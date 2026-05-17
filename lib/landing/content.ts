@@ -47,7 +47,7 @@ export const STEAM_CATEGORIES: Array<{
     color: "#E94B3C",
     textColor: "#ffffff",
     description: "Khám phá thế giới qua thí nghiệm và đặt câu hỏi tại sao.",
-    imageSrc: "https://picsum.photos/seed/steam-science/600/450",
+    imageSrc: "https://images.unsplash.com/photo-1630959305606-3123a081dada?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     key: "technology",
@@ -56,7 +56,7 @@ export const STEAM_CATEGORIES: Array<{
     color: "#7CB342",
     textColor: "#ffffff",
     description: "Xây dựng công cụ tương lai bằng code và sáng tạo.",
-    imageSrc: "https://picsum.photos/seed/steam-tech/600/450",
+    imageSrc: "https://images.unsplash.com/photo-1717347424091-08275b73c918?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     key: "engineering",
@@ -65,7 +65,7 @@ export const STEAM_CATEGORIES: Array<{
     color: "#4FC3F7",
     textColor: "#ffffff",
     description: "Giải quyết vấn đề thực bằng thiết kế và kiến trúc.",
-    imageSrc: "https://picsum.photos/seed/steam-eng/600/450",
+    imageSrc: "https://images.unsplash.com/photo-1581092163144-b7ae3c00adbc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     key: "arts",
@@ -74,7 +74,7 @@ export const STEAM_CATEGORIES: Array<{
     color: "#FDD835",
     textColor: "#2D2D2D",
     description: "Biểu đạt ý tưởng qua thiết kế, âm nhạc và sáng tác.",
-    imageSrc: "https://picsum.photos/seed/steam-arts/600/450",
+    imageSrc: "https://images.unsplash.com/photo-1548811579-017cf2a4268b?q=80&w=689&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     key: "mathematics",
@@ -83,7 +83,7 @@ export const STEAM_CATEGORIES: Array<{
     color: "#7E57C2",
     textColor: "#ffffff",
     description: "Tìm quy luật ẩn trong mọi thứ và giải mã thế giới.",
-    imageSrc: "https://picsum.photos/seed/steam-math/600/450",
+    imageSrc: "https://images.unsplash.com/photo-1676302447092-14a103558511?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 ];
 

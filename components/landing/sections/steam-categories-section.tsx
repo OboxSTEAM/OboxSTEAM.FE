@@ -35,7 +35,7 @@ export function SteamCategoriesSection() {
             style={{ background: cat.color, minHeight: 520 }}
           >
             {/* Background image inset */}
-            <div className="absolute inset-0 opacity-[0.18] group-hover/strip:opacity-[0.18] hover:opacity-[0.42]! transition-opacity duration-300">
+            <div className="absolute inset-0 opacity-40 group-hover/strip:opacity-32 hover:opacity-65! transition-opacity duration-300">
               <ImageSlot
                 ratio="4:3"
                 src={cat.imageSrc}
@@ -95,7 +95,7 @@ export function SteamCategoriesSection() {
             className="relative snap-start shrink-0 w-[78vw] max-w-xs overflow-hidden rounded-2xl"
             style={{ background: cat.color, minHeight: 380 }}
           >
-            <div className="absolute inset-0 opacity-20">
+            <div className="absolute inset-0 opacity-40">
               <ImageSlot
                 ratio="3:4"
                 src={cat.imageSrc}
