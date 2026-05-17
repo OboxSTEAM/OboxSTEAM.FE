@@ -1,141 +1,67 @@
 ---
+description: OboxSTEAM Next.js engineering standards — stack, patterns, security
 alwaysApply: true
 ---
 
-# OboxSTEAM - Next.js Engineering Guide & Ruleset
+# OboxSTEAM — Next.js Engineering
 
-## Overview
-
-Engineering standards for the OboxSTEAM edtech platform. Covers architecture, code quality, security, and delivery workflow. For visual design, colors, typography, and component styling, follow `styling-rule.mdc`.
+Edtech platform standards. **Visual design:** `styling-rule.mdc`. **Domain/routes/roles:** `context.mdc` when relevant.
 
 ---
 
-## Tech Stack
+## Stack
 
-- **Framework**: Next.js (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS; shadcn/ui (Radix primitives), customized per brand
-- **State**: Redux Toolkit for global/client state
-- **Data fetching**: Prefer Server Components and server actions; use React Query or RTK Query where client caching fits
-- **Validation**: Zod for schemas (forms, API payloads, env)
-- **Package manager**: pnpm only (`pnpm install`, `pnpm add`, `pnpm run`)
-- **UI components**: Add or update shadcn components via the project MCP server when available
-- **Icons**: Lucide React (use sparingly; see styling guide)
-- **Testing**: Jest + React Testing Library
+Next.js App Router · TypeScript · Tailwind + shadcn/ui (Radix) · Redux Toolkit (global auth, UI shell) · Zod · **pnpm only** · Jest + RTL · Lucide (sparingly)
+
+**Data:** RSC + Server Actions first; RTK Query/React Query only when client cache/interactivity needs it.
+
+**UI:** Extend shadcn via composition; scaffold/update primitives via project MCP; match `components/ui` patterns.
 
 ---
 
-## Agent Workflow
+## Before coding
 
-Before writing or changing code:
+1. **Review** — Read existing code; `<CODE_REVIEW>` when non-trivial.
+2. **Plan** — `<PLANNING>` for multi-step work; preserve names/literals unless change required; `::CONVENTION_NAME::` for new patterned names.
+3. **Implement** — Small increments; quick verification hints.
+4. **Secure** — `<SECURITY_REVIEW>` for auth, input, secrets, PII.
 
-1. **Review** — Read existing code; summarize behavior in `<CODE_REVIEW>` tags.
-2. **Plan** — Outline discrete steps in `<PLANNING>` tags. Preserve existing variable names and string literals unless change is required. Use `::CONVENTION_NAME::` for new names following a pattern.
-3. **Implement** — Small, testable increments; suggest a quick check after each step.
-4. **Secure** — For auth, input, secrets, or PII, add reasoning in `<SECURITY_REVIEW>` tags.
-
-**Communication**
-
-- Prefer conceptual answers when code is not needed; use code for non-trivial logic.
-- Ask when requirements are ambiguous; discuss trade-offs when multiple approaches exist.
-- Balance fixing the immediate task with reusable, maintainable solutions.
-- Consider hosting, monitoring, and maintenance where relevant.
-- Adapt based on user feedback.
+Prefer concepts over code when sufficient; ask on ambiguity; brief trade-offs when choices matter.
 
 ---
 
-## Code Style and Structure
+## Code style
 
-- Concise, technical TypeScript; functional and declarative patterns (no classes).
-- Descriptive names with auxiliary verbs (`isLoading`, `hasError`, `canSubmit`).
-- File layout: exported components, subcomponents, helpers, static content, types.
-- Directories: lowercase with dashes (`components/course-card`).
-- DRY via iteration and small modules; avoid unnecessary abstraction.
-- Early returns and guard clauses for invalid preconditions.
-- Custom error types for consistent API/UI error handling.
-- Comments only for non-obvious logic; prefer self-documenting code.
+Functional TypeScript (no classes); auxiliary verbs (`isLoading`, `canSubmit`); early returns; custom error types at API/UI boundaries.
+
+**Layout:** exported component → subcomponents → helpers → types; folders `kebab-case`; comments only for non-obvious logic; JSDoc on exports when types aren’t enough.
 
 ---
 
-## Next.js and React
+## Next.js & React
 
-- **Default to Server Components**; minimize `'use client'`, `useEffect`, and local `useState`.
-- Use dynamic `import()` for heavy or below-the-fold client bundles.
-- **Images**: `next/image`, WebP where possible, explicit dimensions, lazy loading.
-- **Responsive**: mobile-first layouts (align with styling guide breakpoints).
-- **Routing**: App Router conventions; colocate route-specific logic under `app/`.
-- **Performance**: reduce client JS, avoid waterfall fetches, stream where appropriate.
+- Default **Server Components**; minimize `'use client'`, `useEffect`, `useState`.
+- Dynamic `import()` for heavy/below-fold client code; `next/image` (WebP, dimensions, lazy); mobile-first; colocate routes under `app/`.
+- Reduce client JS, avoid fetch waterfalls, stream where useful; `prefers-reduced-motion` for motion (see styling guide).
 
 ---
 
-## State Management and Data
+## State, forms, data
 
-- **Redux Toolkit**: global auth, UI shell, cross-page state; slices colocated under `store/` or feature folders.
-- Keep Redux lean; do not duplicate server data that RSC can provide.
-- **Server data**: fetch in RSC or Server Actions; use client caches only when interactivity requires it.
-- **Forms**: controlled inputs with Zod + react-hook-form (or project standard); validate on client and server.
-- Normalize API responses at boundaries; typed selectors and hooks.
+- Redux: lean; slices under `store/` or feature folders; don’t duplicate RSC-fetched data.
+- Forms: Zod + react-hook-form (or project standard); validate client **and** server.
+- Normalize API responses at boundaries; typed selectors/hooks.
 
 ---
 
-## UI and Components
+## Security & ops
 
-- Follow `styling-rule.mdc` for brand colors, typography, spacing, motion, and accessibility.
-- Base interactive UI on shadcn/ui; extend via composition, not one-off duplicates.
-- Use the shadcn MCP to scaffold or update primitives before hand-rolling.
-- Do not restate design tokens here; reference the styling guide.
+Validate/sanitize all input; no client-only trust. No secrets in client bundles. Auth: secure cookies/headers, least privilege. User-facing errors without stacks/internal IDs. Server logs: meaningful, no PII/tokens.
 
 ---
 
-## Security and Operations
+## Testing & delivery
 
-- Validate and sanitize all user input; never trust client-only checks.
-- No secrets in client bundles; use environment variables with server-only access where needed.
-- Auth: secure cookies or headers per project pattern; least-privilege routes and API calls.
-- Handle errors without leaking stack traces or internal IDs to users.
-- Log meaningfully on the server; avoid logging PII or tokens.
+RTL: behavior and a11y, not implementation details. Extend shared components (`CourseCard`, `CategoryBadge`, …) over duplicates.
 
----
-
-## Testing and Documentation
-
-- Unit test components and utilities with Jest + React Testing Library.
-- Test behavior and accessibility, not implementation details.
-- JSDoc on exported functions/components when types alone are insufficient.
-- Optional file-level block comment for modules with non-obvious architecture (auth, API clients):
-
-```tsx
-/**
- * auth-context.tsx — Client auth state; JWT refresh; consumed by protected routes.
- */
-```
-
----
-
-## Methodology
-
-1. **Analyze** — Requirements, constraints, and existing patterns.
-2. **Plan** — Structure and flow before coding (`<PLANNING>` when non-trivial).
-3. **Implement** — Incremental changes aligned with this guide and styling rules.
-4. **Review** — Performance, edge cases, security, and consistency.
-5. **Finalize** — Lint-clean, typed, and verifiable in the app.
-
-Evaluate alternatives briefly when choices matter (RSC vs client, Redux vs local state, etc.).
-
----
-
-## Implementation Notes
-
-- Install dependencies with **pnpm**; keep lockfile committed.
-- Add shadcn components through **MCP** when configured; match `components/ui` patterns.
-- Align new features with existing folder and naming conventions in the repo.
-- Prefer extending shared components (`CourseCard`, `CategoryBadge`, etc.) over duplicates.
-- Respect `prefers-reduced-motion` for animations (see styling guide).
-
----
-
-*Ship focused changes: correct, secure, and consistent with OboxSTEAM patterns.*
-
-**Version**: 1.0  
-**Last Updated**: May 2026  
-**Project**: OboxSTEAM
+**Ship:** focused, lint-clean, typed, verifiable diffs — correct, secure, consistent with OboxSTEAM patterns.
