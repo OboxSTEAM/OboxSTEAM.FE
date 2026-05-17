@@ -1,87 +1,89 @@
 "use client";
 
 import Link from "next/link";
-import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import AnimatedContent from "@/components/AnimatedContent";
-import { CategoryBadge } from "@/components/common/category-badge";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
-import { ImageSlot } from "@/components/common/image-slot";
 import { FEATURED_PROGRAMS } from "@/lib/landing/content";
-import { ArrowRight, Clock, Users } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 export function ProgramsSection() {
   return (
     <section
       id="programs"
-      className="py-20 lg:py-28 bg-[#FAFAF5]"
+      className="py-16 lg:py-20 bg-[#2D2D2D]"
       aria-labelledby="programs-heading"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header */}
         <AnimatedContent distance={30} duration={0.6}>
-          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-12">
+          <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-10">
             <div>
-              <EyebrowChip className="mb-3">Chương trình nổi bật</EyebrowChip>
+              <EyebrowChip dark className="mb-3">Chương trình nổi bật</EyebrowChip>
               <h2
                 id="programs-heading"
-                className="font-heading font-extrabold text-[#2D2D2D]"
-                style={{ fontSize: "clamp(1.8rem, 3.5vw, 2.5rem)" }}
+                className="font-heading font-extrabold text-white tracking-tight leading-[0.97]"
+                style={{ fontSize: "clamp(2rem, 4vw, 3rem)" }}
               >
-                Khám phá các chương trình STEAM
+                Khám phá STEAM.
               </h2>
             </div>
             <Link
               href="/courses"
-              className="flex items-center gap-1.5 text-sm font-semibold text-[#E94B3C] hover:gap-2.5 transition-all duration-150 shrink-0"
+              className="flex items-center gap-1.5 text-sm font-medium text-white/50 hover:text-white hover:gap-2.5 transition-all duration-150 shrink-0"
             >
-              Xem tất cả <ArrowRight size={16} />
+              Xem tất cả <ArrowRight size={14} />
             </Link>
           </div>
         </AnimatedContent>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Card grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {FEATURED_PROGRAMS.map((program, i) => (
             <AnimatedContent
               key={program.id}
-              distance={40}
-              duration={0.6}
+              distance={30}
+              duration={0.55}
               delay={i * 0.08}
             >
-              <Card className="group overflow-hidden border-[#E5E5E0] bg-white rounded-2xl shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-200 cursor-pointer flex flex-col">
-                {/* Top color bar */}
-                <div
-                  className="h-1.5 w-full shrink-0"
-                  style={{ background: program.color }}
-                />
+              <Link
+                href={`/courses/${program.id}`}
+                className="group flex flex-col rounded-xl overflow-hidden bg-[#1e1e1e] hover:bg-[#252525] border border-white/6 hover:border-white/12 transition-all duration-200 cursor-pointer"
+                aria-label={program.title}
+              >
+                {/* Thumbnail — 16:9 */}
+                <div className="relative aspect-video overflow-hidden bg-[#141414] shrink-0">
+                  {program.imageSrc && (
+                    <Image
+                      src={program.imageSrc}
+                      alt={program.title}
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-400 group-hover:scale-[1.03]"
+                    />
+                  )}
+                </div>
 
-                {/* 4:3 thumbnail slot */}
-                <ImageSlot
-                  ratio="4:3"
-                  alt={program.title}
-                  tone={program.category}
-                  className="rounded-none"
-                />
+                {/* Content below image */}
+                <div className="flex flex-col gap-2 p-4">
+                  {/* Category label */}
+                  <p className="text-[11px] font-medium text-white/40 uppercase tracking-[0.12em]">
+                    {program.category}
+                  </p>
 
-                {/* Content */}
-                <div className="p-5 flex flex-col gap-3 flex-1">
-                  <CategoryBadge category={program.category} />
-                  <h3 className="font-heading font-bold text-[#2D2D2D] text-base leading-snug">
+                  {/* Title */}
+                  <h3 className="font-heading font-semibold text-white text-sm leading-snug line-clamp-2 group-hover:text-white/90 transition-colors duration-150">
                     {program.title}
                   </h3>
-                  <p className="text-[#6B6B6B] text-sm leading-relaxed flex-1">
-                    {program.description}
-                  </p>
-                  <div className="flex items-center gap-4 text-xs text-[#6B6B6B] pt-1 border-t border-[#E5E5E0]">
-                    <span className="flex items-center gap-1">
-                      <Clock size={12} />
-                      {program.duration}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users size={12} />
-                      {program.ageGroup}
-                    </span>
+
+                  {/* Meta row */}
+                  <div className="flex items-center gap-3 mt-1 text-[11px] text-white/35">
+                    <span>{program.duration}</span>
+                    <span aria-hidden="true">·</span>
+                    <span>{program.ageGroup}</span>
                   </div>
                 </div>
-              </Card>
+              </Link>
             </AnimatedContent>
           ))}
         </div>

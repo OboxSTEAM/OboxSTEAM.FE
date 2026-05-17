@@ -1,155 +1,118 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
+import { ScanFace, Video, PenLine, Globe, type LucideProps } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
 import { ImageSlot } from "@/components/common/image-slot";
-import { SITE, UNIVERSE_SECTION } from "@/lib/landing/content";
-import Aurora from "@/components/Aurora";
+import { UNIVERSE_SECTION } from "@/lib/landing/content";
 
-function useReducedMotion() {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduce(mq.matches);
-    const handler = (e: MediaQueryListEvent) => setReduce(e.matches);
-    mq.addEventListener("change", handler);
-    return () => mq.removeEventListener("change", handler);
-  }, []);
-  return reduce;
-}
+type LucideIcon = React.ComponentType<LucideProps>;
+
+const FEATURE_ICONS: Record<string, LucideIcon> = {
+  ScanFace,
+  Video,
+  PenLine,
+  Globe,
+};
 
 export function UniverseSection() {
-  const reduce = useReducedMotion();
-
   return (
     <section
       id="portfolio"
-      className="relative bg-[#2D2D2D] text-[#FAFAF5] overflow-hidden"
+      className="relative bg-[#F5F5F0] overflow-hidden"
       aria-labelledby="universe-heading"
     >
-      {/* Aurora shader background */}
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        {reduce ? (
-          <div
-            className="w-full h-full"
-            style={{
-              background:
-                "linear-gradient(135deg, #E94B3C22 0%, #7CB34222 25%, #4FC3F722 50%, #FDD83522 75%, #7E57C222 100%)",
-            }}
-          />
-        ) : (
-          <Aurora
-            colorStops={["#E94B3C", "#4FC3F7", "#7E57C2"]}
-            amplitude={0.8}
-            blend={0.4}
-            speed={0.6}
-          />
-        )}
-      </div>
-
-      {/* Noise texture overlay for depth */}
+      {/* Top-right STEAM rainbow radial tint (cinematic feel without dark surface) */}
       <div
-        className="absolute inset-0 pointer-events-none opacity-[0.04]"
         aria-hidden="true"
+        className="absolute -top-32 -right-32 w-[640px] h-[640px] pointer-events-none"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "repeat",
-          backgroundSize: "200px 200px",
+          background:
+            "radial-gradient(circle at center, #E94B3C 0%, #FDD835 25%, #4FC3F7 55%, #7E57C2 85%, transparent 100%)",
+          opacity: 0.08,
+          filter: "blur(8px)",
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-24 lg:py-32">
-        {/* Logo on dark */}
-        <div className="flex items-center gap-2 mb-16">
-          <Image
-            src={SITE.logoUrl}
-            alt="OboxSTEAM"
-            width={32}
-            height={32}
-            className="object-contain brightness-0 invert"
-          />
-          <span className="font-heading font-bold text-sm text-white/60 tracking-tight">OboxSTEAM</span>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-start">
-          {/* Left — narrative */}
-          <div className="flex flex-col gap-8">
-            <EyebrowChip dark className="w-fit">
-              {UNIVERSE_SECTION.eyebrow}
-            </EyebrowChip>
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
+          {/* Left — narrative (6 cols) */}
+          <div className="lg:col-span-6 flex flex-col gap-7">
+            <EyebrowChip className="w-fit">{UNIVERSE_SECTION.eyebrow}</EyebrowChip>
 
             <h2
               id="universe-heading"
-              className="font-heading font-extrabold text-white text-balance leading-none tracking-tight"
-              style={{ fontSize: "clamp(2.2rem, 5vw, 4rem)" }}
+              className="font-heading font-extrabold text-[#2D2D2D] text-balance tracking-tight"
+              style={{
+                fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
+                lineHeight: 0.98,
+              }}
             >
               {UNIVERSE_SECTION.headline}
             </h2>
 
-            <p className="text-[#FAFAF5]/70 text-lg leading-relaxed max-w-lg">
+            <p className="text-[#6B6B6B] text-lg leading-relaxed max-w-lg">
               {UNIVERSE_SECTION.subheadline}
             </p>
 
-            {/* Feature list */}
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {UNIVERSE_SECTION.features.map((feature) => (
-                <li
-                  key={feature.label}
-                  className="flex items-start gap-3 p-4 rounded-xl bg-white/5 border border-white/8 backdrop-blur-sm"
-                >
-                  <span className="text-2xl shrink-0 mt-0.5" aria-hidden="true">
-                    {feature.icon}
-                  </span>
-                  <div>
-                    <p className="font-semibold text-white text-sm leading-snug">{feature.label}</p>
-                    <p className="text-[#FAFAF5]/55 text-xs mt-0.5 leading-relaxed">{feature.desc}</p>
-                  </div>
-                </li>
-              ))}
+            {/* 2x2 feature micro-cards */}
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {UNIVERSE_SECTION.features.map((feature) => {
+                const Icon = FEATURE_ICONS[feature.iconName];
+                return (
+                  <li
+                    key={feature.label}
+                    className="flex items-start gap-3 p-4 rounded-xl bg-white border border-[#E5E5E0] shadow-sm"
+                  >
+                    {Icon && (
+                      <Icon
+                        size={20}
+                        className="text-[#E94B3C] shrink-0 mt-0.5"
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div>
+                      <p className="font-semibold text-[#2D2D2D] text-sm leading-snug">
+                        {feature.label}
+                      </p>
+                      <p className="text-[#6B6B6B] text-xs mt-0.5 leading-relaxed">
+                        {feature.desc}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
 
-            <div className="flex flex-wrap gap-3 mt-2">
+            <div className="mt-2">
               <Link
                 href={UNIVERSE_SECTION.ctaHref}
-                className={buttonVariants({ size: "lg" }) + " bg-white text-[#2D2D2D] hover:bg-[#FAFAF5] font-semibold px-8 py-3 rounded-lg min-h-[52px] transition-all duration-150 hover:scale-[1.02]"}
+                className={
+                  buttonVariants({ size: "lg" }) +
+                  " bg-[#2D2D2D] hover:bg-[#1a1a1a] text-white font-semibold px-8 py-3 rounded-lg min-h-[52px] transition-all duration-150 hover:scale-[1.02]"
+                }
               >
                 {UNIVERSE_SECTION.ctaLabel}
-              </Link>
-              <Link
-                href="/register"
-                className={buttonVariants({ variant: "outline", size: "lg" }) + " border-white/20 text-white hover:bg-white/10 font-semibold px-8 py-3 rounded-lg min-h-[52px]"}
-              >
-                Đăng ký ngay
               </Link>
             </div>
           </div>
 
-          {/* Right — 16:9 image slot */}
-          <div className="flex flex-col gap-4">
-            <ImageSlot
-              ratio="16:9"
-              alt="Portfolio STEAM của học viên OboxSTEAM"
-              tone="engineering"
-              className="w-full border border-white/10"
-            />
-            {/* Two smaller slots beneath */}
-            <div className="grid grid-cols-2 gap-4">
+          {/* Right — single 16:9 portfolio mockup slot (6 cols) */}
+          <div className="lg:col-span-6">
+            <div className="relative">
               <ImageSlot
-                ratio="4:3"
-                alt="AI nhận dạng khuôn mặt trong lớp học"
-                tone="technology"
-                className="w-full border border-white/10"
+                ratio="16:9"
+                alt="Portfolio microsite mẫu của học viên OboxSTEAM"
+                tone="engineering"
+                className="w-full shadow-xl"
+                sizes="(max-width: 1024px) 100vw, 50vw"
               />
-              <ImageSlot
-                ratio="4:3"
-                alt="Chứng chỉ và thành tích học viên"
-                tone="arts"
-                className="w-full border border-white/10"
-              />
+              {/* Browser-bar tag overlay (subtle skeumorphic hint) */}
+              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase text-[#6B6B6B] border border-[#E5E5E0]">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#E94B3C]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FDD835]" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#7CB342]" />
+                <span className="ml-2">tên.obox.id</span>
+              </div>
             </div>
           </div>
         </div>

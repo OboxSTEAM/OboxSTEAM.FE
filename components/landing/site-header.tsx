@@ -13,7 +13,10 @@ export function SiteHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
-    const handler = () => setScrolled(window.scrollY > 12);
+    const handler = () => {
+      // Switch state once we've scrolled past the dark hero (~80vh threshold).
+      setScrolled(window.scrollY > window.innerHeight * 0.8);
+    };
     window.addEventListener("scroll", handler, { passive: true });
     handler();
     return () => window.removeEventListener("scroll", handler);
@@ -30,17 +33,29 @@ export function SiteHeader() {
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between gap-6">
-          {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0" aria-label="OboxSTEAM trang chủ">
+          {/* Logo — switches between coloured and white-inverted */}
+          <Link
+            href="/"
+            className="flex items-center gap-2 shrink-0"
+            aria-label="OboxSTEAM trang chủ"
+          >
             <Image
               src={SITE.logoUrl}
               alt="OboxSTEAM logo"
               width={36}
               height={36}
-              className="object-contain"
+              className={cn(
+                "object-contain transition-[filter] duration-200",
+                scrolled ? "" : "brightness-0 invert"
+              )}
               priority
             />
-            <span className="font-heading font-800 text-[1.1rem] text-[#2D2D2D] leading-none tracking-tight hidden sm:block">
+            <span
+              className={cn(
+                "font-heading font-bold text-[1.05rem] leading-none tracking-tight hidden sm:block transition-colors duration-200",
+                scrolled ? "text-[#2D2D2D]" : "text-white"
+              )}
+            >
               OboxSTEAM
             </span>
           </Link>
@@ -51,7 +66,12 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="px-3 py-2 rounded-lg text-sm font-medium text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0] transition-colors duration-150 min-h-[44px] flex items-center"
+                className={cn(
+                  "px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-150 min-h-[44px] flex items-center",
+                  scrolled
+                    ? "text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+                    : "text-white/80 hover:text-white hover:bg-white/10"
+                )}
               >
                 {link.label}
               </Link>
@@ -62,13 +82,21 @@ export function SiteHeader() {
           <div className="hidden md:flex items-center gap-3">
             <Link
               href="/login"
-              className="text-sm font-medium text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors px-3 py-2 min-h-[44px] flex items-center"
+              className={cn(
+                "text-sm font-medium px-3 py-2 min-h-[44px] flex items-center transition-colors duration-150",
+                scrolled
+                  ? "text-[#6B6B6B] hover:text-[#2D2D2D]"
+                  : "text-white/80 hover:text-white"
+              )}
             >
               Đăng nhập
             </Link>
             <Link
               href="/register"
-              className={buttonVariants({ size: "sm" }) + " bg-[#E94B3C] hover:bg-[#d43e30] text-white rounded-lg px-5 min-h-[44px]"}
+              className={
+                buttonVariants({ size: "sm" }) +
+                " bg-[#E94B3C] hover:bg-[#d43e30] text-white rounded-lg px-5 min-h-[44px] shadow-md shadow-[#E94B3C]/25"
+              }
             >
               Đăng ký miễn phí
             </Link>
@@ -76,7 +104,13 @@ export function SiteHeader() {
 
           {/* Mobile hamburger */}
           <button
-            className="md:hidden flex items-center justify-center w-11 h-11 rounded-lg text-[#2D2D2D] hover:bg-[#F5F5F0] transition-colors"
+            type="button"
+            className={cn(
+              "md:hidden flex items-center justify-center w-11 h-11 rounded-lg transition-colors duration-150",
+              scrolled
+                ? "text-[#2D2D2D] hover:bg-[#F5F5F0]"
+                : "text-white hover:bg-white/10"
+            )}
             onClick={() => setMobileOpen((v) => !v)}
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? "Đóng menu" : "Mở menu"}
@@ -86,7 +120,7 @@ export function SiteHeader() {
         </div>
       </div>
 
-      {/* Mobile overlay */}
+      {/* Mobile overlay — always cream surface for readability when open */}
       {mobileOpen && (
         <div className="md:hidden bg-[#FAFAF5] border-t border-[#E5E5E0] shadow-lg">
           <nav className="flex flex-col p-4 gap-1" aria-label="Menu di động">
@@ -111,7 +145,10 @@ export function SiteHeader() {
               <Link
                 href="/register"
                 onClick={() => setMobileOpen(false)}
-                className={buttonVariants() + " bg-[#E94B3C] hover:bg-[#d43e30] text-white rounded-lg min-h-[44px] w-full justify-center"}
+                className={
+                  buttonVariants() +
+                  " bg-[#E94B3C] hover:bg-[#d43e30] text-white rounded-lg min-h-[44px] w-full justify-center"
+                }
               >
                 Đăng ký miễn phí
               </Link>
