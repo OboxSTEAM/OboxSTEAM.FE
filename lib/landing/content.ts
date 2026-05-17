@@ -24,8 +24,8 @@ export const HERO = {
     "Nền tảng STEAM trải nghiệm cho trẻ em Việt — mỗi bài học tạo ra một tác phẩm, mỗi tác phẩm dựng nên một hành trình du học.",
   ctaPrimary: { label: "Đăng ký miễn phí", href: "/register" },
   ctaSecondary: { label: "Khám phá chương trình", href: "/courses" },
-  /** 3:4 portrait, like the Tizi brand-introduction figure. Replace with real photo. */
-  imageSrc: "https://picsum.photos/seed/obox-hero-portrait/900/1200",
+  /** Full-bleed hero background. Replace with a real cinematic STEAM classroom photo. */
+  imageSrc: "https://images.unsplash.com/photo-1477281765962-ef34e8bb0967?q=80&w=1033&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 } as const;
 
 export type SteamCategory = "science" | "technology" | "engineering" | "arts" | "mathematics";
@@ -37,7 +37,6 @@ export const STEAM_CATEGORIES: Array<{
   color: string;
   textColor: string;
   description: string;
-  /** 4:3 thumbnail for strip section. Replace with real photo. */
   imageSrc?: string;
 }> = [
   {
