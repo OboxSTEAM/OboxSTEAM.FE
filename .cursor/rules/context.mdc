@@ -25,13 +25,12 @@ Student enrolls in program → learns through online/offline sessions → eviden
 | **Student** | Enroll, learn, track progress, manage own portfolio |
 | **Parent** | Register on behalf of child, pay, monitor child's progress (linked sub-profile) |
 | **Mentor / Instructor** | Teach sessions, grade students per stage, upload recommendation letters, upload evidence media |
-| **Provider** | Partner education center that hosts programs on the platform; approves Mentor accounts |
-| **Manager** | OboxSTEAM platform representative; quality-controls Providers |
+| **Manager** | OboxSTEAM platform representative; oversees program quality and Mentor accounts |
 | **Admin** | System-level observer; manages users, content, AI pipelines |
 
 **Parent–Child linking:** A parent account can create multiple child (Student) sub-profiles. All child activity triggers real-time notifications to the parent.
 
-**Mentor approval flow:** Mentor registers → uploads CCCD, degree, CV, language cert → Provider reviews → approved.
+**Mentor approval flow:** Mentor registers → uploads CCCD, degree, CV, language cert → Manager reviews → Admin approves.
 
 ---
 
@@ -56,7 +55,7 @@ Program
 ### 3.1 Authentication & Account Management
 - Multi-channel sign-up: Google OAuth, phone (OTP), email/password.
 - Role selection at registration (Student, Parent, Mentor).
-- Mentor accounts require Provider approval with document upload.
+- Mentor accounts require Manager/Admin approval with document upload.
 - Parent can create and manage child sub-profiles; activity notifications flow to parent.
 
 ### 3.2 Student Profile (Portfolio Data Source)

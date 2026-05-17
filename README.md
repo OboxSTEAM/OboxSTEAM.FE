@@ -174,8 +174,7 @@ pnpm lint       # ESLint (flat config, Next.js rules)
 | **Student** | Enrolls, learns, owns Portfolio |
 | **Parent** | Pays, monitors child progress (linked sub-profile) |
 | **Mentor** | Teaches, grades, uploads evidence |
-| **Provider** | Partner education center; approves Mentors |
-| **Manager** | OboxSTEAM platform quality control |
+| **Manager** | OboxSTEAM platform quality control; approves Mentors |
 | **Admin** | System observer; manages all entities |
 | **Guest** | Browses programs + views public portfolios |
 
