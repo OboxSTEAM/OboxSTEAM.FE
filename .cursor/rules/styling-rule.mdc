@@ -489,3 +489,196 @@ Logo usage rules:
 **Version**: 1.1  
 **Last Updated**: May 2026  
 **Brand**: OboxSTEAM
+
+---
+
+## Surface Hierarchy
+
+Four named surface modes — only one may be used at a time in a given section:
+
+| Token | Color | Usage |
+|-------|-------|-------|
+| `surface-cream` | `#FAFAF5` | Default for all sections unless specified |
+| `surface-white` | `#FFFFFF` | Cards and modal layers on cream |
+| `surface-off-white` | `#F5F5F0` | Alternating sections for gentle visual rhythm |
+| `surface-charcoal` | `#2D2D2D` | **Max one per page** — the cinematic "STEAM Universe" moment |
+
+Rules:
+- All sections default to `surface-cream`.
+- `surface-charcoal` may only appear once per page. It is the dramatic contrast moment.
+- Never stack `surface-charcoal` sections back-to-back.
+- On `surface-charcoal`, text color flips to `#FAFAF5`; use the white/cream logo variant (see Logo on Dark Background section).
+
+---
+
+## Display Typography Stance
+
+Extends the base type scale for large-format, poster-style layouts:
+
+### Poster Display
+- Font: Nunito 800
+- Size: `clamp(3rem, 8vw, 7rem)` — fluid, fills the viewport width gracefully
+- Tracking: `tracking-tight` (`-0.025em`)
+- Leading: `0.95` — tighter than the base scale for maximum visual impact
+- Alignment: `text-balance` to prevent widow lines
+
+### Eyebrow Chip
+- Font: JetBrains Mono 12px
+- Case: UPPERCASE
+- Letter-spacing: `0.18em`
+- Shape: pill (`rounded-full`)
+- Background: Off-White `#F5F5F0` on light surfaces; White/10 on `surface-charcoal`
+- Use: precedes a headline to set category, date, or status context (e.g. "STEAM · 2026 · BETA")
+
+### Word-Cycle Rule
+When using `RotatingText` inside a headline:
+- Cycle 3–4 verbs only, each ≤ 8 characters.
+- Approved word sets: `["Khám phá", "Sáng tạo", "Tỏa sáng", "Bứt phá"]` (Vietnamese) / `["Discover", "Build", "Share", "Achieve"]` (English).
+- Animation: 3D rotate/flip transition, 2.5s interval.
+
+---
+
+## STEAM Palette Combinations
+
+Approved gradient and color-pair combinations for sections, badges, and decorative elements. Never invent new combinations outside this list.
+
+| Name | Colors | Allowed In |
+|------|--------|------------|
+| Warm pair | Red → Yellow | Hero skeleton, Science/Arts dual badges |
+| Cool pair | Cyan → Purple | Engineering/Math features, footer tint |
+| Growth pair | Green → Cyan | Technology/Engineering progress bars |
+| Full STEAM rainbow | Red → Green → Cyan → Yellow → Purple | Hero decoration only (corner marks, logo ring) |
+| Charcoal + Full STEAM | Dark bg + rainbow tint | `surface-charcoal` Aurora shader section only |
+
+The rainbow gradient in CSS (for hero decoration):
+```css
+linear-gradient(135deg, #E94B3C 0%, #7CB342 25%, #4FC3F7 50%, #FDD835 75%, #7E57C2 100%)
+```
+
+---
+
+## Image Slot System
+
+Every visual zone on the landing page is a reserved `ImageSlot` component. This decouples layout from real photography — images can be dropped in later without changing component structure.
+
+### Canonical Aspect Ratios — Standard Set
+
+| Ratio | Tailwind class | Primary uses |
+|-------|---------------|--------------|
+| `16:9` | `aspect-video` | Hero banners, "How it Works" step thumbnails, cinematic section banner |
+| `1:1` | `aspect-square` | Mentor / student / parent portraits, testimonial avatars |
+| `4:3` | `aspect-[4/3]` | Course card thumbnails, program cards, STEAM strip insets |
+| `3:4` | `aspect-[3/4]` | Role cards (For Parents / For Schools / For Mentors), tall editorial portraits |
+
+### ImageSlot Component Contract
+
+Props:
+```ts
+type ImageSlotProps = {
+  ratio: "16:9" | "1:1" | "4:3" | "3:4";
+  src?: string;        // optional; shows skeleton when absent
+  alt: string;
+  tone?: "science" | "technology" | "engineering" | "arts" | "mathematics" | "neutral";
+  className?: string;
+  sizes?: string;      // next/image sizes hint
+};
+```
+
+Behaviour:
+- **With `src`**: renders `next/image` with `fill`, `sizes`, and `object-cover`.
+- **Without `src` in development**: renders a dashed 2px border in the `tone` STEAM color, with a centred label `"16:9 · drop image here"` in `font-mono text-xs`.
+- **Without `src` in production**: renders a solid Off-White rectangle, no label.
+- The outer `<div>` carries the aspect-ratio class and `relative overflow-hidden rounded-2xl`.
+
+### Image Naming Convention
+Place real images under `public/images/` using the pattern:
+```
+public/images/{section}-{slot}-{descriptor}.webp
+```
+Example: `public/images/hero-main-classroom.webp`
+
+---
+
+## Motion Library — React Bits Mapping
+
+All components are installed from the `@react-bits` registry, TypeScript + Tailwind variant (`-TS-TW`).
+
+### Landing Page Zone → Component
+
+| Zone | Component | Notes |
+|------|-----------|-------|
+| Navigation | `PillNav` | Sliding pill indicator |
+| Hero word-cycle | `RotatingText` | 3D flip, 2.5s interval |
+| Hero supporting copy | `SplitText` | Staggered character entrance |
+| Cinematic shader | `Aurora` | **Charcoal section only**; tinted with STEAM rainbow |
+| Section scroll reveals | `AnimatedContent` + `ScrollReveal` | Fade + upward slide, threshold 0.2 |
+| Impact stats | `CountUp` | Ease-out, triggers on scroll into view |
+| "Why OboxSTEAM" bento | `MagicBento` | 3 expanding tiles |
+| Partner school strip | `LogoLoop` | Continuous marquee, pause on hover |
+| STEAM category cards | `TiltedCard` | 3D tilt on pointer |
+| Featured programs | `CardSwap` | Animated stack swap |
+| Portfolio showcase | `ChromaGrid` | Grayscale → color on hover |
+| Role cards | `SpotlightCard` | Cursor-gradient illumination |
+| CTA border | `BorderGlow` | Mesh-gradient glow tracking cursor |
+| CTA click delight | `ClickSpark` | Particle burst on button click |
+| Shiny labels | `ShinyText` | Metallic sheen on eyebrow chips |
+
+### Forbidden on This Page
+
+The following React Bits components must **not** be used on any page targeting children and parents (too edgy, distracting, or inaccessible):
+
+`BlobCursor`, `GhostCursor`, `TargetCursor`, `Crosshair`, `Hyperspeed`, `LetterGlitch`, `FaultyTerminal`, `DecryptedText`, `EvilEye`, `ASCIIText`, `DarkVeil`, `Dither`, `FaultyTerminal`
+
+---
+
+## Reduced-Motion Fallback Policy
+
+Every animated component must degrade gracefully for users with `prefers-reduced-motion: reduce`.
+
+### Implementation Pattern
+
+```tsx
+"use client";
+import { useEffect, useState } from "react";
+
+function useReducedMotion() {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const handler = (e: MediaQueryListEvent) => setReduce(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  return reduce;
+}
+
+// Usage in a section:
+export function UniverseSection() {
+  const reduce = useReducedMotion();
+  return reduce ? <StaticUniverseSection /> : <AuroraUniverseSection />;
+}
+```
+
+### Shader / WebGL Components
+- `Aurora` → static gradient `background: linear-gradient(135deg, ...)` using STEAM rainbow.
+- `CardSwap` → static grid of cards, no animation.
+- `TiltedCard` → flat card, `transform: none`.
+
+### Text Animation Components
+- `RotatingText` → static text showing the first word only.
+- `SplitText` → text visible immediately, no stagger.
+- `CountUp` → static final number, no count animation.
+
+---
+
+## Logo on Dark Background
+
+Single exception to the existing "light backgrounds only" logo rule:
+
+In `surface-charcoal` sections, display the OboxSTEAM logo with a **white overlay applied via CSS** (`filter: brightness(0) invert(1)`) or use a pre-exported white variant. The coloured pinwheel pieces should remain visible against dark; only the wordmark (if separate) goes white.
+
+Specific rules:
+- Same minimum height (32px) and clear-space (one puzzle-piece-height) apply.
+- Logo must appear at the top of the charcoal section, not as background decoration.
+- Do not add drop shadows or glows to the logo itself on dark backgrounds — the `Aurora` shader behind it provides visual depth.
