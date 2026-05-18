@@ -9,8 +9,8 @@ import { HERO, SITE } from "@/lib/landing/content";
 import RotatingText from "@/components/RotatingText";
 import Aurora from "@/components/Aurora";
 
-const ROTATING_WORD_CLASS =
-  "inline-block text-[#FDD835] bg-gradient-to-br from-[#FDD835] via-[#4FC3F7] to-[#7E57C2] bg-clip-text [-webkit-background-clip:text] [-webkit-text-fill-color:transparent] supports-[background-clip:text]:text-transparent";
+// Single brand accent — Obox Yellow. No gradient fill on display text.
+const ROTATING_WORD_CLASS = "inline-block text-[#FDD835]";
 
 const HERO_STATS = [
   { value: "2,400+", label: "Học viên" },
@@ -18,6 +18,15 @@ const HERO_STATS = [
   { value: "5", label: "Lĩnh vực STEAM" },
   { value: "AI", label: "Portfolio tự động" },
 ];
+
+// Ambient STEAM color orbs — right composition zone, behind vignette
+const STEAM_ORBS = [
+  { color: "#E94B3C", w: 360, h: 360, top: "10%", right: "18%", blur: 130, opacity: 0.22 },
+  { color: "#4FC3F7", w: 260, h: 260, top: "52%", right: "6%",  blur: 110, opacity: 0.18 },
+  { color: "#FDD835", w: 200, h: 200, top: "28%", right: "40%", blur: 100, opacity: 0.15 },
+  { color: "#7CB342", w: 220, h: 220, top: "70%", right: "30%", blur: 120, opacity: 0.13 },
+  { color: "#7E57C2", w: 280, h: 280, top: "5%",  right: "4%",  blur: 140, opacity: 0.16 },
+] as const;
 
 function useReducedMotion() {
   const [reduce, setReduce] = useState(() => {
@@ -33,15 +42,21 @@ function useReducedMotion() {
   return reduce;
 }
 
+function fadeUp(delay: number) {
+  return {
+    animation: `heroFadeUp 0.8s ${delay}s cubic-bezier(0.16, 1, 0.3, 1) both`,
+  } as React.CSSProperties;
+}
+
 export function HeroSection() {
   const reduce = useReducedMotion();
 
   return (
     <section
-      className="relative min-h-svh bg-[#1a1a1a] text-[#FAFAF5] overflow-hidden flex flex-col"
+      className="relative min-h-dvh bg-[#1A1A1A] text-[#FAFAF5] overflow-hidden flex flex-col"
       aria-labelledby="hero-headline"
     >
-      {/* === Layer 1: Background image === */}
+      {/* === Layer 1: Background image — cinematic 50% === */}
       {HERO.imageSrc && (
         <Image
           src={HERO.imageSrc}
@@ -49,66 +64,89 @@ export function HeroSection() {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-35"
+          className="object-cover object-center"
+          style={{ opacity: 0.5, transform: "translateZ(0)" }}
         />
       )}
 
-      {/* === Layer 2: Aurora shader tint === */}
-      <div className="absolute inset-0 pointer-events-none mix-blend-soft-light" aria-hidden="true">
-        {reduce ? (
+      {/* === Layer 2: STEAM ambient orbs — behind vignette, right zone === */}
+      {!reduce &&
+        STEAM_ORBS.map((orb, i) => (
           <div
-            className="w-full h-full"
+            key={i}
+            aria-hidden="true"
+            className="absolute pointer-events-none rounded-full"
             style={{
-              background:
-                "linear-gradient(135deg, #E94B3C33 0%, #4FC3F733 50%, #7E57C233 100%)",
+              width: orb.w,
+              height: orb.h,
+              top: orb.top,
+              right: orb.right,
+              background: orb.color,
+              filter: `blur(${orb.blur}px)`,
+              opacity: orb.opacity,
+              transform: "translateZ(0)",
             }}
           />
-        ) : (
-          <Aurora
-            colorStops={["#E94B3C", "#4FC3F7", "#7E57C2"]}
-            amplitude={0.8}
-            blend={0.5}
-            speed={0.5}
-          />
-        )}
-      </div>
+        ))}
 
-      {/* === Layer 3: Dark vignette gradient === */}
+      {/* === Layer 3: Directional cinematic vignette ===
+          Left-heavy: content zone is deeply dark; right breathes open to reveal the image.
+          Bottom anchor: grounds the section. Top fade: prevents harsh header collision. */}
       <div
         aria-hidden="true"
         className="absolute inset-0 pointer-events-none"
         style={{
-          background:
-            "linear-gradient(to top, rgba(10,10,10,0.85) 0%, rgba(10,10,10,0.4) 40%, rgba(10,10,10,0.25) 65%, rgba(10,10,10,0.6) 100%)",
+          background: [
+            "linear-gradient(to right, rgba(14,11,11,0.92) 0%, rgba(14,11,11,0.72) 38%, rgba(14,11,11,0.32) 62%, rgba(14,11,11,0.08) 100%)",
+            "linear-gradient(to top, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.55) 22%, rgba(10,10,10,0.0) 48%)",
+            "linear-gradient(to bottom, rgba(10,10,10,0.72) 0%, rgba(10,10,10,0.0) 18%)",
+          ].join(", "),
         }}
       />
 
-      {/* === Layer 4: Noise texture === */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 pointer-events-none opacity-[0.04]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E")`,
-          backgroundRepeat: "repeat",
-          backgroundSize: "200px 200px",
-        }}
-      />
+      {/* === Layer 4: Aurora tint — soft chromatic wash === */}
+      {!reduce && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{ mixBlendMode: "soft-light", opacity: 0.55 }}
+        >
+          <Aurora
+            colorStops={["#E94B3C", "#4FC3F7", "#7E57C2"]}
+            amplitude={0.65}
+            blend={0.4}
+            speed={0.4}
+          />
+        </div>
+      )}
 
-      {/* === Vertical indicator (Tizi-style) === */}
+      {/* === Reduced-motion fallback: static tint === */}
+      {reduce && (
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              "linear-gradient(135deg, rgba(233,75,60,0.12) 0%, rgba(79,195,247,0.08) 50%, rgba(126,87,194,0.10) 100%)",
+          }}
+        />
+      )}
+
+      {/* === Scroll indicator === */}
       <div
         aria-hidden="true"
-        className="hidden lg:flex absolute right-6 bottom-28 z-10 flex-col items-center gap-3 font-mono text-[10px] tracking-[0.3em] text-white/30 uppercase"
+        className="hidden lg:flex absolute right-6 bottom-10 z-10 flex-col items-center gap-3 font-mono text-[10px] tracking-[0.3em] text-white/25 uppercase"
         style={{ writingMode: "vertical-rl" }}
       >
         <span>01 / 05</span>
-        <span className="h-10 w-px bg-white/15" />
+        <span className="h-10 w-px bg-white/12" />
         <span>Scroll</span>
       </div>
 
       {/* === Left vertical brand mark === */}
       <div
         aria-hidden="true"
-        className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-10 flex-col items-center gap-2 font-mono text-[9px] tracking-[0.4em] text-white/20 uppercase"
+        className="hidden lg:flex absolute left-6 top-1/2 -translate-y-1/2 z-10 flex-col items-center gap-2 font-mono text-[9px] tracking-[0.4em] text-white/18 uppercase"
         style={{ writingMode: "vertical-rl" }}
       >
         <span>{SITE.name}</span>
@@ -118,18 +156,25 @@ export function HeroSection() {
 
       {/* === Main content === */}
       <div className="relative flex-1 flex items-center z-10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-32 lg:py-36">
-          <div className="max-w-3xl">
-            <EyebrowChip dark className="mb-6">
-              {HERO.eyebrow}
-            </EyebrowChip>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-32 lg:py-40">
+          {/* Content column — left-aligned, 55% max width on large screens */}
+          <div className="max-w-2xl">
 
+            {/* Eyebrow */}
+            <div style={reduce ? undefined : fadeUp(0)}>
+              <EyebrowChip dark className="mb-7">
+                {HERO.eyebrow}
+              </EyebrowChip>
+            </div>
+
+            {/* Headline */}
             <h1
               id="hero-headline"
               className="font-heading font-extrabold text-balance tracking-tight mb-6"
               style={{
-                fontSize: "clamp(3rem, 8vw, 7rem)",
-                lineHeight: 0.93,
+                fontSize: "clamp(3.5rem, 9vw, 8.5rem)",
+                lineHeight: 0.9,
+                ...(reduce ? undefined : fadeUp(0.1)),
               }}
             >
               <span className="text-white">{HERO.headlineStatic}</span>
@@ -158,17 +203,26 @@ export function HeroSection() {
               </span>
             </h1>
 
-            <p className="text-white/60 text-base lg:text-lg leading-relaxed max-w-lg mb-8">
+            {/* Subheadline */}
+            <p
+              className="text-white/55 text-base lg:text-lg leading-relaxed max-w-[52ch] mb-10"
+              style={reduce ? undefined : fadeUp(0.22)}
+            >
               {HERO.subheadline}
             </p>
 
             {/* CTAs */}
-            <div className="flex flex-wrap items-center gap-3 mb-12">
+            <div
+              className="flex flex-wrap items-center gap-3 mb-12"
+              style={reduce ? undefined : fadeUp(0.32)}
+            >
               <Link
                 href={HERO.ctaPrimary.href}
                 className={
                   buttonVariants({ size: "lg" }) +
-                  " bg-[#E94B3C] hover:bg-[#d43e30] text-white font-semibold px-8 py-3 rounded-lg min-h-[52px] text-base transition-all duration-150 hover:scale-[1.02] shadow-lg shadow-[#E94B3C]/25"
+                  " bg-[#E94B3C] hover:bg-[#d43e30] text-white font-semibold px-8 rounded-lg min-h-[52px] text-base" +
+                  " shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_4px_24px_rgba(233,75,60,0.30)]" +
+                  " hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
                 }
               >
                 {HERO.ctaPrimary.label}
@@ -177,27 +231,52 @@ export function HeroSection() {
                 href={HERO.ctaSecondary.href}
                 className={
                   buttonVariants({ variant: "outline", size: "lg" }) +
-                  " border-white/20 bg-white/5 text-white hover:bg-white/10 hover:border-white/35 backdrop-blur-sm font-semibold px-8 py-3 rounded-lg min-h-[52px] text-base transition-all duration-150 hover:scale-[1.02]"
+                  " border border-white/18 bg-white/6 text-white hover:bg-white/10 hover:border-white/32 backdrop-blur-md font-semibold px-8 rounded-lg min-h-[52px] text-base" +
+                  " shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" +
+                  " hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
                 }
               >
                 {HERO.ctaSecondary.label}
               </Link>
             </div>
 
-            {/* Inline stat chips */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+            {/* Stat chips — liquid glass pills */}
+            <div
+              className="flex flex-wrap items-center gap-2"
+              style={reduce ? undefined : fadeUp(0.42)}
+            >
               {HERO_STATS.map((stat, i) => (
-                <div key={i} className="flex items-baseline gap-1.5">
-                  <span className="font-heading font-bold text-white text-sm lg:text-base">
+                <div
+                  key={i}
+                  className="flex items-baseline gap-1.5 px-4 py-2 rounded-full"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                    backdropFilter: "blur(12px)",
+                    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.07)",
+                  }}
+                >
+                  <span className="font-heading font-bold text-white text-sm lg:text-[0.9375rem]">
                     {stat.value}
                   </span>
-                  <span className="text-white/35 text-xs">{stat.label}</span>
+                  <span className="text-white/38 text-xs">{stat.label}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
       </div>
+
+      {/* === Bottom STEAM rainbow line === */}
+      <div
+        aria-hidden="true"
+        className="absolute bottom-0 left-0 w-full h-[2px] pointer-events-none"
+        style={{
+          background:
+            "linear-gradient(90deg, #E94B3C 0%, #7CB342 25%, #4FC3F7 50%, #FDD835 75%, #7E57C2 100%)",
+          opacity: 0.55,
+        }}
+      />
     </section>
   );
 }
