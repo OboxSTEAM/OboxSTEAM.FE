@@ -18,13 +18,11 @@ export const NAV_LINKS = [
 export const HERO = {
   eyebrow: "OBOX STEAM × INTRODUCTION 2026",
   headlineStatic: "Khám phá.",
-  /** 3 verbs only, each ≤ 8 characters per styling rule. */
   rotatingWords: ["Sáng tạo.", "Tỏa sáng.", "Bứt phá."],
   subheadline:
     "Nền tảng STEAM trải nghiệm cho trẻ em Việt — mỗi bài học tạo ra một tác phẩm, mỗi tác phẩm dựng nên một hành trình du học.",
   ctaPrimary: { label: "Đăng ký miễn phí", href: "/register" },
   ctaSecondary: { label: "Khám phá chương trình", href: "/courses" },
-  /** Full-bleed hero background. Replace with a real cinematic STEAM classroom photo. */
   imageSrc: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
 } as const;
 
