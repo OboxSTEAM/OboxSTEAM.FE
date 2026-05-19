@@ -1,4 +1,4 @@
-name: Obox Frontend Deploy
+name: Obox Frontend CI/CD Pipeline
 
 on:
   push:
@@ -8,17 +8,23 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Deploy to VPS
-        uses: appleboy/ssh-action@v1.2.0
+      - name: Checkout Code từ GitHub
+        uses: actions/checkout@v4
+
+      - name: Kết nối VPS qua SSH và Thực thi Deploy
+        uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            set -e
-            cd /root/apps/oboxsteam
+            cd /root/apps/oboxsteam/oboxsteam-fe
+
             git pull origin main
+
             docker compose up -d --build
+
             docker image prune -f
