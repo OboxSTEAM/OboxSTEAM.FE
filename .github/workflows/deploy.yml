@@ -1,4 +1,4 @@
-name: Obox Frontend CI/CD Pipeline
+name: Obox Frontend Deploy
 
 on:
   push:
@@ -8,23 +8,49 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Code từ GitHub
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Kết nối VPS qua SSH và Thực thi Deploy
-        uses: appleboy/ssh-action@v1.0.3
+      - name: Pack release (exclude local/build artifacts)
+        run: |
+          tar --exclude=node_modules --exclude=.git --exclude=.next -czf deploy.tar.gz .
+
+      - name: Upload to VPS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: 22
+          source: deploy.tar.gz
+          target: /root/apps/oboxsteam/oboxsteam-fe
+
+      - name: Extract and restart Docker
+        uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: 22
           script: |
-            cd /root/apps/oboxsteam/oboxsteam-fe
+            set -e
+            APP_DIR=/root/apps/oboxsteam/oboxsteam-fe
+            mkdir -p "$APP_DIR"
+            cd "$APP_DIR"
 
-            git pull origin main
+            # Keep VPS-only .env (not in git) across deploys
+            if [ -f .env ]; then cp .env /tmp/oboxsteam-fe.env; fi
 
+            find . -mindepth 1 -maxdepth 1 ! -name 'deploy.tar.gz' -exec rm -rf {} +
+            tar -xzf deploy.tar.gz
+            rm -f deploy.tar.gz
+
+            if [ -f /tmp/oboxsteam-fe.env ]; then mv /tmp/oboxsteam-fe.env .env; fi
+            if [ ! -f .env ]; then
+              echo "WARN: no .env on VPS — create one with NEXT_PUBLIC_API_URL before production use"
+            fi
+
+            test -f docker-compose.yml
             docker compose up -d --build
-
             docker image prune -f
