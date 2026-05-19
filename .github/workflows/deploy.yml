@@ -14,7 +14,14 @@ jobs:
 
       - name: Pack release (exclude local/build artifacts)
         run: |
-          tar --exclude=node_modules --exclude=.git --exclude=.next -czf deploy.tar.gz .
+          tar \
+            --exclude=node_modules \
+            --exclude=.git \
+            --exclude=.next \
+            -czf "$RUNNER_TEMP/deploy.tar.gz" \
+            -C "$GITHUB_WORKSPACE" \
+            .
+          cp "$RUNNER_TEMP/deploy.tar.gz" "$GITHUB_WORKSPACE/deploy.tar.gz"
 
       - name: Upload to VPS
         uses: appleboy/scp-action@v1
