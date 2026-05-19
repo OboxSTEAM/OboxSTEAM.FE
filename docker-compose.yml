@@ -1,5 +1,6 @@
 services:
   obox-frontend:
+    image: oboxsteam-fe
     container_name: obox-frontend
     build:
       context: .
