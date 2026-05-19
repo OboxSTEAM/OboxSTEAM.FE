@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
+import { SITE } from "@/lib/landing/content";
 import "./globals.css";
 
 const nunito = Nunito({
@@ -19,20 +20,12 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
-const OBOX_LOGO_URL =
-  "https://oboxsteam-bucket.s3.ap-southeast-1.amazonaws.com/obox-logo.png";
-
 export const metadata: Metadata = {
   title: "OboxSTEAM — Học STEAM, Xây Portfolio, Chinh phục Du học",
   description:
     "Nền tảng học STEAM trải nghiệm dành cho trẻ em Việt Nam. Học qua dự án thực tế, nhận chứng chỉ quốc tế và tự động tạo Portfolio AI sẵn sàng cho hồ sơ đại học nước ngoài.",
   keywords: ["STEAM", "edtech", "học trực tuyến", "portfolio du học", "robotics", "AI", "trẻ em"],
   metadataBase: new URL("https://oboxsteam.edu.vn"),
-  icons: {
-    icon: [{ url: OBOX_LOGO_URL, type: "image/png" }],
-    shortcut: OBOX_LOGO_URL,
-    apple: [{ url: OBOX_LOGO_URL, type: "image/png" }],
-  },
   openGraph: {
     title: "OboxSTEAM — Học STEAM, Xây Portfolio, Chinh phục Du học",
     description:
@@ -41,7 +34,7 @@ export const metadata: Metadata = {
     locale: "vi_VN",
     images: [
       {
-        url: OBOX_LOGO_URL,
+        url: SITE.logoUrl,
         width: 512,
         height: 512,
         alt: "OboxSTEAM Logo",
