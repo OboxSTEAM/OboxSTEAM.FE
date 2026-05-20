@@ -1,18 +1,11 @@
 services:
   obox-frontend:
-    image: oboxsteam-fe
+    image: ${DOCKERHUB_USERNAME}/oboxsteam-fe:latest
     container_name: obox-frontend
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        # NEXT_PUBLIC_* is inlined at build time — set in .env before `docker compose build`
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.oboxsteam.website}
+    pull_policy: always
     restart: always
     environment:
       NODE_ENV: production
-      # Placeholder; client bundle uses the build-arg value above
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://api.oboxsteam.website}
     networks:
       - shared_network
 
