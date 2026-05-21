@@ -126,7 +126,7 @@ export const FEATURED_PROGRAMS = [
       "Lập trình robot thực tế, học Machine Learning qua trò chơi và xây dựng dự án AI đầu tiên.",
     color: "#7CB342",
     /** 4:3 course thumbnail. Replace with real photo. */
-    imageSrc: "https://picsum.photos/seed/prog-robotics/400/300",
+    imageSrc: "https://images.unsplash.com/photo-1655393001768-d946c97d6fd1?q=80&w=1176&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     id: "green-science",
@@ -138,7 +138,7 @@ export const FEATURED_PROGRAMS = [
       "Thí nghiệm môi trường, nghiên cứu sinh thái và thiết kế giải pháp cho biến đổi khí hậu.",
     color: "#E94B3C",
     /** 4:3 course thumbnail. Replace with real photo. */
-    imageSrc: "https://picsum.photos/seed/prog-science/400/300",
+    imageSrc: "https://images.unsplash.com/photo-1582684666310-496927aa5663?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     id: "creative-coding",
@@ -150,7 +150,7 @@ export const FEATURED_PROGRAMS = [
       "Kết hợp lập trình với nghệ thuật thị giác để tạo animation, game và tác phẩm số.",
     color: "#FDD835",
     /** 4:3 course thumbnail. Replace with real photo. */
-    imageSrc: "https://picsum.photos/seed/prog-arts/400/300",
+    imageSrc: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?q=80&w=1172&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
   {
     id: "math-logic",
@@ -162,7 +162,7 @@ export const FEATURED_PROGRAMS = [
       "Toán ứng dụng, thuật toán và bài toán thực tế — con đường vào các trường top.",
     color: "#7E57C2",
     /** 4:3 course thumbnail. Replace with real photo. */
-    imageSrc: "https://picsum.photos/seed/prog-math/400/300",
+    imageSrc: "https://images.unsplash.com/photo-1648201637025-1c77b9be3013?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
   },
 ];
 
