@@ -23,7 +23,7 @@ export const AUTH_PAGES: Record<AuthPageKey, AuthPanelContent> = {
     panelDescription:
       "Đăng nhập để theo dõi tiến độ, hoàn thiện portfolio và kết nối với mentor OboxSTEAM.",
     imageSrc:
-      "https://images.unsplash.com/photo-1620641788421-7a1c342ea986?q=80&w=1200&auto=format&fit=crop",
+      "https://plus.unsplash.com/premium_photo-1682124436940-4f3739d0dc63?q=80&w=688&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     imageAlt: "Gradient ánh sáng trừu tượng",
   },
   register: {
@@ -32,7 +32,7 @@ export const AUTH_PAGES: Record<AuthPageKey, AuthPanelContent> = {
     panelDescription:
       "Tham gia cộng đồng trẻ em Việt khám phá khoa học, công nghệ và sáng tạo mỗi ngày.",
     imageSrc:
-      "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?q=80&w=1200&auto=format&fit=crop",
+      "https://plus.unsplash.com/premium_photo-1664372145591-f7cc308ff5da?q=80&w=696&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     imageAlt: "Học sinh trong lớp học STEAM",
   },
   "verify-otp": {

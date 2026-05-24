@@ -106,6 +106,19 @@
   }
 }
 
+/* Hide browser-native password reveal (keeps single custom toggle on auth forms) */
+.auth-password-input::-ms-reveal,
+.auth-password-input::-ms-clear {
+  display: none;
+}
+
+.auth-password-input::-webkit-credentials-auto-fill-button,
+.auth-password-input::-webkit-strong-password-auto-fill-button {
+  display: none !important;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

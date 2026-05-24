@@ -29,11 +29,18 @@ export function AppErrorToast({
       >
         <AlertCircle className="size-3.5 stroke-[2.5]" />
       </div>
-      <div className="min-w-0 space-y-1">
+      <div className="min-w-0 space-y-2">
         <p className="text-sm font-semibold leading-snug">{title}</p>
-        <p className="text-sm leading-relaxed text-[#B91C1C]/95">
-          {reason} {action}
-        </p>
+        <div className="space-y-1.5 border-t border-destructive/15 pt-2">
+          <p className="text-sm leading-relaxed text-[#B91C1C]/85">
+            <span className="font-medium text-[#991B1B]">Lý do: </span>
+            {reason}
+          </p>
+          <p className="text-sm leading-relaxed text-[#991B1B]">
+            <span className="font-medium">Nên làm: </span>
+            {action}
+          </p>
+        </div>
       </div>
     </div>
   );

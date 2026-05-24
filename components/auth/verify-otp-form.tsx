@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -13,6 +13,7 @@ import { verifyOtpSchema } from "@/lib/validations/auth";
 
 import { AuthField } from "./auth-field";
 import { AuthFooterLink, AuthFormHeader, AuthSubmitButton } from "./auth-shell";
+import { OtpInput } from "./otp-input";
 
 type VerifyOtpFormValues = z.infer<typeof verifyOtpSchema>;
 
@@ -23,6 +24,7 @@ export function VerifyOtpForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
@@ -71,15 +73,20 @@ export function VerifyOtpForm() {
           {...register("email")}
         />
 
-        <AuthField
-          id="otp"
-          label="Mã OTP"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          placeholder="123456"
-          maxLength={6}
-          error={errors.otp?.message}
-          {...register("otp")}
+        <Controller
+          name="otp"
+          control={control}
+          render={({ field }) => (
+            <OtpInput
+              id="otp"
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.otp?.message}
+              disabled={isSubmitting}
+              autoFocus
+            />
+          )}
         />
 
         <AuthSubmitButton isLoading={isSubmitting}>Xác thực</AuthSubmitButton>
