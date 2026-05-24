@@ -24,3 +24,24 @@ export const loginSchema = z.object({
 export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1, "Refresh token là bắt buộc."),
 });
+
+export const sendResetLinkSchema = z.object({
+  email: z.email("Email không hợp lệ."),
+});
+
+/** Query params from the email reset link (`?email=…&token=…`). */
+export const resetPasswordLinkParamsSchema = z.object({
+  email: z.email("Email không hợp lệ."),
+  token: z.string().min(1, "Token không hợp lệ."),
+});
+
+export const forgotPasswordSchema = z
+  .object({
+    token: z.string().min(1, "Token là bắt buộc."),
+    newPassword: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
+    confirmPassword: z.string().min(1, "Xác nhận mật khẩu là bắt buộc."),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Mật khẩu xác nhận không khớp.",
+    path: ["confirmPassword"],
+  });

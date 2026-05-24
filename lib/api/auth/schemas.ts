@@ -28,12 +28,20 @@ export const registerValueSchema = createApiValueSchema(registeredUserSchema);
 export const verifyOtpValueSchema = apiValueMessageOnlySchema;
 export const loginValueSchema = createApiValueSchema(authTokensSchema);
 export const refreshTokenValueSchema = createApiValueSchema(authTokensSchema);
+export const sendResetLinkValueSchema = apiValueMessageOnlySchema;
+export const forgotPasswordValueSchema = apiValueMessageOnlySchema;
 
 export const registerResponseSchema = createApiResponseSchema(registerValueSchema);
 export const verifyOtpResponseSchema = createApiResponseSchema(verifyOtpValueSchema);
 export const loginResponseSchema = createApiResponseSchema(loginValueSchema);
 export const refreshTokenResponseSchema =
   createApiResponseSchema(refreshTokenValueSchema);
+export const sendResetLinkResponseSchema = createApiResponseSchema(
+  sendResetLinkValueSchema,
+);
+export const forgotPasswordResponseSchema = createApiResponseSchema(
+  forgotPasswordValueSchema,
+);
 
 export type RegisteredUser = z.infer<typeof registeredUserSchema>;
 export type AuthTokens = z.infer<typeof authTokensSchema>;
@@ -47,3 +55,8 @@ export type RegisterResult = RegisterResponse["value"];
 export type VerifyOtpResult = VerifyOtpResponse["value"];
 export type LoginResult = LoginResponse["value"];
 export type RefreshTokenResult = RefreshTokenResponse["value"];
+
+export type SendResetLinkResponse = z.infer<typeof sendResetLinkResponseSchema>;
+export type ForgotPasswordResponse = z.infer<typeof forgotPasswordResponseSchema>;
+export type SendResetLinkResult = SendResetLinkResponse["value"];
+export type ForgotPasswordResult = ForgotPasswordResponse["value"];

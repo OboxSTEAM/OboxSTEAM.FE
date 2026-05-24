@@ -101,6 +101,17 @@ lib/api/entities/        # optional — shared DTOs used by multiple domains (e.
 - `ApiRequestError` — non-2xx HTTP.
 - `ApiResponseError` — HTTP OK but `isSuccess: false` or missing `value` (map `error.message` for UI; no stack/internal IDs to users).
 
+### User-facing errors (toasts)
+
+Use **Sonner** (`components/ui/sonner`, `<Toaster />` in `AppProviders`) with the shared three-part model in `lib/errors/`:
+
+- `AppErrorState`: `title` (what happened) · `reason` (why) · `action` (what to do)
+- `resolveAppError(error, context)` — normalize API/Zod/network errors
+- `showAppError(state)` · `showAppErrorFromUnknown(error, context)` · `showAppSuccess({ title, description? })`
+- UI: `components/errors/app-error-toast.tsx` (destructive) · `app-success-toast.tsx`
+
+Pass an `AppErrorContext` per feature (`auth.login`, `auth.register`, …) for tailored copy. Do not show stack traces or internal IDs.
+
 ### Later (large API surface)
 
 OpenAPI codegen (`openapi-zod-client`, `orval`) is acceptable when Swagger is the source of truth. Until then, hand-written Zod per domain is the standard.
