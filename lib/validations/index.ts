@@ -1,4 +1,6 @@
-/**
- * Shared Zod schemas for forms and API payloads.
- * Example: export { loginSchema } from "./auth";
- */
+export {
+  loginSchema,
+  refreshTokenSchema,
+  registerSchema,
+  verifyOtpSchema,
+} from "./auth";

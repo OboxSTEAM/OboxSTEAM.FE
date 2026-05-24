@@ -49,8 +49,61 @@ Functional TypeScript (no classes); auxiliary verbs (`isLoading`, `canSubmit`); 
 ## State, forms, data
 
 - Redux: lean; slices under `store/` or feature folders; don’t duplicate RSC-fetched data.
-- Forms: Zod + react-hook-form (or project standard); validate client **and** server.
+- Forms: Zod + react-hook-form (`zodResolver`); validate client **and** server (Server Actions / API).
 - Normalize API responses at boundaries; typed selectors/hooks.
+
+---
+
+## API layer (`lib/api/`)
+
+Backend responses use a shared envelope: `{ isSuccess, value, error }`, with `value` often `{ code, message, data? }`. Keep that shape DRY via `lib/api/schemas.ts` (`createApiResponseSchema`, `createApiValueSchema`, `apiValueMessageOnlySchema`).
+
+### Folder layout (scale by domain)
+
+```text
+lib/api/
+  client.ts              # apiFetch, apiFetchParsed, assertApiSuccess, getApiBaseUrl
+  schemas.ts             # envelope factories only — no domain entities
+  create-endpoint.ts     # createApiPost for POST + envelope routes
+  errors.ts              # ApiRequestError (HTTP), ApiResponseError (isSuccess: false)
+  index.ts               # public barrel
+  <domain>/              # e.g. auth/, courses/
+    schemas.ts           # response entities + *ValueSchema / *ResponseSchema
+    index.ts             # endpoint functions (createApiPost or custom fetch)
+lib/validations/
+  <domain>.ts            # request + form schemas (user-facing rules, Vietnamese messages)
+  index.ts
+lib/api/entities/        # optional — shared DTOs used by multiple domains (e.g. user)
+```
+
+### Zod responsibilities
+
+| Layer | Location | Purpose |
+|-------|----------|---------|
+| **Request / form** | `lib/validations/<domain>.ts` | Rules shared by UI and API (`registerSchema`, `loginSchema`). Import in RHF and `createApiPost({ input })`. |
+| **Response** | `lib/api/<domain>/schemas.ts` | Parse JSON from backend; catch contract drift. Export schemas; derive types with `z.infer`. |
+| **Envelope** | `lib/api/schemas.ts` | Single definition of wrapper shape — do not copy per endpoint. |
+
+- **One source of truth:** prefer `z.infer<typeof schema>` over duplicate manual interfaces.
+- **Validate at boundaries:** forms, Server Actions, and every `lib/api/*` call — never trust client-only checks.
+- **DRY:** define each rule once (email format, API envelope, `RegisteredUser` shape). Reuse across forms and endpoints; extract to `lib/api/entities/` when a DTO appears in 2+ domains.
+- **Don’t over-abstract:** use `createApiPost` for similar POST routes; use explicit `apiFetchParsed` for GET/PATCH, uploads, or custom headers. Avoid mega-helpers until repetition is real (~8+ similar endpoints).
+
+### Adding an endpoint
+
+1. Request schema in `lib/validations/<domain>.ts` if a form or Server Action sends it.
+2. Response entity + `*ValueSchema` in `lib/api/<domain>/schemas.ts`.
+3. Function in `lib/api/<domain>/index.ts` via `createApiPost` or `apiFetchParsed`.
+4. Re-export from `lib/api/index.ts` and `lib/validations/index.ts` when public.
+
+### Errors
+
+- `ApiRequestError` — non-2xx HTTP.
+- `ApiResponseError` — HTTP OK but `isSuccess: false` or missing `value` (map `error.message` for UI; no stack/internal IDs to users).
+
+### Later (large API surface)
+
+OpenAPI codegen (`openapi-zod-client`, `orval`) is acceptable when Swagger is the source of truth. Until then, hand-written Zod per domain is the standard.
 
 ---
 
