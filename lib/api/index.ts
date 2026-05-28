@@ -34,6 +34,7 @@ export {
   apiFetchParsed,
   assertApiSuccess,
   getApiBaseUrl,
+  type ApiFetchOptions,
 } from "./client";
 export {
   apiErrorSchema,

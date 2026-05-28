@@ -11,7 +11,7 @@ import { login } from "@/lib/api";
 import {
   clearRememberedEmail,
   getRememberedEmail,
-  persistAuthTokens,
+  persistAuthSession,
   persistRememberedEmail,
 } from "@/lib/auth/session";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -54,7 +54,10 @@ export function LoginForm() {
         password: values.password,
       });
 
-      persistAuthTokens(result.data);
+      persistAuthSession(result.data, {
+        email: values.email,
+        displayName: values.email.split("@")[0],
+      });
 
       if (rememberMe) {
         persistRememberedEmail(values.email);

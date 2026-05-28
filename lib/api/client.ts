@@ -1,29 +1,37 @@
 import { z } from "zod";
 
-import { env } from "@/lib/env";
-
+import { getApiBaseUrl } from "./config";
 import { ApiRequestError, ApiResponseError } from "./errors";
+import {
+  refreshAuthTokens,
+  resolveBearerAuthHeaders,
+  shouldRetryWithRefresh,
+} from "./interceptors";
 import type { ApiEnvelope } from "./schemas";
 
-export function getApiBaseUrl(): string {
-  return env.NEXT_PUBLIC_API_URL.replace(/\/$/, "");
-}
+export { getApiBaseUrl } from "./config";
 
-type ApiFetchOptions = Omit<RequestInit, "body"> & {
+export type ApiFetchOptions = Omit<RequestInit, "body"> & {
   body?: unknown;
+  /** Do not attach Authorization from session storage */
+  skipAuth?: boolean;
+  /** Do not attempt refresh + retry on 401 */
+  skipRefresh?: boolean;
 };
 
-export async function apiFetch<T>(
+async function executeRequest(
   path: string,
-  options: ApiFetchOptions = {},
-): Promise<T> {
-  const { body, headers, ...rest } = options;
+  options: ApiFetchOptions,
+): Promise<{ response: Response; json: unknown }> {
+  const { body, headers, skipAuth, ...rest } = options;
   const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
+  const authHeaders = skipAuth ? {} : resolveBearerAuthHeaders();
 
   const response = await fetch(url, {
     ...rest,
     headers: {
       "Content-Type": "application/json",
+      ...authHeaders,
       ...headers,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
@@ -34,6 +42,25 @@ export async function apiFetch<T>(
     json = await response.json();
   } catch {
     json = null;
+  }
+
+  return { response, json };
+}
+
+export async function apiFetch<T>(
+  path: string,
+  options: ApiFetchOptions = {},
+): Promise<T> {
+  let { response, json } = await executeRequest(path, options);
+
+  if (shouldRetryWithRefresh(response.status, path, options)) {
+    const newAccessToken = await refreshAuthTokens();
+    if (newAccessToken) {
+      ({ response, json } = await executeRequest(path, {
+        ...options,
+        skipRefresh: true,
+      }));
+    }
   }
 
   if (!response.ok) {
