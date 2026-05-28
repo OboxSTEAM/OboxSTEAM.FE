@@ -35,6 +35,21 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Liên kết không hợp lệ hoặc đã hết hạn.",
     action: "Yêu cầu liên kết mới tại trang Quên mật khẩu.",
   },
+  "account.profile": {
+    title: "Không tải được hồ sơ",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
+  "account.update-profile": {
+    title: "Không cập nhật được hồ sơ",
+    reason: "Thông tin chưa hợp lệ hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra họ tên và số điện thoại rồi thử lại.",
+  },
+  "account.upload-avatar": {
+    title: "Không tải lên được ảnh đại diện",
+    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

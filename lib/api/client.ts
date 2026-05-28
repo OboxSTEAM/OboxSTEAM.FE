@@ -26,15 +26,21 @@ async function executeRequest(
   const { body, headers, skipAuth, ...rest } = options;
   const url = `${getApiBaseUrl()}${path.startsWith("/") ? path : `/${path}`}`;
   const authHeaders = skipAuth ? {} : resolveBearerAuthHeaders();
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
 
   const response = await fetch(url, {
     ...rest,
     headers: {
-      "Content-Type": "application/json",
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...authHeaders,
       ...headers,
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body:
+      body === undefined
+        ? undefined
+        : isFormData
+          ? body
+          : JSON.stringify(body),
   });
 
   let json: unknown;

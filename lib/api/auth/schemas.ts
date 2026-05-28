@@ -1,23 +1,14 @@
 import { z } from "zod";
 
+import { userProfileSchema } from "@/lib/api/entities/user";
 import {
   apiValueMessageOnlySchema,
   createApiResponseSchema,
   createApiValueSchema,
 } from "@/lib/api/schemas";
 
-export const registeredUserSchema = z.object({
-  id: z.string(),
-  code: z.string(),
-  fullName: z.string(),
-  email: z.string(),
-  avatarUrl: z.string().nullable(),
-  phone: z.string(),
-  role: z.string(),
-  status: z.string(),
-  isEmailVerified: z.boolean(),
-  createdAt: z.string(),
-});
+/** Same shape as account profile — used by register response. */
+export const registeredUserSchema = userProfileSchema;
 
 export const authTokensSchema = z.object({
   accessToken: z.string(),

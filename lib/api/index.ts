@@ -1,4 +1,16 @@
 export {
+  getCurrentUser,
+  updateProfile,
+  uploadAvatar,
+  toStoredAuthUser,
+  type GetCurrentUserResult,
+  type UpdateProfileInput,
+  type UpdateProfileResult,
+  type UploadAvatarResult,
+  type UserProfile,
+} from "./account";
+
+export {
   register,
   verifyOtp,
   login,

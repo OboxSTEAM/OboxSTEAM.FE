@@ -1,3 +1,4 @@
+export { updateProfileSchema, uploadAvatarSchema } from "./account";
 export {
   forgotPasswordSchema,
   loginSchema,

@@ -19,4 +19,7 @@ export type AppErrorContext =
   | "auth.register"
   | "auth.verify-otp"
   | "auth.forgot-password"
-  | "auth.reset-password";
+  | "auth.reset-password"
+  | "account.profile"
+  | "account.update-profile"
+  | "account.upload-avatar";
