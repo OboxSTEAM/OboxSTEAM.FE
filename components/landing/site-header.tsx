@@ -6,31 +6,48 @@ import Link from "next/link";
 import { Menu, X } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
-import { useAuthSession } from "@/hooks/use-auth-session";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { SITE, NAV_LINKS } from "@/lib/landing/content";
 import { cn } from "@/lib/utils";
 
 import { UserAccountMenu } from "./user-account-menu";
 
-export function SiteHeader() {
-  const { session, isAuthenticated } = useAuthSession();
-  const [scrolled, setScrolled] = useState(false);
+type SiteHeaderProps = {
+  /** Use on inner pages (no dark hero) so nav text stays readable. */
+  defaultScrolled?: boolean;
+};
+
+export function SiteHeader({ defaultScrolled = false }: SiteHeaderProps) {
+  const {
+    session,
+    profile,
+    isAuthenticated,
+    isLoading: isProfileLoading,
+  } = useCurrentUser();
+  const [scrolled, setScrolled] = useState(defaultScrolled);
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const isSolid = defaultScrolled || scrolled;
+  const displayName =
+    profile?.fullName ?? session?.user?.displayName ?? "Học viên";
+  const userCode = profile?.code ?? session?.user?.code;
+
   useEffect(() => {
+    if (defaultScrolled) return;
+
     const handler = () => {
       setScrolled(window.scrollY > window.innerHeight * 0.8);
     };
     window.addEventListener("scroll", handler, { passive: true });
     handler();
     return () => window.removeEventListener("scroll", handler);
-  }, []);
+  }, [defaultScrolled]);
 
   return (
     <header
       className={cn(
         "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-        scrolled
+        isSolid
           ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0]"
           : "bg-transparent",
       )}
@@ -49,14 +66,14 @@ export function SiteHeader() {
               height={44}
               className={cn(
                 "size-10 object-contain transition-[filter] duration-200 sm:size-11",
-                scrolled ? "" : "brightness-0 invert",
+                isSolid ? "" : "brightness-0 invert",
               )}
               priority
             />
             <span
               className={cn(
                 "font-heading hidden text-lg font-bold leading-none tracking-tight transition-colors duration-200 sm:block sm:text-xl",
-                scrolled ? "text-[#2D2D2D]" : "text-white",
+                isSolid ? "text-[#2D2D2D]" : "text-white",
               )}
             >
               OboxSTEAM
@@ -73,7 +90,7 @@ export function SiteHeader() {
                 href={link.href}
                 className={cn(
                   "flex min-h-[48px] items-center rounded-lg px-3.5 py-2 text-base font-medium transition-colors duration-150",
-                  scrolled
+                  isSolid
                     ? "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
                     : "text-white/85 hover:bg-white/10 hover:text-white",
                 )}
@@ -85,14 +102,49 @@ export function SiteHeader() {
 
           <div className="hidden items-center gap-4 md:flex">
             {isAuthenticated && session ? (
-              <UserAccountMenu session={session} scrolled={scrolled} />
+              <div className="flex items-center gap-3">
+                <div
+                  className={cn(
+                    "hidden min-w-0 text-right lg:block",
+                    isSolid ? "text-[#2D2D2D]" : "text-white",
+                  )}
+                >
+                  <p className="truncate text-sm font-semibold leading-tight">
+                    {displayName}
+                  </p>
+                  {userCode ? (
+                    <p
+                      className={cn(
+                        "truncate text-xs font-medium",
+                        isSolid ? "text-[#6B6B6B]" : "text-white/75",
+                      )}
+                    >
+                      {userCode}
+                    </p>
+                  ) : isProfileLoading ? (
+                    <p
+                      className={cn(
+                        "text-xs",
+                        isSolid ? "text-[#6B6B6B]/60" : "text-white/50",
+                      )}
+                    >
+                      …
+                    </p>
+                  ) : null}
+                </div>
+                <UserAccountMenu
+                  session={session}
+                  profile={profile}
+                  scrolled={isSolid}
+                />
+              </div>
             ) : (
               <>
                 <Link
                   href="/login"
                   className={cn(
                     "flex min-h-[48px] items-center px-3.5 py-2 text-base font-medium transition-colors duration-150",
-                    scrolled
+                    isSolid
                       ? "text-[#6B6B6B] hover:text-[#2D2D2D]"
                       : "text-white/85 hover:text-white",
                   )}
@@ -116,7 +168,7 @@ export function SiteHeader() {
             type="button"
             className={cn(
               "flex size-12 items-center justify-center rounded-lg transition-colors duration-150 md:hidden",
-              scrolled
+              isSolid
                 ? "text-[#2D2D2D] hover:bg-[#F5F5F0]"
                 : "text-white hover:bg-white/10",
             )}
@@ -132,6 +184,16 @@ export function SiteHeader() {
       {mobileOpen && (
         <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden">
           <nav className="flex flex-col gap-1 p-4" aria-label="Menu di động">
+            {isAuthenticated && session ? (
+              <div className="mb-2 border-b border-[#E5E5E0] px-4 pb-3">
+                <p className="text-base font-semibold text-[#2D2D2D]">
+                  {displayName}
+                </p>
+                {userCode ? (
+                  <p className="text-sm text-[#6B6B6B]">{userCode}</p>
+                ) : null}
+              </div>
+            ) : null}
             {NAV_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -145,7 +207,11 @@ export function SiteHeader() {
             <div className="mt-3 flex flex-col gap-2">
               {isAuthenticated && session ? (
                 <div className="flex justify-center py-3">
-                  <UserAccountMenu session={session} scrolled />
+                  <UserAccountMenu
+                    session={session}
+                    profile={profile}
+                    scrolled
+                  />
                 </div>
               ) : (
                 <>

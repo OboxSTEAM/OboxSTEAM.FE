@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
+import { ApiResponseError } from "@/lib/api/errors";
 import type { UserProfile } from "@/lib/api/entities/user";
 import { updateProfileSchema } from "@/lib/validations/account";
 
@@ -29,12 +30,19 @@ export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 const ACCOUNT_ME = "/api/account/me";
 
+function requireApiValue<T>(value: T | null): T {
+  if (value == null) {
+    throw new ApiResponseError("Request failed.");
+  }
+  return value;
+}
+
 export async function getCurrentUser(): Promise<GetCurrentUserResult> {
   const response = await apiFetchParsed(ACCOUNT_ME, getCurrentUserResponseSchema, {
     method: "GET",
   });
   assertApiSuccess(response);
-  return response.value;
+  return requireApiValue(response.value);
 }
 
 export async function updateProfile(
@@ -46,7 +54,7 @@ export async function updateProfile(
     body,
   });
   assertApiSuccess(response);
-  return response.value;
+  return requireApiValue(response.value);
 }
 
 export async function uploadAvatar(file: File): Promise<UploadAvatarResult> {
@@ -62,13 +70,14 @@ export async function uploadAvatar(file: File): Promise<UploadAvatarResult> {
     },
   );
   assertApiSuccess(response);
-  return response.value;
+  return requireApiValue(response.value);
 }
 
 /** Maps API profile to session user fields for header / auth storage. */
 export function toStoredAuthUser(profile: UserProfile) {
   return {
     email: profile.email,
+    code: profile.code,
     displayName: profile.fullName,
     avatarUrl: profile.avatarUrl,
   };

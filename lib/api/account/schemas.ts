@@ -17,6 +17,6 @@ export type UpdateProfileResponse = z.infer<typeof updateProfileResponseSchema>;
 export type UploadAvatarResponse = z.infer<typeof uploadAvatarResponseSchema>;
 
 export type UserProfileValue = z.infer<typeof userProfileValueSchema>;
-export type GetCurrentUserResult = GetCurrentUserResponse["value"];
-export type UpdateProfileResult = UpdateProfileResponse["value"];
-export type UploadAvatarResult = UploadAvatarResponse["value"];
+export type GetCurrentUserResult = NonNullable<GetCurrentUserResponse["value"]>;
+export type UpdateProfileResult = NonNullable<UpdateProfileResponse["value"]>;
+export type UploadAvatarResult = NonNullable<UploadAvatarResponse["value"]>;

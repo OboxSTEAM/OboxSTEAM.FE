@@ -10,6 +10,7 @@ export type StoredAuthTokens = {
 
 export type StoredAuthUser = {
   email: string;
+  code?: string;
   displayName?: string;
   avatarUrl?: string | null;
 };
