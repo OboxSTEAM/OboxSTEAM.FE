@@ -1,10 +1,13 @@
 import { z } from "zod";
 
+import { registerRoleSchema } from "@/lib/api/entities/user";
+
 export const registerSchema = z.object({
   email: z.email("Email không hợp lệ."),
   password: z.string().min(8, "Mật khẩu phải có ít nhất 8 ký tự."),
   fullName: z.string().min(1, "Họ tên là bắt buộc."),
   phone: z.string().min(1, "Số điện thoại là bắt buộc."),
+  role: registerRoleSchema,
 });
 
 export const verifyOtpSchema = z.object({

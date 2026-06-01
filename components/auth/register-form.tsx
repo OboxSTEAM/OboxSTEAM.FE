@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -12,6 +12,7 @@ import { registerSchema } from "@/lib/validations/auth";
 import { AuthField } from "./auth-field";
 import { AuthFooterLink, AuthFormHeader, AuthSubmitButton } from "./auth-shell";
 import { PasswordField } from "./password-field";
+import { RegisterRolePicker } from "./register-role-picker";
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
@@ -20,6 +21,7 @@ export function RegisterForm() {
 
   const {
     register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormValues>({
@@ -29,6 +31,7 @@ export function RegisterForm() {
       password: "",
       fullName: "",
       phone: "",
+      role: "Student",
     },
   });
 
@@ -80,6 +83,19 @@ export function RegisterForm() {
           placeholder="0912345678"
           error={errors.phone?.message}
           {...register("phone")}
+        />
+
+        <Controller
+          name="role"
+          control={control}
+          render={({ field }) => (
+            <RegisterRolePicker
+              value={field.value}
+              onChange={field.onChange}
+              onBlur={field.onBlur}
+              error={errors.role?.message}
+            />
+          )}
         />
 
         <PasswordField

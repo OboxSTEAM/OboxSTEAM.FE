@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+/** Roles accepted by `POST /api/auth/register` (matches backend enum). */
+export const registerRoleSchema = z.enum(["Student", "Parent", "Mentor"]);
+
+export type RegisterRole = z.infer<typeof registerRoleSchema>;
+
 export const userProfileSchema = z.object({
   id: z.string(),
   code: z.string(),
