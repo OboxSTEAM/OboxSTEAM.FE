@@ -314,7 +314,7 @@ export function ProfileAvatarUpload({
                     : "Kéo thả hoặc chọn ảnh"}
               </p>
               <p className="text-sm text-[#6B6B6B]">
-                Bạn sẽ căn khung trước khi tải lên · JPG, PNG, WebP · tối đa 5 MB
+                Bạn sẽ căn khung trước khi tải lên · JPG, PNG · tối đa 5 MB
               </p>
             </div>
 

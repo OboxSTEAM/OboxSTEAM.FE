@@ -6,6 +6,12 @@
         "shadcn@latest",
         "mcp"
       ]
+    },
+    "console-ninja": {
+      "command": "node",
+      "args": [
+        "~/.console-ninja/mcp/"
+      ]
     }
   }
 }
