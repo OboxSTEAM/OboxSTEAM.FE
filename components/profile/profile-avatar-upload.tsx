@@ -7,6 +7,7 @@ import { Check, ImagePlus, Info, Loader2, Sparkles } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { UserProfile } from "@/lib/api/entities/user";
 import { uploadAvatar } from "@/lib/api/account";
+import { getProfileDisplayName, getProfileInitials } from "@/lib/auth/profile-display";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { uploadAvatarSchema } from "@/lib/validations/account";
 import { cn } from "@/lib/utils";
@@ -24,14 +25,6 @@ type CropSource = {
   url: string;
   fileName: string;
 };
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ""}${parts[1]![0] ?? ""}`.toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
 
 function validateImageFile(file: File): boolean {
   const parsed = uploadAvatarSchema.safeParse({ file });
@@ -60,7 +53,8 @@ export function ProfileAvatarUpload({
   const isBusy = isUploading || isSuccess || Boolean(cropSource);
 
   const displayAvatar = previewUrl ?? profile.avatarUrl;
-  const initials = getInitials(profile.fullName);
+  const displayName = getProfileDisplayName(profile);
+  const initials = getProfileInitials(profile);
 
   useEffect(() => {
     return () => {
@@ -235,7 +229,7 @@ export function ProfileAvatarUpload({
                   )}
                 >
                   {displayAvatar ? (
-                    <AvatarImage src={displayAvatar} alt={profile.fullName} />
+                    <AvatarImage src={displayAvatar} alt={displayName} />
                   ) : null}
                   <AvatarFallback className="bg-gradient-to-br from-[#E94B3C] to-[#d43e30] text-2xl font-semibold text-white">
                     {initials}

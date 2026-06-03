@@ -16,9 +16,11 @@ import {
 import type { UserProfile } from "@/lib/api/entities/user";
 import {
   getAccountNavItems,
-  getDefaultDisplayName,
+  getAccountRoleLabel,
   LOGOUT_NAV_ITEM,
 } from "@/lib/auth/account-nav";
+import { getProfileDisplayName } from "@/lib/auth/profile-display";
+import { normalizeAccountRole } from "@/lib/auth/roles";
 import { clearAuthSession, type StoredAuthSession } from "@/lib/auth/session";
 import { cn } from "@/lib/utils";
 
@@ -44,15 +46,17 @@ export function UserAccountMenu({
 }: UserAccountMenuProps) {
   const router = useRouter();
   const email = profile?.email ?? session.user?.email ?? "";
-  const displayName =
-    profile?.fullName ??
-    session.user?.displayName ??
-    email.split("@")[0] ??
-    getDefaultDisplayName(profile?.role);
+  const accountRole = normalizeAccountRole(profile?.role ?? session.user?.role);
+  const displayName = profile
+    ? getProfileDisplayName(profile)
+    : session.user?.displayName?.trim() ||
+      email.split("@")[0] ||
+      getAccountRoleLabel(accountRole);
   const userCode = profile?.code ?? session.user?.code;
   const avatarUrl = profile?.avatarUrl ?? session.user?.avatarUrl;
   const initials = getInitials(displayName, email);
-  const navItems = getAccountNavItems(profile?.role);
+  const navItems = getAccountNavItems(accountRole ?? profile?.role ?? session.user?.role);
+  const roleLabel = accountRole ? getAccountRoleLabel(accountRole) : null;
 
   const handleLogout = () => {
     clearAuthSession();
@@ -95,6 +99,9 @@ export function UserAccountMenu({
             <p className="text-base font-medium text-foreground">{displayName}</p>
             {userCode ? (
               <p className="text-sm font-medium text-muted-foreground">{userCode}</p>
+            ) : null}
+            {roleLabel ? (
+              <p className="text-xs font-medium text-muted-foreground">{roleLabel}</p>
             ) : null}
             {email ? (
               <p className="truncate text-xs text-muted-foreground">{email}</p>

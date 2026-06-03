@@ -28,13 +28,13 @@ export function ProfileEditForm({ profile, onUpdated }: ProfileEditFormProps) {
   } = useForm<ProfileEditValues>({
     resolver: zodResolver(updateProfileSchema),
     defaultValues: {
-      fullName: profile.fullName,
-      phone: profile.phone,
+      fullName: profile.fullName ?? "",
+      phone: profile.phone ?? "",
     },
   });
 
   useEffect(() => {
-    reset({ fullName: profile.fullName, phone: profile.phone });
+    reset({ fullName: profile.fullName ?? "", phone: profile.phone ?? "" });
   }, [profile, reset]);
 
   const onSubmit = handleSubmit(async (values) => {

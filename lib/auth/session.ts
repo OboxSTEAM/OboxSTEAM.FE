@@ -13,6 +13,8 @@ export type StoredAuthUser = {
   code?: string;
   displayName?: string;
   avatarUrl?: string | null;
+  /** Cached from profile for header/nav before `/api/account/me` finishes. */
+  role?: string;
 };
 
 export type StoredAuthSession = StoredAuthTokens & {

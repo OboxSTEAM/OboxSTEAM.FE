@@ -1,9 +1,10 @@
 import type { UserProfile } from "@/lib/api/entities/user";
+import { isParentRole } from "@/lib/auth/roles";
 
 const PARENT_PROFILE_PENDING_KEY = "oboxsteam.parentProfilePending";
 
 export function isParentProfileIncomplete(profile: UserProfile): boolean {
-  return profile.role === "Parent" && profile.isEmailVerified === false;
+  return isParentRole(profile.role) && profile.isEmailVerified === false;
 }
 
 export function setParentProfilePending(): void {
@@ -21,7 +22,16 @@ export function clearParentProfilePending(): void {
   sessionStorage.removeItem(PARENT_PROFILE_PENDING_KEY);
 }
 
-export function shouldShowParentProfileGate(profile: UserProfile | null): boolean {
-  if (!profile || profile.role !== "Parent") return false;
+/**
+ * Show blocking complete-profile UI for shadow parents.
+ * `parentProfilePending` is set right after magic-login so the gate can open
+ * even while `/api/account/me` is still loading.
+ */
+export function shouldShowParentProfileGate(
+  profile: UserProfile | null,
+  options?: { isAuthenticated?: boolean },
+): boolean {
+  if (options?.isAuthenticated && getParentProfilePending()) return true;
+  if (!profile || !isParentRole(profile.role)) return false;
   return getParentProfilePending() || isParentProfileIncomplete(profile);
 }

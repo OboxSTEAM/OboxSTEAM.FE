@@ -2,8 +2,8 @@ import { z } from "zod";
 
 /** Linked account row returned by parent/student link list endpoints. */
 export const linkedAccountSchema = z.object({
-  linkedUserId: z.string(),
-  code: z.string(),
+  linkedUserId: z.coerce.string(),
+  code: z.coerce.string(),
   email: z.string(),
   /** Null for shadow / pending parent accounts before profile completion. */
   fullName: z.string().nullable(),

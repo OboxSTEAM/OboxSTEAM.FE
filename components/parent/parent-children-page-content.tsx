@@ -14,6 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { getParentLinks, type ParentLinkedStudent } from "@/lib/api";
+import { isParentRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
@@ -87,7 +88,9 @@ function LinkedStudentCard({ student }: { student: ParentLinkedStudent }) {
           </div>
           <div>
             <dt className="text-[#6B6B6B]">Số điện thoại</dt>
-            <dd className="font-medium text-[#2D2D2D]">{student.phone}</dd>
+            <dd className="font-medium text-[#2D2D2D]">
+              {student.phone?.trim() || "—"}
+            </dd>
           </div>
         </dl>
 
@@ -139,7 +142,15 @@ export function ParentChildrenPageContent() {
   }, [isAuthenticated, isHydrated, isLoading, router]);
 
   useEffect(() => {
-    if (!isHydrated || isLoading || !isAuthenticated || profile?.role !== "Parent") {
+    if (!isHydrated || isLoading) return;
+
+    if (!isAuthenticated) {
+      setIsFetching(false);
+      return;
+    }
+
+    if (profile && !isParentRole(profile.role)) {
+      setIsFetching(false);
       return;
     }
 
@@ -154,6 +165,7 @@ export function ParentChildrenPageContent() {
       } catch (error) {
         if (!cancelled) {
           setFetchError(error);
+          setLinks([]);
           showAppErrorFromUnknown(error, "parent.links");
         }
       } finally {
@@ -164,7 +176,7 @@ export function ParentChildrenPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [isHydrated, isLoading, isAuthenticated, profile?.role]);
+  }, [isHydrated, isLoading, isAuthenticated, profile]);
 
   if (!isHydrated || isLoading) {
     return <ChildrenSkeleton />;
@@ -174,7 +186,7 @@ export function ParentChildrenPageContent() {
     return <ChildrenSkeleton />;
   }
 
-  if (profile && profile.role !== "Parent") {
+  if (profile && !isParentRole(profile.role)) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p className="font-heading text-xl font-semibold text-[#2D2D2D]">

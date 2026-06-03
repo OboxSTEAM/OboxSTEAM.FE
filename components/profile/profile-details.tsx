@@ -9,6 +9,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import type { UserProfile } from "@/lib/api/entities/user";
+import {
+  getProfileDisplayName,
+  getProfileDisplayPhone,
+  hasProfileName,
+  PROFILE_NAME_PLACEHOLDER,
+  PROFILE_PHONE_PLACEHOLDER,
+} from "@/lib/auth/profile-display";
 import { cn } from "@/lib/utils";
 
 type ProfileDetailsProps = {
@@ -58,6 +65,32 @@ export function ProfileDetails({ profile }: ProfileDetailsProps) {
       <CardContent>
         <dl>
           <DetailRow label="Mã học viên" value={profile.code} />
+          <DetailRow
+            label="Họ và tên"
+            value={
+              <span
+                className={cn(!hasProfileName(profile) && "text-[#6B6B6B] italic")}
+              >
+                {hasProfileName(profile)
+                  ? getProfileDisplayName(profile)
+                  : PROFILE_NAME_PLACEHOLDER}
+              </span>
+            }
+          />
+          <DetailRow
+            label="Số điện thoại"
+            value={
+              <span
+                className={cn(
+                  !profile.phone?.trim() && "text-[#6B6B6B] italic",
+                )}
+              >
+                {profile.phone?.trim()
+                  ? getProfileDisplayPhone(profile.phone)
+                  : PROFILE_PHONE_PLACEHOLDER}
+              </span>
+            }
+          />
           <DetailRow label="Email" value={profile.email} />
           <DetailRow label="Vai trò" value={profile.role} />
           <DetailRow

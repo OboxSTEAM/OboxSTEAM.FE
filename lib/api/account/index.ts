@@ -78,7 +78,8 @@ export function toStoredAuthUser(profile: UserProfile) {
   return {
     email: profile.email,
     code: profile.code,
-    displayName: profile.fullName,
+    displayName: profile.fullName?.trim() || undefined,
     avatarUrl: profile.avatarUrl,
+    role: profile.role,
   };
 }

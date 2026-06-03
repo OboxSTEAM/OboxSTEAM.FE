@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { approveParentLink, parentMagicLogin } from "@/lib/api";
 import { ApiResponseError } from "@/lib/api/errors";
 import { setParentProfilePending } from "@/lib/auth/parent-profile";
+import { isParentRole } from "@/lib/auth/roles";
 import { persistAuthSession } from "@/lib/auth/session";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { isExistingParentAccountError } from "@/lib/parent/magic-login-errors";
@@ -91,7 +92,7 @@ export function MagicLoginPageClient({
 
     try {
       if (isAuthenticated) {
-        if (profile?.role !== "Parent") {
+        if (!isParentRole(profile?.role)) {
           setErrorMessage(
             "Vui lòng đăng nhập bằng tài khoản phụ huynh để xác nhận liên kết.",
           );

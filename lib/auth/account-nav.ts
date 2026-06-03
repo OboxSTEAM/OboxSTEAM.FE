@@ -1,6 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, LayoutDashboard, LogOut, Settings, User, Users } from "lucide-react";
 
+import { isParentRole, normalizeAccountRole } from "@/lib/auth/roles";
+
 export type AccountNavItem = {
   label: string;
   href: string;
@@ -53,14 +55,21 @@ export const PARENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
 /** @deprecated Use getAccountNavItems(role) */
 export const ACCOUNT_NAV_ITEMS = STUDENT_ACCOUNT_NAV_ITEMS;
 
-export function getAccountNavItems(role?: string): AccountNavItem[] {
-  if (role === "Parent") return PARENT_ACCOUNT_NAV_ITEMS;
+export function getAccountNavItems(role?: string | null): AccountNavItem[] {
+  if (isParentRole(role)) return PARENT_ACCOUNT_NAV_ITEMS;
   return STUDENT_ACCOUNT_NAV_ITEMS;
 }
 
-export function getDefaultDisplayName(role?: string): string {
-  if (role === "Parent") return "Phụ huynh";
+/** Short role label for header / account menu when name is unavailable. */
+export function getAccountRoleLabel(role?: string | null): string {
+  if (isParentRole(role)) return "Phụ huynh";
+  if (normalizeAccountRole(role) === "Mentor") return "Mentor";
   return "Học viên";
+}
+
+/** @deprecated Prefer getAccountRoleLabel — kept for callers using “display name”. */
+export function getDefaultDisplayName(role?: string | null): string {
+  return getAccountRoleLabel(role);
 }
 
 export const LOGOUT_NAV_ITEM = {

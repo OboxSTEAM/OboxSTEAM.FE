@@ -7,6 +7,9 @@ import { Menu, X } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { getAccountRoleLabel } from "@/lib/auth/account-nav";
+import { getProfileDisplayName } from "@/lib/auth/profile-display";
+import { normalizeAccountRole } from "@/lib/auth/roles";
 import { SITE, NAV_LINKS } from "@/lib/landing/content";
 import { cn } from "@/lib/utils";
 
@@ -28,11 +31,13 @@ export function SiteHeader({ defaultScrolled = false }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const isSolid = defaultScrolled || scrolled;
-  const displayName =
-    profile?.fullName ??
-    session?.user?.displayName ??
-    (profile?.role === "Parent" ? "Phụ huynh" : "Học viên");
+  const accountRole = normalizeAccountRole(profile?.role ?? session?.user?.role);
+  const displayName = profile
+    ? getProfileDisplayName(profile)
+    : session?.user?.displayName?.trim() ||
+      getAccountRoleLabel(accountRole);
   const userCode = profile?.code ?? session?.user?.code;
+  const roleLabel = accountRole ? getAccountRoleLabel(accountRole) : null;
 
   useEffect(() => {
     if (defaultScrolled) return;
@@ -122,6 +127,15 @@ export function SiteHeader({ defaultScrolled = false }: SiteHeaderProps) {
                       )}
                     >
                       {userCode}
+                    </p>
+                  ) : roleLabel && displayName !== roleLabel ? (
+                    <p
+                      className={cn(
+                        "truncate text-xs font-medium",
+                        isSolid ? "text-[#6B6B6B]" : "text-white/75",
+                      )}
+                    >
+                      {roleLabel}
                     </p>
                   ) : isProfileLoading ? (
                     <p

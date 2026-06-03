@@ -8,10 +8,11 @@ export type RegisterRole = z.infer<typeof registerRoleSchema>;
 export const userProfileSchema = z.object({
   id: z.string(),
   code: z.string(),
-  fullName: z.string(),
+  /** Null for shadow parent accounts before `complete-profile`. */
+  fullName: z.string().nullable(),
   email: z.string(),
   avatarUrl: z.string().nullable(),
-  phone: z.string(),
+  phone: z.string().nullable(),
   role: z.string(),
   status: z.string(),
   isEmailVerified: z.boolean(),

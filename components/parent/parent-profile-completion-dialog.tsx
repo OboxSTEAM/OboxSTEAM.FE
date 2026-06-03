@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { completeParentProfile } from "@/lib/api";
+import type { UserProfile } from "@/lib/api/entities/user";
 import { clearParentProfilePending } from "@/lib/auth/parent-profile";
 import { clearAuthSession } from "@/lib/auth/session";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -36,13 +37,16 @@ type CompleteParentProfileFormValues = z.infer<typeof completeParentProfileFormS
 
 type ParentProfileCompletionDialogProps = {
   open: boolean;
+  profile: UserProfile | null;
 };
 
 export function ParentProfileCompletionDialog({
   open,
+  profile: profileProp,
 }: ParentProfileCompletionDialogProps) {
   const router = useRouter();
-  const { profile, refresh } = useCurrentUser();
+  const { profile: profileFromContext, refresh } = useCurrentUser();
+  const profile = profileProp ?? profileFromContext;
 
   const {
     register,
