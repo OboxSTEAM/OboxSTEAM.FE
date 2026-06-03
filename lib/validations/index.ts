@@ -8,3 +8,10 @@ export {
   sendResetLinkSchema,
   verifyOtpSchema,
 } from "./auth";
+export {
+  approveParentLinkSchema,
+  completeParentProfileSchema,
+  parentMagicLoginLinkParamsSchema,
+  parentMagicLoginSchema,
+  requestParentLinkSchema,
+} from "./parent";

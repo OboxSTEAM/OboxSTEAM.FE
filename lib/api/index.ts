@@ -11,6 +11,29 @@ export {
 } from "./account";
 
 export {
+  approveParentLink,
+  completeParentProfile,
+  getParentLinks,
+  parentMagicLogin,
+  requestParentLink,
+  type ApproveParentLinkInput,
+  type ApproveParentLinkResponse,
+  type ApproveParentLinkResult,
+  type CompleteParentProfileInput,
+  type CompleteParentProfileResponse,
+  type CompleteParentProfileResult,
+  type GetParentLinksResponse,
+  type GetParentLinksResult,
+  type ParentLinkedStudent,
+  type ParentMagicLoginInput,
+  type ParentMagicLoginResponse,
+  type ParentMagicLoginResult,
+  type RequestParentLinkInput,
+  type RequestParentLinkResponse,
+  type RequestParentLinkResult,
+} from "./parent";
+
+export {
   register,
   verifyOtp,
   login,

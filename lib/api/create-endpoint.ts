@@ -1,9 +1,7 @@
 import { z } from "zod";
 
-import { apiFetchParsed, assertApiSuccess } from "./client";
+import { apiFetchParsed, assertApiSuccess, type ApiFetchOptions } from "./client";
 import { createApiResponseSchema } from "./schemas";
-
-type ApiFetchOptions = Omit<RequestInit, "body">;
 
 type CreateApiPostOptions<TInput extends z.ZodType, TValue extends z.ZodType> = {
   path: string;
