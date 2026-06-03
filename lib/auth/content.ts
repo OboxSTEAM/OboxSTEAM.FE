@@ -7,7 +7,8 @@ export type AuthPageKey =
   | "verify-otp"
   | "forgot-password"
   | "reset-password"
-  | "magic-login";
+  | "magic-login"
+  | "approve-link";
 
 export type AuthPanelContent = {
   panelEyebrow: string;
@@ -68,6 +69,15 @@ export const AUTH_PAGES: Record<AuthPageKey, AuthPanelContent> = {
     panelTitle: "Xác nhận kết nối với học viên",
     panelDescription:
       "Hoàn tất bước này để theo dõi tiến độ học tập và nhận thông báo từ OboxSTEAM.",
+    imageSrc:
+      "https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=1200&auto=format&fit=crop",
+    imageAlt: "Phụ huynh và học viên",
+  },
+  "approve-link": {
+    panelEyebrow: "XÁC NHẬN LIÊN KẾT",
+    panelTitle: "Phụ huynh đã có tài khoản",
+    panelDescription:
+      "Đăng nhập để xác nhận liên kết với học viên, sau đó xem thông tin con tại OboxSTEAM.",
     imageSrc:
       "https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=1200&auto=format&fit=crop",
     imageAlt: "Phụ huynh và học viên",

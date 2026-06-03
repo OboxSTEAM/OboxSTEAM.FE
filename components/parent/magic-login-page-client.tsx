@@ -16,14 +16,22 @@ import { isExistingParentAccountError } from "@/lib/parent/magic-login-errors";
 import { parentMagicLoginLinkParamsSchema } from "@/lib/validations/parent";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
+export type ParentLinkConfirmVariant = "magic-login" | "approve-link";
+
 type MagicLoginPageClientProps = {
   email: string | null;
   token: string | null;
+  /** URL path from email — BE uses /magic-login (shadow) or /approve-link (existing parent). */
+  variant?: ParentLinkConfirmVariant;
 };
 
 type FlowState = "loading" | "needs-login" | "error";
 
-export function MagicLoginPageClient({ email, token }: MagicLoginPageClientProps) {
+export function MagicLoginPageClient({
+  email,
+  token,
+  variant = "magic-login",
+}: MagicLoginPageClientProps) {
   const router = useRouter();
   const { profile, isAuthenticated, isHydrated, isLoading, refresh } =
     useCurrentUser();
@@ -39,14 +47,16 @@ export function MagicLoginPageClient({ email, token }: MagicLoginPageClientProps
     }
   }, [email, token]);
 
+  const linkPath = variant === "approve-link" ? "/approve-link" : "/magic-login";
+
   const returnUrl = useMemo(() => {
-    if (!parsed) return "/magic-login";
+    if (!parsed) return linkPath;
     const params = new URLSearchParams({
       email: parsed.email,
       token: parsed.token,
     });
-    return `/magic-login?${params.toString()}`;
-  }, [parsed]);
+    return `${linkPath}?${params.toString()}`;
+  }, [parsed, linkPath]);
 
   const runFlow = useCallback(async () => {
     if (!parsed) return;
@@ -68,6 +78,11 @@ export function MagicLoginPageClient({ email, token }: MagicLoginPageClientProps
 
         setErrorMessage("Vui lòng đăng nhập bằng tài khoản phụ huynh để xác nhận liên kết.");
         setFlowState("error");
+        return;
+      }
+
+      if (variant === "approve-link") {
+        setFlowState("needs-login");
         return;
       }
 
@@ -98,7 +113,7 @@ export function MagicLoginPageClient({ email, token }: MagicLoginPageClientProps
       }
       setFlowState("error");
     }
-  }, [parsed, isAuthenticated, profile, refresh, router]);
+  }, [parsed, isAuthenticated, profile, refresh, router, variant]);
 
   useEffect(() => {
     if (!parsed) {
@@ -149,8 +164,12 @@ export function MagicLoginPageClient({ email, token }: MagicLoginPageClientProps
     return (
       <div className="mx-auto flex w-full max-w-[380px] flex-1 flex-col">
         <AuthFormHeader
-          title="Bạn đã có tài khoản phụ huynh"
-          description="Đăng nhập để xác nhận liên kết với học viên. Sau khi đăng nhập, bạn sẽ được chuyển lại để hoàn tất."
+          title={
+            variant === "approve-link"
+              ? "Đăng nhập để xác nhận liên kết"
+              : "Bạn đã có tài khoản phụ huynh"
+          }
+          description="Đăng nhập bằng tài khoản phụ huynh. Sau khi đăng nhập, hệ thống sẽ xác nhận liên kết và chuyển bạn tới trang Thông tin con."
         />
         <Button
           render={<Link href={loginHref} />}

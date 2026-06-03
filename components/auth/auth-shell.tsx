@@ -24,6 +24,7 @@ function resolvePageKey(pathname: string): AuthPageKey {
   if (pathname.includes("/forgot-password")) return "forgot-password";
   if (pathname.includes("/reset-password")) return "reset-password";
   if (pathname.includes("/magic-login")) return "magic-login";
+  if (pathname.includes("/approve-link")) return "approve-link";
   return "login";
 }
 
