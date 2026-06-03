@@ -15,6 +15,7 @@ import {
   persistRememberedEmail,
 } from "@/lib/auth/session";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { resolveParentLinkDestination } from "@/lib/parent/link-url";
 import { loginSchema } from "@/lib/validations/auth";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
@@ -27,16 +28,33 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 type LoginFormProps = {
   returnUrl?: string | null;
+  /** When `returnUrl` was split by a bare `?`, email/token may live on the login URL. */
+  linkEmail?: string | null;
+  linkToken?: string | null;
 };
 
-function resolveSafeReturnUrl(returnUrl: string | null | undefined): string {
+function resolveSafeReturnUrl(
+  returnUrl: string | null | undefined,
+  linkEmail?: string | null,
+  linkToken?: string | null,
+): string {
+  const parentDestination = resolveParentLinkDestination(returnUrl, {
+    email: linkEmail,
+    token: linkToken,
+  });
+  if (parentDestination) return parentDestination;
+
   if (!returnUrl || !returnUrl.startsWith("/") || returnUrl.startsWith("//")) {
     return "/";
   }
   return returnUrl;
 }
 
-export function LoginForm({ returnUrl }: LoginFormProps = {}) {
+export function LoginForm({
+  returnUrl,
+  linkEmail,
+  linkToken,
+}: LoginFormProps = {}) {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -80,7 +98,7 @@ export function LoginForm({ returnUrl }: LoginFormProps = {}) {
         title: "Đăng nhập thành công",
         description: result.message,
       });
-      router.push(resolveSafeReturnUrl(returnUrl));
+      router.push(resolveSafeReturnUrl(returnUrl, linkEmail, linkToken));
     } catch (error) {
       showAppErrorFromUnknown(error, "auth.login");
     }

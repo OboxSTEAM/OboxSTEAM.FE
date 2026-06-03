@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { AuthFooterLink, AuthFormHeader } from "@/components/auth/auth-shell";
@@ -13,10 +13,15 @@ import { setParentProfilePending } from "@/lib/auth/parent-profile";
 import { persistAuthSession } from "@/lib/auth/session";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { isExistingParentAccountError } from "@/lib/parent/magic-login-errors";
+import {
+  buildParentLinkUrl,
+  PARENT_LINK_PATHS,
+  type ParentLinkConfirmVariant,
+} from "@/lib/parent/link-url";
 import { parentMagicLoginLinkParamsSchema } from "@/lib/validations/parent";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-export type ParentLinkConfirmVariant = "magic-login" | "approve-link";
+export type { ParentLinkConfirmVariant };
 
 type MagicLoginPageClientProps = {
   email: string | null;
@@ -33,11 +38,24 @@ export function MagicLoginPageClient({
   variant = "magic-login",
 }: MagicLoginPageClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { profile, isAuthenticated, isHydrated, isLoading, refresh } =
     useCurrentUser();
-  const [flowState, setFlowState] = useState<FlowState>("loading");
+  const [flowState, setFlowState] = useState<FlowState>(() =>
+    variant === "approve-link" ? "needs-login" : "loading",
+  );
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [useApproveLinkPaths, setUseApproveLinkPaths] = useState(
+    variant === "approve-link",
+  );
   const lastRunKeyRef = useRef<string | null>(null);
+
+  const effectiveVariant: ParentLinkConfirmVariant = pathname.includes(
+    PARENT_LINK_PATHS["approve-link"],
+  )
+    ? "approve-link"
+    : variant;
+  const isApproveLinkFlow = effectiveVariant === "approve-link";
 
   const parsed = useMemo(() => {
     try {
@@ -47,42 +65,47 @@ export function MagicLoginPageClient({
     }
   }, [email, token]);
 
-  const linkPath = variant === "approve-link" ? "/approve-link" : "/magic-login";
+  const linkPath =
+    effectiveVariant === "approve-link" || useApproveLinkPaths
+      ? PARENT_LINK_PATHS["approve-link"]
+      : PARENT_LINK_PATHS["magic-login"];
 
   const returnUrl = useMemo(() => {
     if (!parsed) return linkPath;
-    const params = new URLSearchParams({
-      email: parsed.email,
-      token: parsed.token,
-    });
-    return `${linkPath}?${params.toString()}`;
+    return buildParentLinkUrl(linkPath, parsed.email, parsed.token);
   }, [parsed, linkPath]);
 
   const runFlow = useCallback(async () => {
     if (!parsed) return;
 
-    setFlowState("loading");
     setErrorMessage(null);
 
-    try {
-      if (isAuthenticated) {
-        if (profile?.role === "Parent") {
-          const result = await approveParentLink({ token: parsed.token });
-          showAppSuccess({
-            title: "Liên kết thành công",
-            description: result.message,
-          });
-          router.replace("/parent/children");
-          return;
-        }
-
-        setErrorMessage("Vui lòng đăng nhập bằng tài khoản phụ huynh để xác nhận liên kết.");
-        setFlowState("error");
+    if (!isAuthenticated) {
+      if (isApproveLinkFlow) {
+        setFlowState("needs-login");
         return;
       }
 
-      if (variant === "approve-link") {
-        setFlowState("needs-login");
+      setFlowState("loading");
+    }
+
+    try {
+      if (isAuthenticated) {
+        if (profile?.role !== "Parent") {
+          setErrorMessage(
+            "Vui lòng đăng nhập bằng tài khoản phụ huynh để xác nhận liên kết.",
+          );
+          setFlowState("error");
+          return;
+        }
+
+        setFlowState("loading");
+        const result = await approveParentLink({ token: parsed.token });
+        showAppSuccess({
+          title: "Liên kết thành công",
+          description: result.message,
+        });
+        router.replace("/parent/children");
         return;
       }
 
@@ -102,6 +125,7 @@ export function MagicLoginPageClient({
       router.replace("/parent/children");
     } catch (error) {
       if (isExistingParentAccountError(error)) {
+        setUseApproveLinkPaths(true);
         setFlowState("needs-login");
         return;
       }
@@ -113,7 +137,14 @@ export function MagicLoginPageClient({
       }
       setFlowState("error");
     }
-  }, [parsed, isAuthenticated, profile, refresh, router, variant]);
+  }, [
+    parsed,
+    isAuthenticated,
+    profile,
+    refresh,
+    router,
+    isApproveLinkFlow,
+  ]);
 
   useEffect(() => {
     if (!parsed) {
@@ -125,15 +156,41 @@ export function MagicLoginPageClient({
       return;
     }
 
-    if (!isHydrated) return;
-    if (isAuthenticated && isLoading) return;
-    if (isAuthenticated && !profile) return;
+    if (!isHydrated) {
+      if (isApproveLinkFlow) {
+        setFlowState("needs-login");
+      }
+      return;
+    }
 
-    const runKey = `${isAuthenticated}:${profile?.role ?? ""}:${parsed.email}:${parsed.token}`;
+    if (!isAuthenticated) {
+      if (isApproveLinkFlow) {
+        setFlowState("needs-login");
+        return;
+      }
+
+      const runKey = `guest:${parsed.email}:${parsed.token}`;
+      if (lastRunKeyRef.current === runKey) return;
+      lastRunKeyRef.current = runKey;
+      void runFlow();
+      return;
+    }
+
+    if (isLoading || !profile) return;
+
+    const runKey = `auth:${profile.role}:${parsed.email}:${parsed.token}`;
     if (lastRunKeyRef.current === runKey) return;
     lastRunKeyRef.current = runKey;
     void runFlow();
-  }, [parsed, isHydrated, isAuthenticated, isLoading, profile, runFlow]);
+  }, [
+    parsed,
+    isHydrated,
+    isAuthenticated,
+    isLoading,
+    profile,
+    runFlow,
+    isApproveLinkFlow,
+  ]);
 
   if (!parsed) {
     return (
@@ -160,12 +217,12 @@ export function MagicLoginPageClient({
   }
 
   if (flowState === "needs-login") {
-    const loginHref = `/login?returnUrl=${encodeURIComponent(returnUrl)}`;
+    const loginHref = `/login?returnUrl=${encodeURIComponent(returnUrl)}&intent=login`;
     return (
       <div className="mx-auto flex w-full max-w-[380px] flex-1 flex-col">
         <AuthFormHeader
           title={
-            variant === "approve-link"
+            effectiveVariant === "approve-link" || useApproveLinkPaths
               ? "Đăng nhập để xác nhận liên kết"
               : "Bạn đã có tài khoản phụ huynh"
           }
@@ -178,9 +235,25 @@ export function MagicLoginPageClient({
           Đăng nhập phụ huynh
         </Button>
         <AuthFooterLink
-          prompt="Liên kết dành cho phụ huynh mới?"
+          prompt={
+            effectiveVariant === "approve-link"
+              ? "Liên kết dành cho phụ huynh mới?"
+              : "Liên kết dành cho phụ huynh đã có tài khoản?"
+          }
           linkLabel="Thử lại"
-          href={returnUrl}
+          href={
+            effectiveVariant === "approve-link"
+              ? buildParentLinkUrl(
+                  PARENT_LINK_PATHS["magic-login"],
+                  parsed.email,
+                  parsed.token,
+                )
+              : buildParentLinkUrl(
+                  PARENT_LINK_PATHS["approve-link"],
+                  parsed.email,
+                  parsed.token,
+                )
+          }
         />
       </div>
     );
