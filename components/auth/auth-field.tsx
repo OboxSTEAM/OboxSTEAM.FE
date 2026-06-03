@@ -21,7 +21,7 @@ export function AuthField({
   ...inputProps
 }: AuthFieldProps) {
   return (
-    <div className="space-y-2">
+    <div className="w-full min-w-0 space-y-2">
       <Label htmlFor={id} className="text-[#2D2D2D]">
         {label}
       </Label>
@@ -29,7 +29,7 @@ export function AuthField({
         id={id}
         aria-invalid={!!error}
         className={cn(
-          "h-11 rounded-xl border-0 bg-[#F3F4F6] px-4 text-[#2D2D2D] shadow-none focus-visible:ring-2 focus-visible:ring-[#2D2D2D]/20",
+          "h-11 w-full min-w-0 rounded-xl border-0 bg-[#F3F4F6] px-4 text-[#2D2D2D] shadow-none focus-visible:ring-2 focus-visible:ring-[#2D2D2D]/20",
           className,
         )}
         {...inputProps}

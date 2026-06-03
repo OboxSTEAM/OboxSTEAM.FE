@@ -22,4 +22,10 @@ export type AppErrorContext =
   | "auth.reset-password"
   | "account.profile"
   | "account.update-profile"
-  | "account.upload-avatar";
+  | "account.upload-avatar"
+  | "parent.request-link"
+  | "parent.magic-login"
+  | "parent.complete-profile"
+  | "parent.approve-link"
+  | "parent.links"
+  | "student.links";

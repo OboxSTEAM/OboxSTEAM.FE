@@ -23,6 +23,7 @@ function resolvePageKey(pathname: string): AuthPageKey {
   if (pathname.includes("/verify-otp")) return "verify-otp";
   if (pathname.includes("/forgot-password")) return "forgot-password";
   if (pathname.includes("/reset-password")) return "reset-password";
+  if (pathname.includes("/magic-login")) return "magic-login";
   return "login";
 }
 

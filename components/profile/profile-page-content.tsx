@@ -15,6 +15,7 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { ProfileAvatarUpload } from "./profile-avatar-upload";
 import { ProfileDetails } from "./profile-details";
 import { ProfileEditForm } from "./profile-edit-form";
+import { StudentParentLinkSection } from "./student-parent-link-section";
 
 function ProfileSkeleton() {
   return (
@@ -73,17 +74,30 @@ export function ProfilePageContent() {
     );
   }
 
+  const isParent = profile.role === "Parent";
+  const isStudent = profile.role === "Student";
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
       <header className="mb-8">
-        <p className="text-sm font-medium text-[#E94B3C]">Tài khoản</p>
+        <p className="text-sm font-medium text-[#E94B3C]">
+          {isParent ? "Phụ huynh" : "Tài khoản"}
+        </p>
         <h1 className="font-heading mt-1 text-3xl font-bold tracking-tight text-[#2D2D2D] sm:text-4xl">
           Hồ sơ cá nhân
         </h1>
         <p className="mt-2 max-w-2xl text-base text-[#6B6B6B]">
-          Quản lý ảnh đại diện và thông tin liên hệ.
+          {isParent
+            ? "Quản lý thông tin tài khoản phụ huynh và liên hệ với OboxSTEAM."
+            : "Quản lý ảnh đại diện và thông tin liên hệ."}
         </p>
       </header>
+
+      {isStudent ? (
+        <div className="mb-6">
+          <StudentParentLinkSection />
+        </div>
+      ) : null}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,340px)_1fr]">
         <Card className="border-[#E5E5E0] bg-white shadow-sm lg:row-span-2">
@@ -92,7 +106,9 @@ export function ProfilePageContent() {
               Ảnh đại diện
             </CardTitle>
             <CardDescription className="text-[#6B6B6B]">
-              Kéo thả ảnh chân dung — dùng cho portfolio và nhận diện lớp học.
+              {isParent
+                ? "Ảnh đại diện hiển thị trên tài khoản phụ huynh của bạn."
+                : "Kéo thả ảnh chân dung — dùng cho portfolio và nhận diện lớp học."}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6">

@@ -1,18 +1,10 @@
 import { z } from "zod";
 
 import { authTokensSchema } from "@/lib/api/auth/schemas";
+import { linkedAccountSchema } from "@/lib/api/entities/linked-account";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
-export const parentLinkedStudentSchema = z.object({
-  linkedUserId: z.string(),
-  code: z.string(),
-  email: z.string(),
-  fullName: z.string(),
-  phone: z.string(),
-  avatarUrl: z.string().nullable(),
-  isVerified: z.boolean(),
-  createdAt: z.string(),
-});
+export const parentLinkedStudentSchema = linkedAccountSchema;
 
 export const parentBooleanValueSchema = createApiValueSchema(z.boolean());
 export const parentMagicLoginValueSchema = createApiValueSchema(authTokensSchema);

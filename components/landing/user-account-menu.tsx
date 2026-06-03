@@ -15,7 +15,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { UserProfile } from "@/lib/api/entities/user";
 import {
-  ACCOUNT_NAV_ITEMS,
+  getAccountNavItems,
+  getDefaultDisplayName,
   LOGOUT_NAV_ITEM,
 } from "@/lib/auth/account-nav";
 import { clearAuthSession, type StoredAuthSession } from "@/lib/auth/session";
@@ -44,10 +45,14 @@ export function UserAccountMenu({
   const router = useRouter();
   const email = profile?.email ?? session.user?.email ?? "";
   const displayName =
-    profile?.fullName ?? session.user?.displayName ?? email.split("@")[0] ?? "Học viên";
+    profile?.fullName ??
+    session.user?.displayName ??
+    email.split("@")[0] ??
+    getDefaultDisplayName(profile?.role);
   const userCode = profile?.code ?? session.user?.code;
   const avatarUrl = profile?.avatarUrl ?? session.user?.avatarUrl;
   const initials = getInitials(displayName, email);
+  const navItems = getAccountNavItems(profile?.role);
 
   const handleLogout = () => {
     clearAuthSession();
@@ -100,7 +105,7 @@ export function UserAccountMenu({
         <DropdownMenuSeparator />
 
         <DropdownMenuGroup>
-          {ACCOUNT_NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <DropdownMenuItem
               key={item.href}
               render={<Link href={item.href} />}

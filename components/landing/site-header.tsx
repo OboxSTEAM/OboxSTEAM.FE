@@ -29,7 +29,9 @@ export function SiteHeader({ defaultScrolled = false }: SiteHeaderProps) {
 
   const isSolid = defaultScrolled || scrolled;
   const displayName =
-    profile?.fullName ?? session?.user?.displayName ?? "Học viên";
+    profile?.fullName ??
+    session?.user?.displayName ??
+    (profile?.role === "Parent" ? "Phụ huynh" : "Học viên");
   const userCode = profile?.code ?? session?.user?.code;
 
   useEffect(() => {

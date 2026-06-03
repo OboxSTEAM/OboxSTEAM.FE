@@ -50,6 +50,36 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
     action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
   },
+  "parent.request-link": {
+    title: "Không gửi được yêu cầu liên kết",
+    reason: "Email phụ huynh chưa hợp lệ hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra email phụ huynh và thử lại.",
+  },
+  "parent.magic-login": {
+    title: "Không xác nhận được liên kết",
+    reason: "Liên kết không hợp lệ, đã hết hạn, hoặc tài khoản đã tồn tại.",
+    action: "Mở lại liên kết từ email hoặc đăng nhập nếu bạn đã có tài khoản phụ huynh.",
+  },
+  "parent.complete-profile": {
+    title: "Không hoàn tất được hồ sơ",
+    reason: "Thông tin chưa hợp lệ hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra họ tên, số điện thoại và mật khẩu rồi thử lại.",
+  },
+  "parent.approve-link": {
+    title: "Không xác nhận được liên kết",
+    reason: "Token không hợp lệ hoặc đã hết hạn.",
+    action: "Mở lại liên kết từ email hoặc yêu cầu học viên gửi lại.",
+  },
+  "parent.links": {
+    title: "Không tải được danh sách học viên",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
+  "student.links": {
+    title: "Không tải được thông tin phụ huynh",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

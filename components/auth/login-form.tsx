@@ -25,7 +25,18 @@ import { PasswordField } from "./password-field";
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-export function LoginForm() {
+type LoginFormProps = {
+  returnUrl?: string | null;
+};
+
+function resolveSafeReturnUrl(returnUrl: string | null | undefined): string {
+  if (!returnUrl || !returnUrl.startsWith("/") || returnUrl.startsWith("//")) {
+    return "/";
+  }
+  return returnUrl;
+}
+
+export function LoginForm({ returnUrl }: LoginFormProps = {}) {
   const router = useRouter();
   const [rememberMe, setRememberMe] = useState(false);
 
@@ -69,7 +80,7 @@ export function LoginForm() {
         title: "Đăng nhập thành công",
         description: result.message,
       });
-      router.push("/");
+      router.push(resolveSafeReturnUrl(returnUrl));
     } catch (error) {
       showAppErrorFromUnknown(error, "auth.login");
     }
