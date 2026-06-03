@@ -1,3 +1,5 @@
+import { clearParentProfilePending } from "@/lib/auth/parent-profile";
+
 const AUTH_STORAGE_KEY = "oboxsteam.auth";
 const REMEMBER_EMAIL_KEY = "oboxsteam.rememberEmail";
 
@@ -49,6 +51,7 @@ export function persistAuthTokens(
 export function clearAuthSession(): void {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(AUTH_STORAGE_KEY);
+  clearParentProfilePending();
   notifyAuthSessionChanged();
 }
 

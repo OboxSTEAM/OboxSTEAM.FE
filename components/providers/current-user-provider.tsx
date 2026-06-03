@@ -15,6 +15,7 @@ import {
   toStoredAuthUser,
   type UserProfile,
 } from "@/lib/api/account";
+import { syncParentProfilePendingForProfile } from "@/lib/auth/parent-profile";
 import {
   getAuthSession,
   persistAuthSession,
@@ -85,6 +86,7 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
 
       setProfile(result.data);
       syncSessionFromProfile(result.data);
+      syncParentProfilePendingForProfile(result.data);
       return result.data;
     } catch (err) {
       if (isMountedRef.current && generation === fetchGenerationRef.current) {
