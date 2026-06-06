@@ -1,31 +1,21 @@
 import Link from "next/link";
-import { ScanFace, Video, PenLine, Globe, type LucideProps } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
 import { UNIVERSE_SECTION } from "@/lib/landing/content";
 
 import { UniverseCardSwap } from "./universe-card-swap";
 
-type LucideIcon = React.ComponentType<LucideProps>;
-
-const FEATURE_ICONS: Record<string, LucideIcon> = {
-  ScanFace,
-  Video,
-  PenLine,
-  Globe,
-};
-
 export function UniverseSection() {
   return (
     <section
       id="portfolio"
-      className="relative bg-[#F5F5F0] overflow-hidden"
+      className="relative overflow-x-clip bg-[#F5F5F0]"
       aria-labelledby="universe-heading"
     >
       {/* Top-right STEAM rainbow radial tint (cinematic feel without dark surface) */}
       <div
         aria-hidden="true"
-        className="absolute -top-32 -right-32 w-[640px] h-[640px] pointer-events-none"
+        className="pointer-events-none absolute -top-32 -right-32 h-[640px] w-[640px]"
         style={{
           background:
             "radial-gradient(circle at center, #E94B3C 0%, #FDD835 25%, #4FC3F7 55%, #7E57C2 85%, transparent 100%)",
@@ -34,15 +24,15 @@ export function UniverseSection() {
         }}
       />
 
-      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-16 lg:py-24">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
-          {/* Left — narrative (6 cols) */}
-          <div className="lg:col-span-6 flex flex-col gap-7">
+      <div className="relative mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
+        <div className="relative lg:min-h-[620px]">
+          {/* Left — narrative only (features live in CardSwap) */}
+          <div className="relative z-10 flex max-w-xl flex-col gap-7 lg:max-w-lg">
             <EyebrowChip className="w-fit">{UNIVERSE_SECTION.eyebrow}</EyebrowChip>
 
             <h2
               id="universe-heading"
-              className="font-heading font-extrabold text-[#2D2D2D] text-balance tracking-tight"
+              className="font-heading text-balance font-extrabold tracking-tight text-[#2D2D2D]"
               style={{
                 fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
                 lineHeight: 0.98,
@@ -51,45 +41,16 @@ export function UniverseSection() {
               {UNIVERSE_SECTION.headline}
             </h2>
 
-            <p className="text-[#6B6B6B] text-lg leading-relaxed max-w-lg">
+            <p className="max-w-lg text-lg leading-relaxed text-[#6B6B6B]">
               {UNIVERSE_SECTION.subheadline}
             </p>
 
-            {/* 2x2 feature micro-cards */}
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {UNIVERSE_SECTION.features.map((feature) => {
-                const Icon = FEATURE_ICONS[feature.iconName];
-                return (
-                  <li
-                    key={feature.label}
-                    className="flex items-start gap-3 p-4 rounded-xl bg-white border border-[#E5E5E0] shadow-sm"
-                  >
-                    {Icon && (
-                      <Icon
-                        size={20}
-                        className="text-[#E94B3C] shrink-0 mt-0.5"
-                        aria-hidden="true"
-                      />
-                    )}
-                    <div>
-                      <p className="font-semibold text-[#2D2D2D] text-sm leading-snug">
-                        {feature.label}
-                      </p>
-                      <p className="text-[#6B6B6B] text-xs mt-0.5 leading-relaxed">
-                        {feature.desc}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-
-            <div className="mt-2">
+            <div>
               <Link
                 href={UNIVERSE_SECTION.ctaHref}
                 className={
                   buttonVariants({ size: "lg" }) +
-                  " bg-[#2D2D2D] hover:bg-[#1a1a1a] text-white font-semibold px-8 py-3 rounded-lg min-h-[52px] transition-all duration-150 hover:scale-[1.02]"
+                  " min-h-[52px] rounded-lg bg-[#2D2D2D] px-8 py-3 font-semibold text-white transition-all duration-150 hover:scale-[1.02] hover:bg-[#1a1a1a]"
                 }
               >
                 {UNIVERSE_SECTION.ctaLabel}
@@ -97,8 +58,8 @@ export function UniverseSection() {
             </div>
           </div>
 
-          {/* Right — CardSwap feature stack (6 cols) */}
-          <div className="lg:col-span-6">
+          {/* Right — CardSwap pinned to viewport right edge on desktop */}
+          <div className="relative mt-12 lg:absolute lg:inset-y-0 lg:right-[calc(-50vw+50%)] lg:mt-0 lg:w-[min(58vw,720px)]">
             <UniverseCardSwap />
           </div>
         </div>
