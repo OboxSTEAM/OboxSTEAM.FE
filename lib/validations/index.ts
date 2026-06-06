@@ -9,6 +9,14 @@ export {
   verifyOtpSchema,
 } from "./auth";
 export {
+  createProgramSchema,
+  programIdParamSchema,
+  programListQuerySchema,
+  programSortBySchema,
+  programUpsertSchema,
+  updateProgramSchema,
+} from "./programs";
+export {
   approveParentLinkSchema,
   completeParentProfileSchema,
   parentMagicLoginLinkParamsSchema,

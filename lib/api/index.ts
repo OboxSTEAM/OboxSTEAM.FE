@@ -11,6 +11,38 @@ export {
 } from "./account";
 
 export {
+  createProgram,
+  deleteProgram,
+  getProgramById,
+  getPrograms,
+  getProgramsWithModules,
+  updateProgram,
+  type CreateProgramInput,
+  type CreateProgramResponse,
+  type CreateProgramResult,
+  type DeleteProgramResponse,
+  type DeleteProgramResult,
+  type GetProgramByIdResponse,
+  type GetProgramByIdResult,
+  type GetProgramsResponse,
+  type GetProgramsResult,
+  type GetProgramsWithModulesResponse,
+  type GetProgramsWithModulesResult,
+  type Module,
+  type ModuleCourse,
+  type ModuleType,
+  type Paginated,
+  type Program,
+  type ProgramIdParam,
+  type ProgramLevel,
+  type ProgramListQuery,
+  type ProgramWithModules,
+  type UpdateProgramInput,
+  type UpdateProgramResponse,
+  type UpdateProgramResult,
+} from "./programs";
+
+export {
   approveParentLink,
   completeParentProfile,
   getParentLinks,
