@@ -2,8 +2,9 @@ import Link from "next/link";
 import { ScanFace, Video, PenLine, Globe, type LucideProps } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
-import { ImageSlot } from "@/components/common/image-slot";
 import { UNIVERSE_SECTION } from "@/lib/landing/content";
+
+import { UniverseCardSwap } from "./universe-card-swap";
 
 type LucideIcon = React.ComponentType<LucideProps>;
 
@@ -96,24 +97,9 @@ export function UniverseSection() {
             </div>
           </div>
 
-          {/* Right — single 16:9 portfolio mockup slot (6 cols) */}
+          {/* Right — CardSwap feature stack (6 cols) */}
           <div className="lg:col-span-6">
-            <div className="relative">
-              <ImageSlot
-                ratio="16:9"
-                alt="Portfolio microsite mẫu của học viên OboxSTEAM"
-                tone="engineering"
-                className="w-full shadow-xl"
-                sizes="(max-width: 1024px) 100vw, 50vw"
-              />
-              {/* Browser-bar tag overlay (subtle skeumorphic hint) */}
-              <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-white/85 backdrop-blur-sm rounded-full px-3 py-1 font-mono text-[10px] tracking-[0.2em] uppercase text-[#6B6B6B] border border-[#E5E5E0]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#E94B3C]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-[#FDD835]" />
-                <span className="w-1.5 h-1.5 rounded-full bg-[#7CB342]" />
-                <span className="ml-2">tên.obox.id</span>
-              </div>
-            </div>
+            <UniverseCardSwap />
           </div>
         </div>
       </div>
