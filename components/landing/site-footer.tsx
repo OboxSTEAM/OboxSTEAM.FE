@@ -68,7 +68,7 @@ export function SiteFooter() {
               <h3 className="font-heading font-semibold text-sm text-white mb-4">{title}</h3>
               <ul className="space-y-2.5">
                 {links.map((link) => (
-                  <li key={link.href}>
+                  <li key={link.label}>
                     <Link
                       href={link.href}
                       className="text-sm text-[#FAFAF5]/60 hover:text-white transition-colors duration-150"
