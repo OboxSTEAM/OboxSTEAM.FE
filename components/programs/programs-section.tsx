@@ -11,7 +11,10 @@ import {
   type Program,
   type ProgramListQuery,
 } from "@/lib/api/programs";
-import { DEFAULT_PROGRAM_QUERY } from "@/lib/programs/constants";
+import {
+  DEFAULT_PROGRAM_QUERY,
+  PROGRAM_GRID_MIN_SKELETON_MS,
+} from "@/lib/programs/constants";
 
 import {
   getClearedProgramQuery,
@@ -21,18 +24,25 @@ import {
 import { ProgramGrid } from "./program-grid";
 import { ProgramPagination } from "./program-pagination";
 
+function wait(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
 export function ProgramsSection() {
   const [query, setQuery] = useState<ProgramListQuery>(DEFAULT_PROGRAM_QUERY);
   const [searchInput, setSearchInput] = useState("");
   const [committedSearch, setCommittedSearch] = useState("");
   const [data, setData] = useState<Paginated<Program> | null>(null);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
-  const [isRefetching, setIsRefetching] = useState(false);
+  const [isGridLoading, setIsGridLoading] = useState(true);
+  const [resultsEpoch, setResultsEpoch] = useState(0);
   const hasLoadedOnceRef = useRef(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
       const trimmed = searchInput.trim();
+      setIsGridLoading(true);
       setCommittedSearch(trimmed);
       setQuery((current) =>
         current.page === 1 ? current : { ...current, page: 1 },
@@ -54,32 +64,37 @@ export function ProgramsSection() {
 
   useEffect(() => {
     let cancelled = false;
-    const isSubsequentFetch = hasLoadedOnceRef.current;
+    const startedAt = Date.now();
 
-    if (isSubsequentFetch) {
-      setIsRefetching(true);
-    } else {
-      setIsInitialLoading(true);
-    }
+    const finishLoading = async (nextData: Paginated<Program> | null) => {
+      const elapsed = Date.now() - startedAt;
+      const remaining = Math.max(0, PROGRAM_GRID_MIN_SKELETON_MS - elapsed);
+
+      if (remaining > 0) {
+        await wait(remaining);
+      }
+
+      if (cancelled) return;
+
+      if (nextData) {
+        setData(nextData);
+        hasLoadedOnceRef.current = true;
+        setResultsEpoch((epoch) => epoch + 1);
+      } else if (!hasLoadedOnceRef.current) {
+        setData(null);
+      }
+
+      setIsGridLoading(false);
+    };
 
     const loadPrograms = async () => {
       try {
         const result = await getPrograms(activeQuery);
-        if (!cancelled && result) {
-          setData(result.data);
-          hasLoadedOnceRef.current = true;
-        }
+        await finishLoading(result?.data ?? null);
       } catch (error) {
         if (!cancelled) {
           showAppErrorFromUnknown(error, "programs.list");
-          if (!hasLoadedOnceRef.current) {
-            setData(null);
-          }
-        }
-      } finally {
-        if (!cancelled) {
-          setIsInitialLoading(false);
-          setIsRefetching(false);
+          await finishLoading(null);
         }
       }
     };
@@ -92,6 +107,7 @@ export function ProgramsSection() {
   }, [activeQuery]);
 
   const handleQueryChange = useCallback((patch: Partial<ProgramListQuery>) => {
+    setIsGridLoading(true);
     setQuery((current) => ({
       ...current,
       ...patch,
@@ -103,12 +119,14 @@ export function ProgramsSection() {
   }, []);
 
   const handleClearFilters = useCallback(() => {
+    setIsGridLoading(true);
     setSearchInput("");
     setCommittedSearch("");
     setQuery(getClearedProgramQuery());
   }, []);
 
   const handlePageChange = useCallback((page: number) => {
+    setIsGridLoading(true);
     setQuery((current) => ({
       ...current,
       page,
@@ -185,12 +203,12 @@ export function ProgramsSection() {
 
         <ProgramGrid
           programs={programs}
-          isInitialLoading={isInitialLoading}
-          isRefetching={isRefetching || isSearchPending}
+          isLoading={isGridLoading}
+          resultsEpoch={resultsEpoch}
           onClearFilters={handleClearFilters}
         />
 
-        {data && (
+        {data && !isGridLoading && (
           <ProgramPagination
             currentPage={data.currentPage}
             totalPages={data.totalPages}

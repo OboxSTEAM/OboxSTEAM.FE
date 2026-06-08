@@ -1,8 +1,5 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
-
-import AnimatedContent from "@/components/AnimatedContent";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Program } from "@/lib/api/programs";
@@ -13,8 +10,8 @@ import { ProgramCard } from "./program-card";
 
 type ProgramGridProps = {
   programs: Program[];
-  isInitialLoading: boolean;
-  isRefetching: boolean;
+  isLoading: boolean;
+  resultsEpoch: number;
   onClearFilters: () => void;
 };
 
@@ -39,7 +36,11 @@ function LoadingGrid() {
   );
 
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className="flex flex-col gap-4 motion-safe:animate-[programGridIn_220ms_cubic-bezier(0.16,1,0.3,1)_forwards] opacity-0"
+      aria-busy="true"
+      aria-live="polite"
+    >
       {rows.map((row, rowIndex) => (
         <div
           key={`skeleton-row-${rowIndex}`}
@@ -61,7 +62,7 @@ function LoadingGrid() {
 
 function EmptyState({ onClearFilters }: { onClearFilters: () => void }) {
   return (
-    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-white/8 bg-[#252525]/60 px-6 py-16 text-center">
+    <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-white/8 bg-[#252525]/60 px-6 py-16 text-center motion-safe:animate-[programGridIn_320ms_cubic-bezier(0.16,1,0.3,1)_forwards] opacity-0">
       <p className="font-heading text-lg font-semibold text-white">
         Không tìm thấy chương trình nào
       </p>
@@ -82,75 +83,40 @@ function EmptyState({ onClearFilters }: { onClearFilters: () => void }) {
 
 export function ProgramGrid({
   programs,
-  isInitialLoading,
-  isRefetching,
+  isLoading,
+  resultsEpoch,
   onClearFilters,
 }: ProgramGridProps) {
-  if (isInitialLoading) {
+  if (isLoading) {
     return <LoadingGrid />;
   }
 
-  if (programs.length === 0 && !isRefetching) {
+  if (programs.length === 0) {
     return <EmptyState onClearFilters={onClearFilters} />;
   }
 
   const rows = chunkProgramsForRhythm(programs);
-  const rowStartIndexes = rows.map((_, rowIndex) =>
-    rows.slice(0, rowIndex).reduce((total, row) => total + row.length, 0),
-  );
 
   return (
-    <div className="relative">
-      {isRefetching && (
+    <div
+      key={resultsEpoch}
+      className="flex flex-col gap-4 motion-safe:animate-[programGridIn_320ms_cubic-bezier(0.16,1,0.3,1)_forwards] opacity-0"
+    >
+      {rows.map((row, rowIndex) => (
         <div
-          className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center pt-2"
-          aria-live="polite"
-          aria-busy="true"
+          key={`program-row-${rowIndex}`}
+          className={cn(
+            "grid gap-4",
+            row.length === 2
+              ? "grid-cols-1 sm:grid-cols-2"
+              : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+          )}
         >
-          <span className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-[#252525]/90 px-3 py-1.5 text-xs text-white/70 backdrop-blur-sm">
-            <Loader2 size={13} className="animate-spin text-[#4FC3F7]" />
-            Đang cập nhật...
-          </span>
+          {row.map((program) => (
+            <ProgramCard key={program.id} program={program} />
+          ))}
         </div>
-      )}
-
-      <div
-        className={cn(
-          "flex flex-col gap-4 transition-opacity duration-200 ease-[cubic-bezier(0.16,1,0.3,1)]",
-          isRefetching ? "opacity-75" : "opacity-100",
-        )}
-      >
-        {rows.map((row, rowIndex) => (
-          <div
-            key={`program-row-${rowIndex}`}
-            className={cn(
-              "grid gap-4",
-              row.length === 2
-                ? "grid-cols-1 sm:grid-cols-2"
-                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
-            )}
-          >
-            {row.map((program, itemIndex) => {
-              const card = <ProgramCard program={program} />;
-
-              if (isRefetching) {
-                return <div key={program.id}>{card}</div>;
-              }
-
-              return (
-                <AnimatedContent
-                  key={program.id}
-                  distance={32}
-                  duration={0.55}
-                  delay={(rowStartIndexes[rowIndex] + itemIndex) * 0.06}
-                >
-                  {card}
-                </AnimatedContent>
-              );
-            })}
-          </div>
-        ))}
-      </div>
+      ))}
     </div>
   );
 }

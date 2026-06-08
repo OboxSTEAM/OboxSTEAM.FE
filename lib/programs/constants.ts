@@ -106,6 +106,9 @@ export const DEFAULT_PROGRAM_QUERY: ProgramListQuery = {
   isDescending: true,
 };
 
+/** Minimum skeleton visibility so fast API responses don't flash. */
+export const PROGRAM_GRID_MIN_SKELETON_MS = 420;
+
 export const PROGRAM_GRID_RHYTHM = [3, 2, 3] as const;
 
 export function formatProgramPrice(price: number): string {
