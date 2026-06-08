@@ -85,6 +85,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
     action: "Kiểm tra mạng và thử tải lại trang sau vài giây.",
   },
+  "programs.detail": {
+    title: "Không tải được chương trình",
+    reason: "Chương trình không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Quay lại danh sách chương trình hoặc thử lại sau vài giây.",
+  },
+  "programs.reviews": {
+    title: "Không tải được đánh giá",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Thử tải lại hoặc chuyển sang tab khác rồi quay lại.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

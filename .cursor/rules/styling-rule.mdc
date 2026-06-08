@@ -361,6 +361,7 @@ The logged-in student's home base.
 - Use skeleton loaders matching content layout
 - Subtle pulse animation on skeletons
 - Avoid spinner overuse - skeletons are preferred for content areas
+- Client filter/pagination refetches: use `useClientFetch` + `DEFAULT_MIN_SKELETON_MS` (420ms min visibility) — see `nextjs-engineering-rule.mdc` *Client fetch + skeleton loading*
 
 ---
 

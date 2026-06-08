@@ -29,4 +29,6 @@ export type AppErrorContext =
   | "parent.approve-link"
   | "parent.links"
   | "student.links"
-  | "programs.list";
+  | "programs.list"
+  | "programs.detail"
+  | "programs.reviews";

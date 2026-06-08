@@ -1,5 +1,6 @@
+import type { ModuleType } from "@/lib/api/entities/module";
 import type { ProgramCategory, ProgramLevel } from "@/lib/api/entities/program";
-import type { ProgramListQuery } from "@/lib/api/programs";
+import type { ProgramListQuery, ProgramReviewsQuery } from "@/lib/api/programs";
 import type { SteamCategory } from "@/lib/landing/content";
 
 export type ProgramSortOption = {
@@ -106,8 +107,59 @@ export const DEFAULT_PROGRAM_QUERY: ProgramListQuery = {
   isDescending: true,
 };
 
-/** Minimum skeleton visibility so fast API responses don't flash. */
-export const PROGRAM_GRID_MIN_SKELETON_MS = 420;
+export const MODULE_TYPE_LABELS: Record<ModuleType, string> = {
+  Theory: "Lý thuyết",
+  Experiential: "Trải nghiệm",
+  Research: "Nghiên cứu",
+};
+
+export type ProgramReviewSortOption = {
+  id: string;
+  label: string;
+  sortBy: NonNullable<ProgramReviewsQuery["sortBy"]>;
+  isDescending: boolean;
+};
+
+export const PROGRAM_REVIEW_SORT_OPTIONS: ProgramReviewSortOption[] = [
+  {
+    id: "createdAt-desc",
+    label: "Mới nhất",
+    sortBy: "createdAt",
+    isDescending: true,
+  },
+  {
+    id: "starRating-desc",
+    label: "Điểm cao nhất",
+    sortBy: "starRating",
+    isDescending: true,
+  },
+  {
+    id: "starRating-asc",
+    label: "Điểm thấp nhất",
+    sortBy: "starRating",
+    isDescending: false,
+  },
+];
+
+export const DEFAULT_PROGRAM_REVIEWS_QUERY: ProgramReviewsQuery = {
+  page: 1,
+  pageSize: 10,
+  sortBy: "createdAt",
+  isDescending: true,
+};
+
+export function getReviewSortOptionId(query: ProgramReviewsQuery): string {
+  const match = PROGRAM_REVIEW_SORT_OPTIONS.find(
+    (option) =>
+      option.sortBy === query.sortBy &&
+      option.isDescending === query.isDescending,
+  );
+
+  return match?.id ?? PROGRAM_REVIEW_SORT_OPTIONS[0].id;
+}
+
+/** @deprecated Use `DEFAULT_MIN_SKELETON_MS` from `@/lib/ui/min-skeleton-delay`. */
+export { DEFAULT_MIN_SKELETON_MS as PROGRAM_GRID_MIN_SKELETON_MS } from "@/lib/ui/min-skeleton-delay";
 
 export const PROGRAM_GRID_RHYTHM = [3, 2, 3] as const;
 

@@ -27,15 +27,14 @@ import {
 } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
+import {
+  DARK_SELECT_CONTENT,
+  DARK_SELECT_ITEM,
+  DARK_SELECT_TRIGGER,
+} from "./program-select-styles";
+
 const LEVEL_ALL_VALUE = "all";
 const SEARCH_DEBOUNCE_MS = 400;
-
-const DARK_SELECT_TRIGGER =
-  "h-9 min-w-[11rem] border-white/12 bg-[#2A2A2A] px-3 text-sm text-white/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] hover:bg-[#303030] hover:border-white/18 focus-visible:border-[#4FC3F7]/60 focus-visible:ring-[#4FC3F7]/25 [&_svg]:text-white/45";
-const DARK_SELECT_CONTENT =
-  "border border-white/12 bg-[#2A2A2A] p-1 text-white/90 shadow-[0_20px_48px_rgba(0,0,0,0.55)] ring-0 data-open:animate-none data-closed:animate-none";
-const DARK_SELECT_ITEM =
-  "rounded-md py-2 pl-2.5 pr-8 text-sm text-white/80 focus:bg-white/10 focus:text-white data-[highlighted]:bg-white/10 data-[highlighted]:text-white [&_svg]:text-[#4FC3F7]";
 
 type ProgramFiltersProps = {
   query: ProgramListQuery;

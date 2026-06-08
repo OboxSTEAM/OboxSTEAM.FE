@@ -52,6 +52,26 @@ Functional TypeScript (no classes); auxiliary verbs (`isLoading`, `canSubmit`); 
 - Forms: Zod + react-hook-form (`zodResolver`); validate client **and** server (Server Actions / API).
 - Normalize API responses at boundaries; typed selectors/hooks.
 
+### Client fetch + skeleton loading (filter/pagination lists)
+
+Use when a **client leaf** refetches on filter, sort, or pagination (RSC seeds first page; client owns subsequent queries).
+
+| Piece | Location | Role |
+|-------|----------|------|
+| Min delay | `lib/ui/min-skeleton-delay.ts` — `DEFAULT_MIN_SKELETON_MS` (420), `waitMinSkeleton()` | Prevent skeleton flash on fast responses |
+| Hook | `hooks/use-client-fetch.ts` — `useClientFetch()` | Fetch + min skeleton + retain stale data on error |
+| Skeleton UI | Colocated component matching final layout (e.g. `ReviewSkeletonList`, `ProgramGrid` loading) | Same structure as loaded content |
+
+**Pattern**
+
+1. RSC page passes `initialData` for the default query; client `useState` holds query params.
+2. `useClientFetch({ enabled: !isDefaultQuery, initialData, fetcher, deps: [query, …], onError })`.
+3. On filter/sort/page change: call `markLoading()` **then** update query state.
+4. Render skeleton when `isLoading`; hide pagination while loading.
+5. Debounced search: keep skeleton visible while pending (`isLoading || isSearchPending`).
+
+Do **not** copy the wait/finish boilerplate per feature — extend the hook or `min-skeleton-delay` if new behavior is needed.
+
 ---
 
 ## API layer (`lib/api/`)

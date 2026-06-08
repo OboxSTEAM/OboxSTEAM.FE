@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Clock, Star } from "lucide-react";
 
 import { ImageSlot } from "@/components/common/image-slot";
@@ -26,12 +27,14 @@ export function ProgramCard({ program, className }: ProgramCardProps) {
   const priceParts = getProgramPriceParts(program.price);
 
   return (
-    <article
+    <Link
+      href={`/programs/${program.id}`}
       className={cn(
         "group flex flex-col rounded-2xl overflow-hidden border border-white/8 bg-[#252525]",
         "hover:-translate-y-1 hover:border-white/16 hover:shadow-[0_12px_40px_rgba(0,0,0,0.35)]",
         "active:scale-[0.98] active:-translate-y-[1px]",
         "transition-all duration-200 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7] focus-visible:ring-offset-2 focus-visible:ring-offset-[#1A1A1A]",
         className,
       )}
       style={{
@@ -40,7 +43,6 @@ export function ProgramCard({ program, className }: ProgramCardProps) {
         boxShadow: "0 2px 16px rgba(0,0,0,0.25)",
       }}
       aria-label={program.name}
-      tabIndex={0}
     >
       <div className="relative aspect-[5/2] overflow-hidden bg-[#141414] shrink-0">
         {program.thumbnailUrl ? (
@@ -120,6 +122,6 @@ export function ProgramCard({ program, className }: ProgramCardProps) {
           )}
         </div>
       </div>
-    </article>
+    </Link>
   );
 }
