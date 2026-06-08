@@ -5,11 +5,11 @@ import { SITE, STEAM_CATEGORIES } from "@/lib/landing/content";
 
 const FOOTER_LINKS = {
   "Chương trình": [
-    { label: "Tất cả chương trình", href: "/courses" },
-    { label: "Robotics & AI", href: "/courses/robotics-ai" },
-    { label: "Khoa học Xanh", href: "/courses/green-science" },
-    { label: "Creative Coding", href: "/courses/creative-coding" },
-    { label: "Toán tư duy", href: "/courses/math-logic" },
+    { label: "Tất cả chương trình", href: "#programs" },
+    { label: "Robotics & AI", href: "#programs" },
+    { label: "Khoa học Xanh", href: "#programs" },
+    { label: "Creative Coding", href: "#programs" },
+    { label: "Toán tư duy", href: "#programs" },
   ],
   "Nền tảng": [
     { label: "Portfolio AI", href: "/portfolio" },

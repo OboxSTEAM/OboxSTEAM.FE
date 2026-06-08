@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { programLevelSchema } from "@/lib/api/entities/program";
+import {
+  programCategorySchema,
+  programLevelSchema,
+} from "@/lib/api/entities/program";
 
 export const programSortBySchema = z.enum([
   "name",
@@ -19,6 +22,7 @@ export const programListQuerySchema = z.object({
   page: z.number().int().min(1).optional(),
   pageSize: z.number().int().min(1).optional(),
   code: z.string().optional(),
+  category: programCategorySchema.optional(),
   level: programLevelSchema.optional(),
   rating: z.number().optional(),
   skillsGained: z.string().optional(),

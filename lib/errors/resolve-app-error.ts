@@ -80,6 +80,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
   },
+  "programs.list": {
+    title: "Không tải được danh sách chương trình",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại trang sau vài giây.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import Link from "next/link";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
-import { buttonVariants } from "@/components/ui/button";
 import { HERO, SITE } from "@/lib/landing/content";
 import RotatingText from "@/components/RotatingText";
 import Aurora from "@/components/Aurora";
@@ -205,40 +203,11 @@ export function HeroSection() {
 
             {/* Subheadline */}
             <p
-              className="text-white/55 text-base lg:text-lg leading-relaxed max-w-[52ch] mb-10"
+              className="text-white/55 text-base lg:text-lg leading-relaxed max-w-[52ch] mb-12"
               style={reduce ? undefined : fadeUp(0.22)}
             >
               {HERO.subheadline}
             </p>
-
-            {/* CTAs */}
-            <div
-              className="flex flex-wrap items-center gap-3 mb-12"
-              style={reduce ? undefined : fadeUp(0.32)}
-            >
-              <Link
-                href={HERO.ctaPrimary.href}
-                className={
-                  buttonVariants({ size: "lg" }) +
-                  " bg-[#E94B3C] hover:bg-[#d43e30] text-white font-semibold px-8 rounded-lg min-h-[52px] text-base" +
-                  " shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_4px_24px_rgba(233,75,60,0.30)]" +
-                  " hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-                }
-              >
-                {HERO.ctaPrimary.label}
-              </Link>
-              <Link
-                href={HERO.ctaSecondary.href}
-                className={
-                  buttonVariants({ variant: "outline", size: "lg" }) +
-                  " border border-white/18 bg-white/6 text-white hover:bg-white/10 hover:border-white/32 backdrop-blur-md font-semibold px-8 rounded-lg min-h-[52px] text-base" +
-                  " shadow-[inset_0_1px_0_rgba(255,255,255,0.08)]" +
-                  " hover:scale-[1.02] active:scale-[0.98] transition-all duration-150"
-                }
-              >
-                {HERO.ctaSecondary.label}
-              </Link>
-            </div>
 
             {/* Stat chips — liquid glass pills */}
             <div

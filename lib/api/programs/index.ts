@@ -48,6 +48,7 @@ export type {
 
 export type {
   Program,
+  ProgramCategory,
   ProgramLevel,
   ProgramWithModules,
 } from "@/lib/api/entities/program";
