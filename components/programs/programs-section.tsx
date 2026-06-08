@@ -38,6 +38,7 @@ export function ProgramsSection() {
   const [isGridLoading, setIsGridLoading] = useState(true);
   const [resultsEpoch, setResultsEpoch] = useState(0);
   const hasLoadedOnceRef = useRef(false);
+  const sectionRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -125,20 +126,39 @@ export function ProgramsSection() {
     setQuery(getClearedProgramQuery());
   }, []);
 
-  const handlePageChange = useCallback((page: number) => {
-    setIsGridLoading(true);
-    setQuery((current) => ({
-      ...current,
-      page,
-    }));
+  const scrollToProgramsTop = useCallback(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    section.scrollIntoView({
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "start",
+    });
   }, []);
+
+  const handlePageChange = useCallback(
+    (page: number) => {
+      setIsGridLoading(true);
+      setQuery((current) => ({
+        ...current,
+        page,
+      }));
+      scrollToProgramsTop();
+    },
+    [scrollToProgramsTop],
+  );
 
   const programs = data?.items ?? [];
 
   return (
     <section
+      ref={sectionRef}
       id="programs"
-      className="relative py-20 lg:py-28 bg-[#1A1A1A] overflow-hidden"
+      className="relative py-20 lg:py-28 bg-[#1A1A1A] overflow-hidden scroll-mt-[4.5rem] sm:scroll-mt-20"
       aria-labelledby="programs-heading"
     >
       <div

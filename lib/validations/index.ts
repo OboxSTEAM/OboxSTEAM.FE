@@ -12,6 +12,8 @@ export {
   createProgramSchema,
   programIdParamSchema,
   programListQuerySchema,
+  programReviewsQuerySchema,
+  programReviewsSortBySchema,
   programSortBySchema,
   programUpsertSchema,
   updateProgramSchema,

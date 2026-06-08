@@ -18,13 +18,13 @@ type ProgramGridProps = {
 function ProgramCardSkeleton() {
   return (
     <div className="flex flex-col rounded-2xl overflow-hidden border border-white/8 bg-[#252525]">
-      <Skeleton className="aspect-video w-full rounded-none bg-white/8" />
-      <div className="flex flex-col gap-2 p-3.5">
-        <Skeleton className="h-2.5 w-16 bg-white/8" />
-        <Skeleton className="h-4 w-full bg-white/8" />
-        <Skeleton className="h-4 w-4/5 bg-white/8" />
-        <Skeleton className="h-3 w-2/3 bg-white/8" />
-        <Skeleton className="h-3 w-1/2 bg-white/8" />
+      <Skeleton className="aspect-[5/2] w-full rounded-none bg-white/8" />
+      <div className="flex flex-col gap-3 p-4 sm:p-5">
+        <Skeleton className="h-3 w-20 bg-white/8" />
+        <Skeleton className="h-5 w-full bg-white/8" />
+        <Skeleton className="h-5 w-4/5 bg-white/8" />
+        <Skeleton className="h-4 w-2/3 bg-white/8" />
+        <Skeleton className="h-4 w-1/2 bg-white/8" />
       </div>
     </div>
   );

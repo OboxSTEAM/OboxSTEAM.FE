@@ -7,12 +7,14 @@ import {
   createProgramSchema,
   programIdParamSchema,
   programListQuerySchema,
+  programReviewsQuerySchema,
   updateProgramSchema,
 } from "@/lib/validations/programs";
 
 import {
   deleteProgramResponseSchema,
   getProgramByIdResponseSchema,
+  getProgramReviewsResponseSchema,
   getProgramsResponseSchema,
   getProgramsWithModulesResponseSchema,
   programMutationValueSchema,
@@ -20,6 +22,7 @@ import {
   type CreateProgramResult,
   type DeleteProgramResult,
   type GetProgramByIdResult,
+  type GetProgramReviewsResult,
   type GetProgramsResult,
   type GetProgramsWithModulesResult,
   type UpdateProgramResult,
@@ -32,6 +35,8 @@ export type {
   DeleteProgramResult,
   GetProgramByIdResponse,
   GetProgramByIdResult,
+  GetProgramReviewsResponse,
+  GetProgramReviewsResult,
   GetProgramsResponse,
   GetProgramsResult,
   GetProgramsWithModulesResponse,
@@ -53,9 +58,12 @@ export type {
   ProgramWithModules,
 } from "@/lib/api/entities/program";
 
+export type { ProgramReview } from "@/lib/api/entities/review";
+
 export type { Paginated } from "@/lib/api/entities/pagination";
 
 export type ProgramListQuery = z.infer<typeof programListQuerySchema>;
+export type ProgramReviewsQuery = z.infer<typeof programReviewsQuerySchema>;
 export type ProgramIdParam = z.infer<typeof programIdParamSchema>;
 export type CreateProgramInput = z.infer<typeof createProgramSchema>;
 export type UpdateProgramInput = z.infer<typeof updateProgramSchema>;
@@ -69,12 +77,15 @@ function requireApiValue<T>(value: T | null): T {
   return value;
 }
 
-function buildProgramListQuery(params?: ProgramListQuery): string {
+function buildQueryString<T extends Record<string, unknown>>(
+  params: T | undefined,
+  schema: z.ZodType<T>,
+): string {
   if (!params) {
     return "";
   }
 
-  const parsed = programListQuerySchema.parse(params);
+  const parsed = schema.parse(params);
   const searchParams = new URLSearchParams();
 
   for (const [key, value] of Object.entries(parsed)) {
@@ -85,6 +96,14 @@ function buildProgramListQuery(params?: ProgramListQuery): string {
 
   const query = searchParams.toString();
   return query ? `?${query}` : "";
+}
+
+function buildProgramListQuery(params?: ProgramListQuery): string {
+  return buildQueryString(params, programListQuerySchema);
+}
+
+function buildProgramReviewsQuery(params?: ProgramReviewsQuery): string {
+  return buildQueryString(params, programReviewsQuerySchema);
 }
 
 export async function getPrograms(
@@ -117,6 +136,21 @@ export async function getProgramById(id: string): Promise<GetProgramByIdResult> 
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${programId}`,
     getProgramByIdResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getProgramReviews(
+  id: string,
+  params?: ProgramReviewsQuery,
+): Promise<GetProgramReviewsResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/reviews${buildProgramReviewsQuery(params)}`,
+    getProgramReviewsResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

@@ -111,12 +111,26 @@ export const PROGRAM_GRID_MIN_SKELETON_MS = 420;
 
 export const PROGRAM_GRID_RHYTHM = [3, 2, 3] as const;
 
-export function formatProgramPrice(price: number): string {
+export type ProgramPriceParts =
+  | { isFree: true; label: "Miễn phí" }
+  | { isFree: false; amount: string; unit: "đ" };
+
+export function getProgramPriceParts(price: number): ProgramPriceParts {
   if (price === 0) {
-    return "Miễn phí";
+    return { isFree: true, label: "Miễn phí" };
   }
 
-  return `${new Intl.NumberFormat("vi-VN").format(price)} đ`;
+  return {
+    isFree: false,
+    amount: new Intl.NumberFormat("vi-VN").format(price),
+    unit: "đ",
+  };
+}
+
+export function formatProgramPrice(price: number): string {
+  const parts = getProgramPriceParts(price);
+  if (parts.isFree) return parts.label;
+  return `${parts.amount} ${parts.unit}`;
 }
 
 export function getCategoryAccentColor(

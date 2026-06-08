@@ -5,6 +5,7 @@ import {
   programSchema,
   programWithModulesSchema,
 } from "@/lib/api/entities/program";
+import { programReviewSchema } from "@/lib/api/entities/review";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
 export const paginatedProgramsSchema = createPaginatedSchema(programSchema);
@@ -39,6 +40,15 @@ export const deleteProgramResponseSchema = createApiResponseSchema(
   programDeleteValueSchema,
 );
 
+export const paginatedProgramReviewsSchema =
+  createPaginatedSchema(programReviewSchema);
+export const programReviewsListValueSchema = createApiValueSchema(
+  paginatedProgramReviewsSchema,
+);
+export const getProgramReviewsResponseSchema = createApiResponseSchema(
+  programReviewsListValueSchema,
+);
+
 export type GetProgramsResponse = z.infer<typeof getProgramsResponseSchema>;
 export type GetProgramsWithModulesResponse = z.infer<typeof getProgramsWithModulesResponseSchema>;
 export type GetProgramByIdResponse = z.infer<typeof getProgramByIdResponseSchema>;
@@ -52,3 +62,7 @@ export type GetProgramByIdResult = GetProgramByIdResponse["value"];
 export type CreateProgramResult = CreateProgramResponse["value"];
 export type UpdateProgramResult = UpdateProgramResponse["value"];
 export type DeleteProgramResult = DeleteProgramResponse["value"];
+export type GetProgramReviewsResponse = z.infer<
+  typeof getProgramReviewsResponseSchema
+>;
+export type GetProgramReviewsResult = GetProgramReviewsResponse["value"];

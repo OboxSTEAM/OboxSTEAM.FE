@@ -33,6 +33,16 @@ export const programIdParamSchema = z.object({
   id: z.string().uuid("ID chương trình không hợp lệ."),
 });
 
+export const programReviewsSortBySchema = z.enum(["createdAt", "starRating"]);
+
+/** Query params for `GET /api/programs/{programId}/reviews`. */
+export const programReviewsQuerySchema = z.object({
+  sortBy: programReviewsSortBySchema.optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).optional(),
+});
+
 /** Body for `POST /api/programs` and `PUT /api/programs/{id}`. */
 export const programUpsertSchema = z.object({
   code: z.string().min(1, "Mã chương trình là bắt buộc."),
