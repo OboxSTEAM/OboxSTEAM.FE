@@ -1,23 +1,18 @@
 "use client";
 
-import Link from "next/link";
-
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AnimatedContent from "@/components/AnimatedContent";
 import type { Paginated, ProgramReview, ProgramWithModules } from "@/lib/api/programs";
+import { PROGRAM_DETAIL_SCROLL_MARGIN } from "@/lib/programs/detail-sections";
+import { cn } from "@/lib/utils";
 
 import { ProgramCurriculum } from "./program-curriculum";
-import { ProgramHero } from "./program-hero";
+import { ProgramDetailHero } from "./program-detail-hero";
+import { ProgramExpertsPanel } from "./program-experts-panel";
 import { ProgramOverview } from "./program-overview";
 import { ProgramReviewsSection } from "./program-reviews-section";
+import { ProgramSectionNav } from "./program-section-nav";
 import { ProgramSidebar } from "./program-sidebar";
+import { ProgramStatsBar } from "./program-stats-bar";
 
 type ProgramDetailContentProps = {
   program: ProgramWithModules;
@@ -29,81 +24,80 @@ export function ProgramDetailContent({
   initialReviews,
 }: ProgramDetailContentProps) {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:py-10">
-      <Breadcrumb className="mb-5">
-        <BreadcrumbList>
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/" />}>Trang chủ</BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink render={<Link href="/#programs" />}>
-              Chương trình
-            </BreadcrumbLink>
-          </BreadcrumbItem>
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbPage className="max-w-[12rem] truncate sm:max-w-xs">
-              {program.name}
-            </BreadcrumbPage>
-          </BreadcrumbItem>
-        </BreadcrumbList>
-      </Breadcrumb>
+    <>
+      <ProgramDetailHero program={program} />
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_18.5rem] lg:gap-8 lg:items-start">
-        <div className="space-y-6 min-w-0">
-          <ProgramHero program={program} />
+      <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:pb-16">
+        <ProgramStatsBar program={program} />
 
-          <div className="lg:hidden">
-            <ProgramSidebar program={program} />
-          </div>
-
-          <Tabs defaultValue="overview">
-            <TabsList
-              variant="line"
-              className="h-auto w-full justify-start gap-4 border-b border-[#E5E5E0] bg-transparent p-0"
-            >
-              <TabsTrigger
-                value="overview"
-                className="rounded-none px-0 pb-2.5 after:bg-[#E94B3C] data-active:text-[#2D2D2D]"
-              >
-                Tổng quan
-              </TabsTrigger>
-              <TabsTrigger
-                value="curriculum"
-                className="rounded-none px-0 pb-2.5 after:bg-[#E94B3C] data-active:text-[#2D2D2D]"
-              >
-                Chương trình học
-              </TabsTrigger>
-              <TabsTrigger
-                value="reviews"
-                className="rounded-none px-0 pb-2.5 after:bg-[#E94B3C] data-active:text-[#2D2D2D]"
-              >
-                Đánh giá
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="mt-5">
-              <ProgramOverview program={program} />
-            </TabsContent>
-
-            <TabsContent value="curriculum" className="mt-5">
-              <ProgramCurriculum program={program} />
-            </TabsContent>
-
-            <TabsContent value="reviews" className="mt-5">
-              <ProgramReviewsSection
-                programId={program.id}
-                programRating={program.rating}
-                totalReviews={program.totalReviews}
-                initialData={initialReviews}
-              />
-            </TabsContent>
-          </Tabs>
+        <div className="mt-8">
+          <ProgramSectionNav />
         </div>
 
-        <ProgramSidebar program={program} className="hidden lg:block" />
+        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start lg:gap-10">
+          <div
+            className={cn(
+              "min-w-0 space-y-10",
+              "bg-[radial-gradient(circle_at_1px_1px,rgba(45,45,45,0.04)_1px,transparent_0)] [background-size:20px_20px]",
+            )}
+          >
+            <AnimatedContent distance={40} duration={0.6} threshold={0.08}>
+              <section
+                id="about"
+                aria-labelledby="program-about-heading"
+                className={PROGRAM_DETAIL_SCROLL_MARGIN}
+              >
+                <h2 id="program-about-heading" className="sr-only">
+                  Tổng quan
+                </h2>
+                <ProgramOverview program={program} />
+              </section>
+            </AnimatedContent>
+
+            {program.experts.length > 0 ? (
+              <div className="lg:hidden">
+                <ProgramExpertsPanel program={program} />
+              </div>
+            ) : null}
+
+            <AnimatedContent distance={40} duration={0.6} threshold={0.08}>
+              <section
+                id="curriculum"
+                aria-labelledby="program-curriculum-heading"
+                className={PROGRAM_DETAIL_SCROLL_MARGIN}
+              >
+                <h2 id="program-curriculum-heading" className="sr-only">
+                  Chương trình học
+                </h2>
+                <ProgramCurriculum program={program} />
+              </section>
+            </AnimatedContent>
+
+            <AnimatedContent distance={40} duration={0.6} threshold={0.08}>
+              <section
+                id="reviews"
+                aria-labelledby="program-reviews-heading"
+                className={PROGRAM_DETAIL_SCROLL_MARGIN}
+              >
+                <h2 id="program-reviews-heading" className="sr-only">
+                  Đánh giá
+                </h2>
+                <ProgramReviewsSection
+                  programId={program.id}
+                  programRating={program.rating}
+                  totalReviews={program.totalReviews}
+                  initialData={initialReviews}
+                />
+              </section>
+            </AnimatedContent>
+          </div>
+
+          <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block">
+            <ProgramSidebar program={program} />
+            <ProgramExpertsPanel program={program} />
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ProgramReview } from "@/lib/api/programs";
+import { cn } from "@/lib/utils";
 
 import { StarRating } from "./star-rating";
 
@@ -20,24 +21,30 @@ function formatReviewDate(iso: string): string {
 
 type ProgramReviewCardProps = {
   review: ProgramReview;
+  className?: string;
 };
 
-export function ProgramReviewCard({ review }: ProgramReviewCardProps) {
+export function ProgramReviewCard({ review, className }: ProgramReviewCardProps) {
   return (
-    <article className="py-4">
+    <article
+      className={cn(
+        "flex h-full flex-col rounded-xl border border-[#E5E5E0] bg-white p-4 shadow-[0_2px_12px_rgba(45,45,45,0.04)]",
+        className,
+      )}
+    >
       <div className="flex gap-3">
-        <Avatar size="sm" className="mt-0.5">
+        <Avatar size="sm" className="mt-0.5 size-9 shrink-0">
           {review.studentAvatarUrl ? (
             <AvatarImage src={review.studentAvatarUrl} alt="" />
           ) : null}
-          <AvatarFallback className="bg-[#F5F5F0] text-[#6B6B6B] text-xs font-medium">
+          <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
             {getInitials(review.studentName)}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <p className="font-medium text-sm text-[#2D2D2D]">
+            <p className="text-sm font-semibold text-[#2D2D2D]">
               {review.studentName}
             </p>
             <time
@@ -51,14 +58,17 @@ export function ProgramReviewCard({ review }: ProgramReviewCardProps) {
           <div className="mt-1">
             <StarRating rating={review.starRating} size={12} />
           </div>
-
-          {review.comment ? (
-            <p className="mt-2 text-sm leading-relaxed text-[#6B6B6B]">
-              {review.comment}
-            </p>
-          ) : null}
         </div>
       </div>
+
+      {review.comment ? (
+        <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-[#6B6B6B]">
+          <span className="font-serif text-lg leading-none text-[#E5E5E0]" aria-hidden>
+            &ldquo;
+          </span>
+          {review.comment}
+        </blockquote>
+      ) : null}
     </article>
   );
 }

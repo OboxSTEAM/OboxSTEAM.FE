@@ -1,13 +1,14 @@
 import type { LucideIcon } from "lucide-react";
 import { BookOpen, Clock, Layers, Library } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import type { ProgramWithModules } from "@/lib/api/programs";
 import {
   getProgramPriceParts,
   PROGRAM_LEVEL_LABELS,
 } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
+
+import { ProgramEnrollCta } from "./program-enroll-cta";
 
 type ProgramSidebarProps = {
   program: ProgramWithModules;
@@ -42,7 +43,6 @@ export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
     <aside
       className={cn(
         "rounded-xl border border-[#E5E5E0] bg-white p-5 shadow-[0_4px_20px_rgba(45,45,45,0.05)]",
-        "lg:sticky lg:top-24",
         className,
       )}
     >
@@ -69,17 +69,11 @@ export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
         )}
       </div>
 
-      <Button
-        type="button"
-        className="mt-4 h-11 w-full text-sm font-semibold"
-        aria-label="Đăng ký chương trình"
-      >
-        Đăng ký chương trình
-      </Button>
-
-      <p className="mt-2 text-center text-xs leading-relaxed text-[#6B6B6B]">
-        Tính năng đăng ký sẽ sớm ra mắt
-      </p>
+      <ProgramEnrollCta
+        price={program.price}
+        variant="sidebar"
+        className="mt-4"
+      />
 
       <div className="mt-5 space-y-4 border-t border-[#E5E5E0] pt-4">
         <DetailRow

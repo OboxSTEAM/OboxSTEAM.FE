@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { programExpertSchema } from "@/lib/api/entities/expert";
 import { moduleSchema } from "@/lib/api/entities/module";
 
 export const programLevelSchema = z.enum([
@@ -34,6 +35,7 @@ export const programSchema = z.object({
   price: z.number(),
   createdAt: z.string(),
   updatedAt: z.string(),
+  experts: z.array(programExpertSchema).default([]),
 });
 
 export const programWithModulesSchema = programSchema.extend({

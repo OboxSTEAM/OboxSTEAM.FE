@@ -25,6 +25,7 @@ type ProgramCardProps = {
 
 function ProgramCardExpert({ program }: { program: Program }) {
   const expert = getProgramCardExpert(program);
+  if (!expert) return null;
 
   return (
     <div className="flex min-w-0 items-center gap-2">
@@ -106,7 +107,9 @@ export function ProgramCard({ program, className }: ProgramCardProps) {
       </div>
 
       <div className="flex flex-1 flex-col gap-2 p-3 pt-2.5">
-        <ProgramCardExpert program={program} />
+        {program.experts.length > 0 ? (
+          <ProgramCardExpert program={program} />
+        ) : null}
 
         <h3 className="font-heading text-sm font-bold leading-snug text-white line-clamp-2 group-hover:text-[#FDD835] transition-colors duration-150 sm:text-base">
           {program.name}

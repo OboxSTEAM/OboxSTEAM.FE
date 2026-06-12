@@ -94,7 +94,10 @@ export default async function ProgramDetailPage({
     <>
       <SiteHeader defaultScrolled />
       <main className="min-h-screen bg-[#FAFAF5] pt-[4.5rem] sm:pt-20">
-        <ProgramDetailContent program={program} initialReviews={reviews} />
+        <ProgramDetailContent
+          program={program}
+          initialReviews={reviews}
+        />
       </main>
       <SiteFooter />
     </>

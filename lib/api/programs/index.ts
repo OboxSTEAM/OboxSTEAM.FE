@@ -51,6 +51,8 @@ export type {
   ModuleType,
 } from "@/lib/api/entities/module";
 
+export type { ProgramExpert } from "@/lib/api/entities/expert";
+
 export type {
   Program,
   ProgramCategory,
