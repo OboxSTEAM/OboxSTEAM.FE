@@ -1,19 +1,13 @@
 import { Badge } from "@/components/ui/badge";
 import type { ProgramWithModules } from "@/lib/api/programs";
+import { parseProgramSkills } from "@/lib/programs/format";
 
 type ProgramOverviewProps = {
   program: ProgramWithModules;
 };
 
-function parseSkills(skillsGained: string): string[] {
-  return skillsGained
-    .split(/[,;•\n]/)
-    .map((skill) => skill.trim())
-    .filter(Boolean);
-}
-
 export function ProgramOverview({ program }: ProgramOverviewProps) {
-  const skills = parseSkills(program.skillsGained);
+  const skills = parseProgramSkills(program.skillsGained);
 
   return (
     <div className="space-y-5">

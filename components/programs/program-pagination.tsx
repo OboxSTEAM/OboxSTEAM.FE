@@ -25,12 +25,12 @@ const PAGE_THEME_CLASS: Record<
   { link: string; active: string; disabled: string }
 > = {
   dark: {
-    link: "min-w-8 border-transparent bg-transparent text-white/50 hover:bg-white/8 hover:text-white",
+    link: "min-w-9 border-transparent bg-transparent text-white/50 hover:bg-white/8 hover:text-white",
     active: "bg-white/12 text-white font-medium hover:bg-white/12",
     disabled: "text-white/20 cursor-not-allowed hover:bg-transparent",
   },
   light: {
-    link: "min-w-8 border-transparent bg-transparent text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
+    link: "min-w-9 border-transparent bg-transparent text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
     active: "bg-[#F5F5F0] text-[#2D2D2D] font-medium hover:bg-[#F5F5F0]",
     disabled: "text-[#6B6B6B]/40 cursor-not-allowed hover:bg-transparent",
   },
@@ -68,13 +68,13 @@ export function ProgramPagination({
   const themeClass = PAGE_THEME_CLASS[theme];
 
   return (
-    <Pagination className={cn("mt-6", className)}>
+    <Pagination className={cn("mt-10", className)}>
       <PaginationContent>
         <PaginationItem>
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="default"
             disabled={!hasPrevious}
             onClick={() => onPageChange(currentPage - 1)}
             className={cn(themeClass.link, !hasPrevious && themeClass.disabled)}
@@ -89,7 +89,7 @@ export function ProgramPagination({
             <Button
               type="button"
               variant="ghost"
-              size="icon-sm"
+              size="icon"
               onClick={() => onPageChange(page)}
               aria-label={`Trang ${page}`}
               aria-current={page === currentPage ? "page" : undefined}
@@ -107,7 +107,7 @@ export function ProgramPagination({
           <Button
             type="button"
             variant="ghost"
-            size="sm"
+            size="default"
             disabled={!hasNext}
             onClick={() => onPageChange(currentPage + 1)}
             className={cn(themeClass.link, !hasNext && themeClass.disabled)}
