@@ -17,14 +17,6 @@ type ExpertProfileContentProps = {
   className?: string;
 };
 
-function formatExpertDate(iso: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
-}
-
 function isUsableExternalUrl(url: string | null | undefined): boolean {
   if (!url?.trim()) return false;
 
@@ -63,31 +55,30 @@ function ProfileSection({
   className?: string;
 }) {
   return (
-    <section
-      className={cn(
-        "rounded-xl border p-3.5",
-        tone === "neutral" && "border-[#E5E5E0] bg-white",
-        tone === "accent" && "border-[#4FC3F7]/35 bg-[#4FC3F7]/[0.06]",
-        tone === "highlight" && "border-[#FDD835]/50 bg-[#FDD835]/[0.08]",
-        className,
-      )}
-    >
-      <div className="mb-2 flex items-center gap-2">
+    <section className={cn("border-t border-[#E5E5E0] pt-4", className)}>
+      <div className="mb-2 flex items-center gap-2.5">
         <span
           className={cn(
-            "inline-flex size-6 shrink-0 items-center justify-center rounded-md",
+            "inline-flex size-7 shrink-0 items-center justify-center rounded-full",
             tone === "neutral" && "bg-[#F5F5F0] text-[#6B6B6B]",
-            tone === "accent" && "bg-[#4FC3F7]/15 text-[#2ea8d8]",
-            tone === "highlight" && "bg-[#FDD835]/25 text-[#8a7200]",
+            tone === "accent" && "bg-[#4FC3F7]/12 text-[#2ea8d8]",
+            tone === "highlight" && "bg-[#FDD835]/20 text-[#8a7200]",
           )}
         >
           <Icon className="size-3.5" aria-hidden />
         </span>
-        <h3 className="font-heading text-xs font-semibold uppercase tracking-wide text-[#2D2D2D]">
+        <h3 className="font-heading text-sm font-semibold text-[#2D2D2D]">
           {title}
         </h3>
       </div>
-      {children}
+      <div
+        className={cn(
+          tone === "accent" && "border-l-2 border-[#4FC3F7]/45 pl-3",
+          tone === "highlight" && "border-l-2 border-[#FDD835]/60 pl-3",
+        )}
+      >
+        {children}
+      </div>
     </section>
   );
 }
@@ -112,23 +103,23 @@ function ExpertIdentityHeader({
   const hasLinkedIn = isUsableExternalUrl(linkedInUrl);
 
   return (
-    <div className={cn("flex items-start gap-4 sm:gap-5", className)}>
-      <Avatar className="size-24 shrink-0 ring-2 ring-[#E5E5E0] sm:size-28">
+    <div className={cn("flex items-start gap-4", className)}>
+      <Avatar className="size-20 shrink-0 ring-2 ring-[#E5E5E0] sm:size-24">
         {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-        <AvatarFallback className="bg-[#F5F5F0] text-xl font-semibold text-[#6B6B6B]">
+        <AvatarFallback className="bg-[#F5F5F0] text-lg font-semibold text-[#6B6B6B]">
           {getExpertInitials(fullName)}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
-        <div className="min-w-0 space-y-0.5">
+        <div className="min-w-0 space-y-1">
           <p className="font-heading text-lg font-bold leading-tight text-[#2D2D2D] sm:text-xl">
             {fullName}
           </p>
           <p className="text-sm font-medium text-[#4A4A4A]">{title}</p>
           <p className="text-sm text-[#6B6B6B]">{organization}</p>
           {code ? (
-            <p className="pt-0.5 font-mono text-[10px] uppercase tracking-widest text-[#6B6B6B]/75">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B6B6B]/75">
               {code}
             </p>
           ) : null}
@@ -168,8 +159,11 @@ export function ExpertProfileContent({
     ? programs.filter((item) => item.programId !== currentProgramId)
     : programs;
 
+  const hasBio = Boolean(expert.bio);
+  const hasAchievements = Boolean(expert.achievements);
+
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn("space-y-4", className)}>
       <ExpertIdentityHeader
         fullName={expert.fullName}
         title={expert.title}
@@ -179,14 +173,14 @@ export function ExpertProfileContent({
         linkedInUrl={expert.linkedInUrl}
       />
 
-      {(expert.bio || expert.achievements) && (
+      {hasBio || hasAchievements ? (
         <div
           className={cn(
-            "grid gap-3",
-            expert.bio && expert.achievements && "sm:grid-cols-2",
+            "grid gap-4",
+            hasBio && hasAchievements && "sm:grid-cols-2",
           )}
         >
-          {expert.bio ? (
+          {hasBio ? (
             <ProfileSection title="Giới thiệu" icon={UserRound}>
               <p className="text-sm leading-relaxed whitespace-pre-line text-[#6B6B6B]">
                 {expert.bio}
@@ -194,7 +188,7 @@ export function ExpertProfileContent({
             </ProfileSection>
           ) : null}
 
-          {expert.achievements ? (
+          {hasAchievements ? (
             <ProfileSection title="Thành tựu" icon={Award} tone="highlight">
               <p className="text-sm leading-relaxed text-[#2D2D2D]">
                 {expert.achievements}
@@ -202,19 +196,16 @@ export function ExpertProfileContent({
             </ProfileSection>
           ) : null}
         </div>
-      )}
+      ) : null}
 
       {currentProgram ? (
-        <ProfileSection
-          title="Vai trò trong chương trình này"
-          icon={Sparkles}
-          tone="accent"
-        >
+        <ProfileSection title="Vai trò hiện tại" icon={Sparkles} tone="accent">
           <p className="text-sm font-medium text-[#2D2D2D]">
             {currentProgram.name}
-          </p>
-          <p className="mt-0.5 text-xs text-[#6B6B6B]">
-            {currentProgram.roleInBoard}
+            <span className="font-normal text-[#6B6B6B]">
+              {" "}
+              · {currentProgram.roleInBoard}
+            </span>
           </p>
         </ProfileSection>
       ) : null}
@@ -226,17 +217,17 @@ export function ExpertProfileContent({
           }
           icon={BookOpen}
         >
-          <ul className="grid gap-2 sm:grid-cols-2">
+          <ul className="flex flex-wrap gap-x-4 gap-y-2">
             {otherPrograms.map((item) => (
               <li key={item.programId}>
                 <Link
                   href={`/programs/${item.programId}`}
-                  className="block rounded-lg border border-[#E5E5E0] bg-[#FAFAF5] px-3 py-2 transition-colors hover:border-[#4FC3F7]/40 hover:bg-white"
+                  className="group inline-flex max-w-full flex-col rounded-sm text-sm transition-colors hover:bg-[#FAFAF5] hover:px-1.5 hover:py-0.5"
                 >
-                  <span className="line-clamp-2 text-sm font-medium leading-snug text-[#4FC3F7]">
+                  <span className="truncate font-medium text-[#4FC3F7] group-hover:underline">
                     {item.name}
                   </span>
-                  <span className="mt-1 block text-[11px] text-[#6B6B6B]">
+                  <span className="truncate text-xs text-[#6B6B6B]">
                     {item.code} · {item.roleInBoard}
                   </span>
                 </Link>
@@ -245,11 +236,6 @@ export function ExpertProfileContent({
           </ul>
         </ProfileSection>
       ) : null}
-
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border border-dashed border-[#E5E5E0] bg-[#FAFAF5]/80 px-3 py-2 text-[11px] text-[#6B6B6B]">
-        <span>Cập nhật {formatExpertDate(expert.updatedAt)}</span>
-        <span>Tham gia {formatExpertDate(expert.createdAt)}</span>
-      </div>
     </div>
   );
 }
@@ -283,18 +269,24 @@ export function ExpertProfilePreview({
 
 export function ExpertProfileSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div className="flex items-start gap-4">
-        <div className="size-24 shrink-0 animate-pulse rounded-full bg-[#F5F5F0] sm:size-28" />
+        <div className="size-20 shrink-0 animate-pulse rounded-full bg-[#F5F5F0] sm:size-24" />
         <div className="flex-1 space-y-2 pt-1">
-          <div className="h-5 w-44 animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="h-5 w-48 animate-pulse rounded bg-[#F5F5F0]" />
           <div className="h-4 w-36 animate-pulse rounded bg-[#F5F5F0]" />
           <div className="h-4 w-28 animate-pulse rounded bg-[#F5F5F0]" />
         </div>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="h-24 animate-pulse rounded-xl border border-[#E5E5E0] bg-[#F5F5F0]/60" />
-        <div className="h-24 animate-pulse rounded-xl border border-[#E5E5E0] bg-[#F5F5F0]/60" />
+      <div className="border-t border-[#E5E5E0] pt-4">
+        <div className="mb-2 flex items-center gap-2.5">
+          <div className="size-7 animate-pulse rounded-full bg-[#F5F5F0]" />
+          <div className="h-4 w-24 animate-pulse rounded bg-[#F5F5F0]" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-3.5 w-full animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="h-3.5 w-[90%] animate-pulse rounded bg-[#F5F5F0]" />
+        </div>
       </div>
     </div>
   );

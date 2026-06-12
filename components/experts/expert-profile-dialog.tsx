@@ -15,7 +15,6 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import type { ProgramExpert } from "@/lib/api/entities/expert";
 import { getExpertById } from "@/lib/api/experts";
@@ -61,19 +60,18 @@ export function ExpertProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="flex max-h-[min(88vh,640px)] flex-col gap-0 overflow-hidden p-0 sm:max-w-xl">
-        <div className="relative shrink-0 border-b border-[#E5E5E0] px-6 pb-4 pt-6">
+      <DialogPopup className="flex flex-col gap-0 p-0 sm:max-w-2xl">
+        <div className="relative shrink-0 border-b border-[#E5E5E0] px-7 pb-4 pt-5">
           <DialogClose className="top-4 right-4" />
-          <DialogTitle>Thông tin chuyên gia</DialogTitle>
+          <DialogTitle className="text-lg">Thông tin chuyên gia</DialogTitle>
           <DialogDescription className="sr-only">
             Chi tiết chuyên gia, tiểu sử và chương trình tham gia.
           </DialogDescription>
         </div>
 
-        <ScrollArea className="h-[min(520px,calc(88vh-5.75rem))]">
-          <div className="px-6 py-4">
+        <div className="px-7 py-5">
             {hasError ? (
-              <div className="py-8 text-center">
+              <div className="py-6 text-center">
                 <p className="text-sm text-[#6B6B6B]">
                   Không tải được thông tin chuyên gia.
                 </p>
@@ -89,7 +87,7 @@ export function ExpertProfileDialog({
               </div>
             ) : isLoading && (!data || data.id !== expertId) ? (
               preview ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <ExpertProfilePreview
                     fullName={preview.fullName}
                     title={preview.title}
@@ -108,8 +106,7 @@ export function ExpertProfileDialog({
                 currentProgramId={currentProgramId}
               />
             ) : null}
-          </div>
-        </ScrollArea>
+        </div>
       </DialogPopup>
     </Dialog>
   );
