@@ -95,6 +95,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
     action: "Thử tải lại hoặc chuyển sang tab khác rồi quay lại.",
   },
+  "programs.expert": {
+    title: "Không tải được thông tin chuyên gia",
+    reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Đóng hộp thoại và thử lại sau vài giây.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

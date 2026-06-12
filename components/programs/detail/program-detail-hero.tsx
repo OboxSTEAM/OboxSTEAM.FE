@@ -7,6 +7,7 @@ import Aurora from "@/components/Aurora";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
 import { ImageSlot } from "@/components/common/image-slot";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import type { ProgramExpert } from "@/lib/api/entities/expert";
 import type { ProgramCategory } from "@/lib/api/entities/program";
 import type { ProgramWithModules } from "@/lib/api/programs";
 import { SITE } from "@/lib/landing/content";
@@ -29,6 +30,7 @@ import { StarRating } from "./star-rating";
 type ProgramDetailHeroProps = {
   program: ProgramWithModules;
   className?: string;
+  onExpertClick?: (expert: ProgramExpert) => void;
 };
 
 type CategoryHeroTheme = {
@@ -135,7 +137,13 @@ function HeroBackgroundLogo() {
   );
 }
 
-function ExpertAvatarStack({ program }: { program: ProgramWithModules }) {
+function ExpertAvatarStack({
+  program,
+  onExpertClick,
+}: {
+  program: ProgramWithModules;
+  onExpertClick?: (expert: ProgramExpert) => void;
+}) {
   const experts = program.experts.slice(0, 3);
   if (experts.length === 0) return null;
 
@@ -147,18 +155,22 @@ function ExpertAvatarStack({ program }: { program: ProgramWithModules }) {
         {experts.map((expert) => {
           const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
           return (
-            <Avatar
+            <button
               key={expert.expertId}
-              size="sm"
-              className="size-7 border-2 border-[#FAFAF5] bg-white"
+              type="button"
+              onClick={() => onExpertClick?.(expert)}
+              className="relative rounded-full ring-2 ring-[#FAFAF5] transition-transform hover:z-10 hover:scale-105 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-[#4FC3F7]"
+              aria-label={`Xem thông tin ${expert.fullName}`}
             >
-              {avatarUrl ? (
-                <AvatarImage src={avatarUrl} alt="" />
-              ) : null}
-              <AvatarFallback className="bg-[#F5F5F0] text-[10px] font-medium text-[#6B6B6B]">
-                {getExpertInitials(expert.fullName)}
-              </AvatarFallback>
-            </Avatar>
+              <Avatar size="sm" className="size-7 bg-white">
+                {avatarUrl ? (
+                  <AvatarImage src={avatarUrl} alt="" />
+                ) : null}
+                <AvatarFallback className="bg-[#F5F5F0] text-[10px] font-medium text-[#6B6B6B]">
+                  {getExpertInitials(expert.fullName)}
+                </AvatarFallback>
+              </Avatar>
+            </button>
           );
         })}
       </div>
@@ -169,7 +181,11 @@ function ExpertAvatarStack({ program }: { program: ProgramWithModules }) {
   );
 }
 
-export function ProgramDetailHero({ program, className }: ProgramDetailHeroProps) {
+export function ProgramDetailHero({
+  program,
+  className,
+  onExpertClick,
+}: ProgramDetailHeroProps) {
   const reduceMotion = useReducedMotion();
   const categoryMeta = program.category
     ? PROGRAM_CATEGORY_META[program.category]
@@ -244,7 +260,10 @@ export function ProgramDetailHero({ program, className }: ProgramDetailHeroProps
               </p>
             ) : null}
 
-            <ExpertAvatarStack program={program} />
+            <ExpertAvatarStack
+              program={program}
+              onExpertClick={onExpertClick}
+            />
 
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-[#6B6B6B]">
               {program.rating != null && (

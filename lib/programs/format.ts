@@ -43,6 +43,12 @@ export function getExpertAvatarUrl(
   }
 }
 
+export function getProgramExpertId(
+  expert: Pick<ProgramExpert, "expertId"> & { id?: string | null },
+): string | null {
+  return expert.expertId || expert.id || null;
+}
+
 export function formatProgramExpertSummary(experts: ProgramExpert[]): string | null {
   if (experts.length === 0) return null;
 

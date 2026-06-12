@@ -8,6 +8,7 @@ export {
   sendResetLinkSchema,
   verifyOtpSchema,
 } from "./auth";
+export { expertIdParamSchema, type ExpertIdParam } from "./experts";
 export {
   createProgramSchema,
   programIdParamSchema,

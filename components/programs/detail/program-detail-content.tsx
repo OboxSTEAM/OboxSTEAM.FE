@@ -1,6 +1,12 @@
 "use client";
 
+import { useCallback } from "react";
+
 import AnimatedContent from "@/components/AnimatedContent";
+import {
+  ExpertProfileDialog,
+  useExpertProfileDialog,
+} from "@/components/experts/expert-profile-dialog";
 import type { Paginated, ProgramReview, ProgramWithModules } from "@/lib/api/programs";
 import { PROGRAM_DETAIL_SCROLL_MARGIN } from "@/lib/programs/detail-sections";
 import { cn } from "@/lib/utils";
@@ -23,9 +29,19 @@ export function ProgramDetailContent({
   program,
   initialReviews,
 }: ProgramDetailContentProps) {
+  const { selection, openExpert, closeExpert, isOpen } =
+    useExpertProfileDialog();
+
+  const handleDialogOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) closeExpert();
+    },
+    [closeExpert],
+  );
+
   return (
     <>
-      <ProgramDetailHero program={program} />
+      <ProgramDetailHero program={program} onExpertClick={openExpert} />
 
       <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:pb-16">
         <ProgramStatsBar program={program} />
@@ -56,7 +72,10 @@ export function ProgramDetailContent({
 
             {program.experts.length > 0 ? (
               <div className="lg:hidden">
-                <ProgramExpertsPanel program={program} />
+                <ProgramExpertsPanel
+                  program={program}
+                  onExpertClick={openExpert}
+                />
               </div>
             ) : null}
 
@@ -94,10 +113,21 @@ export function ProgramDetailContent({
 
           <aside className="hidden space-y-4 lg:sticky lg:top-24 lg:block">
             <ProgramSidebar program={program} />
-            <ProgramExpertsPanel program={program} />
+            <ProgramExpertsPanel
+              program={program}
+              onExpertClick={openExpert}
+            />
           </aside>
         </div>
       </div>
+
+      <ExpertProfileDialog
+        expertId={selection?.expertId ?? null}
+        open={isOpen}
+        onOpenChange={handleDialogOpenChange}
+        currentProgramId={program.id}
+        preview={selection?.preview ?? null}
+      />
     </>
   );
 }

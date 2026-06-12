@@ -17,47 +17,51 @@ import { cn } from "@/lib/utils";
 type ProgramExpertsPanelProps = {
   program: ProgramWithModules;
   className?: string;
+  onExpertClick?: (expert: ProgramExpert) => void;
 };
 
 const VISIBLE_EXPERT_LIMIT = 3;
 
-function ExpertRow({ expert }: { expert: ProgramExpert }) {
+function ExpertRow({
+  expert,
+  onExpertClick,
+}: {
+  expert: ProgramExpert;
+  onExpertClick?: (expert: ProgramExpert) => void;
+}) {
   const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
-  const hasLinkedIn = Boolean(expert.linkedInUrl?.trim());
 
   return (
-    <li className="flex gap-3">
-      <Avatar size="sm" className="mt-0.5 size-9 shrink-0">
-        {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-        <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
-          {getExpertInitials(expert.fullName)}
-        </AvatarFallback>
-      </Avatar>
+    <li>
+      <button
+        type="button"
+        onClick={() => onExpertClick?.(expert)}
+        className="flex w-full gap-3 rounded-lg text-left transition-colors hover:bg-[#FAFAF5] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/40 -mx-1 px-1 py-1"
+        aria-label={`Xem thông tin ${expert.fullName}`}
+      >
+        <Avatar size="sm" className="mt-0.5 size-9 shrink-0">
+          {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
+          <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
+            {getExpertInitials(expert.fullName)}
+          </AvatarFallback>
+        </Avatar>
 
-      <div className="min-w-0 flex-1 space-y-0.5">
-        {hasLinkedIn ? (
-          <a
-            href={expert.linkedInUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-sm text-[#4FC3F7] underline-offset-2 hover:underline"
-          >
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="font-medium text-sm text-[#4FC3F7] underline-offset-2">
             {expert.fullName}
-          </a>
-        ) : (
-          <p className="font-medium text-sm text-[#2D2D2D]">{expert.fullName}</p>
-        )}
-
-        <p className="text-xs text-[#6B6B6B]">
-          {[expert.title, expert.organization].filter(Boolean).join(" · ")}
-        </p>
-
-        {expert.roleInBoard ? (
-          <p className="text-xs leading-relaxed text-[#6B6B6B]">
-            {expert.roleInBoard}
           </p>
-        ) : null}
-      </div>
+
+          <p className="text-xs text-[#6B6B6B]">
+            {[expert.title, expert.organization].filter(Boolean).join(" · ")}
+          </p>
+
+          {expert.roleInBoard ? (
+            <p className="text-xs leading-relaxed text-[#6B6B6B]">
+              {expert.roleInBoard}
+            </p>
+          ) : null}
+        </div>
+      </button>
     </li>
   );
 }
@@ -65,6 +69,7 @@ function ExpertRow({ expert }: { expert: ProgramExpert }) {
 export function ProgramExpertsPanel({
   program,
   className,
+  onExpertClick,
 }: ProgramExpertsPanelProps) {
   const [showAll, setShowAll] = useState(false);
   const experts = program.experts;
@@ -89,9 +94,13 @@ export function ProgramExpertsPanel({
         Chuyên gia
       </h2>
 
-      <ul className="mt-4 space-y-4">
+      <ul className="mt-4 space-y-2">
         {visibleExperts.map((expert) => (
-          <ExpertRow key={expert.expertId} expert={expert} />
+          <ExpertRow
+            key={expert.expertId}
+            expert={expert}
+            onExpertClick={onExpertClick}
+          />
         ))}
       </ul>
 

@@ -31,4 +31,5 @@ export type AppErrorContext =
   | "student.links"
   | "programs.list"
   | "programs.detail"
-  | "programs.reviews";
+  | "programs.reviews"
+  | "programs.expert";

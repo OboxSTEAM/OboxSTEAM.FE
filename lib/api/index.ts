@@ -11,6 +11,15 @@ export {
 } from "./account";
 
 export {
+  getExpertById,
+  type Expert,
+  type ExpertProgram,
+  type GetExpertByIdResponse,
+  type GetExpertByIdResult,
+  type ProgramExpert,
+} from "./experts";
+
+export {
   createProgram,
   deleteProgram,
   getProgramById,
