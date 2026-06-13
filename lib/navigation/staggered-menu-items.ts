@@ -1,14 +1,18 @@
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, LayoutDashboard } from "lucide-react";
+import { GraduationCap } from "lucide-react";
 
 import type { StaggeredMenuItem } from "@/components/StaggeredMenu";
 import { getAccountNavItems, LOGOUT_NAV_ITEM } from "@/lib/auth/account-nav";
 import { NAV_LINKS } from "@/lib/landing/content";
 
 const WEBSITE_ICON_MAP: Record<string, LucideIcon> = {
-  Portfolio: LayoutDashboard,
   "Chương trình": GraduationCap,
 };
+
+/** Hidden from mobile stagger menu — still available in desktop account dropdown. */
+const STAGGERED_MENU_EXCLUDED_ACCOUNT_HREFS = new Set(["/settings"]);
+
+const STAGGERED_MENU_EXCLUDED_SITE_LABELS = new Set(["Portfolio"]);
 
 export const STAGGERED_MENU_WARM_COLORS = ["#FFFFFF", "#F5F5F0"] as const;
 
@@ -22,17 +26,21 @@ export function buildSiteHeaderStaggeredMenuItems({
   accountRole,
   onLogout,
 }: BuildSiteHeaderStaggeredMenuOptions): StaggeredMenuItem[] {
-  const accountItems = getAccountNavItems(accountRole).map((item) => ({
-    label: item.label,
-    ariaLabel: item.label,
-    link: item.href,
-    icon: item.icon,
-    description: item.description,
-    group: "Tài khoản",
-  }));
+  const accountItems = getAccountNavItems(accountRole)
+    .filter((item) => !STAGGERED_MENU_EXCLUDED_ACCOUNT_HREFS.has(item.href))
+    .map((item) => ({
+      label: item.label,
+      ariaLabel: item.label,
+      link: item.href,
+      icon: item.icon,
+      description: item.description,
+      group: "Tài khoản",
+    }));
 
   const siteNavItems: StaggeredMenuItem[] = NAV_LINKS.filter(
-    (link) => link.label !== "STEAM",
+    (link) =>
+      link.label !== "STEAM" &&
+      !STAGGERED_MENU_EXCLUDED_SITE_LABELS.has(link.label),
   ).map((link) => ({
     label: link.label,
     ariaLabel: link.label,

@@ -6,11 +6,16 @@ export function EnrollmentGridSkeleton({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }, (_, index) => (
         <div
           key={index}
-          className="overflow-hidden rounded-xl border border-[#E5E5E0] bg-white"
+          className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white"
         >
-          <Skeleton className="aspect-[16/9] w-full rounded-none" />
-          <div className="space-y-3 p-5">
-            <Skeleton className="h-3 w-24" />
+          <div className="p-3 pb-0">
+            <Skeleton className="aspect-[16/9] w-full rounded-lg" />
+          </div>
+          <div className="space-y-3 p-5 pt-4">
+            <div className="flex items-center justify-between gap-2">
+              <Skeleton className="h-3 w-24" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
             <Skeleton className="h-6 w-full" />
             <Skeleton className="h-4 w-3/4" />
             <Skeleton className="h-2 w-full" />

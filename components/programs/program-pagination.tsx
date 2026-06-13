@@ -22,17 +22,31 @@ type ProgramPaginationProps = {
 
 const PAGE_THEME_CLASS: Record<
   ProgramPaginationTheme,
-  { link: string; active: string; disabled: string }
+  {
+    wrapper: string;
+    link: string;
+    active: string;
+    disabled: string;
+    navButton: string;
+  }
 > = {
   dark: {
+    wrapper: "",
     link: "min-w-9 border-transparent bg-transparent text-white/50 hover:bg-white/8 hover:text-white",
     active: "bg-white/12 text-white font-medium hover:bg-white/12",
     disabled: "text-white/20 cursor-not-allowed hover:bg-transparent",
+    navButton: "min-w-9 border-transparent bg-transparent text-white/50 hover:bg-white/8 hover:text-white",
   },
   light: {
-    link: "min-w-9 border-transparent bg-transparent text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
-    active: "bg-[#F5F5F0] text-[#2D2D2D] font-medium hover:bg-[#F5F5F0]",
-    disabled: "text-[#6B6B6B]/40 cursor-not-allowed hover:bg-transparent",
+    wrapper:
+      "rounded-xl border border-[#E5E5E0] bg-white px-2 py-1.5 shadow-[0_2px_12px_rgba(45,45,45,0.06)]",
+    link: "min-w-10 h-9 border border-[#E5E5E0] bg-white text-[#2D2D2D] font-medium shadow-sm hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
+    active:
+      "min-w-10 h-9 border border-[#2D2D2D] bg-[#2D2D2D] text-white font-semibold shadow-sm hover:bg-[#2D2D2D] hover:text-white",
+    disabled:
+      "border-[#E5E5E0] bg-[#FAFAF5] text-[#6B6B6B]/45 cursor-not-allowed shadow-none hover:bg-[#FAFAF5] hover:border-[#E5E5E0]",
+    navButton:
+      "h-9 min-w-[4.5rem] border border-[#E5E5E0] bg-white px-3 font-semibold text-[#2D2D2D] shadow-sm hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
   },
 };
 
@@ -69,7 +83,7 @@ export function ProgramPagination({
 
   return (
     <Pagination className={cn("mt-10", className)}>
-      <PaginationContent>
+      <PaginationContent className={cn("gap-1.5", themeClass.wrapper)}>
         <PaginationItem>
           <Button
             type="button"
@@ -77,7 +91,10 @@ export function ProgramPagination({
             size="default"
             disabled={!hasPrevious}
             onClick={() => onPageChange(currentPage - 1)}
-            className={cn(themeClass.link, !hasPrevious && themeClass.disabled)}
+            className={cn(
+              theme === "light" ? themeClass.navButton : themeClass.link,
+              !hasPrevious && themeClass.disabled,
+            )}
             aria-label="Trang trước"
           >
             Trước
@@ -110,7 +127,10 @@ export function ProgramPagination({
             size="default"
             disabled={!hasNext}
             onClick={() => onPageChange(currentPage + 1)}
-            className={cn(themeClass.link, !hasNext && themeClass.disabled)}
+            className={cn(
+              theme === "light" ? themeClass.navButton : themeClass.link,
+              !hasNext && themeClass.disabled,
+            )}
             aria-label="Trang sau"
           >
             Sau
