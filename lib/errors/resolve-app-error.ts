@@ -100,6 +100,26 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Đóng hộp thoại và thử lại sau vài giây.",
   },
+  "payments.checkout": {
+    title: "Không thể bắt đầu thanh toán",
+    reason: "Yêu cầu thanh toán bị từ chối hoặc chương trình chưa sẵn sàng.",
+    action: "Thử lại sau vài giây hoặc liên hệ hỗ trợ OboxSTEAM.",
+  },
+  "payments.detail": {
+    title: "Không tải được thông tin thanh toán",
+    reason: "Giao dịch không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Kiểm tra lại liên kết hoặc vào Khóa học của tôi.",
+  },
+  "payments.cancel": {
+    title: "Không hủy được thanh toán",
+    reason: "Yêu cầu hủy bị từ chối hoặc giao dịch đã được xử lý.",
+    action: "Quay lại chương trình và thử đăng ký lại nếu cần.",
+  },
+  "enrollments.list": {
+    title: "Không tải được khóa học",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

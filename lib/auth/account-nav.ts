@@ -10,7 +10,7 @@ export type AccountNavItem = {
   description?: string;
 };
 
-/** Mock destinations until learner dashboard routes exist. */
+/** Student account destinations (learner dashboard). */
 export const STUDENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   {
     label: "Hồ sơ cá nhân",

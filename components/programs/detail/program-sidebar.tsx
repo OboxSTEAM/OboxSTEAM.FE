@@ -70,6 +70,7 @@ export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
       </div>
 
       <ProgramEnrollCta
+        programId={program.id}
         price={program.price}
         variant="sidebar"
         className="mt-4"

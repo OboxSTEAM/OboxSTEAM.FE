@@ -32,4 +32,8 @@ export type AppErrorContext =
   | "programs.list"
   | "programs.detail"
   | "programs.reviews"
-  | "programs.expert";
+  | "programs.expert"
+  | "payments.checkout"
+  | "payments.detail"
+  | "payments.cancel"
+  | "enrollments.list";

@@ -291,7 +291,11 @@ export function ProgramDetailHero({
             </div>
 
             <div className="pt-1 lg:hidden">
-              <ProgramEnrollCta price={program.price} variant="hero" />
+              <ProgramEnrollCta
+                programId={program.id}
+                price={program.price}
+                variant="hero"
+              />
             </div>
           </div>
 
