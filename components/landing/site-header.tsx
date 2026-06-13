@@ -4,28 +4,21 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  ChevronDown,
-  GraduationCap,
-  LayoutDashboard,
-  Menu,
-  X,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 
-import StaggeredMenu, { type StaggeredMenuItem } from "@/components/StaggeredMenu";
+import StaggeredMenu from "@/components/StaggeredMenu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import {
-  getAccountNavItems,
-  getAccountRoleLabel,
-  LOGOUT_NAV_ITEM,
-} from "@/lib/auth/account-nav";
+import { getAccountRoleLabel } from "@/lib/auth/account-nav";
 import { getProfileDisplayName } from "@/lib/auth/profile-display";
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { clearAuthSession } from "@/lib/auth/session";
-import { NAV_LINKS, SITE } from "@/lib/landing/content";
+import { SITE } from "@/lib/landing/content";
+import {
+  buildSiteHeaderStaggeredMenuItems,
+  STAGGERED_MENU_WARM_COLORS,
+} from "@/lib/navigation/staggered-menu-items";
 import { cn } from "@/lib/utils";
 
 type SiteHeaderProps = {
@@ -63,79 +56,17 @@ export function SiteHeader({ defaultScrolled = false }: SiteHeaderProps) {
   const avatarUrl = profile?.avatarUrl ?? session?.user?.avatarUrl;
   const initials = getInitials(displayName, email);
 
-  const staggeredMenuItems = useMemo<StaggeredMenuItem[]>(() => {
-    const websiteIconMap: Record<string, LucideIcon> = {
-      Portfolio: LayoutDashboard,
-      "Chương trình": GraduationCap,
-    };
-
-    const accountItems = getAccountNavItems(accountRole);
-    const profileItem = accountItems.find((item) => item.href === "/profile");
-    const coursesItem = accountItems.find((item) => item.href === "/courses");
-    const otherAccountItems = accountItems.filter(
-      (item) =>
-        item.href !== "/profile" &&
-        item.href !== "/settings" &&
-        item.href !== "/courses",
-    );
-
-    const websiteItems: StaggeredMenuItem[] = NAV_LINKS.filter(
-      (link) => link.label !== "STEAM",
-    ).map((link) => ({
-      label: link.label,
-      ariaLabel: link.label,
-      link: link.href,
-      icon: websiteIconMap[link.label],
-    }));
-
-    const accountMapped: StaggeredMenuItem[] = otherAccountItems.map((item) => ({
-      label: item.label,
-      ariaLabel: item.label,
-      link: item.href,
-      icon: item.icon,
-    }));
-
-    const seen = new Set<string>();
-    const merged = [...websiteItems, ...accountMapped].filter((item) => {
-      const key = item.label.trim().toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    });
-
-    const items: StaggeredMenuItem[] = [];
-
-    if (profileItem) {
-      items.push({
-        label: profileItem.label,
-        ariaLabel: profileItem.label,
-        link: profileItem.href,
-        icon: profileItem.icon,
-      });
-    }
-
-    if (coursesItem) {
-      items.push({
-        label: coursesItem.label,
-        ariaLabel: coursesItem.label,
-        link: coursesItem.href,
-        icon: coursesItem.icon,
-      });
-    }
-
-    items.push(...merged);
-    items.push({
-      label: LOGOUT_NAV_ITEM.label,
-      ariaLabel: LOGOUT_NAV_ITEM.label,
-      icon: LOGOUT_NAV_ITEM.icon,
-      onClick: () => {
-        clearAuthSession();
-        router.push("/");
-      },
-    });
-
-    return items;
-  }, [accountRole, router]);
+  const staggeredMenuItems = useMemo(
+    () =>
+      buildSiteHeaderStaggeredMenuItems({
+        accountRole,
+        onLogout: () => {
+          clearAuthSession();
+          router.push("/");
+        },
+      }),
+    [accountRole, router],
+  );
 
   useEffect(() => {
     if (defaultScrolled) return;
@@ -359,7 +290,7 @@ export function SiteHeader({ defaultScrolled = false }: SiteHeaderProps) {
           externalToggleRef={menuToggleRef}
           items={staggeredMenuItems}
           panelHeader={panelHeader}
-          colors={["#2D2D2D", "#3D3D3D"]}
+          colors={[...STAGGERED_MENU_WARM_COLORS]}
           accentColor="#E94B3C"
           displaySocials={false}
           displayItemNumbering={false}
