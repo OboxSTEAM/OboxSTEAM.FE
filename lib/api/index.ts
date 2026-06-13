@@ -57,6 +57,30 @@ export {
 } from "./programs";
 
 export {
+  cancelPayment,
+  checkoutPayment,
+  getPaymentById,
+  type CheckoutPaymentInput,
+  type CheckoutPaymentResponse,
+  type CheckoutPaymentResult,
+  type CheckoutSession,
+  type GetPaymentByIdResponse,
+  type GetPaymentByIdResult,
+  type Payment,
+  type PaymentGateway,
+  type PaymentStatus,
+} from "./payments";
+
+export {
+  getMyProgramEnrollments,
+  type GetMyProgramEnrollmentsResponse,
+  type GetMyProgramEnrollmentsResult,
+  type MyProgramEnrollmentsQuery,
+  type ProgramEnrollment,
+  type ProgramEnrollmentStatus,
+} from "./program-enrollments";
+
+export {
   approveParentLink,
   completeParentProfile,
   getParentLinks,

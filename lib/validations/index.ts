@@ -26,3 +26,11 @@ export {
   parentMagicLoginSchema,
   requestParentLinkSchema,
 } from "./parent";
+export {
+  checkoutPaymentSchema,
+  paymentIdParamSchema,
+} from "./payments";
+export {
+  myProgramEnrollmentsQuerySchema,
+  programEnrollmentSortBySchema,
+} from "./program-enrollments";
