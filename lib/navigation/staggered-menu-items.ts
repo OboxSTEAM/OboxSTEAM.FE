@@ -10,7 +10,7 @@ const WEBSITE_ICON_MAP: Record<string, LucideIcon> = {
   "Chương trình": GraduationCap,
 };
 
-export const STAGGERED_MENU_WARM_COLORS = ["#F5F5F0", "#EDEDE8"] as const;
+export const STAGGERED_MENU_WARM_COLORS = ["#FFFFFF", "#F5F5F0"] as const;
 
 export type BuildSiteHeaderStaggeredMenuOptions = {
   accountRole?: string | null;
