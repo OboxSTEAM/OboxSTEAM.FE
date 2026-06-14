@@ -146,7 +146,6 @@ export function ProgramEnrollCta({
 
   const getSubtext = (): string => {
     if (showEnrollFlow) return getEnrollSubtext();
-    if (enrollmentCta.kind === "enroll") return getEnrollSubtext();
     return enrollmentCta.subtext;
   };
 

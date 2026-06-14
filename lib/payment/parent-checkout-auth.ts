@@ -19,11 +19,6 @@ export function persistParentCheckoutAuth(
       accessToken: checkout.accessToken,
       refreshToken: checkout.refreshToken ?? "",
     },
-    email || role
-      ? {
-          ...(email ? { email } : {}),
-          ...(role ? { role } : {}),
-        }
-      : undefined,
+    email ? { email, ...(role ? { role } : {}) } : undefined,
   );
 }
