@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/card";
 import { parentCheckout } from "@/lib/api";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { persistParentCheckoutAuth } from "@/lib/payment/parent-checkout-auth";
 import { cn } from "@/lib/utils";
 import { parentCheckoutLinkParamsSchema } from "@/lib/validations/payments";
 
@@ -46,10 +47,15 @@ export function ParentCheckoutPageContent() {
           token: parsed.token,
           gateway: "Stripe",
         });
-        const checkoutUrl = result?.data?.checkoutUrl;
-        if (!checkoutUrl) {
+        const checkout = result?.data;
+        const checkoutUrl = checkout?.checkoutUrl;
+        const accessToken = checkout?.accessToken;
+
+        if (!checkoutUrl || !accessToken) {
           throw new Error("Không nhận được liên kết thanh toán.");
         }
+
+        persistParentCheckoutAuth(checkout);
         window.location.href = checkoutUrl;
       } catch (error) {
         setFlowState("error");

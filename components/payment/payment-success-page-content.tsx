@@ -5,8 +5,10 @@ import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { buttonVariants } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { getPaymentById } from "@/lib/api";
 import type { Payment } from "@/lib/api/entities/payment";
+import { isParentRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { PAYMENT_SUCCESS_ILLUSTRATION_URL } from "@/lib/payment/constants";
 import { cn } from "@/lib/utils";
@@ -17,11 +19,63 @@ import { PaymentPageShell } from "./payment-page-shell";
 
 type LoadState = "loading" | "ready" | "error";
 
+function PaymentSuccessFooter({
+  isParent,
+}: {
+  isParent: boolean;
+}) {
+  if (isParent) {
+    return (
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+        <Link
+          href="/parent/children"
+          className={cn(buttonVariants(), "font-semibold")}
+        >
+          Quản lý con
+        </Link>
+        <Link
+          href="/"
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "border-[#E5E5E0]",
+          )}
+        >
+          Về trang chủ
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+      <Link href="/courses" className={cn(buttonVariants(), "font-semibold")}>
+        Vào Khóa học của tôi
+      </Link>
+      <Link
+        href="/#programs"
+        className={cn(
+          buttonVariants({ variant: "outline" }),
+          "border-[#E5E5E0]",
+        )}
+      >
+        Khám phá thêm chương trình
+      </Link>
+    </div>
+  );
+}
+
 export function PaymentSuccessPageContent() {
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
+  const { profile, isHydrated, session } = useCurrentUser();
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [payment, setPayment] = useState<Payment | null>(null);
+
+  const cachedRole = session?.user?.role;
+  const isParent =
+    isHydrated &&
+    ((profile != null && isParentRole(profile.role)) ||
+      (cachedRole != null && isParentRole(cachedRole)));
 
   useEffect(() => {
     if (!paymentId) {
@@ -72,7 +126,7 @@ export function PaymentSuccessPageContent() {
       <PaymentPageShell
         eyebrow="Thanh toán"
         title="Không tải được biên lai"
-        description="Liên kết không hợp lệ hoặc giao dịch chưa sẵn sàng. Kiểm tra email xác nhận hoặc vào Khóa học của tôi."
+        description="Liên kết không hợp lệ hoặc giao dịch chưa sẵn sàng. Kiểm tra email xác nhận hoặc thử lại sau."
         illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
         illustrationAlt="Minh họa thanh toán"
       >
@@ -83,9 +137,18 @@ export function PaymentSuccessPageContent() {
               : "Thiếu mã thanh toán trên URL."}
           </p>
           <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <Link href="/courses" className={cn(buttonVariants(), "font-semibold")}>
-              Khóa học của tôi
-            </Link>
+            {isParent ? (
+              <Link
+                href="/parent/children"
+                className={cn(buttonVariants(), "font-semibold")}
+              >
+                Quản lý con
+              </Link>
+            ) : (
+              <Link href="/courses" className={cn(buttonVariants(), "font-semibold")}>
+                Khóa học của tôi
+              </Link>
+            )}
             <Link
               href="/#programs"
               className={cn(
@@ -104,29 +167,18 @@ export function PaymentSuccessPageContent() {
   return (
     <PaymentPageShell
       eyebrow="Thanh toán thành công"
-      title="Cảm ơn bạn đã đăng ký!"
-      description="Giao dịch đã được ghi nhận. Bạn có thể bắt đầu học ngay trong mục Khóa học của tôi."
+      title={isParent ? "Thanh toán hoàn tất!" : "Cảm ơn bạn đã đăng ký!"}
+      description={
+        isParent
+          ? "Giao dịch đã được ghi nhận. Học viên có thể bắt đầu học trong Khóa học của tôi."
+          : "Giao dịch đã được ghi nhận. Bạn có thể bắt đầu học ngay trong mục Khóa học của tôi."
+      }
       illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
       illustrationAlt="Minh họa thanh toán thành công"
     >
       <PaymentInvoiceCard
         payment={payment}
-        footer={
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-            <Link href="/courses" className={cn(buttonVariants(), "font-semibold")}>
-              Vào Khóa học của tôi
-            </Link>
-            <Link
-              href="/#programs"
-              className={cn(
-                buttonVariants({ variant: "outline" }),
-                "border-[#E5E5E0]",
-              )}
-            >
-              Khám phá thêm chương trình
-            </Link>
-          </div>
-        }
+        footer={<PaymentSuccessFooter isParent={isParent} />}
       />
     </PaymentPageShell>
   );

@@ -2,11 +2,15 @@ import { z } from "zod";
 
 import {
   checkoutSessionSchema,
+  parentCheckoutSessionSchema,
   paymentSchema,
 } from "@/lib/api/entities/payment";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
 export const checkoutPaymentValueSchema = createApiValueSchema(checkoutSessionSchema);
+export const parentCheckoutPaymentValueSchema = createApiValueSchema(
+  parentCheckoutSessionSchema,
+);
 export const paymentDetailValueSchema = createApiValueSchema(paymentSchema);
 export const requestParentPaymentValueSchema = createApiValueSchema(z.null());
 
@@ -20,7 +24,7 @@ export const requestParentPaymentResponseSchema = createApiResponseSchema(
   requestParentPaymentValueSchema,
 );
 export const parentCheckoutResponseSchema = createApiResponseSchema(
-  checkoutPaymentValueSchema,
+  parentCheckoutPaymentValueSchema,
 );
 
 export type CheckoutPaymentResponse = z.infer<typeof checkoutPaymentResponseSchema>;

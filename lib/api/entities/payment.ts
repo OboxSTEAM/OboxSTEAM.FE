@@ -15,6 +15,12 @@ export const checkoutSessionSchema = z.object({
   checkoutUrl: z.string().url(),
 });
 
+/** Parent email-link checkout — includes short-lived access for post-Stripe receipt. */
+export const parentCheckoutSessionSchema = checkoutSessionSchema.extend({
+  accessToken: z.string().min(1),
+  refreshToken: z.string().min(1).optional(),
+});
+
 export const paymentSchema = z.object({
   id: z.string().uuid(),
   code: z.string(),
@@ -34,4 +40,5 @@ export const paymentSchema = z.object({
 export type PaymentGateway = z.infer<typeof paymentGatewaySchema>;
 export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
 export type CheckoutSession = z.infer<typeof checkoutSessionSchema>;
+export type ParentCheckoutSession = z.infer<typeof parentCheckoutSessionSchema>;
 export type Payment = z.infer<typeof paymentSchema>;

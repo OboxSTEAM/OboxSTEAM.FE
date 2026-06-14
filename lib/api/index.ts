@@ -71,6 +71,7 @@ export {
   type ParentCheckoutInput,
   type ParentCheckoutResponse,
   type ParentCheckoutResult,
+  type ParentCheckoutSession,
   type Payment,
   type PaymentGateway,
   type PaymentStatus,

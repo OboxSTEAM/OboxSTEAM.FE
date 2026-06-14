@@ -2,7 +2,9 @@ import { z } from "zod";
 
 import { apiFetch, apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { createApiPost } from "@/lib/api/create-endpoint";
+import { parentCheckoutSessionSchema } from "@/lib/api/entities/payment";
 import { ApiResponseError } from "@/lib/api/errors";
+import { createApiValueSchema } from "@/lib/api/schemas";
 import {
   checkoutPaymentSchema,
   parentCheckoutSchema,
@@ -20,6 +22,10 @@ import {
   type RequestParentPaymentResult,
 } from "./schemas";
 
+const parentCheckoutPaymentValueSchema = createApiValueSchema(
+  parentCheckoutSessionSchema,
+);
+
 export type {
   CheckoutPaymentResponse,
   CheckoutPaymentResult,
@@ -33,6 +39,7 @@ export type {
 
 export type {
   CheckoutSession,
+  ParentCheckoutSession,
   Payment,
   PaymentGateway,
   PaymentStatus,
@@ -66,7 +73,7 @@ export const requestParentPayment = createApiPost({
 export const parentCheckout = createApiPost({
   path: `${PAYMENTS_BASE}/parent-checkout`,
   input: parentCheckoutSchema,
-  value: checkoutPaymentValueSchema,
+  value: parentCheckoutPaymentValueSchema,
   fetchOptions: { skipAuth: true, skipRefresh: true },
 });
 
