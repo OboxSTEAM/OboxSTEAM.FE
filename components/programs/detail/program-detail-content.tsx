@@ -11,6 +11,7 @@ import type { Paginated, ProgramReview, ProgramWithModules } from "@/lib/api/pro
 import { PROGRAM_DETAIL_SCROLL_MARGIN } from "@/lib/programs/detail-sections";
 import { cn } from "@/lib/utils";
 
+import { ProgramEnrollmentLookupProvider } from "./program-enrollment-lookup";
 import { ProgramCurriculum } from "./program-curriculum";
 import { ProgramDetailHero } from "./program-detail-hero";
 import { ProgramExpertsPanel } from "./program-experts-panel";
@@ -40,7 +41,7 @@ export function ProgramDetailContent({
   );
 
   return (
-    <>
+    <ProgramEnrollmentLookupProvider programId={program.id}>
       <ProgramDetailHero program={program} onExpertClick={openExpert} />
 
       <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:pb-16">
@@ -128,6 +129,6 @@ export function ProgramDetailContent({
         currentProgramId={program.id}
         preview={selection?.preview ?? null}
       />
-    </>
+    </ProgramEnrollmentLookupProvider>
   );
 }

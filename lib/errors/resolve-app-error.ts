@@ -115,6 +115,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Yêu cầu hủy bị từ chối hoặc giao dịch đã được xử lý.",
     action: "Quay lại chương trình và thử đăng ký lại nếu cần.",
   },
+  "payments.request-parent": {
+    title: "Không gửi được yêu cầu thanh toán",
+    reason: "Phụ huynh chưa liên kết, chưa xác nhận, hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra liên kết phụ huynh trong hồ sơ và thử lại.",
+  },
+  "payments.parent-checkout": {
+    title: "Không thể bắt đầu thanh toán",
+    reason: "Liên kết thanh toán không hợp lệ hoặc đã hết hạn (24 giờ).",
+    action: "Nhờ học viên gửi lại yêu cầu thanh toán từ trang chương trình.",
+  },
   "enrollments.list": {
     title: "Không tải được khóa học",
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",

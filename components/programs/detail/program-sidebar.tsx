@@ -2,12 +2,10 @@ import type { LucideIcon } from "lucide-react";
 import { BookOpen, Clock, Layers, Library } from "lucide-react";
 
 import type { ProgramWithModules } from "@/lib/api/programs";
-import {
-  getProgramPriceParts,
-  PROGRAM_LEVEL_LABELS,
-} from "@/lib/programs/constants";
+import { PROGRAM_LEVEL_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
+import { ProgramSidebarHead } from "./program-detail-enrollment-head";
 import { ProgramEnrollCta } from "./program-enroll-cta";
 
 type ProgramSidebarProps = {
@@ -37,7 +35,6 @@ function DetailRow({
 
 export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
   const moduleCount = program.modules.length;
-  const priceParts = getProgramPriceParts(program.price);
 
   return (
     <aside
@@ -46,28 +43,7 @@ export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
         className,
       )}
     >
-      <div className="text-center">
-        <p className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
-          Học phí
-        </p>
-        {priceParts.isFree ? (
-          <p className="mt-1 font-heading text-3xl font-extrabold text-[#4FC3F7]">
-            {priceParts.label}
-          </p>
-        ) : (
-          <p
-            className="mt-1 inline-flex items-baseline justify-center gap-1"
-            aria-label={`Giá ${priceParts.amount} ${priceParts.unit}`}
-          >
-            <span className="font-heading text-3xl font-extrabold tabular-nums leading-none text-[#E94B3C]">
-              {priceParts.amount}
-            </span>
-            <span className="text-sm font-bold text-[#E94B3C]/80">
-              {priceParts.unit}
-            </span>
-          </p>
-        )}
-      </div>
+      <ProgramSidebarHead price={program.price} />
 
       <ProgramEnrollCta
         programId={program.id}

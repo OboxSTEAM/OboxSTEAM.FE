@@ -36,4 +36,6 @@ export type AppErrorContext =
   | "payments.checkout"
   | "payments.detail"
   | "payments.cancel"
+  | "payments.request-parent"
+  | "payments.parent-checkout"
   | "enrollments.list";

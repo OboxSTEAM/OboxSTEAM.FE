@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { ProgramDetailBack } from "./program-detail-back";
+import { ProgramHeroEnrollmentHead } from "./program-detail-enrollment-head";
 import { ProgramEnrollCta } from "./program-enroll-cta";
 import { StarRating } from "./star-rating";
 
@@ -291,6 +292,7 @@ export function ProgramDetailHero({
             </div>
 
             <div className="pt-1 lg:hidden">
+              <ProgramHeroEnrollmentHead price={program.price} />
               <ProgramEnrollCta
                 programId={program.id}
                 price={program.price}

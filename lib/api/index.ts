@@ -60,15 +60,23 @@ export {
   cancelPayment,
   checkoutPayment,
   getPaymentById,
+  parentCheckout,
+  requestParentPayment,
   type CheckoutPaymentInput,
   type CheckoutPaymentResponse,
   type CheckoutPaymentResult,
   type CheckoutSession,
   type GetPaymentByIdResponse,
   type GetPaymentByIdResult,
+  type ParentCheckoutInput,
+  type ParentCheckoutResponse,
+  type ParentCheckoutResult,
   type Payment,
   type PaymentGateway,
   type PaymentStatus,
+  type RequestParentPaymentInput,
+  type RequestParentPaymentResponse,
+  type RequestParentPaymentResult,
 } from "./payments";
 
 export {

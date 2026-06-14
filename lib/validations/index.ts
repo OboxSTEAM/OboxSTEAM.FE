@@ -28,7 +28,10 @@ export {
 } from "./parent";
 export {
   checkoutPaymentSchema,
+  parentCheckoutLinkParamsSchema,
+  parentCheckoutSchema,
   paymentIdParamSchema,
+  requestParentPaymentSchema,
 } from "./payments";
 export {
   myProgramEnrollmentsQuerySchema,

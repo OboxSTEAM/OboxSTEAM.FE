@@ -1,16 +1,19 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { Loader2 } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { checkoutPayment } from "@/lib/api";
 import { isParentRole, isStudentRole } from "@/lib/auth/roles";
-import { showAppErrorFromUnknown } from "@/lib/errors";
 import { getProgramPriceParts } from "@/lib/programs/constants";
+import { resolveProgramDetailEnrollmentCta } from "@/lib/programs/enrollments";
 import { cn } from "@/lib/utils";
+
+import { useProgramEnrollmentLookup } from "./program-enrollment-lookup";
+import { ProgramEnrollPaymentDialog } from "./program-enroll-payment-dialog";
 
 type ProgramEnrollCtaProps = {
   programId: string;
@@ -26,8 +29,8 @@ export function ProgramEnrollCta({
   className,
 }: ProgramEnrollCtaProps) {
   const router = useRouter();
-  const { isAuthenticated, isHydrated, profile } = useCurrentUser();
-  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const { isAuthenticated, isHydrated, isLoading, profile } = useCurrentUser();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const priceParts = getProgramPriceParts(price);
   const isHero = variant === "hero";
@@ -35,9 +38,16 @@ export function ProgramEnrollCta({
   const isParent = profile ? isParentRole(profile.role) : false;
   const isStudent = profile ? isStudentRole(profile.role) : false;
 
-  const handleEnroll = async () => {
-    if (isFree || isCheckingOut) return;
+  const { enrollment, isLoading: isEnrollmentLoading } =
+    useProgramEnrollmentLookup();
 
+  const enrollmentCta = useMemo(
+    () => resolveProgramDetailEnrollmentCta(enrollment),
+    [enrollment],
+  );
+
+  const handleEnrollClick = () => {
+    if (isFree) return;
     if (!isHydrated) return;
 
     if (!isAuthenticated) {
@@ -49,24 +59,10 @@ export function ProgramEnrollCta({
 
     if (!isStudent) return;
 
-    setIsCheckingOut(true);
-    try {
-      const result = await checkoutPayment({
-        programId,
-        gateway: "Stripe",
-      });
-      const checkoutUrl = result?.data?.checkoutUrl;
-      if (!checkoutUrl) {
-        throw new Error("Không nhận được liên kết thanh toán.");
-      }
-      window.location.href = checkoutUrl;
-    } catch (error) {
-      setIsCheckingOut(false);
-      showAppErrorFromUnknown(error, "payments.checkout");
-    }
+    setDialogOpen(true);
   };
 
-  const getSubtext = (): string => {
+  const getEnrollSubtext = (): string => {
     if (isFree) return "Tính năng đăng ký miễn phí sẽ sớm ra mắt";
     if (isAuthenticated && isParent) {
       return "Chỉ học viên mới có thể đăng ký trực tiếp";
@@ -75,53 +71,99 @@ export function ProgramEnrollCta({
       return "Tài khoản này không thể đăng ký chương trình";
     }
     if (!isAuthenticated) return "Đăng nhập để đăng ký và thanh toán";
-    return "Thanh toán an toàn qua Stripe";
+    return "Thanh toán trực tiếp hoặc nhờ phụ huynh";
   };
 
-  const isDisabled =
-    isCheckingOut || isFree || (isAuthenticated && !isStudent);
+  const isEnrollDisabled = isFree || (isAuthenticated && !isStudent);
+  const canFetchEnrollment =
+    isHydrated && !isLoading && isAuthenticated && isStudent;
+  const isCheckingEnrollment = canFetchEnrollment && isEnrollmentLoading;
+  const showEnrollFlow =
+    !canFetchEnrollment ||
+    isCheckingEnrollment ||
+    enrollmentCta.kind === "enroll";
 
-  return (
-    <div className={cn("space-y-2", className)}>
-      {isHero && !priceParts.isFree ? (
-        <p className="text-sm text-[#6B6B6B]">
-          Học phí{" "}
-          <span className="font-semibold text-[#2D2D2D]">
-            {priceParts.amount} {priceParts.unit}
-          </span>
-        </p>
-      ) : null}
+  const buttonClassName = cn(
+    "font-semibold",
+    isHero ? "h-11 px-6 text-sm" : "h-11 w-full text-sm",
+  );
 
+  const subtextClassName = cn(
+    "text-xs leading-relaxed text-[#6B6B6B]",
+    isHero ? "" : "text-center",
+  );
+
+  const renderPrimaryAction = () => {
+    if (isCheckingEnrollment) {
+      return (
+        <Button
+          type="button"
+          className={buttonClassName}
+          disabled
+          aria-busy="true"
+        >
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+          Đang kiểm tra…
+        </Button>
+      );
+    }
+
+    if (enrollmentCta.kind === "continue" || enrollmentCta.kind === "review") {
+      return (
+        <Link
+          href={enrollmentCta.href}
+          className={cn(buttonVariants(), buttonClassName)}
+        >
+          {enrollmentCta.label}
+        </Link>
+      );
+    }
+
+    if (enrollmentCta.kind === "complete-payment") {
+      return (
+        <Button
+          type="button"
+          className={buttonClassName}
+          onClick={() => setDialogOpen(true)}
+        >
+          {enrollmentCta.label}
+        </Button>
+      );
+    }
+
+    return (
       <Button
         type="button"
-        className={cn(
-          "font-semibold",
-          isHero ? "h-11 px-6 text-sm" : "h-11 w-full text-sm",
-        )}
+        className={buttonClassName}
         aria-label="Đăng ký chương trình"
-        disabled={isDisabled}
-        onClick={() => void handleEnroll()}
+        disabled={isEnrollDisabled}
+        onClick={handleEnrollClick}
       >
-        {isCheckingOut ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-            Đang chuyển đến thanh toán…
-          </>
-        ) : priceParts.isFree ? (
-          "Đăng ký miễn phí"
-        ) : (
-          "Đăng ký chương trình"
-        )}
+        {priceParts.isFree ? "Đăng ký miễn phí" : "Đăng ký chương trình"}
       </Button>
+    );
+  };
 
-      <p
-        className={cn(
-          "text-xs leading-relaxed text-[#6B6B6B]",
-          isHero ? "" : "text-center",
-        )}
-      >
-        {getSubtext()}
-      </p>
-    </div>
+  const getSubtext = (): string => {
+    if (showEnrollFlow) return getEnrollSubtext();
+    if (enrollmentCta.kind === "enroll") return getEnrollSubtext();
+    return enrollmentCta.subtext;
+  };
+
+  return (
+    <>
+      <div className={cn("space-y-2", className)}>
+        {renderPrimaryAction()}
+
+        <p className={subtextClassName}>{getSubtext()}</p>
+      </div>
+
+      <ProgramEnrollPaymentDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        programId={programId}
+        price={price}
+      />
+    </>
   );
 }

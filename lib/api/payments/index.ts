@@ -5,14 +5,19 @@ import { createApiPost } from "@/lib/api/create-endpoint";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   checkoutPaymentSchema,
+  parentCheckoutSchema,
   paymentIdParamSchema,
+  requestParentPaymentSchema,
 } from "@/lib/validations/payments";
 
 import {
   checkoutPaymentValueSchema,
   getPaymentByIdResponseSchema,
+  requestParentPaymentValueSchema,
   type CheckoutPaymentResult,
   type GetPaymentByIdResult,
+  type ParentCheckoutResult,
+  type RequestParentPaymentResult,
 } from "./schemas";
 
 export type {
@@ -20,6 +25,10 @@ export type {
   CheckoutPaymentResult,
   GetPaymentByIdResponse,
   GetPaymentByIdResult,
+  ParentCheckoutResponse,
+  ParentCheckoutResult,
+  RequestParentPaymentResponse,
+  RequestParentPaymentResult,
 } from "./schemas";
 
 export type {
@@ -30,6 +39,8 @@ export type {
 } from "@/lib/api/entities/payment";
 
 export type CheckoutPaymentInput = z.infer<typeof checkoutPaymentSchema>;
+export type RequestParentPaymentInput = z.infer<typeof requestParentPaymentSchema>;
+export type ParentCheckoutInput = z.infer<typeof parentCheckoutSchema>;
 
 const PAYMENTS_BASE = "/api/payments";
 
@@ -44,6 +55,19 @@ export const checkoutPayment = createApiPost({
   path: `${PAYMENTS_BASE}/checkout`,
   input: checkoutPaymentSchema,
   value: checkoutPaymentValueSchema,
+});
+
+export const requestParentPayment = createApiPost({
+  path: `${PAYMENTS_BASE}/request-parent`,
+  input: requestParentPaymentSchema,
+  value: requestParentPaymentValueSchema,
+});
+
+export const parentCheckout = createApiPost({
+  path: `${PAYMENTS_BASE}/parent-checkout`,
+  input: parentCheckoutSchema,
+  value: checkoutPaymentValueSchema,
+  fetchOptions: { skipAuth: true, skipRefresh: true },
 });
 
 export async function getPaymentById(id: string): Promise<GetPaymentByIdResult> {
