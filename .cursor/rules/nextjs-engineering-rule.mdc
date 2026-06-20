@@ -21,12 +21,27 @@ Next.js App Router · TypeScript · Tailwind + shadcn/ui (Radix) · Redux Toolki
 
 ## Before coding
 
-1. **Review** — Read existing code; `<CODE_REVIEW>` when non-trivial.
+1. **Review** — Use **Codegraph MCP** for TS/TSX context, call paths, and blast radius; `<CODE_REVIEW>` when non-trivial.
 2. **Plan** — `<PLANNING>` for multi-step work; preserve names/literals unless change required; `::CONVENTION_NAME::` for new patterned names.
 3. **Implement** — Small increments; quick verification hints.
 4. **Secure** — `<SECURITY_REVIEW>` for auth, input, secrets, PII.
 
 Prefer concepts over code when sufficient; ask on ambiguity; brief trade-offs when choices matter.
+
+### Code intelligence (Codegraph MCP)
+
+Project MCP server: `codegraph` (`.codegraph/` index). Default for indexed source — faster and includes callers/callees grep cannot follow.
+
+| Intent | Tool |
+|--------|------|
+| How does X work? / survey area / symbols before an edit | `codegraph_explore` |
+| What breaks if I change this? | `codegraph_callers` |
+| One symbol or file + dependency trail | `codegraph_node` |
+| Locate a symbol by name | `codegraph_search` |
+
+- One `codegraph_explore` call usually replaces a search → read → grep loop.
+- Do **not** re-verify Codegraph source with grep; re-read only files in a staleness banner after your edit.
+- Grep/Read when Codegraph does not index the file (configs, `.md`, env) or the index is unavailable.
 
 ---
 

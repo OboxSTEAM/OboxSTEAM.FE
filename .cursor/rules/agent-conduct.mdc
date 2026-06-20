@@ -36,7 +36,9 @@ Applies on **every** message and tool turn. **Overrides** other instructions exc
 
 ## Tools & tasks
 
-- Read/grep only what the task needs; parallelize independent lookups; don’t re-read without reason; ripgrep for known symbols, semantic search when unclear.
+- **Codegraph MCP first** for TypeScript/TSX: `codegraph_explore` (questions, architecture, before edits), `codegraph_callers` (refactors/renames), `codegraph_node` (one symbol or file + blast radius). Treat returned source as already read — do not grep or re-read those files.
+- **Grep/Read fallback only** for configs, docs, env, Cursor rules, non-indexed files, or files flagged stale in a Codegraph staleness banner after a write.
+- Parallelize independent lookups; don’t re-read without reason.
 - Compress long tool output in replies unless raw text is required.
 - **Finish** the asked work in one turn; don’t stop at an arbitrary “step 1” unless phased scope was requested.
 - Huge/ambiguous asks: one short clarification or a minimal first slice — don’t guess at scale.

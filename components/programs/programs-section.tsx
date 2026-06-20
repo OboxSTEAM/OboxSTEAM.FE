@@ -108,7 +108,7 @@ export function ProgramsSection() {
     <section
       ref={sectionRef}
       id="programs"
-      className="relative py-20 lg:py-28 bg-[#1A1A1A] overflow-hidden scroll-mt-[4.5rem] sm:scroll-mt-20"
+      className="relative scroll-mt-[4.5rem] overflow-hidden bg-[#262320] py-20 sm:scroll-mt-20 lg:py-28"
       aria-labelledby="programs-heading"
     >
       <div
@@ -132,7 +132,7 @@ export function ProgramsSection() {
       />
       <div
         aria-hidden="true"
-        className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full pointer-events-none"
+        className="pointer-events-none absolute bottom-0 left-0 h-[400px] w-[400px] rounded-full"
         style={{
           background:
             "radial-gradient(circle, rgba(79,195,247,0.08) 0%, transparent 70%)",
@@ -188,6 +188,15 @@ export function ProgramsSection() {
           />
         )}
       </div>
+
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+        style={{
+          background:
+            "linear-gradient(90deg, #E94B3C 0%, #7CB342 25%, #4FC3F7 50%, #FDD835 75%, #7E57C2 100%)",
+        }}
+      />
     </section>
   );
 }
