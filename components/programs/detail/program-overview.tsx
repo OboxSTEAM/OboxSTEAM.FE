@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import type { ProgramWithModules } from "@/lib/api/programs";
 import { parseProgramSkills } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
@@ -22,9 +21,9 @@ export function ProgramOverview({ program, className }: ProgramOverviewProps) {
         Giới thiệu chương trình
       </h2>
 
-      <div className="mt-4 space-y-5">
+      <div className="mt-4 space-y-6">
         <div>
-          <h3 className="mb-2 font-heading text-sm font-semibold text-[#2D2D2D]">
+          <h3 className="mb-2 font-heading text-base font-semibold text-[#2D2D2D]">
             Mô tả
           </h3>
           <p className="text-sm leading-relaxed text-[#6B6B6B] whitespace-pre-line">
@@ -34,18 +33,15 @@ export function ProgramOverview({ program, className }: ProgramOverviewProps) {
 
         {skills.length > 0 ? (
           <div>
-            <h3 className="mb-2 font-heading text-sm font-semibold text-[#2D2D2D]">
+            <h3 className="mb-3 font-heading text-base font-semibold text-[#2D2D2D]">
               Kỹ năng đạt được
             </h3>
-            <ul className="flex flex-wrap gap-1.5">
+            <ul className="flex flex-wrap gap-2">
               {skills.map((skill) => (
                 <li key={skill}>
-                  <Badge
-                    variant="secondary"
-                    className="bg-[#F5F5F0] font-normal text-[#2D2D2D] hover:bg-[#F5F5F0]"
-                  >
+                  <span className="inline-flex rounded-md bg-[#E8EEF5] px-3 py-1.5 text-sm font-medium text-[#2D2D2D]">
                     {skill}
-                  </Badge>
+                  </span>
                 </li>
               ))}
             </ul>

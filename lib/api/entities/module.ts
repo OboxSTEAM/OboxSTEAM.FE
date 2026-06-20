@@ -16,6 +16,7 @@ export const moduleSchema = z.object({
   isMandatory: z.boolean(),
   price: z.number(),
   retakeFee: z.number(),
+  learningOutcomes: z.array(z.string()).default([]),
   createdAt: z.string(),
   updatedAt: z.string(),
   courses: z.array(moduleCourseSchema),
