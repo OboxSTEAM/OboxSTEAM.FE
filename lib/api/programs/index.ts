@@ -14,6 +14,7 @@ import {
 import {
   deleteProgramResponseSchema,
   getProgramByIdResponseSchema,
+  getProgramCurriculumResponseSchema,
   getProgramReviewsResponseSchema,
   getProgramsResponseSchema,
   getProgramsWithModulesResponseSchema,
@@ -22,6 +23,7 @@ import {
   type CreateProgramResult,
   type DeleteProgramResult,
   type GetProgramByIdResult,
+  type GetProgramCurriculumResult,
   type GetProgramReviewsResult,
   type GetProgramsResult,
   type GetProgramsWithModulesResult,
@@ -35,6 +37,8 @@ export type {
   DeleteProgramResult,
   GetProgramByIdResponse,
   GetProgramByIdResult,
+  GetProgramCurriculumResponse,
+  GetProgramCurriculumResult,
   GetProgramReviewsResponse,
   GetProgramReviewsResult,
   GetProgramsResponse,
@@ -59,6 +63,11 @@ export type {
   ProgramLevel,
   ProgramWithModules,
 } from "@/lib/api/entities/program";
+
+export type {
+  CurriculumModule,
+  ProgramCurriculum,
+} from "@/lib/api/entities/curriculum";
 
 export type { ProgramReview } from "@/lib/api/entities/review";
 
@@ -138,6 +147,20 @@ export async function getProgramById(id: string): Promise<GetProgramByIdResult> 
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${programId}`,
     getProgramByIdResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getProgramCurriculum(
+  id: string,
+): Promise<GetProgramCurriculumResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/curriculum`,
+    getProgramCurriculumResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

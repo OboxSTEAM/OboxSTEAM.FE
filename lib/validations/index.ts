@@ -10,6 +10,14 @@ export {
 } from "./auth";
 export { expertIdParamSchema, type ExpertIdParam } from "./experts";
 export {
+  activityIdParamSchema,
+  courseIdParamSchema,
+  moduleIdParamSchema,
+  type ActivityIdParam,
+  type CourseIdParam,
+  type ModuleIdParam,
+} from "./curriculum";
+export {
   createProgramSchema,
   programIdParamSchema,
   programListQuerySchema,

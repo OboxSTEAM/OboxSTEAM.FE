@@ -23,6 +23,7 @@ export {
   createProgram,
   deleteProgram,
   getProgramById,
+  getProgramCurriculum,
   getProgramReviews,
   getPrograms,
   getProgramsWithModules,
@@ -30,10 +31,13 @@ export {
   type CreateProgramInput,
   type CreateProgramResponse,
   type CreateProgramResult,
+  type CurriculumModule,
   type DeleteProgramResponse,
   type DeleteProgramResult,
   type GetProgramByIdResponse,
   type GetProgramByIdResult,
+  type GetProgramCurriculumResponse,
+  type GetProgramCurriculumResult,
   type GetProgramReviewsResponse,
   type GetProgramReviewsResult,
   type GetProgramsResponse,
@@ -45,6 +49,7 @@ export {
   type ModuleType,
   type Paginated,
   type Program,
+  type ProgramCurriculum,
   type ProgramIdParam,
   type ProgramLevel,
   type ProgramListQuery,
@@ -55,6 +60,31 @@ export {
   type UpdateProgramResponse,
   type UpdateProgramResult,
 } from "./programs";
+
+export {
+  getModuleById,
+  type GetModuleByIdResponse,
+  type GetModuleByIdResult,
+} from "./modules";
+
+export {
+  getCourseById,
+  type Course,
+  type CurriculumCourse,
+  type GetCourseByIdResponse,
+  type GetCourseByIdResult,
+} from "./courses";
+
+export {
+  getActivityById,
+  type Activity,
+  type ActivityMaterial,
+  type ActivityType,
+  type CurriculumActivity,
+  type CurriculumMaterialSummary,
+  type GetActivityByIdResponse,
+  type GetActivityByIdResult,
+} from "./activities";
 
 export {
   cancelPayment,

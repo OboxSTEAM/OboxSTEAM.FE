@@ -1,9 +1,10 @@
 import { z } from "zod";
 
+import { courseSchema } from "@/lib/api/entities/course";
+
 export const moduleTypeSchema = z.enum(["Theory", "Experiential", "Research"]);
 
-/** Placeholder until course entity is defined in the curriculum API. */
-export const moduleCourseSchema = z.object({}).passthrough();
+export const moduleCourseSchema = courseSchema;
 
 export const moduleSchema = z.object({
   id: z.string(),
