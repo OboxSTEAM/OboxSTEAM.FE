@@ -111,12 +111,37 @@ export {
 } from "./payments";
 
 export {
+  completeActivity,
+  getEnrollmentCurriculum,
   getMyProgramEnrollments,
+  getProgramEnrollmentsByStudentId,
+  saveActivityCheckpoint,
+  type ActivityCheckpointData,
+  type ActivityNavStatus,
+  type CompleteActivityData,
+  type CompleteActivityInput,
+  type CompleteActivityResponse,
+  type CompleteActivityResult,
+  type EnrollmentCurriculum,
+  type EnrollmentCurriculumActivity,
+  type EnrollmentCurriculumCourse,
+  type EnrollmentCurriculumMilestone,
+  type EnrollmentCurriculumModule,
+  type GetEnrollmentCurriculumResponse,
+  type GetEnrollmentCurriculumResult,
   type GetMyProgramEnrollmentsResponse,
   type GetMyProgramEnrollmentsResult,
+  type GetStudentProgramEnrollmentsResponse,
+  type GetStudentProgramEnrollmentsResult,
   type MyProgramEnrollmentsQuery,
   type ProgramEnrollment,
   type ProgramEnrollmentStatus,
+  type ResumeState,
+  type ResumeStateKind,
+  type SaveActivityCheckpointInput,
+  type SaveActivityCheckpointResponse,
+  type SaveActivityCheckpointResult,
+  type StudentProgramEnrollmentsQuery,
 } from "./program-enrollments";
 
 export {
