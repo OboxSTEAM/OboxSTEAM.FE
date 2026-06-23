@@ -19,7 +19,10 @@ import {
   getProgramPriceParts,
   PROGRAM_LEVEL_LABELS,
 } from "@/lib/programs/constants";
-import { PROGRAM_ENROLLMENT_STATUS_LABELS } from "@/lib/programs/enrollments";
+import {
+  getProgramLearnHref,
+  PROGRAM_ENROLLMENT_STATUS_LABELS,
+} from "@/lib/programs/enrollments";
 import { cn } from "@/lib/utils";
 
 type EnrollmentCardProps = {
@@ -75,7 +78,9 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
   const priceParts = getProgramPriceParts(enrollment.price);
   const isPendingPayment = enrollment.status === "PendingPayment";
   const detailHref = `/programs/${enrollment.programId}`;
-  const continueHref = detailHref;
+  const learnHref = getProgramLearnHref(enrollment.programId);
+  const isActive = enrollment.status === "Active";
+  const isCompleted = enrollment.status === "Completed";
 
   return (
     <Card
@@ -180,15 +185,26 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
           >
             Hoàn tất thanh toán
           </Link>
-        ) : enrollment.status === "Active" ? (
+        ) : isActive ? (
           <Link
-            href={continueHref}
+            href={learnHref}
             className={cn(
               buttonVariants({ size: "sm" }),
               "inline-flex gap-1.5 font-semibold",
             )}
           >
             Tiếp tục học
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
+        ) : isCompleted ? (
+          <Link
+            href={learnHref}
+            className={cn(
+              buttonVariants({ size: "sm" }),
+              "inline-flex gap-1.5 font-semibold",
+            )}
+          >
+            Xem lại khóa học
             <ArrowRight className="size-4" aria-hidden />
           </Link>
         ) : null}

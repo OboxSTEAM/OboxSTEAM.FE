@@ -25,6 +25,16 @@ export function findEnrollmentForProgram(
   return enrollments.find((enrollment) => enrollment.programId === programId) ?? null;
 }
 
+export function getProgramLearnHref(programId: string): string {
+  return `/programs/${programId}/learn`;
+}
+
+export function canAccessProgramLearn(
+  status: ProgramEnrollmentStatus,
+): boolean {
+  return status === "Active" || status === "Completed";
+}
+
 export function showsEnrollmentProgress(
   enrollment: ProgramEnrollment | null | undefined,
 ): enrollment is ProgramEnrollment {
@@ -58,16 +68,16 @@ export function resolveProgramDetailEnrollmentCta(
     case "Completed":
       return {
         kind: "review",
-        href: "/courses",
+        href: getProgramLearnHref(enrollment.programId),
         label: "Xem lại khóa học",
-        subtext: "Bạn đã hoàn thành chương trình này.",
+        subtext: "Xem lại nội dung chương trình.",
       };
     case "Active":
       return {
         kind: "continue",
-        href: "/courses",
+        href: getProgramLearnHref(enrollment.programId),
         label: "Tiếp tục học",
-        subtext: "Tiếp tục từ Khóa học của tôi.",
+        subtext: "Tiếp tục từ nơi bạn dừng lại.",
       };
     default:
       return { kind: "enroll" };
