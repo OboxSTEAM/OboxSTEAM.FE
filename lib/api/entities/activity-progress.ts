@@ -32,8 +32,17 @@ export const completeActivityDataSchema = z.object({
   activityStatus: activityNavStatusSchema,
 });
 
+export const activityLearningProgressSchema = z.object({
+  activityStatus: z.string(),
+  resumeState: resumeStateSchema.nullable(),
+  lastAccessedAt: z.string().nullable(),
+  completedAt: z.string().nullable(),
+  completionSource: z.string().nullable(),
+});
+
 export type ActivityNavStatus = z.infer<typeof activityNavStatusSchema>;
 export type ResumeStateKind = z.infer<typeof resumeStateKindSchema>;
 export type ResumeState = z.infer<typeof resumeStateSchema>;
 export type ActivityCheckpointData = z.infer<typeof activityCheckpointResultSchema>;
 export type CompleteActivityData = z.infer<typeof completeActivityDataSchema>;
+export type ActivityLearningProgress = z.infer<typeof activityLearningProgressSchema>;

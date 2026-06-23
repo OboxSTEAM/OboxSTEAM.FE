@@ -78,13 +78,22 @@ export {
 export {
   getActivityById,
   type Activity,
+  type ActivityLearningProgress,
   type ActivityMaterial,
   type ActivityType,
   type CurriculumActivity,
   type CurriculumMaterialSummary,
+  type GetActivityByIdOptions,
   type GetActivityByIdResponse,
   type GetActivityByIdResult,
 } from "./activities";
+
+export {
+  getMaterialByActivityId,
+  type GetMaterialByActivityResponse,
+  type GetMaterialByActivityResult,
+  type Material,
+} from "./materials";
 
 export {
   cancelPayment,

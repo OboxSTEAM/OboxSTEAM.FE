@@ -153,6 +153,7 @@ export async function getProgramById(id: string): Promise<GetProgramByIdResult> 
   return requireApiValue(response.value);
 }
 
+/** Students without active enrollment receive HTTP 403. */
 export async function getProgramCurriculum(
   id: string,
 ): Promise<GetProgramCurriculumResult> {

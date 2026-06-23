@@ -35,6 +35,14 @@ export {
   requestParentLinkSchema,
 } from "./parent";
 export {
+  activityDetailQuerySchema,
+  materialByActivityParamsSchema,
+  materialByActivityQuerySchema,
+  type ActivityDetailQuery,
+  type MaterialByActivityParams,
+  type MaterialByActivityQuery,
+} from "./materials";
+export {
   checkoutPaymentSchema,
   parentCheckoutLinkParamsSchema,
   parentCheckoutSchema,

@@ -4,6 +4,7 @@ import {
   activityMaterialSchema,
   curriculumMaterialSummarySchema,
 } from "@/lib/api/entities/material";
+import { activityLearningProgressSchema } from "@/lib/api/entities/activity-progress";
 
 export const activityTypeSchema = z.enum(["SelfPaced", "LiveOnline", "Offline"]);
 
@@ -33,8 +34,11 @@ export const activitySchema = z.object({
   createdAt: z.string(),
   updatedAt: z.string(),
   material: activityMaterialSchema.nullable(),
+  learningProgress: activityLearningProgressSchema.nullable(),
 });
 
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export type CurriculumActivity = z.infer<typeof curriculumActivitySchema>;
 export type Activity = z.infer<typeof activitySchema>;
+
+export type { ActivityLearningProgress } from "@/lib/api/entities/activity-progress";
