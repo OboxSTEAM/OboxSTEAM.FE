@@ -22,6 +22,7 @@ type MaterialActivityProps = {
   resumeState: ResumeState | null;
   isAlreadyComplete: boolean;
   onCanCompleteChange?: (canComplete: boolean) => void;
+  compact?: boolean;
   className?: string;
 };
 
@@ -38,6 +39,7 @@ export function MaterialActivity({
   resumeState,
   isAlreadyComplete,
   onCanCompleteChange,
+  compact = false,
   className,
 }: MaterialActivityProps) {
   const materialMeta = activity.material;
@@ -72,6 +74,17 @@ export function MaterialActivity({
       onCanCompleteChange?.(true);
     }
   }, [materialMeta, isAlreadyComplete, onCanCompleteChange]);
+
+  useEffect(() => {
+    if (
+      compact &&
+      fileUrl &&
+      !isAlreadyComplete &&
+      (materialKind === "pdf" || materialKind === "doc")
+    ) {
+      onCanCompleteChange?.(true);
+    }
+  }, [compact, fileUrl, isAlreadyComplete, materialKind, onCanCompleteChange]);
 
   const persistCheckpoint = useCallback(async () => {
     if (!materialMeta || isAlreadyComplete) return;
@@ -141,7 +154,12 @@ export function MaterialActivity({
 
   if (isLoading) {
     return (
-      <div className={cn("h-64 animate-pulse rounded-xl bg-learn-surface-2", className)} />
+      <div
+        className={cn(
+          compact ? "min-h-0 flex-1 animate-pulse rounded-xl bg-learn-surface-2" : "h-64 animate-pulse rounded-xl bg-learn-surface-2",
+          className,
+        )}
+      />
     );
   }
 
@@ -169,41 +187,67 @@ export function MaterialActivity({
     return (
       <div
         className={cn(
-          "overflow-hidden rounded-xl border border-learn-border-strong bg-black",
+          compact ? "flex min-h-0 flex-1 flex-col" : "overflow-hidden rounded-xl bg-black",
           className,
         )}
       >
-        <video
-          ref={videoRef}
-          src={fileUrl}
-          controls
-          className="aspect-video w-full"
-          onTimeUpdate={(event) => {
-            const target = event.currentTarget;
-            onVideoTimeUpdate(target.currentTime, target.duration);
-            scheduleCheckpoint();
-          }}
-          onEnded={() => {
-            onVideoEnded();
-            void persistCheckpoint();
-          }}
-        />
+        <div
+          className={cn(
+            "overflow-hidden bg-black",
+            compact
+              ? "flex min-h-0 flex-1 items-center justify-center rounded-xl"
+              : "rounded-xl border border-learn-border-strong",
+          )}
+        >
+          <video
+            ref={videoRef}
+            src={fileUrl}
+            controls
+            className={cn(
+              "w-full",
+              compact ? "max-h-full max-w-full object-contain" : "aspect-video",
+            )}
+            onTimeUpdate={(event) => {
+              const target = event.currentTarget;
+              onVideoTimeUpdate(target.currentTime, target.duration);
+              scheduleCheckpoint();
+            }}
+            onEnded={() => {
+              onVideoEnded();
+              void persistCheckpoint();
+            }}
+          />
+        </div>
       </div>
     );
   }
 
   if (materialKind === "pdf") {
     return (
-      <div className={cn("space-y-3", className)}>
+      <div
+        className={cn(
+          compact ? "flex min-h-0 flex-1 flex-col gap-2" : "space-y-3",
+          className,
+        )}
+      >
         <iframe
           src={fileUrl}
           title={materialMeta.title}
-          className="h-[min(70vh,720px)] w-full rounded-xl border border-learn-border bg-learn-surface"
+          className={cn(
+            "w-full rounded-xl bg-learn-surface",
+            compact
+              ? "min-h-0 flex-1"
+              : "h-[min(70vh,720px)] border border-learn-border",
+          )}
         />
         <div
           ref={scrollRef}
-          className="max-h-48 overflow-y-auto rounded-xl border border-learn-border bg-learn-surface-2 p-4 text-sm text-learn-muted"
+          className={cn(
+            "text-sm text-learn-muted",
+            compact ? "shrink-0" : "max-h-48 overflow-y-auto rounded-xl border border-learn-border bg-learn-surface-2 p-4",
+          )}
           onScroll={(event) => {
+            if (compact) return;
             const target = event.currentTarget;
             const ratio =
               target.scrollHeight <= target.clientHeight
@@ -217,7 +261,7 @@ export function MaterialActivity({
             }
           }}
         >
-          <p>
+          <p className={compact ? "text-xs" : undefined}>
             Nếu PDF không hiển thị đầy đủ,{" "}
             <a
               href={fileUrl}
@@ -238,7 +282,9 @@ export function MaterialActivity({
     <div
       ref={scrollRef}
       className={cn(
-        "max-h-[min(70vh,720px)] overflow-y-auto rounded-xl border border-learn-border bg-learn-surface p-6",
+        compact
+          ? "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-learn-surface"
+          : "max-h-[min(70vh,720px)] overflow-y-auto rounded-xl border border-learn-border bg-learn-surface p-6",
         className,
       )}
       onScroll={(event) => {
@@ -258,9 +304,12 @@ export function MaterialActivity({
       <iframe
         src={fileUrl}
         title={materialMeta.title}
-        className="min-h-[480px] w-full rounded-lg border border-learn-border"
+        className={cn(
+          "w-full rounded-lg",
+          compact ? "min-h-0 flex-1" : "min-h-[480px] border border-learn-border",
+        )}
       />
-      <p className="mt-4 text-sm text-learn-muted">
+      <p className={cn("text-sm text-learn-muted", compact && "shrink-0 py-2")}>
         <a
           href={fileUrl}
           target="_blank"

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import type { Activity, ResumeState } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 import { MaterialActivity } from "./material-activity";
 import { SessionActivity } from "./session-activity";
@@ -13,6 +14,7 @@ type ActivityContentProps = {
   resumeState: ResumeState | null;
   isAlreadyComplete: boolean;
   onCanCompleteChange?: (canComplete: boolean) => void;
+  compact?: boolean;
 };
 
 export function ActivityContent({
@@ -21,6 +23,7 @@ export function ActivityContent({
   resumeState,
   isAlreadyComplete,
   onCanCompleteChange,
+  compact = false,
 }: ActivityContentProps) {
   const isSession =
     activity.activityType === "LiveOnline" || activity.activityType === "Offline";
@@ -39,9 +42,16 @@ export function ActivityContent({
         resumeState={resumeState}
         isAlreadyComplete={isAlreadyComplete}
         onCanCompleteChange={onCanCompleteChange}
+        compact={compact}
+        className={compact ? "min-h-0 flex-1" : undefined}
       />
     );
   }
 
-  return <SessionActivity activity={activity} />;
+  return (
+    <SessionActivity
+      activity={activity}
+      className={cn(compact && "pb-1")}
+    />
+  );
 }

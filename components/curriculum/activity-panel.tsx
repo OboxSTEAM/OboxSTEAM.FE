@@ -21,6 +21,8 @@ import {
 } from "@/lib/curriculum/helpers";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 
+import { cn } from "@/lib/utils";
+
 import { ActivityContent } from "./activity-renderers/activity-content";
 
 type ActivityPanelProps = {
@@ -42,12 +44,21 @@ function resolveCompleteSource(
 
 function ActivityPanelSkeleton() {
   return (
-    <div className="space-y-4 rounded-2xl border border-learn-border bg-learn-surface p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-      <Skeleton className="h-4 w-40 bg-learn-surface-2" />
-      <Skeleton className="h-8 w-3/4 bg-learn-surface-2" />
-      <Skeleton className="h-64 w-full rounded-xl bg-learn-surface-2" />
+    <div className="flex h-full flex-col rounded-2xl border border-learn-border bg-learn-surface p-5 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <Skeleton className="h-3 w-32 bg-learn-surface-2" />
+      <Skeleton className="mt-3 h-6 w-2/3 bg-learn-surface-2" />
+      <Skeleton className="mt-4 min-h-0 flex-1 rounded-xl bg-learn-surface-2" />
     </div>
   );
+}
+
+function isMediaFocusedActivity(activity: {
+  activityType: string;
+  material?: { materialType: string } | null;
+}): boolean {
+  if (activity.activityType !== "SelfPaced") return false;
+  const materialType = activity.material?.materialType?.toLowerCase();
+  return materialType === "video" || materialType === "pdf" || Boolean(materialType);
 }
 
 export function ActivityPanel({
@@ -148,7 +159,7 @@ export function ActivityPanel({
 
   if (!selectedActivityId) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Chọn một hoạt động từ danh sách bên trái.</p>
       </div>
     );
@@ -156,7 +167,7 @@ export function ActivityPanel({
 
   if (flatActivity && !isActivitySelectable(flatActivity.status)) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">
           Hoạt động này chưa mở khóa. Hoàn thành các bài trước để tiếp tục.
         </p>
@@ -170,7 +181,7 @@ export function ActivityPanel({
 
   if (hasError && !activity) {
     return (
-      <div className="rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Không tải được nội dung hoạt động.</p>
         <Button type="button" variant="outline" className="mt-4 border-learn-border" onClick={retry}>
           Thử lại
@@ -186,17 +197,19 @@ export function ActivityPanel({
   const resumeState =
     activity.learningProgress?.resumeState ?? flatActivity?.resumeState ?? null;
 
+  const mediaFocused = isMediaFocusedActivity(activity);
+
   return (
-    <div className="flex min-h-[calc(100dvh-7rem)] flex-col rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-      <div className="border-b border-learn-border px-4 py-4 sm:px-6 sm:py-5">
+    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="shrink-0 px-4 py-3 sm:px-5">
         {breadcrumb ? (
           <p className="text-xs text-learn-muted">
             {breadcrumb.moduleName}
             {breadcrumb.groupLabel ? ` · ${breadcrumb.groupLabel}` : null}
           </p>
         ) : null}
-        <div className="mt-2 flex flex-wrap items-start gap-3">
-          <h1 className="font-heading min-w-0 flex-1 text-xl font-semibold text-learn-text-strong sm:text-2xl">
+        <div className="mt-1 flex flex-wrap items-center gap-2">
+          <h1 className="font-heading min-w-0 flex-1 text-lg font-semibold text-learn-text-strong sm:text-xl">
             {activity.name}
           </h1>
           <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
@@ -205,7 +218,12 @@ export function ActivityPanel({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col px-4 pb-3 sm:px-5",
+          mediaFocused ? "overflow-hidden" : "overflow-y-auto",
+        )}
+      >
         <ActivityContent
           key={`${activity.id}-${activityResult?.code ?? "loaded"}`}
           activity={activity}
@@ -213,10 +231,11 @@ export function ActivityPanel({
           resumeState={resumeState}
           isAlreadyComplete={isAlreadyComplete}
           onCanCompleteChange={setCanComplete}
+          compact
         />
       </div>
 
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-learn-border bg-learn-surface/95 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
         <Button
           type="button"
           variant="ghost"

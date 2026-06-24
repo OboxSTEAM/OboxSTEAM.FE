@@ -49,7 +49,7 @@ export function CurriculumShell({
     : { duration: 0.28, ease: [0.16, 1, 0.3, 1] as const };
 
   return (
-    <div className="learn-shell flex min-h-dvh flex-col bg-learn-bg pt-[4.5rem] sm:pt-20">
+    <div className="learn-shell flex h-dvh flex-col overflow-hidden bg-learn-bg pt-[4.5rem] sm:pt-20">
       <SiteHeader defaultScrolled />
 
       <div className="flex min-h-0 flex-1">
@@ -76,8 +76,8 @@ export function CurriculumShell({
           </div>
         </motion.aside>
 
-        <main className="min-w-0 flex-1 p-3 sm:p-4 lg:p-6">
-          <div className="mb-3 flex items-center gap-2">
+        <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4 lg:p-6">
+          <div className="mb-2 shrink-0 flex items-center gap-2">
             <Button
               type="button"
               variant="ghost"
@@ -96,12 +96,14 @@ export function CurriculumShell({
             </Button>
           </div>
 
-          <ActivityPanel
-            curriculum={curriculum}
-            selectedActivityId={selectedActivityId}
-            onSelectActivity={onSelectActivity}
-            onCurriculumRefresh={onCurriculumRefresh}
-          />
+          <div className="min-h-0 flex-1">
+            <ActivityPanel
+              curriculum={curriculum}
+              selectedActivityId={selectedActivityId}
+              onSelectActivity={onSelectActivity}
+              onCurriculumRefresh={onCurriculumRefresh}
+            />
+          </div>
         </main>
       </div>
 
