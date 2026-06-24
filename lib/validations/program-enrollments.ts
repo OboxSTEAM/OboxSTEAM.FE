@@ -40,8 +40,17 @@ export const studentIdParamSchema = z.object({
 
 export const videoResumeStateSchema = z.object({
   kind: z.literal("video"),
-  positionSeconds: z.number().min(0, "Vị trí video không hợp lệ."),
-  durationSeconds: z.number().min(0, "Thời lượng video không hợp lệ.").optional(),
+  positionSeconds: z
+    .number()
+    .min(0, "Vị trí video không hợp lệ.")
+    .transform((value) => Math.floor(value))
+    .pipe(z.number().int().min(0)),
+  durationSeconds: z
+    .number()
+    .min(0, "Thời lượng video không hợp lệ.")
+    .transform((value) => Math.round(value))
+    .pipe(z.number().int().min(0))
+    .optional(),
 });
 
 export const pdfResumeStateSchema = z.object({

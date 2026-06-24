@@ -7,8 +7,17 @@ import { getMaterialByActivityId } from "@/lib/api";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   CHECKPOINT_DEBOUNCE_MS,
+  EMBEDDED_FRAME_POLL_MS,
   SCROLL_COMPLETE_EPSILON,
+  VIDEO_CHECKPOINT_INTERVAL_MS,
+  VIDEO_CHECKPOINT_MIN_DELTA_SECONDS,
 } from "@/lib/curriculum/constants";
+import {
+  buildPdfSrc,
+  readEmbeddedFrameProgress,
+  restoreEmbeddedFrameScroll,
+  type EmbeddedFrameProgress,
+} from "@/lib/curriculum/embedded-frame-progress";
 import {
   useActivityCompletionGate,
   useDebouncedCheckpoint,
@@ -26,11 +35,564 @@ type MaterialActivityProps = {
   className?: string;
 };
 
-function resolveMaterialKind(materialType: string): "video" | "pdf" | "doc" {
+type MaterialKind = "video" | "pdf" | "doc";
+
+function resolveMaterialKind(materialType: string): MaterialKind {
   const normalized = materialType.toLowerCase();
   if (normalized === "video") return "video";
   if (normalized === "pdf") return "pdf";
   return "doc";
+}
+
+function resolveInitialPdfPage(resumeState: ResumeState | null): number {
+  if (resumeState?.kind === "pdf" && resumeState.page != null && resumeState.page > 0) {
+    return resumeState.page;
+  }
+  return 1;
+}
+
+function resolveInitialScrollRatio(resumeState: ResumeState | null): number {
+  if (resumeState?.scrollRatio != null && resumeState.scrollRatio > 0) {
+    return resumeState.scrollRatio;
+  }
+  return 0;
+}
+
+function progressChanged(
+  previous: EmbeddedFrameProgress | null,
+  next: EmbeddedFrameProgress,
+): boolean {
+  if (!previous) return true;
+  return (
+    previous.page !== next.page ||
+    Math.abs(previous.scrollRatio - next.scrollRatio) > 0.01
+  );
+}
+
+type CheckpointSaverProps = {
+  enrollmentId: string;
+  activityId: string;
+  isAlreadyComplete: boolean;
+  buildResumeState: () => Parameters<typeof saveActivityCheckpoint>[2] | null;
+};
+
+function useCheckpointSaver({
+  enrollmentId,
+  activityId,
+  isAlreadyComplete,
+  buildResumeState,
+}: CheckpointSaverProps) {
+  const buildRef = useRef(buildResumeState);
+  const persistRef = useRef<(() => Promise<void>) | null>(null);
+
+  useEffect(() => {
+    buildRef.current = buildResumeState;
+  }, [buildResumeState]);
+
+  const persistCheckpoint = useCallback(async () => {
+    if (isAlreadyComplete) return;
+
+    const payload = buildRef.current();
+    if (!payload) return;
+
+    try {
+      await saveActivityCheckpoint(enrollmentId, activityId, payload);
+    } catch {
+      // Debounced saves should not interrupt the learner with toasts.
+    }
+  }, [activityId, enrollmentId, isAlreadyComplete]);
+
+  persistRef.current = persistCheckpoint;
+
+  const scheduleCheckpoint = useDebouncedCheckpoint(
+    persistCheckpoint,
+    CHECKPOINT_DEBOUNCE_MS,
+  );
+
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        void persistRef.current?.();
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      void persistRef.current?.();
+    };
+  }, []);
+
+  return { persistCheckpoint, scheduleCheckpoint };
+}
+
+function useEmbeddedFrameTracking({
+  iframeRef,
+  progressRef,
+  enabled,
+  onProgress,
+  scheduleCheckpoint,
+}: {
+  iframeRef: React.RefObject<HTMLIFrameElement | null>;
+  progressRef: React.MutableRefObject<EmbeddedFrameProgress>;
+  enabled: boolean;
+  onProgress: (scrollRatio: number) => void;
+  scheduleCheckpoint: () => void;
+}) {
+  useEffect(() => {
+    if (!enabled) return;
+
+    const poll = () => {
+      const next = readEmbeddedFrameProgress(iframeRef.current);
+      if (!next) return;
+
+      onProgress(next.scrollRatio);
+
+      if (progressChanged(progressRef.current, next)) {
+        progressRef.current = next;
+        scheduleCheckpoint();
+      }
+    };
+
+    const intervalId = window.setInterval(poll, EMBEDDED_FRAME_POLL_MS);
+    return () => window.clearInterval(intervalId);
+  }, [enabled, iframeRef, onProgress, progressRef, scheduleCheckpoint]);
+}
+
+type VideoMaterialViewProps = {
+  fileUrl: string;
+  title: string;
+  resumeState: ResumeState | null;
+  compact: boolean;
+  className?: string;
+  enrollmentId: string;
+  activityId: string;
+  isAlreadyComplete: boolean;
+  onCanCompleteChange?: (canComplete: boolean) => void;
+};
+
+function VideoMaterialView({
+  fileUrl,
+  title,
+  resumeState,
+  compact,
+  className,
+  enrollmentId,
+  activityId,
+  isAlreadyComplete,
+  onCanCompleteChange,
+}: VideoMaterialViewProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const lastSeekTargetRef = useRef<number | null>(null);
+  const lastSavedPositionRef = useRef<number | null>(null);
+  const isSeekingRef = useRef(false);
+
+  useEffect(() => {
+    lastSavedPositionRef.current = null;
+  }, [activityId, fileUrl]);
+
+  const { canComplete, onVideoTimeUpdate, onVideoEnded } = useActivityCompletionGate({
+    kind: "video",
+    isAlreadyComplete,
+  });
+
+  const buildResumeState = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return null;
+
+    return {
+      resumeState: {
+        kind: "video" as const,
+        positionSeconds: Math.floor(video.currentTime),
+        durationSeconds: Number.isFinite(video.duration)
+          ? Math.round(video.duration)
+          : undefined,
+      },
+    };
+  }, []);
+
+  const { persistCheckpoint } = useCheckpointSaver({
+    enrollmentId,
+    activityId,
+    isAlreadyComplete,
+    buildResumeState,
+  });
+
+  const persistCheckpointIfChanged = useCallback(
+    async (force = false) => {
+      const payload = buildResumeState();
+      if (!payload) return;
+
+      const position = payload.resumeState.positionSeconds;
+      const lastSaved = lastSavedPositionRef.current;
+
+      if (
+        !force &&
+        lastSaved != null &&
+        Math.abs(position - lastSaved) < VIDEO_CHECKPOINT_MIN_DELTA_SECONDS
+      ) {
+        return;
+      }
+
+      lastSavedPositionRef.current = position;
+      await persistCheckpoint();
+    },
+    [buildResumeState, persistCheckpoint],
+  );
+
+  useEffect(() => {
+    onCanCompleteChange?.(canComplete);
+  }, [canComplete, onCanCompleteChange]);
+
+  useEffect(() => {
+    if (isAlreadyComplete) return;
+
+    const intervalId = window.setInterval(() => {
+      const video = videoRef.current;
+      if (!video || video.paused || video.ended) return;
+      void persistCheckpointIfChanged();
+    }, VIDEO_CHECKPOINT_INTERVAL_MS);
+
+    return () => window.clearInterval(intervalId);
+  }, [activityId, isAlreadyComplete, persistCheckpointIfChanged]);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || resumeState?.kind !== "video") return;
+    if (resumeState.positionSeconds == null || resumeState.positionSeconds <= 0) return;
+
+    const targetSeconds = resumeState.positionSeconds;
+    lastSeekTargetRef.current = targetSeconds;
+    lastSavedPositionRef.current = targetSeconds;
+
+    const seekToResume = () => {
+      if (lastSeekTargetRef.current !== targetSeconds) return;
+      if (video.readyState < 1) return;
+
+      const duration = Number.isFinite(video.duration) ? video.duration : null;
+      const clampedTarget =
+        duration != null && duration > 0
+          ? Math.min(targetSeconds, Math.max(0, duration - 0.25))
+          : targetSeconds;
+
+      if (Math.abs(video.currentTime - clampedTarget) > 0.5) {
+        isSeekingRef.current = true;
+        video.currentTime = clampedTarget;
+      }
+    };
+
+    const onSeeked = () => {
+      isSeekingRef.current = false;
+    };
+
+    seekToResume();
+    video.addEventListener("loadedmetadata", seekToResume);
+    video.addEventListener("canplay", seekToResume);
+    video.addEventListener("durationchange", seekToResume);
+    video.addEventListener("seeked", onSeeked);
+
+    return () => {
+      video.removeEventListener("loadedmetadata", seekToResume);
+      video.removeEventListener("canplay", seekToResume);
+      video.removeEventListener("durationchange", seekToResume);
+      video.removeEventListener("seeked", onSeeked);
+    };
+  }, [activityId, fileUrl, resumeState]);
+
+  return (
+    <div
+      className={cn(
+        compact ? "flex min-h-0 flex-1 flex-col" : "overflow-hidden rounded-xl bg-black",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "overflow-hidden bg-black",
+          compact
+            ? "flex min-h-0 flex-1 items-center justify-center rounded-xl"
+            : "rounded-xl border border-learn-border-strong",
+        )}
+      >
+        <video
+          key={activityId}
+          ref={videoRef}
+          src={fileUrl}
+          title={title}
+          controls
+          preload="metadata"
+          className={cn(
+            "w-full",
+            compact ? "max-h-full max-w-full object-contain" : "aspect-video",
+          )}
+          onSeeking={() => {
+            isSeekingRef.current = true;
+          }}
+          onSeeked={() => {
+            isSeekingRef.current = false;
+          }}
+          onTimeUpdate={(event) => {
+            const target = event.currentTarget;
+            onVideoTimeUpdate(target.currentTime, target.duration);
+          }}
+          onPause={() => {
+            if (isSeekingRef.current) return;
+            void persistCheckpointIfChanged(true);
+          }}
+          onEnded={() => {
+            onVideoEnded();
+            void persistCheckpointIfChanged(true);
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+type PdfMaterialViewProps = {
+  fileUrl: string;
+  title: string;
+  resumeState: ResumeState | null;
+  compact: boolean;
+  className?: string;
+  enrollmentId: string;
+  activityId: string;
+  isAlreadyComplete: boolean;
+  onCanCompleteChange?: (canComplete: boolean) => void;
+};
+
+function PdfMaterialView({
+  fileUrl,
+  title,
+  resumeState,
+  compact,
+  className,
+  enrollmentId,
+  activityId,
+  isAlreadyComplete,
+  onCanCompleteChange,
+}: PdfMaterialViewProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const progressRef = useRef<EmbeddedFrameProgress>({
+    page: resolveInitialPdfPage(resumeState),
+    scrollRatio: resolveInitialScrollRatio(resumeState),
+  });
+
+  const { canComplete, onScrollProgress } = useActivityCompletionGate({
+    kind: "pdf",
+    isAlreadyComplete,
+  });
+
+  const buildResumeState = useCallback(() => {
+    const live = readEmbeddedFrameProgress(iframeRef.current);
+    const progress = live ?? progressRef.current;
+
+    return {
+      resumeState: {
+        kind: "pdf" as const,
+        page: progress.page,
+        scrollRatio: progress.scrollRatio,
+      },
+    };
+  }, []);
+
+  const { persistCheckpoint, scheduleCheckpoint } = useCheckpointSaver({
+    enrollmentId,
+    activityId,
+    isAlreadyComplete,
+    buildResumeState,
+  });
+
+  const handleFrameProgress = useCallback(
+    (scrollRatio: number) => {
+      onScrollProgress(scrollRatio);
+      if (scrollRatio >= 1 - SCROLL_COMPLETE_EPSILON) {
+        void persistCheckpoint();
+      }
+    },
+    [onScrollProgress, persistCheckpoint],
+  );
+
+  const initialPage = resolveInitialPdfPage(resumeState);
+  const initialScrollRatio = resolveInitialScrollRatio(resumeState);
+
+  useEmbeddedFrameTracking({
+    iframeRef,
+    progressRef,
+    enabled: !isAlreadyComplete,
+    onProgress: handleFrameProgress,
+    scheduleCheckpoint,
+  });
+
+  useEffect(() => {
+    onCanCompleteChange?.(canComplete);
+  }, [canComplete, onCanCompleteChange]);
+
+  useEffect(() => {
+    progressRef.current = {
+      page: initialPage,
+      scrollRatio: initialScrollRatio,
+    };
+  }, [activityId, fileUrl, initialPage, initialScrollRatio]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const restore = () => {
+      restoreEmbeddedFrameScroll(iframe, initialScrollRatio);
+      const live = readEmbeddedFrameProgress(iframe);
+      if (live) {
+        progressRef.current = live;
+      }
+    };
+
+    iframe.addEventListener("load", restore);
+    return () => iframe.removeEventListener("load", restore);
+  }, [activityId, fileUrl, initialScrollRatio]);
+
+  return (
+    <div
+      className={cn(
+        compact ? "flex min-h-0 flex-1 flex-col" : "space-y-3",
+        className,
+      )}
+    >
+      <iframe
+        ref={iframeRef}
+        src={buildPdfSrc(fileUrl, initialPage)}
+        title={title}
+        className={cn(
+          "w-full rounded-xl bg-learn-surface",
+          compact
+            ? "min-h-0 flex-1"
+            : "h-[min(70vh,720px)] border border-learn-border",
+        )}
+      />
+    </div>
+  );
+}
+
+type DocMaterialViewProps = {
+  fileUrl: string;
+  title: string;
+  resumeState: ResumeState | null;
+  compact: boolean;
+  className?: string;
+  enrollmentId: string;
+  activityId: string;
+  isAlreadyComplete: boolean;
+  onCanCompleteChange?: (canComplete: boolean) => void;
+};
+
+function DocMaterialView({
+  fileUrl,
+  title,
+  resumeState,
+  compact,
+  className,
+  enrollmentId,
+  activityId,
+  isAlreadyComplete,
+  onCanCompleteChange,
+}: DocMaterialViewProps) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const progressRef = useRef<EmbeddedFrameProgress>({
+    page: 1,
+    scrollRatio: resolveInitialScrollRatio(resumeState),
+  });
+
+  const { canComplete, onScrollProgress } = useActivityCompletionGate({
+    kind: "doc",
+    isAlreadyComplete,
+  });
+
+  const buildResumeState = useCallback(() => {
+    const live = readEmbeddedFrameProgress(iframeRef.current);
+    const progress = live ?? progressRef.current;
+
+    return {
+      resumeState: {
+        kind: "doc" as const,
+        scrollRatio: progress.scrollRatio,
+      },
+    };
+  }, []);
+
+  const { persistCheckpoint, scheduleCheckpoint } = useCheckpointSaver({
+    enrollmentId,
+    activityId,
+    isAlreadyComplete,
+    buildResumeState,
+  });
+
+  const handleFrameProgress = useCallback(
+    (scrollRatio: number) => {
+      onScrollProgress(scrollRatio);
+      if (scrollRatio >= 1 - SCROLL_COMPLETE_EPSILON) {
+        void persistCheckpoint();
+      }
+    },
+    [onScrollProgress, persistCheckpoint],
+  );
+
+  const initialScrollRatio = resolveInitialScrollRatio(resumeState);
+
+  useEmbeddedFrameTracking({
+    iframeRef,
+    progressRef,
+    enabled: !isAlreadyComplete,
+    onProgress: handleFrameProgress,
+    scheduleCheckpoint,
+  });
+
+  useEffect(() => {
+    onCanCompleteChange?.(canComplete);
+  }, [canComplete, onCanCompleteChange]);
+
+  useEffect(() => {
+    progressRef.current = {
+      page: 1,
+      scrollRatio: initialScrollRatio,
+    };
+  }, [activityId, fileUrl, initialScrollRatio]);
+
+  useEffect(() => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+
+    const restore = () => {
+      restoreEmbeddedFrameScroll(iframe, initialScrollRatio);
+      const live = readEmbeddedFrameProgress(iframe);
+      if (live) {
+        progressRef.current = live;
+      }
+    };
+
+    iframe.addEventListener("load", restore);
+    return () => iframe.removeEventListener("load", restore);
+  }, [activityId, fileUrl, initialScrollRatio]);
+
+  return (
+    <div
+      className={cn(
+        compact ? "flex min-h-0 flex-1 flex-col" : "space-y-3",
+        className,
+      )}
+    >
+      <iframe
+        ref={iframeRef}
+        src={fileUrl}
+        title={title}
+        className={cn(
+          "w-full rounded-xl bg-learn-surface",
+          compact
+            ? "min-h-0 flex-1"
+            : "h-[min(70vh,720px)] border border-learn-border",
+        )}
+      />
+    </div>
+  );
 }
 
 export function MaterialActivity({
@@ -44,18 +606,6 @@ export function MaterialActivity({
 }: MaterialActivityProps) {
   const materialMeta = activity.material;
   const materialKind = materialMeta ? resolveMaterialKind(materialMeta.materialType) : "manual";
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  const {
-    canComplete,
-    onVideoTimeUpdate,
-    onVideoEnded,
-    onScrollProgress,
-  } = useActivityCompletionGate({
-    kind: materialMeta ? materialKind : "manual",
-    isAlreadyComplete,
-  });
 
   const { data: materialResult, isLoading, hasError, retry } = useClientFetch({
     enabled: Boolean(materialMeta),
@@ -66,83 +616,10 @@ export function MaterialActivity({
   const fileUrl = materialResult?.data?.fileUrl ?? null;
 
   useEffect(() => {
-    onCanCompleteChange?.(canComplete);
-  }, [canComplete, onCanCompleteChange]);
-
-  useEffect(() => {
     if (!materialMeta && !isAlreadyComplete) {
       onCanCompleteChange?.(true);
     }
   }, [materialMeta, isAlreadyComplete, onCanCompleteChange]);
-
-  useEffect(() => {
-    if (
-      compact &&
-      fileUrl &&
-      !isAlreadyComplete &&
-      (materialKind === "pdf" || materialKind === "doc")
-    ) {
-      onCanCompleteChange?.(true);
-    }
-  }, [compact, fileUrl, isAlreadyComplete, materialKind, onCanCompleteChange]);
-
-  const persistCheckpoint = useCallback(async () => {
-    if (!materialMeta || isAlreadyComplete) return;
-
-    const video = videoRef.current;
-    const scrollEl = scrollRef.current;
-
-    if (materialKind === "video" && video) {
-      await saveActivityCheckpoint(enrollmentId, activity.id, {
-        resumeState: {
-          kind: "video",
-          positionSeconds: video.currentTime,
-          durationSeconds: Number.isFinite(video.duration) ? video.duration : undefined,
-        },
-      });
-      return;
-    }
-
-    if ((materialKind === "pdf" || materialKind === "doc") && scrollEl) {
-      const scrollRatio =
-        scrollEl.scrollHeight <= scrollEl.clientHeight
-          ? 1
-          : scrollEl.scrollTop / (scrollEl.scrollHeight - scrollEl.clientHeight);
-
-      await saveActivityCheckpoint(enrollmentId, activity.id, {
-        resumeState:
-          materialKind === "pdf"
-            ? {
-                kind: "pdf",
-                page: Math.max(1, Math.round(scrollRatio * 10) || 1),
-                scrollRatio,
-              }
-            : {
-                kind: "doc",
-                scrollRatio,
-              },
-      });
-    }
-  }, [activity.id, enrollmentId, isAlreadyComplete, materialKind, materialMeta]);
-
-  const scheduleCheckpoint = useDebouncedCheckpoint(persistCheckpoint, CHECKPOINT_DEBOUNCE_MS);
-
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || materialKind !== "video" || !resumeState?.positionSeconds) return;
-    if (resumeState.kind === "video" && resumeState.positionSeconds > 0) {
-      video.currentTime = resumeState.positionSeconds;
-    }
-  }, [fileUrl, materialKind, resumeState]);
-
-  useEffect(() => {
-    const scrollEl = scrollRef.current;
-    if (!scrollEl || !resumeState?.scrollRatio) return;
-    if (resumeState.kind === "pdf" || resumeState.kind === "doc") {
-      const maxScroll = scrollEl.scrollHeight - scrollEl.clientHeight;
-      scrollEl.scrollTop = maxScroll * resumeState.scrollRatio;
-    }
-  }, [fileUrl, resumeState]);
 
   if (!materialMeta) {
     return (
@@ -183,142 +660,25 @@ export function MaterialActivity({
     );
   }
 
+  const sharedProps = {
+    fileUrl,
+    title: materialMeta.title,
+    resumeState,
+    compact,
+    enrollmentId,
+    activityId: activity.id,
+    isAlreadyComplete,
+    onCanCompleteChange,
+    className,
+  };
+
   if (materialKind === "video") {
-    return (
-      <div
-        className={cn(
-          compact ? "flex min-h-0 flex-1 flex-col" : "overflow-hidden rounded-xl bg-black",
-          className,
-        )}
-      >
-        <div
-          className={cn(
-            "overflow-hidden bg-black",
-            compact
-              ? "flex min-h-0 flex-1 items-center justify-center rounded-xl"
-              : "rounded-xl border border-learn-border-strong",
-          )}
-        >
-          <video
-            ref={videoRef}
-            src={fileUrl}
-            controls
-            className={cn(
-              "w-full",
-              compact ? "max-h-full max-w-full object-contain" : "aspect-video",
-            )}
-            onTimeUpdate={(event) => {
-              const target = event.currentTarget;
-              onVideoTimeUpdate(target.currentTime, target.duration);
-              scheduleCheckpoint();
-            }}
-            onEnded={() => {
-              onVideoEnded();
-              void persistCheckpoint();
-            }}
-          />
-        </div>
-      </div>
-    );
+    return <VideoMaterialView {...sharedProps} />;
   }
 
   if (materialKind === "pdf") {
-    return (
-      <div
-        className={cn(
-          compact ? "flex min-h-0 flex-1 flex-col gap-2" : "space-y-3",
-          className,
-        )}
-      >
-        <iframe
-          src={fileUrl}
-          title={materialMeta.title}
-          className={cn(
-            "w-full rounded-xl bg-learn-surface",
-            compact
-              ? "min-h-0 flex-1"
-              : "h-[min(70vh,720px)] border border-learn-border",
-          )}
-        />
-        <div
-          ref={scrollRef}
-          className={cn(
-            "text-sm text-learn-muted",
-            compact ? "shrink-0" : "max-h-48 overflow-y-auto rounded-xl border border-learn-border bg-learn-surface-2 p-4",
-          )}
-          onScroll={(event) => {
-            if (compact) return;
-            const target = event.currentTarget;
-            const ratio =
-              target.scrollHeight <= target.clientHeight
-                ? 1
-                : target.scrollTop / (target.scrollHeight - target.clientHeight);
-            onScrollProgress(ratio);
-            if (ratio >= 1 - SCROLL_COMPLETE_EPSILON) {
-              void persistCheckpoint();
-            } else {
-              scheduleCheckpoint();
-            }
-          }}
-        >
-          <p className={compact ? "text-xs" : undefined}>
-            Nếu PDF không hiển thị đầy đủ,{" "}
-            <a
-              href={fileUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-learn-accent underline-offset-2 hover:underline"
-            >
-              mở tài liệu trong tab mới
-            </a>
-            .
-          </p>
-        </div>
-      </div>
-    );
+    return <PdfMaterialView {...sharedProps} />;
   }
 
-  return (
-    <div
-      ref={scrollRef}
-      className={cn(
-        compact
-          ? "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl bg-learn-surface"
-          : "max-h-[min(70vh,720px)] overflow-y-auto rounded-xl border border-learn-border bg-learn-surface p-6",
-        className,
-      )}
-      onScroll={(event) => {
-        const target = event.currentTarget;
-        const ratio =
-          target.scrollHeight <= target.clientHeight
-            ? 1
-            : target.scrollTop / (target.scrollHeight - target.clientHeight);
-        onScrollProgress(ratio);
-        if (ratio >= 1 - SCROLL_COMPLETE_EPSILON) {
-          void persistCheckpoint();
-        } else {
-          scheduleCheckpoint();
-        }
-      }}
-    >
-      <iframe
-        src={fileUrl}
-        title={materialMeta.title}
-        className={cn(
-          "w-full rounded-lg",
-          compact ? "min-h-0 flex-1" : "min-h-[480px] border border-learn-border",
-        )}
-      />
-      <p className={cn("text-sm text-learn-muted", compact && "shrink-0 py-2")}>
-        <a
-          href={fileUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-medium text-learn-accent underline-offset-2 hover:underline"
-        >
-          Tải / mở tài liệu
-        </a>
-      </p>
-    </div>
-  );
+  return <DocMaterialView {...sharedProps} />;
 }
