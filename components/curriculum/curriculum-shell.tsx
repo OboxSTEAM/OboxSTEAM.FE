@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from "motion/react";
 
 import { SiteHeader } from "@/components/landing/site-header";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Sheet,
   SheetBody,
@@ -63,9 +64,9 @@ export function CurriculumShell({
           className="hidden shrink-0 overflow-hidden bg-learn-surface lg:block"
           aria-hidden={!desktopNavOpen}
         >
-          <div
+          <ScrollArea
             id="curriculum-desktop-nav"
-            className="sticky top-[4.5rem] h-[calc(100dvh-4.5rem)] overflow-y-auto sm:top-20 sm:h-[calc(100dvh-5rem)]"
+            className="h-[calc(100dvh-4.5rem)] sm:h-[calc(100dvh-5rem)]"
             style={{ width: DESKTOP_NAV_WIDTH }}
           >
             <CurriculumNav
@@ -73,7 +74,7 @@ export function CurriculumShell({
               selectedActivityId={selectedActivityId}
               onSelectActivity={onSelectActivity}
             />
-          </div>
+          </ScrollArea>
         </motion.aside>
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4 lg:p-6">
@@ -129,12 +130,14 @@ export function CurriculumShell({
             </SheetTitle>
             <SheetClose />
           </SheetHeader>
-          <SheetBody className="bg-learn-surface p-0">
-            <CurriculumNav
-              curriculum={curriculum}
-              selectedActivityId={selectedActivityId}
-              onSelectActivity={handleSelectActivity}
-            />
+          <SheetBody className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
+            <ScrollArea className="min-h-0 flex-1">
+              <CurriculumNav
+                curriculum={curriculum}
+                selectedActivityId={selectedActivityId}
+                onSelectActivity={handleSelectActivity}
+              />
+            </ScrollArea>
           </SheetBody>
         </SheetPopup>
       </Sheet>

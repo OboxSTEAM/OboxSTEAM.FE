@@ -107,6 +107,8 @@
   --sidebar-accent-foreground: #2d2d2d;
   --sidebar-border: #e5e5e0;
   --sidebar-ring: #4fc3f7;
+  --scrollbar-thumb: color-mix(in srgb, var(--muted-foreground) 45%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--muted-foreground) 65%, transparent);
 }
 
 /* Warm-dimmed palette for curriculum learn page (scoped via .learn-shell) */
@@ -125,6 +127,8 @@
   --learn-success: #7cb342;
   --learn-primary: #e94b3c;
   --learn-highlight: #fdd835;
+  --scrollbar-thumb: color-mix(in srgb, var(--learn-faint) 45%, transparent);
+  --scrollbar-thumb-hover: color-mix(in srgb, var(--learn-faint) 65%, transparent);
 }
 
 @keyframes heroFadeUp {
@@ -170,7 +174,32 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb) transparent;
   }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-thumb-hover);
+  }
+
+  *::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
   body {
     @apply bg-background text-foreground font-sans;
   }
