@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build-push-and-deploy:
@@ -28,9 +29,12 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:latest
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:${{ github.sha }}
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://oboxsteam.com' }}
+            CACHEBUST=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
