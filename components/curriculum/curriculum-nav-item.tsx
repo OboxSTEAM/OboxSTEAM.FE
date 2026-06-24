@@ -17,24 +17,33 @@ type CurriculumNavItemProps = {
   status: ActivityNavStatus;
   isSelected: boolean;
   onSelect: (activityId: string) => void;
+  /** When nested under a course/milestone tree branch */
+  inTree?: boolean;
 };
 
 function StatusIcon({ status }: { status: ActivityNavStatus }) {
   if (status === "completed") {
-    return <CheckCircle2 className="size-4 shrink-0 text-[#7CB342]" aria-hidden />;
-  }
-  if (status === "locked") {
-    return <Lock className="size-4 shrink-0 text-[#6B6B6B]/60" aria-hidden />;
-  }
-  if (status === "current") {
     return (
-      <span
-        className="size-2.5 shrink-0 rounded-full bg-[#4FC3F7]"
+      <CheckCircle2
+        className="size-4 shrink-0 text-learn-success"
         aria-hidden
       />
     );
   }
-  return <Circle className="size-4 shrink-0 text-[#6B6B6B]" aria-hidden />;
+  if (status === "locked") {
+    return (
+      <Lock className="size-4 shrink-0 text-learn-faint/70" aria-hidden />
+    );
+  }
+  if (status === "current") {
+    return (
+      <span
+        className="size-2.5 shrink-0 rounded-full bg-learn-accent"
+        aria-hidden
+      />
+    );
+  }
+  return <Circle className="size-4 shrink-0 text-learn-faint" aria-hidden />;
 }
 
 export function CurriculumNavItem({
@@ -44,9 +53,11 @@ export function CurriculumNavItem({
   status,
   isSelected,
   onSelect,
+  inTree = false,
 }: CurriculumNavItemProps) {
   const rowRef = useRef<HTMLButtonElement>(null);
   const isLocked = status === "locked";
+  const isCompleted = status === "completed";
   const prefix = ACTIVITY_TITLE_PREFIX[activityType];
 
   useEffect(() => {
@@ -62,16 +73,17 @@ export function CurriculumNavItem({
       disabled={isLocked}
       onClick={() => onSelect(activityId)}
       className={cn(
-        "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm transition-colors",
-        isLocked && "cursor-not-allowed opacity-60",
-        isSelected && "border-l-2 border-[#4FC3F7] bg-[#F5F5F0] font-medium text-[#2D2D2D]",
-        !isSelected && !isLocked && "hover:bg-[#FAFAF5]",
+        "flex min-h-11 w-full items-center gap-2.5 rounded-lg text-left text-sm transition-colors",
+        inTree ? "px-2 py-2" : "px-3 py-2.5",
+        isLocked && "cursor-not-allowed opacity-50",
+        isSelected && "bg-learn-surface font-medium text-learn-text-strong",
+        isCompleted && !isSelected && "text-learn-muted",
       )}
       aria-current={isSelected ? "page" : undefined}
     >
       <StatusIcon status={status} />
       <span className="min-w-0 leading-snug">
-        <span className="text-[#6B6B6B]">{prefix}: </span>
+        <span className="text-learn-faint">{prefix}: </span>
         {activityName}
       </span>
     </button>

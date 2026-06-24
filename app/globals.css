@@ -45,6 +45,20 @@
   --color-steam-engineering: var(--steam-engineering);
   --color-steam-arts: var(--steam-arts);
   --color-steam-mathematics: var(--steam-mathematics);
+  --color-learn-bg: var(--learn-bg);
+  --color-learn-surface: var(--learn-surface);
+  --color-learn-surface-2: var(--learn-surface-2);
+  --color-learn-surface-3: var(--learn-surface-3);
+  --color-learn-border: var(--learn-border);
+  --color-learn-border-strong: var(--learn-border-strong);
+  --color-learn-text-strong: var(--learn-text-strong);
+  --color-learn-text: var(--learn-text);
+  --color-learn-muted: var(--learn-muted);
+  --color-learn-faint: var(--learn-faint);
+  --color-learn-accent: var(--learn-accent);
+  --color-learn-success: var(--learn-success);
+  --color-learn-primary: var(--learn-primary);
+  --color-learn-highlight: var(--learn-highlight);
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
   --radius-lg: var(--radius);
@@ -93,6 +107,24 @@
   --sidebar-accent-foreground: #2d2d2d;
   --sidebar-border: #e5e5e0;
   --sidebar-ring: #4fc3f7;
+}
+
+/* Warm-dimmed palette for curriculum learn page (scoped via .learn-shell) */
+.learn-shell {
+  --learn-bg: #ede9e0;
+  --learn-surface: #f4f1ea;
+  --learn-surface-2: #e7e2d8;
+  --learn-surface-3: #ded8cc;
+  --learn-border: #d8d2c6;
+  --learn-border-strong: #c7c0b2;
+  --learn-text-strong: #2d2b27;
+  --learn-text: #3a3833;
+  --learn-muted: #6b6b6b;
+  --learn-faint: #8c8678;
+  --learn-accent: #4fc3f7;
+  --learn-success: #7cb342;
+  --learn-primary: #e94b3c;
+  --learn-highlight: #fdd835;
 }
 
 @keyframes heroFadeUp {

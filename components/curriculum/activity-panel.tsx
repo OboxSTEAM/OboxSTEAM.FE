@@ -42,10 +42,10 @@ function resolveCompleteSource(
 
 function ActivityPanelSkeleton() {
   return (
-    <div className="space-y-4 rounded-2xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-      <Skeleton className="h-4 w-40" />
-      <Skeleton className="h-8 w-3/4" />
-      <Skeleton className="h-64 w-full rounded-xl" />
+    <div className="space-y-4 rounded-2xl border border-learn-border bg-learn-surface p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <Skeleton className="h-4 w-40 bg-learn-surface-2" />
+      <Skeleton className="h-8 w-3/4 bg-learn-surface-2" />
+      <Skeleton className="h-64 w-full rounded-xl bg-learn-surface-2" />
     </div>
   );
 }
@@ -148,16 +148,16 @@ export function ActivityPanel({
 
   if (!selectedActivityId) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E5E5E0] bg-white p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-        <p className="text-sm text-[#6B6B6B]">Chọn một hoạt động từ danh sách bên trái.</p>
+      <div className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">Chọn một hoạt động từ danh sách bên trái.</p>
       </div>
     );
   }
 
   if (flatActivity && !isActivitySelectable(flatActivity.status)) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-[#E5E5E0] bg-white p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-        <p className="text-sm text-[#6B6B6B]">
+      <div className="flex min-h-[50vh] items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">
           Hoạt động này chưa mở khóa. Hoàn thành các bài trước để tiếp tục.
         </p>
       </div>
@@ -170,9 +170,9 @@ export function ActivityPanel({
 
   if (hasError && !activity) {
     return (
-      <div className="rounded-2xl border border-[#E5E5E0] bg-white p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-        <p className="text-sm text-[#6B6B6B]">Không tải được nội dung hoạt động.</p>
-        <Button type="button" variant="outline" className="mt-4" onClick={retry}>
+      <div className="rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">Không tải được nội dung hoạt động.</p>
+        <Button type="button" variant="outline" className="mt-4 border-learn-border" onClick={retry}>
           Thử lại
         </Button>
       </div>
@@ -187,19 +187,19 @@ export function ActivityPanel({
     activity.learningProgress?.resumeState ?? flatActivity?.resumeState ?? null;
 
   return (
-    <div className="flex min-h-[calc(100dvh-7rem)] flex-col rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-      <div className="border-b border-[#E5E5E0] px-4 py-4 sm:px-6 sm:py-5">
+    <div className="flex min-h-[calc(100dvh-7rem)] flex-col rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="border-b border-learn-border px-4 py-4 sm:px-6 sm:py-5">
         {breadcrumb ? (
-          <p className="text-xs text-[#6B6B6B]">
+          <p className="text-xs text-learn-muted">
             {breadcrumb.moduleName}
             {breadcrumb.groupLabel ? ` · ${breadcrumb.groupLabel}` : null}
           </p>
         ) : null}
         <div className="mt-2 flex flex-wrap items-start gap-3">
-          <h1 className="font-heading min-w-0 flex-1 text-xl font-semibold text-[#2D2D2D] sm:text-2xl">
+          <h1 className="font-heading min-w-0 flex-1 text-xl font-semibold text-learn-text-strong sm:text-2xl">
             {activity.name}
           </h1>
-          <Badge variant="secondary" className="bg-[#F5F5F0] text-[#6B6B6B]">
+          <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
             {ACTIVITY_TYPE_LABELS[activity.activityType]}
           </Badge>
         </div>
@@ -216,7 +216,7 @@ export function ActivityPanel({
         />
       </div>
 
-      <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-[#E5E5E0] bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+      <div className="sticky bottom-0 flex flex-wrap items-center gap-2 border-t border-learn-border bg-learn-surface/95 px-4 py-3 backdrop-blur sm:px-6">
         <Button
           type="button"
           variant="ghost"
@@ -233,11 +233,11 @@ export function ActivityPanel({
 
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {isAlreadyComplete ? (
-            <span className="text-sm font-medium text-[#7CB342]">Đã hoàn thành</span>
+            <span className="text-sm font-medium text-learn-success">Đã hoàn thành</span>
           ) : (
             <Button
               type="button"
-              className="bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90"
+              className="bg-learn-primary text-white hover:bg-learn-primary/90"
               disabled={!canComplete || isCompleting}
               onClick={() => void handleComplete()}
             >
@@ -248,6 +248,7 @@ export function ActivityPanel({
           <Button
             type="button"
             variant="outline"
+            className="border-learn-border"
             disabled={!nextId}
             onClick={() => {
               if (nextId) {

@@ -1,6 +1,8 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { ChevronRight, Lock } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import {
   Accordion,
@@ -14,6 +16,8 @@ import { cn } from "@/lib/utils";
 
 import { CurriculumNavItem } from "./curriculum-nav-item";
 
+const TREE_LINE = "bg-learn-faint/35";
+
 type CurriculumNavProps = {
   curriculum: EnrollmentCurriculum;
   selectedActivityId: string | null;
@@ -21,12 +25,95 @@ type CurriculumNavProps = {
   className?: string;
 };
 
-function GroupLabel({ children }: { children: string }) {
+type NavGroupHeaderProps = {
+  name: string;
+  kind: "course" | "milestone";
+  isOpen: boolean;
+  onToggle: () => void;
+};
+
+function NavGroupHeader({ name, kind, isOpen, onToggle }: NavGroupHeaderProps) {
+  const kindLabel = kind === "course" ? "Khóa học" : "Mốc";
+
   return (
-    <p className="px-3 py-2 font-mono text-[11px] font-medium tracking-[0.12em] text-[#6B6B6B] uppercase">
-      {children}
-    </p>
+    <button
+      type="button"
+      onClick={onToggle}
+      className="flex w-full items-start gap-2 rounded-lg border border-learn-border bg-learn-surface-2 px-3 py-2.5 text-left transition-colors"
+      aria-expanded={isOpen}
+    >
+      <ChevronRight
+        className={cn(
+          "mt-0.5 size-4 shrink-0 text-learn-faint transition-transform duration-200 motion-reduce:transition-none",
+          isOpen && "rotate-90",
+        )}
+        aria-hidden
+      />
+      <span className="min-w-0 flex-1">
+        <span className="font-mono text-[10px] font-medium tracking-[0.12em] text-learn-faint uppercase">
+          {kindLabel}
+        </span>
+        <span className="mt-0.5 block font-heading text-[15px] leading-snug font-semibold text-learn-text-strong">
+          {name}
+        </span>
+      </span>
+    </button>
   );
+}
+
+function NavTreeBranch({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("relative ml-3 pl-4", className)}>
+      <span
+        className={cn(
+          "pointer-events-none absolute top-0 bottom-0 left-0 w-px",
+          TREE_LINE,
+        )}
+        aria-hidden
+      />
+      {children}
+    </div>
+  );
+}
+
+function NavTreeNode({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative">
+      <span
+        className={cn(
+          "pointer-events-none absolute top-[1.375rem] left-0 h-px w-4 -translate-x-4",
+          TREE_LINE,
+        )}
+        aria-hidden
+      />
+      {children}
+    </div>
+  );
+}
+
+function NavActivityNode({ children }: { children: ReactNode }) {
+  return (
+    <div className="relative py-0.5">
+      <span
+        className={cn(
+          "pointer-events-none absolute top-[1.375rem] left-0 h-px w-4 -translate-x-4",
+          TREE_LINE,
+        )}
+        aria-hidden
+      />
+      {children}
+    </div>
+  );
+}
+
+function formatModuleIndex(index: number): string {
+  return String(index + 1).padStart(2, "0");
 }
 
 export function CurriculumNav({
@@ -35,6 +122,9 @@ export function CurriculumNav({
   onSelectActivity,
   className,
 }: CurriculumNavProps) {
+  const reduceMotion = useReducedMotion();
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+
   const modules = [...curriculum.modules].sort(
     (left, right) => left.moduleOrder - right.moduleOrder,
   );
@@ -43,115 +133,169 @@ export function CurriculumNav({
     .filter((module) => !module.isLocked)
     .map((module) => module.moduleId);
 
+  const progress = Math.min(100, Math.max(0, curriculum.progressPercent));
+
+  const isGroupOpen = (key: string) => openGroups[key] ?? true;
+
+  const toggleGroup = (key: string) => {
+    setOpenGroups((current) => ({
+      ...current,
+      [key]: !(current[key] ?? true),
+    }));
+  };
+
   return (
     <div className={cn("flex flex-col", className)}>
-      <div className="border-b border-[#E5E5E0] px-4 py-4">
-        <h2 className="font-heading text-base font-semibold text-[#2D2D2D]">
+      <div className="px-4 py-4">
+        <h2 className="font-heading text-base font-semibold text-learn-text-strong">
           {curriculum.programName}
         </h2>
         <div className="mt-3">
-          <div className="mb-1 flex items-center justify-between text-xs text-[#6B6B6B]">
+          <div className="mb-1.5 flex items-center justify-between text-xs text-learn-muted">
             <span>Tiến độ chương trình</span>
-            <span>{curriculum.progressPercent}%</span>
+            <span className="font-mono tabular-nums">{progress}%</span>
           </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#E5E5E0]">
+          <div className="h-2 overflow-hidden rounded-full bg-learn-surface-2">
             <div
-              className="h-full rounded-full bg-[#4FC3F7] transition-[width] motion-reduce:transition-none"
-              style={{ width: `${Math.min(100, Math.max(0, curriculum.progressPercent))}%` }}
+              className="h-full rounded-full bg-gradient-to-r from-learn-success to-learn-accent transition-[width] motion-reduce:transition-none"
+              style={{ width: `${progress}%` }}
             />
           </div>
         </div>
       </div>
 
-      <Accordion
-        multiple
-        defaultValue={defaultOpen}
-        className="divide-y divide-[#E5E5E0]"
-      >
-        {modules.map((module, index) => {
-          const courses = [...module.courses].sort(
-            (left, right) => left.courseOrder - right.courseOrder,
-          );
-          const milestones = [...module.milestones].sort(
-            (left, right) => left.milestoneOrder - right.milestoneOrder,
-          );
+      <div className="space-y-2 p-3">
+        <Accordion multiple defaultValue={defaultOpen} className="space-y-2">
+          {modules.map((module, index) => {
+            const courses = [...module.courses].sort(
+              (left, right) => left.courseOrder - right.courseOrder,
+            );
+            const milestones = [...module.milestones].sort(
+              (left, right) => left.milestoneOrder - right.milestoneOrder,
+            );
 
-          return (
-            <AccordionItem
-              key={module.moduleId}
-              value={module.moduleId}
-              className="border-0"
-            >
-              <AccordionTrigger
-                className={cn(
-                  "px-4 py-4 hover:no-underline",
-                  module.isLocked && "cursor-not-allowed opacity-70 [&>svg]:hidden",
-                )}
-                disabled={module.isLocked}
+            const groups = [
+              ...courses.map((course) => ({
+                key: course.courseId,
+                kind: "course" as const,
+                name: course.courseName,
+                activities: [...course.activities].sort(
+                  (left, right) => left.activityOrder - right.activityOrder,
+                ),
+              })),
+              ...milestones.map((milestone) => ({
+                key: milestone.milestoneId,
+                kind: "milestone" as const,
+                name: milestone.milestoneName,
+                activities: [...milestone.activities].sort(
+                  (left, right) => left.activityOrder - right.activityOrder,
+                ),
+              })),
+            ];
+
+            return (
+              <AccordionItem
+                key={module.moduleId}
+                value={module.moduleId}
+                className="overflow-hidden rounded-xl border border-learn-border bg-learn-surface-2"
               >
-                <span className="flex min-w-0 flex-1 items-start gap-2 text-left">
-                  {module.isLocked ? (
-                    <Lock className="mt-0.5 size-4 shrink-0 text-[#6B6B6B]" aria-hidden />
-                  ) : null}
-                  <span className="min-w-0">
-                    <span className="block font-medium text-[#2D2D2D]">
-                      Mô-đun {index + 1} · {module.moduleName}
+                <AccordionTrigger
+                  className={cn(
+                    "px-3 py-3 hover:no-underline",
+                    module.isLocked && "cursor-not-allowed opacity-60 [&>svg]:hidden",
+                  )}
+                  disabled={module.isLocked}
+                >
+                  <span className="flex min-w-0 flex-1 items-start gap-3 text-left">
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md",
+                        "bg-learn-surface-3 font-mono text-[11px] font-semibold tabular-nums",
+                        module.isLocked
+                          ? "text-learn-faint"
+                          : "text-learn-text-strong",
+                      )}
+                    >
+                      {formatModuleIndex(index)}
                     </span>
-                    <span className="mt-0.5 block text-xs text-[#6B6B6B]">
-                      {MODULE_TYPE_LABELS[module.moduleType]}
-                      {module.lockReason ? ` · ${module.lockReason}` : null}
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-start gap-2">
+                        {module.isLocked ? (
+                          <Lock
+                            className="mt-0.5 size-3.5 shrink-0 text-learn-faint"
+                            aria-hidden
+                          />
+                        ) : null}
+                        <span className="block font-medium leading-snug text-learn-text-strong">
+                          {module.moduleName}
+                        </span>
+                      </span>
+                      <span className="mt-1 block text-xs text-learn-muted">
+                        {MODULE_TYPE_LABELS[module.moduleType]}
+                        {module.lockReason ? ` · ${module.lockReason}` : null}
+                      </span>
                     </span>
                   </span>
-                </span>
-              </AccordionTrigger>
+                </AccordionTrigger>
 
-              <AccordionContent className="px-2 pb-4">
-                {courses.map((course) => (
-                  <div key={course.courseId} className="mb-2">
-                    <GroupLabel>{`Khóa: ${course.courseName}`}</GroupLabel>
-                    <div className="space-y-0.5">
-                      {[...course.activities]
-                        .sort((left, right) => left.activityOrder - right.activityOrder)
-                        .map((activity) => (
-                          <CurriculumNavItem
-                            key={activity.activityId}
-                            activityId={activity.activityId}
-                            activityName={activity.activityName}
-                            activityType={activity.activityType}
-                            status={activity.status}
-                            isSelected={selectedActivityId === activity.activityId}
-                            onSelect={onSelectActivity}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                ))}
+                <AccordionContent className="space-y-1 bg-learn-bg px-2.5 pb-3 pt-1">
+                  <NavTreeBranch className="space-y-0.5 py-1">
+                    {groups.map((group) => {
+                      const open = isGroupOpen(group.key);
 
-                {milestones.map((milestone) => (
-                  <div key={milestone.milestoneId} className="mb-2">
-                    <GroupLabel>{`Mốc: ${milestone.milestoneName}`}</GroupLabel>
-                    <div className="space-y-0.5">
-                      {[...milestone.activities]
-                        .sort((left, right) => left.activityOrder - right.activityOrder)
-                        .map((activity) => (
-                          <CurriculumNavItem
-                            key={activity.activityId}
-                            activityId={activity.activityId}
-                            activityName={activity.activityName}
-                            activityType={activity.activityType}
-                            status={activity.status}
-                            isSelected={selectedActivityId === activity.activityId}
-                            onSelect={onSelectActivity}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                ))}
-              </AccordionContent>
-            </AccordionItem>
-          );
-        })}
-      </Accordion>
+                      return (
+                        <div key={group.key}>
+                          <NavTreeNode>
+                            <NavGroupHeader
+                              name={group.name}
+                              kind={group.kind}
+                              isOpen={open}
+                              onToggle={() => toggleGroup(group.key)}
+                            />
+                          </NavTreeNode>
+                          <AnimatePresence initial={false}>
+                            {open ? (
+                              <motion.div
+                                key={`${group.key}-activities`}
+                                initial={reduceMotion ? false : { height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={
+                                  reduceMotion ? undefined : { height: 0, opacity: 0 }
+                                }
+                                transition={{
+                                  duration: 0.26,
+                                  ease: [0.16, 1, 0.3, 1],
+                                }}
+                                className="overflow-hidden"
+                              >
+                                {group.activities.map((activity) => (
+                                  <NavActivityNode key={activity.activityId}>
+                                    <CurriculumNavItem
+                                      activityId={activity.activityId}
+                                      activityName={activity.activityName}
+                                      activityType={activity.activityType}
+                                      status={activity.status}
+                                      isSelected={
+                                        selectedActivityId === activity.activityId
+                                      }
+                                      onSelect={onSelectActivity}
+                                      inTree
+                                    />
+                                  </NavActivityNode>
+                                ))}
+                              </motion.div>
+                            ) : null}
+                          </AnimatePresence>
+                        </div>
+                      );
+                    })}
+                  </NavTreeBranch>
+                </AccordionContent>
+              </AccordionItem>
+            );
+          })}
+        </Accordion>
+      </div>
     </div>
   );
 }

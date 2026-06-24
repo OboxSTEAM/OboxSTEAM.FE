@@ -133,24 +133,31 @@ export function MaterialActivity({
 
   if (!materialMeta) {
     return (
-      <p className={cn("text-sm leading-relaxed text-[#6B6B6B]", className)}>
+      <p className={cn("text-sm leading-relaxed text-learn-muted", className)}>
         {activity.description || "Nội dung sẽ được cập nhật."}
       </p>
     );
   }
 
   if (isLoading) {
-    return <div className={cn("h-64 animate-pulse rounded-xl bg-[#E5E5E0]", className)} />;
+    return (
+      <div className={cn("h-64 animate-pulse rounded-xl bg-learn-surface-2", className)} />
+    );
   }
 
   if (hasError || !fileUrl) {
     return (
-      <div className={cn("space-y-3 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-4", className)}>
-        <p className="text-sm text-[#6B6B6B]">Không tải được tài liệu học tập.</p>
+      <div
+        className={cn(
+          "space-y-3 rounded-xl border border-learn-border bg-learn-surface-2 p-4",
+          className,
+        )}
+      >
+        <p className="text-sm text-learn-muted">Không tải được tài liệu học tập.</p>
         <button
           type="button"
           onClick={retry}
-          className="text-sm font-medium text-[#4FC3F7] underline-offset-2 hover:underline"
+          className="text-sm font-medium text-learn-accent underline-offset-2 hover:underline"
         >
           Thử lại
         </button>
@@ -160,7 +167,12 @@ export function MaterialActivity({
 
   if (materialKind === "video") {
     return (
-      <div className={cn("overflow-hidden rounded-xl border border-[#E5E5E0] bg-black", className)}>
+      <div
+        className={cn(
+          "overflow-hidden rounded-xl border border-learn-border-strong bg-black",
+          className,
+        )}
+      >
         <video
           ref={videoRef}
           src={fileUrl}
@@ -186,11 +198,11 @@ export function MaterialActivity({
         <iframe
           src={fileUrl}
           title={materialMeta.title}
-          className="h-[min(70vh,720px)] w-full rounded-xl border border-[#E5E5E0] bg-white"
+          className="h-[min(70vh,720px)] w-full rounded-xl border border-learn-border bg-learn-surface"
         />
         <div
           ref={scrollRef}
-          className="max-h-48 overflow-y-auto rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-4 text-sm text-[#6B6B6B]"
+          className="max-h-48 overflow-y-auto rounded-xl border border-learn-border bg-learn-surface-2 p-4 text-sm text-learn-muted"
           onScroll={(event) => {
             const target = event.currentTarget;
             const ratio =
@@ -211,7 +223,7 @@ export function MaterialActivity({
               href={fileUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-medium text-[#4FC3F7] underline-offset-2 hover:underline"
+              className="font-medium text-learn-accent underline-offset-2 hover:underline"
             >
               mở tài liệu trong tab mới
             </a>
@@ -226,7 +238,7 @@ export function MaterialActivity({
     <div
       ref={scrollRef}
       className={cn(
-        "max-h-[min(70vh,720px)] overflow-y-auto rounded-xl border border-[#E5E5E0] bg-white p-6",
+        "max-h-[min(70vh,720px)] overflow-y-auto rounded-xl border border-learn-border bg-learn-surface p-6",
         className,
       )}
       onScroll={(event) => {
@@ -246,14 +258,14 @@ export function MaterialActivity({
       <iframe
         src={fileUrl}
         title={materialMeta.title}
-        className="min-h-[480px] w-full rounded-lg border border-[#E5E5E0]"
+        className="min-h-[480px] w-full rounded-lg border border-learn-border"
       />
-      <p className="mt-4 text-sm text-[#6B6B6B]">
+      <p className="mt-4 text-sm text-learn-muted">
         <a
           href={fileUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-[#4FC3F7] underline-offset-2 hover:underline"
+          className="font-medium text-learn-accent underline-offset-2 hover:underline"
         >
           Tải / mở tài liệu
         </a>
