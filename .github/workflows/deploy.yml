@@ -30,13 +30,10 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:latest
             ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:latest
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://oboxsteam.com' }}
-            CACHEBUST=${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
       - name: Sync compose file to VPS
         uses: appleboy/scp-action@v1
@@ -58,10 +55,11 @@ jobs:
           script: |
             set -e
             cd /root/apps/oboxsteam/oboxsteam-fe
+            export IMAGE_TAG=${{ github.sha }}
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
             docker compose pull obox-frontend
-            docker compose up -d obox-frontend
+            docker compose up -d --force-recreate --pull always obox-frontend
             docker image prune -af
             docker logs --tail 20 obox-frontend

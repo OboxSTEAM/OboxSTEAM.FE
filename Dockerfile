@@ -9,7 +9,8 @@ RUN corepack enable && corepack prepare pnpm@9.6.0 --activate
 FROM base AS deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile
 
 FROM base AS builder
 WORKDIR /app
@@ -18,11 +19,10 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 ARG NEXT_PUBLIC_API_URL
-ARG CACHEBUST
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 
-# CACHEBUST invalidates the build layer on every commit (GHA layer cache can skip pnpm build otherwise).
-RUN echo "Build id: ${CACHEBUST}" && pnpm build
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
+    pnpm build
 
 FROM base AS runner
 WORKDIR /app

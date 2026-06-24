@@ -1,6 +1,6 @@
 services:
   obox-frontend:
-    image: ${DOCKERHUB_USERNAME}/oboxsteam-fe:latest
+    image: ${DOCKERHUB_USERNAME}/oboxsteam-fe:${IMAGE_TAG:-latest}
     container_name: obox-frontend
     pull_policy: always
     restart: always
