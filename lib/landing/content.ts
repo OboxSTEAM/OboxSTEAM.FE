@@ -6,7 +6,7 @@
 export const SITE = {
   name: "OboxSTEAM",
   tagline: "Khám phá. Sáng tạo. Tỏa sáng.",
-  logoUrl: "https://oboxsteam-bucket.s3.ap-southeast-1.amazonaws.com/logo/obox-logo.png",
+  logoUrl: "https://oboxsteam-bucket-main.s3.ap-southeast-1.amazonaws.com/Seed/Material/logo-obox.png",
 } as const;
 
 export const NAV_LINKS = [
