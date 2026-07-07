@@ -120,6 +120,36 @@ export {
 } from "./payments";
 
 export {
+  createClassEnrollment,
+  type ClassEnrollment,
+  type ClassEnrollmentStatus,
+  type CreateClassEnrollmentInput,
+  type CreateClassEnrollmentResponse,
+  type CreateClassEnrollmentResult,
+} from "./class-enrollments";
+
+export {
+  getClassSessions,
+  getClassWithStudents,
+  getClasses,
+  type Class,
+  type ClassListQuery,
+  type ClassSession,
+  type ClassSessionKind,
+  type ClassSessionsQuery,
+  type ClassSessionStatus,
+  type ClassStatus,
+  type ClassStudentEnrollmentStatus,
+  type ClassStudentRoster,
+  type GetClassSessionsResponse,
+  type GetClassSessionsResult,
+  type GetClassWithStudentsResponse,
+  type GetClassWithStudentsResult,
+  type GetClassesResponse,
+  type GetClassesResult,
+} from "./classes";
+
+export {
   completeActivity,
   getEnrollmentCurriculum,
   getMyProgramEnrollments,

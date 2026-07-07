@@ -50,6 +50,18 @@ export {
   requestParentPaymentSchema,
 } from "./payments";
 export {
+  classIdParamSchema,
+  classListQuerySchema,
+  classSessionSortBySchema,
+  classSessionsQuerySchema,
+  classSortBySchema,
+  createClassEnrollmentSchema,
+  type ClassIdParam,
+  type ClassListQuery,
+  type ClassSessionsQuery,
+  type CreateClassEnrollmentInput,
+} from "./classes";
+export {
   myProgramEnrollmentsQuerySchema,
   programEnrollmentSortBySchema,
   studentProgramEnrollmentsQuerySchema,
