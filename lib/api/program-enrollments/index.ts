@@ -16,11 +16,13 @@ import {
   completeActivityResponseSchema,
   getEnrollmentCurriculumResponseSchema,
   getMyProgramEnrollmentsResponseSchema,
+  getProgramEnrollmentClassResponseSchema,
   getStudentProgramEnrollmentsResponseSchema,
   saveActivityCheckpointResponseSchema,
   type CompleteActivityResult,
   type GetEnrollmentCurriculumResult,
   type GetMyProgramEnrollmentsResult,
+  type GetProgramEnrollmentClassResult,
   type GetStudentProgramEnrollmentsResult,
   type SaveActivityCheckpointResult,
 } from "./schemas";
@@ -30,6 +32,8 @@ export type {
   CompleteActivityResult,
   GetEnrollmentCurriculumResponse,
   GetEnrollmentCurriculumResult,
+  GetProgramEnrollmentClassResponse,
+  GetProgramEnrollmentClassResult,
   GetMyProgramEnrollmentsResponse,
   GetMyProgramEnrollmentsResult,
   GetStudentProgramEnrollmentsResponse,
@@ -58,6 +62,8 @@ export type {
   ProgramEnrollment,
   ProgramEnrollmentStatus,
 } from "@/lib/api/entities/program-enrollment";
+
+export type { ProgramEnrollmentClass } from "@/lib/api/entities/program-enrollment-class";
 
 export type MyProgramEnrollmentsQuery = z.infer<typeof myProgramEnrollmentsQuerySchema>;
 export type StudentProgramEnrollmentsQuery = z.infer<
@@ -133,6 +139,22 @@ export async function getEnrollmentCurriculum(
   const response = await apiFetchParsed(
     `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/curriculum`,
     getEnrollmentCurriculumResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getProgramEnrollmentClass(
+  enrollmentId: string,
+): Promise<GetProgramEnrollmentClassResult> {
+  const { enrollmentId: parsedEnrollmentId } = enrollmentIdParamSchema.parse({
+    enrollmentId,
+  });
+
+  const response = await apiFetchParsed(
+    `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/class`,
+    getProgramEnrollmentClassResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

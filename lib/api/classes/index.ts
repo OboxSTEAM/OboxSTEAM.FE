@@ -10,9 +10,11 @@ import {
 
 import {
   getClassSessionsResponseSchema,
+  getClassWithSessionsResponseSchema,
   getClassWithStudentsResponseSchema,
   getClassesResponseSchema,
   type GetClassSessionsResult,
+  type GetClassWithSessionsResult,
   type GetClassWithStudentsResult,
   type GetClassesResult,
 } from "./schemas";
@@ -20,6 +22,8 @@ import {
 export type {
   GetClassSessionsResponse,
   GetClassSessionsResult,
+  GetClassWithSessionsResponse,
+  GetClassWithSessionsResult,
   GetClassWithStudentsResponse,
   GetClassWithStudentsResult,
   GetClassesResponse,
@@ -29,6 +33,7 @@ export type {
 export type {
   Class,
   ClassStatus,
+  ClassWithSessions,
 } from "@/lib/api/entities/class";
 
 export type {
@@ -110,6 +115,20 @@ export async function getClassSessions(
   const response = await apiFetchParsed(
     `${CLASSES_BASE}/${parsedClassId}/sessions${buildQueryString(params, classSessionsQuerySchema)}`,
     getClassSessionsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getClassWithSessions(
+  classId: string,
+): Promise<GetClassWithSessionsResult> {
+  const { classId: parsedClassId } = classIdParamSchema.parse({ classId });
+
+  const response = await apiFetchParsed(
+    `${CLASSES_BASE}/with-sessions/${parsedClassId}`,
+    getClassWithSessionsResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);
