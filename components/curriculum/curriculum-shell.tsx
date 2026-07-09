@@ -16,6 +16,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { EnrollmentCurriculum } from "@/lib/api";
+import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
 import { cn } from "@/lib/utils";
 
 import { ActivityPanel } from "./activity-panel";
@@ -28,6 +29,7 @@ type CurriculumShellProps = {
   selectedActivityId: string | null;
   onSelectActivity: (activityId: string) => void;
   onCurriculumRefresh: () => Promise<void>;
+  classContext?: CurriculumClassContext | null;
 };
 
 export function CurriculumShell({
@@ -35,6 +37,7 @@ export function CurriculumShell({
   selectedActivityId,
   onSelectActivity,
   onCurriculumRefresh,
+  classContext = null,
 }: CurriculumShellProps) {
   const reduceMotion = useReducedMotion();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -73,6 +76,7 @@ export function CurriculumShell({
               curriculum={curriculum}
               selectedActivityId={selectedActivityId}
               onSelectActivity={onSelectActivity}
+              classContext={classContext}
             />
           </ScrollArea>
         </motion.aside>
@@ -103,6 +107,7 @@ export function CurriculumShell({
               selectedActivityId={selectedActivityId}
               onSelectActivity={onSelectActivity}
               onCurriculumRefresh={onCurriculumRefresh}
+              classSessions={classContext?.sessions ?? []}
             />
           </div>
         </main>
@@ -136,6 +141,7 @@ export function CurriculumShell({
                 curriculum={curriculum}
                 selectedActivityId={selectedActivityId}
                 onSelectActivity={handleSelectActivity}
+                classContext={classContext}
               />
             </ScrollArea>
           </SheetBody>

@@ -11,9 +11,11 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import type { EnrollmentCurriculum } from "@/lib/api";
+import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
+import { CurriculumClassBar } from "./curriculum-class-bar";
 import { CurriculumNavItem } from "./curriculum-nav-item";
 
 const TREE_LINE = "bg-learn-faint/35";
@@ -22,6 +24,7 @@ type CurriculumNavProps = {
   curriculum: EnrollmentCurriculum;
   selectedActivityId: string | null;
   onSelectActivity: (activityId: string) => void;
+  classContext?: CurriculumClassContext | null;
   className?: string;
 };
 
@@ -120,6 +123,7 @@ export function CurriculumNav({
   curriculum,
   selectedActivityId,
   onSelectActivity,
+  classContext = null,
   className,
 }: CurriculumNavProps) {
   const reduceMotion = useReducedMotion();
@@ -163,6 +167,8 @@ export function CurriculumNav({
           </div>
         </div>
       </div>
+
+      {classContext ? <CurriculumClassBar classContext={classContext} /> : null}
 
       <div className="space-y-2 p-3">
         <Accordion multiple defaultValue={defaultOpen} className="space-y-2">

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import type { Activity, ResumeState } from "@/lib/api";
+import type { ClassSession } from "@/lib/api/entities/class-session";
 import { cn } from "@/lib/utils";
 
 import { MaterialActivity } from "./material-activity";
@@ -13,6 +14,7 @@ type ActivityContentProps = {
   enrollmentId: string;
   resumeState: ResumeState | null;
   isAlreadyComplete: boolean;
+  nextSession?: ClassSession | null;
   onCanCompleteChange?: (canComplete: boolean) => void;
   compact?: boolean;
 };
@@ -22,6 +24,7 @@ export function ActivityContent({
   enrollmentId,
   resumeState,
   isAlreadyComplete,
+  nextSession = null,
   onCanCompleteChange,
   compact = false,
 }: ActivityContentProps) {
@@ -51,6 +54,7 @@ export function ActivityContent({
   return (
     <SessionActivity
       activity={activity}
+      nextSession={nextSession}
       className={cn(compact && "pb-1")}
     />
   );

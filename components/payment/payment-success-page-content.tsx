@@ -1,15 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getPaymentById } from "@/lib/api";
+import {
+  getMyProgramEnrollments,
+  getPaymentById,
+  getProgramEnrollmentClass,
+} from "@/lib/api";
 import type { Payment } from "@/lib/api/entities/payment";
 import { isParentRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { getProgramLearnHref } from "@/lib/programs/enrollments";
 import { PAYMENT_SUCCESS_ILLUSTRATION_URL } from "@/lib/payment/constants";
 import { cn } from "@/lib/utils";
 
@@ -19,11 +25,17 @@ import { PaymentPageShell } from "./payment-page-shell";
 
 type LoadState = "loading" | "ready" | "error";
 
+type PaymentSuccessFooterProps = {
+  isParent: boolean;
+  programId?: string | null;
+  onChooseClass?: () => void;
+};
+
 function PaymentSuccessFooter({
   isParent,
-}: {
-  isParent: boolean;
-}) {
+  programId,
+  onChooseClass,
+}: PaymentSuccessFooterProps) {
   if (isParent) {
     return (
       <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
@@ -48,9 +60,30 @@ function PaymentSuccessFooter({
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-      <Link href="/courses" className={cn(buttonVariants(), "font-semibold")}>
-        Vào Khóa học của tôi
-      </Link>
+      {programId ? (
+        <Link
+          href={getProgramLearnHref(programId)}
+          className={cn(buttonVariants(), "font-semibold")}
+        >
+          Vào học ngay
+        </Link>
+      ) : (
+        <Link href="/courses" className={cn(buttonVariants(), "font-semibold")}>
+          Vào Khóa học của tôi
+        </Link>
+      )}
+      {onChooseClass ? (
+        <button
+          type="button"
+          className={cn(
+            buttonVariants({ variant: "outline" }),
+            "border-[#E5E5E0]",
+          )}
+          onClick={onChooseClass}
+        >
+          Chọn lớp học
+        </button>
+      ) : null}
       <Link
         href="/#programs"
         className={cn(
@@ -65,11 +98,16 @@ function PaymentSuccessFooter({
 }
 
 export function PaymentSuccessPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const paymentId = searchParams.get("paymentId");
   const { profile, isHydrated, session } = useCurrentUser();
   const [loadState, setLoadState] = useState<LoadState>("loading");
   const [payment, setPayment] = useState<Payment | null>(null);
+  const [programId, setProgramId] = useState<string | null>(null);
+  const [programName, setProgramName] = useState<string | null>(null);
+  const [isClassPickerOpen, setIsClassPickerOpen] = useState(false);
+  const [hasCheckedClass, setHasCheckedClass] = useState(false);
 
   const cachedRole = session?.user?.role;
   const isParent =
@@ -106,6 +144,49 @@ export function PaymentSuccessPageContent() {
       cancelled = true;
     };
   }, [paymentId]);
+
+  useEffect(() => {
+    if (loadState !== "ready" || !payment || isParent || hasCheckedClass) return;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const [enrollmentClassResult, enrollmentsResult] = await Promise.all([
+          getProgramEnrollmentClass(payment.programEnrollmentId),
+          getMyProgramEnrollments({ page: 1, pageSize: 50 }),
+        ]);
+
+        if (cancelled) return;
+
+        const enrollment = enrollmentsResult?.data?.items.find(
+          (item) => item.id === payment.programEnrollmentId,
+        );
+
+        if (enrollment) {
+          setProgramId(enrollment.programId);
+          setProgramName(enrollment.name);
+        }
+
+        const classId = enrollmentClassResult?.data?.classId ?? null;
+        if (!classId && enrollment) {
+          setIsClassPickerOpen(true);
+        }
+      } catch (error) {
+        if (!cancelled) {
+          showAppErrorFromUnknown(error, "generic");
+        }
+      } finally {
+        if (!cancelled) {
+          setHasCheckedClass(true);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [hasCheckedClass, isParent, loadState, payment]);
 
   if (loadState === "loading") {
     return (
@@ -165,21 +246,48 @@ export function PaymentSuccessPageContent() {
   }
 
   return (
-    <PaymentPageShell
-      eyebrow="Thanh toán thành công"
-      title={isParent ? "Thanh toán hoàn tất!" : "Cảm ơn bạn đã đăng ký!"}
-      description={
-        isParent
-          ? "Giao dịch đã được ghi nhận. Học viên có thể bắt đầu học trong Khóa học của tôi."
-          : "Giao dịch đã được ghi nhận. Bạn có thể bắt đầu học ngay trong mục Khóa học của tôi."
-      }
-      illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
-      illustrationAlt="Minh họa thanh toán thành công"
-    >
-      <PaymentInvoiceCard
-        payment={payment}
-        footer={<PaymentSuccessFooter isParent={isParent} />}
-      />
-    </PaymentPageShell>
+    <>
+      <PaymentPageShell
+        eyebrow="Thanh toán thành công"
+        title={isParent ? "Thanh toán hoàn tất!" : "Cảm ơn bạn đã đăng ký!"}
+        description={
+          isParent
+            ? "Giao dịch đã được ghi nhận. Học viên có thể bắt đầu học trong Khóa học của tôi."
+            : "Giao dịch đã được ghi nhận. Hãy chọn lớp học để bắt đầu cùng lớp, hoặc quay lại sau."
+        }
+        illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
+        illustrationAlt="Minh họa thanh toán thành công"
+      >
+        <PaymentInvoiceCard
+          payment={payment}
+          footer={
+            <PaymentSuccessFooter
+              isParent={isParent}
+              programId={programId}
+              onChooseClass={
+                !isParent && programId
+                  ? () => setIsClassPickerOpen(true)
+                  : undefined
+              }
+            />
+          }
+        />
+      </PaymentPageShell>
+
+      {!isParent && programId ? (
+        <ClassPickerDialog
+          open={isClassPickerOpen}
+          onOpenChange={setIsClassPickerOpen}
+          programId={programId}
+          programEnrollmentId={payment.programEnrollmentId}
+          programName={programName ?? undefined}
+          onEnrolled={() => {
+            if (programId) {
+              router.push(getProgramLearnHref(programId));
+            }
+          }}
+        />
+      ) : null}
+    </>
   );
 }

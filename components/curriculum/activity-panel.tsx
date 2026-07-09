@@ -9,10 +9,12 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   completeActivity,
   getActivityById,
+  type ClassSession,
   type EnrollmentCurriculum,
 } from "@/lib/api";
 import type { CompleteActivitySource } from "@/lib/validations/program-enrollments";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
+import { getNextSessionForActivity } from "@/lib/classes/session-helpers";
 import {
   findFlatActivity,
   getActivityBreadcrumb,
@@ -30,6 +32,7 @@ type ActivityPanelProps = {
   selectedActivityId: string | null;
   onSelectActivity: (activityId: string) => void;
   onCurriculumRefresh: () => Promise<void>;
+  classSessions?: ClassSession[];
 };
 
 function resolveCompleteSource(
@@ -66,6 +69,7 @@ export function ActivityPanel({
   selectedActivityId,
   onSelectActivity,
   onCurriculumRefresh,
+  classSessions = [],
 }: ActivityPanelProps) {
   const [canComplete, setCanComplete] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -114,6 +118,12 @@ export function ActivityPanel({
   });
 
   const activity = activityResult?.data ?? null;
+
+  const nextSession = useMemo(() => {
+    if (!activity || !selectedActivityId) return null;
+    if (activity.activityType === "SelfPaced") return null;
+    return getNextSessionForActivity(classSessions, selectedActivityId);
+  }, [activity, classSessions, selectedActivityId]);
 
   const isAlreadyComplete =
     flatActivity?.status === "completed" ||
@@ -230,6 +240,7 @@ export function ActivityPanel({
           enrollmentId={curriculum.enrollmentId}
           resumeState={resumeState}
           isAlreadyComplete={isAlreadyComplete}
+          nextSession={nextSession}
           onCanCompleteChange={setCanComplete}
           compact
         />
