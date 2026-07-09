@@ -170,7 +170,7 @@ export function CurriculumNav({
 
       {classContext ? <CurriculumClassBar classContext={classContext} /> : null}
 
-      <div className="space-y-2 p-3">
+      <div className="space-y-2 border-t border-learn-border/80 p-3 pt-4">
         <Accordion multiple defaultValue={defaultOpen} className="space-y-2">
           {modules.map((module, index) => {
             const courses = [...module.courses].sort(

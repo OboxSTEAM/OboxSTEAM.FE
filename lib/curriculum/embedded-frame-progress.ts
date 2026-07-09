@@ -1,3 +1,5 @@
+import { SCROLL_COMPLETE_EPSILON } from "@/lib/curriculum/constants";
+
 export type EmbeddedFrameProgress = {
   page: number;
   scrollRatio: number;
@@ -18,6 +20,59 @@ export function buildPdfSrc(fileUrl: string, page: number): string {
   return page > 1 ? `${base}#page=${page}` : base;
 }
 
+function getPdfViewerContainer(doc: Document): HTMLElement | null {
+  return (
+    doc.getElementById("viewerContainer") ??
+    doc.getElementById("viewer") ??
+    null
+  );
+}
+
+type PdfViewerApplicationShape = {
+  page?: number;
+  pagesCount?: number;
+  pdfViewer?: {
+    currentPageNumber?: number;
+    pagesCount?: number;
+  };
+};
+
+function getPdfViewerApplication(
+  win: Window,
+): { page: number; pagesCount: number } | null {
+  const pdfViewer = (win as Window & { PDFViewerApplication?: PdfViewerApplicationShape })
+    .PDFViewerApplication;
+
+  if (!pdfViewer) return null;
+
+  const page = pdfViewer.page ?? pdfViewer.pdfViewer?.currentPageNumber;
+  const pagesCount = pdfViewer.pagesCount ?? pdfViewer.pdfViewer?.pagesCount;
+
+  if (page == null || pagesCount == null || pagesCount < 1) return null;
+
+  return {
+    page: Math.min(Math.max(page, 1), pagesCount),
+    pagesCount,
+  };
+}
+
+/** Combines page index with in-page scroll for paginated PDF viewers. */
+export function computePaginatedPdfScrollRatio(
+  page: number,
+  pagesCount: number,
+  innerScrollRatio: number,
+): number {
+  if (pagesCount <= 1) {
+    return innerScrollRatio;
+  }
+
+  return Math.min(1, ((page - 1) + innerScrollRatio) / pagesCount);
+}
+
+export function isScrollComplete(scrollRatio: number): boolean {
+  return scrollRatio >= 1 - SCROLL_COMPLETE_EPSILON;
+}
+
 /** Read page + in-document scroll from an embedded PDF/DOC iframe (same-origin only). */
 export function readEmbeddedFrameProgress(
   iframe: HTMLIFrameElement | null,
@@ -29,19 +84,40 @@ export function readEmbeddedFrameProgress(
     const doc = win?.document;
     if (!win || !doc) return null;
 
-    const pdfViewer = (
-      win as Window & { PDFViewerApplication?: { page: number; pagesCount: number } }
-    ).PDFViewerApplication;
+    const viewerContainer = getPdfViewerContainer(doc);
+    const pdfViewer = getPdfViewerApplication(win);
+    const page = pdfViewer?.page ?? parsePdfPageFromHash(win.location.hash);
 
-    if (pdfViewer?.page) {
-      const pagesCount = pdfViewer.pagesCount || pdfViewer.page;
-      return {
-        page: pdfViewer.page,
-        scrollRatio: pagesCount > 1 ? pdfViewer.page / pagesCount : 1,
-      };
+    if (viewerContainer && viewerContainer.scrollHeight > viewerContainer.clientHeight) {
+      const containerScrollRatio = getScrollRatio(viewerContainer);
+
+      if (pdfViewer) {
+        const paginatedRatio = computePaginatedPdfScrollRatio(
+          pdfViewer.page,
+          pdfViewer.pagesCount,
+          containerScrollRatio,
+        );
+
+        const scrollRatio =
+          pdfViewer.page >= pdfViewer.pagesCount && isScrollComplete(containerScrollRatio)
+            ? 1
+            : Math.max(containerScrollRatio, paginatedRatio);
+
+        return { page, scrollRatio };
+      }
+
+      return { page, scrollRatio: containerScrollRatio };
     }
 
-    const page = parsePdfPageFromHash(win.location.hash);
+    if (pdfViewer) {
+      const scrollRatio =
+        pdfViewer.pagesCount <= 1
+          ? 1
+          : pdfViewer.page / pdfViewer.pagesCount;
+
+      return { page, scrollRatio };
+    }
+
     const scrollRoot = (doc.scrollingElement ?? doc.documentElement) as HTMLElement;
     return {
       page,
@@ -60,9 +136,13 @@ export function restoreEmbeddedFrameScroll(
 
   try {
     const doc = iframe.contentWindow?.document;
-    const scrollRoot = (doc?.scrollingElement ?? doc?.documentElement) as
-      | HTMLElement
-      | undefined;
+    if (!doc) return;
+
+    const viewerContainer = getPdfViewerContainer(doc);
+    const scrollRoot = (viewerContainer ??
+      doc.scrollingElement ??
+      doc.documentElement) as HTMLElement | undefined;
+
     if (!scrollRoot) return;
 
     const maxScroll = scrollRoot.scrollHeight - scrollRoot.clientHeight;

@@ -9,6 +9,10 @@ import {
 
 export type CompletionGateKind = "video" | "pdf" | "doc" | "manual" | "session";
 
+function isImmediatelyCompletable(kind: CompletionGateKind): boolean {
+  return kind === "manual" || kind === "session" || kind === "pdf" || kind === "doc";
+}
+
 export type UseActivityCompletionGateOptions = {
   kind: CompletionGateKind;
   /** When true, activity is already marked done on the server. */
@@ -28,11 +32,11 @@ export function useActivityCompletionGate({
   isAlreadyComplete = false,
 }: UseActivityCompletionGateOptions): UseActivityCompletionGateResult {
   const [canComplete, setCanComplete] = useState(
-    isAlreadyComplete || kind === "manual" || kind === "session",
+    isAlreadyComplete || isImmediatelyCompletable(kind),
   );
 
   useEffect(() => {
-    setCanComplete(isAlreadyComplete || kind === "manual" || kind === "session");
+    setCanComplete(isAlreadyComplete || isImmediatelyCompletable(kind));
   }, [isAlreadyComplete, kind]);
 
   const onVideoTimeUpdate = useCallback((currentTime: number, duration: number) => {

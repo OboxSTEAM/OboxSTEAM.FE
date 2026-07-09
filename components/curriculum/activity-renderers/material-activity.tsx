@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Activity, ResumeState } from "@/lib/api";
 import { getMaterialByActivityId } from "@/lib/api";
@@ -8,7 +8,6 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   CHECKPOINT_DEBOUNCE_MS,
   EMBEDDED_FRAME_POLL_MS,
-  SCROLL_COMPLETE_EPSILON,
   VIDEO_CHECKPOINT_INTERVAL_MS,
   VIDEO_CHECKPOINT_MIN_DELTA_SECONDS,
 } from "@/lib/curriculum/constants";
@@ -18,6 +17,7 @@ import {
   restoreEmbeddedFrameScroll,
   type EmbeddedFrameProgress,
 } from "@/lib/curriculum/embedded-frame-progress";
+import { resolvePdfEmbedUrl } from "@/lib/curriculum/pdf-embed-url";
 import {
   useActivityCompletionGate,
   useDebouncedCheckpoint,
@@ -132,18 +132,22 @@ function useEmbeddedFrameTracking({
   enabled,
   onProgress,
   scheduleCheckpoint,
+  readProgress = readEmbeddedFrameProgress,
 }: {
   iframeRef: React.RefObject<HTMLIFrameElement | null>;
   progressRef: React.MutableRefObject<EmbeddedFrameProgress>;
   enabled: boolean;
   onProgress: (scrollRatio: number) => void;
   scheduleCheckpoint: () => void;
+  readProgress?: (
+    iframe: HTMLIFrameElement | null,
+  ) => EmbeddedFrameProgress | null;
 }) {
   useEffect(() => {
     if (!enabled) return;
 
     const poll = () => {
-      const next = readEmbeddedFrameProgress(iframeRef.current);
+      const next = readProgress(iframeRef.current);
       if (!next) return;
 
       onProgress(next.scrollRatio);
@@ -156,7 +160,7 @@ function useEmbeddedFrameTracking({
 
     const intervalId = window.setInterval(poll, EMBEDDED_FRAME_POLL_MS);
     return () => window.clearInterval(intervalId);
-  }, [enabled, iframeRef, onProgress, progressRef, scheduleCheckpoint]);
+  }, [enabled, iframeRef, onProgress, progressRef, readProgress, scheduleCheckpoint]);
 }
 
 type VideoMaterialViewProps = {
@@ -377,11 +381,50 @@ function PdfMaterialView({
     page: resolveInitialPdfPage(resumeState),
     scrollRatio: resolveInitialScrollRatio(resumeState),
   });
+  const [embedUrl, setEmbedUrl] = useState<string | null>(null);
+  const [isEmbedLoading, setIsEmbedLoading] = useState(true);
 
-  const { canComplete, onScrollProgress } = useActivityCompletionGate({
+  const initialPage = resolveInitialPdfPage(resumeState);
+  const initialScrollRatio = resolveInitialScrollRatio(resumeState);
+
+  const { canComplete } = useActivityCompletionGate({
     kind: "pdf",
     isAlreadyComplete,
   });
+
+  useEffect(() => {
+    let cancelled = false;
+    let revoke: (() => void) | undefined;
+
+    setIsEmbedLoading(true);
+    setEmbedUrl(null);
+
+    void (async () => {
+      try {
+        const resolved = await resolvePdfEmbedUrl(fileUrl);
+        if (cancelled) {
+          resolved.revoke?.();
+          return;
+        }
+
+        revoke = resolved.revoke;
+        setEmbedUrl(resolved.embedUrl);
+      } catch {
+        if (!cancelled) {
+          setEmbedUrl(fileUrl);
+        }
+      } finally {
+        if (!cancelled) {
+          setIsEmbedLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      revoke?.();
+    };
+  }, [activityId, fileUrl]);
 
   const buildResumeState = useCallback(() => {
     const live = readEmbeddedFrameProgress(iframeRef.current);
@@ -396,31 +439,18 @@ function PdfMaterialView({
     };
   }, []);
 
-  const { persistCheckpoint, scheduleCheckpoint } = useCheckpointSaver({
+  const { scheduleCheckpoint } = useCheckpointSaver({
     enrollmentId,
     activityId,
     isAlreadyComplete,
     buildResumeState,
   });
 
-  const handleFrameProgress = useCallback(
-    (scrollRatio: number) => {
-      onScrollProgress(scrollRatio);
-      if (scrollRatio >= 1 - SCROLL_COMPLETE_EPSILON) {
-        void persistCheckpoint();
-      }
-    },
-    [onScrollProgress, persistCheckpoint],
-  );
-
-  const initialPage = resolveInitialPdfPage(resumeState);
-  const initialScrollRatio = resolveInitialScrollRatio(resumeState);
-
   useEmbeddedFrameTracking({
     iframeRef,
     progressRef,
-    enabled: !isAlreadyComplete,
-    onProgress: handleFrameProgress,
+    enabled: !isAlreadyComplete && Boolean(embedUrl),
+    onProgress: () => {},
     scheduleCheckpoint,
   });
 
@@ -437,7 +467,7 @@ function PdfMaterialView({
 
   useEffect(() => {
     const iframe = iframeRef.current;
-    if (!iframe) return;
+    if (!iframe || !embedUrl) return;
 
     const restore = () => {
       restoreEmbeddedFrameScroll(iframe, initialScrollRatio);
@@ -449,7 +479,18 @@ function PdfMaterialView({
 
     iframe.addEventListener("load", restore);
     return () => iframe.removeEventListener("load", restore);
-  }, [activityId, fileUrl, initialScrollRatio]);
+  }, [activityId, embedUrl, initialScrollRatio]);
+
+  if (isEmbedLoading || !embedUrl) {
+    return (
+      <div
+        className={cn(
+          compact ? "min-h-0 flex-1 animate-pulse rounded-xl bg-learn-surface-2" : "h-[min(70vh,720px)] animate-pulse rounded-xl bg-learn-surface-2",
+          className,
+        )}
+      />
+    );
+  }
 
   return (
     <div
@@ -460,7 +501,7 @@ function PdfMaterialView({
     >
       <iframe
         ref={iframeRef}
-        src={buildPdfSrc(fileUrl, initialPage)}
+        src={buildPdfSrc(embedUrl, initialPage)}
         title={title}
         className={cn(
           "w-full rounded-xl bg-learn-surface",
@@ -502,7 +543,7 @@ function DocMaterialView({
     scrollRatio: resolveInitialScrollRatio(resumeState),
   });
 
-  const { canComplete, onScrollProgress } = useActivityCompletionGate({
+  const { canComplete } = useActivityCompletionGate({
     kind: "doc",
     isAlreadyComplete,
   });
@@ -519,22 +560,12 @@ function DocMaterialView({
     };
   }, []);
 
-  const { persistCheckpoint, scheduleCheckpoint } = useCheckpointSaver({
+  const { scheduleCheckpoint } = useCheckpointSaver({
     enrollmentId,
     activityId,
     isAlreadyComplete,
     buildResumeState,
   });
-
-  const handleFrameProgress = useCallback(
-    (scrollRatio: number) => {
-      onScrollProgress(scrollRatio);
-      if (scrollRatio >= 1 - SCROLL_COMPLETE_EPSILON) {
-        void persistCheckpoint();
-      }
-    },
-    [onScrollProgress, persistCheckpoint],
-  );
 
   const initialScrollRatio = resolveInitialScrollRatio(resumeState);
 
@@ -542,7 +573,7 @@ function DocMaterialView({
     iframeRef,
     progressRef,
     enabled: !isAlreadyComplete,
-    onProgress: handleFrameProgress,
+    onProgress: () => {},
     scheduleCheckpoint,
   });
 
