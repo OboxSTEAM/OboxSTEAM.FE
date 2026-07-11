@@ -11,8 +11,10 @@ import {
   getEnrollmentCurriculum,
   getMyProgramEnrollments,
   getProgramEnrollmentClass,
+  getUserProfileById,
   type EnrollmentCurriculum,
   type ProgramEnrollment,
+  type UserProfile,
 } from "@/lib/api";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLASS_SESSIONS_QUERY } from "@/lib/classes/constants";
@@ -46,6 +48,7 @@ function LearnSkeleton() {
 function buildClassContext(
   classWithStudentsResult: Awaited<ReturnType<typeof getClassWithStudents>>,
   sessionsResult: Awaited<ReturnType<typeof getClassSessions>>,
+  mentor: UserProfile | null,
 ): CurriculumClassContext | null {
   const classWithStudents = classWithStudentsResult?.data;
   if (!classWithStudents) return null;
@@ -56,9 +59,19 @@ function buildClassContext(
     className: classWithStudents.name,
     seatsTaken: classWithStudents.seatsTaken,
     maxCapacity: classWithStudents.maxCapacity,
+    mentor,
     roster: classWithStudents.students,
     sessions: sessionsResult?.data?.items ?? [],
   };
+}
+
+async function loadMentorProfile(mentorId: string): Promise<UserProfile | null> {
+  try {
+    const result = await getUserProfileById(mentorId);
+    return result?.data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function CurriculumLearnContent({ programId }: CurriculumLearnContentProps) {
@@ -96,9 +109,13 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       getClassSessions(classId, CLASS_SESSIONS_QUERY),
     ]);
 
+    const mentorId = classWithStudentsResult?.data?.mentorId;
+    const mentor = mentorId ? await loadMentorProfile(mentorId) : null;
+
     const nextClassContext = buildClassContext(
       classWithStudentsResult,
       sessionsResult,
+      mentor,
     );
     setClassContext(nextClassContext);
     return nextClassContext;

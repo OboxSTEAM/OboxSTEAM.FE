@@ -3,13 +3,15 @@ import { z } from "zod";
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import type { UserProfile } from "@/lib/api/entities/user";
-import { updateProfileSchema } from "@/lib/validations/account";
+import { updateProfileSchema, userIdParamSchema } from "@/lib/validations/account";
 
 import {
   getCurrentUserResponseSchema,
+  getUserProfileByIdResponseSchema,
   updateProfileResponseSchema,
   uploadAvatarResponseSchema,
   type GetCurrentUserResult,
+  type GetUserProfileByIdResult,
   type UpdateProfileResult,
   type UploadAvatarResult,
 } from "./schemas";
@@ -17,6 +19,8 @@ import {
 export type {
   GetCurrentUserResponse,
   GetCurrentUserResult,
+  GetUserProfileByIdResponse,
+  GetUserProfileByIdResult,
   UpdateProfileResponse,
   UpdateProfileResult,
   UploadAvatarResponse,
@@ -28,7 +32,8 @@ export type { UserProfile } from "@/lib/api/entities/user";
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
-const ACCOUNT_ME = "/api/account/me";
+const ACCOUNT_BASE = "/api/account";
+const ACCOUNT_ME = `${ACCOUNT_BASE}/me`;
 
 function requireApiValue<T>(value: T | null): T {
   if (value == null) {
@@ -41,6 +46,18 @@ export async function getCurrentUser(): Promise<GetCurrentUserResult> {
   const response = await apiFetchParsed(ACCOUNT_ME, getCurrentUserResponseSchema, {
     method: "GET",
   });
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getUserProfileById(userId: string): Promise<GetUserProfileByIdResult> {
+  const { userId: parsedUserId } = userIdParamSchema.parse({ userId });
+
+  const response = await apiFetchParsed(
+    `${ACCOUNT_BASE}/${parsedUserId}`,
+    getUserProfileByIdResponseSchema,
+    { method: "GET" },
+  );
   assertApiSuccess(response);
   return requireApiValue(response.value);
 }

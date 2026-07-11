@@ -18,3 +18,7 @@ export const uploadAvatarSchema = z.object({
       "Ảnh đại diện không được vượt quá 5 MB.",
     ),
 });
+
+export const userIdParamSchema = z.object({
+  userId: z.string().uuid("User id không hợp lệ."),
+});

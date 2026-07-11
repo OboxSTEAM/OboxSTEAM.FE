@@ -1,9 +1,11 @@
 export {
   getCurrentUser,
+  getUserProfileById,
   updateProfile,
   uploadAvatar,
   toStoredAuthUser,
   type GetCurrentUserResult,
+  type GetUserProfileByIdResult,
   type UpdateProfileInput,
   type UpdateProfileResult,
   type UploadAvatarResult,

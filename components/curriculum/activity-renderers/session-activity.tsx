@@ -3,7 +3,7 @@ import { Calendar, ExternalLink, MapPin, Users } from "lucide-react";
 import type { Activity } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
-import { formatClassSessionDateTime } from "@/lib/classes/session-helpers";
+import { formatClassSessionSchedule } from "@/lib/classes/session-helpers";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,7 @@ export function SessionActivity({
   const location = nextSession?.location ?? activity.location;
   const maxCapacity = nextSession?.maxCapacity ?? activity.maxCapacity;
   const hasSchedule = Boolean(nextSession);
+  const schedule = startTime ? formatClassSessionSchedule(startTime, endTime) : null;
 
   return (
     <div className={cn("space-y-5", className)}>
@@ -51,16 +52,66 @@ export function SessionActivity({
 
         <div className="flex items-start gap-3 text-sm">
           <Calendar className="mt-0.5 size-4 shrink-0 text-learn-faint" aria-hidden />
-          <div>
+          <div className="min-w-0">
             <dt className="text-learn-muted">Thời gian</dt>
-            <dd className="font-medium text-learn-text-strong">
-              {startTime ? (
-                <>
-                  {formatClassSessionDateTime(startTime)}
-                  {endTime ? ` – ${formatClassSessionDateTime(endTime)}` : null}
-                </>
+            <dd className="mt-1.5">
+              {!schedule ? (
+                <span className="font-medium text-learn-text-strong">Lịch sẽ được cập nhật</span>
+              ) : schedule.spansMultipleDays && schedule.end ? (
+                <div className="rounded-xl border border-learn-border bg-learn-surface px-4 py-3.5">
+                  <ol className="relative space-y-4">
+                    <span
+                      aria-hidden
+                      className="absolute left-[5px] top-2.5 bottom-2.5 w-px bg-learn-border-strong"
+                    />
+                    <li className="relative flex items-baseline gap-3 pl-6">
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1.5 size-2.5 rounded-full border-2 border-learn-accent bg-learn-surface"
+                      />
+                      <span className="w-16 shrink-0 whitespace-nowrap text-[11px] font-medium uppercase tracking-wide text-learn-faint">
+                        Bắt đầu
+                      </span>
+                      <span className="flex flex-wrap items-baseline gap-x-2.5">
+                        <span className="text-[15px] font-semibold leading-none tabular-nums text-learn-text-strong">
+                          {schedule.start.time}
+                        </span>
+                        <span className="text-xs text-learn-muted">{schedule.start.date}</span>
+                      </span>
+                    </li>
+                    <li className="relative flex items-baseline gap-3 pl-6">
+                      <span
+                        aria-hidden
+                        className="absolute left-0 top-1.5 size-2.5 rounded-full border-2 border-learn-border-strong bg-learn-surface"
+                      />
+                      <span className="w-16 shrink-0 whitespace-nowrap text-[11px] font-medium uppercase tracking-wide text-learn-faint">
+                        Kết thúc
+                      </span>
+                      <span className="flex flex-wrap items-baseline gap-x-2.5">
+                        <span className="text-[15px] font-semibold leading-none tabular-nums text-learn-text-strong">
+                          {schedule.end.time}
+                        </span>
+                        <span className="text-xs text-learn-muted">{schedule.end.date}</span>
+                      </span>
+                    </li>
+                  </ol>
+                  <span className="mt-3.5 inline-flex rounded-full border border-learn-border bg-learn-surface-2 px-2.5 py-0.5 text-[11px] font-medium text-learn-muted">
+                    {schedule.relative}
+                  </span>
+                </div>
               ) : (
-                "Lịch sẽ được cập nhật"
+                <div className="rounded-xl border border-learn-border bg-learn-surface px-4 py-3.5">
+                  <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1.5">
+                    <span className="text-[15px] font-semibold leading-none tabular-nums text-learn-text-strong">
+                      {schedule.start.time}
+                      {schedule.end ? ` – ${schedule.end.time}` : null}
+                    </span>
+                    <span className="text-xs text-learn-muted">{schedule.start.date}</span>
+                    <span className="inline-flex rounded-full border border-learn-border bg-learn-surface-2 px-2.5 py-0.5 text-[11px] font-medium text-learn-muted">
+                      {schedule.relative}
+                    </span>
+                  </div>
+                </div>
               )}
             </dd>
           </div>
