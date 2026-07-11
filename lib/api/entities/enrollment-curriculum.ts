@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { activityTypeSchema } from "@/lib/api/entities/activity";
 import { activityNavStatusSchema, resumeStateSchema } from "@/lib/api/entities/activity-progress";
+import { enrollmentCurriculumAssignmentSchema } from "@/lib/api/entities/assignment";
 import { curriculumMaterialSummarySchema } from "@/lib/api/entities/material";
 import { moduleTypeSchema } from "@/lib/api/entities/module";
 
@@ -21,6 +22,7 @@ export const enrollmentCurriculumCourseSchema = z.object({
   courseName: z.string(),
   courseOrder: z.number(),
   activities: z.array(enrollmentCurriculumActivitySchema),
+  assignments: z.array(enrollmentCurriculumAssignmentSchema).default([]),
 });
 
 export const enrollmentCurriculumMilestoneSchema = z.object({
@@ -28,6 +30,7 @@ export const enrollmentCurriculumMilestoneSchema = z.object({
   milestoneName: z.string(),
   milestoneOrder: z.number(),
   activities: z.array(enrollmentCurriculumActivitySchema),
+  assignment: enrollmentCurriculumAssignmentSchema.nullable(),
 });
 
 export const enrollmentCurriculumModuleSchema = z.object({
@@ -41,6 +44,7 @@ export const enrollmentCurriculumModuleSchema = z.object({
   moduleEnrollmentId: z.string(),
   courses: z.array(enrollmentCurriculumCourseSchema),
   milestones: z.array(enrollmentCurriculumMilestoneSchema).default([]),
+  assignments: z.array(enrollmentCurriculumAssignmentSchema).default([]),
 });
 
 export const enrollmentCurriculumSchema = z.object({
@@ -57,3 +61,5 @@ export type EnrollmentCurriculumCourse = z.infer<typeof enrollmentCurriculumCour
 export type EnrollmentCurriculumMilestone = z.infer<typeof enrollmentCurriculumMilestoneSchema>;
 export type EnrollmentCurriculumModule = z.infer<typeof enrollmentCurriculumModuleSchema>;
 export type EnrollmentCurriculum = z.infer<typeof enrollmentCurriculumSchema>;
+
+export type { EnrollmentCurriculumAssignment } from "@/lib/api/entities/assignment";

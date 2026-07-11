@@ -1,4 +1,8 @@
 import type { ActivityNavStatus, ActivityType } from "@/lib/api";
+import type {
+  AssignmentType,
+  EnrollmentAssignmentStatus,
+} from "@/lib/api/entities/assignment";
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   SelfPaced: "Tự học",
@@ -20,6 +24,30 @@ export const ACTIVITY_NAV_STATUS_META: Record<
   current: { label: "Đang học", icon: "current" },
   available: { label: "Có thể học", icon: "available" },
   locked: { label: "Đã khóa", icon: "locked" },
+};
+
+export const ASSIGNMENT_TYPE_LABELS: Record<AssignmentType, string> = {
+  Quiz: "Trắc nghiệm",
+  Retrospective: "Đánh giá",
+  FileUpload: "Nộp bài",
+};
+
+export const ASSIGNMENT_TITLE_PREFIX: Record<AssignmentType, string> = {
+  Quiz: "Bài kiểm tra",
+  Retrospective: "Bài tập",
+  FileUpload: "Bài nộp",
+};
+
+export const ASSIGNMENT_STATUS_META: Record<
+  EnrollmentAssignmentStatus,
+  { label: string; icon: "check" | "available" | "locked" | "pending" }
+> = {
+  available: { label: "Có thể làm", icon: "available" },
+  locked: { label: "Đã khóa", icon: "locked" },
+  submitted: { label: "Đã nộp", icon: "pending" },
+  graded: { label: "Đã chấm", icon: "pending" },
+  passed: { label: "Đạt", icon: "check" },
+  failed: { label: "Chưa đạt", icon: "locked" },
 };
 
 /** Scroll/video completion thresholds. */

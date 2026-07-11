@@ -53,10 +53,16 @@ export type {
 export type {
   EnrollmentCurriculum,
   EnrollmentCurriculumActivity,
+  EnrollmentCurriculumAssignment,
   EnrollmentCurriculumCourse,
   EnrollmentCurriculumMilestone,
   EnrollmentCurriculumModule,
 } from "@/lib/api/entities/enrollment-curriculum";
+
+export type {
+  AssignmentType,
+  EnrollmentAssignmentStatus,
+} from "@/lib/api/entities/assignment";
 
 export type {
   ProgramEnrollment,

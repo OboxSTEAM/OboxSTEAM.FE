@@ -10,15 +10,32 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import type { EnrollmentCurriculum } from "@/lib/api";
+import type { EnrollmentCurriculum, EnrollmentCurriculumAssignment } from "@/lib/api";
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
 import { CurriculumClassBar } from "./curriculum-class-bar";
+import { CurriculumNavAssignmentItem } from "./curriculum-nav-assignment-item";
 import { CurriculumNavItem } from "./curriculum-nav-item";
 
 const TREE_LINE = "bg-learn-faint/35";
+
+type NavGroup = {
+  key: string;
+  kind: "course" | "milestone";
+  name: string;
+  activities: EnrollmentCurriculum["modules"][number]["courses"][number]["activities"];
+  assignments: EnrollmentCurriculumAssignment[];
+};
+
+function sortAssignments(
+  assignments: EnrollmentCurriculumAssignment[],
+): EnrollmentCurriculumAssignment[] {
+  return [...assignments].sort((left, right) =>
+    left.assignmentCode.localeCompare(right.assignmentCode),
+  );
+}
 
 type CurriculumNavProps = {
   curriculum: EnrollmentCurriculum;
@@ -180,7 +197,7 @@ export function CurriculumNav({
               (left, right) => left.milestoneOrder - right.milestoneOrder,
             );
 
-            const groups = [
+            const groups: NavGroup[] = [
               ...courses.map((course) => ({
                 key: course.courseId,
                 kind: "course" as const,
@@ -188,6 +205,7 @@ export function CurriculumNav({
                 activities: [...course.activities].sort(
                   (left, right) => left.activityOrder - right.activityOrder,
                 ),
+                assignments: sortAssignments(course.assignments),
               })),
               ...milestones.map((milestone) => ({
                 key: milestone.milestoneId,
@@ -196,8 +214,13 @@ export function CurriculumNav({
                 activities: [...milestone.activities].sort(
                   (left, right) => left.activityOrder - right.activityOrder,
                 ),
+                assignments: milestone.assignment
+                  ? [milestone.assignment]
+                  : [],
               })),
             ];
+
+            const moduleAssignments = sortAssignments(module.assignments);
 
             return (
               <AccordionItem
@@ -289,12 +312,32 @@ export function CurriculumNav({
                                     />
                                   </NavActivityNode>
                                 ))}
+                                {group.assignments.map((assignment) => (
+                                  <NavActivityNode key={assignment.assignmentId}>
+                                    <CurriculumNavAssignmentItem
+                                      assignment={assignment}
+                                      inTree
+                                    />
+                                  </NavActivityNode>
+                                ))}
                               </motion.div>
                             ) : null}
                           </AnimatePresence>
                         </div>
                       );
                     })}
+                    {moduleAssignments.length > 0 ? (
+                      <div className="pt-1">
+                        {moduleAssignments.map((assignment) => (
+                          <NavActivityNode key={assignment.assignmentId}>
+                            <CurriculumNavAssignmentItem
+                              assignment={assignment}
+                              inTree
+                            />
+                          </NavActivityNode>
+                        ))}
+                      </div>
+                    ) : null}
                   </NavTreeBranch>
                 </AccordionContent>
               </AccordionItem>
