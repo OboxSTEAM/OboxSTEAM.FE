@@ -91,6 +91,38 @@ export {
 } from "./activities";
 
 export {
+  getAssignmentById,
+  getInProgressQuiz,
+  getQuizResult,
+  saveQuizDraftAnswers,
+  startQuizAttempt,
+  submitQuiz,
+  type AssignmentDetail,
+  type GetAssignmentByIdResponse,
+  type GetAssignmentByIdResult,
+  type GetInProgressQuizResponse,
+  type GetInProgressQuizResult,
+  type GetQuizResultResponse,
+  type GetQuizResultResult,
+  type QuestionType,
+  type QuizAttempt,
+  type QuizQuestion,
+  type QuizQuestionOption,
+  type QuizResult,
+  type QuizSavedAnswer,
+  type SaveQuizAnswersInput,
+  type SaveQuizDraftAnswersResponse,
+  type SaveQuizDraftAnswersResult,
+  type SaveQuizDraftResult,
+  type StartQuizAttemptResponse,
+  type StartQuizAttemptResult,
+  type SubmissionStatus,
+  type SubmitQuizInput,
+  type SubmitQuizResponse,
+  type SubmitQuizResult,
+} from "./assignments";
+
+export {
   getMaterialByActivityId,
   type GetMaterialByActivityResponse,
   type GetMaterialByActivityResult,

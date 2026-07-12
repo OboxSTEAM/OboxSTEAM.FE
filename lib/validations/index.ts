@@ -81,3 +81,15 @@ export {
   type CompleteActivitySource,
   type CompleteActivityInput,
 } from "./program-enrollments";
+export {
+  assignmentIdParamSchema,
+  submissionIdParamSchema,
+  quizAnswerInputSchema,
+  saveQuizAnswersSchema,
+  submitQuizSchema,
+  type AssignmentIdParam,
+  type SubmissionIdParam,
+  type QuizAnswerInput,
+  type SaveQuizAnswersInput,
+  type SubmitQuizInput,
+} from "./assignments";
