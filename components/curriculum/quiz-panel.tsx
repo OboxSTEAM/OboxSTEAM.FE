@@ -4,10 +4,21 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getAssignmentById,
+  getAssignmentQuizResult,
+  getInProgressQuiz,
+  getQuizResult,
   saveQuizDraftAnswers,
   startQuizAttempt,
   submitQuiz,
@@ -16,6 +27,7 @@ import {
   type QuizAttempt,
   type QuizResult,
 } from "@/lib/api";
+import { ApiRequestError } from "@/lib/api/errors";
 import {
   getAssignmentBreadcrumb,
   isAssignmentSelectable,
@@ -23,6 +35,11 @@ import {
 } from "@/lib/curriculum/assignment-helpers";
 import { QUIZ_ANSWER_SAVE_DEBOUNCE_MS, ASSIGNMENT_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { getQuizMarks, toggleQuizMark } from "@/lib/curriculum/quiz-marks";
+import {
+  clearStoredQuizSubmissionId,
+  getStoredQuizSubmissionId,
+  setStoredQuizSubmissionId,
+} from "@/lib/curriculum/quiz-storage";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -39,10 +56,74 @@ type QuizPanelProps = {
 
 type QuizPhase = "intro" | "attempt" | "result";
 
+type HydratedQuizState =
+  | { phase: "attempt"; attempt: QuizAttempt }
+  | { phase: "result"; result: QuizResult };
+
 function answersFromAttempt(attempt: QuizAttempt): Record<string, string[]> {
   return Object.fromEntries(
     attempt.savedAnswers.map((answer) => [answer.questionId, answer.selectedOptionIds]),
   );
+}
+
+function isCompletedAssignmentStatus(status: FlatCurriculumAssignment["status"]): boolean {
+  return status === "completed" || status === "submitted";
+}
+
+function isMissingQuizResultError(error: unknown): boolean {
+  return error instanceof ApiRequestError && (error.status === 404 || error.status === 405);
+}
+
+async function loadHydratedQuizState(
+  assignmentId: string,
+  flatStatus: FlatCurriculumAssignment["status"],
+): Promise<HydratedQuizState | null> {
+  if (isCompletedAssignmentStatus(flatStatus)) {
+    try {
+      const assignmentResult = await getAssignmentQuizResult(assignmentId);
+      const graded = assignmentResult?.data;
+      if (graded) {
+        setStoredQuizSubmissionId(assignmentId, graded.submissionId);
+        return { phase: "result", result: graded };
+      }
+    } catch (error) {
+      if (!isMissingQuizResultError(error)) {
+        throw error;
+      }
+    }
+  }
+
+  const storedSubmissionId = getStoredQuizSubmissionId(assignmentId);
+  if (!storedSubmissionId) {
+    return null;
+  }
+
+  try {
+    const gradedResult = await getQuizResult(storedSubmissionId);
+    const graded = gradedResult?.data;
+    if (graded) {
+      return { phase: "result", result: graded };
+    }
+  } catch (error) {
+    if (!isMissingQuizResultError(error)) {
+      throw error;
+    }
+  }
+
+  try {
+    const inProgressResult = await getInProgressQuiz(storedSubmissionId);
+    const attempt = inProgressResult?.data;
+    if (attempt) {
+      return { phase: "attempt", attempt };
+    }
+  } catch (error) {
+    if (!isMissingQuizResultError(error)) {
+      throw error;
+    }
+    clearStoredQuizSubmissionId(assignmentId);
+  }
+
+  return null;
 }
 
 function QuizPanelSkeleton() {
@@ -70,6 +151,7 @@ export function QuizPanel({
   const [isStarting, setIsStarting] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef<{ questionId: string; selectedOptionIds: string[] } | null>(
     null,
@@ -89,6 +171,7 @@ export function QuizPanel({
     setMarkedIds(new Set());
     setIsSaving(false);
     setIsSubmitting(false);
+    setIsConfirmOpen(false);
     pendingSaveRef.current = null;
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -123,6 +206,44 @@ export function QuizPanel({
   });
 
   const assignment: AssignmentDetail | null = assignmentResult?.data ?? null;
+  const hasCompletedAttempt = isCompletedAssignmentStatus(flatAssignment.status);
+
+  const {
+    data: hydratedState,
+    isLoading: isHydrating,
+    hasError: hydrationError,
+    retry: retryHydration,
+  } = useClientFetch({
+    enabled:
+      isAssignmentSelectable(flatAssignment.status) &&
+      flatAssignment.assignmentType === "Quiz",
+    fetcher: async () => loadHydratedQuizState(assignmentId, flatAssignment.status),
+    deps: [assignmentId, flatAssignment.status],
+    onError: (error) => {
+      showAppErrorFromUnknown(error, "generic");
+    },
+  });
+
+  useEffect(() => {
+    if (!hydratedState) return;
+
+    if (hydratedState.phase === "result") {
+      setResult(hydratedState.result);
+      setAttempt(null);
+      setCurrentIndex(0);
+      setAnswers({});
+      setMarkedIds(new Set());
+      setPhase("result");
+      return;
+    }
+
+    setAttempt(hydratedState.attempt);
+    setResult(null);
+    setAnswers(answersFromAttempt(hydratedState.attempt));
+    setMarkedIds(getQuizMarks(hydratedState.attempt.submissionId));
+    setCurrentIndex(0);
+    setPhase("attempt");
+  }, [hydratedState]);
 
   const flushSave = useCallback(
     async (submissionId: string, payload: { questionId: string; selectedOptionIds: string[] }) => {
@@ -167,6 +288,7 @@ export function QuizPanel({
       setAttempt(nextAttempt);
       setAnswers(answersFromAttempt(nextAttempt));
       setMarkedIds(getQuizMarks(nextAttempt.submissionId));
+      setStoredQuizSubmissionId(assignmentId, nextAttempt.submissionId);
       setCurrentIndex(0);
       setPhase("attempt");
     } catch (error) {
@@ -211,21 +333,17 @@ export function QuizPanel({
     setMarkedIds(getQuizMarks(attempt.submissionId));
   }, [attempt, currentIndex]);
 
-  const handleSubmit = useCallback(async () => {
+  const unansweredCount = useMemo(() => {
+    if (!attempt) return 0;
+    return attempt.questions.filter(
+      (question) => (answers[question.id]?.length ?? 0) === 0,
+    ).length;
+  }, [answers, attempt]);
+
+  const performSubmit = useCallback(async () => {
     if (!attempt) return;
 
-    const unanswered = attempt.questions.filter(
-      (question) => (answers[question.id]?.length ?? 0) === 0,
-    );
-    if (unanswered.length > 0) {
-      const proceed = window.confirm(
-        `Bạn còn ${unanswered.length} câu chưa trả lời. Bạn có chắc muốn nộp bài?`,
-      );
-      if (!proceed) return;
-    } else {
-      const proceed = window.confirm("Nộp bài kiểm tra? Bạn sẽ không thể sửa sau khi nộp.");
-      if (!proceed) return;
-    }
+    setIsConfirmOpen(false);
 
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -256,6 +374,7 @@ export function QuizPanel({
       }
 
       setResult(graded);
+      setStoredQuizSubmissionId(assignmentId, graded.submissionId);
       setPhase("result");
       showAppSuccess({
         title: graded.passed ? "Đã nộp bài — Đạt yêu cầu" : "Đã nộp bài",
@@ -267,13 +386,18 @@ export function QuizPanel({
     } finally {
       setIsSubmitting(false);
     }
-  }, [answers, attempt, flushSave, onCurriculumRefresh]);
+  }, [answers, assignmentId, attempt, flushSave, onCurriculumRefresh]);
+
+  const handleSubmit = useCallback(() => {
+    if (!attempt || isSubmitting) return;
+    setIsConfirmOpen(true);
+  }, [attempt, isSubmitting]);
 
   const handleExpire = useCallback(() => {
     if (!isSubmitting && phase === "attempt") {
-      void handleSubmit();
+      void performSubmit();
     }
-  }, [handleSubmit, isSubmitting, phase]);
+  }, [performSubmit, isSubmitting, phase]);
 
   if (!isAssignmentSelectable(flatAssignment.status)) {
     return (
@@ -314,12 +438,37 @@ export function QuizPanel({
     return <QuizPanelSkeleton />;
   }
 
+  const isRestoringSession =
+    isHydrating && phase === "intro" && (hasCompletedAttempt || Boolean(getStoredQuizSubmissionId(assignmentId)));
+
+  if (isRestoringSession) {
+    return <QuizPanelSkeleton />;
+  }
+
+  if (hydrationError && hasCompletedAttempt && phase === "intro" && !result) {
+    return (
+      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">Không tải được kết quả bài kiểm tra.</p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 border-learn-border"
+          onClick={retryHydration}
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
   const canRetry =
     assignment.maxAttempts > 1 &&
     (result?.attemptNumber ?? 0) < assignment.maxAttempts;
 
-  const isRetake = ["completed", "submitted"].includes(flatAssignment.status);
+  const isRetake = hasCompletedAttempt;
   const startLabel = isRetake ? "Làm lại bài kiểm tra" : "Bắt đầu làm bài";
+  const showIntroStart = phase === "intro";
+  const showResultRetry = phase === "result" && canRetry;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
@@ -348,9 +497,7 @@ export function QuizPanel({
           phase !== "attempt" && "overflow-y-auto px-4 pb-3 sm:px-5",
         )}
       >
-        {phase === "intro" ? (
-          <QuizIntro assignment={assignment} />
-        ) : null}
+        {phase === "intro" ? <QuizIntro assignment={assignment} /> : null}
 
         {phase === "attempt" && attempt ? (
           <QuizAttemptView
@@ -376,7 +523,7 @@ export function QuizPanel({
         {phase === "result" && result ? <QuizResultView result={result} /> : null}
       </div>
 
-      {phase === "intro" ? (
+      {showIntroStart ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
           <Button
             type="button"
@@ -389,7 +536,7 @@ export function QuizPanel({
         </div>
       ) : null}
 
-      {phase === "result" && canRetry ? (
+      {showResultRetry ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
           <Button
             type="button"
@@ -405,6 +552,42 @@ export function QuizPanel({
           </Button>
         </div>
       ) : null}
+
+      <Dialog
+        open={isConfirmOpen}
+        onOpenChange={(open) => {
+          if (!isSubmitting) setIsConfirmOpen(open);
+        }}
+      >
+        <DialogPopup className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Nộp bài kiểm tra?</DialogTitle>
+            <DialogDescription>
+              {unansweredCount > 0
+                ? `Bạn còn ${unansweredCount} câu chưa trả lời. Sau khi nộp, bạn sẽ không thể chỉnh sửa câu trả lời.`
+                : "Sau khi nộp, bạn sẽ không thể chỉnh sửa câu trả lời."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isSubmitting}
+              onClick={() => setIsConfirmOpen(false)}
+            >
+              Tiếp tục làm bài
+            </Button>
+            <Button
+              type="button"
+              className="bg-primary text-primary-foreground hover:bg-primary/90"
+              disabled={isSubmitting}
+              onClick={() => void performSubmit()}
+            >
+              {isSubmitting ? "Đang nộp..." : "Nộp bài"}
+            </Button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </div>
   );
 }

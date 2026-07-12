@@ -179,3 +179,20 @@ export async function getQuizResult(
   assertApiSuccess(response);
   return requireApiValue(response.value);
 }
+
+/** `GET /api/assignments/{assignmentId}/quiz/result` — latest graded attempt for the student. */
+export async function getAssignmentQuizResult(
+  assignmentId: string,
+): Promise<GetQuizResultResult> {
+  const { assignmentId: parsedAssignmentId } = assignmentIdParamSchema.parse({
+    assignmentId,
+  });
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENTS_BASE}/${parsedAssignmentId}/quiz/result`,
+    getQuizResultResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}

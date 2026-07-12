@@ -92,6 +92,7 @@ export {
 
 export {
   getAssignmentById,
+  getAssignmentQuizResult,
   getInProgressQuiz,
   getQuizResult,
   saveQuizDraftAnswers,
