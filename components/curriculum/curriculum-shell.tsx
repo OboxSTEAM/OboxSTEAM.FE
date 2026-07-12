@@ -21,8 +21,8 @@ import { findFlatAssignment } from "@/lib/curriculum/assignment-helpers";
 import { cn } from "@/lib/utils";
 
 import { ActivityPanel } from "./activity-panel";
+import { AssignmentPanel } from "./assignment-panel";
 import { CurriculumNav } from "./curriculum-nav";
-import { QuizPanel } from "./quiz-panel";
 
 const DESKTOP_NAV_WIDTH = 320;
 
@@ -120,7 +120,7 @@ export function CurriculumShell({
 
           <div className="min-h-0 flex-1">
             {selectedAssignmentId && flatAssignment ? (
-              <QuizPanel
+              <AssignmentPanel
                 curriculum={curriculum}
                 assignmentId={selectedAssignmentId}
                 flatAssignment={flatAssignment}

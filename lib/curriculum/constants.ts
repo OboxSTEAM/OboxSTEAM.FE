@@ -61,3 +61,6 @@ export const VIDEO_CHECKPOINT_MIN_DELTA_SECONDS = 1;
 
 /** Debounce draft quiz answer saves while the student selects options. */
 export const QUIZ_ANSWER_SAVE_DEBOUNCE_MS = 800;
+
+/** Debounce retrospective draft autosave while the student types. */
+export const RETROSPECTIVE_DRAFT_SAVE_DEBOUNCE_MS = 1200;
