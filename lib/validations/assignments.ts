@@ -35,3 +35,16 @@ export type SubmissionIdParam = z.infer<typeof submissionIdParamSchema>;
 export type QuizAnswerInput = z.infer<typeof quizAnswerInputSchema>;
 export type SaveQuizAnswersInput = z.infer<typeof saveQuizAnswersSchema>;
 export type SubmitQuizInput = z.infer<typeof submitQuizSchema>;
+
+/** Body for `PUT /api/submissions/{submissionId}/retrospective/draft`. */
+export const saveRetrospectiveDraftSchema = z.object({
+  contentText: z.string().nullable().optional(),
+});
+
+/** Body for `POST /api/submissions/{submissionId}/retrospective/submit`. */
+export const submitRetrospectiveSchema = z.object({
+  contentText: z.string().nullable().optional(),
+});
+
+export type SaveRetrospectiveDraftInput = z.infer<typeof saveRetrospectiveDraftSchema>;
+export type SubmitRetrospectiveInput = z.infer<typeof submitRetrospectiveSchema>;
