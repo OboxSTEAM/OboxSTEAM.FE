@@ -81,6 +81,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
   const [classContext, setClassContext] = useState<CurriculumClassContext | null>(null);
   const [enrollment, setEnrollment] = useState<ProgramEnrollment | null>(null);
   const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isClassPickerOpen, setIsClassPickerOpen] = useState(false);
@@ -197,6 +198,16 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
     };
   }, [isAuthenticated, isHydrated, isUserLoading, loadLearningState, programId, router]);
 
+  const handleSelectActivity = useCallback((activityId: string) => {
+    setSelectedAssignmentId(null);
+    setSelectedActivityId(activityId);
+  }, []);
+
+  const handleSelectAssignment = useCallback((assignmentId: string) => {
+    setSelectedActivityId(null);
+    setSelectedAssignmentId(assignmentId);
+  }, []);
+
   const handleCurriculumRefresh = useCallback(async () => {
     if (!curriculum) return;
     await loadCurriculum(curriculum.enrollmentId, selectedActivityId);
@@ -280,7 +291,9 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       <CurriculumShell
         curriculum={curriculum}
         selectedActivityId={selectedActivityId}
-        onSelectActivity={setSelectedActivityId}
+        selectedAssignmentId={selectedAssignmentId}
+        onSelectActivity={handleSelectActivity}
+        onSelectAssignment={handleSelectAssignment}
         onCurriculumRefresh={handleCurriculumRefresh}
         classContext={classContext}
       />

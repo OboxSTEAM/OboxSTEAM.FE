@@ -2,14 +2,16 @@ import { z } from "zod";
 
 export const assignmentTypeSchema = z.enum(["Quiz", "Retrospective", "FileUpload"]);
 
-/** Per-student status on enrollment curriculum assignment nodes. */
+/**
+ * Per-student status on enrollment curriculum assignment nodes.
+ * Mirrors the backend `ResolveAssignmentStatus` output (CurriculumStatusHelper):
+ * locked · available · submitted · completed.
+ */
 export const enrollmentAssignmentStatusSchema = z.enum([
   "available",
   "locked",
   "submitted",
-  "graded",
-  "passed",
-  "failed",
+  "completed",
 ]);
 
 export const enrollmentCurriculumAssignmentSchema = z.object({

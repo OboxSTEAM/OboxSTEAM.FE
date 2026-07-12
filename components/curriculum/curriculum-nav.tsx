@@ -40,7 +40,9 @@ function sortAssignments(
 type CurriculumNavProps = {
   curriculum: EnrollmentCurriculum;
   selectedActivityId: string | null;
+  selectedAssignmentId: string | null;
   onSelectActivity: (activityId: string) => void;
+  onSelectAssignment: (assignmentId: string) => void;
   classContext?: CurriculumClassContext | null;
   className?: string;
 };
@@ -139,7 +141,9 @@ function formatModuleIndex(index: number): string {
 export function CurriculumNav({
   curriculum,
   selectedActivityId,
+  selectedAssignmentId,
   onSelectActivity,
+  onSelectAssignment,
   classContext = null,
   className,
 }: CurriculumNavProps) {
@@ -316,6 +320,10 @@ export function CurriculumNav({
                                   <NavActivityNode key={assignment.assignmentId}>
                                     <CurriculumNavAssignmentItem
                                       assignment={assignment}
+                                      isSelected={
+                                        selectedAssignmentId === assignment.assignmentId
+                                      }
+                                      onSelect={onSelectAssignment}
                                       inTree
                                     />
                                   </NavActivityNode>
@@ -332,6 +340,10 @@ export function CurriculumNav({
                           <NavActivityNode key={assignment.assignmentId}>
                             <CurriculumNavAssignmentItem
                               assignment={assignment}
+                              isSelected={
+                                selectedAssignmentId === assignment.assignmentId
+                              }
+                              onSelect={onSelectAssignment}
                               inTree
                             />
                           </NavActivityNode>

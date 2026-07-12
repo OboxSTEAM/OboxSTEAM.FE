@@ -17,17 +17,21 @@ import {
 } from "@/components/ui/sheet";
 import type { EnrollmentCurriculum } from "@/lib/api";
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
+import { findFlatAssignment } from "@/lib/curriculum/assignment-helpers";
 import { cn } from "@/lib/utils";
 
 import { ActivityPanel } from "./activity-panel";
 import { CurriculumNav } from "./curriculum-nav";
+import { QuizPanel } from "./quiz-panel";
 
 const DESKTOP_NAV_WIDTH = 320;
 
 type CurriculumShellProps = {
   curriculum: EnrollmentCurriculum;
   selectedActivityId: string | null;
+  selectedAssignmentId: string | null;
   onSelectActivity: (activityId: string) => void;
+  onSelectAssignment: (assignmentId: string) => void;
   onCurriculumRefresh: () => Promise<void>;
   classContext?: CurriculumClassContext | null;
 };
@@ -35,7 +39,9 @@ type CurriculumShellProps = {
 export function CurriculumShell({
   curriculum,
   selectedActivityId,
+  selectedAssignmentId,
   onSelectActivity,
+  onSelectAssignment,
   onCurriculumRefresh,
   classContext = null,
 }: CurriculumShellProps) {
@@ -43,8 +49,17 @@ export function CurriculumShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [desktopNavOpen, setDesktopNavOpen] = useState(true);
 
+  const flatAssignment = selectedAssignmentId
+    ? findFlatAssignment(curriculum, selectedAssignmentId)
+    : null;
+
   const handleSelectActivity = (activityId: string) => {
     onSelectActivity(activityId);
+    setMobileNavOpen(false);
+  };
+
+  const handleSelectAssignment = (assignmentId: string) => {
+    onSelectAssignment(assignmentId);
     setMobileNavOpen(false);
   };
 
@@ -75,7 +90,9 @@ export function CurriculumShell({
             <CurriculumNav
               curriculum={curriculum}
               selectedActivityId={selectedActivityId}
-              onSelectActivity={onSelectActivity}
+              selectedAssignmentId={selectedAssignmentId}
+              onSelectActivity={handleSelectActivity}
+              onSelectAssignment={handleSelectAssignment}
               classContext={classContext}
             />
           </ScrollArea>
@@ -102,13 +119,22 @@ export function CurriculumShell({
           </div>
 
           <div className="min-h-0 flex-1">
-            <ActivityPanel
-              curriculum={curriculum}
-              selectedActivityId={selectedActivityId}
-              onSelectActivity={onSelectActivity}
-              onCurriculumRefresh={onCurriculumRefresh}
-              classSessions={classContext?.sessions ?? []}
-            />
+            {selectedAssignmentId && flatAssignment ? (
+              <QuizPanel
+                curriculum={curriculum}
+                assignmentId={selectedAssignmentId}
+                flatAssignment={flatAssignment}
+                onCurriculumRefresh={onCurriculumRefresh}
+              />
+            ) : (
+              <ActivityPanel
+                curriculum={curriculum}
+                selectedActivityId={selectedActivityId}
+                onSelectActivity={onSelectActivity}
+                onCurriculumRefresh={onCurriculumRefresh}
+                classSessions={classContext?.sessions ?? []}
+              />
+            )}
           </div>
         </main>
       </div>
@@ -140,7 +166,9 @@ export function CurriculumShell({
               <CurriculumNav
                 curriculum={curriculum}
                 selectedActivityId={selectedActivityId}
+                selectedAssignmentId={selectedAssignmentId}
                 onSelectActivity={handleSelectActivity}
+                onSelectAssignment={handleSelectAssignment}
                 classContext={classContext}
               />
             </ScrollArea>

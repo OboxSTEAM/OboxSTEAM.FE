@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const questionTypeSchema = z.enum(["SingleChoice", "MultiChoice"]);
+export const questionTypeSchema = z.enum(["SingleChoice", "MultipleChoice"]);
 
 export const submissionStatusSchema = z.enum(["Pending", "Graded"]);
 
