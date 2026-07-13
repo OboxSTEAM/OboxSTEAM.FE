@@ -82,6 +82,10 @@ export {
   type CompleteActivityInput,
 } from "./program-enrollments";
 export {
+  moduleEnrollmentIdParamSchema,
+  type ModuleEnrollmentIdParam,
+} from "./module-enrollments";
+export {
   assignmentIdParamSchema,
   submissionIdParamSchema,
   quizAnswerInputSchema,

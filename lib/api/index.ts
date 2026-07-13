@@ -209,6 +209,7 @@ export {
   getEnrollmentCurriculum,
   getMyProgramEnrollments,
   getProgramEnrollmentClass,
+  getProgramEnrollmentModuleEnrollments,
   getProgramEnrollmentsByStudentId,
   saveActivityCheckpoint,
   type ActivityCheckpointData,
@@ -229,10 +230,14 @@ export {
   type GetEnrollmentCurriculumResult,
   type GetProgramEnrollmentClassResponse,
   type GetProgramEnrollmentClassResult,
+  type GetProgramEnrollmentModuleEnrollmentsResponse,
+  type GetProgramEnrollmentModuleEnrollmentsResult,
   type GetMyProgramEnrollmentsResponse,
   type GetMyProgramEnrollmentsResult,
   type GetStudentProgramEnrollmentsResponse,
   type GetStudentProgramEnrollmentsResult,
+  type ModuleEnrollment,
+  type ModuleEnrollmentStatus,
   type MyProgramEnrollmentsQuery,
   type ProgramEnrollment,
   type ProgramEnrollmentClass,
@@ -244,6 +249,16 @@ export {
   type SaveActivityCheckpointResult,
   type StudentProgramEnrollmentsQuery,
 } from "./program-enrollments";
+
+export {
+  getModuleEnrollmentResearchMilestoneProgress,
+  type GetModuleEnrollmentResearchMilestoneProgressResponse,
+  type GetModuleEnrollmentResearchMilestoneProgressResult,
+  type ModuleEnrollmentIdParam,
+  type StudentMilestoneActivityProgress,
+  type StudentMilestoneItemProgress,
+  type StudentMilestoneProgress,
+} from "./module-enrollments";
 
 export {
   approveParentLink,

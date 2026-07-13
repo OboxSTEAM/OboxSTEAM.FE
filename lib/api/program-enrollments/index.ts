@@ -17,12 +17,14 @@ import {
   getEnrollmentCurriculumResponseSchema,
   getMyProgramEnrollmentsResponseSchema,
   getProgramEnrollmentClassResponseSchema,
+  getProgramEnrollmentModuleEnrollmentsResponseSchema,
   getStudentProgramEnrollmentsResponseSchema,
   saveActivityCheckpointResponseSchema,
   type CompleteActivityResult,
   type GetEnrollmentCurriculumResult,
   type GetMyProgramEnrollmentsResult,
   type GetProgramEnrollmentClassResult,
+  type GetProgramEnrollmentModuleEnrollmentsResult,
   type GetStudentProgramEnrollmentsResult,
   type SaveActivityCheckpointResult,
 } from "./schemas";
@@ -34,6 +36,8 @@ export type {
   GetEnrollmentCurriculumResult,
   GetProgramEnrollmentClassResponse,
   GetProgramEnrollmentClassResult,
+  GetProgramEnrollmentModuleEnrollmentsResponse,
+  GetProgramEnrollmentModuleEnrollmentsResult,
   GetMyProgramEnrollmentsResponse,
   GetMyProgramEnrollmentsResult,
   GetStudentProgramEnrollmentsResponse,
@@ -70,6 +74,11 @@ export type {
 } from "@/lib/api/entities/program-enrollment";
 
 export type { ProgramEnrollmentClass } from "@/lib/api/entities/program-enrollment-class";
+
+export type {
+  ModuleEnrollment,
+  ModuleEnrollmentStatus,
+} from "@/lib/api/entities/module-enrollment";
 
 export type MyProgramEnrollmentsQuery = z.infer<typeof myProgramEnrollmentsQuerySchema>;
 export type StudentProgramEnrollmentsQuery = z.infer<
@@ -161,6 +170,23 @@ export async function getProgramEnrollmentClass(
   const response = await apiFetchParsed(
     `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/class`,
     getProgramEnrollmentClassResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `GET /api/program-enrollments/{enrollmentId}/module-enrollments` */
+export async function getProgramEnrollmentModuleEnrollments(
+  enrollmentId: string,
+): Promise<GetProgramEnrollmentModuleEnrollmentsResult> {
+  const { enrollmentId: parsedEnrollmentId } = enrollmentIdParamSchema.parse({
+    enrollmentId,
+  });
+
+  const response = await apiFetchParsed(
+    `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/module-enrollments`,
+    getProgramEnrollmentModuleEnrollmentsResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

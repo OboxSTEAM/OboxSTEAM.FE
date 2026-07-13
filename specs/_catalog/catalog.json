@@ -564,7 +564,7 @@
       {
         "path": "/api/program-enrollments/{enrollmentId}/curriculum",
         "method": "get",
-        "description": "Returns the curriculum tree with per-student activity status, module locks, and current activity."
+        "description": "Returns the curriculum tree with per-student activity and assignment status, module locks, and current activity."
       },
       {
         "path": "/api/program-enrollments/{enrollmentId}/activities/{activityId}/checkpoint",
