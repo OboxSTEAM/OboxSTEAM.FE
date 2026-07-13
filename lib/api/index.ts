@@ -297,6 +297,32 @@ export {
   type ForgotPasswordResult,
 } from "./auth";
 
+export {
+  getResearchSubmissionById,
+  gradeResearchSubmission,
+  startResearchSubmission,
+  submitResearchSubmission,
+  uploadResearchSubmissionFile,
+  type GetResearchSubmissionByIdResponse,
+  type GetResearchSubmissionByIdResult,
+  type GradeResearchSubmissionInput,
+  type GradeResearchSubmissionResponse,
+  type GradeResearchSubmissionResult,
+  type ResearchSubmission,
+  type ResearchSubmissionIdParam,
+  type ResearchSubmissionStatus,
+  type ResearchSubmissionUploadPayload,
+  type StartResearchSubmissionInput,
+  type StartResearchSubmissionResponse,
+  type StartResearchSubmissionResult,
+  type SubmitResearchSubmissionInput,
+  type SubmitResearchSubmissionResponse,
+  type SubmitResearchSubmissionResult,
+  type UploadResearchSubmissionQuery,
+  type UploadResearchSubmissionFileResponse,
+  type UploadResearchSubmissionFileResult,
+} from "./research-submissions";
+
 export { createApiPost } from "./create-endpoint";
 export { ApiRequestError, ApiResponseError } from "./errors";
 export {
