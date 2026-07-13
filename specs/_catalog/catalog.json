@@ -1,0 +1,1611 @@
+[
+  {
+    "uri": {
+      "specId": "oboxsteam.openapi.json",
+      "type": "specification",
+      "identifier": "oboxsteam.openapi.json"
+    },
+    "description": "API for OboxSteam.",
+    "operations": [
+      {
+        "path": "/api/account/me",
+        "method": "get",
+        "description": "Retrieves the profile information of the currently authenticated user."
+      },
+      {
+        "path": "/api/account/me",
+        "method": "put",
+        "description": "Updates the profile information of the currently authenticated user."
+      },
+      {
+        "path": "/api/account/{userId}",
+        "method": "get",
+        "description": "Retrieves the profile information of a specific user by their ID."
+      },
+      {
+        "path": "/api/account/me/avatar",
+        "method": "post",
+        "description": "Uploads a new avatar image for the currently authenticated user. Replaces the existing avatar if one exists."
+      },
+      {
+        "path": "/api/activities",
+        "method": "get",
+        "description": "Retrieve a paginated list of activities with optional search, filter, and sort options."
+      },
+      {
+        "path": "/api/activities",
+        "method": "post",
+        "description": "Creates a new activity with the provided information. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/activities/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific activity by its ID. Students must pass programEnrollmentId."
+      },
+      {
+        "path": "/api/activities/{id}",
+        "method": "put",
+        "description": "Updates the details of a specific activity by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/activities/{id}",
+        "method": "delete",
+        "description": "Soft-deletes an activity by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/activity-progresses",
+        "method": "post",
+        "description": "Creates activity progress for a module enrollment and sets status to InProgress. Requires Student role."
+      },
+      {
+        "path": "/api/activity-progresses/done",
+        "method": "patch",
+        "description": "Marks an activity as Done for the given module enrollment and recalculates module/program progress. Requires Student role."
+      },
+      {
+        "path": "/api/activity-progresses/force-complete",
+        "method": "post",
+        "description": "Test-only endpoint that forces any activity to Done for a given student, bypassing all business rules (enrollment status, ownership, activity type, sequential lock, schedule windows). The module enrollment is resolved automatically. Requires Mentor or Manager role."
+      },
+      {
+        "path": "/api/assignments/{assignmentId}",
+        "method": "get",
+        "description": "Retrieve an assignment by its ID. Students must have an active enrollment in the assignment's module."
+      },
+      {
+        "path": "/api/assignments/{assignmentId}",
+        "method": "put",
+        "description": "Updates an assignment by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/assignments/{assignmentId}",
+        "method": "delete",
+        "description": "Soft-deletes an assignment by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/assignments",
+        "method": "post",
+        "description": "Creates a new assignment for a module. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/assignment-submissions/submit",
+        "method": "post",
+        "description": "Student turns in a FileUpload assignment. Quizzes and retrospectives use their dedicated endpoints. Provide ContentText and/or FileUrl."
+      },
+      {
+        "path": "/api/assignment-submissions/{submissionId}",
+        "method": "get",
+        "description": "Returns a FileUpload submission. Access is enforced per role."
+      },
+      {
+        "path": "/api/assignment-submissions/{submissionId}/upload",
+        "method": "post",
+        "description": "Uploads a deliverable file to S3 only (no DB write) and returns the file URL for use in submit."
+      },
+      {
+        "path": "/api/assignment-submissions/{submissionId}/grade",
+        "method": "post",
+        "description": "Mentor, Manager, or SuperAdmin grades a turned-in submission against the assignment's pass score, or returns it for revision. Grading recalculates module and program progress."
+      },
+      {
+        "path": "/api/auth/register",
+        "method": "post",
+        "description": "Creates a new user account with the provided registration information."
+      },
+      {
+        "path": "/api/auth/login",
+        "method": "post",
+        "description": "Authenticate user and return JWT tokens."
+      },
+      {
+        "path": "/api/auth/logout",
+        "method": "post",
+        "description": "Logs out the currently authenticated user."
+      },
+      {
+        "path": "/api/auth/send-resetlink",
+        "method": "post",
+        "description": "Sends a password reset link to the specified email if it exists."
+      },
+      {
+        "path": "/api/auth/forgot-password",
+        "method": "post",
+        "description": "Reset user password using token sent to email."
+      },
+      {
+        "path": "/api/auth/refresh-token",
+        "method": "post",
+        "description": "Refresh JWT access token using a valid refresh token."
+      },
+      {
+        "path": "/api/auth/resend-otp",
+        "method": "post",
+        "description": "Resend OTP to user's email for registration or password reset."
+      },
+      {
+        "path": "/api/auth/verify-otp",
+        "method": "post",
+        "description": "Verify OTP for email confirmation and activate account."
+      },
+      {
+        "path": "/api/webhooks/aws",
+        "method": "post"
+      },
+      {
+        "path": "/api/classes",
+        "method": "get",
+        "description": "Retrieve a paginated list of cohort classes with basic information only. Use GET /api/classes/{id} for full details including SeatsTaken."
+      },
+      {
+        "path": "/api/classes",
+        "method": "post",
+        "description": "Creates a new class cohort in Draft status. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/classes/with-students/{classId}",
+        "method": "get",
+        "description": "Retrieve class details including active enrolled students. Students may view the roster only for a class they are actively enrolled in. SuperAdmin and Manager may view any class roster. Mentors may only view classes they own."
+      },
+      {
+        "path": "/api/classes/with-sessions/{classId}",
+        "method": "get",
+        "description": "Retrieve class details including all scheduled sessions for the cohort, ordered by start time."
+      },
+      {
+        "path": "/api/classes/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific class cohort by its ID, including SeatsTaken."
+      },
+      {
+        "path": "/api/classes/{id}",
+        "method": "put",
+        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/classes/{id}/open",
+        "method": "post",
+        "description": "Transitions a class from Draft to Open. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/classes/{id}/start",
+        "method": "post",
+        "description": "Transitions a class from Open to InProgress. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/classes/{id}/complete",
+        "method": "post",
+        "description": "Transitions a class from InProgress to Completed. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/class-enrollments",
+        "method": "post",
+        "description": "Joins a class cohort within an active program enrollment. The selected class must belong to the same program. Requires Student role."
+      },
+      {
+        "path": "/api/class-enrollments/{id}",
+        "method": "put",
+        "description": "Moves the student from the current class to another cohort within the same program. Requires Student role."
+      },
+      {
+        "path": "/api/class-enrollments/{id}",
+        "method": "get",
+        "description": "Retrieve a class enrollment. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/class-enrollments/program-enrollment/{programEnrollmentId}",
+        "method": "get",
+        "description": "Lists class enrollments for a program enrollment. Access is enforced per role."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions",
+        "method": "get",
+        "description": "Retrieve a paginated list of scheduled sessions for a class cohort."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions",
+        "method": "post",
+        "description": "Schedules a new session for a class cohort. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/with-students/{sessionId}",
+        "method": "get",
+        "description": "Retrieve class session details including attendance roster. Students receive only their own row; mentors, managers, and super admins receive the full roster."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific class session."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/{id}",
+        "method": "put",
+        "description": "Updates a scheduled class session. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/{id}",
+        "method": "delete",
+        "description": "Soft-deletes a class session. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/courses",
+        "method": "get",
+        "description": "Retrieve a paginated list of courses with optional search, filter, and sort options."
+      },
+      {
+        "path": "/api/courses",
+        "method": "post",
+        "description": "Creates a new course with the provided information. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/courses/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific course by its ID."
+      },
+      {
+        "path": "/api/courses/{id}",
+        "method": "put",
+        "description": "Updates the details of a specific course by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/courses/{id}",
+        "method": "delete",
+        "description": "Soft-deletes a course by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/courses/name/{name}",
+        "method": "get",
+        "description": "Retrieve a single course by its exact name (case-insensitive)."
+      },
+      {
+        "path": "/api/experts",
+        "method": "get",
+        "description": "Retrieve a paginated list of experts with optional search, filter, and sort options."
+      },
+      {
+        "path": "/api/experts",
+        "method": "post",
+        "description": "Creates a new expert with the provided information. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/experts/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific expert by its ID."
+      },
+      {
+        "path": "/api/experts/{id}",
+        "method": "put",
+        "description": "Updates the details of a specific expert by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/experts/{id}",
+        "method": "delete",
+        "description": "Soft-deletes an expert by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/programs/{programId}",
+        "method": "post",
+        "description": "Assigns a program to an expert. Optional request body may include RoleInBoard. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/programs/{programId}",
+        "method": "put",
+        "description": "Updates the program assignment for an expert. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/programs/{programId}",
+        "method": "delete",
+        "description": "Removes a program assignment from an expert. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/highlight-video/stacks",
+        "method": "post",
+        "description": "Creates a highlight stack for a student in a program and starts the first video job. If StudentId is omitted, the authenticated user from the JWT is used."
+      },
+      {
+        "path": "/api/highlight-video/stacks",
+        "method": "get",
+        "description": "Lists highlight stacks for a program and student. If studentId is omitted, the authenticated user from the JWT is used."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}",
+        "method": "get",
+        "description": "Retrieves one highlight stack and its video items by stack ID."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}",
+        "method": "delete",
+        "description": "Soft-deletes a highlight stack and all of its video items."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}/trim",
+        "method": "post",
+        "description": "Starts a trim job that excludes the given time ranges from a completed highlight video."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}/add-segment",
+        "method": "post",
+        "description": "Inserts a source media segment into the highlight manifest by source timeline order and re-encodes."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}",
+        "method": "delete",
+        "description": "Soft-deletes one highlight video item so another can be generated in the stack."
+      },
+      {
+        "path": "/api/invoices/my",
+        "method": "get",
+        "description": "Retrieve all invoices issued for the current user (student or parent), sorted by most recent."
+      },
+      {
+        "path": "/api/invoices/{id}",
+        "method": "get",
+        "description": "Returns the details of an invoice by its Invoice ID."
+      },
+      {
+        "path": "/api/invoices/by-payment/{paymentId}",
+        "method": "get",
+        "description": "Returns the invoice created automatically after a successful payment. Returns 404 if the payment has not been confirmed."
+      },
+      {
+        "path": "/api/materials/upload",
+        "method": "post",
+        "description": "Uploads learning material to S3 for a SelfPaced activity. Supported formats: PDF (≤50 MB), DOC/DOCX (≤50 MB), Video .mp4/.mov/.avi/.mkv (≤3 GB), Image .jpg/.jpeg/.png/.gif/.webp (≤10 MB). ActivityId is required."
+      },
+      {
+        "path": "/api/materials/activity/{activityId}",
+        "method": "get",
+        "description": "Returns the learning material for a SelfPaced activity. Students must pass programEnrollmentId for enrollment-scoped access."
+      },
+      {
+        "path": "/api/materials/{materialId}",
+        "method": "put",
+        "description": "Updates the title of a material."
+      },
+      {
+        "path": "/api/materials/{materialId}",
+        "method": "delete",
+        "description": "Soft-deletes the material and removes the corresponding file from S3."
+      },
+      {
+        "path": "/api/media/upload",
+        "method": "post",
+        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) to an activity. Images are auto face-tagged immediately. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed."
+      },
+      {
+        "path": "/api/media/activity/{activityId}",
+        "method": "get",
+        "description": "Retrieves all media assets for a specific activity, including face recognition tags."
+      },
+      {
+        "path": "/api/media/{mediaId}/process-tags",
+        "method": "post",
+        "description": "Submits a new Rekognition face-search job on the transcoded video output, restarts label detection, then polls once for results. Returns 202 while VideoStatus is PendingTagging; call again until TaggingComplete."
+      },
+      {
+        "path": "/api/media/{mediaId}",
+        "method": "delete",
+        "description": "Soft-deletes a media asset and removes the file from S3 storage."
+      },
+      {
+        "path": "/api/modules",
+        "method": "get",
+        "description": "Retrieve a paginated list of modules with optional search, filter, and sort options."
+      },
+      {
+        "path": "/api/modules",
+        "method": "post",
+        "description": "Creates a new module with the provided information. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/modules/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific module by its ID."
+      },
+      {
+        "path": "/api/modules/{id}",
+        "method": "put",
+        "description": "Updates the details of a specific module by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/modules/{id}",
+        "method": "delete",
+        "description": "Soft-deletes a module by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/modules/name/{name}",
+        "method": "get",
+        "description": "Retrieve a single module by its exact name (case-insensitive)."
+      },
+      {
+        "path": "/api/module-enrollments/retake",
+        "method": "post",
+        "description": "Creates a new module enrollment attempt after failing the module (two failed assignments). Requires Student role."
+      },
+      {
+        "path": "/api/module-enrollments/{id}",
+        "method": "get",
+        "description": "Retrieve a module enrollment. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/parent/request-link",
+        "method": "post"
+      },
+      {
+        "path": "/api/parent/magic-login",
+        "method": "post"
+      },
+      {
+        "path": "/api/parent/complete-profile",
+        "method": "post"
+      },
+      {
+        "path": "/api/parent/approve-link",
+        "method": "post"
+      },
+      {
+        "path": "/api/parent/links",
+        "method": "get"
+      },
+      {
+        "path": "/api/payments/checkout",
+        "method": "post",
+        "description": "Student initiates checkout for a paid program. Returns a hosted payment URL (Stripe or MoMo)."
+      },
+      {
+        "path": "/api/payments/checkout/retake",
+        "method": "post",
+        "description": "Student initiates checkout for a module retake fee. Returns a hosted payment URL."
+      },
+      {
+        "path": "/api/payments/request-parent",
+        "method": "post",
+        "description": "Student sends a payment request email to a linked, verified parent. The parent receives a 24h payment link."
+      },
+      {
+        "path": "/api/payments/request-parent/retake",
+        "method": "post",
+        "description": "Student sends a payment request email to a linked, verified parent. The parent receives a 24h payment link for the module retake fee."
+      },
+      {
+        "path": "/api/payments/parent-checkout",
+        "method": "post",
+        "description": "Parent uses the token from their email to initiate checkout. No authentication required — the token itself is the credential."
+      },
+      {
+        "path": "/api/payments/stripe-webhook",
+        "method": "post",
+        "description": "Receives checkout.session.completed events from Stripe. Must be registered in the Stripe dashboard."
+      },
+      {
+        "path": "/api/payments/{id}",
+        "method": "get",
+        "description": "Returns payment details. Available to authenticated users."
+      },
+      {
+        "path": "/api/payments/{id}/cancel",
+        "method": "patch",
+        "description": "Called by the front-end when the user is redirected back to the cancelUrl. Marks the Payment as Cancelled and, if applicable, rolls back the parent's PaymentRequest to Pending so they can retry. Idempotent — safe to call multiple times."
+      },
+      {
+        "path": "/api/programs",
+        "method": "get",
+        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options."
+      },
+      {
+        "path": "/api/programs",
+        "method": "post",
+        "description": "Creates a new program with the provided information. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/programs/with-modules",
+        "method": "get",
+        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options."
+      },
+      {
+        "path": "/api/programs/{id}/curriculum",
+        "method": "get",
+        "description": "Retrieve a compact curriculum outline for a program: modules, courses or milestones, activities, and materials."
+      },
+      {
+        "path": "/api/programs/{id}",
+        "method": "get",
+        "description": "Retrieve detailed information for a specific program by its ID."
+      },
+      {
+        "path": "/api/programs/{id}",
+        "method": "put",
+        "description": "Updates the details of a specific program by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/programs/{id}",
+        "method": "delete",
+        "description": "Soft-deletes a program by its ID. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/programs/name/{name}",
+        "method": "get",
+        "description": "Retrieve a single program by its exact name (case-insensitive)."
+      },
+      {
+        "path": "/api/program-enrollments/{id}",
+        "method": "get",
+        "description": "Retrieve a program enrollment. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/program-enrollments/me",
+        "method": "get",
+        "description": "Students: own enrollments. Parents: linked students. Admins: all enrollments."
+      },
+      {
+        "path": "/api/program-enrollments/{enrollmentId}/class",
+        "method": "get",
+        "description": "Returns the active class cohort linked to this program enrollment. ClassId is null when the student has not joined a class yet. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/program-enrollments/{enrollmentId}/curriculum",
+        "method": "get",
+        "description": "Returns the curriculum tree with per-student activity status, module locks, and current activity."
+      },
+      {
+        "path": "/api/program-enrollments/{enrollmentId}/activities/{activityId}/checkpoint",
+        "method": "patch",
+        "description": "Persists resume position (video time, PDF page, doc scroll) for an in-progress SelfPaced activity."
+      },
+      {
+        "path": "/api/program-enrollments/{enrollmentId}/activities/{activityId}/complete",
+        "method": "post",
+        "description": "Marks a SelfPaced activity as done for the enrollment and returns updated progress."
+      },
+      {
+        "path": "/api/program-enrollments/student/{studentId}",
+        "method": "get",
+        "description": "List program enrollments for a student. Access rules apply per role (self, linked parent, or admin)."
+      },
+      {
+        "path": "/api/programs/{programId}/reviews",
+        "method": "post",
+        "description": "Allows an enrolled student to submit a star rating and optional comment for a program they are enrolled in. One review per student per program."
+      },
+      {
+        "path": "/api/programs/{programId}/reviews",
+        "method": "get",
+        "description": "Retrieve a paginated list of reviews for the specified program. Supports sorting by createdAt (default) or starRating."
+      },
+      {
+        "path": "/api/programs/{programId}/reviews/{reviewId}",
+        "method": "put",
+        "description": "Allows the review owner to update their star rating or comment. Both fields are optional (partial update)."
+      },
+      {
+        "path": "/api/programs/{programId}/reviews/{reviewId}",
+        "method": "delete",
+        "description": "Soft-deletes a review. The review owner, SuperAdmin, or Manager may call this endpoint."
+      },
+      {
+        "path": "/api/question-banks/{questionBankId}",
+        "method": "get",
+        "description": "Retrieve a question bank by its ID."
+      },
+      {
+        "path": "/api/question-banks/{questionBankId}",
+        "method": "delete",
+        "description": "Soft-deletes a question bank and its questions. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/question-banks",
+        "method": "post",
+        "description": "Creates a new question bank for a course. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/question-banks/{questionBankId}/questions/{questionId}",
+        "method": "delete",
+        "description": "Soft-deletes a question and its options from a question bank. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/question-banks/{questionBankId}/import",
+        "method": "post",
+        "description": "Parses a CSV file and imports valid question rows into the specified question bank. Invalid rows are skipped and returned in the error list. Requires SuperAdmin or Manager role."
+      },
+      {
+        "path": "/api/assignments/{assignmentId}/quiz/start",
+        "method": "post",
+        "description": "Starts a new Mode A quiz attempt or resumes an existing Pending submission. Requires Student role and an active enrollment in the assignment's module."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/quiz",
+        "method": "get",
+        "description": "Returns quiz questions and saved answers for a Pending submission. Requires Student role."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/quiz/answers",
+        "method": "put",
+        "description": "Upserts draft answers for a Pending submission. Partial answers are allowed. Requires Student role."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/quiz/submit",
+        "method": "post",
+        "description": "Final submit: merges request answers with saved drafts, validates all questions are answered, auto-grades, and sets submission to Graded. An empty answers array is allowed when all drafts are saved. Requires Student role."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/quiz/result",
+        "method": "get",
+        "description": "Returns the graded result for a submission. Requires Student role."
+      },
+      {
+        "path": "/api/modules/{moduleId}/research-milestones",
+        "method": "post",
+        "description": "Creates a research milestone and its linked deliverable assignment. Requires SuperAdmin or Manager."
+      },
+      {
+        "path": "/api/modules/{moduleId}/research-milestones",
+        "method": "get",
+        "description": "Lists all research milestones for a module, ordered by MilestoneOrder."
+      },
+      {
+        "path": "/api/research-milestones/{milestoneId}",
+        "method": "get",
+        "description": "Retrieve a research milestone (includes assignment and linked activities)."
+      },
+      {
+        "path": "/api/research-milestones/{milestoneId}",
+        "method": "put",
+        "description": "Updates milestone fields and the linked deliverable assignment. Requires SuperAdmin or Manager."
+      },
+      {
+        "path": "/api/research-milestones/{milestoneId}",
+        "method": "delete",
+        "description": "Soft-deletes a milestone (and its linked assignment) when no submissions exist. Requires SuperAdmin or Manager."
+      },
+      {
+        "path": "/api/research-milestones/{milestoneId}/activities",
+        "method": "post",
+        "description": "Links an existing activity to a milestone with required flag and display order. Requires SuperAdmin, Manager, or Mentor."
+      },
+      {
+        "path": "/api/research-milestones/{milestoneId}/activities/{activityId}",
+        "method": "put",
+        "description": "Updates required flag and/or display order for the activity link. Requires SuperAdmin, Manager, or Mentor."
+      },
+      {
+        "path": "/api/research-milestones/{milestoneId}/activities/{activityId}",
+        "method": "delete",
+        "description": "Removes (soft-deletes) the activity link from the milestone. Requires SuperAdmin, Manager, or Mentor."
+      },
+      {
+        "path": "/api/module-enrollments/{moduleEnrollmentId}/research-milestones/progress",
+        "method": "get",
+        "description": "Returns per-milestone unlock and submission readiness for a module enrollment. Access is enforced per role."
+      },
+      {
+        "path": "/api/research-submissions/start",
+        "method": "post",
+        "description": "Mentor, Manager, or SuperAdmin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window."
+      },
+      {
+        "path": "/api/research-submissions/{submissionId}",
+        "method": "get",
+        "description": "Returns a research milestone submission. Access is enforced per role."
+      },
+      {
+        "path": "/api/research-submissions/{submissionId}/upload",
+        "method": "post",
+        "description": "Uploads a deliverable or evidence file to S3 only (no DB write). Returns CreateResearchSubmissionRequestDto with FileUrl or EvidenceUrls for use in submit. Set isEvidence=true for supporting evidence files."
+      },
+      {
+        "path": "/api/research-submissions/{submissionId}/submit",
+        "method": "post",
+        "description": "Student submits research deliverable content in a single action. No draft saving. Resubmission after ReturnedForRevision does not require mentor to reopen."
+      },
+      {
+        "path": "/api/research-submissions/{submissionId}/grade",
+        "method": "post",
+        "description": "Mentor, Manager, or SuperAdmin grades a turned-in submission or returns it for revision."
+      },
+      {
+        "path": "/api/assignments/{assignmentId}/retrospective/start",
+        "method": "post",
+        "description": "Creates a new Pending submission or resumes an existing draft or revision. Requires Student role and an active enrollment in the assignment's module."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/retrospective",
+        "method": "get",
+        "description": "Returns plain-text content and status for a retrospective submission. Students may only access their own submission."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/retrospective/draft",
+        "method": "put",
+        "description": "Autosaves plain-text draft content for a Pending or ReturnedForRevision submission."
+      },
+      {
+        "path": "/api/submissions/{submissionId}/retrospective/submit",
+        "method": "post",
+        "description": "Final submit: merges optional request text with the saved draft, requires non-empty plain text, and sets submission to TurnedIn for mentor grading."
+      },
+      {
+        "path": "/api/seed/all",
+        "method": "post",
+        "description": "Seeds all database tables with sample data. Run DELETE /api/seed/clear first when resetting dev data."
+      },
+      {
+        "path": "/api/seed/clear",
+        "method": "delete",
+        "description": "Removes all application data from the database (PostgreSQL TRUNCATE CASCADE). EF migration history is preserved."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/{sessionId}/attendance",
+        "method": "get",
+        "description": "Returns attendance records for a class session. Students receive only their own record; mentors, managers, and super admins receive the full roster."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/{sessionId}/attendance/students/{studentId}",
+        "method": "put",
+        "description": "Upserts one student's attendance for a class session. Requires Mentor, Manager, or SuperAdmin role."
+      }
+    ],
+    "schemas": [
+      {
+        "name": "ActivitiesResponseDto"
+      },
+      {
+        "name": "ActivitiesResponseDtoApiResult"
+      },
+      {
+        "name": "ActivitiesResponseDtoPagination"
+      },
+      {
+        "name": "ActivitiesResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ActivitiesResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ActivitiesResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ActivityLearningProgressDto"
+      },
+      {
+        "name": "ActivityProgressResponseDto"
+      },
+      {
+        "name": "ActivityProgressResponseDtoApiResult"
+      },
+      {
+        "name": "ActivityProgressResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ActivityResumeStateDto"
+      },
+      {
+        "name": "AddHighlightSegmentRequest"
+      },
+      {
+        "name": "AddProgramToExpertDto"
+      },
+      {
+        "name": "ApiResult"
+      },
+      {
+        "name": "ApproveLinkDto"
+      },
+      {
+        "name": "AssignmentResponseDto"
+      },
+      {
+        "name": "AssignmentResponseDtoApiResult"
+      },
+      {
+        "name": "AssignmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "AssignmentSubmissionResponseDto"
+      },
+      {
+        "name": "AssignmentSubmissionResponseDtoApiResult"
+      },
+      {
+        "name": "AssignmentSubmissionResponseDtoResponseDataContent"
+      },
+      {
+        "name": "BankQuestionOptionResponseDto"
+      },
+      {
+        "name": "BankQuestionResponseDto"
+      },
+      {
+        "name": "BooleanApiResult"
+      },
+      {
+        "name": "BooleanResponseDataContent"
+      },
+      {
+        "name": "CheckoutRequestDto"
+      },
+      {
+        "name": "CheckoutResponseDto"
+      },
+      {
+        "name": "CheckoutResponseDtoApiResult"
+      },
+      {
+        "name": "CheckoutResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassEnrollmentResponseDto"
+      },
+      {
+        "name": "ClassEnrollmentResponseDtoApiResult"
+      },
+      {
+        "name": "ClassEnrollmentResponseDtoPagination"
+      },
+      {
+        "name": "ClassEnrollmentResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassEnrollmentResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ClassEnrollmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassResponseDto"
+      },
+      {
+        "name": "ClassResponseDtoApiResult"
+      },
+      {
+        "name": "ClassResponseDtoPagination"
+      },
+      {
+        "name": "ClassResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ClassResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassSessionResponseDto"
+      },
+      {
+        "name": "ClassSessionResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionResponseDtoPagination"
+      },
+      {
+        "name": "ClassSessionResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassSessionResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ClassSessionResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassSessionStudentResponseDto"
+      },
+      {
+        "name": "ClassSessionWithStudentsResponseDto"
+      },
+      {
+        "name": "ClassSessionWithStudentsResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionWithStudentsResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassStudentResponseDto"
+      },
+      {
+        "name": "ClassWithSessionsResponseDto"
+      },
+      {
+        "name": "ClassWithSessionsResponseDtoApiResult"
+      },
+      {
+        "name": "ClassWithSessionsResponseDtoResponseDataContent"
+      },
+      {
+        "name": "CompleteActivityRequestDto"
+      },
+      {
+        "name": "CompleteActivityResponseDto"
+      },
+      {
+        "name": "CompleteActivityResponseDtoApiResult"
+      },
+      {
+        "name": "CompleteActivityResponseDtoResponseDataContent"
+      },
+      {
+        "name": "CompleteProfileDto"
+      },
+      {
+        "name": "CourseResponseDto"
+      },
+      {
+        "name": "CourseResponseDtoApiResult"
+      },
+      {
+        "name": "CourseResponseDtoPagination"
+      },
+      {
+        "name": "CourseResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "CourseResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "CourseResponseDtoResponseDataContent"
+      },
+      {
+        "name": "CreateActivitiesRequestDto"
+      },
+      {
+        "name": "CreateActivityProgressRequestDto"
+      },
+      {
+        "name": "CreateAssignmentRequestDto"
+      },
+      {
+        "name": "CreateClassEnrollmentRequestDto"
+      },
+      {
+        "name": "CreateClassRequestDto"
+      },
+      {
+        "name": "CreateClassSessionRequestDto"
+      },
+      {
+        "name": "CreateCourseRequestDto"
+      },
+      {
+        "name": "CreateHighlightStackRequest"
+      },
+      {
+        "name": "CreateModuleRequestDto"
+      },
+      {
+        "name": "CreateProgramRequestDto"
+      },
+      {
+        "name": "CreateProgramReviewDto"
+      },
+      {
+        "name": "CreateQuestionBankRequestDto"
+      },
+      {
+        "name": "CreateResearchMilestoneRequestDto"
+      },
+      {
+        "name": "CreateResearchSubmissionRequestDto"
+      },
+      {
+        "name": "CreateResearchSubmissionRequestDtoApiResult"
+      },
+      {
+        "name": "CreateResearchSubmissionRequestDtoResponseDataContent"
+      },
+      {
+        "name": "EnrollmentCurriculumActivityDto"
+      },
+      {
+        "name": "EnrollmentCurriculumAssignmentDto"
+      },
+      {
+        "name": "EnrollmentCurriculumCourseDto"
+      },
+      {
+        "name": "EnrollmentCurriculumDto"
+      },
+      {
+        "name": "EnrollmentCurriculumDtoApiResult"
+      },
+      {
+        "name": "EnrollmentCurriculumDtoResponseDataContent"
+      },
+      {
+        "name": "EnrollmentCurriculumMaterialDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMilestoneDto"
+      },
+      {
+        "name": "EnrollmentCurriculumModuleDto"
+      },
+      {
+        "name": "ErrorContent"
+      },
+      {
+        "name": "ExpertCreateDto"
+      },
+      {
+        "name": "ExpertProgramAssignmentDto"
+      },
+      {
+        "name": "ExpertProgramSummaryDto"
+      },
+      {
+        "name": "ExpertProgramSummaryDtoApiResult"
+      },
+      {
+        "name": "ExpertProgramSummaryDtoResponseDataContent"
+      },
+      {
+        "name": "ExpertResponseDto"
+      },
+      {
+        "name": "ExpertResponseDtoApiResult"
+      },
+      {
+        "name": "ExpertResponseDtoPagination"
+      },
+      {
+        "name": "ExpertResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ExpertResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ExpertResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ExpertUpdateDto"
+      },
+      {
+        "name": "FaceSegmentDto"
+      },
+      {
+        "name": "ForceCompleteActivityRequestDto"
+      },
+      {
+        "name": "ForgotPasswordRequestDto"
+      },
+      {
+        "name": "GradeAssignmentSubmissionRequestDto"
+      },
+      {
+        "name": "GradeResearchSubmissionRequestDto"
+      },
+      {
+        "name": "HighlightSourceClipDto"
+      },
+      {
+        "name": "HighlightSourceSegmentDto"
+      },
+      {
+        "name": "HighlightVideoItemDto"
+      },
+      {
+        "name": "HighlightVideoItemDtoApiResult"
+      },
+      {
+        "name": "HighlightVideoItemDtoResponseDataContent"
+      },
+      {
+        "name": "HighlightVideoStackDto"
+      },
+      {
+        "name": "HighlightVideoStackDtoApiResult"
+      },
+      {
+        "name": "HighlightVideoStackDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "HighlightVideoStackDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "HighlightVideoStackDtoResponseDataContent"
+      },
+      {
+        "name": "HttpValidationProblemDetails"
+      },
+      {
+        "name": "ImportBankQuestionsResultDto"
+      },
+      {
+        "name": "ImportBankQuestionsResultDtoApiResult"
+      },
+      {
+        "name": "ImportBankQuestionsResultDtoResponseDataContent"
+      },
+      {
+        "name": "ImportRowErrorDto"
+      },
+      {
+        "name": "InvoiceResponseDto"
+      },
+      {
+        "name": "InvoiceResponseDtoApiResult"
+      },
+      {
+        "name": "InvoiceResponseDtoListApiResult"
+      },
+      {
+        "name": "InvoiceResponseDtoListResponseDataContent"
+      },
+      {
+        "name": "InvoiceResponseDtoResponseDataContent"
+      },
+      {
+        "name": "LabelTimelineEntryDto"
+      },
+      {
+        "name": "LinkMilestoneActivityRequestDto"
+      },
+      {
+        "name": "LoginRequestDto"
+      },
+      {
+        "name": "LoginResponseDto"
+      },
+      {
+        "name": "LoginResponseDtoApiResult"
+      },
+      {
+        "name": "LoginResponseDtoResponseDataContent"
+      },
+      {
+        "name": "MagicLoginDto"
+      },
+      {
+        "name": "MaterialResponseDto"
+      },
+      {
+        "name": "MaterialResponseDtoApiResult"
+      },
+      {
+        "name": "MaterialResponseDtoResponseDataContent"
+      },
+      {
+        "name": "MediaAssetDto"
+      },
+      {
+        "name": "MediaAssetDtoApiResult"
+      },
+      {
+        "name": "MediaAssetDtoListApiResult"
+      },
+      {
+        "name": "MediaAssetDtoListResponseDataContent"
+      },
+      {
+        "name": "MediaAssetDtoResponseDataContent"
+      },
+      {
+        "name": "MediaTagDto"
+      },
+      {
+        "name": "ModuleEnrollmentResponseDto"
+      },
+      {
+        "name": "ModuleEnrollmentResponseDtoApiResult"
+      },
+      {
+        "name": "ModuleEnrollmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ModuleRetakeCheckoutRequestDto"
+      },
+      {
+        "name": "ModulesResponseDto"
+      },
+      {
+        "name": "ModulesResponseDtoApiResult"
+      },
+      {
+        "name": "ModulesResponseDtoPagination"
+      },
+      {
+        "name": "ModulesResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ModulesResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ModulesResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ObjectApiResult"
+      },
+      {
+        "name": "ObjectResponseDataContent"
+      },
+      {
+        "name": "ParentCheckoutRequestDto"
+      },
+      {
+        "name": "ParentModulePaymentRequestDto"
+      },
+      {
+        "name": "ParentPaymentRequestDto"
+      },
+      {
+        "name": "PaymentResponseDto"
+      },
+      {
+        "name": "PaymentResponseDtoApiResult"
+      },
+      {
+        "name": "PaymentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ProblemDetails"
+      },
+      {
+        "name": "ProgramCurriculumActivityDto"
+      },
+      {
+        "name": "ProgramCurriculumCourseDto"
+      },
+      {
+        "name": "ProgramCurriculumDto"
+      },
+      {
+        "name": "ProgramCurriculumDtoApiResult"
+      },
+      {
+        "name": "ProgramCurriculumDtoResponseDataContent"
+      },
+      {
+        "name": "ProgramCurriculumMaterialDto"
+      },
+      {
+        "name": "ProgramCurriculumMilestoneDto"
+      },
+      {
+        "name": "ProgramCurriculumModuleDto"
+      },
+      {
+        "name": "ProgramEnrollmentClassDto"
+      },
+      {
+        "name": "ProgramEnrollmentClassDtoApiResult"
+      },
+      {
+        "name": "ProgramEnrollmentClassDtoResponseDataContent"
+      },
+      {
+        "name": "ProgramEnrollmentResponseDto"
+      },
+      {
+        "name": "ProgramEnrollmentResponseDtoApiResult"
+      },
+      {
+        "name": "ProgramEnrollmentResponseDtoPagination"
+      },
+      {
+        "name": "ProgramEnrollmentResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ProgramEnrollmentResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramEnrollmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ProgramExpertSummaryDto"
+      },
+      {
+        "name": "ProgramListItemDto"
+      },
+      {
+        "name": "ProgramListItemDtoPagination"
+      },
+      {
+        "name": "ProgramListItemDtoPaginationApiResult"
+      },
+      {
+        "name": "ProgramListItemDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramReviewResponseDto"
+      },
+      {
+        "name": "ProgramReviewResponseDtoApiResult"
+      },
+      {
+        "name": "ProgramReviewResponseDtoPagination"
+      },
+      {
+        "name": "ProgramReviewResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ProgramReviewResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramReviewResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ProgramsResponseDto"
+      },
+      {
+        "name": "ProgramsResponseDtoApiResult"
+      },
+      {
+        "name": "ProgramsResponseDtoPagination"
+      },
+      {
+        "name": "ProgramsResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ProgramsResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramsResponseDtoResponseDataContent"
+      },
+      {
+        "name": "QuestionBankResponseDto"
+      },
+      {
+        "name": "QuestionBankResponseDtoApiResult"
+      },
+      {
+        "name": "QuestionBankResponseDtoResponseDataContent"
+      },
+      {
+        "name": "QuizAnswerItemDto"
+      },
+      {
+        "name": "QuizAttemptResponseDto"
+      },
+      {
+        "name": "QuizAttemptResponseDtoApiResult"
+      },
+      {
+        "name": "QuizAttemptResponseDtoResponseDataContent"
+      },
+      {
+        "name": "QuizOptionForStudentDto"
+      },
+      {
+        "name": "QuizQuestionForStudentDto"
+      },
+      {
+        "name": "QuizResultResponseDto"
+      },
+      {
+        "name": "QuizResultResponseDtoApiResult"
+      },
+      {
+        "name": "QuizResultResponseDtoResponseDataContent"
+      },
+      {
+        "name": "RequestLinkDto"
+      },
+      {
+        "name": "ResearchMilestoneActivityResponseDto"
+      },
+      {
+        "name": "ResearchMilestoneActivityResponseDtoApiResult"
+      },
+      {
+        "name": "ResearchMilestoneActivityResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ResearchMilestoneResponseDto"
+      },
+      {
+        "name": "ResearchMilestoneResponseDtoApiResult"
+      },
+      {
+        "name": "ResearchMilestoneResponseDtoListApiResult"
+      },
+      {
+        "name": "ResearchMilestoneResponseDtoListResponseDataContent"
+      },
+      {
+        "name": "ResearchMilestoneResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ResearchSubmissionResponseDto"
+      },
+      {
+        "name": "ResearchSubmissionResponseDtoApiResult"
+      },
+      {
+        "name": "ResearchSubmissionResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ResendOtpRequestDto"
+      },
+      {
+        "name": "ResetPasswordDto"
+      },
+      {
+        "name": "ResponseContent"
+      },
+      {
+        "name": "RetrospectiveAttemptResponseDto"
+      },
+      {
+        "name": "RetrospectiveAttemptResponseDtoApiResult"
+      },
+      {
+        "name": "RetrospectiveAttemptResponseDtoResponseDataContent"
+      },
+      {
+        "name": "SaveActivityCheckpointRequestDto"
+      },
+      {
+        "name": "SaveActivityCheckpointResponseDto"
+      },
+      {
+        "name": "SaveActivityCheckpointResponseDtoApiResult"
+      },
+      {
+        "name": "SaveActivityCheckpointResponseDtoResponseDataContent"
+      },
+      {
+        "name": "SaveDraftAnswersRequestDto"
+      },
+      {
+        "name": "SaveDraftAnswersResponseDto"
+      },
+      {
+        "name": "SaveDraftAnswersResponseDtoApiResult"
+      },
+      {
+        "name": "SaveDraftAnswersResponseDtoResponseDataContent"
+      },
+      {
+        "name": "SaveRetrospectiveDraftRequestDto"
+      },
+      {
+        "name": "SaveRetrospectiveDraftResponseDto"
+      },
+      {
+        "name": "SaveRetrospectiveDraftResponseDtoApiResult"
+      },
+      {
+        "name": "SaveRetrospectiveDraftResponseDtoResponseDataContent"
+      },
+      {
+        "name": "SessionAttendanceResponseDto"
+      },
+      {
+        "name": "SessionAttendanceResponseDtoApiResult"
+      },
+      {
+        "name": "SessionAttendanceResponseDtoPagination"
+      },
+      {
+        "name": "SessionAttendanceResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "SessionAttendanceResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "SessionAttendanceResponseDtoResponseDataContent"
+      },
+      {
+        "name": "StartResearchSubmissionRequestDto"
+      },
+      {
+        "name": "StringApiResult"
+      },
+      {
+        "name": "StringResponseDataContent"
+      },
+      {
+        "name": "StudentMilestoneActivityProgressDto"
+      },
+      {
+        "name": "StudentMilestoneItemProgressDto"
+      },
+      {
+        "name": "StudentMilestoneProgressDto"
+      },
+      {
+        "name": "StudentMilestoneProgressDtoApiResult"
+      },
+      {
+        "name": "StudentMilestoneProgressDtoResponseDataContent"
+      },
+      {
+        "name": "SubmitAssignmentRequestDto"
+      },
+      {
+        "name": "SubmitQuizAnswersRequestDto"
+      },
+      {
+        "name": "SubmitRetrospectiveRequestDto"
+      },
+      {
+        "name": "TimeRangeDto"
+      },
+      {
+        "name": "TokenRefreshRequestDto"
+      },
+      {
+        "name": "TrimHighlightVideoRequest"
+      },
+      {
+        "name": "UpdateActivitiesRequestDto"
+      },
+      {
+        "name": "UpdateActivityProgressRequestDto"
+      },
+      {
+        "name": "UpdateAssignmentRequestDto"
+      },
+      {
+        "name": "UpdateClassEnrollmentRequestDto"
+      },
+      {
+        "name": "UpdateClassRequestDto"
+      },
+      {
+        "name": "UpdateClassSessionRequestDto"
+      },
+      {
+        "name": "UpdateCourseRequestDto"
+      },
+      {
+        "name": "UpdateMaterialRequestDto"
+      },
+      {
+        "name": "UpdateMilestoneActivityLinkRequestDto"
+      },
+      {
+        "name": "UpdateModuleEnrollmentRequestDto"
+      },
+      {
+        "name": "UpdateModuleRequestDto"
+      },
+      {
+        "name": "UpdateProgramRequestDto"
+      },
+      {
+        "name": "UpdateProgramReviewDto"
+      },
+      {
+        "name": "UpdateResearchMilestoneRequestDto"
+      },
+      {
+        "name": "UpdateSessionAttendanceRequestDto"
+      },
+      {
+        "name": "UpdateUserDto"
+      },
+      {
+        "name": "UserDto"
+      },
+      {
+        "name": "UserDtoApiResult"
+      },
+      {
+        "name": "UserDtoResponseDataContent"
+      },
+      {
+        "name": "UserRegistrationDto"
+      },
+      {
+        "name": "VerifyOtpDto"
+      }
+    ]
+  }
+]

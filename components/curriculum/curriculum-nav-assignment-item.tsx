@@ -11,6 +11,8 @@ import { cn } from "@/lib/utils";
 
 type CurriculumNavAssignmentItemProps = {
   assignment: EnrollmentCurriculumAssignment;
+  isSelected?: boolean;
+  onSelect?: (assignmentId: string) => void;
   inTree?: boolean;
 };
 
@@ -45,25 +47,49 @@ function StatusIcon({
 
 export function CurriculumNavAssignmentItem({
   assignment,
+  isSelected = false,
+  onSelect,
   inTree = false,
 }: CurriculumNavAssignmentItemProps) {
   const isLocked = assignment.status === "locked";
   const prefix = ASSIGNMENT_TITLE_PREFIX[assignment.assignmentType];
 
+  if (isLocked || !onSelect) {
+    return (
+      <div
+        className={cn(
+          "flex min-h-11 w-full items-center gap-2.5 rounded-lg text-left text-sm",
+          inTree ? "px-2 py-2" : "px-3 py-2.5",
+          "cursor-not-allowed opacity-50",
+        )}
+        aria-disabled
+      >
+        <StatusIcon status={assignment.status} />
+        <span className="min-w-0 leading-snug">
+          <span className="text-learn-faint">{prefix}: </span>
+          {assignment.title}
+        </span>
+      </div>
+    );
+  }
+
   return (
-    <div
+    <button
+      type="button"
+      onClick={() => onSelect(assignment.assignmentId)}
       className={cn(
-        "flex min-h-11 w-full items-center gap-2.5 rounded-lg text-left text-sm",
+        "flex min-h-11 w-full items-center gap-2.5 rounded-lg text-left text-sm transition-colors",
         inTree ? "px-2 py-2" : "px-3 py-2.5",
-        isLocked ? "opacity-50" : "text-learn-muted",
+        isSelected && "bg-learn-surface font-medium text-learn-text-strong",
+        !isSelected && "text-learn-muted hover:bg-learn-surface/80",
       )}
-      aria-disabled={isLocked}
+      aria-current={isSelected ? "page" : undefined}
     >
       <StatusIcon status={assignment.status} />
       <span className="min-w-0 leading-snug">
         <span className="text-learn-faint">{prefix}: </span>
         {assignment.title}
       </span>
-    </div>
+    </button>
   );
 }
