@@ -1,6 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  CheckCircle2,
+  Hourglass,
+  PenLine,
+  RotateCcw,
+  XCircle,
+  type LucideIcon,
+} from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -111,32 +119,70 @@ function RetrospectivePanelSkeleton() {
   );
 }
 
-function RetrospectiveGradeSummary({ attempt }: { attempt: RetrospectiveAttempt }) {
+type StatusTone = "info" | "success" | "warn";
+
+const TONE_STYLES: Record<StatusTone, string> = {
+  info: "bg-learn-accent/10 text-learn-accent",
+  success: "bg-learn-success/15 text-learn-success",
+  warn: "bg-learn-primary/10 text-learn-primary",
+};
+
+function StatusPill({
+  tone,
+  icon: Icon,
+  children,
+}: {
+  tone: StatusTone;
+  icon: LucideIcon;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold",
+        TONE_STYLES[tone],
+      )}
+    >
+      <Icon className="size-4 shrink-0" aria-hidden />
+      {children}
+    </span>
+  );
+}
+
+function RetrospectiveGradeSummary({
+  attempt,
+  gradedLabel,
+}: {
+  attempt: RetrospectiveAttempt;
+  gradedLabel: string | null;
+}) {
   const percent =
     attempt.maxPoints > 0 && attempt.assignedGrade != null
       ? Math.round((attempt.assignedGrade / attempt.maxPoints) * 100)
       : null;
+  const passed = attempt.passed ?? false;
 
   return (
-    <div className="rounded-xl border border-learn-border bg-learn-surface-2 p-4">
-      <div className="flex flex-wrap items-baseline gap-2">
-        <span className="font-mono text-2xl font-semibold tabular-nums text-learn-text-strong">
-          {attempt.assignedGrade ?? "—"}
+    <div className="rounded-xl border border-learn-border bg-learn-surface-2 p-3.5">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <StatusPill tone={passed ? "success" : "warn"} icon={passed ? CheckCircle2 : XCircle}>
+          {passed ? "Đã đạt" : "Chưa đạt"}
+        </StatusPill>
+        <span className="flex items-baseline gap-1">
+          <span className="font-mono text-2xl font-semibold tabular-nums text-learn-text-strong">
+            {attempt.assignedGrade ?? "—"}
+          </span>
+          <span className="text-sm text-learn-muted">/ {attempt.maxPoints}</span>
         </span>
-        <span className="text-sm text-learn-muted">/ {attempt.maxPoints}</span>
-        {percent != null && attempt.passed != null ? (
-          <span
-            className={cn(
-              "ml-auto rounded-full px-2 py-0.5 text-xs font-medium",
-              attempt.passed
-                ? "bg-learn-success/15 text-learn-success"
-                : "bg-learn-primary/10 text-learn-primary",
-            )}
-          >
-            {attempt.passed ? "Đạt" : "Chưa đạt"} · {percent}%
+        {percent != null ? (
+          <span className="ml-auto text-sm font-semibold tabular-nums text-learn-muted">
+            {percent}%
           </span>
         ) : null}
       </div>
+      {gradedLabel ? (
+        <p className="mt-2 text-xs text-learn-faint">Chấm lúc {gradedLabel}</p>
+      ) : null}
       {attempt.mentorFeedback ? (
         <p className="mt-3 border-t border-learn-border pt-3 text-sm leading-relaxed text-learn-muted">
           <span className="font-medium text-learn-text-strong">Nhận xét: </span>
@@ -353,10 +399,25 @@ export function RetrospectivePanel({
 
   const savedLabel = formatTimestamp(lastSavedAt);
   const submittedLabel = formatTimestamp(attempt.submittedAt);
+  const gradedLabel = formatTimestamp(attempt.gradedAt);
+  const trimmed = contentText.trim();
+  const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
   const description =
     assignment.description ||
     attempt.description ||
     "Chia sẻ suy nghĩ, bài học rút ra và cảm nhận của bạn về hoạt động vừa qua.";
+
+  const saveStatus = isSaving
+    ? "Đang lưu nháp…"
+    : savedLabel
+      ? `Đã lưu · ${savedLabel}`
+      : "Tự động lưu nháp";
+
+  const surfaceMeta = isEditable
+    ? saveStatus
+    : submittedLabel
+      ? `Đã nộp · ${submittedLabel}`
+      : "Bài đã nộp";
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
@@ -380,27 +441,53 @@ export function RetrospectivePanel({
         </p>
       </div>
 
-      <div className="flex min-h-0 flex-1 flex-col px-4 pb-3 sm:px-5">
-        {attempt.status === "ReturnedForRevision" && attempt.mentorFeedback ? (
-          <div className="mb-3 rounded-lg border border-learn-primary/20 bg-learn-primary/5 px-3 py-2.5 text-sm text-learn-muted">
-            <span className="font-medium text-learn-text-strong">Cần chỉnh sửa: </span>
-            {attempt.mentorFeedback}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-3 sm:px-5">
+        {attempt.status === "TurnedIn" ? (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+            <StatusPill tone="info" icon={Hourglass}>
+              Đã nộp — chờ chấm điểm
+            </StatusPill>
+            {submittedLabel ? (
+              <span className="text-sm text-learn-muted">Nộp lúc {submittedLabel}</span>
+            ) : null}
+          </div>
+        ) : null}
+
+        {attempt.status === "ReturnedForRevision" ? (
+          <div className="rounded-xl border border-learn-primary/25 bg-learn-primary/5 p-3.5">
+            <StatusPill tone="warn" icon={RotateCcw}>
+              Cần chỉnh sửa
+            </StatusPill>
+            {attempt.mentorFeedback ? (
+              <p className="mt-2.5 text-sm leading-relaxed text-learn-muted">
+                {attempt.mentorFeedback}
+              </p>
+            ) : null}
           </div>
         ) : null}
 
         {attempt.status === "Graded" ? (
-          <div className="mb-3">
-            <RetrospectiveGradeSummary attempt={attempt} />
+          <RetrospectiveGradeSummary attempt={attempt} gradedLabel={gradedLabel} />
+        ) : null}
+
+        <div
+          className={cn(
+            "flex min-h-0 flex-1 flex-col overflow-hidden rounded-xl border transition-colors",
+            isEditable
+              ? "border-learn-border bg-learn-bg focus-within:border-learn-accent focus-within:ring-2 focus-within:ring-learn-accent/15"
+              : "border-learn-border bg-learn-surface-2/40",
+          )}
+        >
+          <div className="flex items-center gap-2 border-b border-learn-border/70 px-3.5 py-2">
+            <PenLine
+              className={cn("size-4 shrink-0", isEditable ? "text-learn-accent" : "text-learn-faint")}
+              aria-hidden
+            />
+            <span className="text-sm font-semibold text-learn-text-strong">
+              {isEditable ? "Bài viết của bạn" : "Bài viết đã nộp"}
+            </span>
           </div>
-        ) : null}
 
-        {attempt.status === "TurnedIn" ? (
-          <p className="mb-2 text-xs font-medium text-learn-muted">
-            Đã nộp{submittedLabel ? ` · ${submittedLabel}` : ""} — chờ mentor chấm điểm
-          </p>
-        ) : null}
-
-        <div className="flex min-h-0 flex-1 flex-col">
           <label htmlFor="retrospective-content" className="sr-only">
             Nội dung đánh giá
           </label>
@@ -409,36 +496,40 @@ export function RetrospectivePanel({
             value={contentText}
             onChange={(event) => handleContentChange(event.target.value)}
             readOnly={!isEditable}
-            placeholder="Viết suy nghĩ của bạn tại đây..."
+            placeholder="Viết suy nghĩ của bạn tại đây…"
             className={cn(
-              "min-h-[12rem] w-full flex-1 resize-none rounded-xl border border-learn-border bg-learn-surface-2/40 px-3.5 py-3 text-sm leading-relaxed text-learn-text-strong outline-none transition-colors",
-              "placeholder:text-learn-faint focus-visible:border-learn-accent focus-visible:ring-2 focus-visible:ring-learn-accent/20",
-              !isEditable && "cursor-default opacity-90",
+              "min-h-[11rem] w-full flex-1 resize-none bg-transparent px-3.5 py-3 text-[15px] leading-relaxed text-learn-text-strong outline-none",
+              "placeholder:text-learn-faint",
+              !isEditable && "cursor-default",
             )}
           />
-          <p className="mt-2 text-xs text-learn-faint">
-            {isEditable
-              ? isSaving
-                ? "Đang lưu nháp..."
-                : savedLabel
-                  ? `Lưu nháp lúc ${savedLabel}`
-                  : "Nội dung được tự động lưu nháp"
-              : submittedLabel
-                ? `Nộp lúc ${submittedLabel}`
-                : "Bài đã nộp"}
-          </p>
+
+          <div className="flex items-center justify-between gap-3 border-t border-learn-border/70 px-3.5 py-1.5">
+            <span className="text-xs tabular-nums text-learn-faint">{wordCount} từ</span>
+            <span
+              className={cn(
+                "text-xs",
+                isSaving ? "text-learn-accent" : "text-learn-faint",
+              )}
+            >
+              {surfaceMeta}
+            </span>
+          </div>
         </div>
       </div>
 
       {isEditable ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
-          <p className="text-xs text-learn-faint">
-            Điểm đạt: {attempt.passScore}/{attempt.maxPoints}
+          <p className="text-sm font-medium text-learn-muted">
+            Điểm đạt{" "}
+            <span className="tabular-nums text-learn-text-strong">
+              {attempt.passScore}/{attempt.maxPoints}
+            </span>
           </p>
           <Button
             type="button"
             className="ml-auto bg-learn-primary text-white hover:bg-learn-primary/90"
-            disabled={isSubmitting || !contentText.trim()}
+            disabled={isSubmitting || !trimmed}
             onClick={() => setIsConfirmOpen(true)}
           >
             {isSubmitting ? "Đang nộp..." : "Nộp bài đánh giá"}
