@@ -1,14 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  CheckCircle2,
-  Hourglass,
-  PenLine,
-  RotateCcw,
-  XCircle,
-  type LucideIcon,
-} from "lucide-react";
+import { PenLine } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,7 +42,19 @@ import {
   setStoredRetrospectiveSubmissionId,
 } from "@/lib/curriculum/retrospective-storage";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { formatAssignmentTimestamp } from "@/lib/curriculum/assignment-outcome";
+import {
+  buildRetrospectiveGradedOutcome,
+  buildRetrospectivePendingOutcome,
+  buildRetrospectiveRevisionOutcome,
+} from "@/lib/curriculum/build-assignment-outcome";
 import { cn } from "@/lib/utils";
+
+import {
+  AssignmentPendingCard,
+  AssignmentResultCard,
+  AssignmentRevisionCard,
+} from "./assignment-outcome";
 
 type RetrospectivePanelProps = {
   curriculum: EnrollmentCurriculum;
@@ -64,20 +69,6 @@ function isEditableStatus(status: RetrospectiveSubmissionStatus): boolean {
 
 function isMissingSubmissionError(error: unknown): boolean {
   return error instanceof ApiRequestError && error.status === 404;
-}
-
-function formatTimestamp(value: string | null): string | null {
-  if (!value) return null;
-  try {
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-    }).format(new Date(value));
-  } catch {
-    return null;
-  }
 }
 
 async function loadRetrospectiveAttempt(
@@ -115,80 +106,6 @@ function RetrospectivePanelSkeleton() {
       <Skeleton className="h-3 w-32 bg-learn-surface-2" />
       <Skeleton className="mt-3 h-6 w-2/3 bg-learn-surface-2" />
       <Skeleton className="mt-4 min-h-0 flex-1 rounded-xl bg-learn-surface-2" />
-    </div>
-  );
-}
-
-type StatusTone = "info" | "success" | "warn";
-
-const TONE_STYLES: Record<StatusTone, string> = {
-  info: "bg-learn-accent/10 text-learn-accent",
-  success: "bg-learn-success/15 text-learn-success",
-  warn: "bg-learn-primary/10 text-learn-primary",
-};
-
-function StatusPill({
-  tone,
-  icon: Icon,
-  children,
-}: {
-  tone: StatusTone;
-  icon: LucideIcon;
-  children: React.ReactNode;
-}) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-semibold",
-        TONE_STYLES[tone],
-      )}
-    >
-      <Icon className="size-4 shrink-0" aria-hidden />
-      {children}
-    </span>
-  );
-}
-
-function RetrospectiveGradeSummary({
-  attempt,
-  gradedLabel,
-}: {
-  attempt: RetrospectiveAttempt;
-  gradedLabel: string | null;
-}) {
-  const percent =
-    attempt.maxPoints > 0 && attempt.assignedGrade != null
-      ? Math.round((attempt.assignedGrade / attempt.maxPoints) * 100)
-      : null;
-  const passed = attempt.passed ?? false;
-
-  return (
-    <div className="rounded-xl border border-learn-border bg-learn-surface-2 p-3.5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <StatusPill tone={passed ? "success" : "warn"} icon={passed ? CheckCircle2 : XCircle}>
-          {passed ? "Đã đạt" : "Chưa đạt"}
-        </StatusPill>
-        <span className="flex items-baseline gap-1">
-          <span className="font-mono text-2xl font-semibold tabular-nums text-learn-text-strong">
-            {attempt.assignedGrade ?? "—"}
-          </span>
-          <span className="text-sm text-learn-muted">/ {attempt.maxPoints}</span>
-        </span>
-        {percent != null ? (
-          <span className="ml-auto text-sm font-semibold tabular-nums text-learn-muted">
-            {percent}%
-          </span>
-        ) : null}
-      </div>
-      {gradedLabel ? (
-        <p className="mt-2 text-xs text-learn-faint">Chấm lúc {gradedLabel}</p>
-      ) : null}
-      {attempt.mentorFeedback ? (
-        <p className="mt-3 border-t border-learn-border pt-3 text-sm leading-relaxed text-learn-muted">
-          <span className="font-medium text-learn-text-strong">Nhận xét: </span>
-          {attempt.mentorFeedback}
-        </p>
-      ) : null}
     </div>
   );
 }
@@ -397,9 +314,8 @@ export function RetrospectivePanel({
     return <RetrospectivePanelSkeleton />;
   }
 
-  const savedLabel = formatTimestamp(lastSavedAt);
-  const submittedLabel = formatTimestamp(attempt.submittedAt);
-  const gradedLabel = formatTimestamp(attempt.gradedAt);
+  const savedLabel = formatAssignmentTimestamp(lastSavedAt);
+  const submittedLabel = formatAssignmentTimestamp(attempt.submittedAt);
   const trimmed = contentText.trim();
   const wordCount = trimmed ? trimmed.split(/\s+/).length : 0;
   const description =
@@ -443,31 +359,15 @@ export function RetrospectivePanel({
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 px-4 pb-3 sm:px-5">
         {attempt.status === "TurnedIn" ? (
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-            <StatusPill tone="info" icon={Hourglass}>
-              Đã nộp — chờ chấm điểm
-            </StatusPill>
-            {submittedLabel ? (
-              <span className="text-sm text-learn-muted">Nộp lúc {submittedLabel}</span>
-            ) : null}
-          </div>
+          <AssignmentPendingCard {...buildRetrospectivePendingOutcome(attempt)} />
         ) : null}
 
         {attempt.status === "ReturnedForRevision" ? (
-          <div className="rounded-xl border border-learn-primary/25 bg-learn-primary/5 p-3.5">
-            <StatusPill tone="warn" icon={RotateCcw}>
-              Cần chỉnh sửa
-            </StatusPill>
-            {attempt.mentorFeedback ? (
-              <p className="mt-2.5 text-sm leading-relaxed text-learn-muted">
-                {attempt.mentorFeedback}
-              </p>
-            ) : null}
-          </div>
+          <AssignmentRevisionCard {...buildRetrospectiveRevisionOutcome(attempt)} />
         ) : null}
 
         {attempt.status === "Graded" ? (
-          <RetrospectiveGradeSummary attempt={attempt} gradedLabel={gradedLabel} />
+          <AssignmentResultCard {...buildRetrospectiveGradedOutcome(attempt)} />
         ) : null}
 
         <div

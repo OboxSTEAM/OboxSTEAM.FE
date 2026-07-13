@@ -11874,7 +11874,7 @@
           "ProgramEnrollment"
         ],
         "summary": "Get enrollment-scoped program curriculum",
-        "description": "Returns the curriculum tree with per-student activity status, module locks, and current activity.",
+        "description": "Returns the curriculum tree with per-student activity and assignment status, module locks, and current activity.",
         "parameters": [
           {
             "name": "enrollmentId",
