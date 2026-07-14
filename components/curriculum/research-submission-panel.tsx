@@ -208,7 +208,7 @@ function FilePreviewMedia({
   const kind = resolveResearchPreviewKind(name, url);
   const frameClass =
     size === "tile"
-      ? "aspect-square w-full overflow-hidden rounded-md bg-learn-surface-2"
+      ? "aspect-square w-full overflow-hidden rounded-none bg-learn-surface-2"
       : size === "sm"
         ? "h-12 w-12 shrink-0 overflow-hidden rounded-md border border-learn-border bg-learn-surface-2"
         : "h-[4.25rem] w-[4.25rem] shrink-0 overflow-hidden rounded-lg border border-learn-border bg-learn-surface-2";
@@ -216,7 +216,12 @@ function FilePreviewMedia({
   if (kind === "image") {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- remote S3 submission URLs
-      <img src={url} alt={name} className={cn(frameClass, "object-cover")} loading="lazy" />
+      <img
+        src={url}
+        alt={name}
+        className={cn(frameClass, "object-cover object-center")}
+        loading="lazy"
+      />
     );
   }
 
@@ -332,9 +337,11 @@ function EvidenceTile({
   disabled?: boolean;
 }) {
   return (
-    <div className="group relative w-[5.5rem] shrink-0 overflow-hidden rounded-lg border border-learn-border bg-learn-surface">
+    <div className="group relative w-[5.5rem] shrink-0 overflow-hidden rounded-md border border-learn-border bg-learn-surface">
       <a href={url} target="_blank" rel="noopener noreferrer" className="block">
-        <FilePreviewMedia url={url} name={name} size="tile" />
+        <div className="aspect-square w-full overflow-hidden bg-learn-surface-2">
+          <FilePreviewMedia url={url} name={name} size="tile" />
+        </div>
         <p
           className="truncate border-t border-learn-border/70 px-1.5 py-1 text-[10px] font-medium leading-tight text-learn-text-strong"
           title={name}
