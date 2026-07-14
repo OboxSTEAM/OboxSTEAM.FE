@@ -1,4 +1,4 @@
-import type { QuizResult } from "@/lib/api";
+import type { QuizResult, ResearchSubmission } from "@/lib/api";
 import type { RetrospectiveAttempt } from "@/lib/api/entities/retrospective";
 
 import {
@@ -70,5 +70,52 @@ export function buildRetrospectiveRevisionOutcome(
 ): AssignmentRevisionCardModel {
   return {
     feedback: attempt.mentorFeedback,
+  };
+}
+
+export function buildResearchGradedOutcome(
+  submission: ResearchSubmission,
+): AssignmentResultCardModel {
+  const gradedLabel = formatAssignmentTimestamp(submission.gradedAt);
+  const submittedLabel = formatAssignmentTimestamp(submission.submittedAt);
+  const passed = submission.passed ?? false;
+
+  return {
+    passed,
+    summary: submission.attemptNumber > 1 ? `Lần ${submission.attemptNumber}` : undefined,
+    assignedGrade: submission.assignedGrade ?? 0,
+    maxPoints: submission.maxPoints,
+    passScore: submission.passScore,
+    details: [
+      { label: "Điểm đạt yêu cầu", value: String(submission.passScore) },
+      ...(submittedLabel ? [{ label: "Nộp lúc", value: submittedLabel }] : []),
+      ...(gradedLabel ? [{ label: "Chấm lúc", value: gradedLabel }] : []),
+    ],
+    mentorFeedback: submission.mentorFeedback,
+    footer: passed
+      ? "Bạn đã hoàn thành mốc nghiên cứu này."
+      : "Hãy xem nhận xét của mentor và chỉnh sửa nếu được yêu cầu.",
+  };
+}
+
+export function buildResearchPendingOutcome(
+  submission: ResearchSubmission,
+): AssignmentPendingCardModel {
+  const submittedLabel = formatAssignmentTimestamp(submission.submittedAt);
+
+  return {
+    summary:
+      submission.attemptNumber > 1
+        ? `Lần ${submission.attemptNumber} · chờ mentor chấm điểm`
+        : undefined,
+    submittedLabel,
+  };
+}
+
+export function buildResearchRevisionOutcome(
+  submission: ResearchSubmission,
+): AssignmentRevisionCardModel {
+  return {
+    feedback: submission.mentorFeedback,
   };
 }

@@ -130,6 +130,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
   },
+  "research.upload": {
+    title: "Không tải lên được tệp",
+    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn tệp khác (tối đa 25 MB) và thử lại.",
+  },
+  "research.submit": {
+    title: "Không nộp được bài",
+    reason: "Yêu cầu nộp bị từ chối hoặc bài nộp chưa sẵn sàng.",
+    action: "Kiểm tra tệp chính, điều kiện mốc và thử lại.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

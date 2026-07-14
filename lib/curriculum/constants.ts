@@ -64,3 +64,9 @@ export const QUIZ_ANSWER_SAVE_DEBOUNCE_MS = 800;
 
 /** Debounce retrospective draft autosave while the student types. */
 export const RETROSPECTIVE_DRAFT_SAVE_DEBOUNCE_MS = 1200;
+
+/** Research milestone file upload limits (client-side). */
+export const RESEARCH_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
+export const RESEARCH_UPLOAD_MAX_EVIDENCE = 10;
+export const RESEARCH_UPLOAD_ACCEPT =
+  ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.png,.jpg,.jpeg,.webp,.gif,.mp4,.mov,.txt";
