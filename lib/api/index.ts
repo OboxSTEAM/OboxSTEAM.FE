@@ -51,6 +51,7 @@ export {
   type ModuleType,
   type Paginated,
   type Program,
+  type ProgramCategory,
   type ProgramCurriculum,
   type ProgramIdParam,
   type ProgramLevel,
@@ -65,20 +66,45 @@ export {
 
 export {
   getModuleById,
+  getModules,
+  createModule,
+  updateModule,
+  deleteModule,
   type GetModuleByIdResponse,
   type GetModuleByIdResult,
+  type CreateModuleResponse,
+  type CreateModuleResult,
+  type UpdateModuleResponse,
+  type UpdateModuleResult,
+  type DeleteModuleResponse,
+  type DeleteModuleResult,
+  type GetModulesResponse,
+  type GetModulesResult,
+  type GetModulesQuery,
 } from "./modules";
 
 export {
   getCourseById,
+  createCourse,
+  updateCourse,
+  deleteCourse,
   type Course,
   type CurriculumCourse,
   type GetCourseByIdResponse,
   type GetCourseByIdResult,
+  type CreateCourseResponse,
+  type CreateCourseResult,
+  type UpdateCourseResponse,
+  type UpdateCourseResult,
+  type DeleteCourseResponse,
+  type DeleteCourseResult,
 } from "./courses";
 
 export {
   getActivityById,
+  createActivity,
+  updateActivity,
+  deleteActivity,
   type Activity,
   type ActivityLearningProgress,
   type ActivityMaterial,
@@ -88,7 +114,14 @@ export {
   type GetActivityByIdOptions,
   type GetActivityByIdResponse,
   type GetActivityByIdResult,
+  type CreateActivityResponse,
+  type CreateActivityResult,
+  type UpdateActivityResponse,
+  type UpdateActivityResult,
+  type DeleteActivityResponse,
+  type DeleteActivityResult,
 } from "./activities";
+
 
 export {
   getAssignmentById,
@@ -141,9 +174,19 @@ export {
 
 export {
   getMaterialByActivityId,
-  type GetMaterialByActivityResponse,
-  type GetMaterialByActivityResult,
+  uploadMaterial,
+  updateMaterial,
+  deleteMaterial,
   type Material,
+  type MaterialType,
+  type GetMaterialResponse,
+  type GetMaterialResult,
+  type UploadMaterialResponse,
+  type UploadMaterialResult,
+  type UpdateMaterialResponse,
+  type UpdateMaterialResult,
+  type DeleteMaterialResponse,
+  type DeleteMaterialResult,
 } from "./materials";
 
 export {

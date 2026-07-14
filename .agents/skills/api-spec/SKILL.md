@@ -1,0 +1,57 @@
+﻿---
+description: OboxSTEAM backend OpenAPI spec — endpoints, DTOs, envelope mapping for lib/api work
+name: api-spec
+---
+
+# OboxSTEAM — Backend API Spec
+
+Load when adding or updating `lib/api/*`, `lib/validations/*`, or any feature that calls the backend.
+
+---
+
+## Sources
+
+| Resource | Location |
+|----------|----------|
+| OpenAPI JSON (committed) | `specs/oboxsteam.openapi.json` |
+| Live spec URL | https://api.oboxsteam.website/swagger/v1/swagger.json |
+| Swagger UI | https://api.oboxsteam.website/index.html |
+| API base (`NEXT_PUBLIC_API_URL`) | https://api.oboxsteam.website |
+
+**Refresh spec:** `pnpm sync:api-spec` (run after BE deploys new endpoints).
+
+**Agent tooling:** Use **obox-api** MCP (`get-api-catalog`, operation lookup) before implementing new endpoints. Prefer the committed spec; sync if stale.
+
+---
+
+## Swagger → FE mapping
+
+Backend routes in Swagger use `/api/...` paths. FE `apiFetch` prepends `NEXT_PUBLIC_API_URL` — pass paths as `/api/...` (same as Swagger).
+
+### Response envelope
+
+Swagger `*ApiResult` schemas map to the FE envelope in `lib/api/schemas.ts`:
+
+```json
+{ "isSuccess": true, "value": { "code": "...", "message": "...", "data": { ... } }, "error": null }
+```
+
+| Swagger | FE Zod |
+|---------|--------|
+| `FooDtoApiResult` outer shape | `createApiResponseSchema(createApiValueSchema(fooSchema))` |
+| `value.data` entity | `fooSchema` in `lib/api/<domain>/schemas.ts` |
+| Message-only success | `createApiResponseSchema(apiValueMessageOnlySchema)` |
+| `error` on failure | Handled by `assertApiSuccess` → `ApiResponseError` |
+
+Do **not** treat Swagger response bodies as raw DTOs — always wrap with the envelope helpers.
+
+### Implementation checklist
+
+1. Query **obox-api** MCP or read `specs/oboxsteam.openapi.json` for path, method, request/response schemas.
+2. Request/form rules → `lib/validations/<domain>.ts` (Vietnamese messages).
+3. Response entity + `*ValueSchema` → `lib/api/<domain>/schemas.ts`.
+4. Endpoint function → `lib/api/<domain>/index.ts` via `createApiPost` or `apiFetchParsed`.
+5. Re-export from `lib/api/index.ts` when public.
+
+Auth: protected routes use bearer token via `lib/api/interceptors/auth.ts` (default on `apiFetch`).
+

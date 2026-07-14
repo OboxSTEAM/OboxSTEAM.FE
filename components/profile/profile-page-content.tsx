@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { isParentRole } from "@/lib/auth/roles";
+import { isParentRole, isStudentRole } from "@/lib/auth/roles";
 
 import { ProfileAvatarUpload } from "./profile-avatar-upload";
 import { ProfileDetails } from "./profile-details";
@@ -76,7 +76,7 @@ export function ProfilePageContent() {
   }
 
   const isParent = isParentRole(profile.role);
-  const isStudent = !isParent;
+  const isStudent = isStudentRole(profile.role);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 sm:px-6 sm:py-12">
