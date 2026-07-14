@@ -1,79 +1,387 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import Image from "next/image";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MANAGER_NAV_GROUPS } from "@/lib/manager/nav";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  BookOpen,
+  ChevronRight,
+  ChevronsUpDown,
+  LayoutDashboard,
+  LogOut,
+  Settings2,
+  Users,
+  User,
+  Sparkles,
+} from "lucide-react";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarRail,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuGroup,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCurrentUser } from "@/hooks/use-current-user";
+import { clearAuthSession } from "@/lib/auth/session";
 
 const LOGO_URL =
   "https://oboxsteam-bucket-main.s3.ap-southeast-1.amazonaws.com/Seed/Material/logo-obox.png";
 
-export function ManagerSidebar() {
-  const pathname = usePathname();
+function getInitials(name?: string | null): string {
+  if (!name?.trim()) return "M";
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
+}
+
+/** Controlled Collapsible menu group to resolve uncontrolled state changes warnings */
+function CollapsibleMenuGroup({
+  item,
+  pathname,
+}: {
+  item: {
+    title: string;
+    url: string;
+    icon: React.ComponentType<{ className?: string }>;
+    items?: { title: string; url: string }[];
+  };
+  pathname: string;
+}) {
+  const isGroupActive = item.items?.some((sub) =>
+    sub.url === "/manager" ? pathname === "/manager" : pathname.startsWith(sub.url)
+  );
+
+  const [open, setOpen] = React.useState(isGroupActive);
+  const [prevPathname, setPrevPathname] = React.useState(pathname);
+
+  // Sync state during render when pathname changes
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
+    if (isGroupActive) {
+      setOpen(true);
+    }
+  }
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-[#E5E5E0] bg-[#FAFAF5]">
-      {/* Logo */}
-      <div className="flex h-16 items-center gap-2.5 border-b border-[#E5E5E0] px-5">
-        <Link href="/" className="flex items-center gap-2.5">
-          <Image
-            src={LOGO_URL}
-            alt="OboxSTEAM"
-            width={28}
-            height={28}
-            className="rounded-md"
+    <Collapsible
+      render={<SidebarMenuItem />}
+      open={open}
+      onOpenChange={setOpen}
+      className="group/collapsible"
+    >
+      <CollapsibleTrigger
+        render={
+          <SidebarMenuButton
+            tooltip={item.title}
+            className={cn(
+              "w-full transition-all duration-200 rounded-lg px-3 py-2 text-sm font-medium text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D] data-[state=open]:text-[#2D2D2D]",
+              isGroupActive && "text-[#E94B3C] bg-[#E94B3C]/5 font-semibold"
+            )}
           />
-          <span className="font-heading text-base font-bold tracking-tight text-[#2D2D2D]">
-            OboxSTEAM
-          </span>
-        </Link>
-        <span className="ml-auto rounded-full bg-[#E94B3C]/10 px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#E94B3C]">
-          Manager
-        </span>
-      </div>
+        }
+      >
+        <item.icon
+          className={cn(
+            "size-4 shrink-0 transition-colors",
+            isGroupActive ? "text-[#E94B3C]" : "text-[#6B6B6B] group-hover:text-[#2D2D2D]"
+          )}
+        />
+        <span>{item.title}</span>
+        <ChevronRight
+          className={cn(
+            "ml-auto size-3.5 transition-transform duration-200 text-[#6B6B6B]",
+            open ? "rotate-90" : "group-data-[open]/collapsible:rotate-90"
+          )}
+        />
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <SidebarMenuSub className="ml-4 pl-2 border-l border-[#E5E5E0]/60 my-1 space-y-0.5">
+          {item.items?.map((subItem) => {
+            const isSubActive = pathname === subItem.url || pathname.startsWith(subItem.url + "/");
+            return (
+              <SidebarMenuSubItem key={subItem.title}>
+                <SidebarMenuSubButton
+                  render={<Link href={subItem.url} />}
+                  isActive={isSubActive}
+                  className={cn(
+                    "w-full rounded-md px-3 py-1.5 text-[13px] transition-all duration-150 flex items-center gap-2",
+                    isSubActive
+                      ? "text-[#E94B3C] bg-[#E94B3C]/10 font-semibold"
+                      : "text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+                  )}
+                >
+                  <span>{subItem.title}</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            );
+          })}
+        </SidebarMenuSub>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
 
-      {/* Nav groups */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-5">
-          {MANAGER_NAV_GROUPS.map((group) => (
-            <div key={group.title}>
-              <p className="mb-1.5 px-2 font-mono text-[10px] font-semibold uppercase tracking-widest text-[#6B6B6B]">
-                {group.title}
-              </p>
-              <ul className="space-y-0.5">
-                {group.items.map((item) => {
-                  const isActive =
-                    item.href === "/manager"
-                      ? pathname === "/manager"
-                      : pathname.startsWith(item.href);
-                  return (
-                    <li key={item.href}>
-                      <Link
-                        href={item.href}
-                        className={cn(
-                          "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                          isActive
-                            ? "bg-[#E94B3C]/10 text-[#E94B3C]"
-                            : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
-                        )}
-                        aria-current={isActive ? "page" : undefined}
-                      >
-                        <item.icon
-                          className={cn("size-4 shrink-0", isActive ? "text-[#E94B3C]" : "text-[#6B6B6B]")}
-                          aria-hidden
-                        />
-                        {item.label}
-                      </Link>
-                    </li>
-                  );
-                })}
-              </ul>
+export function ManagerSidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { profile } = useCurrentUser();
+  const { isMobile, state } = useSidebar();
+
+  const navGroups = [
+    {
+      title: "Platform",
+      items: [
+        {
+          title: "Dashboard",
+          url: "/manager",
+          icon: LayoutDashboard,
+          isFlat: true,
+        },
+        {
+          title: "Chương trình học",
+          url: "/manager/programs",
+          icon: BookOpen,
+          items: [
+            { title: "Chương trình", url: "/manager/programs" },
+            { title: "Module", url: "/manager/modules" },
+            { title: "Khóa học", url: "/manager/courses" },
+            { title: "Hoạt động", url: "/manager/activities" },
+            { title: "Tài liệu", url: "/manager/materials" },
+            { title: "Ngân hàng câu hỏi", url: "/manager/question-bank" },
+            { title: "Milestone nghiên cứu", url: "/manager/milestones" },
+          ],
+        },
+        {
+          title: "Lớp học",
+          url: "/manager/classes",
+          icon: Users,
+          items: [
+            { title: "Lớp học", url: "/manager/classes" },
+            { title: "Lịch học", url: "/manager/sessions" },
+            { title: "Điểm danh", url: "/manager/attendance" },
+            { title: "Bài tập", url: "/manager/assignments" },
+          ],
+        },
+        {
+          title: "Vận hành",
+          url: "/manager/enrollments",
+          icon: Settings2,
+          items: [
+            { title: "Đăng ký học", url: "/manager/enrollments" },
+            { title: "Đánh giá", url: "/manager/reviews" },
+            { title: "Chuyên gia", url: "/manager/experts" },
+            { title: "Duyệt Mentor", url: "/manager/mentors" },
+          ],
+        },
+      ],
+    },
+  ];
+
+  function handleLogout() {
+    clearAuthSession();
+    router.replace("/login");
+  }
+
+  return (
+    <Sidebar collapsible="icon" className="border-r border-[#E5E5E0] bg-[#FAFAF5]">
+      <SidebarHeader className="border-b border-[#E5E5E0]/60 p-3 group-data-[state=collapsed]:p-2 h-16 flex flex-row items-center justify-between transition-all duration-200">
+        <Link
+          href="/"
+          className="flex items-center gap-2.5 overflow-hidden w-full px-2 group-data-[state=collapsed]:px-0 group-data-[state=collapsed]:justify-center"
+        >
+          <div className="flex size-7 shrink-0 items-center justify-center rounded-lg">
+            <Image
+              src={LOGO_URL}
+              alt="OboxSTEAM"
+              width={26}
+              height={26}
+              className="rounded-md shrink-0"
+            />
+          </div>
+          {state !== "collapsed" && (
+            <div className="flex items-center justify-between flex-1 min-w-0 ml-1 animate-in fade-in-0 duration-200">
+              <span className="font-heading text-sm font-bold tracking-tight text-[#2D2D2D] truncate">
+                OboxSTEAM
+              </span>
+              <span className="ml-2 shrink-0 rounded-full bg-[#E94B3C]/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#E94B3C]">
+                Manager
+              </span>
             </div>
-          ))}
-        </nav>
-      </ScrollArea>
-    </aside>
+          )}
+        </Link>
+      </SidebarHeader>
+
+      {/* Sidebar Content with Collapsible Groups */}
+      <SidebarContent className="px-2 py-3">
+        {navGroups.map((group) => (
+          <SidebarGroup key={group.title} className="p-0">
+            {state !== "collapsed" && (
+              <SidebarGroupLabel className="px-3 font-heading text-[10px] font-bold uppercase tracking-widest text-[#6B6B6B]/80 mb-2">
+                {group.title}
+              </SidebarGroupLabel>
+            )}
+            <SidebarMenu className="space-y-1">
+              {group.items.map((item) => {
+                if (item.isFlat) {
+                  const isActive = pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        render={<Link href={item.url} />}
+                        tooltip={item.title}
+                        isActive={isActive}
+                        className={cn(
+                          "w-full transition-all duration-200 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-3",
+                          isActive
+                            ? "bg-[#E94B3C]/10 text-[#E94B3C] font-semibold"
+                            : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                        )}
+                      >
+                        {item.icon && (
+                          <item.icon
+                            className={cn("size-4 shrink-0", isActive ? "text-[#E94B3C]" : "text-[#6B6B6B]")}
+                          />
+                        )}
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                }
+
+                return (
+                  <CollapsibleMenuGroup
+                    key={item.title}
+                    item={item}
+                    pathname={pathname}
+                  />
+                );
+              })}
+            </SidebarMenu>
+          </SidebarGroup>
+        ))}
+      </SidebarContent>
+
+      {/* Sidebar Footer with NavUser */}
+      <SidebarFooter className="border-t border-[#E5E5E0]/60 p-3">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                render={
+                  <SidebarMenuButton
+                    size="lg"
+                    className="w-full text-left transition-all duration-200 hover:bg-[#F5F5F0] data-[state=open]:bg-[#F5F5F0]"
+                  />
+                }
+              >
+                <Avatar className="size-8 rounded-lg">
+                  {profile?.avatarUrl ? (
+                    <AvatarImage src={profile.avatarUrl} alt={profile.fullName ?? "Manager"} />
+                  ) : null}
+                  <AvatarFallback className="rounded-lg bg-[#E94B3C]/10 text-xs font-semibold text-[#E94B3C]">
+                    {getInitials(profile?.fullName)}
+                  </AvatarFallback>
+                </Avatar>
+                {state !== "collapsed" && (
+                  <div className="grid flex-1 text-left text-sm leading-tight ml-2">
+                    <span className="truncate font-medium text-[#2D2D2D]">
+                      {profile?.fullName ?? "Manager"}
+                    </span>
+                    <span className="truncate text-xs text-[#6B6B6B] font-light">
+                      {profile?.email ?? "manager@obox.id"}
+                    </span>
+                  </div>
+                )}
+                {state !== "collapsed" && <ChevronsUpDown className="ml-auto size-4 text-[#6B6B6B]" />}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                className="w-56 rounded-xl border border-[#E5E5E0] bg-white p-1 shadow-lg"
+                side={isMobile ? "bottom" : "right"}
+                align="end"
+                sideOffset={4}
+              >
+                {/* Wrap Label inside DropdownMenuGroup to resolve Base UI context error */}
+                <DropdownMenuGroup>
+                  <DropdownMenuLabel className="p-0 font-normal">
+                    <div className="flex items-center gap-2.5 px-2 py-1.5 text-left text-sm">
+                      <Avatar className="size-8 rounded-lg">
+                        {profile?.avatarUrl ? (
+                          <AvatarImage src={profile.avatarUrl} alt={profile.fullName ?? "Manager"} />
+                        ) : null}
+                        <AvatarFallback className="rounded-lg bg-[#E94B3C]/10 text-xs font-semibold text-[#E94B3C]">
+                          {getInitials(profile?.fullName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="grid flex-1 text-left text-sm leading-tight">
+                        <span className="truncate font-semibold text-[#2D2D2D]">
+                          {profile?.fullName ?? "Manager"}
+                        </span>
+                        <span className="truncate text-xs text-[#6B6B6B]">
+                          {profile?.email}
+                        </span>
+                      </div>
+                    </div>
+                  </DropdownMenuLabel>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem className="gap-2 p-2 focus:bg-[#F5F5F0] cursor-pointer rounded-lg text-xs font-medium text-[#6B6B6B] hover:text-[#2D2D2D] disabled:opacity-50">
+                    <Sparkles className="size-4 text-[#FDD835]" />
+                    Upgrade to Premium
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
+                <DropdownMenuGroup>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/profile")}
+                    className="gap-2 p-2 focus:bg-[#F5F5F0] cursor-pointer rounded-lg text-[#2D2D2D]"
+                  >
+                    <User className="size-4 text-[#6B6B6B]" />
+                    Hồ sơ cá nhân
+                  </DropdownMenuItem>
+                </DropdownMenuGroup>
+                <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="gap-2 p-2 focus:bg-red-50 cursor-pointer rounded-lg text-[#E94B3C] focus:text-[#E94B3C]"
+                >
+                  <LogOut className="size-4" />
+                  Đăng xuất
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+      <SidebarRail />
+    </Sidebar>
   );
 }

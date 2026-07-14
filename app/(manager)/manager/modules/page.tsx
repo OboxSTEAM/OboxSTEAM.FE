@@ -28,28 +28,28 @@ import {
 
 // ── Module type chip config ─────────────────────────────────────────────────
 const MODULE_TYPE_OPTIONS = [
-  { value: "all",          label: "Tất cả",       letter: "∞",  color: "#2D2D2D", bg: "bg-[#2D2D2D]",       activeBg: "border-[#2D2D2D] bg-[#2D2D2D] text-white" },
-  { value: "Theory",       label: "Lý thuyết",    letter: "T",  color: "#4FC3F7", bg: "bg-[#4FC3F7]/10",    activeBg: "border-[#4FC3F7]/40 bg-[#4FC3F7]/10 text-[#0d6e9c]" },
-  { value: "Experiential", label: "Trải nghiệm",  letter: "E",  color: "#7CB342", bg: "bg-[#7CB342]/10",    activeBg: "border-[#7CB342]/40 bg-[#7CB342]/10 text-[#3d5c22]" },
-  { value: "Research",     label: "Nghiên cứu",   letter: "R",  color: "#7E57C2", bg: "bg-[#7E57C2]/10",    activeBg: "border-[#7E57C2]/40 bg-[#7E57C2]/10 text-[#51308a]" },
+  { value: "all", label: "Tất cả", letter: "∞", color: "#2D2D2D", bg: "bg-[#2D2D2D]", activeBg: "border-[#2D2D2D] bg-[#2D2D2D] text-white" },
+  { value: "Theory", label: "Lý thuyết", letter: "T", color: "#4FC3F7", bg: "bg-[#4FC3F7]/10", activeBg: "border-[#4FC3F7]/40 bg-[#4FC3F7]/10 text-[#0d6e9c]" },
+  { value: "Experiential", label: "Trải nghiệm", letter: "E", color: "#7CB342", bg: "bg-[#7CB342]/10", activeBg: "border-[#7CB342]/40 bg-[#7CB342]/10 text-[#3d5c22]" },
+  { value: "Research", label: "Nghiên cứu", letter: "R", color: "#7E57C2", bg: "bg-[#7E57C2]/10", activeBg: "border-[#7E57C2]/40 bg-[#7E57C2]/10 text-[#51308a]" },
 ] as const;
 
 const SORT_OPTIONS = [
   { label: "Sắp xếp theo", value: "all" },
   { label: "Tên học phần", value: "name" },
-  { label: "Mã học phần",  value: "code" },
-  { label: "Thứ tự học",   value: "moduleOrder" },
-  { label: "Học phí",      value: "price" },
-  { label: "Ngày tạo",     value: "createdAt" },
+  { label: "Mã học phần", value: "code" },
+  { label: "Thứ tự học", value: "moduleOrder" },
+  { label: "Học phí", value: "price" },
+  { label: "Ngày tạo", value: "createdAt" },
 ];
 
 // ── Main page ────────────────────────────────────────────────────────────────
 export default function ManagerModulesPage() {
-  const [search, setSearch]           = useState("");
-  const [moduleType, setModuleType]   = useState("all");
-  const [sortBy, setSortBy]           = useState("all");
-  const [isDescending, setIsDesc]     = useState(false);
-  const [page, setPage]               = useState(1);
+  const [search, setSearch] = useState("");
+  const [moduleType, setModuleType] = useState("all");
+  const [sortBy, setSortBy] = useState("all");
+  const [isDescending, setIsDesc] = useState(false);
+  const [page, setPage] = useState(1);
 
   // Fetch programs for programId → name mapping
   const { data: programsData } = useClientFetch({
@@ -58,15 +58,15 @@ export default function ManagerModulesPage() {
     deps: [],
   });
   const programsList = programsData?.data?.items || [];
-  const programMap   = new Map(programsList.map((p) => [p.id, p]));
+  const programMap = new Map(programsList.map((p) => [p.id, p]));
 
   // Fetch modules
   const { data: modulesData, isLoading, markLoading } = useClientFetch({
     fetcher: async () =>
       getModules({
-        search:       search.trim() || undefined,
-        moduleType:   moduleType === "all" ? undefined : moduleType,
-        sortBy:       sortBy === "all" ? undefined : sortBy,
+        search: search.trim() || undefined,
+        moduleType: moduleType === "all" ? undefined : moduleType,
+        sortBy: sortBy === "all" ? undefined : sortBy,
         isDescending: sortBy !== "all" ? isDescending : undefined,
         page,
         pageSize: 10,
@@ -75,9 +75,9 @@ export default function ManagerModulesPage() {
     deps: [search, moduleType, sortBy, isDescending, page],
   });
 
-  const modulesList  = modulesData?.data?.items || [];
-  const totalPages   = modulesData?.data?.totalPages || 1;
-  const showClear    = search !== "" || moduleType !== "all" || sortBy !== "all" || isDescending;
+  const modulesList = modulesData?.data?.items || [];
+  const totalPages = modulesData?.data?.totalPages || 1;
+  const showClear = search !== "" || moduleType !== "all" || sortBy !== "all" || isDescending;
 
   const handleSearchChange = (val: string) => {
     markLoading();
@@ -148,7 +148,7 @@ export default function ManagerModulesPage() {
       ),
     },
     {
-      header: "Chương trình học cha",
+      header: "Chương trình học",
       className: "min-w-[180px]",
       render: (row) => {
         const program = programMap.get(row.programId);

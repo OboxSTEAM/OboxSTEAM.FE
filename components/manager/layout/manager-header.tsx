@@ -1,118 +1,137 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { LogOut, User } from "lucide-react";
+import * as React from "react";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
+import { Bell } from "lucide-react";
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { clearAuthSession } from "@/lib/auth/session";
-import { useCurrentUser } from "@/hooks/use-current-user";
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
 
-const LOGO_URL =
-  "https://oboxsteam-bucket-main.s3.ap-southeast-1.amazonaws.com/Seed/Material/logo-obox.png";
+const PATH_LABELS: Record<string, string> = {
+  manager: "Tổng quan",
+  programs: "Chương trình",
+  create: "Tạo mới",
+  modules: "Module",
+  courses: "Khóa học",
+  activities: "Hoạt động",
+  materials: "Tài liệu",
+  "question-bank": "Ngân hàng câu hỏi",
+  milestones: "Milestone",
+  classes: "Lớp học",
+  sessions: "Lịch học",
+  attendance: "Điểm danh",
+  assignments: "Bài tập",
+  enrollments: "Đăng ký học",
+  reviews: "Đánh giá",
+  experts: "Chuyên gia",
+  mentors: "Duyệt Mentor",
+};
 
-function getInitials(name?: string | null): string {
-  if (!name?.trim()) return "M";
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
+export function ManagerHeader({ title: _title }: { title?: string }) {
+  const pathname = usePathname();
+  const [resolvedLabels, setResolvedLabels] = React.useState<Record<string, string>>({});
 
-export function ManagerHeader({ title }: { title?: string }) {
-  const router = useRouter();
-  const { profile } = useCurrentUser();
+  const segments = pathname.split("/").filter(Boolean);
 
-  function handleLogout() {
-    clearAuthSession();
-    router.replace("/login");
-  }
+  React.useEffect(() => {
+    const uuidSegments = segments.filter(
+      (seg) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(seg) &&
+        !resolvedLabels[seg]
+    );
+
+    if (uuidSegments.length === 0) return;
+
+    uuidSegments.forEach(async (id) => {
+      try {
+        const idx = segments.indexOf(id);
+        const prevSegment = idx > 0 ? segments[idx - 1] : "";
+
+        if (prevSegment === "programs") {
+          const { getProgramById } = await import("@/lib/api");
+          const res = await getProgramById(id);
+          if (res?.data?.name) {
+            setResolvedLabels((prev) => ({ ...prev, [id]: res.data.name }));
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load breadcrumb label for id:", id, err);
+      }
+    });
+  }, [segments, resolvedLabels]);
+
+  // Generate dynamic breadcrumb segments based on pathname
+  const breadcrumbItems = segments.map((segment, index) => {
+    const url = "/" + segments.slice(0, index + 1).join("/");
+    const label = PATH_LABELS[segment] || resolvedLabels[segment] || segment;
+    const isLast = index === segments.length - 1;
+    return { label, url, isLast };
+  });
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E5E0] bg-white px-6">
-      {/* Page title slot */}
-      <div>
-        {title ? (
-          <h1 className="font-heading text-lg font-semibold text-[#2D2D2D]">{title}</h1>
-        ) : null}
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E5E0] bg-white px-4 transition-[width,height] ease-linear">
+      {/* Left section: Sidebar trigger & Breadcrumbs */}
+      <div className="flex items-center gap-2">
+        <SidebarTrigger className="-ml-1 text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]" />
+        <Separator
+          orientation="vertical"
+          className="mr-2 data-[orientation=vertical]:h-4 bg-[#E5E5E0]"
+        />
+        <Breadcrumb>
+          <BreadcrumbList>
+            {breadcrumbItems.length > 1 &&
+              breadcrumbItems.map((item, index) => {
+                // If it is 'manager', it points to dashboard overview
+                const isManagerSegment = index === 0 && segments[0] === "manager";
+                const displayLabel = isManagerSegment ? "Tổng quan" : item.label;
+
+                return (
+                  <React.Fragment key={item.url}>
+                    {index > 0 && <BreadcrumbSeparator className="text-[#6B6B6B]/60" />}
+                    <BreadcrumbItem>
+                      {item.isLast ? (
+                        <BreadcrumbPage className="font-heading font-semibold text-[#2D2D2D]">
+                          {displayLabel}
+                        </BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink
+                          render={<Link href={item.url} />}
+                          className="font-heading text-[#6B6B6B] hover:text-[#E94B3C] transition-colors"
+                        >
+                          {displayLabel}
+                        </BreadcrumbLink>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
+                );
+              })}
+          </BreadcrumbList>
+        </Breadcrumb>
       </div>
 
-      {/* User menu */}
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          className="flex items-center gap-2.5 rounded-full outline-none ring-2 ring-transparent transition hover:ring-[#E5E5E0] focus-visible:ring-[#4FC3F7]"
-          aria-label="Tài khoản"
+      {/* Right section: Notification action button */}
+      <div className="flex items-center gap-4">
+        {/* Simple Notification Button for Premium aesthetic */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative size-9 rounded-full text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+          aria-label="Thông báo"
         >
-          <Avatar className="size-9">
-            {profile?.avatarUrl ? (
-              <AvatarImage src={profile.avatarUrl} alt={profile.fullName ?? "Manager"} />
-            ) : null}
-            <AvatarFallback className="bg-[#E94B3C]/10 text-sm font-semibold text-[#E94B3C]">
-              {getInitials(profile?.fullName)}
-            </AvatarFallback>
-          </Avatar>
-          <span className="hidden text-sm font-medium text-[#2D2D2D] sm:block">
-            {profile?.fullName ?? profile?.email ?? "Manager"}
-          </span>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent align="end" className="w-60">
-          {/* Label must be inside DropdownMenuGroup (Base UI requirement) */}
-          <DropdownMenuGroup>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex items-center gap-2.5 py-0.5">
-                <Image
-                  src={LOGO_URL}
-                  alt="OboxSTEAM"
-                  width={20}
-                  height={20}
-                  className="rounded-sm"
-                />
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium text-[#2D2D2D]">
-                    {profile?.fullName ?? profile?.email ?? "Manager"}
-                  </p>
-                  <p className="truncate text-xs text-[#6B6B6B]">{profile?.email}</p>
-                </div>
-              </div>
-            </DropdownMenuLabel>
-          </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={() => router.push("/profile")}
-              className="cursor-pointer"
-            >
-              <User className="mr-2 size-4" aria-hidden />
-              Hồ sơ cá nhân
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-
-          <DropdownMenuSeparator />
-
-          <DropdownMenuGroup>
-            <DropdownMenuItem
-              onClick={handleLogout}
-              className="cursor-pointer text-[#E94B3C] focus:text-[#E94B3C]"
-            >
-              <LogOut className="mr-2 size-4" aria-hidden />
-              Đăng xuất
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          <Bell className="size-5" />
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#E94B3C]" />
+        </Button>
+      </div>
     </header>
   );
 }

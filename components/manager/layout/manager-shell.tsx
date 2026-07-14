@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
@@ -7,6 +8,7 @@ import { ManagerHeader } from "@/components/manager/layout/manager-header";
 import { ManagerSidebar } from "@/components/manager/layout/manager-sidebar";
 import { isManagerRole } from "@/lib/auth/roles";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 
 /** Map pathname prefix to page title shown in header. */
 function resolvePageTitle(pathname: string): string {
@@ -71,12 +73,10 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
       return;
     }
     // Wait until profile is loaded before checking role
-    // (profile is null during getCurrentUser() fetch even when authenticated)
     if (profile && !isManagerRole(profile.role)) {
       router.replace("/");
     }
   }, [isAuthenticated, isHydrated, isLoading, profile, pathname, router]);
-
 
   // Show skeleton while hydrating, loading, or pending redirect
   if (!isHydrated || isLoading) {
@@ -92,14 +92,14 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   const pageTitle = resolvePageTitle(pathname);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#FAFAF5]">
+    <SidebarProvider className="h-screen overflow-hidden">
       <ManagerSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-[#FAFAF5]">
         <ManagerHeader title={pageTitle} />
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto bg-[#FAFAF5]">
           {children}
         </main>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
