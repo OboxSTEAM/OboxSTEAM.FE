@@ -22,6 +22,7 @@ import {
   Save,
   FolderPlus,
   ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -232,7 +233,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
-      <PHdr icon={BookOpen} color={W.success}
+      <PHdr icon={FolderOpen} color={W.success}
         title={isEdit ? `Chỉnh sửa: ${moduleToEdit!.name}` : "Tạo Module mới"}
         sub="Học phần trong chương trình học" />
       <div className="flex-1 overflow-y-auto p-5 space-y-6">
@@ -373,7 +374,7 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
-      <PHdr icon={FolderOpen} color={W.accent} title={isEdit ? `Chỉnh sửa: ${courseToEdit!.name}` : "Tạo Khóa học mới"} sub="Khóa học trong học phần" />
+      <PHdr icon={BookOpen} color={W.accent} title={isEdit ? `Chỉnh sửa: ${courseToEdit!.name}` : "Tạo Khóa học mới"} sub="Khóa học trong học phần" />
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         <STitle>Thông tin khóa học</STitle>
         <div className="space-y-1.5">
@@ -619,10 +620,23 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
 /* ══════════════════════════════════════════════════════════════════════════════
    STRUCTURE CARD
 ══════════════════════════════════════════════════════════════════════════════ */
+type StructureNodeKind = "program" | "module" | "course" | "activity";
+
+const STRUCTURE_NODE_ICON: Record<
+  StructureNodeKind,
+  { Icon: LucideIcon; color: string; bg: string }
+> = {
+  program: { Icon: LayoutGrid, color: "#E94B3C", bg: "#ffffff" },
+  module: { Icon: FolderOpen, color: "#7CB342", bg: "#ffffff" },
+  course: { Icon: BookOpen, color: "#4FC3F7", bg: "#ffffff" },
+  activity: { Icon: ActivityIcon, color: "#9c27b0", bg: "#ffffff" },
+};
+
 function StructureTreeRow({
   depth,
   isLast,
   selected,
+  kind,
   label,
   meta,
   onSelect,
@@ -636,6 +650,7 @@ function StructureTreeRow({
   depth: number;
   isLast: boolean;
   selected: boolean;
+  kind: StructureNodeKind;
   label: string;
   meta?: string;
   onSelect: () => void;
@@ -654,6 +669,7 @@ function StructureTreeRow({
   );
   const hasBranch = childItems.length > 0;
   const [open, setOpen] = useState(defaultOpen || forceOpen);
+  const { Icon: NodeIcon, color: iconColor, bg: iconBg } = STRUCTURE_NODE_ICON[kind];
 
   useEffect(() => {
     if (forceOpen || selected) setOpen(true);
@@ -721,13 +737,25 @@ function StructureTreeRow({
             <span className="size-6 shrink-0" aria-hidden />
           )}
 
+          <span
+            className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
+            style={{
+              background: iconBg,
+              borderColor: selected ? "rgba(79,195,247,0.35)" : W.border,
+              color: iconColor,
+            }}
+            aria-hidden
+          >
+            <NodeIcon className="size-3.5" strokeWidth={2.25} />
+          </span>
+
           <button
             type="button"
             onClick={() => {
               if (hasBranch) setOpen(true);
               onSelect();
             }}
-            className="flex min-w-0 flex-1 flex-col py-1.5 pr-2 text-left"
+            className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
           >
             <span
               className="truncate text-[12.5px] leading-snug"
@@ -1129,6 +1157,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       <StructureTreeRow
         depth={0}
         isLast
+        kind="program"
         defaultOpen
         selected={sel?.kind === "program"}
         label={program.name}
@@ -1153,6 +1182,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
               key={mod.id}
               depth={1}
               isLast={isLastMod}
+              kind="module"
               forceOpen={moduleForceOpen}
               selected={sel?.kind === "module" && sel.id === mod.id}
               label={mod.name}
@@ -1178,6 +1208,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                     key={course.id}
                     depth={2}
                     isLast={isLastCourse}
+                    kind="course"
                     forceOpen={courseForceOpen}
                     selected={sel?.kind === "course" && sel.id === course.id}
                     label={course.name}
@@ -1205,6 +1236,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                             aIdx === acts.length - 1 &&
                             !(sel?.kind === "activity-new" && sel.courseId === course.id)
                           }
+                          kind="activity"
                           selected={sel?.kind === "activity" && sel.id === act.id}
                           label={act.name}
                           meta={schedule ? `${typeLabel} · ${schedule}` : typeLabel}
