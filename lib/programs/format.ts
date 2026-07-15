@@ -43,6 +43,27 @@ export function getExpertAvatarUrl(
   }
 }
 
+/** Default mock thumbnail when a program has no image (placehold.co style). */
+export const PROGRAM_THUMBNAIL_PLACEHOLDER_URL =
+  "https://placehold.co/800x450/png";
+
+/** Usable thumbnail URL — falls back to the placehold.co mock when missing/invalid. */
+export function getProgramThumbnailUrl(
+  url: string | null | undefined,
+): string {
+  if (!url?.trim()) return PROGRAM_THUMBNAIL_PLACEHOLDER_URL;
+
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") {
+      return url;
+    }
+    return PROGRAM_THUMBNAIL_PLACEHOLDER_URL;
+  } catch {
+    return PROGRAM_THUMBNAIL_PLACEHOLDER_URL;
+  }
+}
+
 export function getProgramExpertId(
   expert: Pick<ProgramExpert, "expertId"> & { id?: string | null },
 ): string | null {

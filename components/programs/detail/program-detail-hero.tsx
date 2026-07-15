@@ -5,7 +5,6 @@ import Image from "next/image";
 
 import Aurora from "@/components/Aurora";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
-import { ImageSlot } from "@/components/common/image-slot";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ProgramExpert } from "@/lib/api/entities/expert";
 import type { ProgramCategory } from "@/lib/api/entities/program";
@@ -19,6 +18,7 @@ import {
   formatProgramExpertSummary,
   getExpertAvatarUrl,
   getExpertInitials,
+  getProgramThumbnailUrl,
   truncateProgramDescription,
 } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
@@ -194,6 +194,7 @@ export function ProgramDetailHero({
   const theme = getCategoryHeroTheme(program.category ?? null);
   const { accentColor } = theme;
   const excerpt = truncateProgramDescription(program.description);
+  const thumbnailUrl = getProgramThumbnailUrl(program.thumbnailUrl);
 
   return (
     <header
@@ -309,24 +310,14 @@ export function ProgramDetailHero({
               style={{ borderTop: `5px solid ${accentColor}` }}
             >
               <div className="relative aspect-[4/3]">
-                {program.thumbnailUrl ? (
-                  <Image
-                    src={program.thumbnailUrl}
-                    alt=""
-                    fill
-                    priority
-                    sizes="14rem"
-                    className="object-cover"
-                  />
-                ) : (
-                  <ImageSlot
-                    ratio="4:3"
-                    alt={program.name}
-                    tone={categoryMeta?.steamKey ?? "neutral"}
-                    className="absolute inset-0 rounded-none"
-                    sizes="14rem"
-                  />
-                )}
+                <Image
+                  src={thumbnailUrl}
+                  alt=""
+                  fill
+                  priority
+                  sizes="14rem"
+                  className="object-cover"
+                />
               </div>
             </div>
           </div>

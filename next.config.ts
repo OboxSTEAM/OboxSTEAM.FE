@@ -26,6 +26,11 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "placehold.co",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
         hostname: "i.pravatar.cc",
         pathname: "/**",
       },

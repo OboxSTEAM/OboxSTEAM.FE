@@ -152,6 +152,31 @@
         "method": "post"
       },
       {
+        "path": "/api/certificates/me",
+        "method": "get",
+        "description": "Students see their own certificates. Parents see linked students. Admins see all program certificates."
+      },
+      {
+        "path": "/api/certificates/{id}",
+        "method": "get",
+        "description": "Full show-page payload for an issued program certificate."
+      },
+      {
+        "path": "/api/certificates/by-enrollment/{programEnrollmentId}",
+        "method": "get",
+        "description": "Returns the program certificate for an enrollment when issued; otherwise null data."
+      },
+      {
+        "path": "/api/certificates/verify/{code}",
+        "method": "get",
+        "description": "Public endpoint for the FE share/verify page."
+      },
+      {
+        "path": "/api/certificates/program-enrollments/{programEnrollmentId}/ensure",
+        "method": "post",
+        "description": "Issues a program certificate when all activities are Done. Retries PDF upload when missing. Idempotent."
+      },
+      {
         "path": "/api/classes",
         "method": "get",
         "description": "Retrieve a paginated list of cohort classes with basic information only. Use GET /api/classes/{id} for full details including SeatsTaken."
@@ -707,6 +732,11 @@
         "description": "Mentor, Manager, or SuperAdmin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window."
       },
       {
+        "path": "/api/research-submissions/start-for-class",
+        "method": "post",
+        "description": "Mentor, Manager, or SuperAdmin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped."
+      },
+      {
         "path": "/api/research-submissions/{submissionId}",
         "method": "get",
         "description": "Returns a research milestone submission. Access is enforced per role."
@@ -842,6 +872,33 @@
       },
       {
         "name": "BooleanResponseDataContent"
+      },
+      {
+        "name": "CertificateDetailDto"
+      },
+      {
+        "name": "CertificateDetailDtoApiResult"
+      },
+      {
+        "name": "CertificateDetailDtoResponseDataContent"
+      },
+      {
+        "name": "CertificateListItemDto"
+      },
+      {
+        "name": "CertificateListItemDtoListApiResult"
+      },
+      {
+        "name": "CertificateListItemDtoListResponseDataContent"
+      },
+      {
+        "name": "CertificateModuleDto"
+      },
+      {
+        "name": "CertificateProgramDto"
+      },
+      {
+        "name": "CertificateStudentDto"
       },
       {
         "name": "CheckoutRequestDto"
@@ -1511,6 +1568,21 @@
       },
       {
         "name": "SessionAttendanceResponseDtoResponseDataContent"
+      },
+      {
+        "name": "StartResearchSubmissionForClassRequestDto"
+      },
+      {
+        "name": "StartResearchSubmissionForClassResponseDto"
+      },
+      {
+        "name": "StartResearchSubmissionForClassResponseDtoApiResult"
+      },
+      {
+        "name": "StartResearchSubmissionForClassResponseDtoResponseDataContent"
+      },
+      {
+        "name": "StartResearchSubmissionForClassSkippedDto"
       },
       {
         "name": "StartResearchSubmissionRequestDto"

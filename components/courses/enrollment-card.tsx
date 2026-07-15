@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Clock } from "lucide-react";
 
-import { ImageSlot } from "@/components/common/image-slot";
 import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -23,6 +22,7 @@ import {
   getProgramLearnHref,
   PROGRAM_ENROLLMENT_STATUS_LABELS,
 } from "@/lib/programs/enrollments";
+import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 type EnrollmentCardProps = {
@@ -81,6 +81,7 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
   const learnHref = getProgramLearnHref(enrollment.programId);
   const isActive = enrollment.status === "Active";
   const isCompleted = enrollment.status === "Completed";
+  const thumbnailUrl = getProgramThumbnailUrl(enrollment.thumbnailUrl);
 
   return (
     <Card
@@ -91,23 +92,13 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
     >
       <div className="p-3 pb-0">
         <div className="relative aspect-[16/9] overflow-hidden rounded-lg border border-[#E5E5E0] bg-[#F5F5F0]">
-          {enrollment.thumbnailUrl ? (
-            <Image
-              src={enrollment.thumbnailUrl}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              className="object-cover"
-            />
-          ) : (
-            <ImageSlot
-              ratio="16:9"
-              alt={enrollment.name}
-              tone="neutral"
-              className="absolute inset-0 rounded-none"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-            />
-          )}
+          <Image
+            src={thumbnailUrl}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className="object-cover"
+          />
         </div>
       </div>
 
