@@ -147,6 +147,32 @@ export {
 } from "./materials";
 
 export {
+  ensureProgramCertificate,
+  getCertificateByEnrollment,
+  getCertificateById,
+  getMyCertificates,
+  verifyCertificate,
+  type CertificateCodeParam,
+  type CertificateDetail,
+  type CertificateIdParam,
+  type CertificateListItem,
+  type CertificateModule,
+  type CertificateProgram,
+  type CertificateStudent,
+  type EnsureProgramCertificateResponse,
+  type EnsureProgramCertificateResult,
+  type GetCertificateByEnrollmentResponse,
+  type GetCertificateByEnrollmentResult,
+  type GetCertificateByIdResponse,
+  type GetCertificateByIdResult,
+  type GetMyCertificatesResponse,
+  type GetMyCertificatesResult,
+  type ProgramEnrollmentIdParam,
+  type VerifyCertificateResponse,
+  type VerifyCertificateResult,
+} from "./certificates";
+
+export {
   cancelPayment,
   checkoutPayment,
   getPaymentById,

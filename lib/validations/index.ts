@@ -50,6 +50,14 @@ export {
   requestParentPaymentSchema,
 } from "./payments";
 export {
+  certificateCodeParamSchema,
+  certificateIdParamSchema,
+  programEnrollmentIdParamSchema,
+  type CertificateCodeParam,
+  type CertificateIdParam,
+  type ProgramEnrollmentIdParam,
+} from "./certificates";
+export {
   classIdParamSchema,
   classListQuerySchema,
   classSessionSortBySchema,
