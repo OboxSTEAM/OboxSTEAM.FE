@@ -48,12 +48,12 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
       },
       {
         label: "Module",
-        href: "/manager/modules",
+        href: "/manager/programs",
         icon: FolderTree,
       },
       {
         label: "Khóa học",
-        href: "/manager/courses",
+        href: "/manager/programs",
         icon: BookOpen,
       },
       {
@@ -76,6 +76,11 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         href: "/manager/milestones",
         icon: Target,
       },
+      {
+        label: "Bài tập",
+        href: "/manager/assignments",
+        icon: ClipboardList,
+      },
     ],
   },
   {
@@ -95,11 +100,6 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         label: "Điểm danh",
         href: "/manager/attendance",
         icon: CheckSquare,
-      },
-      {
-        label: "Bài tập",
-        href: "/manager/assignments",
-        icon: ClipboardList,
       },
     ],
   },

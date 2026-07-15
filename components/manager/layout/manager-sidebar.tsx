@@ -1,9 +1,9 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   BookOpen,
@@ -35,7 +35,6 @@ import {
 import {
   Collapsible,
   CollapsibleContent,
-  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import {
   DropdownMenu,
@@ -49,6 +48,11 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { clearAuthSession } from "@/lib/auth/session";
+import {
+  matchProgramDetailId,
+  platformFocusFromPath,
+  type PlatformCurriculumFocus,
+} from "@/lib/manager/curriculum-focus";
 
 const LOGO_URL =
   "https://oboxsteam-bucket-main.s3.ap-southeast-1.amazonaws.com/Seed/Material/logo-obox.png";
@@ -62,32 +66,127 @@ function getInitials(name?: string | null): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-/** Controlled Collapsible menu group to resolve uncontrolled state changes warnings */
+type NavItem = {
+  title: string;
+  url: string;
+  focus?: PlatformCurriculumFocus;
+};
+
+/**
+ * - Parent group label navigates (e.g. Chương trình học → list).
+ * - Chevron alone expands/collapses children.
+ * - Module / Course / Activity deep-link into the open program via ?node=.
+ */
+function resolveNavHref(item: NavItem, programId: string | null): string {
+  if (item.focus === "program") {
+    return "/manager/programs";
+  }
+  if (programId && item.focus) {
+    return `/manager/programs/${programId}?node=${item.focus}`;
+  }
+  return item.url;
+}
+
+function isNavItemActive(
+  item: NavItem,
+  pathname: string,
+  programId: string | null,
+  curriculumFocus: PlatformCurriculumFocus | null,
+): boolean {
+  if (item.focus === "program") {
+    // List / create
+    if (
+      pathname === "/manager/programs" ||
+      pathname.startsWith("/manager/programs/create")
+    ) {
+      return true;
+    }
+    // Program detail at program-level edit (no deeper node)
+    return !!programId && curriculumFocus === "program";
+  }
+
+  if (programId) {
+    if (item.focus) return curriculumFocus === item.focus;
+    return pathname === item.url || pathname.startsWith(item.url + "/");
+  }
+
+  if (item.focus) return false;
+  return pathname === item.url || pathname.startsWith(item.url + "/");
+}
+
 function CollapsibleMenuGroup({
   item,
   pathname,
+  programId,
+  curriculumFocus,
 }: {
   item: {
     title: string;
     url: string;
     icon: React.ComponentType<{ className?: string }>;
-    items?: { title: string; url: string }[];
+    items?: NavItem[];
   };
   pathname: string;
+  programId: string | null;
+  curriculumFocus: PlatformCurriculumFocus | null;
 }) {
-  const isGroupActive = item.items?.some((sub) =>
-    sub.url === "/manager" ? pathname === "/manager" : pathname.startsWith(sub.url)
-  );
+  const { state } = useSidebar();
+  const isIcon = state === "collapsed";
 
-  const [open, setOpen] = React.useState(isGroupActive);
+  const isGroupActive =
+    pathname.startsWith(item.url) ||
+    !!item.items?.some((sub) => {
+      if (sub.focus) {
+        // Any curriculum focus (list or program detail) keeps the group lit
+        if (pathname.startsWith("/manager/programs")) return true;
+        return (
+          pathname === sub.url ||
+          pathname.startsWith(sub.url + "/") ||
+          (programId != null && curriculumFocus === sub.focus)
+        );
+      }
+      return pathname === sub.url || pathname.startsWith(sub.url + "/");
+    });
+
+  const [open, setOpen] = React.useState(!!isGroupActive);
   const [prevPathname, setPrevPathname] = React.useState(pathname);
 
-  // Sync state during render when pathname changes
   if (pathname !== prevPathname) {
     setPrevPathname(pathname);
     if (isGroupActive) {
       setOpen(true);
     }
+  }
+
+  React.useEffect(() => {
+    if (programId && curriculumFocus) setOpen(true);
+  }, [programId, curriculumFocus]);
+
+  // Icon-collapsed rail: single highlighted button + tooltip (no chevron / submenu chrome)
+  if (isIcon) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={item.title}
+          isActive={isGroupActive}
+          render={<Link href={item.url} />}
+          className={cn(
+            "w-full justify-center rounded-lg transition-all duration-200",
+            isGroupActive
+              ? "bg-[#E94B3C]/10 text-[#E94B3C] font-semibold"
+              : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
+          )}
+        >
+          <item.icon
+            className={cn(
+              "size-4 shrink-0",
+              isGroupActive ? "text-[#E94B3C]" : "text-[#6B6B6B]",
+            )}
+          />
+          <span className="sr-only">{item.title}</span>
+        </SidebarMenuButton>
+      </SidebarMenuItem>
+    );
   }
 
   return (
@@ -97,45 +196,65 @@ function CollapsibleMenuGroup({
       onOpenChange={setOpen}
       className="group/collapsible"
     >
-      <CollapsibleTrigger
-        render={
-          <SidebarMenuButton
-            tooltip={item.title}
+      <div
+        className={cn(
+          "flex w-full items-center gap-0.5 rounded-lg transition-colors",
+          isGroupActive ? "bg-[#E94B3C]/10" : "hover:bg-[#F5F5F0]",
+        )}
+      >
+        <Link
+          href={item.url}
+          title={item.title}
+          className={cn(
+            "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+            isGroupActive
+              ? "font-semibold text-[#E94B3C]"
+              : "text-[#6B6B6B] hover:text-[#2D2D2D]",
+          )}
+        >
+          <item.icon
             className={cn(
-              "w-full transition-all duration-200 rounded-lg px-3 py-2 text-sm font-medium text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D] data-[state=open]:text-[#2D2D2D]",
-              isGroupActive && "text-[#E94B3C] bg-[#E94B3C]/5 font-semibold"
+              "size-4 shrink-0",
+              isGroupActive ? "text-[#E94B3C]" : "text-[#6B6B6B]",
             )}
           />
-        }
-      >
-        <item.icon
-          className={cn(
-            "size-4 shrink-0 transition-colors",
-            isGroupActive ? "text-[#E94B3C]" : "text-[#6B6B6B] group-hover:text-[#2D2D2D]"
-          )}
-        />
-        <span>{item.title}</span>
-        <ChevronRight
-          className={cn(
-            "ml-auto size-3.5 transition-transform duration-200 text-[#6B6B6B]",
-            open ? "rotate-90" : "group-data-[open]/collapsible:rotate-90"
-          )}
-        />
-      </CollapsibleTrigger>
+          <span className="truncate">{item.title}</span>
+        </Link>
+        <button
+          type="button"
+          aria-label={open ? `Thu gọn ${item.title}` : `Mở ${item.title}`}
+          aria-expanded={open}
+          onClick={() => setOpen((v) => !v)}
+          className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-[#6B6B6B] transition-colors hover:bg-[#E5E5E0]/60 hover:text-[#2D2D2D]"
+        >
+          <ChevronRight
+            className={cn(
+              "size-3.5 transition-transform duration-200",
+              open && "rotate-90",
+            )}
+          />
+        </button>
+      </div>
       <CollapsibleContent>
-        <SidebarMenuSub className="ml-4 pl-2 border-l border-[#E5E5E0]/60 my-1 space-y-0.5">
+        <SidebarMenuSub className="ml-4 my-1 space-y-0.5 border-l border-[#E5E5E0]/60 pl-2">
           {item.items?.map((subItem) => {
-            const isSubActive = pathname === subItem.url || pathname.startsWith(subItem.url + "/");
+            const href = resolveNavHref(subItem, programId);
+            const isSubActive = isNavItemActive(
+              subItem,
+              pathname,
+              programId,
+              curriculumFocus,
+            );
             return (
               <SidebarMenuSubItem key={subItem.title}>
                 <SidebarMenuSubButton
-                  render={<Link href={subItem.url} />}
-                  isActive={isSubActive}
+                  render={<Link href={href} />}
+                  isActive={false}
                   className={cn(
-                    "w-full rounded-md px-3 py-1.5 text-[13px] transition-all duration-150 flex items-center gap-2",
+                    "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[13px] transition-all duration-150",
                     isSubActive
-                      ? "text-[#E94B3C] bg-[#E94B3C]/10 font-semibold"
-                      : "text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+                      ? "bg-[#E94B3C]/10 font-semibold text-[#E94B3C]"
+                      : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
                   )}
                 >
                   <span>{subItem.title}</span>
@@ -151,9 +270,16 @@ function CollapsibleMenuGroup({
 
 export function ManagerSidebar() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const router = useRouter();
   const { profile } = useCurrentUser();
   const { isMobile, state } = useSidebar();
+
+  const programId = matchProgramDetailId(pathname);
+  const curriculumFocus = platformFocusFromPath(
+    pathname,
+    searchParams.get("node"),
+  );
 
   const navGroups = [
     {
@@ -163,20 +289,21 @@ export function ManagerSidebar() {
           title: "Dashboard",
           url: "/manager",
           icon: LayoutDashboard,
-          isFlat: true,
+          isFlat: true as const,
         },
         {
           title: "Chương trình học",
           url: "/manager/programs",
           icon: BookOpen,
           items: [
-            { title: "Chương trình", url: "/manager/programs" },
-            { title: "Module", url: "/manager/modules" },
-            { title: "Khóa học", url: "/manager/courses" },
-            { title: "Hoạt động", url: "/manager/activities" },
+            { title: "Chương trình", url: "/manager/programs", focus: "program" as const },
+            { title: "Module", url: "/manager/programs", focus: "module" as const },
+            { title: "Khóa học", url: "/manager/programs", focus: "course" as const },
+            { title: "Hoạt động", url: "/manager/activities", focus: "activity" as const },
             { title: "Tài liệu", url: "/manager/materials" },
             { title: "Ngân hàng câu hỏi", url: "/manager/question-bank" },
             { title: "Milestone nghiên cứu", url: "/manager/milestones" },
+            { title: "Bài tập", url: "/manager/assignments" },
           ],
         },
         {
@@ -187,7 +314,6 @@ export function ManagerSidebar() {
             { title: "Lớp học", url: "/manager/classes" },
             { title: "Lịch học", url: "/manager/sessions" },
             { title: "Điểm danh", url: "/manager/attendance" },
-            { title: "Bài tập", url: "/manager/assignments" },
           ],
         },
         {
@@ -239,7 +365,6 @@ export function ManagerSidebar() {
         </Link>
       </SidebarHeader>
 
-      {/* Sidebar Content with Collapsible Groups */}
       <SidebarContent className="px-2 py-3">
         {navGroups.map((group) => (
           <SidebarGroup key={group.title} className="p-0">
@@ -250,7 +375,7 @@ export function ManagerSidebar() {
             )}
             <SidebarMenu className="space-y-1">
               {group.items.map((item) => {
-                if (item.isFlat) {
+                if ("isFlat" in item && item.isFlat) {
                   const isActive = pathname === item.url;
                   return (
                     <SidebarMenuItem key={item.title}>
@@ -262,12 +387,15 @@ export function ManagerSidebar() {
                           "w-full transition-all duration-200 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-3",
                           isActive
                             ? "bg-[#E94B3C]/10 text-[#E94B3C] font-semibold"
-                            : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                            : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
                         )}
                       >
                         {item.icon && (
                           <item.icon
-                            className={cn("size-4 shrink-0", isActive ? "text-[#E94B3C]" : "text-[#6B6B6B]")}
+                            className={cn(
+                              "size-4 shrink-0",
+                              isActive ? "text-[#E94B3C]" : "text-[#6B6B6B]",
+                            )}
                           />
                         )}
                         <span>{item.title}</span>
@@ -281,6 +409,8 @@ export function ManagerSidebar() {
                     key={item.title}
                     item={item}
                     pathname={pathname}
+                    programId={programId}
+                    curriculumFocus={curriculumFocus}
                   />
                 );
               })}
@@ -289,7 +419,6 @@ export function ManagerSidebar() {
         ))}
       </SidebarContent>
 
-      {/* Sidebar Footer with NavUser */}
       <SidebarFooter className="border-t border-[#E5E5E0]/60 p-3">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -328,7 +457,6 @@ export function ManagerSidebar() {
                 align="end"
                 sideOffset={4}
               >
-                {/* Wrap Label inside DropdownMenuGroup to resolve Base UI context error */}
                 <DropdownMenuGroup>
                   <DropdownMenuLabel className="p-0 font-normal">
                     <div className="flex items-center gap-2.5 px-2 py-1.5 text-left text-sm">

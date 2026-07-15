@@ -3,7 +3,7 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Bell } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 
 import {
   Breadcrumb,
@@ -37,7 +37,13 @@ const PATH_LABELS: Record<string, string> = {
   mentors: "Duyệt Mentor",
 };
 
-export function ManagerHeader({ title: _title }: { title?: string }) {
+export function ManagerHeader({
+  title: _title,
+  onOpenCommand,
+}: {
+  title?: string;
+  onOpenCommand?: () => void;
+}) {
   const pathname = usePathname();
   const [resolvedLabels, setResolvedLabels] = React.useState<Record<string, string>>({});
 
@@ -119,9 +125,21 @@ export function ManagerHeader({ title: _title }: { title?: string }) {
         </Breadcrumb>
       </div>
 
-      {/* Right section: Notification action button */}
-      <div className="flex items-center gap-4">
-        {/* Simple Notification Button for Premium aesthetic */}
+      {/* Right section: Command + notifications */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onOpenCommand}
+          className="size-9 rounded-full text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+          aria-label="Tìm kiếm (⌘K)"
+          title="Tìm kiếm (⌘K)"
+        >
+          <Search className="size-5" />
+        </Button>
+        <kbd className="pointer-events-none hidden h-7 select-none items-center gap-1 rounded-md border border-[#E5E5E0] bg-[#FAFAF5] px-2 font-mono text-[10px] font-medium text-[#6B6B6B] sm:inline-flex">
+          ⌘K
+        </kbd>
         <Button
           variant="ghost"
           size="icon"

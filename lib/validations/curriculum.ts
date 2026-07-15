@@ -35,10 +35,16 @@ export const updateModuleSchema = createModuleSchema.partial().extend({
 });
 
 export const createCourseSchema = z.object({
-  code: z.string().min(1, "Mã khóa học là bắt buộc.").nullable().optional(),
+  code: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.string().min(1, "Mã khóa học là bắt buộc.").nullable(),
+  ),
   moduleId: z.string().uuid("ID module không hợp lệ."),
   name: z.string().min(1, "Tên khóa học là bắt buộc."),
-  description: z.string().nullable().optional(),
+  description: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.string().nullable(),
+  ),
 });
 
 export const updateCourseSchema = createCourseSchema.partial().extend({

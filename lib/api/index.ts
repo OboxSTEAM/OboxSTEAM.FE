@@ -85,6 +85,7 @@ export {
 
 export {
   getCourseById,
+  getCourses,
   createCourse,
   updateCourse,
   deleteCourse,
@@ -92,6 +93,9 @@ export {
   type CurriculumCourse,
   type GetCourseByIdResponse,
   type GetCourseByIdResult,
+  type GetCoursesResponse,
+  type GetCoursesResult,
+  type GetCoursesQuery,
   type CreateCourseResponse,
   type CreateCourseResult,
   type UpdateCourseResponse,
@@ -99,6 +103,8 @@ export {
   type DeleteCourseResponse,
   type DeleteCourseResult,
 } from "./courses";
+
+export { hydrateProgramCurriculum } from "./programs/hydrate-curriculum";
 
 export {
   getActivityById,

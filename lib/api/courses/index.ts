@@ -13,17 +13,21 @@ import {
   createCourseResponseSchema,
   deleteCourseResponseSchema,
   getCourseByIdResponseSchema,
+  getCoursesResponseSchema,
   courseMutationValueSchema,
   updateCourseResponseSchema,
   type CreateCourseResult,
   type DeleteCourseResult,
   type GetCourseByIdResult,
+  type GetCoursesResult,
   type UpdateCourseResult,
 } from "./schemas";
 
 export type {
   GetCourseByIdResponse,
   GetCourseByIdResult,
+  GetCoursesResponse,
+  GetCoursesResult,
   CreateCourseResponse,
   CreateCourseResult,
   UpdateCourseResponse,
@@ -51,6 +55,36 @@ export async function getCourseById(id: string): Promise<GetCourseByIdResult> {
     getCourseByIdResponseSchema,
     { method: "GET" },
   );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export type GetCoursesQuery = {
+  search?: string;
+  sortBy?: string;
+  isDescending?: boolean;
+  page?: number;
+  pageSize?: number;
+  code?: string;
+  moduleName?: string;
+};
+
+export async function getCourses(query: GetCoursesQuery = {}): Promise<GetCoursesResult> {
+  const searchParams = new URLSearchParams();
+  if (query.search) searchParams.append("search", query.search);
+  if (query.sortBy) searchParams.append("sortBy", query.sortBy);
+  if (query.isDescending !== undefined) {
+    searchParams.append("isDescending", String(query.isDescending));
+  }
+  if (query.page) searchParams.append("page", String(query.page));
+  if (query.pageSize) searchParams.append("pageSize", String(query.pageSize));
+  if (query.code) searchParams.append("code", query.code);
+  if (query.moduleName) searchParams.append("moduleName", query.moduleName);
+
+  const queryString = searchParams.toString();
+  const path = queryString ? `${COURSES_BASE}?${queryString}` : COURSES_BASE;
+
+  const response = await apiFetchParsed(path, getCoursesResponseSchema, { method: "GET" });
   assertApiSuccess(response);
   return requireApiValue(response.value);
 }

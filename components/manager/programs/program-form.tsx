@@ -127,7 +127,7 @@ export function ProgramForm({
 
       {/* ── Top: Image panel (Hero Banner) ─────────────────────────── */}
       <div className="rounded-2xl border border-[#E8E8E3] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-        <p className="mb-4 text-sm font-bold text-[#1A1A1A] uppercase tracking-wider">Ảnh chương trình (Hero Banner)</p>
+        <p className="mb-4 text-sm font-bold text-[#1A1A1A] uppercase tracking-wider">Ảnh chương trình</p>
         
         <div className="flex flex-col md:flex-row gap-5 items-start">
           {/* Thumbnail preview - Wide banner aspect ratio */}

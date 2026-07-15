@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import { ProgramDetailEditClient } from "@/components/manager/programs/program-detail-edit-client";
 import { getProgramById } from "@/lib/api";
+import { hydrateProgramCurriculum } from "@/lib/api/programs/hydrate-curriculum";
 import { programIdParamSchema } from "@/lib/validations/programs";
 
 type ProgramPageProps = {
@@ -24,7 +25,8 @@ export default async function ProgramPage({ params }: ProgramPageProps) {
       notFound();
     }
 
-    return <ProgramDetailEditClient program={program} />;
+    const withCourses = await hydrateProgramCurriculum(program);
+    return <ProgramDetailEditClient program={withCourses} />;
   } catch (error) {
     console.error("Error loading program detail:", error);
     notFound();

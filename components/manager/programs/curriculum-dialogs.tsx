@@ -59,6 +59,7 @@ import {
   LIGHT_SELECT_CONTENT,
   LIGHT_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
+import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 
 // --- Date/Time Helpers ---
 function formatToApiDateTime(val: string | null | undefined): string | null {
@@ -323,7 +324,9 @@ export function ModuleFormDialog({
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
                       <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg border-[#D8D8D3]")}>
-                        <SelectValue placeholder="Chọn loại Module" />
+                        <span className="truncate">
+                          {MODULE_TYPE_LABELS[field.value as keyof typeof MODULE_TYPE_LABELS] ?? field.value ?? "Chọn loại Module"}
+                        </span>
                       </SelectTrigger>
                       <SelectContent className={LIGHT_SELECT_CONTENT}>
                         <SelectItem value="Theory" className={LIGHT_SELECT_ITEM}>Lý thuyết</SelectItem>
@@ -345,7 +348,11 @@ export function ModuleFormDialog({
                   render={({ field }) => (
                     <Select value={field.value || "none"} onValueChange={(val) => field.onChange(val === "none" ? null : val)}>
                       <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg border-[#D8D8D3]")}>
-                        <SelectValue placeholder="Không có" />
+                        <span className="truncate">
+                          {!field.value || field.value === "none"
+                            ? "Không có"
+                            : (otherModules.find((m) => m.id === field.value)?.name ?? "Không có")}
+                        </span>
                       </SelectTrigger>
                       <SelectContent className={LIGHT_SELECT_CONTENT}>
                         <SelectItem value="none" className={LIGHT_SELECT_ITEM}>Không có</SelectItem>

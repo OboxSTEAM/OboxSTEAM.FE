@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useCallback, useMemo, useEffect } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  ChevronRight,
   Plus,
   Trash,
   BookOpen,
@@ -14,9 +13,8 @@ import {
   LayoutGrid,
   Check,
   Save,
-  Circle,
   FolderPlus,
-  PlusCircle,
+  ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -25,13 +23,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectTrigger,
-  SelectValue,
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
 import { ProgramForm } from "@/components/manager/programs/program-form";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
-import { MaterialUploadDialog } from "./curriculum-dialogs";
 import {
   createModule,
   updateModule,
@@ -80,6 +76,12 @@ const W = {
   success:    "#7cb342",
   primary:    "#e94b3c",
 } as const;
+
+const ACTIVITY_TYPE_LABELS: Record<string, string> = {
+  SelfPaced: "Tự học",
+  LiveOnline: "Online trực tiếp",
+  Offline: "Offline tại lớp",
+};
 
 /* ─── DateTime helpers ──────────────────────────────────────────────────────── */
 function toApi(val: string | null | undefined): string | null {
@@ -265,7 +267,11 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}><SelectValue /></SelectTrigger>
+                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                    <span className="truncate">
+                      {MODULE_TYPE_LABELS[field.value] ?? field.value}
+                    </span>
+                  </SelectTrigger>
                   <SelectContent className={LIGHT_SELECT_CONTENT}>
                     <SelectItem value="Theory" className={LIGHT_SELECT_ITEM}>Lý thuyết</SelectItem>
                     <SelectItem value="Experiential" className={LIGHT_SELECT_ITEM}>Trải nghiệm</SelectItem>
@@ -278,10 +284,20 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Module tiên quyết</Label>
               <Controller name="prerequisiteModuleId" control={control} render={({ field }) => (
                 <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? null : v)}>
-                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}><SelectValue placeholder="Không có" /></SelectTrigger>
+                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                    <span className="truncate">
+                      {!field.value || field.value === "none"
+                        ? "Không có"
+                        : (others.find((m) => m.id === field.value)?.name ?? "Không có")}
+                    </span>
+                  </SelectTrigger>
                   <SelectContent className={LIGHT_SELECT_CONTENT}>
                     <SelectItem value="none" className={LIGHT_SELECT_ITEM}>Không có</SelectItem>
-                    {others.map((m) => <SelectItem key={m.id} value={m.id} className={LIGHT_SELECT_ITEM}>{m.name}</SelectItem>)}
+                    {others.map((m) => (
+                      <SelectItem key={m.id} value={m.id} className={LIGHT_SELECT_ITEM}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               )} />
@@ -452,9 +468,13 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Hoạt động <span style={{ color: W.primary }}>*</span></Label>
             <Controller name="activityType" control={control} render={({ field }) => (
               <Select value={field.value} onValueChange={field.onChange}>
-                <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}><SelectValue /></SelectTrigger>
+                <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                  <span className="truncate">
+                    {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
+                  </span>
+                </SelectTrigger>
                 <SelectContent className={LIGHT_SELECT_CONTENT}>
-                  <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học (Self-Paced)</SelectItem>
+                  <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học</SelectItem>
                   <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online trực tiếp</SelectItem>
                   <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline tại lớp</SelectItem>
                 </SelectContent>
@@ -568,64 +588,185 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   TREE ITEM
+   STRUCTURE CARD
 ══════════════════════════════════════════════════════════════════════════════ */
-function TreeItem({ isSelected, depth, hasChildren, isExpanded, onToggleExpand, onSelect, onDelete, icon: Icon, iconColor, label, badge, onAdd, addLabel }: {
-  isSelected: boolean; depth: number; hasChildren?: boolean; isExpanded?: boolean;
-  onToggleExpand?: () => void; onSelect: () => void; onDelete?: () => void;
-  icon: React.ElementType; iconColor: string; label: string; badge?: string;
-  onAdd?: () => void; addLabel?: string;
+function StructureTreeRow({
+  depth,
+  isLast,
+  selected,
+  label,
+  meta,
+  onSelect,
+  onDelete,
+  onAdd,
+  addLabel,
+  children,
+}: {
+  depth: number;
+  isLast: boolean;
+  selected: boolean;
+  label: string;
+  meta?: string;
+  onSelect: () => void;
+  onDelete?: () => void;
+  onAdd?: () => void;
+  addLabel?: string;
+  children?: React.ReactNode;
 }) {
   return (
-    <div
-      className="group/ti flex items-center gap-0.5 rounded-lg"
-      style={{
-        paddingLeft: `${depth * 14 + 6}px`, paddingRight: "4px",
-        background: isSelected ? "rgba(79,195,247,0.13)" : "transparent",
-        border: isSelected ? "1px solid rgba(79,195,247,0.28)" : "1px solid transparent",
-        transition: "background 0.15s",
-      }}
-      onMouseEnter={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = W.surface2; }}
-      onMouseLeave={(e) => { if (!isSelected) (e.currentTarget as HTMLElement).style.background = "transparent"; }}
-    >
-      {hasChildren !== undefined ? (
-        <button type="button" onClick={onToggleExpand} className="flex size-5 shrink-0 items-center justify-center rounded" style={{ color: W.faint }}>
-          <ChevronRight className={cn("size-3 transition-transform duration-200", isExpanded && "rotate-90")} />
-        </button>
-      ) : <span className="size-5 shrink-0" />}
+    <li className="relative">
+      {/* Guides live in a gutter; content box starts after so it never covers the lines */}
+      {depth > 0 && (
+        <>
+          <span
+            className={cn(
+              "pointer-events-none absolute left-0 z-0 w-px",
+              isLast ? "top-0 h-[1.125rem]" : "inset-y-0",
+            )}
+            style={{ background: W.border }}
+            aria-hidden
+          />
+          <span
+            className="pointer-events-none absolute top-[1.125rem] left-0 z-0 h-px w-3"
+            style={{ background: W.border }}
+            aria-hidden
+          />
+        </>
+      )}
 
-      <button type="button" onClick={onSelect} className="flex min-w-0 flex-1 items-center gap-1.5 py-2 text-left">
-        <Icon className="size-3.5 shrink-0" style={{ color: iconColor }} />
-        <span className="truncate text-[12.5px] leading-snug" style={{ color: isSelected ? "#0d6e9c" : W.text, fontWeight: isSelected ? 600 : 400 }}>
-          {label}
-        </span>
-        {badge && (
-          <span className="ml-auto shrink-0 rounded-full px-1.5 py-px text-[9px] font-semibold" style={{ background: "rgba(0,0,0,0.07)", color: W.muted }}>
-            {badge}
-          </span>
-        )}
-      </button>
+      <div className={cn("relative z-10", depth > 0 && "ml-3")}>
+        <div
+          className="group/tr flex items-center gap-0.5 rounded-lg"
+          style={{
+            background: selected ? "rgba(79,195,247,0.13)" : "transparent",
+            border: selected
+              ? "1px solid rgba(79,195,247,0.28)"
+              : "1px solid transparent",
+          }}
+        >
+          <button
+            type="button"
+            onClick={onSelect}
+            className="flex min-w-0 flex-1 flex-col px-2 py-1.5 text-left"
+          >
+            <span
+              className="truncate text-[12.5px] leading-snug"
+              style={{
+                color: selected ? "#0d6e9c" : W.text,
+                fontWeight: selected ? 600 : 500,
+              }}
+            >
+              {label}
+            </span>
+            {meta && (
+              <span className="mt-0.5 truncate text-[10px]" style={{ color: W.faint }}>
+                {meta}
+              </span>
+            )}
+          </button>
 
-      <div className="flex items-center gap-px opacity-0 group-hover/ti:opacity-100 transition-opacity shrink-0">
-        {onAdd && (
-          <button type="button" title={addLabel || "Thêm"} onClick={onAdd}
-            className="flex size-6 items-center justify-center rounded transition-colors" style={{ color: W.faint }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = W.success; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = W.faint; }}>
-            <Plus className="size-3" />
-          </button>
-        )}
-        {onDelete && (
-          <button type="button" title="Xóa" onClick={onDelete}
-            className="flex size-6 items-center justify-center rounded transition-colors" style={{ color: W.faint }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = W.primary; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = W.faint; }}>
-            <Trash className="size-3" />
-          </button>
+          <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100">
+            {onAdd && (
+              <button
+                type="button"
+                title={addLabel || "Thêm"}
+                onClick={onAdd}
+                className="flex size-6 items-center justify-center rounded"
+                style={{ color: W.faint }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = W.success;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = W.faint;
+                }}
+              >
+                <Plus className="size-3" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                title="Xóa"
+                onClick={onDelete}
+                className="flex size-6 items-center justify-center rounded"
+                style={{ color: W.faint }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = W.primary;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLElement).style.color = W.faint;
+                }}
+              >
+                <Trash className="size-3" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {children && (
+          <ul className="relative mt-0.5" role="list">
+            {children}
+          </ul>
         )}
       </div>
-    </div>
+    </li>
   );
+}
+
+function ParentPathBreadcrumb({
+  parts,
+}: {
+  parts: { label: string; onClick?: () => void }[];
+}) {
+  return (
+    <nav className="flex flex-wrap items-center gap-1 px-3 py-2 text-[11px]" aria-label="Đường dẫn cha">
+      {parts.map((part, i) => (
+        <span key={`${part.label}-${i}`} className="flex items-center gap-1">
+          {i > 0 && <ChevronRight className="size-3" style={{ color: W.faint }} />}
+          {part.onClick ? (
+            <button
+              type="button"
+              onClick={part.onClick}
+              className="truncate font-medium hover:underline"
+              style={{ color: W.muted, maxWidth: 120 }}
+            >
+              {part.label}
+            </button>
+          ) : (
+            <span className="truncate font-semibold" style={{ color: W.textStrong, maxWidth: 140 }}>
+              {part.label}
+            </span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+function selToQuery(sel: SelectedNode): string {
+  if (!sel || sel.kind === "program") return "";
+  const params = new URLSearchParams();
+  if (sel.kind === "module-new") {
+    params.set("node", "module-new");
+  } else if (sel.kind === "module") {
+    params.set("node", "module");
+    params.set("id", sel.id);
+  } else if (sel.kind === "course-new") {
+    params.set("node", "course-new");
+    params.set("moduleId", sel.moduleId);
+  } else if (sel.kind === "course") {
+    params.set("node", "course");
+    params.set("id", sel.id);
+    params.set("moduleId", sel.moduleId);
+  } else if (sel.kind === "activity-new") {
+    params.set("node", "activity-new");
+    params.set("courseId", sel.courseId);
+  } else if (sel.kind === "activity") {
+    params.set("node", "activity");
+    params.set("id", sel.id);
+    params.set("courseId", sel.courseId);
+  }
+  return params.toString();
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -633,169 +774,480 @@ function TreeItem({ isSelected, depth, hasChildren, isExpanded, onToggleExpand, 
 ══════════════════════════════════════════════════════════════════════════════ */
 type CurriculumSplitPanelProps = { program: ProgramWithModules; onRefresh: () => void };
 
+function parseSelFromSearch(
+  searchParams: URLSearchParams,
+  modules: Module[],
+): SelectedNode | null {
+  const node = searchParams.get("node");
+  if (!node) return null;
+
+  if (node === "program") return { kind: "program" };
+  if (node === "module-new") return { kind: "module-new" };
+  if (node === "course-new") {
+    const moduleId = searchParams.get("moduleId");
+    if (moduleId && modules.some((m) => m.id === moduleId)) {
+      return { kind: "course-new", moduleId };
+    }
+    return null;
+  }
+  if (node === "activity-new") {
+    const courseId = searchParams.get("courseId");
+    if (courseId && modules.some((m) => m.courses?.some((c) => c.id === courseId))) {
+      return { kind: "activity-new", courseId };
+    }
+    return null;
+  }
+
+  const id = searchParams.get("id");
+  if (node === "module") {
+    if (id && modules.some((m) => m.id === id)) return { kind: "module", id };
+    // Platform "Module" click without id → first module
+    if (modules[0]) return { kind: "module", id: modules[0].id };
+    return { kind: "module-new" };
+  }
+  if (node === "course") {
+    if (!id) {
+      const first = modules.flatMap((m) =>
+        (m.courses || []).map((c) => ({ course: c, moduleId: m.id })),
+      )[0];
+      if (first) return { kind: "course", id: first.course.id, moduleId: first.moduleId };
+      if (modules[0]) return { kind: "course-new", moduleId: modules[0].id };
+      return null;
+    }
+    const moduleId = searchParams.get("moduleId");
+    const mod =
+      modules.find((m) => m.id === moduleId) ||
+      modules.find((m) => m.courses?.some((c) => c.id === id));
+    if (mod?.courses?.some((c) => c.id === id)) {
+      return { kind: "course", id, moduleId: mod.id };
+    }
+    return null;
+  }
+  if (node === "activity") {
+    if (!id) {
+      const first = modules
+        .flatMap((m) => m.courses || [])
+        .flatMap((c) =>
+          (c.activities || []).map((a) => ({ activity: a, courseId: c.id })),
+        )[0];
+      if (first) return { kind: "activity", id: first.activity.id, courseId: first.courseId };
+      const firstCourse = modules.flatMap((m) => m.courses || [])[0];
+      if (firstCourse) return { kind: "activity-new", courseId: firstCourse.id };
+      return null;
+    }
+    const courseId = searchParams.get("courseId");
+    const course =
+      modules.flatMap((m) => m.courses || []).find((c) => c.id === courseId) ||
+      modules.flatMap((m) => m.courses || []).find((c) => c.activities?.some((a) => a.id === id));
+    if (course?.activities?.some((a) => a.id === id)) {
+      return { kind: "activity", id, courseId: course.id };
+    }
+  }
+  return null;
+}
+
 export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPanelProps) {
-  const modules = [...(program.modules || [])].sort((a, b) => a.moduleOrder - b.moduleOrder);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const modules = useMemo(
+    () => [...(program.modules || [])].sort((a, b) => a.moduleOrder - b.moduleOrder),
+    [program.modules],
+  );
 
-  const [sel, setSel] = useState<SelectedNode>({ kind: "program" });
-  const [openMods, setOpenMods] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(modules.map((m) => [m.id, true])));
-  const [openCrs, setOpenCrs] = useState<Record<string, boolean>>({});
-  const [delTarget, setDelTarget] = useState<{ type: "module" | "course" | "activity"; id: string; name: string } | null>(null);
-  const [matDlg, setMatDlg] = useState<{ open: boolean; activityId: string; material: unknown }>({ open: false, activityId: "", material: null });
+  const [sel, setSel] = useState<SelectedNode>(() => {
+    return parseSelFromSearch(searchParams, modules) ?? { kind: "program" };
+  });
+  const [delTarget, setDelTarget] = useState<{
+    type: "module" | "course" | "activity";
+    id: string;
+    name: string;
+  } | null>(null);
 
-  const togMod = (id: string) => setOpenMods((p) => ({ ...p, [id]: !(p[id] ?? true) }));
-  const togCrs = (id: string) => setOpenCrs((p) => ({ ...p, [id]: !(p[id] ?? false) }));
+  const select = useCallback(
+    (next: SelectedNode) => {
+      setSel(next);
+      const qs = selToQuery(next);
+      const nextUrl = qs ? `${pathname}?${qs}` : pathname;
+      const currentQs = searchParams.toString();
+      const currentUrl = currentQs ? `${pathname}?${currentQs}` : pathname;
+      if (nextUrl !== currentUrl) {
+        router.replace(nextUrl, { scroll: false });
+      }
+    },
+    [pathname, router, searchParams],
+  );
+
+  useEffect(() => {
+    const next = parseSelFromSearch(searchParams, modules);
+    if (!next) {
+      if (!searchParams.get("node") && sel?.kind !== "program") {
+        setSel({ kind: "program" });
+      }
+      return;
+    }
+    setSel((prev) => {
+      const same =
+        prev?.kind === next.kind &&
+        JSON.stringify(prev) === JSON.stringify(next);
+      return same ? prev : next;
+    });
+  // Only react to URL / module tree changes — not local sel
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, modules]);
+
+  const context = useMemo(() => {
+    let module: Module | null = null;
+    let course: Course | null = null;
+    let activity: ActivityType | null = null;
+
+    if (sel?.kind === "module" || sel?.kind === "course-new") {
+      module = modules.find((m) => m.id === (sel.kind === "module" ? sel.id : sel.moduleId)) ?? null;
+    } else if (sel?.kind === "course") {
+      module = modules.find((m) => m.id === sel.moduleId) ?? null;
+      course = module?.courses?.find((c) => c.id === sel.id) ?? null;
+    } else if (sel?.kind === "activity" || sel?.kind === "activity-new") {
+      const courseId = sel.courseId;
+      module = modules.find((m) => m.courses?.some((c) => c.id === courseId)) ?? null;
+      course = module?.courses?.find((c) => c.id === courseId) ?? null;
+      if (sel.kind === "activity") {
+        activity = course?.activities?.find((a) => a.id === sel.id) ?? null;
+      }
+    }
+
+    return { module, course, activity };
+  }, [sel, modules]);
+
+  const pathParts = useMemo(() => {
+    const parts: { label: string; onClick?: () => void }[] = [
+      { label: program.name, onClick: () => select({ kind: "program" }) },
+    ];
+    if (context.module) {
+      parts.push({
+        label: context.module.name,
+        onClick: () => select({ kind: "module", id: context.module!.id }),
+      });
+    }
+    if (context.course) {
+      parts.push({
+        label: context.course.name,
+        onClick: () =>
+          select({
+            kind: "course",
+            id: context.course!.id,
+            moduleId: context.module!.id,
+          }),
+      });
+    }
+    if (context.activity) {
+      parts.push({ label: context.activity.name });
+    } else if (sel?.kind === "module-new") {
+      parts.push({ label: "Module mới" });
+    } else if (sel?.kind === "course-new") {
+      parts.push({ label: "Khóa học mới" });
+    } else if (sel?.kind === "activity-new") {
+      parts.push({ label: "Hoạt động mới" });
+    }
+    return parts;
+  }, [program.name, context, sel, select]);
 
   const handleDel = async () => {
     if (!delTarget) return;
     try {
-      if (delTarget.type === "module") { await deleteModule(delTarget.id); showAppSuccess({ title: "Đã xóa", description: `Module: ${delTarget.name}` }); }
-      else if (delTarget.type === "course") { await deleteCourse(delTarget.id); showAppSuccess({ title: "Đã xóa", description: `Khóa học: ${delTarget.name}` }); }
-      else { await deleteActivity(delTarget.id); showAppSuccess({ title: "Đã xóa", description: `Hoạt động: ${delTarget.name}` }); }
-      setSel({ kind: "program" }); onRefresh();
-    } catch (err) { showAppErrorFromUnknown(err, "programs.detail"); }
-    finally { setDelTarget(null); }
+      if (delTarget.type === "module") {
+        await deleteModule(delTarget.id);
+        showAppSuccess({ title: "Đã xóa", description: `Module: ${delTarget.name}` });
+      } else if (delTarget.type === "course") {
+        await deleteCourse(delTarget.id);
+        showAppSuccess({ title: "Đã xóa", description: `Khóa học: ${delTarget.name}` });
+      } else {
+        await deleteActivity(delTarget.id);
+        showAppSuccess({ title: "Đã xóa", description: `Hoạt động: ${delTarget.name}` });
+      }
+      select({ kind: "program" });
+      onRefresh();
+    } catch (err) {
+      showAppErrorFromUnknown(err, "programs.detail");
+    } finally {
+      setDelTarget(null);
+    }
   };
 
   const detail = useCallback((): React.ReactNode => {
     if (!sel) return <EmptyPanel />;
     if (sel.kind === "program") return <ProgramInfoPanel program={program} onSuccess={onRefresh} />;
-    if (sel.kind === "module-new") return <ModuleFormPanel programId={program.id} moduleToEdit={null} modulesInProgram={modules} onSuccess={() => { onRefresh(); setSel({ kind: "program" }); }} />;
+    if (sel.kind === "module-new") {
+      return (
+        <ModuleFormPanel
+          programId={program.id}
+          moduleToEdit={null}
+          modulesInProgram={modules}
+          onSuccess={() => {
+            onRefresh();
+            select({ kind: "program" });
+          }}
+        />
+      );
+    }
     if (sel.kind === "module") {
       const mod = modules.find((m) => m.id === sel.id) || null;
-      return <ModuleFormPanel programId={program.id} moduleToEdit={mod} modulesInProgram={modules} onSuccess={onRefresh} />;
+      return (
+        <ModuleFormPanel
+          programId={program.id}
+          moduleToEdit={mod}
+          modulesInProgram={modules}
+          onSuccess={onRefresh}
+        />
+      );
     }
-    if (sel.kind === "course-new") return <CourseFormPanel moduleId={sel.moduleId} courseToEdit={null} onSuccess={() => { onRefresh(); setSel({ kind: "module", id: sel.moduleId }); }} />;
+    if (sel.kind === "course-new") {
+      return (
+        <CourseFormPanel
+          moduleId={sel.moduleId}
+          courseToEdit={null}
+          onSuccess={() => {
+            onRefresh();
+            select({ kind: "module", id: sel.moduleId });
+          }}
+        />
+      );
+    }
     if (sel.kind === "course") {
-      const mod = modules.find((m) => m.courses?.some((c) => c.id === sel.id));
-      const course = mod?.courses?.find((c) => c.id === sel.id) || null;
-      return <CourseFormPanel moduleId={sel.moduleId} courseToEdit={course} onSuccess={onRefresh} />;
+      const course =
+        modules.find((m) => m.id === sel.moduleId)?.courses?.find((c) => c.id === sel.id) || null;
+      return (
+        <CourseFormPanel moduleId={sel.moduleId} courseToEdit={course} onSuccess={onRefresh} />
+      );
     }
-    if (sel.kind === "activity-new") return <ActivityFormPanel courseId={sel.courseId} activityToEdit={null} onSuccess={onRefresh} />;
+    if (sel.kind === "activity-new") {
+      return (
+        <ActivityFormPanel
+          courseId={sel.courseId}
+          activityToEdit={null}
+          onSuccess={() => {
+            onRefresh();
+            const mod = modules.find((m) => m.courses?.some((c) => c.id === sel.courseId));
+            if (mod) select({ kind: "course", id: sel.courseId, moduleId: mod.id });
+          }}
+        />
+      );
+    }
     if (sel.kind === "activity") {
-      const course = modules.flatMap((m) => m.courses || []).find((c) => c.activities?.some((a) => a.id === sel.id));
+      const course = modules
+        .flatMap((m) => m.courses || [])
+        .find((c) => c.activities?.some((a) => a.id === sel.id));
       const act = course?.activities?.find((a) => a.id === sel.id) || null;
-      return <ActivityFormPanel courseId={sel.courseId} activityToEdit={act} onSuccess={onRefresh} />;
+      return (
+        <ActivityFormPanel courseId={sel.courseId} activityToEdit={act} onSuccess={onRefresh} />
+      );
     }
     return <EmptyPanel />;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sel, program, modules]);
+  }, [sel, program, modules, onRefresh, select]);
+
+  const structureTree = (
+    <ul className="relative" role="list">
+      <StructureTreeRow
+        depth={0}
+        isLast
+        selected={sel?.kind === "program"}
+        label={program.name}
+        meta={program.code}
+        onSelect={() => select({ kind: "program" })}
+        onAdd={() => select({ kind: "module-new" })}
+        addLabel="Thêm Module"
+      >
+        {modules.map((mod, mIdx) => {
+          const courses = [...(mod.courses || [])];
+          const isLastMod = mIdx === modules.length - 1 && sel?.kind !== "module-new";
+          return (
+            <StructureTreeRow
+              key={mod.id}
+              depth={1}
+              isLast={isLastMod}
+              selected={sel?.kind === "module" && sel.id === mod.id}
+              label={mod.name}
+              meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
+              onSelect={() => select({ kind: "module", id: mod.id })}
+              onDelete={() => setDelTarget({ type: "module", id: mod.id, name: mod.name })}
+              onAdd={() => select({ kind: "course-new", moduleId: mod.id })}
+              addLabel="Thêm khóa học"
+            >
+              {courses.map((course, cIdx) => {
+                const acts = [...(course.activities || [])].sort(
+                  (a, b) => a.activityOrder - b.activityOrder,
+                );
+                const isLastCourse =
+                  cIdx === courses.length - 1 &&
+                  !(sel?.kind === "course-new" && sel.moduleId === mod.id);
+                return (
+                  <StructureTreeRow
+                    key={course.id}
+                    depth={2}
+                    isLast={isLastCourse}
+                    selected={sel?.kind === "course" && sel.id === course.id}
+                    label={course.name}
+                    meta={course.code ?? undefined}
+                    onSelect={() =>
+                      select({ kind: "course", id: course.id, moduleId: mod.id })
+                    }
+                    onDelete={() =>
+                      setDelTarget({ type: "course", id: course.id, name: course.name })
+                    }
+                    onAdd={() => select({ kind: "activity-new", courseId: course.id })}
+                    addLabel="Thêm hoạt động"
+                  >
+                    {acts.map((act, aIdx) => (
+                      <StructureTreeRow
+                        key={act.id}
+                        depth={3}
+                        isLast={
+                          aIdx === acts.length - 1 &&
+                          !(sel?.kind === "activity-new" && sel.courseId === course.id)
+                        }
+                        selected={sel?.kind === "activity" && sel.id === act.id}
+                        label={act.name}
+                        meta={ACTIVITY_PREFIX[act.activityType] ?? act.activityType}
+                        onSelect={() =>
+                          select({ kind: "activity", id: act.id, courseId: course.id })
+                        }
+                        onDelete={() =>
+                          setDelTarget({ type: "activity", id: act.id, name: act.name })
+                        }
+                      />
+                    ))}
+                    {(sel?.kind === "activity-new" && sel.courseId === course.id) || acts.length === 0 ? (
+                      <li className="relative">
+                        <span
+                          className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                          style={{ background: W.border }}
+                          aria-hidden
+                        />
+                        <span
+                          className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                          style={{ background: W.border }}
+                          aria-hidden
+                        />
+                        <button
+                          type="button"
+                          onClick={() => select({ kind: "activity-new", courseId: course.id })}
+                          className="ml-4 py-1.5 text-left text-[11px] font-medium"
+                          style={{
+                            color:
+                              sel?.kind === "activity-new" && sel.courseId === course.id
+                                ? "#9c27b0"
+                                : W.faint,
+                          }}
+                        >
+                          + Thêm hoạt động
+                        </button>
+                      </li>
+                    ) : null}
+                  </StructureTreeRow>
+                );
+              })}
+              {(sel?.kind === "course-new" && sel.moduleId === mod.id) || courses.length === 0 ? (
+                <li className="relative">
+                  <span
+                    className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                    style={{ background: W.border }}
+                    aria-hidden
+                  />
+                  <span
+                    className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                    style={{ background: W.border }}
+                    aria-hidden
+                  />
+                  <button
+                    type="button"
+                    onClick={() => select({ kind: "course-new", moduleId: mod.id })}
+                    className="ml-4 py-1.5 text-left text-[11px] font-medium"
+                    style={{
+                      color:
+                        sel?.kind === "course-new" && sel.moduleId === mod.id
+                          ? W.accent
+                          : W.faint,
+                    }}
+                  >
+                    + Thêm khóa học
+                  </button>
+                </li>
+              ) : null}
+            </StructureTreeRow>
+          );
+        })}
+        <li className="relative">
+          {modules.length > 0 && (
+            <>
+              <span
+                className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                style={{ background: W.border }}
+                aria-hidden
+              />
+              <span
+                className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                style={{ background: W.border }}
+                aria-hidden
+              />
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => select({ kind: "module-new" })}
+            className={cn("flex items-center gap-1.5 py-1.5 text-[11px] font-medium", modules.length > 0 && "ml-4")}
+            style={{ color: sel?.kind === "module-new" ? W.success : W.faint }}
+          >
+            <FolderPlus className="size-3" />
+            Thêm module
+          </button>
+        </li>
+      </StructureTreeRow>
+    </ul>
+  );
 
   return (
-    <div className="flex rounded-xl border overflow-hidden" style={{ background: W.bg, borderColor: W.border, minHeight: "620px" }}>
-
-      {/* Left tree */}
-      <div className="flex flex-col border-r overflow-hidden shrink-0" style={{ width: 272, borderColor: W.border, background: W.surface }}>
-        <div className="flex items-center justify-between px-3 py-2 border-b shrink-0" style={{ borderColor: W.border }}>
-          <span className="text-[10px] font-bold uppercase tracking-widest" style={{ color: W.faint }}>Cấu trúc</span>
-          <button type="button" title="Thêm Module"
-            onClick={() => setSel({ kind: "module-new" })}
-            className="flex size-6 items-center justify-center rounded transition-colors" style={{ color: W.faint }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = W.success; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = W.faint; }}>
-            <FolderPlus className="size-3.5" />
-          </button>
+    <div
+      className="flex overflow-hidden rounded-xl border"
+      style={{ background: W.bg, borderColor: W.border, minHeight: "620px" }}
+    >
+      {/* ── Structure tree ─────────────────────────────────────────── */}
+      <div
+        className="flex w-[300px] shrink-0 flex-col border-r overflow-hidden"
+        style={{ borderColor: W.border, background: W.surface }}
+      >
+        <div
+          className="flex items-center justify-between border-b px-3 py-2.5 shrink-0"
+          style={{ borderColor: W.border }}
+        >
+          <span
+            className="text-[10px] font-bold uppercase tracking-widest"
+            style={{ color: W.faint }}
+          >
+            Cấu trúc
+          </span>
         </div>
 
-        <div className="flex-1 overflow-y-auto py-1.5 px-1 space-y-px">
-          <TreeItem isSelected={sel?.kind === "program"} depth={0} icon={LayoutGrid} iconColor={W.primary}
-            label={program.name} badge={`${modules.length}`} onSelect={() => setSel({ kind: "program" })} />
+        <div className="flex-1 overflow-y-auto p-2">{structureTree}</div>
+      </div>
 
-          {modules.map((mod) => {
-            const courses = [...(mod.courses || [])];
-            const mOpen = openMods[mod.id] ?? true;
-            return (
-              <div key={mod.id}>
-                <TreeItem
-                  isSelected={sel?.kind === "module" && sel.id === mod.id}
-                  depth={1} hasChildren isExpanded={mOpen} onToggleExpand={() => togMod(mod.id)}
-                  icon={BookOpen} iconColor={W.success}
-                  label={mod.name} badge={MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}
-                  onSelect={() => setSel({ kind: "module", id: mod.id })}
-                  onAdd={() => setSel({ kind: "course-new", moduleId: mod.id })} addLabel="Thêm Khóa học"
-                  onDelete={() => setDelTarget({ type: "module", id: mod.id, name: mod.name })}
-                />
-
-                {mOpen && courses.map((course) => {
-                  const acts = [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder);
-                  const cOpen = openCrs[course.id] ?? false;
-                  return (
-                    <div key={course.id}>
-                      <TreeItem
-                        isSelected={sel?.kind === "course" && sel.id === course.id}
-                        depth={2} hasChildren isExpanded={cOpen} onToggleExpand={() => togCrs(course.id)}
-                        icon={FolderOpen} iconColor={W.accent}
-                        label={course.name} badge={`${acts.length}`}
-                        onSelect={() => setSel({ kind: "course", id: course.id, moduleId: mod.id })}
-                        onAdd={() => setSel({ kind: "activity-new", courseId: course.id })} addLabel="Thêm Hoạt động"
-                        onDelete={() => setDelTarget({ type: "course", id: course.id, name: course.name })}
-                      />
-                      {cOpen && acts.map((act) => (
-                        <TreeItem key={act.id}
-                          isSelected={sel?.kind === "activity" && sel.id === act.id}
-                          depth={3} icon={Circle} iconColor={W.faint}
-                          label={`${ACTIVITY_PREFIX[act.activityType] ?? act.activityType}: ${act.name}`}
-                          onSelect={() => setSel({ kind: "activity", id: act.id, courseId: course.id })}
-                          onDelete={() => setDelTarget({ type: "activity", id: act.id, name: act.name })}
-                        />
-                      ))}
-                      {cOpen && (
-                        <button type="button" onClick={() => setSel({ kind: "activity-new", courseId: course.id })}
-                          className="flex w-full items-center gap-1.5 rounded-lg py-1 text-[11px] transition-colors"
-                          style={{ paddingLeft: `${3 * 14 + 6 + 20}px`, color: W.faint }}
-                          onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = W.accent; }}
-                          onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = W.faint; }}>
-                          <PlusCircle className="size-3" /> Thêm hoạt động
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {mOpen && (
-                  <button type="button" onClick={() => setSel({ kind: "course-new", moduleId: mod.id })}
-                    className="flex w-full items-center gap-1.5 rounded-lg py-1 text-[11px] transition-colors"
-                    style={{ paddingLeft: `${2 * 14 + 6 + 20}px`, color: W.faint }}
-                    onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = W.accent; }}
-                    onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = W.faint; }}>
-                    <Plus className="size-3" /> Thêm khóa học
-                  </button>
-                )}
-              </div>
-            );
-          })}
-
-          <button type="button" onClick={() => setSel({ kind: "module-new" })}
-            className="flex w-full items-center gap-1.5 rounded-lg py-1 text-[11px] transition-colors"
-            style={{ paddingLeft: `${1 * 14 + 6 + 20}px`, color: W.faint }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = W.success; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = W.faint; }}>
-            <FolderPlus className="size-3" /> Thêm học phần
-          </button>
+      {/* ── Detail ─────────────────────────────────────────────────── */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden" style={{ background: W.bg }}>
+        <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
+          <ParentPathBreadcrumb parts={pathParts} />
         </div>
+        <div className="min-h-0 flex-1 overflow-hidden">{detail()}</div>
       </div>
 
-      {/* Right detail */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden" style={{ background: W.bg }}>
-        {detail()}
-      </div>
-
-      {/* Dialogs */}
-      <MaterialUploadDialog
-        isOpen={matDlg.open}
-        onOpenChange={(open) => setMatDlg({ open, activityId: "", material: null })}
-        activityId={matDlg.activityId}
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        existingMaterial={matDlg.material as any}
-        onSuccess={onRefresh}
-      />
       <ConfirmDialog
         isOpen={!!delTarget}
-        onOpenChange={(open) => { if (!open) setDelTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDelTarget(null);
+        }}
         onConfirm={handleDel}
         title={`Xác nhận xóa ${delTarget?.type === "module" ? "Module" : delTarget?.type === "course" ? "Khóa học" : "Hoạt động"}`}
         description={`Bạn có chắc muốn xóa "${delTarget?.name}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa bỏ" cancelLabel="Hủy" variant="destructive"
+        confirmLabel="Xóa bỏ"
+        cancelLabel="Hủy"
+        variant="destructive"
       />
     </div>
   );

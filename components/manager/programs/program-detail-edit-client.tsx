@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Users, Star, GraduationCap, BookOpen, LayoutGrid } from "lucide-react";
+import { Suspense, useState } from "react";
+import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
@@ -35,7 +35,6 @@ function StepperTabBar({
     >
       {TABS.map((tab, idx) => {
         const isActive = tab.id === active;
-        const Icon = tab.icon;
         return (
           <button
             key={tab.id}
@@ -49,7 +48,6 @@ function StepperTabBar({
                 : "text-[#6B6B6B] hover:text-[#3a3833]"
             )}
           >
-            {/* Step number circle */}
             <span
               className={cn(
                 "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
@@ -62,7 +60,6 @@ function StepperTabBar({
             </span>
             {tab.label}
 
-            {/* Active underline */}
             {isActive && (
               <span
                 className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
@@ -73,6 +70,15 @@ function StepperTabBar({
         );
       })}
     </div>
+  );
+}
+
+function CurriculumPanelFallback() {
+  return (
+    <div
+      className="h-[620px] animate-pulse rounded-xl border"
+      style={{ background: "#ede9e0", borderColor: "#d8d2c6" }}
+    />
   );
 }
 
@@ -87,7 +93,6 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
 
-  // Sync when server re-fetches
   if (initialProgram !== prevInitial) {
     setPrevInitial(initialProgram);
     setProgram(initialProgram);
@@ -106,18 +111,18 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
         breadcrumbs={breadcrumbs}
       />
 
-      {/* Stepper tab bar */}
       <StepperTabBar active={activeTab} onChange={setActiveTab} />
 
-      {/* Tab content */}
       <div className="px-6 pb-12 pt-6">
         {activeTab === "curriculum" && (
-          <CurriculumSplitPanel
-            program={program}
-            onRefresh={() => {
-              router.refresh();
-            }}
-          />
+          <Suspense fallback={<CurriculumPanelFallback />}>
+            <CurriculumSplitPanel
+              program={program}
+              onRefresh={() => {
+                router.refresh();
+              }}
+            />
+          </Suspense>
         )}
 
         {activeTab === "experts" && (

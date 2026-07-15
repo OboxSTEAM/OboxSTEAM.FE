@@ -1,20 +1,21 @@
 "use client";
 
 import * as React from "react";
-import { useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 
 import { ManagerHeader } from "@/components/manager/layout/manager-header";
 import { ManagerSidebar } from "@/components/manager/layout/manager-sidebar";
+import { ManagerCommandPalette } from "@/components/manager/command-palette/manager-command-palette";
 import { isManagerRole } from "@/lib/auth/roles";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { Suspense } from "react";
 
 /** Map pathname prefix to page title shown in header. */
 function resolvePageTitle(pathname: string): string {
   if (pathname === "/manager") return "Tổng quan";
   if (pathname.startsWith("/manager/programs")) return "Chương trình";
-  if (pathname.startsWith("/manager/modules")) return "Module";
   if (pathname.startsWith("/manager/courses")) return "Khóa học";
   if (pathname.startsWith("/manager/activities")) return "Hoạt động";
   if (pathname.startsWith("/manager/materials")) return "Tài liệu";
@@ -57,6 +58,20 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { profile, isAuthenticated, isHydrated, isLoading } = useCurrentUser();
+  const [commandOpen, setCommandOpen] = useState(false);
+
+  const openCommand = useCallback(() => setCommandOpen(true), []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, []);
 
   useEffect(() => {
     if (!isHydrated || isLoading) return;
@@ -93,13 +108,16 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SidebarProvider className="h-screen overflow-hidden">
-      <ManagerSidebar />
+      <Suspense fallback={<div className="w-64 shrink-0 border-r border-[#E5E5E0] bg-[#FAFAF5]" />}>
+        <ManagerSidebar />
+      </Suspense>
       <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-[#FAFAF5]">
-        <ManagerHeader title={pageTitle} />
+        <ManagerHeader title={pageTitle} onOpenCommand={openCommand} />
         <main className="flex-1 overflow-auto bg-[#FAFAF5]">
           {children}
         </main>
       </SidebarInset>
+      <ManagerCommandPalette open={commandOpen} onOpenChange={setCommandOpen} />
     </SidebarProvider>
   );
 }
