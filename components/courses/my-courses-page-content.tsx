@@ -24,8 +24,11 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { CertificateCongratsBox } from "@/components/certificates/certificate-congrats-box";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { getMyCertificates } from "@/lib/api/certificates";
+import type { CertificateListItem } from "@/lib/api/entities/certificate";
 import {
   getMyProgramEnrollments,
   type MyProgramEnrollmentsQuery,
@@ -93,6 +96,27 @@ export function MyCoursesPageContent() {
       deps: [query, canFetch],
       onError: (error) => showAppErrorFromUnknown(error, "enrollments.list"),
     });
+
+  const { data: certificates } = useClientFetch({
+    enabled: canFetch,
+    fetcher: async () => {
+      try {
+        const result = await getMyCertificates();
+        return result?.data ?? [];
+      } catch {
+        // Degrade silently — enrollment list should still render.
+        return [];
+      }
+    },
+    deps: [canFetch],
+  });
+
+  const certificatesByProgramId = new Map<string, CertificateListItem>();
+  for (const certificate of certificates ?? []) {
+    if (!certificatesByProgramId.has(certificate.programId)) {
+      certificatesByProgramId.set(certificate.programId, certificate);
+    }
+  }
 
   const handleSortChange = useCallback(
     (sortId: string | null) => {
@@ -249,10 +273,34 @@ export function MyCoursesPageContent() {
         </Card>
       ) : (
         <>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {enrollments.map((enrollment) => (
-              <EnrollmentCard key={enrollment.id} enrollment={enrollment} />
-            ))}
+          <div className="grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {enrollments.map((enrollment) => {
+              const certificate = certificatesByProgramId.get(
+                enrollment.programId,
+              );
+
+              if (!certificate) {
+                return (
+                  <EnrollmentCard
+                    key={enrollment.id}
+                    enrollment={enrollment}
+                  />
+                );
+              }
+
+              return (
+                <div
+                  key={enrollment.id}
+                  className="flex flex-col self-start overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_2px_16px_rgba(45,45,45,0.05)] transition-shadow hover:shadow-[0_8px_24px_rgba(45,45,45,0.1)]"
+                >
+                  <EnrollmentCard
+                    enrollment={enrollment}
+                    className="h-auto rounded-none border-0 shadow-none"
+                  />
+                  <CertificateCongratsBox certificate={certificate} />
+                </div>
+              );
+            })}
           </div>
 
           {data ? (
