@@ -25,7 +25,7 @@ export default function CreateProgramPage() {
       });
       router.push("/manager/programs");
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "programs.create");
     } finally {
       setIsSubmitting(false);
     }

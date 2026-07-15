@@ -27,6 +27,7 @@ import {
 import { deleteModule, deleteCourse, deleteActivity, type ProgramWithModules } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { formatProgramPrice, MODULE_TYPE_LABELS } from "@/lib/programs/constants";
+import { formatActivityScheduleRange } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
 // ─── Warm palette (mirrors .learn-shell tokens) ───────────────────────────
@@ -167,7 +168,7 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
       }
       onRefresh();
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.node.delete");
     } finally {
       setDeleteTarget(null);
     }
@@ -504,7 +505,10 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
                                                   {activity.startTime && (
                                                     <span className="flex items-center gap-0.5">
                                                       <Calendar className="size-2.5" />
-                                                      {activity.startTime.split(" ")[0]}
+                                                      {formatActivityScheduleRange(
+                                                        activity.startTime,
+                                                        activity.endTime,
+                                                      )}
                                                     </span>
                                                   )}
                                                   {activity.maxCapacity && (

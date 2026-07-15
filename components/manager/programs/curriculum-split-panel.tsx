@@ -1,6 +1,13 @@
 "use client";
 
-import { useState, useCallback, useMemo, useEffect } from "react";
+import {
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,6 +67,12 @@ import {
   LIGHT_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
+import {
+  formatActivityScheduleRange,
+  formatApiDateTimeDisplay,
+  fromApiDateTimeToLocalInput,
+  toApiDateTimeFromLocalInput,
+} from "@/lib/curriculum/datetime";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const W = {
@@ -81,24 +94,6 @@ const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   SelfPaced: "Tự học",
   LiveOnline: "Online trực tiếp",
   Offline: "Offline tại lớp",
-};
-
-/* ─── DateTime helpers ──────────────────────────────────────────────────────── */
-function toApi(val: string | null | undefined): string | null {
-  if (!val) return null;
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return null;
-  const p = (n: number) => String(n).padStart(2, "0");
-  return `${p(d.getDate())}/${p(d.getMonth() + 1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:00`;
-}
-function fromApi(val: string | null | undefined): string {
-  if (!val) return "";
-  const [date, time] = val.split(" ");
-  if (!date || !time) return "";
-  const [day, mon, yr] = date.split("/");
-  const [hh, mm] = time.split(":");
-  if (!yr || !mm) return "";
-  return `${yr}-${mon}-${day}T${hh}:${mm}`;
 }
 
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
@@ -229,7 +224,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo module ${data.name}.` });
       }
       flash(); onSuccess();
-    } catch (err) { showAppErrorFromUnknown(err, "programs.detail"); }
+    } catch (err) { showAppErrorFromUnknown(err, "curriculum.module.save"); }
     finally { setBusy(false); }
   };
 
@@ -304,7 +299,12 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             </div>
             <div className="col-span-2 flex items-center gap-2">
               <Controller name="isMandatory" control={control} render={({ field }) => (
-                <Checkbox id="mand" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
+                <Checkbox
+                  id="mand"
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(v === true)}
+                  className="border-[#8c8678] bg-white data-checked:border-primary"
+                />
               )} />
               <Label htmlFor="mand" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Học phần bắt buộc</Label>
             </div>
@@ -367,7 +367,7 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo khóa học ${data.name}.` });
       }
       flash(); onSuccess();
-    } catch (err) { showAppErrorFromUnknown(err, "programs.detail"); }
+    } catch (err) { showAppErrorFromUnknown(err, "curriculum.course.save"); }
     finally { setBusy(false); }
   };
 
@@ -413,7 +413,8 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
       activityType: activityToEdit.activityType, description: activityToEdit.description || "",
       activityOrder: activityToEdit.activityOrder, location: activityToEdit.location || "",
-      startTime: fromApi(activityToEdit.startTime), endTime: fromApi(activityToEdit.endTime),
+      startTime: fromApiDateTimeToLocalInput(activityToEdit.startTime),
+      endTime: fromApiDateTimeToLocalInput(activityToEdit.endTime),
       maxCapacity: activityToEdit.maxCapacity,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
@@ -433,8 +434,10 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
       const payload = {
         code: data.code || null, courseId: data.courseId, name: data.name, activityType: data.activityType,
         description: data.description || "", activityOrder: Number(data.activityOrder),
-        location: live ? data.location || null : null, startTime: live ? toApi(data.startTime) : null,
-        endTime: live ? toApi(data.endTime) : null, maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
+        location: live ? data.location || null : null,
+        startTime: live ? toApiDateTimeFromLocalInput(data.startTime) : null,
+        endTime: live ? toApiDateTimeFromLocalInput(data.endTime) : null,
+        maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
       };
       if (isEdit && activityToEdit) {
@@ -445,7 +448,7 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo hoạt động ${data.name}.` });
       }
       flash(); onSuccess();
-    } catch (err) { showAppErrorFromUnknown(err, "programs.detail"); }
+    } catch (err) { showAppErrorFromUnknown(err, "curriculum.activity.save"); }
     finally { setBusy(false); }
   };
 
@@ -492,6 +495,22 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Địa điểm / Đường dẫn <span style={{ color: W.primary }}>*</span></Label>
                 <input type="text" placeholder={actType === "LiveOnline" ? "Zoom, Google Meet..." : "Phòng 201, Tòa nhà A..."} {...register("location")} className={IN} style={{ borderColor: W.border }} />
               </div>
+              {isEdit && activityToEdit?.startTime ? (
+                <div
+                  className="col-span-2 rounded-lg px-3 py-2.5 text-sm"
+                  style={{ background: W.surface2, color: W.text }}
+                >
+                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: W.faint }}>
+                    Lịch hiện tại
+                  </p>
+                  <p className="mt-0.5 font-medium" style={{ color: W.textStrong }}>
+                    {formatApiDateTimeDisplay(activityToEdit.startTime)}
+                    {activityToEdit.endTime
+                      ? ` → ${formatApiDateTimeDisplay(activityToEdit.endTime)}`
+                      : ""}
+                  </p>
+                </div>
+              ) : null}
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Bắt đầu <span style={{ color: W.primary }}>*</span></Label>
                 <input type="datetime-local" {...register("startTime")} className={IN} style={{ borderColor: W.border }} />
@@ -510,13 +529,23 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
           <div className="col-span-2 grid grid-cols-2 gap-4 pt-1">
             <div className="flex items-center gap-2">
               <Controller name="requireQrCheckin" control={control} render={({ field }) => (
-                <Checkbox id="qr" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
+                <Checkbox
+                  id="qr"
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(v === true)}
+                  className="border-[#8c8678] bg-white data-checked:border-primary"
+                />
               )} />
               <Label htmlFor="qr" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
             </div>
             <div className="flex items-center gap-2">
               <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
-                <Checkbox id="med" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} />
+                <Checkbox
+                  id="med"
+                  checked={field.value}
+                  onCheckedChange={(v) => field.onChange(v === true)}
+                  className="border-[#8c8678] bg-white data-checked:border-primary"
+                />
               )} />
               <Label htmlFor="med" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
             </div>
@@ -552,7 +581,7 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
       flash();
       showAppSuccess({ title: "Cập nhật thành công", description: "Chương trình đã được cập nhật." });
       router.refresh(); onSuccess();
-    } catch (err) { showAppErrorFromUnknown(err, "programs.detail"); }
+    } catch (err) { showAppErrorFromUnknown(err, "programs.update"); }
     finally { setBusy(false); }
   };
 
@@ -600,6 +629,8 @@ function StructureTreeRow({
   onDelete,
   onAdd,
   addLabel,
+  defaultOpen = false,
+  forceOpen = false,
   children,
 }: {
   depth: number;
@@ -611,8 +642,33 @@ function StructureTreeRow({
   onDelete?: () => void;
   onAdd?: () => void;
   addLabel?: string;
-  children?: React.ReactNode;
+  /** Initial expand state (e.g. program root). */
+  defaultOpen?: boolean;
+  /** Keep open when selection / create-flow lives under this node. */
+  forceOpen?: boolean;
+  children?: ReactNode;
 }) {
+  const childItems = useMemo(
+    () => (Array.isArray(children) ? children : [children]).filter(Boolean),
+    [children],
+  );
+  const hasBranch = childItems.length > 0;
+  const [open, setOpen] = useState(defaultOpen || forceOpen);
+
+  useEffect(() => {
+    if (forceOpen || selected) setOpen(true);
+  }, [forceOpen, selected]);
+
+  const handleToggle = (e: MouseEvent) => {
+    e.stopPropagation();
+    setOpen((prev) => !prev);
+  };
+
+  const handleAdd = () => {
+    if (hasBranch) setOpen(true);
+    onAdd?.();
+  };
+
   return (
     <li className="relative">
       {/* Guides live in a gutter; content box starts after so it never covers the lines */}
@@ -644,10 +700,34 @@ function StructureTreeRow({
               : "1px solid transparent",
           }}
         >
+          {hasBranch ? (
+            <button
+              type="button"
+              title={open ? "Thu gọn" : "Mở rộng"}
+              aria-expanded={open}
+              aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
+              onClick={handleToggle}
+              className="flex size-6 shrink-0 items-center justify-center rounded"
+              style={{ color: W.faint }}
+            >
+              <ChevronRight
+                className={cn(
+                  "size-3.5 transition-transform duration-200",
+                  open && "rotate-90",
+                )}
+              />
+            </button>
+          ) : (
+            <span className="size-6 shrink-0" aria-hidden />
+          )}
+
           <button
             type="button"
-            onClick={onSelect}
-            className="flex min-w-0 flex-1 flex-col px-2 py-1.5 text-left"
+            onClick={() => {
+              if (hasBranch) setOpen(true);
+              onSelect();
+            }}
+            className="flex min-w-0 flex-1 flex-col py-1.5 pr-2 text-left"
           >
             <span
               className="truncate text-[12.5px] leading-snug"
@@ -670,7 +750,7 @@ function StructureTreeRow({
               <button
                 type="button"
                 title={addLabel || "Thêm"}
-                onClick={onAdd}
+                onClick={handleAdd}
                 className="flex size-6 items-center justify-center rounded"
                 style={{ color: W.faint }}
                 onMouseEnter={(e) => {
@@ -703,11 +783,11 @@ function StructureTreeRow({
           </div>
         </div>
 
-        {children && (
+        {hasBranch && open ? (
           <ul className="relative mt-0.5" role="list">
             {children}
           </ul>
-        )}
+        ) : null}
       </div>
     </li>
   );
@@ -967,7 +1047,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       select({ kind: "program" });
       onRefresh();
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.node.delete");
     } finally {
       setDelTarget(null);
     }
@@ -1049,6 +1129,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       <StructureTreeRow
         depth={0}
         isLast
+        defaultOpen
         selected={sel?.kind === "program"}
         label={program.name}
         meta={program.code}
@@ -1059,11 +1140,20 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         {modules.map((mod, mIdx) => {
           const courses = [...(mod.courses || [])];
           const isLastMod = mIdx === modules.length - 1 && sel?.kind !== "module-new";
+          const moduleForceOpen =
+            (sel?.kind === "module" && sel.id === mod.id) ||
+            (sel?.kind === "course" && sel.moduleId === mod.id) ||
+            (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
+            (sel?.kind === "activity" &&
+              courses.some((c) => c.id === sel.courseId)) ||
+            (sel?.kind === "activity-new" &&
+              courses.some((c) => c.id === sel.courseId));
           return (
             <StructureTreeRow
               key={mod.id}
               depth={1}
               isLast={isLastMod}
+              forceOpen={moduleForceOpen}
               selected={sel?.kind === "module" && sel.id === mod.id}
               label={mod.name}
               meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
@@ -1079,11 +1169,16 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                 const isLastCourse =
                   cIdx === courses.length - 1 &&
                   !(sel?.kind === "course-new" && sel.moduleId === mod.id);
+                const courseForceOpen =
+                  (sel?.kind === "course" && sel.id === course.id) ||
+                  (sel?.kind === "activity" && sel.courseId === course.id) ||
+                  (sel?.kind === "activity-new" && sel.courseId === course.id);
                 return (
                   <StructureTreeRow
                     key={course.id}
                     depth={2}
                     isLast={isLastCourse}
+                    forceOpen={courseForceOpen}
                     selected={sel?.kind === "course" && sel.id === course.id}
                     label={course.name}
                     meta={course.code ?? undefined}
@@ -1096,25 +1191,32 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                     onAdd={() => select({ kind: "activity-new", courseId: course.id })}
                     addLabel="Thêm hoạt động"
                   >
-                    {acts.map((act, aIdx) => (
-                      <StructureTreeRow
-                        key={act.id}
-                        depth={3}
-                        isLast={
-                          aIdx === acts.length - 1 &&
-                          !(sel?.kind === "activity-new" && sel.courseId === course.id)
-                        }
-                        selected={sel?.kind === "activity" && sel.id === act.id}
-                        label={act.name}
-                        meta={ACTIVITY_PREFIX[act.activityType] ?? act.activityType}
-                        onSelect={() =>
-                          select({ kind: "activity", id: act.id, courseId: course.id })
-                        }
-                        onDelete={() =>
-                          setDelTarget({ type: "activity", id: act.id, name: act.name })
-                        }
-                      />
-                    ))}
+                    {acts.map((act, aIdx) => {
+                      const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
+                      const schedule =
+                        act.activityType !== "SelfPaced"
+                          ? formatActivityScheduleRange(act.startTime, act.endTime)
+                          : "";
+                      return (
+                        <StructureTreeRow
+                          key={act.id}
+                          depth={3}
+                          isLast={
+                            aIdx === acts.length - 1 &&
+                            !(sel?.kind === "activity-new" && sel.courseId === course.id)
+                          }
+                          selected={sel?.kind === "activity" && sel.id === act.id}
+                          label={act.name}
+                          meta={schedule ? `${typeLabel} · ${schedule}` : typeLabel}
+                          onSelect={() =>
+                            select({ kind: "activity", id: act.id, courseId: course.id })
+                          }
+                          onDelete={() =>
+                            setDelTarget({ type: "activity", id: act.id, name: act.name })
+                          }
+                        />
+                      );
+                    })}
                     {(sel?.kind === "activity-new" && sel.courseId === course.id) || acts.length === 0 ? (
                       <li className="relative">
                         <span

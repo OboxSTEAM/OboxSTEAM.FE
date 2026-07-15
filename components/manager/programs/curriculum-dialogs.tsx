@@ -52,7 +52,7 @@ import {
   type UpdateActivityInput,
 } from "@/lib/validations/curriculum";
 import { updateMaterialSchema, type UpdateMaterialInput } from "@/lib/validations/materials";
-import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
   LIGHT_SELECT_TRIGGER,
@@ -60,34 +60,11 @@ import {
   LIGHT_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
-
-// --- Date/Time Helpers ---
-function formatToApiDateTime(val: string | null | undefined): string | null {
-  if (!val) return null;
-  const d = new Date(val);
-  if (isNaN(d.getTime())) return null;
-  const day = String(d.getDate()).padStart(2, "0");
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  const hours = String(d.getHours()).padStart(2, "0");
-  const minutes = String(d.getMinutes()).padStart(2, "0");
-  return `${day}/${month}/${year} ${hours}:${minutes}:00`;
-}
-
-function formatFromApiDateTime(val: string | null | undefined): string {
-  if (!val) return "";
-  const parts = val.split(" ");
-  if (parts.length < 2) return "";
-  const dateParts = parts[0].split("/");
-  const timeParts = parts[1].split(":");
-  if (dateParts.length < 3 || timeParts.length < 2) return "";
-  const day = dateParts[0];
-  const month = dateParts[1];
-  const year = dateParts[2];
-  const hours = timeParts[0];
-  const minutes = timeParts[1];
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
-}
+import {
+  formatApiDateTimeDisplay,
+  fromApiDateTimeToLocalInput,
+  toApiDateTimeFromLocalInput,
+} from "@/lib/curriculum/datetime";
 
 // ==========================================
 // 1. Module Form Dialog
@@ -219,7 +196,7 @@ export function ModuleFormDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.module.save");
     } finally {
       setIsSubmitting(false);
     }
@@ -376,6 +353,7 @@ export function ModuleFormDialog({
                       id="isMandatory"
                       checked={field.value}
                       onCheckedChange={(val) => field.onChange(val === true)}
+                      className="border-[#8c8678] bg-white data-checked:border-primary"
                     />
                   )}
                 />
@@ -547,7 +525,7 @@ export function CourseFormDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.course.save");
     } finally {
       setIsSubmitting(false);
     }
@@ -695,8 +673,8 @@ export function ActivityFormDialog({
           description: activityToEdit.description || "",
           activityOrder: activityToEdit.activityOrder,
           location: activityToEdit.location || "",
-          startTime: formatFromApiDateTime(activityToEdit.startTime),
-          endTime: formatFromApiDateTime(activityToEdit.endTime),
+          startTime: fromApiDateTimeToLocalInput(activityToEdit.startTime),
+          endTime: fromApiDateTimeToLocalInput(activityToEdit.endTime),
           maxCapacity: activityToEdit.maxCapacity,
           requireQrCheckin: activityToEdit.requireQrCheckin,
           requireMediaEvidence: activityToEdit.requireMediaEvidence,
@@ -732,8 +710,12 @@ export function ActivityFormDialog({
         description: data.description || "",
         activityOrder: Number(data.activityOrder),
         location: isOnlineOrOffline ? data.location || null : null,
-        startTime: isOnlineOrOffline ? formatToApiDateTime(data.startTime) : null,
-        endTime: isOnlineOrOffline ? formatToApiDateTime(data.endTime) : null,
+        startTime: isOnlineOrOffline
+          ? toApiDateTimeFromLocalInput(data.startTime)
+          : null,
+        endTime: isOnlineOrOffline
+          ? toApiDateTimeFromLocalInput(data.endTime)
+          : null,
         maxCapacity: isOnlineOrOffline && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin,
         requireMediaEvidence: data.requireMediaEvidence,
@@ -755,7 +737,7 @@ export function ActivityFormDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.activity.save");
     } finally {
       setIsSubmitting(false);
     }
@@ -858,6 +840,20 @@ export function ActivityFormDialog({
                   />
                 </div>
 
+                {isEdit && activityToEdit?.startTime ? (
+                  <div className="col-span-2 rounded-lg bg-[#E7E2D8] px-3 py-2.5 text-sm text-[#3A3833]">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8C8678]">
+                      Lịch hiện tại
+                    </p>
+                    <p className="mt-0.5 font-medium text-[#2D2B27]">
+                      {formatApiDateTimeDisplay(activityToEdit.startTime)}
+                      {activityToEdit.endTime
+                        ? ` → ${formatApiDateTimeDisplay(activityToEdit.endTime)}`
+                        : ""}
+                    </p>
+                  </div>
+                ) : null}
+
                 <div className="space-y-1.5 col-span-2 md:col-span-1">
                   <Label htmlFor="startTime" className="text-sm font-semibold text-[#2D2D2D]">
                     Thời gian bắt đầu <span className="text-[#E94B3C]">*</span>
@@ -907,6 +903,7 @@ export function ActivityFormDialog({
                       id="requireQrCheckin"
                       checked={field.value}
                       onCheckedChange={(val) => field.onChange(val === true)}
+                      className="border-[#8c8678] bg-white data-checked:border-primary"
                     />
                   )}
                 />
@@ -924,6 +921,7 @@ export function ActivityFormDialog({
                       id="requireMediaEvidence"
                       checked={field.value}
                       onCheckedChange={(val) => field.onChange(val === true)}
+                      className="border-[#8c8678] bg-white data-checked:border-primary"
                     />
                   )}
                 />
@@ -1036,7 +1034,11 @@ export function MaterialUploadDialog({
         });
       } else {
         if (!file) {
-          showAppErrorFromUnknown(new Error("Vui lòng chọn tệp tin cần tải lên."), "programs.detail");
+          showAppError({
+            title: "Thiếu tệp tài liệu",
+            reason: "Bạn chưa chọn tệp cần tải lên.",
+            action: "Chọn tệp PDF, tài liệu hoặc media rồi thử lại.",
+          });
           setIsSubmitting(false);
           return;
         }
@@ -1049,7 +1051,7 @@ export function MaterialUploadDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.material.save");
     } finally {
       setIsSubmitting(false);
     }
@@ -1067,7 +1069,7 @@ export function MaterialUploadDialog({
       onSuccess();
       onOpenChange(false);
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "curriculum.material.delete");
     } finally {
       setIsDeleting(false);
     }

@@ -1,10 +1,13 @@
-import { getModuleById } from "@/lib/api/modules";
+import { getCourseById } from "@/lib/api/courses";
+import type { ModuleCourse } from "@/lib/api/entities/module";
 import type { ProgramWithModules } from "@/lib/api/entities/program";
+import { getModuleById } from "@/lib/api/modules";
 
 /**
- * `GET /api/programs/{id}` often returns modules with empty `courses`.
- * Nested courses (+ activities) live on `GET /api/modules/{id}` — hydrate them here
- * so the manager curriculum tree stays in sync after program load / refresh.
+ * Progressive curriculum hydration for the manager tree:
+ * 1. `GET /api/programs/{id}` often returns modules with empty `courses`
+ * 2. `GET /api/modules/{id}` fills courses (activities may still be empty)
+ * 3. `GET /api/courses/{id}` fills nested activities for each course
  */
 export async function hydrateProgramCurriculum(
   program: ProgramWithModules,
@@ -18,10 +21,14 @@ export async function hydrateProgramCurriculum(
         const result = await getModuleById(mod.id);
         const detail = result?.data;
         if (!detail) return mod;
+
+        const courses = detail.courses ?? [];
+        const coursesWithActivities = await hydrateCourseActivities(courses);
+
         return {
           ...mod,
           ...detail,
-          courses: detail.courses ?? [],
+          courses: coursesWithActivities,
         };
       } catch {
         return mod;
@@ -30,4 +37,26 @@ export async function hydrateProgramCurriculum(
   );
 
   return { ...program, modules: hydrated };
+}
+
+async function hydrateCourseActivities(courses: ModuleCourse[]): Promise<ModuleCourse[]> {
+  if (courses.length === 0) return courses;
+
+  return Promise.all(
+    courses.map(async (course) => {
+      try {
+        const result = await getCourseById(course.id);
+        const detail = result?.data;
+        if (!detail) return course;
+
+        return {
+          ...course,
+          ...detail,
+          activities: detail.activities ?? [],
+        };
+      } catch {
+        return course;
+      }
+    }),
+  );
 }

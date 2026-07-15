@@ -90,6 +90,21 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chương trình không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Quay lại danh sách chương trình hoặc thử lại sau vài giây.",
   },
+  "programs.create": {
+    title: "Không tạo được chương trình",
+    reason: "Thông tin chương trình chưa hợp lệ hoặc đã trùng mã/tên.",
+    action: "Kiểm tra lại các trường bắt buộc rồi thử lưu lần nữa.",
+  },
+  "programs.update": {
+    title: "Không cập nhật được chương trình",
+    reason: "Thông tin chưa hợp lệ hoặc chương trình không còn tồn tại.",
+    action: "Kiểm tra lại thông tin, tải lại trang rồi thử lưu.",
+  },
+  "programs.delete": {
+    title: "Không xóa được chương trình",
+    reason: "Chương trình có thể đang được sử dụng hoặc không còn tồn tại.",
+    action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
+  },
   "programs.reviews": {
     title: "Không tải được đánh giá",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
@@ -99,6 +114,36 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không tải được thông tin chuyên gia",
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Đóng hộp thoại và thử lại sau vài giây.",
+  },
+  "curriculum.module.save": {
+    title: "Không lưu được module",
+    reason: "Thông tin module chưa hợp lệ hoặc đã trùng mã.",
+    action: "Kiểm tra tên, mã, thứ tự và học phí rồi thử lại.",
+  },
+  "curriculum.course.save": {
+    title: "Không lưu được khóa học",
+    reason: "Thông tin khóa học chưa hợp lệ hoặc đã trùng mã.",
+    action: "Kiểm tra tên, mã và mô tả rồi thử lại.",
+  },
+  "curriculum.activity.save": {
+    title: "Không lưu được hoạt động",
+    reason: "Thông tin hoạt động chưa hợp lệ hoặc lịch học chưa đúng.",
+    action: "Kiểm tra tên, loại, thứ tự và thời gian (nếu có) rồi thử lại.",
+  },
+  "curriculum.material.save": {
+    title: "Không lưu được tài liệu",
+    reason: "Tệp không hợp lệ, thiếu tiêu đề, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn đúng loại tệp, đặt tiêu đề rõ ràng rồi thử lại.",
+  },
+  "curriculum.material.delete": {
+    title: "Không xóa được tài liệu",
+    reason: "Tài liệu có thể không còn tồn tại hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại trang rồi thử xóa lại.",
+  },
+  "curriculum.node.delete": {
+    title: "Không xóa được mục này",
+    reason: "Mục có thể đang chứa nội dung con hoặc không còn tồn tại.",
+    action: "Xóa các mục con trước (nếu có), tải lại rồi thử lại.",
   },
   "payments.checkout": {
     title: "Không thể bắt đầu thanh toán",
@@ -131,6 +176,68 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
   },
 };
+
+/** Contexts where a curated backend string may be shown (auth only). */
+const API_MESSAGE_ALLOWED: ReadonlySet<AppErrorContext> = new Set([
+  "auth.login",
+  "auth.register",
+  "auth.verify-otp",
+  "auth.forgot-password",
+  "auth.reset-password",
+]);
+
+/** Manager mutate flows — never surface raw BE messages. */
+const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
+  "programs.create",
+  "programs.update",
+  "programs.delete",
+  "curriculum.module.save",
+  "curriculum.course.save",
+  "curriculum.activity.save",
+  "curriculum.material.save",
+  "curriculum.material.delete",
+  "curriculum.node.delete",
+]);
+
+function reasonForHttpStatus(
+  status: number,
+  context: AppErrorContext,
+): string | null {
+  if (status === 401) {
+    return "Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập.";
+  }
+  if (status === 403) {
+    return "Bạn không có quyền thực hiện thao tác này.";
+  }
+  if (status === 404) {
+    if (MANAGER_MUTATE.has(context)) {
+      return "Mục này không còn tồn tại hoặc đã bị xóa.";
+    }
+    return "Không tìm thấy dữ liệu yêu cầu.";
+  }
+  if (status === 409) {
+    if (context === "programs.create" || context === "programs.update") {
+      return "Mã hoặc tên chương trình đã tồn tại.";
+    }
+    if (context.startsWith("curriculum.")) {
+      return "Mã hoặc tên đã tồn tại trong chương trình.";
+    }
+    return "Dữ liệu bị trùng với mục đã có.";
+  }
+  if (status === 413) {
+    return "Tệp tải lên quá lớn so với giới hạn hệ thống.";
+  }
+  if (status === 400 || status === 422) {
+    if (MANAGER_MUTATE.has(context)) {
+      return CONTEXT_FALLBACKS[context].reason;
+    }
+    return "Thông tin gửi lên chưa hợp lệ.";
+  }
+  if (status >= 500) {
+    return "Hệ thống tạm thời không phản hồi.";
+  }
+  return null;
+}
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
   if (error instanceof ApiResponseError) {
@@ -167,20 +274,28 @@ function mapHttpStatusToError(
     };
   }
 
+  const fallback = CONTEXT_FALLBACKS[context];
+  const statusReason = reasonForHttpStatus(status, context);
+  const useApi = API_MESSAGE_ALLOWED.has(context) && !!apiMessage;
+
   if (status >= 500) {
     return {
       title: "Máy chủ đang gặp sự cố",
-      reason: apiMessage ?? "Hệ thống tạm thời không phản hồi.",
+      reason: useApi ? apiMessage! : (statusReason ?? "Hệ thống tạm thời không phản hồi."),
       action: "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
     };
   }
 
   if (status === 0 || status >= 400) {
-    const fallback = CONTEXT_FALLBACKS[context];
     return {
       title: fallback.title,
-      reason: apiMessage ?? fallback.reason,
-      action: fallback.action,
+      reason: useApi
+        ? apiMessage!
+        : (statusReason ?? fallback.reason),
+      action:
+        status === 401
+          ? "Đăng nhập lại rồi thử tiếp."
+          : fallback.action,
     };
   }
 
@@ -196,8 +311,7 @@ function fromZodError(error: ZodError): AppErrorState {
   };
 }
 
-function fromNetworkError(context: AppErrorContext): AppErrorState {
-  const fallback = CONTEXT_FALLBACKS[context];
+function fromNetworkError(_context: AppErrorContext): AppErrorState {
   return {
     title: "Không thể kết nối máy chủ",
     reason: "Thiết bị của bạn không kết nối được với OboxSTEAM.",
@@ -207,23 +321,26 @@ function fromNetworkError(context: AppErrorContext): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
+ * Raw backend messages are only used for curated auth contexts.
  */
 export function resolveAppError(
   error: unknown,
   context: AppErrorContext = "generic",
 ): AppErrorState {
   if (error instanceof ApiResponseError) {
-    const mapped = mapHttpStatusToError(400, context, error.message);
+    const mapped = mapHttpStatusToError(
+      400,
+      context,
+      API_MESSAGE_ALLOWED.has(context) ? error.message : null,
+    );
     if (mapped) return mapped;
-    return {
-      title: CONTEXT_FALLBACKS[context].title,
-      reason: error.message,
-      action: CONTEXT_FALLBACKS[context].action,
-    };
+    return CONTEXT_FALLBACKS[context];
   }
 
   if (error instanceof ApiRequestError) {
-    const apiMessage = extractApiMessage(error);
+    const apiMessage = API_MESSAGE_ALLOWED.has(context)
+      ? extractApiMessage(error)
+      : null;
     const mapped = mapHttpStatusToError(error.status, context, apiMessage);
     if (mapped) return mapped;
 
@@ -240,13 +357,20 @@ export function resolveAppError(
     return fromNetworkError(context);
   }
 
+  // Intentional client-side tips — keep if message looks user-facing (Vietnamese), not technical.
   if (error instanceof Error && error.message) {
-    const fallback = CONTEXT_FALLBACKS[context];
-    return {
-      title: fallback.title,
-      reason: error.message,
-      action: fallback.action,
-    };
+    const looksTechnical =
+      /[A-Z][a-z]+Exception|\bDTO\b|\bUUID\b|\bHttpStatus\b|at\s+\w+\.|System\.|Request failed|NullReference|SqlException/i.test(
+        error.message,
+      );
+    if (!looksTechnical && !MANAGER_MUTATE.has(context)) {
+      const fallback = CONTEXT_FALLBACKS[context];
+      return {
+        title: fallback.title,
+        reason: error.message,
+        action: fallback.action,
+      };
+    }
   }
 
   return CONTEXT_FALLBACKS[context];

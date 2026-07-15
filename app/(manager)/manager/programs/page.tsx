@@ -130,7 +130,7 @@ export default function ManagerProgramsPage() {
       setDeleteTarget(null);
       retry(); // Reload table data
     } catch (err) {
-      showAppErrorFromUnknown(err, "programs.detail");
+      showAppErrorFromUnknown(err, "programs.delete");
     }
   }
 
