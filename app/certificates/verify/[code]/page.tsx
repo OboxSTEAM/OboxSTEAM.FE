@@ -8,15 +8,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { verifyCertificate } from "@/lib/api/certificates";
 import type { CertificateDetail } from "@/lib/api/entities/certificate";
 import { ApiRequestError } from "@/lib/api/errors";
-import { getCertificateVerifyHref } from "@/lib/certificates/format";
+import { resolveCertificateShareUrl } from "@/lib/certificates/format";
 import { certificateCodeParamSchema } from "@/lib/validations/certificates";
 import { cn } from "@/lib/utils";
 
 type VerifyCertificatePageProps = {
   params: Promise<{ code: string }>;
 };
-
-const SITE_ORIGIN = "https://oboxsteam.edu.vn";
 
 async function loadCertificate(
   code: string,
@@ -99,9 +97,10 @@ export default async function VerifyCertificatePage({
   const code = decodeURIComponent(rawCode);
   const certificate = await loadCertificate(code);
 
-  const shareUrl = certificate?.code
-    ? `${SITE_ORIGIN}${getCertificateVerifyHref(certificate.code)}`
-    : `${SITE_ORIGIN}${getCertificateVerifyHref(code)}`;
+  const shareUrl = resolveCertificateShareUrl({
+    code: certificate?.code ?? code,
+    verificationUrl: certificate?.verificationUrl,
+  });
 
   return (
     <>

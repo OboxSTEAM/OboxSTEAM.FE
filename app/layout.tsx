@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   description:
     "Nền tảng học STEAM trải nghiệm dành cho trẻ em Việt Nam. Học qua dự án thực tế, nhận chứng chỉ quốc tế và tự động tạo Portfolio AI sẵn sàng cho hồ sơ đại học nước ngoài.",
   keywords: ["STEAM", "edtech", "học trực tuyến", "portfolio du học", "robotics", "AI", "trẻ em"],
-  metadataBase: new URL("https://oboxsteam.edu.vn"),
+  metadataBase: new URL("https://oboxsteam.website"),
   openGraph: {
     title: "OboxSTEAM — Học STEAM, Xây Portfolio, Chinh phục Du học",
     description:

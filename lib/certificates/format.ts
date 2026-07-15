@@ -1,6 +1,40 @@
+/** Public site origin used for shareable certificate links. */
+export const CERTIFICATE_SITE_ORIGIN = "https://oboxsteam.website";
+
 /** Public share/verify route for a certificate code. */
 export function getCertificateVerifyHref(code: string): string {
   return `/certificates/verify/${encodeURIComponent(code)}`;
+}
+
+/**
+ * Prefer BE `verificationUrl` when it points at our public site;
+ * otherwise build from the known FE origin + code.
+ */
+export function resolveCertificateShareUrl(options: {
+  code: string | null | undefined;
+  verificationUrl?: string | null;
+}): string {
+  const verificationUrl = options.verificationUrl?.trim();
+  if (verificationUrl) {
+    try {
+      const parsed = new URL(verificationUrl);
+      if (
+        parsed.hostname === "oboxsteam.website" ||
+        parsed.hostname.endsWith(".oboxsteam.website")
+      ) {
+        return parsed.toString();
+      }
+    } catch {
+      // Fall through to FE-built URL.
+    }
+  }
+
+  const code = options.code?.trim();
+  if (!code) {
+    return CERTIFICATE_SITE_ORIGIN;
+  }
+
+  return `${CERTIFICATE_SITE_ORIGIN}${getCertificateVerifyHref(code)}`;
 }
 
 /** Formats BE issue dates (`15/06/2026 14:30:00` or ISO). */
