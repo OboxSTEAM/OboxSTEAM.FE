@@ -110,6 +110,22 @@ export {
   type SubmitRetrospectiveInput,
 } from "./assignments";
 export {
+  createPortfolioItemSchema,
+  portfolioItemIdParamSchema,
+  portfolioSubdomainAvailabilityQuerySchema,
+  portfolioSubdomainParamSchema,
+  reorderPortfolioItemsSchema,
+  updatePortfolioItemSchema,
+  updatePortfolioSchema,
+  type CreatePortfolioItemInput,
+  type PortfolioItemIdParam,
+  type PortfolioSubdomainAvailabilityQuery,
+  type PortfolioSubdomainParam,
+  type ReorderPortfolioItemsInput,
+  type UpdatePortfolioInput,
+  type UpdatePortfolioItemInput,
+} from "./portfolios";
+export {
   gradeResearchSubmissionSchema,
   researchSubmissionIdParamSchema,
   startResearchSubmissionSchema,

@@ -174,7 +174,7 @@
       {
         "path": "/api/certificates/program-enrollments/{programEnrollmentId}/ensure",
         "method": "post",
-        "description": "Issues a program certificate when all activities are Done. Retries PDF upload when missing. Idempotent."
+        "description": "Issues a program certificate when all activities are Done. Regenerates and re-uploads the PDF (including avatar/thumbnail images). Reuses the same certificate code when already issued."
       },
       {
         "path": "/api/classes",
@@ -472,6 +472,26 @@
         "description": "Retrieve a module enrollment. Students see their own; parents see linked students; admins see all."
       },
       {
+        "path": "/api/notifications",
+        "method": "get",
+        "description": "Returns a paginated inbox for the current user. Optionally filter to unread only."
+      },
+      {
+        "path": "/api/notifications/unread-count",
+        "method": "get",
+        "description": "Returns the number of unread notifications for the current user."
+      },
+      {
+        "path": "/api/notifications/{id}/read",
+        "method": "patch",
+        "description": "Marks a single notification as read. Only the recipient may do this."
+      },
+      {
+        "path": "/api/notifications/read-all",
+        "method": "patch",
+        "description": "Marks all unread notifications for the current user as read."
+      },
+      {
         "path": "/api/parent/request-link",
         "method": "post"
       },
@@ -530,6 +550,56 @@
         "path": "/api/payments/{id}/cancel",
         "method": "patch",
         "description": "Called by the front-end when the user is redirected back to the cancelUrl. Marks the Payment as Cancelled and, if applicable, rolls back the parent's PaymentRequest to Pending so they can retry. Idempotent — safe to call multiple times."
+      },
+      {
+        "path": "/api/portfolios/me",
+        "method": "get",
+        "description": "Returns the authenticated student's root portfolio with all items."
+      },
+      {
+        "path": "/api/portfolios/me",
+        "method": "put",
+        "description": "Updates profile, theme, links, subdomain, and publish state. Publishing requires a valid unique subdomain."
+      },
+      {
+        "path": "/api/portfolios",
+        "method": "post",
+        "description": "Creates an unpublished portfolio without a subdomain. One portfolio per student."
+      },
+      {
+        "path": "/api/portfolios/subdomain-available",
+        "method": "get",
+        "description": "Live check while the student types a subdomain. Excludes the caller's current subdomain."
+      },
+      {
+        "path": "/api/portfolios/me/items",
+        "method": "post",
+        "description": "Creates ExternalCert, Hobby, Extracurricular, or Project items."
+      },
+      {
+        "path": "/api/portfolios/me/items/{itemId}",
+        "method": "put",
+        "description": "Updates manual items fully. Auto-imported items can be hidden, reordered, and narrative-edited."
+      },
+      {
+        "path": "/api/portfolios/me/items/{itemId}",
+        "method": "delete",
+        "description": "Soft-deletes manual items only. Auto-imported items must be hidden instead."
+      },
+      {
+        "path": "/api/portfolios/me/items/reorder",
+        "method": "put",
+        "description": "Updates display order for the provided item ids."
+      },
+      {
+        "path": "/api/portfolios/me/sync",
+        "method": "post",
+        "description": "Idempotently imports certificates and graded capstone projects. Highlight reels are not imported."
+      },
+      {
+        "path": "/api/portfolios/by-subdomain/{subdomain}",
+        "method": "get",
+        "description": "Anonymous endpoint for the public portfolio page. Returns only visible items."
       },
       {
         "path": "/api/programs",
@@ -1051,6 +1121,9 @@
         "name": "CreateModuleRequestDto"
       },
       {
+        "name": "CreatePortfolioItemRequestDto"
+      },
+      {
         "name": "CreateProgramRequestDto"
       },
       {
@@ -1297,6 +1370,27 @@
         "name": "ModulesResponseDtoResponseDataContent"
       },
       {
+        "name": "NotificationDto"
+      },
+      {
+        "name": "NotificationDtoPagination"
+      },
+      {
+        "name": "NotificationDtoPaginationApiResult"
+      },
+      {
+        "name": "NotificationDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "NotificationUnreadCountDto"
+      },
+      {
+        "name": "NotificationUnreadCountDtoApiResult"
+      },
+      {
+        "name": "NotificationUnreadCountDtoResponseDataContent"
+      },
+      {
         "name": "ObjectApiResult"
       },
       {
@@ -1319,6 +1413,30 @@
       },
       {
         "name": "PaymentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "PortfolioAppendixItemDto"
+      },
+      {
+        "name": "PortfolioCustomItemResponseDto"
+      },
+      {
+        "name": "PortfolioCustomItemResponseDtoApiResult"
+      },
+      {
+        "name": "PortfolioCustomItemResponseDtoResponseDataContent"
+      },
+      {
+        "name": "PortfolioLinkDto"
+      },
+      {
+        "name": "PortfolioResponseDto"
+      },
+      {
+        "name": "PortfolioResponseDtoApiResult"
+      },
+      {
+        "name": "PortfolioResponseDtoResponseDataContent"
       },
       {
         "name": "ProblemDetails"
@@ -1426,6 +1544,15 @@
         "name": "ProgramsResponseDtoResponseDataContent"
       },
       {
+        "name": "PublicPortfolioResponseDto"
+      },
+      {
+        "name": "PublicPortfolioResponseDtoApiResult"
+      },
+      {
+        "name": "PublicPortfolioResponseDtoResponseDataContent"
+      },
+      {
         "name": "QuestionBankResponseDto"
       },
       {
@@ -1460,6 +1587,12 @@
       },
       {
         "name": "QuizResultResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ReorderPortfolioItemEntryDto"
+      },
+      {
+        "name": "ReorderPortfolioItemsRequestDto"
       },
       {
         "name": "RequestLinkDto"
@@ -1609,6 +1742,15 @@
         "name": "StudentMilestoneProgressDtoResponseDataContent"
       },
       {
+        "name": "SubdomainAvailabilityResponseDto"
+      },
+      {
+        "name": "SubdomainAvailabilityResponseDtoApiResult"
+      },
+      {
+        "name": "SubdomainAvailabilityResponseDtoResponseDataContent"
+      },
+      {
         "name": "SubmitAssignmentRequestDto"
       },
       {
@@ -1616,6 +1758,9 @@
       },
       {
         "name": "SubmitRetrospectiveRequestDto"
+      },
+      {
+        "name": "ThemeConfigDto"
       },
       {
         "name": "TimeRangeDto"
@@ -1658,6 +1803,12 @@
       },
       {
         "name": "UpdateModuleRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioItemRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioRequestDto"
       },
       {
         "name": "UpdateProgramRequestDto"
