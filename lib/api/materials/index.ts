@@ -3,22 +3,28 @@ import { ApiResponseError } from "@/lib/api/errors";
 import {
   materialByActivityParamsSchema,
   materialIdParamSchema,
+  materialListQuerySchema,
   updateMaterialSchema,
+  type MaterialListQuery,
   type UpdateMaterialInput,
 } from "@/lib/validations/materials";
 
 import {
   deleteMaterialResponseSchema,
   getMaterialResponseSchema,
+  getMaterialsResponseSchema,
   uploadMaterialResponseSchema,
   updateMaterialResponseSchema,
   type DeleteMaterialResult,
   type GetMaterialResult,
+  type GetMaterialsResult,
   type UploadMaterialResult,
   type UpdateMaterialResult,
 } from "./schemas";
 
 export type {
+  GetMaterialsResponse,
+  GetMaterialsResult,
   GetMaterialResponse,
   GetMaterialResult,
   UploadMaterialResponse,
@@ -29,7 +35,14 @@ export type {
   DeleteMaterialResult,
 } from "./schemas";
 
-export type { Material, MaterialType, ActivityMaterial, CurriculumMaterialSummary } from "@/lib/api/entities/material";
+export type {
+  Material,
+  MaterialType,
+  MaterialListItem,
+  ActivityMaterial,
+  CurriculumMaterialSummary,
+} from "@/lib/api/entities/material";
+export type { MaterialListQuery, MaterialTypeFilter } from "@/lib/validations/materials";
 
 const MATERIALS_BASE = "/api/materials";
 
@@ -38,6 +51,30 @@ function requireApiValue<T>(value: T | null): T {
     throw new ApiResponseError("Request failed.");
   }
   return value;
+}
+
+function buildMaterialListQuery(params?: MaterialListQuery): string {
+  if (!params) return "";
+  const parsed = materialListQuerySchema.parse(params);
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(parsed)) {
+    if (value !== undefined) searchParams.set(key, String(value));
+  }
+  const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
+
+/** `GET /api/materials` — paginated list with program/course/activity context. */
+export async function getMaterials(
+  params?: MaterialListQuery,
+): Promise<GetMaterialsResult> {
+  const response = await apiFetchParsed(
+    `${MATERIALS_BASE}${buildMaterialListQuery(params)}`,
+    getMaterialsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
 }
 
 export async function getMaterialByActivityId(

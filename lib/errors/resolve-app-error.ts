@@ -310,6 +310,14 @@ function mapHttpStatusToError(
     };
   }
 
+  if (status === 409 && context === "curriculum.material.save") {
+    return {
+      title: "Hoạt động đã có tài liệu",
+      reason: "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
+      action: "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+    };
+  }
+
   const fallback = CONTEXT_FALLBACKS[context];
   const statusReason = reasonForHttpStatus(status, context);
   const useApi = API_MESSAGE_ALLOWED.has(context) && !!apiMessage;

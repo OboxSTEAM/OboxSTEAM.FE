@@ -38,9 +38,17 @@ export {
   activityDetailQuerySchema,
   materialByActivityParamsSchema,
   materialByActivityQuerySchema,
+  materialListQuerySchema,
+  materialTypeFilterSchema,
+  updateMaterialSchema,
+  materialIdParamSchema,
   type ActivityDetailQuery,
   type MaterialByActivityParams,
   type MaterialByActivityQuery,
+  type MaterialListQuery,
+  type MaterialTypeFilter,
+  type UpdateMaterialInput,
+  type MaterialIdParam,
 } from "./materials";
 export {
   checkoutPaymentSchema,

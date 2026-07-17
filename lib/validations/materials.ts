@@ -25,8 +25,31 @@ export const updateMaterialSchema = z.object({
   title: z.string().min(1, "Tiêu đề tài liệu là bắt buộc."),
 });
 
+export const materialTypeFilterSchema = z.enum([
+  "PDF",
+  "DOC",
+  "Video",
+  "Image",
+  "ExternalLink",
+]);
+
+/** Query params for `GET /api/materials`. */
+export const materialListQuerySchema = z.object({
+  search: z.string().optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).optional(),
+  materialType: materialTypeFilterSchema.optional(),
+  programId: z.string().uuid().optional(),
+  courseId: z.string().uuid().optional(),
+  activityId: z.string().uuid().optional(),
+});
+
 export type ActivityDetailQuery = z.infer<typeof activityDetailQuerySchema>;
 export type MaterialByActivityParams = z.infer<typeof materialByActivityParamsSchema>;
 export type MaterialByActivityQuery = z.infer<typeof materialByActivityQuerySchema>;
 export type MaterialIdParam = z.infer<typeof materialIdParamSchema>;
 export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
+export type MaterialTypeFilter = z.infer<typeof materialTypeFilterSchema>;
+export type MaterialListQuery = z.infer<typeof materialListQuerySchema>;

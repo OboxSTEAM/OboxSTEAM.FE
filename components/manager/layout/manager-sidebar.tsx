@@ -299,7 +299,7 @@ export function ManagerSidebar() {
             { title: "Chương trình", url: "/manager/programs", focus: "program" as const },
             { title: "Module", url: "/manager/programs", focus: "module" as const },
             { title: "Khóa học", url: "/manager/programs", focus: "course" as const },
-            { title: "Hoạt động", url: "/manager/activities", focus: "activity" as const },
+            { title: "Hoạt động", url: "/manager/programs", focus: "activity" as const },
             { title: "Tài liệu", url: "/manager/materials" },
             { title: "Ngân hàng câu hỏi", url: "/manager/question-bank" },
             { title: "Milestone nghiên cứu", url: "/manager/milestones" },

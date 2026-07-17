@@ -27,6 +27,47 @@ import {
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
+/* ─── Upload constraints (mirror backend limits) ───────────────────────────── */
+const MAX_TITLE_LENGTH = 200;
+
+/** Allowed extension → size limit in MB (per backend upload spec). */
+const FILE_SIZE_LIMIT_MB: Record<string, number> = {
+  pdf: 50,
+  doc: 50,
+  docx: 50,
+  mp4: 3072,
+  mov: 3072,
+  avi: 3072,
+  mkv: 3072,
+  jpg: 10,
+  jpeg: 10,
+  png: 10,
+  gif: 10,
+  webp: 10,
+};
+
+function fileExtension(name: string): string {
+  const idx = name.lastIndexOf(".");
+  return idx >= 0 ? name.slice(idx + 1).toLowerCase() : "";
+}
+
+function humanLimit(mb: number): string {
+  return mb >= 1024 ? `${mb / 1024} GB` : `${mb} MB`;
+}
+
+/** Returns a Vietnamese error message when the file is not acceptable, else null. */
+function validateFile(file: File): string | null {
+  const ext = fileExtension(file.name);
+  const limitMb = FILE_SIZE_LIMIT_MB[ext];
+  if (!limitMb) {
+    return "Định dạng không hỗ trợ. Chỉ nhận PDF, DOC/DOCX, video (mp4/mov/avi/mkv), ảnh (jpg/png/gif/webp).";
+  }
+  if (file.size > limitMb * 1024 * 1024) {
+    return `Tệp vượt giới hạn ${humanLimit(limitMb)} cho định dạng .${ext}.`;
+  }
+  return null;
+}
+
 /* ─── Palette (mirrors curriculum-split-panel) ─────────────────────────────── */
 const W = {
   surface: "#f4f1ea",
@@ -88,6 +129,9 @@ export function ActivityMaterialSection({
   const [material, setMaterial] = useState<ActivityMaterial | null>(initialMaterial);
   const [busy, setBusy] = useState(false);
 
+  // Parent resolves the real material (with signed fileUrl) before mounting this.
+  const [fileUrl, setFileUrl] = useState<string | null>(initialMaterial?.fileUrl ?? null);
+
   // Upload draft
   const [file, setFile] = useState<File | null>(null);
   const [uploadTitle, setUploadTitle] = useState("");
@@ -111,9 +155,14 @@ export function ActivityMaterialSection({
   function handleFilePick(e: ChangeEvent<HTMLInputElement>) {
     const picked = e.target.files?.[0] ?? null;
     setFile(picked);
-    setUploadError(null);
-    if (picked && !uploadTitle.trim()) {
-      setUploadTitle(picked.name.replace(/\.[^/.]+$/, ""));
+    if (!picked) {
+      setUploadError(null);
+      return;
+    }
+    const fileError = validateFile(picked);
+    setUploadError(fileError);
+    if (!fileError && !uploadTitle.trim()) {
+      setUploadTitle(picked.name.replace(/\.[^/.]+$/, "").slice(0, MAX_TITLE_LENGTH));
     }
   }
 
@@ -122,18 +171,29 @@ export function ActivityMaterialSection({
       setUploadError("Vui lòng chọn tệp tài liệu.");
       return;
     }
-    if (!uploadTitle.trim()) {
+    const fileError = validateFile(file);
+    if (fileError) {
+      setUploadError(fileError);
+      return;
+    }
+    const title = uploadTitle.trim();
+    if (!title) {
       setUploadError("Vui lòng nhập tiêu đề tài liệu.");
+      return;
+    }
+    if (title.length > MAX_TITLE_LENGTH) {
+      setUploadError(`Tiêu đề tối đa ${MAX_TITLE_LENGTH} ký tự.`);
       return;
     }
     setBusy(true);
     try {
-      const result = await uploadMaterial(activityId, uploadTitle.trim(), file);
+      const result = await uploadMaterial(activityId, title, file);
       setMaterial(result?.data ?? null);
+      setFileUrl(result?.data?.fileUrl ?? null);
       resetUploadDraft();
       showAppSuccess({
         title: "Tải lên thành công",
-        description: `Đã đính kèm tài liệu "${uploadTitle.trim()}".`,
+        description: `Đã đính kèm tài liệu "${title}".`,
       });
       onChanged();
     } catch (err) {
@@ -171,6 +231,7 @@ export function ActivityMaterialSection({
     try {
       await deleteMaterial(material.id);
       setMaterial(null);
+      setFileUrl(null);
       showAppSuccess({ title: "Đã xóa", description: "Tài liệu đã được gỡ khỏi hoạt động." });
       onChanged();
     } catch (err) {
@@ -190,7 +251,7 @@ export function ActivityMaterialSection({
           className="flex items-start gap-3 rounded-xl border bg-white p-3.5"
           style={{ borderColor: W.border }}
         >
-          <MaterialIcon materialType={material.materialType} />
+          <MaterialPreview materialType={material.materialType} fileUrl={fileUrl} />
 
           <div className="min-w-0 flex-1">
             {editingTitle ? (
@@ -249,9 +310,9 @@ export function ActivityMaterialSection({
                 {visualFor(material.materialType).label}
               </span>
               {formatBytes(material.fileSizeBytes) && <span>{formatBytes(material.fileSizeBytes)}</span>}
-              {material.fileUrl ? (
+              {fileUrl ? (
                 <a
-                  href={material.fileUrl}
+                  href={fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 font-semibold hover:underline"
@@ -260,7 +321,9 @@ export function ActivityMaterialSection({
                   <ExternalLink className="size-3" />
                   Xem tệp
                 </a>
-              ) : null}
+              ) : (
+                <span style={{ color: W.faint }}>Đang tải tệp…</span>
+              )}
             </div>
           </div>
 
@@ -301,13 +364,18 @@ export function ActivityMaterialSection({
             <input
               ref={fileInputRef}
               type="file"
+              accept=".pdf,.doc,.docx,.mp4,.mov,.avi,.mkv,.jpg,.jpeg,.png,.gif,.webp"
               onChange={handleFilePick}
               disabled={busy}
               className="block w-full text-sm text-[#3a3833] file:mr-3 file:rounded-lg file:border-0 file:bg-[#e7e2d8] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[#3a3833] hover:file:bg-[#ded8cc]"
             />
-            {file && (
+            {file ? (
               <p className="text-[11px]" style={{ color: W.faint }}>
                 {file.name} · {formatBytes(file.size)}
+              </p>
+            ) : (
+              <p className="text-[11px]" style={{ color: W.faint }}>
+                PDF/DOC ≤ 50MB · Video ≤ 3GB · Ảnh ≤ 10MB
               </p>
             )}
           </div>
@@ -319,6 +387,7 @@ export function ActivityMaterialSection({
             <input
               type="text"
               value={uploadTitle}
+              maxLength={MAX_TITLE_LENGTH}
               onChange={(e) => setUploadTitle(e.target.value)}
               onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === "Enter") {
@@ -367,15 +436,39 @@ export function ActivityMaterialSection({
   );
 }
 
-function MaterialIcon({ materialType }: { materialType: string }) {
+function MaterialPreview({
+  materialType,
+  fileUrl,
+}: {
+  materialType: string;
+  fileUrl: string | null;
+}) {
   const { Icon, color } = visualFor(materialType);
+  const isImage = materialType === "Image";
+
+  if (isImage && fileUrl) {
+    return (
+      <a
+        href={fileUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        title="Xem ảnh đầy đủ"
+        className="block size-14 shrink-0 overflow-hidden rounded-lg border"
+        style={{ borderColor: W.border }}
+      >
+        {/* eslint-disable-next-line @next/next/no-img-element -- signed URL, unknown host, thumbnail only */}
+        <img src={fileUrl} alt="Xem trước tài liệu" className="size-full object-cover" />
+      </a>
+    );
+  }
+
   return (
     <span
-      className="flex size-10 shrink-0 items-center justify-center rounded-lg border"
-      style={{ background: "white", borderColor: W.border, color }}
+      className="flex size-14 shrink-0 items-center justify-center rounded-lg border"
+      style={{ background: W.surface, borderColor: W.border, color }}
       aria-hidden
     >
-      <Icon className="size-5" strokeWidth={2} />
+      <Icon className="size-6" strokeWidth={2} />
     </span>
   );
 }

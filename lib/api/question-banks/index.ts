@@ -23,6 +23,7 @@ export type {
   GetQuestionBankResult,
   ImportQuestionsResponse,
   ImportQuestionsResult,
+  ImportRowError,
 } from "./schemas";
 
 export type { QuestionBank } from "@/lib/api/entities/question-bank";

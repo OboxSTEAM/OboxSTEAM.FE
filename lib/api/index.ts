@@ -189,12 +189,18 @@ export {
 } from "./assignments";
 
 export {
+  getMaterials,
   getMaterialByActivityId,
   uploadMaterial,
   updateMaterial,
   deleteMaterial,
   type Material,
   type MaterialType,
+  type MaterialListItem,
+  type MaterialListQuery,
+  type MaterialTypeFilter,
+  type GetMaterialsResponse,
+  type GetMaterialsResult,
   type GetMaterialResponse,
   type GetMaterialResult,
   type UploadMaterialResponse,
@@ -242,6 +248,7 @@ export {
   type GetQuestionBankResult,
   type ImportQuestionsResponse,
   type ImportQuestionsResult,
+  type ImportRowError,
   type QuestionBank,
   type QuestionBankIdParam,
 } from "./question-banks";

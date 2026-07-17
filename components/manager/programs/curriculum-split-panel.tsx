@@ -24,6 +24,7 @@ import {
   Save,
   FolderPlus,
   ChevronRight,
+  AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
 
@@ -54,6 +55,7 @@ import {
   deleteActivity,
   deleteAssignment,
   getAssignmentById,
+  getMaterialByActivityId,
   deleteResearchMilestone,
   getResearchMilestoneById,
   getResearchMilestonesByModule,
@@ -62,6 +64,7 @@ import {
   type Module,
   type Course,
   type Activity as ActivityType,
+  type ActivityMaterial,
   type AssignmentDetail,
   type ResearchMilestone,
 } from "@/lib/api";
@@ -353,7 +356,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
 
-  const { register, handleSubmit, control, reset, formState: { errors } } = useForm<MFV>({
+  const { register, handleSubmit, control, reset, getValues, formState: { errors } } = useForm<MFV>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(isEdit ? updateModuleSchema : createModuleSchema) as any,
     values: moduleToEdit ? {
@@ -379,8 +382,12 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   const onSubmit = async (data: any) => {
     setBusy(true);
     try {
-      const outcomes = data.learningOutcomesText
-        ? data.learningOutcomesText.split("\n").map((s: string) => s.trim()).filter(Boolean) : [];
+      // `learningOutcomesText` is a UI-only field absent from the module Zod
+      // schema, so the resolver strips it from `data`. Read it straight from the
+      // form state so edits actually reach the API payload.
+      const outcomesText = getValues("learningOutcomesText") ?? "";
+      const outcomes = outcomesText
+        ? outcomesText.split("\n").map((s) => s.trim()).filter(Boolean) : [];
       const payload = {
         code: data.code || null, programId: data.programId, name: data.name, moduleType: data.moduleType,
         moduleOrder: Number(data.moduleOrder), prerequisiteModuleId: data.prerequisiteModuleId || null,
@@ -588,7 +595,7 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
 
-  const { register, handleSubmit, control, watch, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateActivitySchema : createActivitySchema),
     values: activityToEdit ? {
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
@@ -606,15 +613,51 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
   });
 
   const actType = watch("activityType");
+  const activityId = activityToEdit?.id;
+  const [existingMaterial, setExistingMaterial] = useState<ActivityMaterial | null>(
+    activityToEdit?.material ?? null,
+  );
+  const [materialLoading, setMaterialLoading] = useState(isEdit);
+  const [showMaterial, setShowMaterial] = useState(!!activityToEdit?.material);
+
+  // The activity payload may omit its material; ask the server so the checkbox
+  // reflects reality (ticked from load) and we never show a stale/other file.
+  // Material only applies to SelfPaced activities.
+  useEffect(() => {
+    if (!isEdit || !activityId || activityToEdit?.activityType !== "SelfPaced") {
+      setMaterialLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setMaterialLoading(true);
+    void (async () => {
+      try {
+        const result = await getMaterialByActivityId(activityId);
+        if (cancelled) return;
+        if (result?.data) {
+          setExistingMaterial(result.data);
+          setShowMaterial(true);
+        }
+      } catch {
+        // No material yet, or not permitted — keep the upload form available.
+      } finally {
+        if (!cancelled) setMaterialLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEdit, activityId, activityToEdit?.activityType]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     setBusy(true);
     try {
       const live = data.activityType !== "SelfPaced";
+      const orderNum = Number(data.activityOrder);
       const payload = {
         code: data.code || null, courseId: data.courseId, name: data.name, activityType: data.activityType,
-        description: data.description || "", activityOrder: Number(data.activityOrder),
+        description: data.description || "", activityOrder: orderNum,
         location: live ? data.location || null : null,
         startTime: live ? toApiDateTimeFromLocalInput(data.startTime) : null,
         endTime: live ? toApiDateTimeFromLocalInput(data.endTime) : null,
@@ -622,7 +665,13 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
         requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
       };
       if (isEdit && activityToEdit) {
-        await updateActivity(activityToEdit.id, payload);
+        // The backend re-validates ActivityOrder against the course max on update,
+        // so omit it when unchanged to avoid a false "must be greater" rejection.
+        const orderUnchanged = orderNum === activityToEdit.activityOrder;
+        await updateActivity(activityToEdit.id, {
+          ...payload,
+          activityOrder: orderUnchanged ? undefined : orderNum,
+        });
         showAppSuccess({ title: "Cập nhật thành công", description: `Hoạt động ${data.name} đã được cập nhật.` });
       } else {
         await createActivity(payload);
@@ -651,7 +700,17 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
           <div className="flex flex-col space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Hoạt động <span style={{ color: W.primary }}>*</span></Label>
             <Controller name="activityType" control={control} render={({ field }) => (
-              <Select value={field.value} onValueChange={field.onChange}>
+              <Select value={field.value} onValueChange={(v) => {
+                field.onChange(v);
+                // Self-paced activities have no schedule; clear stale values so they
+                // are not resurfaced (and are sent as null on save).
+                if (v === "SelfPaced") {
+                  setValue("location", "");
+                  setValue("startTime", "");
+                  setValue("endTime", "");
+                  setValue("maxCapacity", null);
+                }
+              }}>
                 <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
                   <span className="truncate">
                     {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
@@ -739,20 +798,55 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
         </div>
 
         {actType === "SelfPaced" ? (
-          isEdit && activityToEdit ? (
-            <ActivityMaterialSection
-              activityId={activityToEdit.id}
-              initialMaterial={activityToEdit.material ?? null}
-              onChanged={onSuccess}
-            />
-          ) : (
-            <div className="border-t pt-5" style={{ borderColor: W.border }}>
-              <STitle>Tài liệu học tập</STitle>
-              <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
-                Lưu hoạt động trước, sau đó bạn có thể đính kèm tài liệu học tập tại đây.
+          <div className="border-t pt-5" style={{ borderColor: W.border }}>
+            <label className="flex cursor-pointer items-center gap-2">
+              <Checkbox
+                checked={showMaterial}
+                onCheckedChange={(v) => setShowMaterial(v === true)}
+                disabled={materialLoading}
+                className="border-[#8c8678] bg-white data-checked:border-primary"
+              />
+              <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                Đính kèm tài liệu học tập
+              </span>
+              {materialLoading && (
+                <span className="text-xs" style={{ color: W.faint }}>Đang kiểm tra…</span>
+              )}
+            </label>
+
+            {showMaterial ? (
+              <div className="mt-4">
+                {isEdit && activityToEdit ? (
+                  materialLoading ? (
+                    <p className="text-xs" style={{ color: W.faint }}>Đang tải tài liệu…</p>
+                  ) : (
+                    <ActivityMaterialSection
+                      activityId={activityToEdit.id}
+                      initialMaterial={existingMaterial}
+                      onChanged={onSuccess}
+                    />
+                  )
+                ) : (
+                  <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
+                    Lưu hoạt động trước, sau đó bạn có thể đính kèm tài liệu học tập tại đây.
+                  </p>
+                )}
+              </div>
+            ) : null}
+          </div>
+        ) : existingMaterial ? (
+          <div className="border-t pt-5" style={{ borderColor: W.border }}>
+            <div
+              className="flex items-start gap-2.5 rounded-xl border p-3.5 text-xs"
+              style={{ borderColor: "#f0c36d", background: "#fdf6e3", color: "#8a6d1f" }}
+            >
+              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+              <p className="leading-relaxed">
+                Hoạt động này có tài liệu{existingMaterial.title ? ` “${existingMaterial.title}”` : ""}. Hình thức không phải
+                Tự học sẽ <strong>ẩn tài liệu</strong> khỏi học viên (không xóa). Đổi lại “Tự học” để dùng, hoặc xóa tài liệu thủ công.
               </p>
             </div>
-          )
+          </div>
         ) : null}
       </div>
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
@@ -1482,12 +1576,13 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       const course =
         modules.find((m) => m.id === sel.moduleId)?.courses?.find((c) => c.id === sel.id) || null;
       return (
-        <CourseFormPanel moduleId={sel.moduleId} courseToEdit={course} onSuccess={onRefresh} />
+        <CourseFormPanel key={sel.id} moduleId={sel.moduleId} courseToEdit={course} onSuccess={onRefresh} />
       );
     }
     if (sel.kind === "activity-new") {
       return (
         <ActivityFormPanel
+          key={`activity-new-${sel.courseId}`}
           courseId={sel.courseId}
           activityToEdit={null}
           onSuccess={() => {
@@ -1504,7 +1599,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         .find((c) => c.activities?.some((a) => a.id === sel.id));
       const act = course?.activities?.find((a) => a.id === sel.id) || null;
       return (
-        <ActivityFormPanel courseId={sel.courseId} activityToEdit={act} onSuccess={onRefresh} />
+        <ActivityFormPanel key={sel.id} courseId={sel.courseId} activityToEdit={act} onSuccess={onRefresh} />
       );
     }
     if (sel.kind === "assignment-new") {
@@ -1667,10 +1762,9 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                           ? formatActivityScheduleRange(act.startTime, act.endTime)
                           : "";
                       const metaBase = schedule ? `${typeLabel} · ${schedule}` : typeLabel;
-                      const activityMeta =
-                        act.activityType === "SelfPaced" && act.material
-                          ? `${metaBase} · Có tài liệu`
-                          : metaBase;
+                      const activityMeta = act.material
+                        ? `${metaBase} · Có tài liệu`
+                        : metaBase;
                       return (
                         <StructureTreeRow
                           key={act.id}
@@ -1692,33 +1786,32 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                         />
                       );
                     })}
-                    {(sel?.kind === "activity-new" && sel.courseId === course.id) || acts.length === 0 ? (
-                      <li className="relative">
-                        <span
-                          className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                          style={{ background: W.border }}
-                          aria-hidden
-                        />
-                        <span
-                          className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                          style={{ background: W.border }}
-                          aria-hidden
-                        />
-                        <button
-                          type="button"
-                          onClick={() => select({ kind: "activity-new", courseId: course.id })}
-                          className="ml-4 py-1.5 text-left text-[11px] font-medium"
-                          style={{
-                            color:
-                              sel?.kind === "activity-new" && sel.courseId === course.id
-                                ? "#9c27b0"
-                                : W.faint,
-                          }}
-                        >
-                          + Thêm hoạt động
-                        </button>
-                      </li>
-                    ) : null}
+                    <li className="relative">
+                      <span
+                        className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                        style={{ background: W.border }}
+                        aria-hidden
+                      />
+                      <span
+                        className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                        style={{ background: W.border }}
+                        aria-hidden
+                      />
+                      <button
+                        type="button"
+                        onClick={() => select({ kind: "activity-new", courseId: course.id })}
+                        className="ml-4 flex items-center gap-1.5 py-1.5 text-left text-[11px] font-medium"
+                        style={{
+                          color:
+                            sel?.kind === "activity-new" && sel.courseId === course.id
+                              ? "#9c27b0"
+                              : W.faint,
+                        }}
+                      >
+                        <ActivityIcon className="size-3" />
+                        Thêm hoạt động
+                      </button>
+                    </li>
                   </StructureTreeRow>
                 );
               })}
