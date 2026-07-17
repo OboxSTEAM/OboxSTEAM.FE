@@ -33,6 +33,10 @@ export const programIdParamSchema = z.object({
   id: z.string().uuid("ID chương trình không hợp lệ."),
 });
 
+export const reviewIdParamSchema = z.object({
+  reviewId: z.string().uuid("ID đánh giá không hợp lệ."),
+});
+
 export const programReviewsSortBySchema = z.enum(["createdAt", "starRating"]);
 
 /** Query params for `GET /api/programs/{programId}/reviews`. */

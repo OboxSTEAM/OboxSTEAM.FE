@@ -24,6 +24,7 @@ export {
 export {
   createProgram,
   deleteProgram,
+  deleteProgramReview,
   getProgramById,
   getProgramCurriculum,
   getProgramReviews,
@@ -36,6 +37,8 @@ export {
   type CurriculumModule,
   type DeleteProgramResponse,
   type DeleteProgramResult,
+  type DeleteProgramReviewResponse,
+  type DeleteProgramReviewResult,
   type GetProgramByIdResponse,
   type GetProgramByIdResult,
   type GetProgramCurriculumResponse,

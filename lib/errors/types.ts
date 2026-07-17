@@ -35,6 +35,7 @@ export type AppErrorContext =
   | "programs.update"
   | "programs.delete"
   | "programs.reviews"
+  | "programs.reviews.delete"
   | "programs.expert"
   | "curriculum.module.save"
   | "curriculum.course.save"

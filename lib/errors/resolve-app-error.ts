@@ -110,6 +110,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
     action: "Thử tải lại hoặc chuyển sang tab khác rồi quay lại.",
   },
+  "programs.reviews.delete": {
+    title: "Không xóa được đánh giá",
+    reason: "Đánh giá có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại danh sách đánh giá và thử lại.",
+  },
   "programs.expert": {
     title: "Không tải được thông tin chuyên gia",
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
@@ -221,6 +226,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "programs.create",
   "programs.update",
   "programs.delete",
+  "programs.reviews.delete",
   "curriculum.module.save",
   "curriculum.course.save",
   "curriculum.activity.save",

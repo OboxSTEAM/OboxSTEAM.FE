@@ -6,6 +6,7 @@ import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
+import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { type ProgramWithModules } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -137,10 +138,11 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
         {activeTab === "reviews" && (
           <div className="py-4">
-            <ManagerEmptyState
-              title="Đánh giá từ Học viên"
-              description={`Danh sách ý kiến phản hồi và đánh giá sao cho chương trình ${program.name}.`}
-              icon={Star}
+            <ProgramReviewsManager
+              programId={program.id}
+              programName={program.name}
+              programRating={program.rating}
+              totalReviews={program.totalReviews}
             />
           </div>
         )}
