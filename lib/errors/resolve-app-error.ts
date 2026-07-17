@@ -140,6 +140,51 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Yêu cầu nộp bị từ chối hoặc bài nộp chưa sẵn sàng.",
     action: "Kiểm tra tệp chính, điều kiện mốc và thử lại.",
   },
+  "portfolio.load": {
+    title: "Không tải được portfolio",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
+  "portfolio.create": {
+    title: "Không tạo được portfolio",
+    reason: "Portfolio có thể đã tồn tại hoặc yêu cầu bị từ chối.",
+    action: "Tải lại trang hoặc thử lại sau vài giây.",
+  },
+  "portfolio.update": {
+    title: "Không lưu được portfolio",
+    reason: "Thông tin chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra các trường và thử lưu lại.",
+  },
+  "portfolio.subdomain": {
+    title: "Không cập nhật được subdomain",
+    reason: "Subdomain đã được dùng, không hợp lệ, hoặc yêu cầu bị từ chối.",
+    action: "Chọn subdomain khác hoặc bỏ trống khi chưa công khai.",
+  },
+  "portfolio.publish": {
+    title: "Không cập nhật được trạng thái công khai",
+    reason: "Cần subdomain hợp lệ trước khi công khai, hoặc yêu cầu bị từ chối.",
+    action: "Đặt subdomain rồi thử công khai lại.",
+  },
+  "portfolio.item": {
+    title: "Không cập nhật được mục portfolio",
+    reason: "Thông tin mục chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra tiêu đề và nội dung rồi thử lại.",
+  },
+  "portfolio.reorder": {
+    title: "Không sắp xếp được mục",
+    reason: "Danh sách mục không hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Thử kéo thả lại hoặc tải lại trang.",
+  },
+  "portfolio.sync": {
+    title: "Không đồng bộ được mục tự động",
+    reason: "Máy chủ tạm thời không phản hồi hoặc yêu cầu bị từ chối.",
+    action: "Thử đồng bộ lại sau vài giây.",
+  },
+  "portfolio.public": {
+    title: "Không tải được trang công khai",
+    reason: "Portfolio không tồn tại, chưa công khai, hoặc máy chủ tạm thời không phản hồi.",
+    action: "Kiểm tra lại liên kết hoặc quay lại trang chủ.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

@@ -40,4 +40,13 @@ export type AppErrorContext =
   | "payments.parent-checkout"
   | "enrollments.list"
   | "research.upload"
-  | "research.submit";
+  | "research.submit"
+  | "portfolio.load"
+  | "portfolio.create"
+  | "portfolio.update"
+  | "portfolio.subdomain"
+  | "portfolio.publish"
+  | "portfolio.item"
+  | "portfolio.reorder"
+  | "portfolio.sync"
+  | "portfolio.public";

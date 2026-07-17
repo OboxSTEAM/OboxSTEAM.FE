@@ -151,8 +151,16 @@ The `components.json` already has the React Bits registry registered:
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_API_URL` | No (dev) | Backend API base URL |
+| `NEXT_PUBLIC_ROOT_DOMAIN` | No (dev) | Root host for portfolio subdomains (e.g. `localhost:3000` or `oboxsteam.website`). Middleware rewrites `{sub}.root` → `/p/{sub}`. |
 
 Copy `.env.example` → `.env.local` and fill in values. Never commit `.env.local`.
+
+### Portfolio public URLs
+
+- Path fallback: `/p/{subdomain}` (works without DNS).
+- Subdomain: `{subdomain}.{NEXT_PUBLIC_ROOT_DOMAIN}` via `middleware.ts` Host rewrite.
+- Local testing: Chromium resolves `*.localhost` — e.g. `http://alice.localhost:3000`.
+- Production needs wildcard DNS `*.rootdomain` → this Next.js app.
 
 ---
 

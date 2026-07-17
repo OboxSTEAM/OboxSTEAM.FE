@@ -286,7 +286,7 @@ export async function getPublicPortfolioBySubdomain(
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/by-subdomain/${encodeURIComponent(parsedSubdomain)}`,
     getPublicPortfolioBySubdomainResponseSchema,
-    { method: "GET" },
+    { method: "GET", skipAuth: true },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

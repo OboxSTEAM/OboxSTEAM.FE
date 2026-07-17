@@ -67,17 +67,31 @@ export type GetPublicPortfolioBySubdomainResponse = z.infer<
   typeof getPublicPortfolioBySubdomainResponseSchema
 >;
 
-export type GetMyPortfolioResult = GetMyPortfolioResponse["value"];
-export type CreatePortfolioResult = CreatePortfolioResponse["value"];
-export type UpdatePortfolioResult = UpdatePortfolioResponse["value"];
-export type UpdatePortfolioSubdomainResult = UpdatePortfolioSubdomainResponse["value"];
-export type UpdatePortfolioPublicationResult = UpdatePortfolioPublicationResponse["value"];
-export type SyncPortfolioItemsResult = SyncPortfolioItemsResponse["value"];
-export type ReorderPortfolioItemsResult = ReorderPortfolioItemsResponse["value"];
-export type CreatePortfolioItemResult = CreatePortfolioItemResponse["value"];
-export type UpdatePortfolioItemResult = UpdatePortfolioItemResponse["value"];
-export type DeletePortfolioItemResult = DeletePortfolioItemResponse["value"];
-export type CheckPortfolioSubdomainAvailabilityResult =
-  CheckPortfolioSubdomainAvailabilityResponse["value"];
-export type GetPublicPortfolioBySubdomainResult =
-  GetPublicPortfolioBySubdomainResponse["value"];
+export type GetMyPortfolioResult = NonNullable<GetMyPortfolioResponse["value"]>;
+export type CreatePortfolioResult = NonNullable<CreatePortfolioResponse["value"]>;
+export type UpdatePortfolioResult = NonNullable<UpdatePortfolioResponse["value"]>;
+export type UpdatePortfolioSubdomainResult = NonNullable<
+  UpdatePortfolioSubdomainResponse["value"]
+>;
+export type UpdatePortfolioPublicationResult = NonNullable<
+  UpdatePortfolioPublicationResponse["value"]
+>;
+export type SyncPortfolioItemsResult = NonNullable<SyncPortfolioItemsResponse["value"]>;
+export type ReorderPortfolioItemsResult = NonNullable<
+  ReorderPortfolioItemsResponse["value"]
+>;
+export type CreatePortfolioItemResult = NonNullable<
+  CreatePortfolioItemResponse["value"]
+>;
+export type UpdatePortfolioItemResult = NonNullable<
+  UpdatePortfolioItemResponse["value"]
+>;
+export type DeletePortfolioItemResult = NonNullable<
+  DeletePortfolioItemResponse["value"]
+>;
+export type CheckPortfolioSubdomainAvailabilityResult = NonNullable<
+  CheckPortfolioSubdomainAvailabilityResponse["value"]
+>;
+export type GetPublicPortfolioBySubdomainResult = NonNullable<
+  GetPublicPortfolioBySubdomainResponse["value"]
+>;
