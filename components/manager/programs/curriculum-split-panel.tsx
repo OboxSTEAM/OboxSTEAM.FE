@@ -17,6 +17,8 @@ import {
   BookOpen,
   FolderOpen,
   Activity as ActivityIcon,
+  ClipboardList,
+  Flag,
   LayoutGrid,
   Check,
   Save,
@@ -35,6 +37,10 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { ProgramForm } from "@/components/manager/programs/program-form";
+import { ActivityMaterialSection } from "@/components/manager/programs/activity-material-section";
+import { AssignmentFormPanel } from "@/components/manager/programs/assignment-form-panel";
+import { MilestoneFormPanel } from "@/components/manager/programs/milestone-form-panel";
+import { QuestionBankSection } from "@/components/manager/programs/question-bank-section";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   createModule,
@@ -46,11 +52,18 @@ import {
   createActivity,
   updateActivity,
   deleteActivity,
+  deleteAssignment,
+  getAssignmentById,
+  deleteResearchMilestone,
+  getResearchMilestoneById,
+  getResearchMilestonesByModule,
   updateProgram,
   type ProgramWithModules,
   type Module,
   type Course,
   type Activity as ActivityType,
+  type AssignmentDetail,
+  type ResearchMilestone,
 } from "@/lib/api";
 import {
   createModuleSchema,
@@ -97,6 +110,12 @@ const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   Offline: "Offline tại lớp",
 }
 
+const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
+  Retrospective: "Nhật ký phản tư",
+  FileUpload: "Nộp tệp",
+  Quiz: "Trắc nghiệm",
+}
+
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
@@ -111,6 +130,10 @@ type SelectedNode =
   | { kind: "course"; id: string; moduleId: string }
   | { kind: "activity-new"; courseId: string }
   | { kind: "activity"; id: string; courseId: string }
+  | { kind: "assignment-new"; moduleId: string }
+  | { kind: "assignment"; id: string; moduleId: string }
+  | { kind: "milestone-new"; moduleId: string }
+  | { kind: "milestone"; id: string; moduleId: string }
   | null;
 
 /* ─── Micro helpers ─────────────────────────────────────────────────────────── */
@@ -158,6 +181,152 @@ function EmptyPanel() {
       <p className="text-sm font-semibold" style={{ color: W.textStrong }}>Chọn một mục để chỉnh sửa</p>
       <p className="text-xs max-w-[200px]" style={{ color: W.muted }}>Bấm vào tên chương trình, module, khóa học hoặc hoạt động bên trái.</p>
     </div>
+  );
+}
+
+/* ─── Assignment edit loader (fetch by id when not in session) ───────────────── */
+function AssignmentDetailLoader({
+  assignmentId,
+  moduleId,
+  courseOptions,
+  initial,
+  onSuccess,
+}: {
+  assignmentId: string;
+  moduleId: string;
+  courseOptions: { id: string; name: string }[];
+  initial: AssignmentDetail | null;
+  onSuccess: (a: AssignmentDetail) => void;
+}) {
+  const [assignment, setAssignment] = useState<AssignmentDetail | null>(initial);
+  const [loading, setLoading] = useState(!initial);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (initial) {
+      setAssignment(initial);
+      setLoading(false);
+      setFailed(false);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+    setFailed(false);
+    getAssignmentById(assignmentId)
+      .then((res) => {
+        if (!active) return;
+        setAssignment(res?.data ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setFailed(true);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [assignmentId, initial]);
+
+  if (loading) {
+    return (
+      <div className="p-5">
+        <div className="h-48 w-full animate-pulse rounded-xl" style={{ background: W.surface2 }} />
+      </div>
+    );
+  }
+  if (failed || !assignment) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
+        <p className="text-sm font-semibold" style={{ color: W.textStrong }}>
+          Không tải được bài tập
+        </p>
+        <p className="text-xs max-w-[220px]" style={{ color: W.muted }}>
+          Bài tập có thể đã bị xóa hoặc phiên làm việc đã hết. Hãy chọn lại từ danh sách.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <AssignmentFormPanel
+      moduleId={moduleId}
+      courseOptions={courseOptions}
+      assignmentToEdit={assignment}
+      onSuccess={onSuccess}
+    />
+  );
+}
+
+/* ─── Milestone edit loader (fetch by id when not in loaded list) ─────────────── */
+function MilestoneDetailLoader({
+  milestoneId,
+  moduleId,
+  activityOptions,
+  initial,
+  onSuccess,
+}: {
+  milestoneId: string;
+  moduleId: string;
+  activityOptions: { id: string; name: string }[];
+  initial: ResearchMilestone | null;
+  onSuccess: (m: ResearchMilestone) => void;
+}) {
+  const [milestone, setMilestone] = useState<ResearchMilestone | null>(initial);
+  const [loading, setLoading] = useState(!initial);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    if (initial) {
+      setMilestone(initial);
+      setLoading(false);
+      setFailed(false);
+      return;
+    }
+    let active = true;
+    setLoading(true);
+    setFailed(false);
+    getResearchMilestoneById(milestoneId)
+      .then((res) => {
+        if (!active) return;
+        setMilestone(res?.data ?? null);
+        setLoading(false);
+      })
+      .catch(() => {
+        if (!active) return;
+        setFailed(true);
+        setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [milestoneId, initial]);
+
+  if (loading) {
+    return (
+      <div className="p-5">
+        <div className="h-48 w-full animate-pulse rounded-xl" style={{ background: W.surface2 }} />
+      </div>
+    );
+  }
+  if (failed || !milestone) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
+        <p className="text-sm font-semibold" style={{ color: W.textStrong }}>
+          Không tải được milestone
+        </p>
+        <p className="text-xs max-w-[220px]" style={{ color: W.muted }}>
+          Milestone có thể đã bị xóa. Hãy chọn lại từ danh sách.
+        </p>
+      </div>
+    );
+  }
+  return (
+    <MilestoneFormPanel
+      moduleId={moduleId}
+      activityOptions={activityOptions}
+      milestoneToEdit={milestone}
+      onSuccess={onSuccess}
+    />
   );
 }
 
@@ -390,6 +559,17 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
           <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
         </div>
+
+        {isEdit && courseToEdit ? (
+          <QuestionBankSection courseId={courseToEdit.id} />
+        ) : (
+          <div className="border-t pt-5" style={{ borderColor: W.border }}>
+            <STitle>Ngân hàng câu hỏi</STitle>
+            <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
+              Lưu khóa học trước, sau đó bạn có thể tạo ngân hàng câu hỏi tại đây.
+            </p>
+          </div>
+        )}
       </div>
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Khóa học"} />
@@ -557,6 +737,23 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
             <textarea rows={3} placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
           </div>
         </div>
+
+        {actType === "SelfPaced" ? (
+          isEdit && activityToEdit ? (
+            <ActivityMaterialSection
+              activityId={activityToEdit.id}
+              initialMaterial={activityToEdit.material ?? null}
+              onChanged={onSuccess}
+            />
+          ) : (
+            <div className="border-t pt-5" style={{ borderColor: W.border }}>
+              <STitle>Tài liệu học tập</STitle>
+              <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
+                Lưu hoạt động trước, sau đó bạn có thể đính kèm tài liệu học tập tại đây.
+              </p>
+            </div>
+          )
+        ) : null}
       </div>
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Hoạt động"} />
@@ -620,7 +817,13 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
 /* ══════════════════════════════════════════════════════════════════════════════
    STRUCTURE CARD
 ══════════════════════════════════════════════════════════════════════════════ */
-type StructureNodeKind = "program" | "module" | "course" | "activity";
+type StructureNodeKind =
+  | "program"
+  | "module"
+  | "course"
+  | "activity"
+  | "assignment"
+  | "milestone";
 
 const STRUCTURE_NODE_ICON: Record<
   StructureNodeKind,
@@ -630,6 +833,8 @@ const STRUCTURE_NODE_ICON: Record<
   module: { Icon: FolderOpen, color: "#7CB342", bg: "#ffffff" },
   course: { Icon: BookOpen, color: "#4FC3F7", bg: "#ffffff" },
   activity: { Icon: ActivityIcon, color: "#9c27b0", bg: "#ffffff" },
+  assignment: { Icon: ClipboardList, color: "#f59e0b", bg: "#ffffff" },
+  milestone: { Icon: Flag, color: "#8b5cf6", bg: "#ffffff" },
 };
 
 function StructureTreeRow({
@@ -873,6 +1078,20 @@ function selToQuery(sel: SelectedNode): string {
     params.set("node", "activity");
     params.set("id", sel.id);
     params.set("courseId", sel.courseId);
+  } else if (sel.kind === "assignment-new") {
+    params.set("node", "assignment-new");
+    params.set("moduleId", sel.moduleId);
+  } else if (sel.kind === "assignment") {
+    params.set("node", "assignment");
+    params.set("id", sel.id);
+    params.set("moduleId", sel.moduleId);
+  } else if (sel.kind === "milestone-new") {
+    params.set("node", "milestone-new");
+    params.set("moduleId", sel.moduleId);
+  } else if (sel.kind === "milestone") {
+    params.set("node", "milestone");
+    params.set("id", sel.id);
+    params.set("moduleId", sel.moduleId);
   }
   return params.toString();
 }
@@ -902,6 +1121,36 @@ function parseSelFromSearch(
     const courseId = searchParams.get("courseId");
     if (courseId && modules.some((m) => m.courses?.some((c) => c.id === courseId))) {
       return { kind: "activity-new", courseId };
+    }
+    return null;
+  }
+  if (node === "assignment-new") {
+    const moduleId = searchParams.get("moduleId");
+    if (moduleId && modules.some((m) => m.id === moduleId)) {
+      return { kind: "assignment-new", moduleId };
+    }
+    return null;
+  }
+  if (node === "assignment") {
+    const id = searchParams.get("id");
+    const moduleId = searchParams.get("moduleId");
+    if (id && moduleId && modules.some((m) => m.id === moduleId)) {
+      return { kind: "assignment", id, moduleId };
+    }
+    return null;
+  }
+  if (node === "milestone-new") {
+    const moduleId = searchParams.get("moduleId");
+    if (moduleId && modules.some((m) => m.id === moduleId)) {
+      return { kind: "milestone-new", moduleId };
+    }
+    return null;
+  }
+  if (node === "milestone") {
+    const id = searchParams.get("id");
+    const moduleId = searchParams.get("moduleId");
+    if (id && moduleId && modules.some((m) => m.id === moduleId)) {
+      return { kind: "milestone", id, moduleId };
     }
     return null;
   }
@@ -967,10 +1216,84 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
     return parseSelFromSearch(searchParams, modules) ?? { kind: "program" };
   });
   const [delTarget, setDelTarget] = useState<{
-    type: "module" | "course" | "activity";
+    type: "module" | "course" | "activity" | "assignment" | "milestone";
     id: string;
     name: string;
+    moduleId?: string;
   } | null>(null);
+
+  /**
+   * Assignments created/edited this session, keyed by moduleId. The backend has no
+   * "list assignments by module" endpoint yet (see plan.md), so the tree can only
+   * surface assignments the manager touched in this session.
+   */
+  const [sessionAssignments, setSessionAssignments] = useState<
+    Record<string, AssignmentDetail[]>
+  >({});
+
+  const upsertSessionAssignment = useCallback((assignment: AssignmentDetail) => {
+    setSessionAssignments((prev) => {
+      const list = prev[assignment.moduleId] ?? [];
+      const next = list.some((a) => a.id === assignment.id)
+        ? list.map((a) => (a.id === assignment.id ? assignment : a))
+        : [...list, assignment];
+      return { ...prev, [assignment.moduleId]: next };
+    });
+  }, []);
+
+  const removeSessionAssignment = useCallback((moduleId: string, id: string) => {
+    setSessionAssignments((prev) => {
+      const list = prev[moduleId] ?? [];
+      return { ...prev, [moduleId]: list.filter((a) => a.id !== id) };
+    });
+  }, []);
+
+  /** Milestones per Research module (has a list endpoint, unlike assignments). */
+  const [milestonesByModule, setMilestonesByModule] = useState<
+    Record<string, ResearchMilestone[]>
+  >({});
+
+  const researchIdsKey = modules
+    .filter((m) => m.moduleType === "Research")
+    .map((m) => m.id)
+    .join(",");
+
+  useEffect(() => {
+    if (!researchIdsKey) return;
+    const ids = researchIdsKey.split(",");
+    let active = true;
+    ids.forEach((mid) => {
+      getResearchMilestonesByModule(mid)
+        .then((res) => {
+          if (active) {
+            setMilestonesByModule((prev) => ({ ...prev, [mid]: res?.data ?? [] }));
+          }
+        })
+        .catch(() => {
+          /* module may have no milestones yet — ignore */
+        });
+    });
+    return () => {
+      active = false;
+    };
+  }, [researchIdsKey]);
+
+  const upsertMilestone = useCallback((milestone: ResearchMilestone) => {
+    setMilestonesByModule((prev) => {
+      const list = prev[milestone.moduleId] ?? [];
+      const next = list.some((m) => m.id === milestone.id)
+        ? list.map((m) => (m.id === milestone.id ? milestone : m))
+        : [...list, milestone];
+      return { ...prev, [milestone.moduleId]: next };
+    });
+  }, []);
+
+  const removeMilestone = useCallback((moduleId: string, id: string) => {
+    setMilestonesByModule((prev) => {
+      const list = prev[moduleId] ?? [];
+      return { ...prev, [moduleId]: list.filter((m) => m.id !== id) };
+    });
+  }, []);
 
   const select = useCallback(
     (next: SelectedNode) => {
@@ -1009,8 +1332,17 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
     let course: Course | null = null;
     let activity: ActivityType | null = null;
 
-    if (sel?.kind === "module" || sel?.kind === "course-new") {
-      module = modules.find((m) => m.id === (sel.kind === "module" ? sel.id : sel.moduleId)) ?? null;
+    if (
+      sel?.kind === "module" ||
+      sel?.kind === "course-new" ||
+      sel?.kind === "assignment-new" ||
+      sel?.kind === "assignment" ||
+      sel?.kind === "milestone-new" ||
+      sel?.kind === "milestone"
+    ) {
+      const moduleId =
+        sel.kind === "module" ? sel.id : sel.moduleId;
+      module = modules.find((m) => m.id === moduleId) ?? null;
     } else if (sel?.kind === "course") {
       module = modules.find((m) => m.id === sel.moduleId) ?? null;
       course = module?.courses?.find((c) => c.id === sel.id) ?? null;
@@ -1055,6 +1387,14 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       parts.push({ label: "Khóa học mới" });
     } else if (sel?.kind === "activity-new") {
       parts.push({ label: "Hoạt động mới" });
+    } else if (sel?.kind === "assignment-new") {
+      parts.push({ label: "Bài tập mới" });
+    } else if (sel?.kind === "assignment") {
+      parts.push({ label: "Bài tập" });
+    } else if (sel?.kind === "milestone-new") {
+      parts.push({ label: "Milestone mới" });
+    } else if (sel?.kind === "milestone") {
+      parts.push({ label: "Milestone" });
     }
     return parts;
   }, [program.name, context, sel, select]);
@@ -1068,9 +1408,27 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       } else if (delTarget.type === "course") {
         await deleteCourse(delTarget.id);
         showAppSuccess({ title: "Đã xóa", description: `Khóa học: ${delTarget.name}` });
-      } else {
+      } else if (delTarget.type === "activity") {
         await deleteActivity(delTarget.id);
         showAppSuccess({ title: "Đã xóa", description: `Hoạt động: ${delTarget.name}` });
+      } else if (delTarget.type === "assignment") {
+        await deleteAssignment(delTarget.id);
+        if (delTarget.moduleId) removeSessionAssignment(delTarget.moduleId, delTarget.id);
+        showAppSuccess({ title: "Đã xóa", description: `Bài tập: ${delTarget.name}` });
+        if (delTarget.moduleId) {
+          select({ kind: "module", id: delTarget.moduleId });
+          setDelTarget(null);
+          return;
+        }
+      } else {
+        await deleteResearchMilestone(delTarget.id);
+        if (delTarget.moduleId) removeMilestone(delTarget.moduleId, delTarget.id);
+        showAppSuccess({ title: "Đã xóa", description: `Milestone: ${delTarget.name}` });
+        if (delTarget.moduleId) {
+          select({ kind: "module", id: delTarget.moduleId });
+          setDelTarget(null);
+          return;
+        }
       }
       select({ kind: "program" });
       onRefresh();
@@ -1149,8 +1507,84 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         <ActivityFormPanel courseId={sel.courseId} activityToEdit={act} onSuccess={onRefresh} />
       );
     }
+    if (sel.kind === "assignment-new") {
+      const mod = modules.find((m) => m.id === sel.moduleId);
+      const courseOptions = (mod?.courses ?? []).map((c) => ({ id: c.id, name: c.name }));
+      return (
+        <AssignmentFormPanel
+          moduleId={sel.moduleId}
+          courseOptions={courseOptions}
+          assignmentToEdit={null}
+          onSuccess={(a) => {
+            upsertSessionAssignment(a);
+            select({ kind: "assignment", id: a.id, moduleId: sel.moduleId });
+          }}
+        />
+      );
+    }
+    if (sel.kind === "assignment") {
+      const mod = modules.find((m) => m.id === sel.moduleId);
+      const courseOptions = (mod?.courses ?? []).map((c) => ({ id: c.id, name: c.name }));
+      const fromSession =
+        (sessionAssignments[sel.moduleId] ?? []).find((a) => a.id === sel.id) ?? null;
+      return (
+        <AssignmentDetailLoader
+          key={sel.id}
+          assignmentId={sel.id}
+          moduleId={sel.moduleId}
+          courseOptions={courseOptions}
+          initial={fromSession}
+          onSuccess={upsertSessionAssignment}
+        />
+      );
+    }
+    if (sel.kind === "milestone-new") {
+      const mod = modules.find((m) => m.id === sel.moduleId);
+      const activityOptions = (mod?.courses ?? [])
+        .flatMap((c) => c.activities ?? [])
+        .map((a) => ({ id: a.id, name: a.name }));
+      return (
+        <MilestoneFormPanel
+          moduleId={sel.moduleId}
+          activityOptions={activityOptions}
+          milestoneToEdit={null}
+          onSuccess={(m) => {
+            upsertMilestone(m);
+            select({ kind: "milestone", id: m.id, moduleId: sel.moduleId });
+          }}
+        />
+      );
+    }
+    if (sel.kind === "milestone") {
+      const mod = modules.find((m) => m.id === sel.moduleId);
+      const activityOptions = (mod?.courses ?? [])
+        .flatMap((c) => c.activities ?? [])
+        .map((a) => ({ id: a.id, name: a.name }));
+      const fromList =
+        (milestonesByModule[sel.moduleId] ?? []).find((m) => m.id === sel.id) ?? null;
+      return (
+        <MilestoneDetailLoader
+          key={sel.id}
+          milestoneId={sel.id}
+          moduleId={sel.moduleId}
+          activityOptions={activityOptions}
+          initial={fromList}
+          onSuccess={upsertMilestone}
+        />
+      );
+    }
     return <EmptyPanel />;
-  }, [sel, program, modules, onRefresh, select]);
+  }, [
+    sel,
+    program,
+    modules,
+    onRefresh,
+    select,
+    sessionAssignments,
+    upsertSessionAssignment,
+    milestonesByModule,
+    upsertMilestone,
+  ]);
 
   const structureTree = (
     <ul className="relative" role="list">
@@ -1173,6 +1607,10 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
             (sel?.kind === "module" && sel.id === mod.id) ||
             (sel?.kind === "course" && sel.moduleId === mod.id) ||
             (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
+            (sel?.kind === "assignment" && sel.moduleId === mod.id) ||
+            (sel?.kind === "assignment-new" && sel.moduleId === mod.id) ||
+            (sel?.kind === "milestone" && sel.moduleId === mod.id) ||
+            (sel?.kind === "milestone-new" && sel.moduleId === mod.id) ||
             (sel?.kind === "activity" &&
               courses.some((c) => c.id === sel.courseId)) ||
             (sel?.kind === "activity-new" &&
@@ -1228,6 +1666,11 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                         act.activityType !== "SelfPaced"
                           ? formatActivityScheduleRange(act.startTime, act.endTime)
                           : "";
+                      const metaBase = schedule ? `${typeLabel} · ${schedule}` : typeLabel;
+                      const activityMeta =
+                        act.activityType === "SelfPaced" && act.material
+                          ? `${metaBase} · Có tài liệu`
+                          : metaBase;
                       return (
                         <StructureTreeRow
                           key={act.id}
@@ -1239,7 +1682,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                           kind="activity"
                           selected={sel?.kind === "activity" && sel.id === act.id}
                           label={act.name}
-                          meta={schedule ? `${typeLabel} · ${schedule}` : typeLabel}
+                          meta={activityMeta}
                           onSelect={() =>
                             select({ kind: "activity", id: act.id, courseId: course.id })
                           }
@@ -1306,6 +1749,110 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                   </button>
                 </li>
               ) : null}
+
+              {(sessionAssignments[mod.id] ?? []).map((asg, aIdx, arr) => (
+                <StructureTreeRow
+                  key={asg.id}
+                  depth={2}
+                  isLast={
+                    aIdx === arr.length - 1 &&
+                    !(sel?.kind === "assignment-new" && sel.moduleId === mod.id)
+                  }
+                  kind="assignment"
+                  selected={sel?.kind === "assignment" && sel.id === asg.id}
+                  label={asg.title}
+                  meta={ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ?? asg.assignmentType}
+                  onSelect={() => select({ kind: "assignment", id: asg.id, moduleId: mod.id })}
+                  onDelete={() =>
+                    setDelTarget({
+                      type: "assignment",
+                      id: asg.id,
+                      name: asg.title,
+                      moduleId: mod.id,
+                    })
+                  }
+                />
+              ))}
+              <li className="relative">
+                <span
+                  className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                  style={{ background: W.border }}
+                  aria-hidden
+                />
+                <span
+                  className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                  style={{ background: W.border }}
+                  aria-hidden
+                />
+                <button
+                  type="button"
+                  onClick={() => select({ kind: "assignment-new", moduleId: mod.id })}
+                  className="ml-4 flex items-center gap-1.5 py-1.5 text-left text-[11px] font-medium"
+                  style={{
+                    color:
+                      sel?.kind === "assignment-new" && sel.moduleId === mod.id
+                        ? "#f59e0b"
+                        : W.faint,
+                  }}
+                >
+                  <ClipboardList className="size-3" />
+                  Thêm bài tập
+                </button>
+              </li>
+
+              {mod.moduleType === "Research" && (
+                <>
+                  {(milestonesByModule[mod.id] ?? []).map((ms, msIdx, arr) => (
+                    <StructureTreeRow
+                      key={ms.id}
+                      depth={2}
+                      isLast={
+                        msIdx === arr.length - 1 &&
+                        !(sel?.kind === "milestone-new" && sel.moduleId === mod.id)
+                      }
+                      kind="milestone"
+                      selected={sel?.kind === "milestone" && sel.id === ms.id}
+                      label={ms.title || ms.code || "Milestone"}
+                      meta={ms.isCapstone ? "Capstone" : `Mốc ${ms.milestoneOrder}`}
+                      onSelect={() => select({ kind: "milestone", id: ms.id, moduleId: mod.id })}
+                      onDelete={() =>
+                        setDelTarget({
+                          type: "milestone",
+                          id: ms.id,
+                          name: ms.title || "Milestone",
+                          moduleId: mod.id,
+                        })
+                      }
+                    />
+                  ))}
+                  <li className="relative">
+                    <span
+                      className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                      style={{ background: W.border }}
+                      aria-hidden
+                    />
+                    <span
+                      className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                      style={{ background: W.border }}
+                      aria-hidden
+                    />
+                    <button
+                      type="button"
+                      onClick={() => select({ kind: "milestone-new", moduleId: mod.id })}
+                      className="ml-4 flex items-center gap-1.5 py-1.5 text-left text-[11px] font-medium"
+                      style={{
+                        color:
+                          sel?.kind === "milestone-new" && sel.moduleId === mod.id
+                            ? "#8b5cf6"
+                            : W.faint,
+                      }}
+                    >
+                      <Flag className="size-3" />
+                      Thêm milestone
+                    </button>
+                  </li>
+                </>
+              )}
             </StructureTreeRow>
           );
         })}
@@ -1377,7 +1924,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
           if (!open) setDelTarget(null);
         }}
         onConfirm={handleDel}
-        title={`Xác nhận xóa ${delTarget?.type === "module" ? "Module" : delTarget?.type === "course" ? "Khóa học" : "Hoạt động"}`}
+        title={`Xác nhận xóa ${delTarget?.type === "module" ? "Module" : delTarget?.type === "course" ? "Khóa học" : delTarget?.type === "activity" ? "Hoạt động" : delTarget?.type === "assignment" ? "Bài tập" : "Milestone"}`}
         description={`Bạn có chắc muốn xóa "${delTarget?.name}"? Hành động này không thể hoàn tác.`}
         confirmLabel="Xóa bỏ"
         cancelLabel="Hủy"

@@ -130,6 +130,8 @@ export {
 
 
 export {
+  createAssignment,
+  deleteAssignment,
   getAssignmentById,
   getAssignmentQuizResult,
   getInProgressQuiz,
@@ -141,7 +143,15 @@ export {
   startRetrospectiveAttempt,
   submitQuiz,
   submitRetrospective,
+  updateAssignment,
   type AssignmentDetail,
+  type AssignmentTypeInput,
+  type CreateAssignmentInput,
+  type CreateAssignmentResponse,
+  type CreateAssignmentResult,
+  type UpdateAssignmentInput,
+  type UpdateAssignmentResponse,
+  type UpdateAssignmentResult,
   type GetAssignmentByIdResponse,
   type GetAssignmentByIdResult,
   type GetInProgressQuizResponse,
@@ -194,6 +204,47 @@ export {
   type DeleteMaterialResponse,
   type DeleteMaterialResult,
 } from "./materials";
+
+export {
+  createResearchMilestone,
+  deleteResearchMilestone,
+  getResearchMilestoneById,
+  getResearchMilestonesByModule,
+  linkMilestoneActivity,
+  unlinkMilestoneActivity,
+  updateResearchMilestone,
+  type CreateResearchMilestoneInput,
+  type GetResearchMilestoneResponse,
+  type GetResearchMilestoneResult,
+  type GetResearchMilestonesResponse,
+  type GetResearchMilestonesResult,
+  type LinkMilestoneActivityInput,
+  type LinkMilestoneActivityResponse,
+  type LinkMilestoneActivityResult,
+  type MilestoneAssignment,
+  type ResearchMilestone,
+  type ResearchMilestoneActivity,
+  type ResearchMilestoneMutationResponse,
+  type ResearchMilestoneMutationResult,
+  type UpdateResearchMilestoneInput,
+} from "./research-milestones";
+
+export {
+  createQuestionBank,
+  deleteBankQuestion,
+  deleteQuestionBank,
+  getQuestionBankById,
+  importBankQuestions,
+  type CreateQuestionBankInput,
+  type CreateQuestionBankResponse,
+  type CreateQuestionBankResult,
+  type GetQuestionBankResponse,
+  type GetQuestionBankResult,
+  type ImportQuestionsResponse,
+  type ImportQuestionsResult,
+  type QuestionBank,
+  type QuestionBankIdParam,
+} from "./question-banks";
 
 export {
   cancelPayment,

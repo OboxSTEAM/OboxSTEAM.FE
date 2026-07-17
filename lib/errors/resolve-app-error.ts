@@ -140,6 +140,36 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Tài liệu có thể không còn tồn tại hoặc máy chủ từ chối yêu cầu.",
     action: "Tải lại trang rồi thử xóa lại.",
   },
+  "curriculum.assignment.save": {
+    title: "Không lưu được bài tập",
+    reason: "Thông tin bài tập chưa hợp lệ hoặc đã trùng mã.",
+    action: "Kiểm tra tiêu đề, điểm, và cấu hình rồi thử lại.",
+  },
+  "curriculum.milestone.save": {
+    title: "Không lưu được milestone",
+    reason: "Thông tin milestone hoặc sản phẩm nộp chưa hợp lệ.",
+    action: "Kiểm tra mã, tiêu đề, thứ tự và sản phẩm nộp rồi thử lại.",
+  },
+  "curriculum.milestone.link": {
+    title: "Không cập nhật được liên kết hoạt động",
+    reason: "Hoạt động có thể đã được liên kết hoặc yêu cầu bị từ chối.",
+    action: "Tải lại và thử lại.",
+  },
+  "curriculum.questionBank.save": {
+    title: "Không lưu được ngân hàng câu hỏi",
+    reason: "Thông tin chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra tên ngân hàng câu hỏi rồi thử lại.",
+  },
+  "curriculum.questionBank.delete": {
+    title: "Không xóa được ngân hàng câu hỏi",
+    reason: "Ngân hàng có thể đang được sử dụng hoặc không còn tồn tại.",
+    action: "Tải lại và thử lại.",
+  },
+  "curriculum.questionBank.import": {
+    title: "Không import được câu hỏi",
+    reason: "Tệp CSV không hợp lệ hoặc máy chủ từ chối tải lên.",
+    action: "Kiểm tra định dạng tệp CSV rồi thử lại.",
+  },
   "curriculum.node.delete": {
     title: "Không xóa được mục này",
     reason: "Mục có thể đang chứa nội dung con hoặc không còn tồn tại.",
@@ -196,6 +226,12 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "curriculum.activity.save",
   "curriculum.material.save",
   "curriculum.material.delete",
+  "curriculum.assignment.save",
+  "curriculum.milestone.save",
+  "curriculum.milestone.link",
+  "curriculum.questionBank.save",
+  "curriculum.questionBank.delete",
+  "curriculum.questionBank.import",
   "curriculum.node.delete",
 ]);
 
