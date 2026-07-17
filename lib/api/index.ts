@@ -348,6 +348,8 @@ export {
   reorderPortfolioItems,
   syncPortfolioItems,
   updateMyPortfolio,
+  updateMyPortfolioPublication,
+  updateMyPortfolioSubdomain,
   updatePortfolioItem,
   type CheckPortfolioSubdomainAvailabilityResponse,
   type CheckPortfolioSubdomainAvailabilityResult,
@@ -384,8 +386,14 @@ export {
   type UpdatePortfolioItemInput,
   type UpdatePortfolioItemResponse,
   type UpdatePortfolioItemResult,
+  type UpdatePortfolioPublicationInput,
+  type UpdatePortfolioPublicationResponse,
+  type UpdatePortfolioPublicationResult,
   type UpdatePortfolioResponse,
   type UpdatePortfolioResult,
+  type UpdatePortfolioSubdomainInput,
+  type UpdatePortfolioSubdomainResponse,
+  type UpdatePortfolioSubdomainResult,
 } from "./portfolios";
 
 export {

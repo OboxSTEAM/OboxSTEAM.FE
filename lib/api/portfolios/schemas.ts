@@ -22,6 +22,10 @@ export const subdomainAvailabilityValueSchema = createApiValueSchema(
 export const getMyPortfolioResponseSchema = createApiResponseSchema(portfolioValueSchema);
 export const createPortfolioResponseSchema = createApiResponseSchema(portfolioValueSchema);
 export const updatePortfolioResponseSchema = createApiResponseSchema(portfolioValueSchema);
+export const updatePortfolioSubdomainResponseSchema =
+  createApiResponseSchema(portfolioValueSchema);
+export const updatePortfolioPublicationResponseSchema =
+  createApiResponseSchema(portfolioValueSchema);
 export const syncPortfolioItemsResponseSchema = createApiResponseSchema(portfolioValueSchema);
 export const reorderPortfolioItemsResponseSchema = createApiResponseSchema(portfolioValueSchema);
 
@@ -45,6 +49,12 @@ export const getPublicPortfolioBySubdomainResponseSchema = createApiResponseSche
 export type GetMyPortfolioResponse = z.infer<typeof getMyPortfolioResponseSchema>;
 export type CreatePortfolioResponse = z.infer<typeof createPortfolioResponseSchema>;
 export type UpdatePortfolioResponse = z.infer<typeof updatePortfolioResponseSchema>;
+export type UpdatePortfolioSubdomainResponse = z.infer<
+  typeof updatePortfolioSubdomainResponseSchema
+>;
+export type UpdatePortfolioPublicationResponse = z.infer<
+  typeof updatePortfolioPublicationResponseSchema
+>;
 export type SyncPortfolioItemsResponse = z.infer<typeof syncPortfolioItemsResponseSchema>;
 export type ReorderPortfolioItemsResponse = z.infer<typeof reorderPortfolioItemsResponseSchema>;
 export type CreatePortfolioItemResponse = z.infer<typeof createPortfolioItemResponseSchema>;
@@ -60,6 +70,8 @@ export type GetPublicPortfolioBySubdomainResponse = z.infer<
 export type GetMyPortfolioResult = GetMyPortfolioResponse["value"];
 export type CreatePortfolioResult = CreatePortfolioResponse["value"];
 export type UpdatePortfolioResult = UpdatePortfolioResponse["value"];
+export type UpdatePortfolioSubdomainResult = UpdatePortfolioSubdomainResponse["value"];
+export type UpdatePortfolioPublicationResult = UpdatePortfolioPublicationResponse["value"];
 export type SyncPortfolioItemsResult = SyncPortfolioItemsResponse["value"];
 export type ReorderPortfolioItemsResult = ReorderPortfolioItemsResponse["value"];
 export type CreatePortfolioItemResult = CreatePortfolioItemResponse["value"];

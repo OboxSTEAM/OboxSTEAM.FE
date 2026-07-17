@@ -559,7 +559,7 @@
       {
         "path": "/api/portfolios/me",
         "method": "put",
-        "description": "Updates profile, theme, links, subdomain, and publish state. Publishing requires a valid unique subdomain."
+        "description": "Updates portfolio profile, theme, and links. Subdomain and publication state use dedicated endpoints."
       },
       {
         "path": "/api/portfolios",
@@ -570,6 +570,16 @@
         "path": "/api/portfolios/subdomain-available",
         "method": "get",
         "description": "Live check while the student types a subdomain. Excludes the caller's current subdomain."
+      },
+      {
+        "path": "/api/portfolios/me/subdomain",
+        "method": "put",
+        "description": "Validates and claims a unique subdomain. Send null or blank to remove it while unpublished. Using for debounce checking on frontend"
+      },
+      {
+        "path": "/api/portfolios/me/publication",
+        "method": "put",
+        "description": "Sets the desired publication state idempotently. Publishing requires a valid unique subdomain."
       },
       {
         "path": "/api/portfolios/me/items",
@@ -1808,7 +1818,13 @@
         "name": "UpdatePortfolioItemRequestDto"
       },
       {
+        "name": "UpdatePortfolioPublicationRequestDto"
+      },
+      {
         "name": "UpdatePortfolioRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioSubdomainRequestDto"
       },
       {
         "name": "UpdateProgramRequestDto"

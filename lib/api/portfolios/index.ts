@@ -10,7 +10,9 @@ import {
   portfolioSubdomainParamSchema,
   reorderPortfolioItemsSchema,
   updatePortfolioItemSchema,
+  updatePortfolioPublicationSchema,
   updatePortfolioSchema,
+  updatePortfolioSubdomainSchema,
 } from "@/lib/validations/portfolios";
 import type {
   CreatePortfolioItemInput,
@@ -18,6 +20,8 @@ import type {
   ReorderPortfolioItemsInput,
   UpdatePortfolioInput,
   UpdatePortfolioItemInput,
+  UpdatePortfolioPublicationInput,
+  UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
 
 import {
@@ -30,7 +34,9 @@ import {
   reorderPortfolioItemsResponseSchema,
   syncPortfolioItemsResponseSchema,
   updatePortfolioItemResponseSchema,
+  updatePortfolioPublicationResponseSchema,
   updatePortfolioResponseSchema,
+  updatePortfolioSubdomainResponseSchema,
   type CheckPortfolioSubdomainAvailabilityResult,
   type CreatePortfolioItemResult,
   type CreatePortfolioResult,
@@ -40,7 +46,9 @@ import {
   type ReorderPortfolioItemsResult,
   type SyncPortfolioItemsResult,
   type UpdatePortfolioItemResult,
+  type UpdatePortfolioPublicationResult,
   type UpdatePortfolioResult,
+  type UpdatePortfolioSubdomainResult,
 } from "./schemas";
 
 export type {
@@ -62,8 +70,12 @@ export type {
   SyncPortfolioItemsResult,
   UpdatePortfolioItemResponse,
   UpdatePortfolioItemResult,
+  UpdatePortfolioPublicationResponse,
+  UpdatePortfolioPublicationResult,
   UpdatePortfolioResponse,
   UpdatePortfolioResult,
+  UpdatePortfolioSubdomainResponse,
+  UpdatePortfolioSubdomainResult,
 } from "./schemas";
 
 export type {
@@ -87,6 +99,8 @@ export type {
   ReorderPortfolioItemsInput,
   UpdatePortfolioInput,
   UpdatePortfolioItemInput,
+  UpdatePortfolioPublicationInput,
+  UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
 
 const PORTFOLIOS_BASE = "/api/portfolios";
@@ -126,7 +140,7 @@ export async function getMyPortfolio(): Promise<GetMyPortfolioResult> {
   return requireApiValue(response.value);
 }
 
-/** `PUT /api/portfolios/me` */
+/** `PUT /api/portfolios/me` — profile, theme, and links only. */
 export async function updateMyPortfolio(
   input: UpdatePortfolioInput,
 ): Promise<UpdatePortfolioResult> {
@@ -135,6 +149,36 @@ export async function updateMyPortfolio(
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me`,
     updatePortfolioResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/portfolios/me/subdomain` — claim, change, or clear subdomain. */
+export async function updateMyPortfolioSubdomain(
+  input: UpdatePortfolioSubdomainInput,
+): Promise<UpdatePortfolioSubdomainResult> {
+  const body = updatePortfolioSubdomainSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/subdomain`,
+    updatePortfolioSubdomainResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/portfolios/me/publication` — publish or unpublish. Requires a valid subdomain to publish. */
+export async function updateMyPortfolioPublication(
+  input: UpdatePortfolioPublicationInput,
+): Promise<UpdatePortfolioPublicationResult> {
+  const body = updatePortfolioPublicationSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/publication`,
+    updatePortfolioPublicationResponseSchema,
     { method: "PUT", body },
   );
   assertApiSuccess(response);

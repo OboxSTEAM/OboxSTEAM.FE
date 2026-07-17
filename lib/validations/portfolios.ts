@@ -19,16 +19,24 @@ export const portfolioSubdomainAvailabilityQuerySchema = z.object({
   subdomain: z.string().min(1, "Subdomain là bắt buộc."),
 });
 
-/** Body for `PUT /api/portfolios/me`. */
+/** Body for `PUT /api/portfolios/me` — profile, theme, and links only. */
 export const updatePortfolioSchema = z.object({
-  isPublic: z.boolean().nullable().optional(),
-  subdomain: z.string().max(100, "Subdomain tối đa 100 ký tự.").nullable().optional(),
   displayName: z.string().max(255, "Tên hiển thị tối đa 255 ký tự.").nullable().optional(),
   headline: z.string().max(255, "Tiêu đề tối đa 255 ký tự.").nullable().optional(),
   tagline: z.string().max(255, "Tagline tối đa 255 ký tự.").nullable().optional(),
   summary: z.string().nullable().optional(),
   theme: portfolioThemeSchema.optional(),
   links: z.array(portfolioLinkSchema).nullable().optional(),
+});
+
+/** Body for `PUT /api/portfolios/me/subdomain`. Send null/blank to clear while unpublished. */
+export const updatePortfolioSubdomainSchema = z.object({
+  subdomain: z.string().max(100, "Subdomain tối đa 100 ký tự.").nullable().optional(),
+});
+
+/** Body for `PUT /api/portfolios/me/publication`. */
+export const updatePortfolioPublicationSchema = z.object({
+  isPublished: z.boolean(),
 });
 
 /** Body for `POST /api/portfolios/me/items`. */
@@ -82,6 +90,8 @@ export type PortfolioSubdomainAvailabilityQuery = z.infer<
   typeof portfolioSubdomainAvailabilityQuerySchema
 >;
 export type UpdatePortfolioInput = z.infer<typeof updatePortfolioSchema>;
+export type UpdatePortfolioSubdomainInput = z.infer<typeof updatePortfolioSubdomainSchema>;
+export type UpdatePortfolioPublicationInput = z.infer<typeof updatePortfolioPublicationSchema>;
 export type CreatePortfolioItemInput = z.infer<typeof createPortfolioItemSchema>;
 export type UpdatePortfolioItemInput = z.infer<typeof updatePortfolioItemSchema>;
 export type ReorderPortfolioItemsInput = z.infer<typeof reorderPortfolioItemsSchema>;

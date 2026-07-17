@@ -116,7 +116,9 @@ export {
   portfolioSubdomainParamSchema,
   reorderPortfolioItemsSchema,
   updatePortfolioItemSchema,
+  updatePortfolioPublicationSchema,
   updatePortfolioSchema,
+  updatePortfolioSubdomainSchema,
   type CreatePortfolioItemInput,
   type PortfolioItemIdParam,
   type PortfolioSubdomainAvailabilityQuery,
@@ -124,6 +126,8 @@ export {
   type ReorderPortfolioItemsInput,
   type UpdatePortfolioInput,
   type UpdatePortfolioItemInput,
+  type UpdatePortfolioPublicationInput,
+  type UpdatePortfolioSubdomainInput,
 } from "./portfolios";
 export {
   gradeResearchSubmissionSchema,
