@@ -63,6 +63,11 @@ export const portfolioThemeSlotOverridesSchema = z
     heroText: z.string().optional(),
     card: z.string().optional(),
     reveal: z.string().optional(),
+    /** `page` = Nền trang drives look; `effect` = Nền hiệu ứng drives look. */
+    backgroundMode: z.enum(["page", "effect"]).optional(),
+    /** 0–6 discrete typography steps (finer than enum wire values). */
+    fontScaleStep: z.number().int().min(0).max(6).optional(),
+    lineHeightStep: z.number().int().min(0).max(6).optional(),
   })
   .strict();
 

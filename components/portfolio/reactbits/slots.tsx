@@ -57,6 +57,49 @@ function hexToRgba(hex: string, alpha: number): `rgba(${number}, ${number}, ${nu
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
+function resolvePageBackgroundStyle(
+  theme: ResolvedPortfolioTheme,
+): CSSProperties {
+  const plainFill = theme.isDark ? "#121212" : "#FAFAF5";
+
+  if (theme.backgroundStyle === "Gradient") {
+    return {
+      background: `linear-gradient(145deg, ${theme.primaryColor} 0%, ${theme.secondaryColor} 48%, ${theme.accentColor} 100%)`,
+    };
+  }
+
+  if (theme.backgroundStyle === "Pattern") {
+    return {
+      backgroundColor: plainFill,
+      backgroundImage: `radial-gradient(${theme.primaryColor} 1.6px, transparent 1.6px)`,
+      backgroundSize: "16px 16px",
+    };
+  }
+
+  if (theme.backgroundStyle === "Image") {
+    if (theme.backgroundImageUrl) {
+      return {
+        backgroundImage: `linear-gradient(145deg, ${theme.primaryColor}55, ${theme.secondaryColor}40), url(${theme.backgroundImageUrl})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      };
+    }
+    return {
+      backgroundColor: plainFill,
+      backgroundImage:
+        "linear-gradient(45deg, #E5E5E0 25%, transparent 25%), linear-gradient(-45deg, #E5E5E0 25%, transparent 25%)",
+      backgroundSize: "18px 18px",
+    };
+  }
+
+  // Plain — solid page fill tinted lightly by primary
+  return {
+    background: theme.isDark
+      ? plainFill
+      : `linear-gradient(180deg, ${theme.primaryColor}22 0%, ${plainFill} 38%, ${plainFill} 100%)`,
+  };
+}
+
 export function PortfolioBackground({
   slot,
   theme,
@@ -67,48 +110,23 @@ export function PortfolioBackground({
   className?: string;
 }) {
   const animate = useShouldAnimate();
+  const pageStyle = resolvePageBackgroundStyle(theme);
 
-  const baseStyle: CSSProperties | undefined =
-    theme.backgroundStyle === "Gradient" || slot === "GradientSoft"
-      ? {
-          background: `linear-gradient(145deg, ${theme.primaryColor}55 0%, ${theme.secondaryColor}40 42%, ${theme.accentColor}30 100%)`,
-        }
-      : theme.backgroundStyle === "Pattern"
-        ? {
-            backgroundColor: theme.isDark ? "#121212" : "#FAFAF5",
-            backgroundImage: `radial-gradient(${theme.primaryColor}70 1.75px, transparent 1.75px)`,
-            backgroundSize: "14px 14px",
-          }
-        : theme.backgroundStyle === "Image" && theme.backgroundImageUrl
-          ? {
-              backgroundImage: `linear-gradient(145deg, ${theme.primaryColor}33, ${theme.secondaryColor}22), url(${theme.backgroundImageUrl})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }
-          : theme.backgroundImageUrl
-            ? {
-                backgroundImage: `url(${theme.backgroundImageUrl})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }
-            : theme.backgroundStyle === "Plain"
-              ? {
-                  background: `linear-gradient(180deg, ${theme.primaryColor}18 0%, transparent 42%)`,
-                }
-              : undefined;
-
-  const showEffect = animate && slot !== "None";
+  // Animated overlays when Nền hiệu ứng is the active stage (page style forced Plain).
+  const showEffect =
+    animate &&
+    slot !== "None" &&
+    (theme.backgroundMode === "effect" || theme.backgroundStyle === "Plain");
 
   return (
     <div
       className={cn(
-        "pointer-events-none absolute inset-0 -z-10 overflow-hidden",
+        "pointer-events-none absolute inset-0 z-0 overflow-hidden",
         className,
       )}
       aria-hidden
+      style={pageStyle}
     >
-      {baseStyle ? <div className="absolute inset-0" style={baseStyle} /> : null}
-
       {showEffect && slot === "Aurora" ? (
         <div className="absolute inset-0 size-full min-h-[280px] opacity-90">
           <Aurora
@@ -128,12 +146,7 @@ export function PortfolioBackground({
         />
       ) : null}
       {showEffect && slot === "DotGrid" ? (
-        <div
-          className={cn(
-            "absolute inset-0 size-full",
-            theme.isDark ? "bg-[#121212]/80" : "bg-[#FAFAF5]/70",
-          )}
-        >
+        <div className="absolute inset-0 size-full">
           <DotGrid
             dotSize={3}
             gap={22}
@@ -143,9 +156,9 @@ export function PortfolioBackground({
           />
         </div>
       ) : null}
-      {showEffect && slot === "GradientSoft" && !baseStyle ? (
+      {showEffect && slot === "GradientSoft" ? (
         <div
-          className="absolute inset-0 size-full"
+          className="absolute inset-0 size-full opacity-80"
           style={{
             background: `linear-gradient(145deg, ${theme.primaryColor}55 0%, ${theme.secondaryColor}40 42%, ${theme.accentColor}30 100%)`,
           }}

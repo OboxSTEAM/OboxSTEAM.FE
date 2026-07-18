@@ -246,6 +246,14 @@ export type ResolvedPortfolioTheme = {
   fontScaleClass: string;
   lineHeightClass: string;
   cardSurfaceClass: string;
+  /** Discrete UI steps 0–6 for cỡ chữ / giãn dòng. */
+  fontScaleStep: number;
+  lineHeightStep: number;
+  /** Which background control group is authoritative. */
+  backgroundMode: "page" | "effect";
+  /** Applied as inline style for fine-grained slider steps. */
+  fontScaleEm: number;
+  lineHeightEm: number;
 };
 
 function pickOverride<T extends string>(
@@ -258,6 +266,12 @@ function pickOverride<T extends string>(
   }
   return fallback;
 }
+
+/** 7-stage font scale (em multipliers). */
+export const FONT_SCALE_STEPS = [0.82, 0.88, 0.94, 1, 1.12, 1.24, 1.38] as const;
+
+/** 7-stage line-height multipliers (1.0 → 2.0). */
+export const LINE_HEIGHT_STEPS = [1, 1.15, 1.3, 1.45, 1.6, 1.8, 2] as const;
 
 const FONT_SCALE_CLASS: Record<PortfolioFontScale, string> = {
   Sm: "text-[0.88em]",
@@ -291,6 +305,48 @@ const DARK_CARD_SURFACE_CLASS: Record<PortfolioCardStyle, string> = {
   Elevated:
     "border border-[#FAFAF5]/14 bg-[#1a1a1a] shadow-[0_16px_40px_rgba(0,0,0,0.45)]",
 };
+
+export function fontScaleEnumFromStep(step: number): PortfolioFontScale {
+  if (step <= 1) return "Sm";
+  if (step <= 3) return "Base";
+  if (step <= 5) return "Lg";
+  return "Xl";
+}
+
+export function lineHeightEnumFromStep(step: number): PortfolioLineHeight {
+  if (step <= 1) return "Tight";
+  if (step <= 4) return "Normal";
+  return "Relaxed";
+}
+
+export function fontScaleStepFromEnum(scale: PortfolioFontScale): number {
+  switch (scale) {
+    case "Sm":
+      return 1;
+    case "Lg":
+      return 5;
+    case "Xl":
+      return 6;
+    default:
+      return 3;
+  }
+}
+
+export function lineHeightStepFromEnum(line: PortfolioLineHeight): number {
+  switch (line) {
+    case "Tight":
+      return 1;
+    case "Relaxed":
+      return 6;
+    default:
+      return 3;
+  }
+}
+
+function clampStep(value: number | undefined, fallback: number): number {
+  if (value == null || Number.isNaN(value)) return fallback;
+  return Math.max(0, Math.min(6, Math.round(value)));
+}
 
 /** Resolver: preset default → per-slot override (settingsJson) → granular theme fields. */
 export function resolvePortfolioTheme(theme: PortfolioTheme): ResolvedPortfolioTheme {
@@ -330,11 +386,31 @@ export function resolvePortfolioTheme(theme: PortfolioTheme): ResolvedPortfolioT
     theme.layoutStyle || preset.layoutStyle,
   );
 
+  const fontScaleStep = clampStep(
+    overrides.fontScaleStep,
+    fontScaleStepFromEnum(fontScale),
+  );
+  const lineHeightStep = clampStep(
+    overrides.lineHeightStep,
+    lineHeightStepFromEnum(lineHeight),
+  );
+
+  const derivedMode: "page" | "effect" =
+    overrides.backgroundMode ??
+    (background !== "None" && backgroundStyle === "Plain" ? "effect" : "page");
+
+  const effectiveBackground =
+    derivedMode === "page" ? ("None" as BackgroundSlotId) : background;
+  const effectiveBackgroundStyle =
+    derivedMode === "effect"
+      ? ("Plain" as const)
+      : backgroundStyle;
+
   return {
     preset,
     templateId,
     overrides,
-    background,
+    background: effectiveBackground,
     heroText,
     card,
     gallery: preset.gallery,
@@ -348,7 +424,7 @@ export function resolvePortfolioTheme(theme: PortfolioTheme): ResolvedPortfolioT
     lineHeight,
     density,
     cardStyle,
-    backgroundStyle,
+    backgroundStyle: effectiveBackgroundStyle,
     backgroundImageUrl: theme.backgroundImageUrl,
     primaryColor: theme.primaryColor || preset.primaryColor,
     secondaryColor: theme.secondaryColor || preset.secondaryColor,
@@ -360,6 +436,11 @@ export function resolvePortfolioTheme(theme: PortfolioTheme): ResolvedPortfolioT
     cardSurfaceClass: preset.isDark
       ? DARK_CARD_SURFACE_CLASS[cardStyle]
       : CARD_SURFACE_CLASS[cardStyle],
+    fontScaleStep,
+    lineHeightStep,
+    backgroundMode: derivedMode,
+    fontScaleEm: FONT_SCALE_STEPS[fontScaleStep] ?? 1,
+    lineHeightEm: LINE_HEIGHT_STEPS[lineHeightStep] ?? 1.45,
   };
 }
 

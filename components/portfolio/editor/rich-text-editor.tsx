@@ -2,15 +2,34 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
-import { Bold, Italic, Link2, List, ListOrdered, Strikethrough } from "lucide-react";
+import Underline from "@tiptap/extension-underline";
+import TextAlign from "@tiptap/extension-text-align";
+import { TextStyle } from "@tiptap/extension-text-style";
+import { Color } from "@tiptap/extension-color";
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Underline as UnderlineIcon,
+} from "lucide-react";
 
 import { EditableFieldFrame } from "@/components/portfolio/editor/editable-frame";
 import { Button } from "@/components/ui/button";
+import { PORTFOLIO_COLOR_SWATCHES } from "@/lib/portfolio/constants";
+import {
+  isEmptyPortfolioHtml,
+  sanitizePortfolioHtml,
+} from "@/lib/portfolio/sanitize-html";
 import { cn } from "@/lib/utils";
-import { isEmptyPortfolioHtml, sanitizePortfolioHtml } from "@/lib/portfolio/sanitize-html";
 
 type RichTextEditorProps = {
   value: string;
@@ -20,6 +39,11 @@ type RichTextEditorProps = {
   className?: string;
   /** Compact chrome for canvas inline editing. */
   variant?: "panel" | "inline";
+  /**
+   * `compact` — titles / one-liners (marks + color + align, no lists).
+   * `full` — detail body text (lists, link, headings marks).
+   */
+  mode?: "compact" | "full";
   isDark?: boolean;
 };
 
@@ -44,12 +68,62 @@ function ToolbarButton({
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       className={cn(
-        "size-9 rounded-md text-[#2D2D2D]",
-        active && "bg-[#4FC3F7]/20 text-[#0f7cad]",
+        "size-8 rounded-md text-[#2D2D2D]",
+        active && "bg-[#2D2D2D]/12 text-[#2D2D2D]",
       )}
     >
       {children}
     </Button>
+  );
+}
+
+function ToolbarDivider() {
+  return <span className="mx-0.5 h-5 w-px shrink-0 bg-[#E5E5E0]" aria-hidden />;
+}
+
+function ColorSwatchControl({ editor }: { editor: Editor }) {
+  const activeColor =
+    (editor.getAttributes("textStyle").color as string | undefined) ?? "";
+
+  return (
+    <div className="flex items-center gap-1 px-1">
+      <label className="relative flex size-7 cursor-pointer items-center justify-center">
+        <span
+          className={cn(
+            "size-5 rounded-full border-2 border-white shadow-[0_0_0_1.5px_#7CB342]",
+          )}
+          style={{ backgroundColor: activeColor || "#2D2D2D" }}
+        />
+        <input
+          type="color"
+          aria-label="Màu chữ"
+          value={/^#[0-9a-fA-F]{6}$/.test(activeColor) ? activeColor : "#2D2D2D"}
+          onMouseDown={(event) => event.preventDefault()}
+          onChange={(event) => {
+            editor.chain().focus().setColor(event.target.value).run();
+          }}
+          className="absolute inset-0 cursor-pointer opacity-0"
+        />
+      </label>
+      <div className="hidden items-center gap-0.5 sm:flex">
+        {PORTFOLIO_COLOR_SWATCHES.slice(0, 5).map((swatch) => (
+          <button
+            key={swatch.value}
+            type="button"
+            title={swatch.label}
+            aria-label={swatch.label}
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => editor.chain().focus().setColor(swatch.value).run()}
+            className={cn(
+              "size-3.5 rounded-full border border-white shadow-[0_0_0_1px_#D0D0C8]",
+              activeColor.toLowerCase() === swatch.value.toLowerCase() &&
+                "shadow-[0_0_0_1.5px_#7CB342]",
+            )}
+            style={{ backgroundColor: swatch.value }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -77,7 +151,7 @@ function FloatingToolbar({
       const el = anchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setPos({ top: rect.top, left: rect.left, width: Math.max(rect.width, 220) });
+      setPos({ top: rect.top, left: rect.left, width: Math.max(rect.width, 280) });
     };
 
     update();
@@ -109,6 +183,143 @@ function FloatingToolbar({
   );
 }
 
+function buildExtensions(mode: "compact" | "full", placeholder: string) {
+  const isCompact = mode === "compact";
+
+  return [
+    StarterKit.configure({
+      heading: isCompact ? false : { levels: [2, 3] },
+      bulletList: isCompact ? false : undefined,
+      orderedList: isCompact ? false : undefined,
+      blockquote: isCompact ? false : undefined,
+      codeBlock: false,
+      horizontalRule: false,
+      link: {
+        openOnClick: false,
+        HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+      },
+    }),
+    Underline,
+    TextStyle,
+    Color,
+    TextAlign.configure({
+      types: isCompact ? ["paragraph"] : ["heading", "paragraph"],
+    }),
+    Placeholder.configure({ placeholder }),
+  ];
+}
+
+function EditorToolbar({
+  editor,
+  mode,
+}: {
+  editor: Editor;
+  mode: "compact" | "full";
+}) {
+  const setLink = () => {
+    const previous = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("URL liên kết", previous ?? "https://");
+    if (url === null) return;
+    if (!url.trim()) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
+  };
+
+  return (
+    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-[#C9C9C2] bg-white p-1 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
+      <ColorSwatchControl editor={editor} />
+      <ToolbarDivider />
+      <ToolbarButton
+        label="Đậm"
+        active={editor.isActive("bold")}
+        onClick={() => editor.chain().focus().toggleBold().run()}
+      >
+        <Bold className="size-[16px]" strokeWidth={2.5} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Nghiêng"
+        active={editor.isActive("italic")}
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+      >
+        <Italic className="size-[16px]" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Gạch dưới"
+        active={editor.isActive("underline")}
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+      >
+        <UnderlineIcon className="size-[16px]" />
+      </ToolbarButton>
+      {mode === "full" ? (
+        <>
+          <ToolbarDivider />
+          <ToolbarButton
+            label="Danh sách số"
+            active={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          >
+            <ListOrdered className="size-[16px]" />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Danh sách"
+            active={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          >
+            <List className="size-[16px]" />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Liên kết"
+            active={editor.isActive("link")}
+            onClick={setLink}
+          >
+            <Link2 className="size-[16px]" />
+          </ToolbarButton>
+        </>
+      ) : null}
+      <ToolbarDivider />
+      <ToolbarButton
+        label="Căn trái"
+        active={editor.isActive({ textAlign: "left" })}
+        onClick={() => editor.chain().focus().setTextAlign("left").run()}
+      >
+        <AlignLeft className="size-[16px]" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Căn giữa"
+        active={editor.isActive({ textAlign: "center" })}
+        onClick={() => editor.chain().focus().setTextAlign("center").run()}
+      >
+        <AlignCenter className="size-[16px]" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Căn phải"
+        active={editor.isActive({ textAlign: "right" })}
+        onClick={() => editor.chain().focus().setTextAlign("right").run()}
+      >
+        <AlignRight className="size-[16px]" />
+      </ToolbarButton>
+      {mode === "full" ? (
+        <ToolbarButton
+          label="Căn đều"
+          active={editor.isActive({ textAlign: "justify" })}
+          onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+        >
+          <AlignJustify className="size-[16px]" />
+        </ToolbarButton>
+      ) : null}
+    </div>
+  );
+}
+
+function toEditorContent(value: string): string {
+  const cleaned = sanitizePortfolioHtml(value);
+  if (!cleaned) return "";
+  if (/<[^>]+>/.test(cleaned)) return cleaned;
+  return `<p>${cleaned}</p>`;
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -116,36 +327,37 @@ export function RichTextEditor({
   ariaLabel = "Trình soạn thảo văn bản",
   className,
   variant = "panel",
+  mode = "full",
   isDark = false,
 }: RichTextEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const isCompact = mode === "compact";
 
   const editor = useEditor({
-    extensions: [
-      // TipTap v3 StarterKit already registers Link — configure it here, don't add Link again.
-      StarterKit.configure({
-        heading: { levels: [2, 3] },
-        link: {
-          openOnClick: false,
-          HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
-        },
-      }),
-      Placeholder.configure({ placeholder }),
-    ],
-    content: sanitizePortfolioHtml(value) || "",
+    extensions: buildExtensions(mode, placeholder),
+    content: toEditorContent(value),
     editorProps: {
       attributes: {
         "aria-label": ariaLabel,
         class: cn(
-          "min-h-[6.5rem] outline-none",
-          // Contain list markers so they never spill outside the field.
+          "outline-none",
           "[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5",
+          "[&_p]:m-0",
           "[&_.is-editor-empty:first-child::before]:text-[#5C5C5C] [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
-          variant === "inline"
-            ? "px-3 py-2.5 text-base leading-relaxed text-inherit [font:inherit]"
-            : "rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
+          isCompact
+            ? "min-h-[1.5em] px-1.5 py-0.5 leading-inherit text-inherit [font:inherit]"
+            : variant === "inline"
+              ? "min-h-[6.5rem] px-3 py-2.5 text-base leading-relaxed text-inherit [font:inherit]"
+              : "min-h-[6.5rem] rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
         ),
+      },
+      handleKeyDown: (_view, event) => {
+        if (isCompact && event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
       },
     },
     onUpdate: ({ editor: current }) => {
@@ -170,7 +382,7 @@ export function RichTextEditor({
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
-    const next = sanitizePortfolioHtml(value) || "";
+    const next = toEditorContent(value);
     if (isEmptyPortfolioHtml(current) && isEmptyPortfolioHtml(next)) return;
     if (current !== next) {
       editor.commands.setContent(next, { emitUpdate: false });
@@ -179,59 +391,7 @@ export function RichTextEditor({
 
   if (!editor) return null;
 
-  const setLink = () => {
-    const previous = editor.getAttributes("link").href as string | undefined;
-    const url = window.prompt("URL liên kết", previous ?? "https://");
-    if (url === null) return;
-    if (!url.trim()) {
-      editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
-    }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
-  };
-
-  const toolbar = (
-    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-[#C9C9C2] bg-white p-1.5 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
-      <ToolbarButton
-        label="Đậm"
-        active={editor.isActive("bold")}
-        onClick={() => editor.chain().focus().toggleBold().run()}
-      >
-        <Bold className="size-[18px]" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Nghiêng"
-        active={editor.isActive("italic")}
-        onClick={() => editor.chain().focus().toggleItalic().run()}
-      >
-        <Italic className="size-[18px]" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Gạch ngang"
-        active={editor.isActive("strike")}
-        onClick={() => editor.chain().focus().toggleStrike().run()}
-      >
-        <Strikethrough className="size-[18px]" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Danh sách"
-        active={editor.isActive("bulletList")}
-        onClick={() => editor.chain().focus().toggleBulletList().run()}
-      >
-        <List className="size-[18px]" />
-      </ToolbarButton>
-      <ToolbarButton
-        label="Danh sách số"
-        active={editor.isActive("orderedList")}
-        onClick={() => editor.chain().focus().toggleOrderedList().run()}
-      >
-        <ListOrdered className="size-[18px]" />
-      </ToolbarButton>
-      <ToolbarButton label="Liên kết" active={editor.isActive("link")} onClick={setLink}>
-        <Link2 className="size-[18px]" />
-      </ToolbarButton>
-    </div>
-  );
+  const toolbar = <EditorToolbar editor={editor} mode={mode} />;
 
   if (variant === "inline") {
     return (

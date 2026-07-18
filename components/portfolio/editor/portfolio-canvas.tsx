@@ -13,7 +13,6 @@ import {
   Trash2,
 } from "lucide-react";
 
-import { InlineText } from "@/components/portfolio/editor/inline-text";
 import { EditableSection } from "@/components/portfolio/editor/editable-frame";
 import { MediaUploader } from "@/components/portfolio/editor/media-uploader";
 import { RichTextEditor } from "@/components/portfolio/editor/rich-text-editor";
@@ -52,6 +51,7 @@ import {
   PORTFOLIO_SECTIONS,
   type PortfolioSectionId,
 } from "@/lib/portfolio/constants";
+import { hasPortfolioHtmlTags } from "@/lib/portfolio/sanitize-html";
 import {
   GALLERY_SLOT_OPTIONS,
   HERO_TEXT_SLOT_OPTIONS,
@@ -114,7 +114,79 @@ export type PortfolioCanvasProps = {
 };
 
 function hasHtmlTags(value: string): boolean {
-  return /<[^>]+>/.test(value);
+  return hasPortfolioHtmlTags(value);
+}
+
+function stripHtmlText(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .replace(/<br\s*\/?>/gi, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Compact TipTap for titles / one-line fields. */
+function CompactRichField({
+  value,
+  onChange,
+  ariaLabel,
+  placeholder,
+  isDark,
+  className,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  ariaLabel: string;
+  placeholder?: string;
+  isDark?: boolean;
+  className?: string;
+}) {
+  return (
+    <RichTextEditor
+      mode="compact"
+      variant="inline"
+      isDark={isDark}
+      value={value}
+      onChange={onChange}
+      ariaLabel={ariaLabel}
+      placeholder={placeholder}
+      className={className}
+    />
+  );
+}
+
+/** Section title chrome — primary pill so theme color reads across the page. */
+function EditableSectionTitle({
+  value,
+  onChange,
+  placeholder,
+  primaryColor,
+  headingFontCss,
+}: {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder: string;
+  isDark: boolean;
+  primaryColor: string;
+  headingFontCss: string;
+}) {
+  return (
+    <div
+      className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-white"
+      style={{ backgroundColor: primaryColor, fontFamily: headingFontCss }}
+    >
+      <CompactRichField
+        value={value}
+        onChange={onChange}
+        ariaLabel="Tiêu đề phần"
+        placeholder={placeholder}
+        isDark
+        className="min-w-[8rem] text-base font-bold tracking-tight text-white [&_*]:text-white"
+      />
+    </div>
+  );
 }
 
 function looksLikeUrl(value: string): boolean {
@@ -439,15 +511,21 @@ function ItemCardEditable({
           style={{ fontFamily: resolved.headingFontCss }}
         >
           {isAuto ? (
-            <p>{item.title ?? "Không có tiêu đề"}</p>
+            hasHtmlTags(item.title ?? "") ? (
+              <RichText
+                html={item.title}
+                className="prose-p:my-0 text-base font-semibold"
+              />
+            ) : (
+              <p>{item.title ?? "Không có tiêu đề"}</p>
+            )
           ) : (
-            <InlineText
+            <CompactRichField
               value={item.title ?? ""}
               onChange={(next) => onPatchItemText(item.id, { title: next })}
               ariaLabel="Tiêu đề mục"
               placeholder="Tiêu đề mục…"
-              tone={resolved.isDark ? "dark" : "light"}
-              maxLength={255}
+              isDark={resolved.isDark}
             />
           )}
         </div>
@@ -465,25 +543,25 @@ function ItemCardEditable({
           ) : null
         ) : (
           <div className="mt-1 flex flex-col gap-1 text-sm sm:flex-row sm:gap-2">
-            <InlineText
+            <CompactRichField
               value={item.subtitle ?? ""}
               onChange={(next) => onPatchItemText(item.id, { subtitle: next })}
               ariaLabel="Phụ đề"
               placeholder="Phụ đề…"
-              tone={resolved.isDark ? "dark" : "light"}
-              maxLength={255}
+              isDark={resolved.isDark}
               className={cn(
                 "sm:flex-1",
                 resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
               )}
             />
-            <InlineText
+            <CompactRichField
               value={item.organization ?? ""}
-              onChange={(next) => onPatchItemText(item.id, { organization: next })}
+              onChange={(next) =>
+                onPatchItemText(item.id, { organization: next })
+              }
               ariaLabel="Tổ chức"
               placeholder="Tổ chức…"
-              tone={resolved.isDark ? "dark" : "light"}
-              maxLength={255}
+              isDark={resolved.isDark}
               className={cn(
                 "sm:flex-1",
                 resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
@@ -509,10 +587,13 @@ function ItemCardEditable({
 
         <div className="mt-2">
           <RichTextEditor
+            mode="full"
             variant="inline"
             isDark={resolved.isDark}
             value={item.studentEditedBody ?? ""}
-            onChange={(next) => onPatchItemText(item.id, { studentEditedBody: next })}
+            onChange={(next) =>
+              onPatchItemText(item.id, { studentEditedBody: next })
+            }
             ariaLabel="Nội dung tường thuật"
             placeholder="Kể câu chuyện của bạn: đã học được gì, tạo ra điều gì…"
             className={cn(
@@ -594,31 +675,27 @@ function ItemsGroupEditable({
       {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {onTitleChange ? (
-          <h2
-            className={cn(
-              "text-lg font-bold tracking-tight",
-              resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-            )}
-            style={{ fontFamily: resolved.headingFontCss }}
-          >
-            <InlineText
-              value={title}
-              onChange={onTitleChange}
-              ariaLabel="Tiêu đề phần"
-              placeholder="Tiêu đề phần…"
-              tone={resolved.isDark ? "dark" : "light"}
-              maxLength={255}
-            />
-          </h2>
+          <EditableSectionTitle
+            value={title}
+            onChange={onTitleChange}
+            placeholder="Tiêu đề phần…"
+            isDark={resolved.isDark}
+            primaryColor={resolved.primaryColor}
+            headingFontCss={resolved.headingFontCss}
+          />
         ) : (
           <h2
-            className={cn(
-              "text-lg font-bold tracking-tight",
-              resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-            )}
-            style={{ fontFamily: resolved.headingFontCss }}
+            className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight text-white"
+            style={{
+              fontFamily: resolved.headingFontCss,
+              backgroundColor: resolved.primaryColor,
+            }}
           >
-            {title}
+            {hasHtmlTags(title) ? (
+              <RichText html={title} className="prose-p:my-0 text-inherit" />
+            ) : (
+              title
+            )}
           </h2>
         )}
         <button
@@ -702,7 +779,9 @@ function ProfileSectionEditable({
 }) {
   const tone = resolved.isDark ? ("dark" as const) : ("light" as const);
   const name =
-    draft.displayName || draft.studentName || "Học viên OboxSTEAM";
+    stripHtmlText(draft.displayName) ||
+    draft.studentName ||
+    "Học viên OboxSTEAM";
   const chipColors = {
     primary: resolved.primaryColor,
     secondary: resolved.secondaryColor,
@@ -827,15 +906,14 @@ function ProfileSectionEditable({
 
           <div className="mt-3 space-y-2">
             <div className={nameClass} style={nameStyle}>
-              <InlineText
+              <CompactRichField
                 value={draft.displayName ?? ""}
                 onChange={(next) => onPatchDraft({ displayName: next })}
                 ariaLabel="Tên hiển thị"
                 placeholder={draft.studentName ?? "Tên của bạn…"}
-                tone={
-                  resolved.heroText === "SplitGradient" ? "light" : tone
+                isDark={
+                  resolved.heroText === "SplitGradient" ? false : tone === "dark"
                 }
-                maxLength={255}
               />
             </div>
 
@@ -847,13 +925,12 @@ function ProfileSectionEditable({
               )}
               style={{ fontFamily: resolved.headingFontCss }}
             >
-              <InlineText
+              <CompactRichField
                 value={draft.headline ?? ""}
                 onChange={(next) => onPatchDraft({ headline: next })}
                 ariaLabel="Tiêu đề"
                 placeholder="VD: Học viên STEAM · Robotics"
-                tone={tone}
-                maxLength={255}
+                isDark={resolved.isDark}
               />
             </div>
           </div>
@@ -864,13 +941,12 @@ function ProfileSectionEditable({
               resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#5C5C5C]",
             )}
           >
-            <InlineText
+            <CompactRichField
               value={draft.tagline ?? ""}
               onChange={(next) => onPatchDraft({ tagline: next })}
               ariaLabel="Tagline"
               placeholder="Một câu ngắn về hành trình của bạn…"
-              tone={tone}
-              maxLength={255}
+              isDark={resolved.isDark}
             />
           </div>
 
@@ -881,6 +957,7 @@ function ProfileSectionEditable({
             )}
           >
             <RichTextEditor
+              mode="full"
               variant="inline"
               isDark={resolved.isDark}
               value={draft.summary ?? ""}
@@ -961,29 +1038,21 @@ function LinksSectionEditable({
       {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
       <div className="flex items-center justify-between gap-2">
         {onTitleChange ? (
-          <h2
-            className={cn(
-              "text-lg font-bold tracking-tight",
-              resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-            )}
-            style={{ fontFamily: resolved.headingFontCss }}
-          >
-            <InlineText
-              value={title}
-              onChange={onTitleChange}
-              ariaLabel="Tiêu đề phần liên kết"
-              placeholder="Liên kết"
-              tone={resolved.isDark ? "dark" : "light"}
-              maxLength={255}
-            />
-          </h2>
+          <EditableSectionTitle
+            value={title}
+            onChange={onTitleChange}
+            placeholder="Liên kết"
+            isDark={resolved.isDark}
+            primaryColor={resolved.primaryColor}
+            headingFontCss={resolved.headingFontCss}
+          />
         ) : (
           <h2
-            className={cn(
-              "text-lg font-bold tracking-tight",
-              resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-            )}
-            style={{ fontFamily: resolved.headingFontCss }}
+            className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight text-white"
+            style={{
+              fontFamily: resolved.headingFontCss,
+              backgroundColor: resolved.primaryColor,
+            }}
           >
             {title}
           </h2>
@@ -1078,27 +1147,20 @@ function CustomSectionEditable({
         </HoverChrome>
       ) : null}
 
-      <h2
-        className={cn(
-          "text-lg font-bold tracking-tight",
-          resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-        )}
-        style={{ fontFamily: resolved.headingFontCss }}
-      >
-        <InlineText
-          value={section.title ?? ""}
-          onChange={(next) => patch({ title: next })}
-          ariaLabel="Tiêu đề phần"
-          placeholder={
-            PORTFOLIO_SECTION_KIND_LABELS[section.kind] ?? "Tiêu đề phần…"
-          }
-          tone={resolved.isDark ? "dark" : "light"}
-          maxLength={255}
-        />
-      </h2>
+      <EditableSectionTitle
+        value={section.title ?? ""}
+        onChange={(next) => patch({ title: next })}
+        placeholder={
+          PORTFOLIO_SECTION_KIND_LABELS[section.kind] ?? "Tiêu đề phần…"
+        }
+        isDark={resolved.isDark}
+        primaryColor={resolved.primaryColor}
+        headingFontCss={resolved.headingFontCss}
+      />
 
       {section.kind === "RichText" ? (
         <RichTextEditor
+          mode="full"
           variant="inline"
           isDark={resolved.isDark}
           value={section.contentHtml ?? ""}
@@ -1164,6 +1226,7 @@ function CustomSectionEditable({
       {section.kind === "Embed" ? (
         <div className="space-y-3">
           <RichTextEditor
+            mode="full"
             variant="inline"
             isDark={resolved.isDark}
             value={section.contentHtml ?? ""}
@@ -1557,16 +1620,14 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     <div
       className={cn(
         "relative mx-auto w-full max-w-[880px] overflow-hidden rounded-[1.5rem]",
-        resolved.isDark
-          ? "bg-[#121212] text-[#FAFAF5]"
-          : "bg-[#FAFAF5] text-[#2D2D2D]",
-        resolved.fontScaleClass,
-        resolved.lineHeightClass,
+        resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1",
         resolved.isDark ? "ring-[#FAFAF5]/10" : "ring-[#E5E5E0]",
       )}
       style={{
         fontFamily: resolved.bodyFontCss,
+        fontSize: `${resolved.fontScaleEm}em`,
+        lineHeight: resolved.lineHeightEm,
         ["--pf-primary" as string]: resolved.primaryColor,
         ["--pf-secondary" as string]: resolved.secondaryColor,
         ["--pf-accent" as string]: resolved.accentColor,
@@ -1574,7 +1635,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     >
       <PortfolioBackground slot={resolved.background} theme={resolved} />
 
-      <div className="relative px-4 py-8 sm:px-8 sm:py-10">
+      <div className="relative z-10 px-4 py-8 sm:px-8 sm:py-10">
         {useDynamicSections ? (
           <div className={resolved.densityGapClass}>
             <div data-portfolio-section="profile" className="scroll-mt-28">

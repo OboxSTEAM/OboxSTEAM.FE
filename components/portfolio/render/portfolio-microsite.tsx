@@ -267,18 +267,34 @@ function ItemCard({
         )}
         style={{ fontFamily: resolved.headingFontCss }}
       >
-        {item.title ?? "Không có tiêu đề"}
+        {item.title && /<[^>]+>/.test(item.title) ? (
+          <RichText
+            html={item.title}
+            className="prose-p:my-0 text-inherit"
+          />
+        ) : (
+          (item.title ?? "Không có tiêu đề")
+        )}
       </h3>
 
       {item.subtitle || item.organization ? (
-        <p
+        <div
           className={cn(
             "mt-1 text-sm",
             resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
           )}
         >
-          {[item.subtitle, item.organization].filter(Boolean).join(" · ")}
-        </p>
+          {[item.subtitle, item.organization].filter(Boolean).map((part, index) => (
+            <span key={`${item.id}-meta-${index}`}>
+              {index > 0 ? " · " : null}
+              {part && /<[^>]+>/.test(part) ? (
+                <RichText html={part} className="prose-p:my-0 inline text-inherit" />
+              ) : (
+                part
+              )}
+            </span>
+          ))}
+        </div>
       ) : null}
 
       <ItemBody item={item} isDark={resolved.isDark} />
@@ -321,13 +337,17 @@ function SectionHeading({
 }) {
   return (
     <h2
-      className={cn(
-        "text-xl font-bold tracking-tight",
-        resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-      )}
-      style={{ fontFamily: resolved.headingFontCss }}
+      className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight text-white sm:text-lg"
+      style={{
+        fontFamily: resolved.headingFontCss,
+        backgroundColor: resolved.primaryColor,
+      }}
     >
-      {title}
+      {/<[^>]+>/.test(title) ? (
+        <RichText html={title} className="prose-p:my-0 text-inherit [&_*]:text-inherit" />
+      ) : (
+        title
+      )}
     </h2>
   );
 }
@@ -411,7 +431,12 @@ function ProfileSection({
   resolved: ResolvedPortfolioTheme;
   compact?: boolean;
 }) {
-  const name = data.displayName ?? data.studentName ?? "Học viên OboxSTEAM";
+  const name =
+    (data.displayName
+      ? data.displayName.replace(/<[^>]+>/g, "").replace(/&nbsp;/gi, " ").trim()
+      : "") ||
+    data.studentName ||
+    "Học viên OboxSTEAM";
   const summaryIsHtml = data.summary ? hasHtmlTags(data.summary) : false;
 
   return (
@@ -462,24 +487,47 @@ function ProfileSection({
             <PortfolioHeroText
               slot={resolved.heroText}
               name={name}
-              headline={data.headline}
+              headline={
+                data.headline && hasHtmlTags(data.headline)
+                  ? null
+                  : data.headline
+              }
               colors={[
                 resolved.primaryColor,
                 resolved.accentColor,
                 resolved.secondaryColor,
               ]}
             />
+            {data.headline && hasHtmlTags(data.headline) ? (
+              <RichText
+                html={data.headline}
+                className={cn(
+                  "mt-2 text-base font-semibold sm:text-lg",
+                  resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
+                )}
+              />
+            ) : null}
           </div>
 
           {data.tagline ? (
-            <p
-              className={cn(
-                "mt-2 text-sm leading-relaxed",
-                resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
-              )}
-            >
-              {data.tagline}
-            </p>
+            /<[^>]+>/.test(data.tagline) ? (
+              <RichText
+                html={data.tagline}
+                className={cn(
+                  "mt-2 text-sm leading-relaxed",
+                  resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
+                )}
+              />
+            ) : (
+              <p
+                className={cn(
+                  "mt-2 text-sm leading-relaxed",
+                  resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
+                )}
+              >
+                {data.tagline}
+              </p>
+            )
           ) : null}
 
           {data.summary ? (
@@ -702,21 +750,24 @@ export function PortfolioMicrosite({
     <div
       className={cn(
         "relative min-h-full",
-        resolved.isDark
-          ? "bg-[#121212] text-[#FAFAF5]"
-          : "bg-[#FAFAF5] text-[#2D2D2D]",
-        resolved.fontScaleClass,
-        resolved.lineHeightClass,
+        resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         compact ? "p-4" : "px-4 py-8 sm:px-6 sm:py-12",
         className,
       )}
-      style={{ fontFamily: resolved.bodyFontCss }}
+      style={{
+        fontFamily: resolved.bodyFontCss,
+        fontSize: `${resolved.fontScaleEm}em`,
+        lineHeight: resolved.lineHeightEm,
+        ["--pf-primary" as string]: resolved.primaryColor,
+        ["--pf-secondary" as string]: resolved.secondaryColor,
+        ["--pf-accent" as string]: resolved.accentColor,
+      }}
     >
       <PortfolioBackground slot={resolved.background} theme={resolved} />
 
       <div
         className={cn(
-          "relative mx-auto",
+          "relative z-10 mx-auto",
           gapClass,
           compact ? "max-w-full" : "max-w-4xl",
         )}
