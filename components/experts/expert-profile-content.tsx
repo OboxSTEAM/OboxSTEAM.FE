@@ -222,9 +222,9 @@ export function ExpertProfileContent({
               <li key={item.programId}>
                 <Link
                   href={`/programs/${item.programId}`}
-                  className="group inline-flex max-w-full flex-col rounded-sm text-sm transition-colors hover:bg-[#FAFAF5] hover:px-1.5 hover:py-0.5"
+                  className="group inline-flex max-w-full flex-col rounded-md px-1.5 py-0.5 text-sm transition-colors hover:bg-[#4FC3F7]/10"
                 >
-                  <span className="truncate font-medium text-[#4FC3F7] group-hover:underline">
+                  <span className="truncate font-medium text-[#4FC3F7] transition-colors group-hover:text-[#0D6E9C]">
                     {item.name}
                   </span>
                   <span className="truncate text-xs text-[#6B6B6B]">

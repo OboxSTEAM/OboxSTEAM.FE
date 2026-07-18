@@ -13,12 +13,32 @@ export {
 } from "./account";
 
 export {
+  addExpertToProgram,
+  createExpert,
+  deleteExpert,
   getExpertById,
+  getExperts,
+  removeExpertFromProgram,
+  updateExpert,
+  type CreateExpertInput,
+  type CreateExpertResponse,
+  type CreateExpertResult,
+  type DeleteExpertResponse,
+  type DeleteExpertResult,
   type Expert,
+  type ExpertListQuery,
   type ExpertProgram,
+  type ExpertProgramAssignmentInput,
+  type ExpertProgramResponse,
+  type ExpertProgramResult,
   type GetExpertByIdResponse,
   type GetExpertByIdResult,
+  type GetExpertsResponse,
+  type GetExpertsResult,
   type ProgramExpert,
+  type UpdateExpertInput,
+  type UpdateExpertResponse,
+  type UpdateExpertResult,
 } from "./experts";
 
 export {

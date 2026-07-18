@@ -8,7 +8,24 @@ export {
   sendResetLinkSchema,
   verifyOtpSchema,
 } from "./auth";
-export { expertIdParamSchema, type ExpertIdParam } from "./experts";
+export {
+  createExpertSchema,
+  expertIdParamSchema,
+  expertListQuerySchema,
+  expertProgramAssignmentSchema,
+  expertProgramInputSchema,
+  expertProgramParamSchema,
+  expertSortBySchema,
+  expertUpsertSchema,
+  updateExpertSchema,
+  type CreateExpertInput,
+  type ExpertIdParam,
+  type ExpertListQuery,
+  type ExpertProgramAssignmentInput,
+  type ExpertProgramInput,
+  type ExpertProgramParam,
+  type UpdateExpertInput,
+} from "./experts";
 export {
   activityIdParamSchema,
   courseIdParamSchema,

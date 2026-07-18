@@ -6,6 +6,7 @@ import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
+import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { type ProgramWithModules } from "@/lib/api";
 import { cn } from "@/lib/utils";
@@ -16,7 +17,7 @@ type TabId = "curriculum" | "experts" | "reviews" | "classes";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "curriculum",  label: "Khung chương trình", icon: LayoutGrid },
-  { id: "experts",     label: "Giảng viên",          icon: Users },
+  { id: "experts",     label: "Chuyên gia",           icon: Users },
   { id: "reviews",     label: "Đánh giá",             icon: Star },
   { id: "classes",     label: "Lớp",                  icon: GraduationCap },
 ];
@@ -128,11 +129,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
         {activeTab === "experts" && (
           <div className="py-4">
-            <ManagerEmptyState
-              title="Giảng viên & Chuyên gia"
-              description={`Gán giảng viên phụ trách hoặc chuyên gia phản biện cho chương trình ${program.name}.`}
-              icon={Users}
-            />
+            <ProgramExpertsManager program={program} />
           </div>
         )}
 

@@ -120,6 +120,26 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Đóng hộp thoại và thử lại sau vài giây.",
   },
+  "experts.list": {
+    title: "Không tải được danh sách chuyên gia",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "experts.create": {
+    title: "Không tạo được chuyên gia",
+    reason: "Thông tin chưa hợp lệ hoặc mã chuyên gia đã tồn tại.",
+    action: "Kiểm tra mã, họ tên và các chương trình được gán rồi thử lại.",
+  },
+  "experts.update": {
+    title: "Không cập nhật được chuyên gia",
+    reason: "Thông tin chưa hợp lệ hoặc chuyên gia không còn tồn tại.",
+    action: "Tải lại danh sách, kiểm tra thông tin rồi thử lưu lại.",
+  },
+  "experts.delete": {
+    title: "Không xóa được chuyên gia",
+    reason: "Chuyên gia có thể đang được sử dụng hoặc không còn tồn tại.",
+    action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
+  },
   "curriculum.module.save": {
     title: "Không lưu được module",
     reason: "Thông tin module chưa hợp lệ hoặc đã trùng mã.",
@@ -227,6 +247,9 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "programs.update",
   "programs.delete",
   "programs.reviews.delete",
+  "experts.create",
+  "experts.update",
+  "experts.delete",
   "curriculum.module.save",
   "curriculum.course.save",
   "curriculum.activity.save",
