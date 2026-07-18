@@ -15,8 +15,8 @@ type InlineFieldTone = "light" | "dark";
 
 function toneClasses(tone: InlineFieldTone): string {
   return tone === "dark"
-    ? "placeholder:text-white/45 hover:bg-white/10 focus:bg-white/10"
-    : "placeholder:text-[#A8A8A0] hover:bg-[rgba(45,45,45,0.03)] focus:bg-transparent";
+    ? "placeholder:text-white/65 hover:bg-white/10 focus:bg-white/10"
+    : "placeholder:text-[#5C5C5C] hover:bg-[rgba(45,45,45,0.03)] focus:bg-transparent";
 }
 
 type InlineTextProps = {

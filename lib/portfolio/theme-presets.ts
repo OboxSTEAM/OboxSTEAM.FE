@@ -260,10 +260,10 @@ function pickOverride<T extends string>(
 }
 
 const FONT_SCALE_CLASS: Record<PortfolioFontScale, string> = {
-  Sm: "text-[0.92em]",
+  Sm: "text-[0.88em]",
   Base: "text-[1em]",
-  Lg: "text-[1.06em]",
-  Xl: "text-[1.14em]",
+  Lg: "text-[1.18em]",
+  Xl: "text-[1.38em]",
 };
 
 const LINE_HEIGHT_CLASS: Record<PortfolioLineHeight, string> = {
@@ -273,22 +273,23 @@ const LINE_HEIGHT_CLASS: Record<PortfolioLineHeight, string> = {
 };
 
 const DENSITY_GAP_CLASS: Record<PortfolioDensity, string> = {
-  Compact: "space-y-6",
-  Cozy: "space-y-8",
-  Spacious: "space-y-12",
+  Compact: "space-y-4",
+  Cozy: "space-y-9",
+  Spacious: "space-y-16",
 };
 
 const CARD_SURFACE_CLASS: Record<PortfolioCardStyle, string> = {
-  Outline: "border border-[#E5E5E0] bg-white shadow-none",
-  Soft: "border-0 bg-[#F5F5F0] shadow-none",
-  Elevated: "border border-[#E5E5E0]/80 bg-white shadow-[0_12px_28px_rgba(45,45,45,0.08)]",
+  Outline: "border-2 border-[#D8D8D0] bg-white shadow-none",
+  Soft: "border-0 bg-[#F0F0EA] shadow-none",
+  Elevated:
+    "border border-[#E5E5E0] bg-white shadow-[0_16px_40px_rgba(45,45,45,0.12)]",
 };
 
 const DARK_CARD_SURFACE_CLASS: Record<PortfolioCardStyle, string> = {
-  Outline: "border border-[#FAFAF5]/14 bg-[#1a1a1a] shadow-none",
-  Soft: "border-0 bg-[#222222] shadow-none",
+  Outline: "border-2 border-[#FAFAF5]/22 bg-[#1a1a1a] shadow-none",
+  Soft: "border-0 bg-[#262626] shadow-none",
   Elevated:
-    "border border-[#FAFAF5]/12 bg-[#1a1a1a] shadow-[0_12px_28px_rgba(0,0,0,0.35)]",
+    "border border-[#FAFAF5]/14 bg-[#1a1a1a] shadow-[0_16px_40px_rgba(0,0,0,0.45)]",
 };
 
 /** Resolver: preset default → per-slot override (settingsJson) → granular theme fields. */

@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { useReducedMotion } from "motion/react";
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import type {
   BackgroundSlotId,
@@ -51,28 +51,32 @@ export function PortfolioBackground({
 }) {
   const animate = useShouldAnimate();
 
-  const staticGradient =
+  const baseStyle: CSSProperties | undefined =
     theme.backgroundStyle === "Gradient" || slot === "GradientSoft"
       ? {
-          background: `linear-gradient(135deg, ${theme.primaryColor}22 0%, ${theme.secondaryColor}18 50%, transparent 100%)`,
+          background: `linear-gradient(145deg, ${theme.primaryColor}38 0%, ${theme.secondaryColor}28 42%, ${theme.accentColor}18 100%)`,
         }
-      : theme.backgroundImageUrl
+      : theme.backgroundStyle === "Pattern"
         ? {
-            backgroundImage: `url(${theme.backgroundImageUrl})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
+            backgroundColor: theme.isDark ? "#121212" : "#FAFAF5",
+            backgroundImage: `radial-gradient(${theme.primaryColor}40 1.5px, transparent 1.5px)`,
+            backgroundSize: "16px 16px",
           }
-        : undefined;
+        : theme.backgroundStyle === "Image" && theme.backgroundImageUrl
+          ? {
+              backgroundImage: `url(${theme.backgroundImageUrl})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : theme.backgroundImageUrl
+            ? {
+                backgroundImage: `url(${theme.backgroundImageUrl})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : undefined;
 
-  if (!animate || slot === "None") {
-    return (
-      <div
-        className={cn("pointer-events-none absolute inset-0 -z-10", className)}
-        style={staticGradient}
-        aria-hidden
-      />
-    );
-  }
+  const showEffect = animate && slot !== "None";
 
   return (
     <div
@@ -82,8 +86,10 @@ export function PortfolioBackground({
       )}
       aria-hidden
     >
-      {slot === "Aurora" ? (
-        <div className="size-full min-h-[280px]">
+      {baseStyle ? <div className="absolute inset-0" style={baseStyle} /> : null}
+
+      {showEffect && slot === "Aurora" ? (
+        <div className="absolute inset-0 size-full min-h-[280px] opacity-90">
           <Aurora
             colorStops={[theme.primaryColor, theme.accentColor, theme.secondaryColor]}
             blend={0.5}
@@ -92,16 +98,16 @@ export function PortfolioBackground({
           />
         </div>
       ) : null}
-      {slot === "Waves" ? (
+      {showEffect && slot === "Waves" ? (
         <Waves
-          lineColor={`${theme.primaryColor}55`}
+          lineColor={`${theme.primaryColor}66`}
           backgroundColor="transparent"
           waveSpeedX={0.012}
           waveSpeedY={0.008}
         />
       ) : null}
-      {slot === "DotGrid" ? (
-        <div className="size-full bg-[#121212]">
+      {showEffect && slot === "DotGrid" ? (
+        <div className="absolute inset-0 size-full bg-[#121212]/80">
           <DotGrid
             dotSize={3}
             gap={22}
@@ -111,8 +117,13 @@ export function PortfolioBackground({
           />
         </div>
       ) : null}
-      {slot === "GradientSoft" ? (
-        <div className="size-full" style={staticGradient} />
+      {showEffect && slot === "GradientSoft" && !baseStyle ? (
+        <div
+          className="absolute inset-0 size-full"
+          style={{
+            background: `linear-gradient(145deg, ${theme.primaryColor}38 0%, ${theme.secondaryColor}28 42%, ${theme.accentColor}18 100%)`,
+          }}
+        />
       ) : null}
     </div>
   );

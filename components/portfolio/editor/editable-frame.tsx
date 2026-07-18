@@ -7,13 +7,11 @@ import { cn } from "@/lib/utils";
 type EditableSectionProps = {
   children: ReactNode;
   className?: string;
-  /** Dark microsite canvas — dashed borders need higher contrast. */
   isDark?: boolean;
 };
 
 /**
- * Section chrome for the portfolio editor (TopCV-style).
- * Always shows a dashed outline; highlights on focus-within / click into children.
+ * Section chrome — dashed outline, cyan highlight when focused (no glow).
  */
 export function EditableSection({
   children,
@@ -23,19 +21,17 @@ export function EditableSection({
   return (
     <div
       className={cn(
-        "group/editable relative rounded-xl border border-dashed p-3 transition-[border-color,box-shadow,background-color] duration-200 sm:p-4",
+        "group/editable relative rounded-xl border border-dashed p-3 transition-colors duration-150 sm:p-4",
         isDark
           ? [
-              "border-[#FAFAF5]/22",
-              "hover:border-[#FAFAF5]/40",
-              "focus-within:border-[#4FC3F7] focus-within:bg-[#4FC3F7]/10",
-              "focus-within:shadow-[inset_0_0_0_1px_rgba(79,195,247,0.45)]",
+              "border-[#FAFAF5]/28",
+              "hover:border-[#FAFAF5]/45",
+              "focus-within:border-[#4FC3F7] focus-within:bg-[rgba(79,195,247,0.08)]",
             ]
           : [
-              "border-[#C9C9C2]/90",
+              "border-[#C4C4BC]",
               "hover:border-[#A8A8A0]",
               "focus-within:border-[#4FC3F7] focus-within:bg-[rgba(79,195,247,0.06)]",
-              "focus-within:shadow-[inset_0_0_0_1px_rgba(79,195,247,0.35)]",
             ],
         className,
       )}
@@ -52,7 +48,7 @@ type EditableFieldFrameProps = {
 };
 
 /**
- * Dashed focus ring around a single inline text / rich-text control.
+ * Field focus frame — visible on hover, strong cyan when active.
  */
 export function EditableFieldFrame({
   children,
@@ -62,10 +58,10 @@ export function EditableFieldFrame({
   return (
     <div
       className={cn(
-        "rounded-md border border-dashed border-transparent transition-[border-color,background-color,box-shadow] duration-150",
+        "rounded-lg border border-dashed transition-colors duration-150",
         isDark
-          ? "hover:border-[#FAFAF5]/25 focus-within:border-[#4FC3F7] focus-within:bg-white/5 focus-within:shadow-[inset_0_0_0_1px_rgba(79,195,247,0.4)]"
-          : "hover:border-[#C9C9C2] focus-within:border-[#4FC3F7] focus-within:bg-white/90 focus-within:shadow-[inset_0_0_0_1px_rgba(79,195,247,0.3)]",
+          ? "border-[#FAFAF5]/20 hover:border-[#FAFAF5]/40 focus-within:border-[#4FC3F7] focus-within:bg-white/8"
+          : "border-[#D0D0C8] bg-white/70 hover:border-[#A8A8A0] focus-within:border-[#4FC3F7] focus-within:bg-white",
         className,
       )}
     >

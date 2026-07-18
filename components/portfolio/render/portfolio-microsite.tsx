@@ -158,7 +158,7 @@ function itemsLayoutClass(
     case "bento":
       return "grid auto-rows-auto gap-4 sm:grid-cols-2";
     case "timeline":
-      return "relative space-y-4 border-l-2 pl-5";
+      return "relative space-y-4";
     case "masonry":
       return "columns-1 gap-4 sm:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid";
     default:
@@ -232,14 +232,10 @@ function ItemCard({
   resolved: ResolvedPortfolioTheme;
   layoutStyle: ResolvedPortfolioTheme["layoutStyle"];
 }) {
-  const accentBorder = item.accentColor ?? resolved.accentColor;
   const cardSurface = resolved.cardSurfaceClass;
 
   return (
-    <div
-      className={cn("h-full", itemSpanClass(item.span, layoutStyle))}
-      style={{ borderLeft: `3px solid ${item.accentColor ?? accentBorder}` }}
-    >
+    <div className={cn("h-full", itemSpanClass(item.span, layoutStyle))}>
       <PortfolioCardShell
         slot={resolved.card}
         surfaceClass={cardSurface}
@@ -353,14 +349,7 @@ function ItemsSection({
   return (
     <section className="space-y-4">
       <SectionHeading title={title} resolved={resolved} />
-      <div
-        className={layoutClass}
-        style={
-          resolved.layoutStyle === "timeline"
-            ? { borderLeftColor: resolved.accentColor }
-            : undefined
-        }
-      >
+      <div className={layoutClass}>
         {items.map((item) => (
           <ItemCard
             key={item.id}

@@ -21,6 +21,7 @@ import {
   PortfolioBackground,
   PortfolioCardShell,
   PortfolioGallery,
+  PortfolioReveal,
   type GalleryImage,
 } from "@/components/portfolio/reactbits/slots";
 import { RichText } from "@/components/portfolio/render/rich-text";
@@ -53,6 +54,7 @@ import {
 } from "@/lib/portfolio/constants";
 import {
   GALLERY_SLOT_OPTIONS,
+  HERO_TEXT_SLOT_OPTIONS,
   resolvePortfolioTheme,
   type GallerySlotId,
   type ResolvedPortfolioTheme,
@@ -174,7 +176,7 @@ function itemsLayoutClass(
     case "bento":
       return "grid auto-rows-auto gap-3 sm:grid-cols-2";
     case "timeline":
-      return "relative space-y-3 border-l-2 pl-4";
+      return "relative space-y-3";
     case "masonry":
       return "columns-1 gap-3 sm:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid";
     default:
@@ -309,12 +311,12 @@ function ItemCardEditable({
 }: ItemCardEditableProps) {
   const controls = useDragControls();
   const isAuto = item.source === "AutoImported";
-  const accentBorder = item.accentColor ?? resolved.accentColor;
   const cardSurface = resolved.cardSurfaceClass;
   const media = itemMediaSources(item);
 
   return (
     <Reorder.Item
+      as="div"
       value={item.id}
       dragListener={false}
       dragControls={controls}
@@ -322,11 +324,10 @@ function ItemCardEditable({
       layout="position"
       transition={reduceMotion ? { duration: 0 } : undefined}
       className={cn(
-        "group relative h-full",
+        "group relative h-full list-none",
         itemSpanClass(item.span, resolved.layoutStyle),
         !item.isVisible && "opacity-55",
       )}
-      style={{ borderLeft: `3px solid ${accentBorder}` }}
     >
       <PortfolioCardShell
         slot={resolved.card}
@@ -621,11 +622,6 @@ function ItemsGroupEditable({
             onPreviewReorder(toGlobalOrder(nextIds))
           }
           className={layoutClass}
-          style={
-            resolved.layoutStyle === "timeline"
-              ? { borderLeftColor: resolved.accentColor }
-              : undefined
-          }
         >
           {items.map((item) => (
             <ItemCardEditable
@@ -664,12 +660,28 @@ function ProfileSectionEditable({
     accent: resolved.accentColor,
   };
 
+  const heroHint =
+    HERO_TEXT_SLOT_OPTIONS.find((option) => option.id === resolved.heroText)
+      ?.label ?? resolved.heroText;
+
+  const nameClass = cn(
+    "text-2xl font-extrabold tracking-tight sm:text-4xl",
+    resolved.heroText === "Decrypted" && "font-mono tracking-[0.08em]",
+    resolved.heroText === "TrueFocus" &&
+      "tracking-tighter underline decoration-[#E94B3C] decoration-2 underline-offset-8",
+    resolved.heroText === "BlurShiny" && "italic tracking-wide opacity-95",
+    resolved.heroText === "SplitGradient" &&
+      "bg-gradient-to-r from-[#E94B3C] via-[#7E57C2] to-[#4FC3F7] bg-clip-text text-transparent",
+  );
+
   return (
     <section
       className={cn(
         "relative overflow-hidden rounded-[1.25rem]",
-        resolved.isDark ? "bg-[#1a1a1a]/80" : "bg-white/80 backdrop-blur-sm",
+        resolved.isDark ? "bg-[#1a1a1a]/80" : "bg-white/90",
         "p-5 sm:p-6",
+        "ring-1",
+        resolved.isDark ? "ring-[#FAFAF5]/12" : "ring-[#E5E5E0]",
       )}
     >
       <div className="relative -mx-5 -mt-5 mb-4 sm:-mx-6 sm:-mt-6">
@@ -687,21 +699,27 @@ function ProfileSectionEditable({
         ) : (
           <div
             className={cn(
-              "flex h-24 items-center justify-center sm:h-28",
-              resolved.isDark ? "bg-[#FAFAF5]/5" : "bg-[#F5F5F0]",
+              "flex h-28 items-center justify-center sm:h-32",
+              resolved.isDark ? "bg-[#FAFAF5]/5" : "bg-[#F0F0EA]",
             )}
+            style={{
+              background:
+                resolved.backgroundStyle === "Gradient"
+                  ? `linear-gradient(135deg, ${resolved.primaryColor}33, ${resolved.secondaryColor}28)`
+                  : undefined,
+            }}
           >
             <p
               className={cn(
-                "text-xs",
-                resolved.isDark ? "text-[#FAFAF5]/50" : "text-[#6B6B6B]",
+                "text-sm font-medium",
+                resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#5C5C5C]",
               )}
             >
               Chưa có ảnh bìa
             </p>
           </div>
         )}
-        <div className="absolute bottom-2 right-2 rounded-xl bg-white/95 p-2 shadow-sm">
+        <div className="absolute bottom-2 right-2 rounded-xl bg-white p-2 shadow-sm ring-1 ring-[#E5E5E0]">
           <MediaUploader
             label="ảnh bìa"
             onUploadedUrl={(url) => onPatchDraft({ coverImageUrl: url })}
@@ -711,14 +729,21 @@ function ProfileSectionEditable({
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 max-w-2xl flex-1">
-          <p
-            className={cn(
-              "font-mono text-[10px] uppercase tracking-[0.18em]",
-              resolved.isDark ? "text-[#FAFAF5]/60" : "text-[#6B6B6B]",
-            )}
-          >
-            Portfolio STEAM
-          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p
+              className={cn(
+                "font-mono text-[10px] uppercase tracking-[0.18em]",
+                resolved.isDark ? "text-[#FAFAF5]/60" : "text-[#5C5C5C]",
+              )}
+            >
+              Portfolio STEAM
+            </p>
+            {resolved.heroText !== "Plain" ? (
+              <span className="rounded-md border border-[#4FC3F7]/40 bg-[#4FC3F7]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0f7cad]">
+                Hero: {heroHint}
+              </span>
+            ) : null}
+          </div>
 
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {STEAM_CHIPS.map((chip) => (
@@ -733,22 +758,25 @@ function ProfileSectionEditable({
           </div>
 
           <div className="mt-3 space-y-2">
-            <div
-              className="text-2xl font-extrabold tracking-tight sm:text-4xl"
-              style={{ fontFamily: resolved.headingFontCss }}
-            >
+            <div className={nameClass} style={{ fontFamily: resolved.headingFontCss }}>
               <InlineText
                 value={draft.displayName ?? ""}
                 onChange={(next) => onPatchDraft({ displayName: next })}
                 ariaLabel="Tên hiển thị"
                 placeholder={draft.studentName ?? "Tên của bạn…"}
-                tone={tone}
+                tone={
+                  resolved.heroText === "SplitGradient" ? "light" : tone
+                }
                 maxLength={255}
               />
             </div>
 
             <div
-              className="text-base font-semibold sm:text-lg"
+              className={cn(
+                "text-base font-semibold sm:text-lg",
+                resolved.heroText === "Decrypted" && "font-mono text-sm sm:text-base",
+                resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
+              )}
               style={{ fontFamily: resolved.headingFontCss }}
             >
               <InlineText
@@ -765,7 +793,7 @@ function ProfileSectionEditable({
           <div
             className={cn(
               "mt-2 text-sm leading-relaxed",
-              resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
+              resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#5C5C5C]",
             )}
           >
             <InlineText
@@ -781,7 +809,7 @@ function ProfileSectionEditable({
           <div
             className={cn(
               "mt-3 max-w-xl",
-              resolved.isDark ? "text-[#FAFAF5]/85" : "text-[#2D2D2D]/85",
+              resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
             )}
           >
             <RichTextEditor
@@ -813,7 +841,7 @@ function ProfileSectionEditable({
                 "flex h-24 w-24 items-center justify-center rounded-xl text-2xl font-bold sm:h-28 sm:w-28",
                 resolved.isDark
                   ? "bg-[#FAFAF5]/10 text-[#FAFAF5]"
-                  : "bg-[#F5F5F0] text-[#2D2D2D]",
+                  : "bg-[#F0F0EA] text-[#2D2D2D]",
               )}
             >
               {name.slice(0, 1).toUpperCase()}
@@ -1080,11 +1108,13 @@ function LegacySectionShell({
   sectionId,
   reduceMotion,
   isDark,
+  reveal,
   children,
 }: {
   sectionId: PortfolioSectionId;
   reduceMotion: boolean;
   isDark: boolean;
+  reveal: ResolvedPortfolioTheme["reveal"];
   children: ReactNode;
 }) {
   const controls = useDragControls();
@@ -1094,12 +1124,13 @@ function LegacySectionShell({
 
   return (
     <Reorder.Item
+      as="div"
       value={sectionId}
       dragListener={false}
       dragControls={controls}
       layout="position"
       transition={reduceMotion ? { duration: 0 } : undefined}
-      className="group/section relative"
+      className="group/section relative list-none"
     >
       <div
         className={cn(
@@ -1123,7 +1154,9 @@ function LegacySectionShell({
           <GripVertical className="size-3.5" />
         </button>
       </div>
-      <EditableSection isDark={isDark}>{children}</EditableSection>
+      <EditableSection isDark={isDark}>
+        <PortfolioReveal slot={reveal}>{children}</PortfolioReveal>
+      </EditableSection>
     </Reorder.Item>
   );
 }
@@ -1132,6 +1165,7 @@ function DynamicSectionShell({
   section,
   reduceMotion,
   isDark,
+  reveal,
   onToggleSectionVisibility,
   onDeleteSection,
   children,
@@ -1139,6 +1173,7 @@ function DynamicSectionShell({
   section: PortfolioSection;
   reduceMotion: boolean;
   isDark: boolean;
+  reveal: ResolvedPortfolioTheme["reveal"];
   onToggleSectionVisibility?: PortfolioCanvasProps["onToggleSectionVisibility"];
   onDeleteSection?: PortfolioCanvasProps["onDeleteSection"];
   children: ReactNode;
@@ -1152,12 +1187,13 @@ function DynamicSectionShell({
 
   return (
     <Reorder.Item
+      as="div"
       value={section.id}
       dragListener={false}
       dragControls={controls}
       layout="position"
       transition={reduceMotion ? { duration: 0 } : undefined}
-      className="group/section relative"
+      className="group/section relative list-none"
     >
       <div
         className={cn(
@@ -1202,7 +1238,9 @@ function DynamicSectionShell({
           <GripVertical className="size-3.5" />
         </button>
       </div>
-      <EditableSection isDark={isDark}>{children}</EditableSection>
+      <EditableSection isDark={isDark}>
+        <PortfolioReveal slot={reveal}>{children}</PortfolioReveal>
+      </EditableSection>
     </Reorder.Item>
   );
 }
@@ -1357,6 +1395,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
         sectionId="profile"
         reduceMotion={reduceMotion}
         isDark={resolved.isDark}
+        reveal={resolved.reveal}
       >
         <ProfileSectionEditable
           draft={draft}
@@ -1371,6 +1410,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
         sectionId="projects"
         reduceMotion={reduceMotion}
         isDark={resolved.isDark}
+        reveal={resolved.reveal}
       >
         <ItemsGroupEditable
           title="Dự án & chứng chỉ"
@@ -1390,6 +1430,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
         sectionId="activities"
         reduceMotion={reduceMotion}
         isDark={resolved.isDark}
+        reveal={resolved.reveal}
       >
         <ItemsGroupEditable
           title="Hoạt động ngoại khóa"
@@ -1408,6 +1449,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
         sectionId="links"
         reduceMotion={reduceMotion}
         isDark={resolved.isDark}
+        reveal={resolved.reveal}
       >
         <LinksSectionEditable
           draft={draft}
@@ -1438,13 +1480,15 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
 
       <div className="relative px-4 py-8 sm:px-8 sm:py-10">
         {useDynamicSections ? (
-          <div className="space-y-8">
+          <div className={resolved.densityGapClass}>
             <EditableSection isDark={resolved.isDark}>
-              <ProfileSectionEditable
-                draft={draft}
-                resolved={resolved}
-                onPatchDraft={onPatchDraft}
-              />
+              <PortfolioReveal slot={resolved.reveal}>
+                <ProfileSectionEditable
+                  draft={draft}
+                  resolved={resolved}
+                  onPatchDraft={onPatchDraft}
+                />
+              </PortfolioReveal>
             </EditableSection>
 
             <Reorder.Group
@@ -1452,7 +1496,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
               axis="y"
               values={dynamicSectionIds}
               onReorder={(nextIds: string[]) => onReorderSections?.(nextIds)}
-              className="space-y-8"
+              className={resolved.densityGapClass}
             >
               {dynamicSections.map((section) => (
                 <DynamicSectionShell
@@ -1460,6 +1504,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
                   section={section}
                   reduceMotion={reduceMotion}
                   isDark={resolved.isDark}
+                  reveal={resolved.reveal}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   onDeleteSection={onDeleteSection}
                 >
@@ -1478,7 +1523,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
             onReorder={(next: PortfolioSectionId[]) =>
               onPatchTheme({ ...theme, sectionOrder: next })
             }
-            className="space-y-8"
+            className={resolved.densityGapClass}
           >
             {sectionOrder.map((sectionId) => legacySections[sectionId])}
           </Reorder.Group>
