@@ -1,24 +1,41 @@
-/** Curated FE catalog for portfolio theme fields (backend stores free-form strings). */
+/** Curated FE catalog for portfolio theme fields (backend stores free-form / enum strings). */
 
 export const PORTFOLIO_TEMPLATES = [
   {
-    id: "aurora",
-    label: "Aurora",
-    description: "Gradient hero, soft STEAM accents, modern cards.",
+    id: "aurora-signature",
+    label: "Aurora Signature",
+    description: "Năng lượng STEAM — gradient sống, thẻ spotlight, gallery vòng tròn.",
   },
   {
-    id: "editorial",
-    label: "Editorial",
-    description: "Wide typography, magazine-style sections.",
+    id: "editorial-ink",
+    label: "Editorial Ink",
+    description: "Tạp chí êm dịu — serif, masonry, typography rõ ràng.",
   },
   {
-    id: "minimal",
-    label: "Minimal",
-    description: "Clean whitespace, quiet hierarchy.",
+    id: "neo-lab",
+    label: "Neo Lab",
+    description: "Lab tối — mono, decrypted text, thẻ tilt + glow.",
+  },
+  {
+    id: "studio-play",
+    label: "Studio Play",
+    description: "Sáng tạo vui — bounce cards, blur text, carousel.",
+  },
+  {
+    id: "quiet-minimal",
+    label: "Quiet Minimal",
+    description: "Ít chuyển động — nền nhẹ, thẻ soft, dễ đọc.",
   },
 ] as const;
 
 export type PortfolioTemplateId = (typeof PORTFOLIO_TEMPLATES)[number]["id"];
+
+/** Legacy template ids → current presets. */
+const TEMPLATE_ALIASES: Record<string, PortfolioTemplateId> = {
+  aurora: "aurora-signature",
+  editorial: "editorial-ink",
+  minimal: "quiet-minimal",
+};
 
 export const PORTFOLIO_FONTS = [
   {
@@ -54,21 +71,65 @@ export const PORTFOLIO_LAYOUT_STYLES = [
   {
     id: "stacked",
     label: "Stacked",
-    description: "Single column, generous spacing.",
+    description: "Một cột, khoảng cách gọn.",
   },
   {
     id: "bento",
     label: "Bento",
-    description: "Card grid with varied spans.",
+    description: "Lưới thẻ với span đa dạng.",
   },
   {
     id: "timeline",
     label: "Timeline",
-    description: "Chronological rail for items.",
+    description: "Trục thời gian cho các mục.",
+  },
+  {
+    id: "masonry",
+    label: "Masonry",
+    description: "Cột so le kiểu tạp chí.",
   },
 ] as const;
 
 export type PortfolioLayoutStyleId = (typeof PORTFOLIO_LAYOUT_STYLES)[number]["id"];
+
+export const PORTFOLIO_FONT_SCALES = [
+  { id: "Sm" as const, label: "Nhỏ" },
+  { id: "Base" as const, label: "Vừa" },
+  { id: "Lg" as const, label: "Lớn" },
+  { id: "Xl" as const, label: "Rất lớn" },
+];
+
+export const PORTFOLIO_LINE_HEIGHTS = [
+  { id: "Tight" as const, label: "Chặt" },
+  { id: "Normal" as const, label: "Vừa" },
+  { id: "Relaxed" as const, label: "Rộng" },
+];
+
+export const PORTFOLIO_DENSITIES = [
+  { id: "Compact" as const, label: "Gọn" },
+  { id: "Cozy" as const, label: "Vừa" },
+  { id: "Spacious" as const, label: "Thoáng" },
+];
+
+export const PORTFOLIO_BACKGROUND_STYLES = [
+  { id: "Plain" as const, label: "Trơn" },
+  { id: "Gradient" as const, label: "Gradient" },
+  { id: "Pattern" as const, label: "Họa tiết" },
+  { id: "Image" as const, label: "Ảnh" },
+];
+
+export const PORTFOLIO_CARD_STYLES = [
+  { id: "Outline" as const, label: "Viền" },
+  { id: "Soft" as const, label: "Mềm" },
+  { id: "Elevated" as const, label: "Nổi" },
+];
+
+export const PORTFOLIO_ITEM_SPANS = [
+  { id: "Single" as const, label: "1 cột" },
+  { id: "Wide" as const, label: "Rộng" },
+  { id: "Tall" as const, label: "Cao" },
+  { id: "Large" as const, label: "Lớn" },
+];
 
 export const PORTFOLIO_SECTIONS = [
   { id: "profile", label: "Hồ sơ" },
@@ -113,6 +174,15 @@ export const PORTFOLIO_ITEM_TYPE_LABELS: Record<string, string> = {
   HighlightReel: "Highlight reel",
 };
 
+export const PORTFOLIO_SECTION_KIND_LABELS: Record<string, string> = {
+  ProjectsGroup: "Nhóm dự án",
+  ActivitiesGroup: "Nhóm hoạt động",
+  LinksGroup: "Nhóm liên kết",
+  RichText: "Khối văn bản",
+  Gallery: "Thư viện ảnh",
+  Embed: "Nhúng",
+};
+
 export const RESERVED_PORTFOLIO_SUBDOMAINS = [
   "www",
   "app",
@@ -131,6 +201,9 @@ export function getPortfolioFontCss(fontId: string | null | undefined): string {
 export function getPortfolioTemplateId(
   templateId: string | null | undefined,
 ): PortfolioTemplateId {
+  if (!templateId) return PORTFOLIO_TEMPLATES[0].id;
+  const aliased = TEMPLATE_ALIASES[templateId];
+  if (aliased) return aliased;
   const match = PORTFOLIO_TEMPLATES.find((template) => template.id === templateId);
   return match?.id ?? PORTFOLIO_TEMPLATES[0].id;
 }
@@ -153,4 +226,17 @@ export function normalizeSectionOrder(
     (id) => !fromTheme.includes(id),
   );
   return [...fromTheme, ...missing];
+}
+
+/** Empty rich-text HTML → null for API save. */
+export function nullIfEmptyHtml(html: string | null | undefined): string | null {
+  if (html == null) return null;
+  const trimmed = html.trim();
+  if (!trimmed) return null;
+  const textOnly = trimmed
+    .replace(/<br\s*\/?>/gi, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/<[^>]+>/g, "")
+    .trim();
+  return textOnly ? trimmed : null;
 }

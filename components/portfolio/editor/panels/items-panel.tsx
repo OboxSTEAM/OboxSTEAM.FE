@@ -35,7 +35,7 @@ export function ItemsPanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-[#6B6B6B]">
+      <p className="text-xs leading-relaxed text-[#6B6B6B]">
         Mục tự động nhập chỉ ẩn/hiện và chỉnh tường thuật; mục thủ công có thể
         xóa. Kéo thả trực tiếp trên trang để sắp xếp.
       </p>
@@ -44,7 +44,7 @@ export function ItemsPanel({
         <Button
           type="button"
           variant="outline"
-          className="h-10 flex-1 rounded-xl"
+          className="h-10 flex-1 rounded-xl border-[#E5E5E0] bg-white"
           disabled={isSyncing}
           onClick={onSync}
         >
@@ -62,7 +62,7 @@ export function ItemsPanel({
       </div>
 
       {orderedItems.length === 0 ? (
-        <p className="rounded-xl bg-[#FAFAF5] px-4 py-6 text-center text-sm text-[#6B6B6B]">
+        <p className="rounded-2xl border border-dashed border-[#C9C9C2] bg-white/70 px-4 py-6 text-center text-sm text-[#6B6B6B]">
           Chưa có mục. Bấm Đồng bộ để nhập chứng chỉ/capstone, hoặc thêm thủ
           công.
         </p>
@@ -73,7 +73,7 @@ export function ItemsPanel({
             return (
               <li
                 key={item.id}
-                className="rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-3"
+                className="rounded-2xl border border-[#E5E5E0] bg-white p-3 shadow-sm"
               >
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[#6B6B6B]">

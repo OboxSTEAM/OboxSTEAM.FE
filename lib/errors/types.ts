@@ -49,4 +49,6 @@ export type AppErrorContext =
   | "portfolio.item"
   | "portfolio.reorder"
   | "portfolio.sync"
-  | "portfolio.public";
+  | "portfolio.public"
+  | "portfolio.media"
+  | "portfolio.section";

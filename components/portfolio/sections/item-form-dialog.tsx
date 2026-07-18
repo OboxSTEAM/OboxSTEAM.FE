@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
+import { MediaUploader } from "@/components/portfolio/editor/media-uploader";
+import { RichTextEditor } from "@/components/portfolio/editor/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,8 +25,11 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import type { PortfolioItem, PortfolioItemType } from "@/lib/api/entities/portfolio";
+import type {
+  PortfolioItem,
+  PortfolioItemType,
+  PortfolioMediaAsset,
+} from "@/lib/api/entities/portfolio";
 import {
   createPortfolioItem,
   updatePortfolioItem,
@@ -32,18 +37,18 @@ import {
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   MANUAL_PORTFOLIO_ITEM_TYPES,
+  nullIfEmptyHtml,
   PORTFOLIO_ITEM_TYPE_LABELS,
 } from "@/lib/portfolio/constants";
+import {
+  LIGHT_SELECT_CONTENT_PANEL,
+  LIGHT_SELECT_ITEM_PANEL,
+  LIGHT_SELECT_TRIGGER_FULL,
+} from "@/lib/ui/select-styles";
 import {
   createPortfolioItemSchema,
   updatePortfolioItemSchema,
 } from "@/lib/validations/portfolios";
-
-const LIGHT_SELECT_TRIGGER =
-  "h-11 w-full rounded-xl border-[#E5E5E0] bg-white text-[#2D2D2D]";
-const LIGHT_SELECT_CONTENT =
-  "rounded-xl border-[#E5E5E0] bg-white text-[#2D2D2D]";
-const LIGHT_SELECT_ITEM = "rounded-lg focus:bg-[#F5F5F0]";
 
 const createFormSchema = createPortfolioItemSchema;
 const editFormSchema = updatePortfolioItemSchema;
@@ -124,10 +129,16 @@ export function PortfolioItemFormDialog({
   }, [open, item]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [itemType, setItemType] = useState<PortfolioItemType>("Project");
+  const [mediaAssets, setMediaAssets] = useState<PortfolioMediaAsset[]>([]);
 
   useEffect(() => {
     if (!isEdit) setItemType("Project");
   }, [isEdit, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    setMediaAssets(item?.mediaAssets ?? []);
+  }, [open, item]);
 
   const handleCreate = createForm.handleSubmit(async (values) => {
     try {
@@ -137,13 +148,18 @@ export function PortfolioItemFormDialog({
         title: values.title,
         subtitle: values.subtitle || null,
         organization: values.organization || null,
-        description: values.description || null,
-        studentEditedBody: values.studentEditedBody || null,
+        description: nullIfEmptyHtml(values.description),
+        studentEditedBody: nullIfEmptyHtml(values.studentEditedBody),
         mediaUrl: values.mediaUrl || null,
         externalUrl: values.externalUrl || null,
         startDate: values.startDate || null,
         endDate: values.endDate || null,
         isVisible: values.isVisible ?? true,
+        mediaAssets: mediaAssets.map((asset, index) => ({
+          id: asset.id,
+          caption: asset.caption,
+          displayOrder: asset.displayOrder ?? index,
+        })),
       });
       onSaved(result.data);
       onOpenChange(false);
@@ -163,13 +179,18 @@ export function PortfolioItemFormDialog({
         title: narrativeOnly ? undefined : values.title || null,
         subtitle: narrativeOnly ? undefined : values.subtitle || null,
         organization: narrativeOnly ? undefined : values.organization || null,
-        description: values.description || null,
-        studentEditedBody: values.studentEditedBody || null,
+        description: nullIfEmptyHtml(values.description),
+        studentEditedBody: nullIfEmptyHtml(values.studentEditedBody),
         mediaUrl: narrativeOnly ? undefined : values.mediaUrl || null,
         externalUrl: narrativeOnly ? undefined : values.externalUrl || null,
         startDate: narrativeOnly ? undefined : values.startDate || null,
         endDate: narrativeOnly ? undefined : values.endDate || null,
         isVisible: values.isVisible,
+        mediaAssets: mediaAssets.map((asset, index) => ({
+          id: asset.id,
+          caption: asset.caption,
+          displayOrder: asset.displayOrder ?? index,
+        })),
       });
       onSaved(result.data);
       onOpenChange(false);
@@ -214,17 +235,17 @@ export function PortfolioItemFormDialog({
                   if (value) setItemType(value as PortfolioItemType);
                 }}
               >
-                <SelectTrigger className={LIGHT_SELECT_TRIGGER}>
+                <SelectTrigger className={LIGHT_SELECT_TRIGGER_FULL}>
                   <span>
                     {PORTFOLIO_ITEM_TYPE_LABELS[itemType] ?? itemType}
                   </span>
                 </SelectTrigger>
-                <SelectContent className={LIGHT_SELECT_CONTENT}>
+                <SelectContent className={LIGHT_SELECT_CONTENT_PANEL}>
                   {MANUAL_PORTFOLIO_ITEM_TYPES.map((type) => (
                     <SelectItem
                       key={type}
                       value={type}
-                      className={LIGHT_SELECT_ITEM}
+                      className={LIGHT_SELECT_ITEM_PANEL}
                     >
                       {PORTFOLIO_ITEM_TYPE_LABELS[type]}
                     </SelectItem>
@@ -271,22 +292,68 @@ export function PortfolioItemFormDialog({
 
           <div className="space-y-2">
             <Label>Mô tả</Label>
-            <Textarea
-              className="min-h-20 rounded-xl"
-              {...(isEdit
-                ? editForm.register("description")
-                : createForm.register("description"))}
-            />
+            {isEdit ? (
+              <Controller
+                control={editForm.control}
+                name="description"
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Mô tả ngắn…"
+                  />
+                )}
+              />
+            ) : (
+              <Controller
+                control={createForm.control}
+                name="description"
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Mô tả ngắn…"
+                  />
+                )}
+              />
+            )}
           </div>
 
           <div className="space-y-2">
             <Label>Nội dung tường thuật</Label>
-            <Textarea
-              className="min-h-24 rounded-xl"
-              placeholder="Bạn đã học được gì? Câu chuyện phía sau…"
-              {...(isEdit
-                ? editForm.register("studentEditedBody")
-                : createForm.register("studentEditedBody"))}
+            {isEdit ? (
+              <Controller
+                control={editForm.control}
+                name="studentEditedBody"
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Bạn đã học được gì? Câu chuyện phía sau…"
+                  />
+                )}
+              />
+            ) : (
+              <Controller
+                control={createForm.control}
+                name="studentEditedBody"
+                render={({ field }) => (
+                  <RichTextEditor
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    placeholder="Bạn đã học được gì? Câu chuyện phía sau…"
+                  />
+                )}
+              />
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Ảnh minh chứng</Label>
+            <MediaUploader
+              assets={mediaAssets}
+              onChange={setMediaAssets}
+              label="ảnh"
             />
           </div>
 

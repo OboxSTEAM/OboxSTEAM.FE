@@ -185,6 +185,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Portfolio không tồn tại, chưa công khai, hoặc máy chủ tạm thời không phản hồi.",
     action: "Kiểm tra lại liên kết hoặc quay lại trang chủ.",
   },
+  "portfolio.media": {
+    title: "Không xử lý được ảnh portfolio",
+    reason: "Tệp không hợp lệ, vượt dung lượng, hoặc máy chủ từ chối yêu cầu.",
+    action: "Chọn ảnh khác (JPG/PNG/WebP) và thử lại.",
+  },
+  "portfolio.section": {
+    title: "Không cập nhật được section",
+    reason: "Thông tin section chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra tiêu đề và nội dung rồi thử lại.",
+  },
 };
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {

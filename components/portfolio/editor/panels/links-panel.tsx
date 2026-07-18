@@ -4,7 +4,6 @@ import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import type { PortfolioLink } from "@/lib/api/entities/portfolio";
 
 type LinksPanelProps = {
@@ -29,12 +28,12 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-xs text-[#6B6B6B]">
+      <p className="text-xs leading-relaxed text-[#6B6B6B]">
         Thêm GitHub, Behance, LinkedIn… Liên kết trống sẽ bị loại khi lưu.
       </p>
 
       {links.length === 0 ? (
-        <p className="rounded-xl bg-[#FAFAF5] px-4 py-6 text-center text-sm text-[#6B6B6B]">
+        <p className="rounded-2xl border border-dashed border-[#C9C9C2] bg-white/70 px-4 py-6 text-center text-sm text-[#6B6B6B]">
           Chưa có liên kết.
         </p>
       ) : (
@@ -42,27 +41,27 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
           {links.map((link, index) => (
             <div
               key={`link-${index}`}
-              className="space-y-2 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-3"
+              className="space-y-2 rounded-2xl border border-[#E5E5E0] bg-white p-3 shadow-sm"
             >
               <div className="space-y-1.5">
-                <Label className="text-xs">Nhãn</Label>
+                <p className="text-xs font-medium text-[#2D2D2D]">Nhãn</p>
                 <Input
                   value={link.label ?? ""}
                   onChange={(event) =>
                     updateLink(index, { label: event.target.value })
                   }
-                  className="h-10 rounded-xl bg-white"
+                  className="h-10 rounded-xl border-[#E5E5E0] bg-[#FAFAF5]"
                   placeholder="GitHub"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">URL</Label>
+                <p className="text-xs font-medium text-[#2D2D2D]">URL</p>
                 <Input
                   value={link.url ?? ""}
                   onChange={(event) =>
                     updateLink(index, { url: event.target.value })
                   }
-                  className="h-10 rounded-xl bg-white"
+                  className="h-10 rounded-xl border-[#E5E5E0] bg-[#FAFAF5]"
                   placeholder="https://"
                 />
               </div>
@@ -83,7 +82,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
       <Button
         type="button"
         variant="outline"
-        className="h-10 w-full rounded-xl"
+        className="h-10 w-full rounded-xl border-[#E5E5E0] bg-white"
         onClick={addLink}
       >
         <Plus className="size-4" />

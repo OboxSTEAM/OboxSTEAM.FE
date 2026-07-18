@@ -29,16 +29,23 @@ import type {
   Portfolio,
   PortfolioItem,
   PortfolioLink,
+  PortfolioMediaAsset,
+  PortfolioSection,
+  PortfolioSectionKind,
   PortfolioTheme,
 } from "@/lib/api/entities/portfolio";
 import {
   createPortfolio,
+  createPortfolioSection,
   deletePortfolioItem,
+  deletePortfolioSection,
   getMyPortfolio,
   reorderPortfolioItems,
+  reorderPortfolioSections,
   syncPortfolioItems,
   updateMyPortfolio,
   updatePortfolioItem,
+  updatePortfolioSection,
 } from "@/lib/api/portfolios";
 import type { UpdatePortfolioItemInput } from "@/lib/validations/portfolios";
 import { isParentRole, isStudentRole } from "@/lib/auth/roles";
@@ -47,6 +54,7 @@ import {
   getPortfolioLayoutStyleId,
   getPortfolioTemplateId,
   normalizeSectionOrder,
+  nullIfEmptyHtml,
   PORTFOLIO_FONTS,
 } from "@/lib/portfolio/constants";
 
@@ -81,7 +89,9 @@ function isProfileDirty(draft: Portfolio, baseline: Portfolio): boolean {
     textValue(draft.displayName) !== textValue(baseline.displayName) ||
     textValue(draft.headline) !== textValue(baseline.headline) ||
     textValue(draft.tagline) !== textValue(baseline.tagline) ||
-    textValue(draft.summary) !== textValue(baseline.summary)
+    textValue(draft.summary) !== textValue(baseline.summary) ||
+    textValue(draft.avatarUrl) !== textValue(baseline.avatarUrl) ||
+    textValue(draft.coverImageUrl) !== textValue(baseline.coverImageUrl)
   );
 }
 
@@ -106,6 +116,8 @@ function mergeServerStructural(server: Portfolio, draft: Portfolio): Portfolio {
     headline: draft.headline,
     tagline: draft.tagline,
     summary: draft.summary,
+    avatarUrl: draft.avatarUrl,
+    coverImageUrl: draft.coverImageUrl,
     theme: draft.theme,
     links: draft.links,
     items: (server.items ?? []).map((serverItem) => {
@@ -379,7 +391,9 @@ export function PortfolioSettingsPageContent() {
           displayName: currentDraft.displayName?.trim() || null,
           headline: currentDraft.headline?.trim() || null,
           tagline: currentDraft.tagline?.trim() || null,
-          summary: currentDraft.summary?.trim() || null,
+          summary: nullIfEmptyHtml(currentDraft.summary),
+          avatarUrl: currentDraft.avatarUrl?.trim() || null,
+          coverImageUrl: currentDraft.coverImageUrl?.trim() || null,
           theme: normalizeThemeForSave(currentDraft.theme),
           links: cleanLinksForSave(currentDraft.links),
         });
@@ -395,13 +409,14 @@ export function PortfolioSettingsPageContent() {
         if (!original || !isItemTextDirty(item, original)) continue;
 
         const isAuto = item.source === "AutoImported";
+        const body = nullIfEmptyHtml(item.studentEditedBody);
         const patch: UpdatePortfolioItemInput = isAuto
-          ? { studentEditedBody: item.studentEditedBody || null }
+          ? { studentEditedBody: body }
           : {
               title: item.title || null,
               subtitle: item.subtitle || null,
               organization: item.organization || null,
-              studentEditedBody: item.studentEditedBody || null,
+              studentEditedBody: body,
             };
         const result = await updatePortfolioItem(item.id, patch);
         updatedItems.push(result.data);
@@ -540,6 +555,150 @@ export function PortfolioSettingsPageContent() {
     setEditingItem(item);
     setItemDialogOpen(true);
   }, []);
+
+  const handleAddSection = useCallback(
+    async (kind: PortfolioSectionKind) => {
+      try {
+        const result = await createPortfolioSection({
+          kind,
+          title: null,
+          isVisible: true,
+        });
+        const section = result.data;
+        setBaseline((current) =>
+          current
+            ? { ...current, sections: [...(current.sections ?? []), section] }
+            : current,
+        );
+        setDraft((current) =>
+          current
+            ? { ...current, sections: [...(current.sections ?? []), section] }
+            : current,
+        );
+        showAppSuccess({ title: "Đã thêm section" });
+      } catch (error) {
+        showAppErrorFromUnknown(error, "portfolio.section");
+      }
+    },
+    [],
+  );
+
+  const handleUpdateSection = useCallback(
+    async (sectionId: string, patch: Partial<PortfolioSection>) => {
+      setDraft((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          sections: (current.sections ?? []).map((section) =>
+            section.id === sectionId ? { ...section, ...patch } : section,
+          ),
+        };
+      });
+
+      try {
+        const mediaAssets = patch.mediaAssets?.map((asset: PortfolioMediaAsset, index) => ({
+          id: asset.id,
+          caption: asset.caption,
+          displayOrder: asset.displayOrder ?? index,
+        }));
+        const result = await updatePortfolioSection(sectionId, {
+          title: patch.title,
+          isVisible: patch.isVisible,
+          contentHtml:
+            patch.contentHtml !== undefined
+              ? nullIfEmptyHtml(patch.contentHtml)
+              : undefined,
+          settingsJson: patch.settingsJson,
+          mediaAssets,
+        });
+        const saved = result.data;
+        setBaseline((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            sections: (current.sections ?? []).map((section) =>
+              section.id === sectionId ? saved : section,
+            ),
+          };
+        });
+        setDraft((current) => {
+          if (!current) return current;
+          return {
+            ...current,
+            sections: (current.sections ?? []).map((section) =>
+              section.id === sectionId ? saved : section,
+            ),
+          };
+        });
+      } catch (error) {
+        showAppErrorFromUnknown(error, "portfolio.section");
+      }
+    },
+    [],
+  );
+
+  const handleDeleteSection = useCallback(async (sectionId: string) => {
+    if (!window.confirm("Xóa section này?")) return;
+    try {
+      await deletePortfolioSection(sectionId);
+      setBaseline((current) =>
+        current
+          ? {
+              ...current,
+              sections: (current.sections ?? []).filter(
+                (section) => section.id !== sectionId,
+              ),
+            }
+          : current,
+      );
+      setDraft((current) =>
+        current
+          ? {
+              ...current,
+              sections: (current.sections ?? []).filter(
+                (section) => section.id !== sectionId,
+              ),
+            }
+          : current,
+      );
+      showAppSuccess({ title: "Đã xóa section" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "portfolio.section");
+    }
+  }, []);
+
+  const handleReorderSections = useCallback(
+    async (orderedIds: string[]) => {
+      setDraft((current) => {
+        if (!current) return current;
+        const orderIndex = new Map(orderedIds.map((id, index) => [id, index]));
+        return {
+          ...current,
+          sections: (current.sections ?? []).map((section) => ({
+            ...section,
+            displayOrder: orderIndex.get(section.id) ?? section.displayOrder,
+          })),
+        };
+      });
+
+      try {
+        const result = await reorderPortfolioSections({
+          sections: orderedIds.map((id, index) => ({ id, displayOrder: index })),
+        });
+        applyServerPortfolio(result.data);
+      } catch (error) {
+        showAppErrorFromUnknown(error, "portfolio.section");
+      }
+    },
+    [applyServerPortfolio],
+  );
+
+  const handleToggleSectionVisibility = useCallback(
+    (section: PortfolioSection, visible: boolean) => {
+      void handleUpdateSection(section.id, { isVisible: visible });
+    },
+    [handleUpdateSection],
+  );
 
   /* ---------- create flow ---------- */
 
@@ -734,6 +893,15 @@ export function PortfolioSettingsPageContent() {
             onSyncItems={() => void handleSync()}
             isSyncing={isSyncing}
             onOpenLinksPanel={() => setActivePanel("links")}
+            onAddSection={(kind) => void handleAddSection(kind)}
+            onUpdateSection={(sectionId, patch) =>
+              void handleUpdateSection(sectionId, patch)
+            }
+            onDeleteSection={(sectionId) => void handleDeleteSection(sectionId)}
+            onReorderSections={(orderedIds) =>
+              void handleReorderSections(orderedIds)
+            }
+            onToggleSectionVisibility={handleToggleSectionVisibility}
           />
         </main>
       </div>
