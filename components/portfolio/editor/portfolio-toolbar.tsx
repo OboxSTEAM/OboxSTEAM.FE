@@ -153,7 +153,7 @@ export function PortfolioToolbar({
             <DialogTitle className="text-base">Xem trước portfolio</DialogTitle>
             <DialogClose className="static" />
           </div>
-          <div className="h-full overflow-y-auto">
+          <div id="portfolio-preview-scroll" className="h-full overflow-y-auto">
             <PortfolioMicrosite data={toPortfolioMicrositeData(draft)} />
           </div>
         </DialogPopup>

@@ -73,8 +73,26 @@ export function ItemsPanel({
             return (
               <li
                 key={item.id}
-                className="rounded-2xl border border-[#E5E5E0] bg-white p-3 shadow-sm"
+                className={cn(
+                  "relative overflow-hidden rounded-2xl border bg-white p-3 shadow-sm",
+                  item.isVisible ? "border-[#E5E5E0]" : "border-[#2D2D2D]/40",
+                )}
               >
+                {!item.isVisible ? (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 z-[1]"
+                    style={{
+                      backgroundImage: `
+                        linear-gradient(45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%),
+                        linear-gradient(-45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%)
+                      `,
+                      backgroundSize: "18px 18px",
+                      opacity: 0.35,
+                    }}
+                  />
+                ) : null}
+                <div className="relative z-[2]">
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[#6B6B6B]">
                     {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
@@ -87,6 +105,11 @@ export function ItemsPanel({
                   >
                     {isAuto ? "Tự động" : "Thủ công"}
                   </span>
+                  {!item.isVisible ? (
+                    <span className="rounded-full bg-[#2D2D2D] px-2 py-0.5 text-[10px] font-semibold text-white">
+                      Đang ẩn
+                    </span>
+                  ) : null}
                 </div>
                 <p className="mt-1.5 truncate text-sm font-semibold text-[#2D2D2D]">
                   {item.title ?? "Không có tiêu đề"}
@@ -99,7 +122,12 @@ export function ItemsPanel({
                         onToggleVisibility(item, Boolean(checked))
                       }
                     />
-                    <span className="text-xs text-[#6B6B6B]">
+                    <span
+                      className={cn(
+                        "text-xs font-medium",
+                        item.isVisible ? "text-[#6B6B6B]" : "text-[#2D2D2D]",
+                      )}
+                    >
                       {item.isVisible ? "Hiện" : "Ẩn"}
                     </span>
                   </div>
@@ -127,6 +155,7 @@ export function ItemsPanel({
                       </Button>
                     ) : null}
                   </div>
+                </div>
                 </div>
               </li>
             );

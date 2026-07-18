@@ -10,6 +10,7 @@ import {
   PortfolioRail,
   type PortfolioPanelId,
 } from "@/components/portfolio/editor/portfolio-rail";
+import { SectionOutlinePanel } from "@/components/portfolio/editor/section-outline-panel";
 import { PortfolioToolbar } from "@/components/portfolio/editor/portfolio-toolbar";
 import { DesignPanel } from "@/components/portfolio/editor/panels/design-panel";
 import { ItemsPanel } from "@/components/portfolio/editor/panels/items-panel";
@@ -56,6 +57,8 @@ import {
   normalizeSectionOrder,
   nullIfEmptyHtml,
   PORTFOLIO_FONTS,
+  PORTFOLIO_SECTION_KIND_LABELS,
+  PORTFOLIO_SECTIONS,
 } from "@/lib/portfolio/constants";
 
 const PANEL_TITLES: Record<PortfolioPanelId, string> = {
@@ -700,6 +703,42 @@ export function PortfolioSettingsPageContent() {
     [handleUpdateSection],
   );
 
+  const outlineEntries = useMemo(() => {
+    if (!draft) return [];
+
+    const dynamic = [...(draft.sections ?? [])].sort(
+      (a, b) => a.displayOrder - b.displayOrder,
+    );
+
+    if (dynamic.length > 0) {
+      return [
+        {
+          id: "profile",
+          label: "Hồ sơ",
+          isVisible: true,
+          pinned: true,
+        },
+        ...dynamic.map((section) => ({
+          id: section.id,
+          label:
+            section.title ||
+            PORTFOLIO_SECTION_KIND_LABELS[section.kind] ||
+            section.kind,
+          isVisible: section.isVisible,
+        })),
+      ];
+    }
+
+    return normalizeSectionOrder(draft.theme.sectionOrder).map((sectionId) => ({
+      id: sectionId,
+      label:
+        PORTFOLIO_SECTIONS.find((section) => section.id === sectionId)?.label ??
+        sectionId,
+      isVisible: true,
+      pinned: sectionId === "profile",
+    }));
+  }, [draft]);
+
   /* ---------- create flow ---------- */
 
   const handleCreate = async () => {
@@ -848,6 +887,24 @@ export function PortfolioSettingsPageContent() {
 
       <div className="mx-auto flex w-full max-w-[110rem] flex-1 items-stretch">
         <PortfolioRail active={activePanel} onSelect={setActivePanel} />
+
+        <SectionOutlinePanel
+          entries={outlineEntries}
+          onReorder={(orderedIds) => {
+            if ((draft.sections ?? []).length > 0) {
+              void handleReorderSections(orderedIds);
+              return;
+            }
+            patchTheme({
+              ...draft.theme,
+              sectionOrder: normalizeSectionOrder(["profile", ...orderedIds]),
+            });
+          }}
+          onToggleVisibility={(id, visible) => {
+            const section = draft.sections?.find((item) => item.id === id);
+            if (section) handleToggleSectionVisibility(section, visible);
+          }}
+        />
 
         {activePanel ? (
           <PortfolioPanelHost

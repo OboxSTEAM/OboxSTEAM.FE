@@ -1,6 +1,8 @@
 import type { Area } from "react-easy-crop";
 
 const AVATAR_OUTPUT_SIZE = 512;
+const COVER_OUTPUT_WIDTH = 1600;
+const COVER_OUTPUT_HEIGHT = 640;
 
 function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
@@ -12,10 +14,11 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Renders the cropped region to a square JPEG blob for avatar upload. */
-export async function getCroppedAvatarBlob(
+/** Renders a cropped region to a JPEG blob at the given output size. */
+export async function getCroppedImageBlob(
   imageSrc: string,
   pixelCrop: Area,
+  output: { width: number; height: number },
 ): Promise<Blob> {
   const image = await loadImage(imageSrc);
   const canvas = document.createElement("canvas");
@@ -25,8 +28,8 @@ export async function getCroppedAvatarBlob(
     throw new Error("Không thể xử lý ảnh.");
   }
 
-  canvas.width = AVATAR_OUTPUT_SIZE;
-  canvas.height = AVATAR_OUTPUT_SIZE;
+  canvas.width = output.width;
+  canvas.height = output.height;
 
   ctx.drawImage(
     image,
@@ -36,8 +39,8 @@ export async function getCroppedAvatarBlob(
     pixelCrop.height,
     0,
     0,
-    AVATAR_OUTPUT_SIZE,
-    AVATAR_OUTPUT_SIZE,
+    output.width,
+    output.height,
   );
 
   return new Promise((resolve, reject) => {
@@ -52,9 +55,34 @@ export async function getCroppedAvatarBlob(
   });
 }
 
+/** Square crop for avatar upload. */
+export async function getCroppedAvatarBlob(
+  imageSrc: string,
+  pixelCrop: Area,
+): Promise<Blob> {
+  return getCroppedImageBlob(imageSrc, pixelCrop, {
+    width: AVATAR_OUTPUT_SIZE,
+    height: AVATAR_OUTPUT_SIZE,
+  });
+}
+
+/** Wide crop for portfolio cover / hero. */
+export async function getCroppedCoverBlob(
+  imageSrc: string,
+  pixelCrop: Area,
+): Promise<Blob> {
+  return getCroppedImageBlob(imageSrc, pixelCrop, {
+    width: COVER_OUTPUT_WIDTH,
+    height: COVER_OUTPUT_HEIGHT,
+  });
+}
+
 export function blobToFile(blob: Blob, fileName: string): File {
   return new File([blob], fileName.replace(/\.\w+$/, "") + ".jpg", {
     type: "image/jpeg",
     lastModified: Date.now(),
   });
 }
+
+export const PORTFOLIO_COVER_ASPECT = COVER_OUTPUT_WIDTH / COVER_OUTPUT_HEIGHT;
+export const PORTFOLIO_AVATAR_ASPECT = 1;

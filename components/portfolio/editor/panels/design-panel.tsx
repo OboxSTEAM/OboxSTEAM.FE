@@ -171,14 +171,21 @@ function SlotPreview({
     return (
       <div
         className={cn(
-          "h-8 w-full rounded-md border bg-white",
-          id === "Spotlight" && "border-[#4FC3F7]/40 shadow-sm",
-          id === "Tilted" && "rotate-1 border-[#E5E5E0]",
-          id === "Bounce" && "border-[#7CB342]/40",
-          id === "StarBorder" && "border-[#4FC3F7]",
-          id === "Soft" && "border-0 bg-[#F0F0EA]",
+          "flex h-10 w-full items-center justify-center rounded-md",
+          id === "Soft" ? "bg-[#F0F0EA]" : "bg-white",
         )}
-      />
+      >
+        <div
+          className={cn(
+            "h-6 w-[85%] rounded-md bg-white",
+            id === "Spotlight" && "shadow-[0_0_0_2px_#4FC3F7]",
+            id === "Tilted" && "rotate-6 shadow-[4px_4px_0_0_#4FC3F733]",
+            id === "Bounce" && "shadow-[0_6px_0_0_#7CB34266]",
+            id === "StarBorder" && "border-2 border-dashed border-[#4FC3F7]",
+            id === "Soft" && "border-0 bg-[#E8E8E0]",
+          )}
+        />
+      </div>
     );
   }
   return (

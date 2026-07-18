@@ -40,6 +40,23 @@ function useShouldAnimate() {
   return !(reduce ?? false);
 }
 
+/** Convert #RGB / #RRGGBB to rgba() for components that require that format. */
+function hexToRgba(hex: string, alpha: number): `rgba(${number}, ${number}, ${number}, ${number})` {
+  const raw = hex.replace("#", "");
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((ch) => ch + ch)
+          .join("")
+      : raw.padEnd(6, "0").slice(0, 6);
+  const n = Number.parseInt(full, 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 export function PortfolioBackground({
   slot,
   theme,
@@ -54,17 +71,17 @@ export function PortfolioBackground({
   const baseStyle: CSSProperties | undefined =
     theme.backgroundStyle === "Gradient" || slot === "GradientSoft"
       ? {
-          background: `linear-gradient(145deg, ${theme.primaryColor}38 0%, ${theme.secondaryColor}28 42%, ${theme.accentColor}18 100%)`,
+          background: `linear-gradient(145deg, ${theme.primaryColor}55 0%, ${theme.secondaryColor}40 42%, ${theme.accentColor}30 100%)`,
         }
       : theme.backgroundStyle === "Pattern"
         ? {
             backgroundColor: theme.isDark ? "#121212" : "#FAFAF5",
-            backgroundImage: `radial-gradient(${theme.primaryColor}40 1.5px, transparent 1.5px)`,
-            backgroundSize: "16px 16px",
+            backgroundImage: `radial-gradient(${theme.primaryColor}70 1.75px, transparent 1.75px)`,
+            backgroundSize: "14px 14px",
           }
         : theme.backgroundStyle === "Image" && theme.backgroundImageUrl
           ? {
-              backgroundImage: `url(${theme.backgroundImageUrl})`,
+              backgroundImage: `linear-gradient(145deg, ${theme.primaryColor}33, ${theme.secondaryColor}22), url(${theme.backgroundImageUrl})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
@@ -74,7 +91,11 @@ export function PortfolioBackground({
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }
-            : undefined;
+            : theme.backgroundStyle === "Plain"
+              ? {
+                  background: `linear-gradient(180deg, ${theme.primaryColor}18 0%, transparent 42%)`,
+                }
+              : undefined;
 
   const showEffect = animate && slot !== "None";
 
@@ -107,11 +128,16 @@ export function PortfolioBackground({
         />
       ) : null}
       {showEffect && slot === "DotGrid" ? (
-        <div className="absolute inset-0 size-full bg-[#121212]/80">
+        <div
+          className={cn(
+            "absolute inset-0 size-full",
+            theme.isDark ? "bg-[#121212]/80" : "bg-[#FAFAF5]/70",
+          )}
+        >
           <DotGrid
             dotSize={3}
             gap={22}
-            baseColor="#2a2a2a"
+            baseColor={theme.isDark ? "#2a2a2a" : "#D0D0C8"}
             activeColor={theme.primaryColor}
             proximity={100}
           />
@@ -121,7 +147,7 @@ export function PortfolioBackground({
         <div
           className="absolute inset-0 size-full"
           style={{
-            background: `linear-gradient(145deg, ${theme.primaryColor}38 0%, ${theme.secondaryColor}28 42%, ${theme.accentColor}18 100%)`,
+            background: `linear-gradient(145deg, ${theme.primaryColor}55 0%, ${theme.secondaryColor}40 42%, ${theme.accentColor}30 100%)`,
           }}
         />
       ) : null}
@@ -134,13 +160,16 @@ export function PortfolioHeroText({
   name,
   headline,
   className,
+  colors = ["#E94B3C", "#7E57C2", "#4FC3F7"],
 }: {
   slot: HeroTextSlotId;
   name: string;
   headline?: string | null;
   className?: string;
+  colors?: [string, string, string] | string[];
 }) {
   const animate = useShouldAnimate();
+  const [c0, c1, c2] = colors;
 
   if (!animate || slot === "Plain") {
     return (
@@ -166,10 +195,7 @@ export function PortfolioHeroText({
           />
           {headline ? (
             <div className="mt-2 text-lg font-semibold">
-              <GradientText
-                colors={["#E94B3C", "#7E57C2", "#4FC3F7"]}
-                showBorder={false}
-              >
+              <GradientText colors={[c0, c1, c2]} showBorder={false}>
                 {headline}
               </GradientText>
             </div>
@@ -181,7 +207,7 @@ export function PortfolioHeroText({
           sentence={headline ? `${name} — ${headline}` : name}
           manualMode={false}
           blurAmount={4}
-          borderColor="#E94B3C"
+          borderColor={c0}
         />
       ) : null}
       {slot === "Decrypted" ? (
@@ -215,6 +241,7 @@ export function PortfolioCardShell({
   surfaceClass,
   className,
   isDark = false,
+  accentColor = "#4FC3F7",
   children,
 }: {
   slot: CardSlotId;
@@ -222,11 +249,49 @@ export function PortfolioCardShell({
   className?: string;
   /** When false, effect wrappers must stay transparent so light card surfaces remain readable. */
   isDark?: boolean;
+  /** Theme primary — drives distinct card chrome per slot. */
+  accentColor?: string;
   children: ReactNode;
 }) {
   const animate = useShouldAnimate();
+
+  const slotChrome =
+    slot === "Spotlight"
+      ? {
+          className: "ring-2",
+          style: { boxShadow: `0 0 0 2px ${accentColor}` } as CSSProperties,
+        }
+      : slot === "Tilted"
+        ? {
+            className: "origin-center rotate-2",
+            style: {
+              boxShadow: `6px 10px 0 0 ${accentColor}33`,
+            } as CSSProperties,
+          }
+        : slot === "Bounce"
+          ? {
+              className: "",
+              style: {
+                boxShadow: `0 12px 0 0 ${accentColor}40, 0 18px 32px rgba(45,45,45,0.12)`,
+              } as CSSProperties,
+            }
+          : slot === "StarBorder"
+            ? {
+                className: "ring-2 ring-dashed",
+                style: { boxShadow: `0 0 0 2px ${accentColor}` } as CSSProperties,
+              }
+            : { className: "", style: undefined };
+
   const body = (
-    <div className={cn("relative z-[1] h-full rounded-2xl p-4 sm:p-5", surfaceClass, className)}>
+    <div
+      className={cn(
+        "relative z-[1] h-full rounded-2xl p-4 sm:p-5",
+        surfaceClass,
+        slotChrome.className,
+        className,
+      )}
+      style={slotChrome.style}
+    >
       {children}
     </div>
   );
@@ -245,8 +310,8 @@ export function PortfolioCardShell({
         background="transparent"
         borderColor="transparent"
         borderRadius="1rem"
-        glareColor={isDark ? "#ffffff" : "#4FC3F7"}
-        glareOpacity={isDark ? 0.22 : 0.32}
+        glareColor={isDark ? "#ffffff" : accentColor}
+        glareOpacity={isDark ? 0.22 : 0.28}
         style={{ width: "100%", height: "100%", display: "block" }}
       >
         {body}
@@ -258,9 +323,7 @@ export function PortfolioCardShell({
     return (
       <SpotlightCard
         className="h-full rounded-2xl bg-transparent p-0"
-        spotlightColor={
-          isDark ? "rgba(79, 195, 247, 0.22)" : "rgba(79, 195, 247, 0.16)"
-        }
+        spotlightColor={hexToRgba(accentColor, isDark ? 0.28 : 0.2)}
       >
         {body}
       </SpotlightCard>
@@ -272,7 +335,7 @@ export function PortfolioCardShell({
       <StarBorder
         as="div"
         className="block h-full w-full"
-        color="#4FC3F7"
+        color={accentColor}
         speed="6s"
         contentClassName="!border-0 !bg-transparent !p-0 !text-left !text-inherit"
       >

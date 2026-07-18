@@ -31,18 +31,21 @@ import type {
   UpdatePortfolioSectionInput,
   UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
-
+import {
+  themeToApiWire,
+  toPortfolioEnumWire,
+} from "@/lib/api/entities/portfolio";
 import {
   checkPortfolioSubdomainAvailabilityResponseSchema,
   createPortfolioResponseSchema,
   createPortfolioSectionResponseSchema,
+  createPortfolioItemResponseSchema,
   deletePortfolioItemResponseSchema,
   deletePortfolioMediaResponseSchema,
   deletePortfolioSectionResponseSchema,
   getMyPortfolioResponseSchema,
   getPublicPortfolioBySubdomainResponseSchema,
   listPortfolioMediaResponseSchema,
-  portfolioItemValueSchema,
   portfolioSectionValueSchema,
   reorderPortfolioItemsResponseSchema,
   reorderPortfolioSectionsResponseSchema,
@@ -208,11 +211,15 @@ export async function updateMyPortfolio(
   input: UpdatePortfolioInput,
 ): Promise<UpdatePortfolioResult> {
   const body = updatePortfolioSchema.parse(input);
+  const wireBody = {
+    ...body,
+    theme: body.theme ? themeToApiWire(body.theme) : undefined,
+  };
 
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me`,
     updatePortfolioResponseSchema,
-    { method: "PUT", body },
+    { method: "PUT", body: wireBody },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
@@ -276,11 +283,26 @@ export async function checkPortfolioSubdomainAvailability(
 }
 
 /** `POST /api/portfolios/me/items` */
-export const createPortfolioItem = createApiPost({
-  path: `${PORTFOLIOS_BASE}/me/items`,
-  input: createPortfolioItemSchema,
-  value: portfolioItemValueSchema,
-});
+export async function createPortfolioItem(
+  input: CreatePortfolioItemInput,
+): Promise<CreatePortfolioItemResult> {
+  const body = createPortfolioItemSchema.parse(input);
+  const wireBody = {
+    ...body,
+    span:
+      body.span == null || body.span === undefined
+        ? body.span
+        : toPortfolioEnumWire(body.span),
+  };
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/items`,
+    createPortfolioItemResponseSchema,
+    { method: "POST", body: wireBody },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
 
 /** `PUT /api/portfolios/me/items/{itemId}` */
 export async function updatePortfolioItem(
@@ -289,11 +311,20 @@ export async function updatePortfolioItem(
 ): Promise<UpdatePortfolioItemResult> {
   const { itemId: parsedItemId } = portfolioItemIdParamSchema.parse({ itemId });
   const body = updatePortfolioItemSchema.parse(input);
+  const wireBody = {
+    ...body,
+    span:
+      body.span === undefined
+        ? undefined
+        : body.span == null
+          ? null
+          : toPortfolioEnumWire(body.span),
+  };
 
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me/items/${parsedItemId}`,
     updatePortfolioItemResponseSchema,
-    { method: "PUT", body },
+    { method: "PUT", body: wireBody },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

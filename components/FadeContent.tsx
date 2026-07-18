@@ -5,6 +5,22 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+/** Nearest overflow scroll ancestor, or null to use the window. */
+function findScrollParent(el: HTMLElement): Element | null {
+  let parent = el.parentElement;
+  while (parent) {
+    const { overflowY } = getComputedStyle(parent);
+    if (
+      (overflowY === 'auto' || overflowY === 'scroll' || overflowY === 'overlay') &&
+      parent.scrollHeight > parent.clientHeight + 1
+    ) {
+      return parent;
+    }
+    parent = parent.parentElement;
+  }
+  return null;
+}
+
 interface FadeContentProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   container?: Element | string | null;
@@ -44,7 +60,17 @@ const FadeContent: React.FC<FadeContentProps> = ({
     const el = ref.current;
     if (!el) return;
 
-    let scrollerTarget: Element | string | null = container || document.getElementById('snap-main-container') || null;
+    let scrollerTarget: Element | string | null = container ?? null;
+
+    if (!scrollerTarget) {
+      const previewScroll = document.getElementById('portfolio-preview-scroll');
+      if (previewScroll?.contains(el)) {
+        scrollerTarget = previewScroll;
+      } else {
+        scrollerTarget =
+          document.getElementById('snap-main-container') ?? findScrollParent(el);
+      }
+    }
 
     if (typeof scrollerTarget === 'string') {
       scrollerTarget = document.querySelector(scrollerTarget);
@@ -56,7 +82,7 @@ const FadeContent: React.FC<FadeContentProps> = ({
     gsap.set(el, {
       autoAlpha: initialOpacity,
       filter: blur ? 'blur(10px)' : 'blur(0px)',
-      willChange: 'opacity, filter, transform'
+      willChange: 'opacity, filter, transform',
     });
 
     const tl = gsap.timeline({
@@ -71,28 +97,38 @@ const FadeContent: React.FC<FadeContentProps> = ({
             delay: getSeconds(disappearAfter),
             duration: getSeconds(disappearDuration),
             ease: disappearEase,
-            onComplete: () => onDisappearanceComplete?.()
+            onComplete: () => onDisappearanceComplete?.(),
           });
         }
-      }
+      },
     });
 
     tl.to(el, {
       autoAlpha: 1,
       filter: 'blur(0px)',
       duration: getSeconds(duration),
-      ease: ease
+      ease: ease,
     });
 
     const st = ScrollTrigger.create({
       trigger: el,
-      scroller: scrollerTarget || window,
+      scroller: scrollerTarget || undefined,
       start: `top ${startPct}%`,
       once: true,
-      onEnter: () => tl.play()
+      onEnter: () => tl.play(),
     });
 
+    const playIfPast = () => {
+      ScrollTrigger.refresh();
+      if (st.scroll() >= st.start - 1) {
+        tl.play();
+      }
+    };
+    requestAnimationFrame(playIfPast);
+    const timeoutId = window.setTimeout(playIfPast, 120);
+
     return () => {
+      window.clearTimeout(timeoutId);
       st.kill();
       tl.kill();
       gsap.killTweensOf(el);

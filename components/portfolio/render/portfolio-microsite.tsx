@@ -240,14 +240,13 @@ function ItemCard({
         slot={resolved.card}
         surfaceClass={cardSurface}
         isDark={resolved.isDark}
+        accentColor={resolved.primaryColor}
         className="h-full"
       >
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p
-          className={cn(
-            "font-mono text-[11px] uppercase tracking-[0.16em]",
-            resolved.isDark ? "text-[#FAFAF5]/60" : "text-[#6B6B6B]",
-          )}
+          className="font-mono text-[11px] uppercase tracking-[0.16em]"
+          style={{ color: resolved.primaryColor }}
         >
           {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
         </p>
@@ -288,11 +287,10 @@ function ItemCard({
       {item.mentorEndorsement ? (
         <blockquote
           className={cn(
-            "mt-3 border-l-2 pl-3 text-sm italic",
-            resolved.isDark
-              ? "border-[#4FC3F7] text-[#FAFAF5]/75"
-              : "border-[#4FC3F7] text-[#6B6B6B]",
+            "mt-3 border-l-[3px] pl-3 text-sm italic",
+            resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
           )}
+          style={{ borderColor: resolved.accentColor }}
         >
           {item.mentorEndorsement}
         </blockquote>
@@ -303,7 +301,8 @@ function ItemCard({
           href={item.externalUrl}
           target="_blank"
           rel="noreferrer"
-          className="mt-3 inline-flex text-sm font-medium text-[#4FC3F7] underline-offset-4 hover:underline"
+          className="mt-3 inline-flex text-sm font-semibold underline-offset-4 hover:underline"
+          style={{ color: resolved.primaryColor }}
         >
           Xem liên kết
         </a>
@@ -379,18 +378,25 @@ function LinksSection({
     <section className="space-y-3">
       <SectionHeading title={title} resolved={resolved} />
       <div className="flex flex-wrap gap-2">
-        {visible.map((link, index) => (
-          <a
-            key={`${link.url}-${index}`}
-            href={link.url!}
-            target="_blank"
-            rel="noreferrer"
-            className="rounded-full px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
-            style={{ backgroundColor: resolved.primaryColor }}
-          >
-            {link.label || link.url}
-          </a>
-        ))}
+        {visible.map((link, index) => {
+          const palette = [
+            resolved.primaryColor,
+            resolved.secondaryColor,
+            resolved.accentColor,
+          ];
+          return (
+            <a
+              key={`${link.url}-${index}`}
+              href={link.url!}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+              style={{ backgroundColor: palette[index % palette.length] }}
+            >
+              {link.label || link.url}
+            </a>
+          );
+        })}
       </div>
     </section>
   );
@@ -415,9 +421,10 @@ function ProfileSection({
         resolved.isDark ? "bg-[#1a1a1a]/80" : "bg-white/80 backdrop-blur-sm",
         compact ? "p-5" : "p-6 sm:p-8",
       )}
+      style={{ boxShadow: `inset 0 4px 0 0 ${resolved.primaryColor}` }}
     >
       {data.coverImageUrl ? (
-        <div className="relative -mx-6 -mt-6 mb-5 h-36 overflow-hidden sm:-mx-8 sm:-mt-8">
+        <div className="relative -mx-6 -mt-6 mb-5 h-36 overflow-hidden sm:-mx-8 sm:-mt-8 sm:h-44">
           <Image
             src={data.coverImageUrl}
             alt=""
@@ -426,16 +433,27 @@ function ProfileSection({
             className="object-cover"
             sizes="(max-width: 768px) 100vw, 896px"
           />
+          <div
+            className="absolute inset-x-0 bottom-0 h-16"
+            style={{
+              background: `linear-gradient(to top, ${resolved.isDark ? "#1a1a1a" : "#ffffff"}ee, transparent)`,
+            }}
+          />
         </div>
-      ) : null}
+      ) : (
+        <div
+          className="relative -mx-6 -mt-6 mb-5 h-28 sm:-mx-8 sm:-mt-8 sm:h-36"
+          style={{
+            background: `linear-gradient(135deg, ${resolved.primaryColor}55 0%, ${resolved.secondaryColor}40 48%, ${resolved.accentColor}35 100%)`,
+          }}
+        />
+      )}
 
       <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-2xl">
           <p
-            className={cn(
-              "font-mono text-[11px] uppercase tracking-[0.18em]",
-              resolved.isDark ? "text-[#FAFAF5]/60" : "text-[#6B6B6B]",
-            )}
+            className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: resolved.primaryColor }}
           >
             Portfolio STEAM
           </p>
@@ -445,6 +463,11 @@ function ProfileSection({
               slot={resolved.heroText}
               name={name}
               headline={data.headline}
+              colors={[
+                resolved.primaryColor,
+                resolved.accentColor,
+                resolved.secondaryColor,
+              ]}
             />
           </div>
 
@@ -478,9 +501,10 @@ function ProfileSection({
         {data.avatarUrl ? (
           <div
             className={cn(
-              "relative shrink-0 overflow-hidden rounded-2xl shadow-lg ring-2 ring-white/40",
+              "relative shrink-0 overflow-hidden rounded-2xl shadow-lg",
               compact ? "h-20 w-20" : "h-28 w-28 sm:h-32 sm:w-32",
             )}
+            style={{ boxShadow: `0 0 0 3px ${resolved.primaryColor}` }}
           >
             <Image
               src={data.avatarUrl}
@@ -494,12 +518,12 @@ function ProfileSection({
         ) : (
           <div
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-2xl font-bold",
+              "flex shrink-0 items-center justify-center rounded-2xl font-bold text-white",
               compact ? "h-20 w-20 text-xl" : "h-28 w-28 text-3xl sm:h-32 sm:w-32",
-              resolved.isDark
-                ? "bg-[#FAFAF5]/10 text-[#FAFAF5]"
-                : "bg-[#F5F5F0] text-[#2D2D2D]",
             )}
+            style={{
+              background: `linear-gradient(145deg, ${resolved.primaryColor}, ${resolved.accentColor})`,
+            }}
           >
             {name.slice(0, 1).toUpperCase()}
           </div>

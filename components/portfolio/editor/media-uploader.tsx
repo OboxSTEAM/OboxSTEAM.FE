@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2, X } from "lucide-react";
 
+import { ImageCropDialog } from "@/components/portfolio/editor/image-crop-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import type { PortfolioMediaAsset, PortfolioMediaUpload } from "@/lib/api/entities/portfolio";
@@ -17,20 +18,37 @@ import { cn } from "@/lib/utils";
 const ACCEPT = "image/jpeg,image/jpg,image/png";
 const MAX_BYTES = 5 * 1024 * 1024;
 
+export type MediaUploadCropOptions = {
+  aspect: number;
+  cropShape?: "rect" | "round";
+  title: string;
+  description: string;
+  outputWidth: number;
+  outputHeight: number;
+};
+
 type MediaUploaderProps = {
   /** Currently attached assets (item/section). */
   assets?: PortfolioMediaAsset[] | null;
   onChange?: (next: PortfolioMediaAsset[]) => void;
-  /** When true, only upload and return the library asset (avatar/cover). */
+  /** When set, only upload and return the library asset (avatar/cover). */
   onUploadedUrl?: (url: string, asset: PortfolioMediaUpload) => void;
+  /** Open a crop dialog before upload (avatar/cover). */
+  crop?: MediaUploadCropOptions;
   className?: string;
   label?: string;
+};
+
+type CropSource = {
+  url: string;
+  fileName: string;
 };
 
 export function MediaUploader({
   assets = [],
   onChange,
   onUploadedUrl,
+  crop,
   className,
   label = "Ảnh",
 }: MediaUploaderProps) {
@@ -38,28 +56,17 @@ export function MediaUploader({
   const [isUploading, setIsUploading] = useState(false);
   const [library, setLibrary] = useState<PortfolioMediaUpload[] | null>(null);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
+  const [cropSource, setCropSource] = useState<CropSource | null>(null);
 
   const attached = assets ?? [];
 
-  const handleFiles = async (files: FileList | null) => {
-    if (!files?.length) return;
-    const file = files[0];
-    if (!file) return;
-    if (!ACCEPT.split(",").includes(file.type) && !/\.(jpe?g|png)$/i.test(file.name)) {
-      showAppErrorFromUnknown(
-        new Error("Chỉ hỗ trợ ảnh JPG/PNG."),
-        "portfolio.media",
-      );
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      showAppErrorFromUnknown(
-        new Error("Ảnh tối đa 5 MB."),
-        "portfolio.media",
-      );
-      return;
-    }
+  useEffect(() => {
+    return () => {
+      if (cropSource?.url) URL.revokeObjectURL(cropSource.url);
+    };
+  }, [cropSource?.url]);
 
+  const uploadFile = async (file: File) => {
     setIsUploading(true);
     try {
       const result = await uploadPortfolioMedia(file);
@@ -87,6 +94,39 @@ export function MediaUploader({
       setIsUploading(false);
       if (inputRef.current) inputRef.current.value = "";
     }
+  };
+
+  const handleFiles = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const file = files[0];
+    if (!file) return;
+    if (!ACCEPT.split(",").includes(file.type) && !/\.(jpe?g|png)$/i.test(file.name)) {
+      showAppErrorFromUnknown(
+        new Error("Chỉ hỗ trợ ảnh JPG/PNG."),
+        "portfolio.media",
+      );
+      return;
+    }
+    if (file.size > MAX_BYTES) {
+      showAppErrorFromUnknown(new Error("Ảnh tối đa 5 MB."), "portfolio.media");
+      return;
+    }
+
+    if (crop) {
+      const url = URL.createObjectURL(file);
+      setCropSource({ url, fileName: file.name });
+      if (inputRef.current) inputRef.current.value = "";
+      return;
+    }
+
+    await uploadFile(file);
+  };
+
+  const closeCrop = () => {
+    setCropSource((current) => {
+      if (current?.url) URL.revokeObjectURL(current.url);
+      return null;
+    });
   };
 
   const loadLibrary = async () => {
@@ -146,7 +186,7 @@ export function MediaUploader({
           type="button"
           variant="outline"
           className="h-9 rounded-xl"
-          disabled={isUploading}
+          disabled={isUploading || Boolean(cropSource)}
           onClick={() => inputRef.current?.click()}
         >
           {isUploading ? (
@@ -245,6 +285,24 @@ export function MediaUploader({
             ))}
           </div>
         </div>
+      ) : null}
+
+      {cropSource && crop ? (
+        <ImageCropDialog
+          imageSrc={cropSource.url}
+          fileName={cropSource.fileName}
+          aspect={crop.aspect}
+          cropShape={crop.cropShape}
+          title={crop.title}
+          description={crop.description}
+          outputWidth={crop.outputWidth}
+          outputHeight={crop.outputHeight}
+          onCancel={closeCrop}
+          onConfirm={(file) => {
+            closeCrop();
+            void uploadFile(file);
+          }}
+        />
       ) : null}
     </div>
   );

@@ -210,15 +210,20 @@ function sortedSections(sections: PortfolioSection[] | null | undefined): Portfo
 function HoverChrome({
   children,
   className,
+  alwaysVisible = false,
 }: {
   children: ReactNode;
   className?: string;
+  /** Keep chrome visible (e.g. while item/section is hidden). */
+  alwaysVisible?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "absolute top-2 right-2 z-10 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white/95 px-1 py-0.5 shadow-sm backdrop-blur transition-opacity",
-        "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+        "absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1 py-0.5 shadow-sm transition-opacity",
+        alwaysVisible
+          ? "opacity-100"
+          : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
         className,
       )}
     >
@@ -233,6 +238,7 @@ function ChromeButton({
   onPointerDown,
   destructive = false,
   grabbable = false,
+  emphasized = false,
   children,
 }: {
   label: string;
@@ -240,6 +246,8 @@ function ChromeButton({
   onPointerDown?: (event: React.PointerEvent) => void;
   destructive?: boolean;
   grabbable?: boolean;
+  /** High-contrast state (e.g. "currently hidden — click to show"). */
+  emphasized?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -250,13 +258,44 @@ function ChromeButton({
       onClick={onClick}
       onPointerDown={onPointerDown}
       className={cn(
-        "flex size-7 items-center justify-center rounded-full text-[#6B6B6B] transition-colors hover:bg-[#F5F5F0] hover:text-[#2D2D2D] focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none",
-        destructive && "text-[#E94B3C] hover:text-[#E94B3C]",
+        "flex size-7 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+        emphasized
+          ? "bg-[#2D2D2D] text-white hover:bg-[#1a1a1a]"
+          : "text-[#2D2D2D] hover:bg-[#F0F0EA]",
+        destructive && !emphasized && "text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]",
         grabbable && "cursor-grab touch-none active:cursor-grabbing",
       )}
     >
       {children}
     </button>
+  );
+}
+
+/** Diagonal X hatch + badge when an item/section is hidden in the editor. */
+function HiddenOverlay({ label = "Đang ẩn" }: { label?: string }) {
+  return (
+    <div
+      aria-hidden
+      className="pointer-events-none absolute inset-0 z-[8] overflow-hidden rounded-[inherit]"
+    >
+      <div className="absolute inset-0 bg-[#FAFAF5]/55" />
+      <div
+        className="absolute inset-0 opacity-70"
+        style={{
+          backgroundImage: `
+            linear-gradient(45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%),
+            linear-gradient(-45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%)
+          `,
+          backgroundSize: "22px 22px",
+          backgroundPosition: "center",
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span className="rounded-lg bg-[#2D2D2D] px-3 py-1.5 text-xs font-semibold tracking-wide text-white shadow-md">
+          {label}
+        </span>
+      </div>
+    </div>
   );
 }
 
@@ -326,16 +365,17 @@ function ItemCardEditable({
       className={cn(
         "group relative h-full list-none",
         itemSpanClass(item.span, resolved.layoutStyle),
-        !item.isVisible && "opacity-55",
       )}
     >
       <PortfolioCardShell
         slot={resolved.card}
         surfaceClass={cardSurface}
         isDark={resolved.isDark}
+        accentColor={resolved.primaryColor}
         className="h-full"
       >
-        <HoverChrome>
+        {!item.isVisible ? <HiddenOverlay /> : null}
+        <HoverChrome alwaysVisible={!item.isVisible}>
           <ChromeButton
             label="Kéo để sắp xếp"
             grabbable
@@ -348,12 +388,13 @@ function ItemCardEditable({
           </ChromeButton>
           <ChromeButton
             label={item.isVisible ? "Ẩn mục" : "Hiện mục"}
+            emphasized={!item.isVisible}
             onClick={() => onToggleVisibility(item, !item.isVisible)}
           >
             {item.isVisible ? (
-              <EyeOff className="size-3.5" />
+              <EyeOff className="size-3.5" strokeWidth={2.25} />
             ) : (
-              <Eye className="size-3.5" />
+              <Eye className="size-3.5" strokeWidth={2.25} />
             )}
           </ChromeButton>
           <ChromeButton label="Chỉnh sửa chi tiết" onClick={() => onEdit(item)}>
@@ -368,10 +409,8 @@ function ItemCardEditable({
 
         <div className="flex flex-wrap items-start justify-between gap-2">
           <p
-            className={cn(
-              "font-mono text-[10px] uppercase tracking-[0.16em]",
-              resolved.isDark ? "text-[#FAFAF5]/60" : "text-[#6B6B6B]",
-            )}
+            className="font-mono text-[10px] uppercase tracking-[0.16em]"
+            style={{ color: resolved.primaryColor }}
           >
             {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
           </p>
@@ -385,7 +424,7 @@ function ItemCardEditable({
               </span>
             ) : null}
             {!item.isVisible ? (
-              <span className="rounded-full bg-[#F5F5F0] px-2 py-0.5 text-[10px] font-medium text-[#6B6B6B]">
+              <span className="rounded-full bg-[#2D2D2D] px-2 py-0.5 text-[10px] font-semibold text-white">
                 Đang ẩn
               </span>
             ) : null}
@@ -498,7 +537,12 @@ function ItemCardEditable({
         ) : null}
 
         {item.externalUrl ? (
-          <p className="mt-2.5 text-sm font-medium text-[#4FC3F7]">{item.externalUrl}</p>
+          <p
+            className="mt-2.5 text-sm font-semibold"
+            style={{ color: resolved.primaryColor }}
+          >
+            {item.externalUrl}
+          </p>
         ) : null}
       </PortfolioCardShell>
     </Reorder.Item>
@@ -546,7 +590,8 @@ function ItemsGroupEditable({
   const layoutClass = itemsLayoutClass(resolved.layoutStyle);
 
   return (
-    <div className={cn("space-y-3", dimmed && "opacity-55")}>
+    <div className="relative space-y-3">
+      {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
       <div className="flex flex-wrap items-center justify-between gap-2">
         {onTitleChange ? (
           <h2
@@ -579,7 +624,11 @@ function ItemsGroupEditable({
         <button
           type="button"
           onClick={onAddItem}
-          className="flex items-center gap-1 rounded-full border border-dashed border-[#C9C9C2] px-3 py-1 text-xs font-medium text-[#6B6B6B] opacity-0 transition-opacity hover:border-[#4FC3F7] hover:text-[#2D2D2D] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none group-hover/section:opacity-100"
+          className="flex items-center gap-1 rounded-full border border-dashed px-3 py-1 text-xs font-medium opacity-0 transition-opacity hover:border-[var(--pf-primary)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none group-hover/section:opacity-100"
+          style={{
+            borderColor: `${resolved.primaryColor}66`,
+            color: resolved.primaryColor,
+          }}
         >
           <Plus className="size-3.5" />
           Thêm mục
@@ -667,12 +716,23 @@ function ProfileSectionEditable({
   const nameClass = cn(
     "text-2xl font-extrabold tracking-tight sm:text-4xl",
     resolved.heroText === "Decrypted" && "font-mono tracking-[0.08em]",
-    resolved.heroText === "TrueFocus" &&
-      "tracking-tighter underline decoration-[#E94B3C] decoration-2 underline-offset-8",
+    resolved.heroText === "TrueFocus" && "tracking-tighter underline decoration-2 underline-offset-8",
     resolved.heroText === "BlurShiny" && "italic tracking-wide opacity-95",
-    resolved.heroText === "SplitGradient" &&
-      "bg-gradient-to-r from-[#E94B3C] via-[#7E57C2] to-[#4FC3F7] bg-clip-text text-transparent",
+    resolved.heroText === "SplitGradient" && "bg-clip-text text-transparent",
   );
+
+  const nameStyle =
+    resolved.heroText === "SplitGradient"
+      ? {
+          fontFamily: resolved.headingFontCss,
+          backgroundImage: `linear-gradient(90deg, ${resolved.primaryColor}, ${resolved.accentColor}, ${resolved.secondaryColor})`,
+        }
+      : resolved.heroText === "TrueFocus"
+        ? {
+            fontFamily: resolved.headingFontCss,
+            textDecorationColor: resolved.primaryColor,
+          }
+        : { fontFamily: resolved.headingFontCss };
 
   return (
     <section
@@ -680,13 +740,17 @@ function ProfileSectionEditable({
         "relative overflow-hidden rounded-[1.25rem]",
         resolved.isDark ? "bg-[#1a1a1a]/80" : "bg-white/90",
         "p-5 sm:p-6",
-        "ring-1",
-        resolved.isDark ? "ring-[#FAFAF5]/12" : "ring-[#E5E5E0]",
+        "ring-2",
       )}
+      style={{
+        ["--pf-primary" as string]: resolved.primaryColor,
+        boxShadow: `inset 0 4px 0 0 ${resolved.primaryColor}`,
+        borderColor: `${resolved.primaryColor}33`,
+      }}
     >
       <div className="relative -mx-5 -mt-5 mb-4 sm:-mx-6 sm:-mt-6">
         {draft.coverImageUrl ? (
-          <div className="relative h-32 overflow-hidden sm:h-36">
+          <div className="relative h-32 overflow-hidden sm:h-40">
             <Image
               src={draft.coverImageUrl}
               alt=""
@@ -695,26 +759,21 @@ function ProfileSectionEditable({
               className="object-cover"
               sizes="(max-width: 768px) 100vw, 896px"
             />
+            <div
+              className="absolute inset-x-0 bottom-0 h-16"
+              style={{
+                background: `linear-gradient(to top, ${resolved.isDark ? "#1a1a1a" : "#ffffff"}ee, transparent)`,
+              }}
+            />
           </div>
         ) : (
           <div
-            className={cn(
-              "flex h-28 items-center justify-center sm:h-32",
-              resolved.isDark ? "bg-[#FAFAF5]/5" : "bg-[#F0F0EA]",
-            )}
+            className="flex h-28 items-center justify-center sm:h-36"
             style={{
-              background:
-                resolved.backgroundStyle === "Gradient"
-                  ? `linear-gradient(135deg, ${resolved.primaryColor}33, ${resolved.secondaryColor}28)`
-                  : undefined,
+              background: `linear-gradient(135deg, ${resolved.primaryColor}55 0%, ${resolved.secondaryColor}40 48%, ${resolved.accentColor}35 100%)`,
             }}
           >
-            <p
-              className={cn(
-                "text-sm font-medium",
-                resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#5C5C5C]",
-              )}
-            >
+            <p className="rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-[#2D2D2D]">
               Chưa có ảnh bìa
             </p>
           </div>
@@ -723,6 +782,14 @@ function ProfileSectionEditable({
           <MediaUploader
             label="ảnh bìa"
             onUploadedUrl={(url) => onPatchDraft({ coverImageUrl: url })}
+            crop={{
+              aspect: 2.5,
+              cropShape: "rect",
+              title: "Cắt ảnh bìa",
+              description: "Kéo và thu phóng để chọn vùng hiển thị trên portfolio.",
+              outputWidth: 1600,
+              outputHeight: 640,
+            }}
           />
         </div>
       </div>
@@ -731,15 +798,16 @@ function ProfileSectionEditable({
         <div className="min-w-0 max-w-2xl flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <p
-              className={cn(
-                "font-mono text-[10px] uppercase tracking-[0.18em]",
-                resolved.isDark ? "text-[#FAFAF5]/60" : "text-[#5C5C5C]",
-              )}
+              className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em]"
+              style={{ color: resolved.primaryColor }}
             >
               Portfolio STEAM
             </p>
             {resolved.heroText !== "Plain" ? (
-              <span className="rounded-md border border-[#4FC3F7]/40 bg-[#4FC3F7]/10 px-2 py-0.5 text-[10px] font-semibold text-[#0f7cad]">
+              <span
+                className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-white"
+                style={{ backgroundColor: resolved.accentColor }}
+              >
                 Hero: {heroHint}
               </span>
             ) : null}
@@ -758,7 +826,7 @@ function ProfileSectionEditable({
           </div>
 
           <div className="mt-3 space-y-2">
-            <div className={nameClass} style={{ fontFamily: resolved.headingFontCss }}>
+            <div className={nameClass} style={nameStyle}>
               <InlineText
                 value={draft.displayName ?? ""}
                 onChange={(next) => onPatchDraft({ displayName: next })}
@@ -825,7 +893,10 @@ function ProfileSectionEditable({
 
         <div className="flex shrink-0 flex-col items-center gap-2">
           {draft.avatarUrl ? (
-            <div className="relative h-24 w-24 overflow-hidden rounded-xl shadow-lg ring-2 ring-white/40 sm:h-28 sm:w-28">
+            <div
+              className="relative h-24 w-24 overflow-hidden rounded-xl shadow-lg sm:h-28 sm:w-28"
+              style={{ boxShadow: `0 0 0 3px ${resolved.primaryColor}` }}
+            >
               <Image
                 src={draft.avatarUrl}
                 alt={name}
@@ -837,12 +908,10 @@ function ProfileSectionEditable({
             </div>
           ) : (
             <div
-              className={cn(
-                "flex h-24 w-24 items-center justify-center rounded-xl text-2xl font-bold sm:h-28 sm:w-28",
-                resolved.isDark
-                  ? "bg-[#FAFAF5]/10 text-[#FAFAF5]"
-                  : "bg-[#F0F0EA] text-[#2D2D2D]",
-              )}
+              className="flex h-24 w-24 items-center justify-center rounded-xl text-2xl font-bold text-white sm:h-28 sm:w-28"
+              style={{
+                background: `linear-gradient(145deg, ${resolved.primaryColor}, ${resolved.accentColor})`,
+              }}
             >
               {name.slice(0, 1).toUpperCase()}
             </div>
@@ -850,6 +919,14 @@ function ProfileSectionEditable({
           <MediaUploader
             label="avatar"
             onUploadedUrl={(url) => onPatchDraft({ avatarUrl: url })}
+            crop={{
+              aspect: 1,
+              cropShape: "round",
+              title: "Cắt ảnh đại diện",
+              description: "Kéo để căn mặt vào khung. Thu phóng nếu ảnh quá lớn.",
+              outputWidth: 512,
+              outputHeight: 512,
+            }}
           />
         </div>
       </div>
@@ -873,9 +950,15 @@ function LinksSectionEditable({
   dimmed?: boolean;
 }) {
   const links = (draft.links ?? []).filter((link) => Boolean(link.url));
+  const linkPalette = [
+    resolved.primaryColor,
+    resolved.secondaryColor,
+    resolved.accentColor,
+  ];
 
   return (
-    <div className={cn("space-y-3", dimmed && "opacity-55")}>
+    <div className="relative space-y-3">
+      {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
       <div className="flex items-center justify-between gap-2">
         {onTitleChange ? (
           <h2
@@ -908,7 +991,8 @@ function LinksSectionEditable({
         <button
           type="button"
           onClick={onOpenLinksPanel}
-          className="flex items-center gap-1 rounded-full border border-dashed border-[#C9C9C2] px-3 py-1 text-xs font-medium text-[#6B6B6B] opacity-0 transition-opacity hover:border-[#4FC3F7] hover:text-[#2D2D2D] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none group-hover/section:opacity-100"
+          className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity group-hover/section:opacity-100 focus-visible:opacity-100"
+          style={{ backgroundColor: resolved.primaryColor }}
         >
           <Pencil className="size-3" />
           Chỉnh liên kết
@@ -919,7 +1003,12 @@ function LinksSectionEditable({
         <button
           type="button"
           onClick={onOpenLinksPanel}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-[#C9C9C2] bg-white/60 px-4 py-5 text-sm text-[#6B6B6B] transition-colors hover:border-[#4FC3F7] hover:text-[#2D2D2D] focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none"
+          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
+          style={{
+            borderColor: `${resolved.primaryColor}66`,
+            color: resolved.primaryColor,
+            backgroundColor: `${resolved.primaryColor}0d`,
+          }}
         >
           <Plus className="size-4" />
           Thêm GitHub, Behance, LinkedIn…
@@ -930,7 +1019,7 @@ function LinksSectionEditable({
             <span
               key={`${link.url}-${index}`}
               className="rounded-full px-3.5 py-1.5 text-sm font-medium text-white"
-              style={{ backgroundColor: resolved.primaryColor }}
+              style={{ backgroundColor: linkPalette[index % linkPalette.length] }}
             >
               {link.label || link.url}
             </span>
@@ -962,24 +1051,21 @@ function CustomSectionEditable({
   };
 
   return (
-    <div
-      className={cn(
-        "group relative space-y-3",
-        dimmed && "opacity-55",
-      )}
-    >
+    <div className="group relative space-y-3">
+      {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
       {isCustom ? (
-        <HoverChrome>
+        <HoverChrome alwaysVisible={dimmed}>
           <ChromeButton
             label={section.isVisible ? "Ẩn phần" : "Hiện phần"}
+            emphasized={dimmed}
             onClick={() =>
               onToggleSectionVisibility?.(section, !section.isVisible)
             }
           >
             {section.isVisible ? (
-              <EyeOff className="size-3.5" />
+              <EyeOff className="size-3.5" strokeWidth={2.25} />
             ) : (
-              <Eye className="size-3.5" />
+              <Eye className="size-3.5" strokeWidth={2.25} />
             )}
           </ChromeButton>
           <ChromeButton
@@ -1131,6 +1217,7 @@ function LegacySectionShell({
       layout="position"
       transition={reduceMotion ? { duration: 0 } : undefined}
       className="group/section relative list-none"
+      data-portfolio-section={sectionId}
     >
       <div
         className={cn(
@@ -1155,7 +1242,7 @@ function LegacySectionShell({
         </button>
       </div>
       <EditableSection isDark={isDark}>
-        <PortfolioReveal slot={reveal}>{children}</PortfolioReveal>
+        <PortfolioReveal slot="None">{children}</PortfolioReveal>
       </EditableSection>
     </Reorder.Item>
   );
@@ -1194,11 +1281,14 @@ function DynamicSectionShell({
       layout="position"
       transition={reduceMotion ? { duration: 0 } : undefined}
       className="group/section relative list-none"
+      data-portfolio-section={section.id}
     >
       <div
         className={cn(
           "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity",
-          "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
+          !section.isVisible
+            ? "opacity-100"
+            : "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
         )}
       >
         <span className="max-w-[10rem] truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B6B]">
@@ -1207,12 +1297,13 @@ function DynamicSectionShell({
         {!isCustom && onToggleSectionVisibility ? (
           <ChromeButton
             label={section.isVisible ? "Ẩn phần" : "Hiện phần"}
+            emphasized={!section.isVisible}
             onClick={() => onToggleSectionVisibility(section, !section.isVisible)}
           >
             {section.isVisible ? (
-              <EyeOff className="size-3" />
+              <EyeOff className="size-3" strokeWidth={2.25} />
             ) : (
-              <Eye className="size-3" />
+              <Eye className="size-3" strokeWidth={2.25} />
             )}
           </ChromeButton>
         ) : null}
@@ -1239,7 +1330,7 @@ function DynamicSectionShell({
         </button>
       </div>
       <EditableSection isDark={isDark}>
-        <PortfolioReveal slot={reveal}>{children}</PortfolioReveal>
+        <PortfolioReveal slot="None">{children}</PortfolioReveal>
       </EditableSection>
     </Reorder.Item>
   );
@@ -1474,22 +1565,29 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
         "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1",
         resolved.isDark ? "ring-[#FAFAF5]/10" : "ring-[#E5E5E0]",
       )}
-      style={{ fontFamily: resolved.bodyFontCss }}
+      style={{
+        fontFamily: resolved.bodyFontCss,
+        ["--pf-primary" as string]: resolved.primaryColor,
+        ["--pf-secondary" as string]: resolved.secondaryColor,
+        ["--pf-accent" as string]: resolved.accentColor,
+      }}
     >
       <PortfolioBackground slot={resolved.background} theme={resolved} />
 
       <div className="relative px-4 py-8 sm:px-8 sm:py-10">
         {useDynamicSections ? (
           <div className={resolved.densityGapClass}>
-            <EditableSection isDark={resolved.isDark}>
-              <PortfolioReveal slot={resolved.reveal}>
-                <ProfileSectionEditable
-                  draft={draft}
-                  resolved={resolved}
-                  onPatchDraft={onPatchDraft}
-                />
-              </PortfolioReveal>
-            </EditableSection>
+            <div data-portfolio-section="profile" className="scroll-mt-28">
+              <EditableSection isDark={resolved.isDark}>
+                <PortfolioReveal slot="None">
+                  <ProfileSectionEditable
+                    draft={draft}
+                    resolved={resolved}
+                    onPatchDraft={onPatchDraft}
+                  />
+                </PortfolioReveal>
+              </EditableSection>
+            </div>
 
             <Reorder.Group
               as="div"

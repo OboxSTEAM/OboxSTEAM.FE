@@ -1,5 +1,19 @@
 import { z } from "zod";
 
+/** Map FE PascalCase enum → BE camelCase wire value (`Sm` → `sm`). */
+export function toPortfolioEnumWire(value: string): string {
+  return value.charAt(0).toLowerCase() + value.slice(1);
+}
+
+function coercePascalEnum<const T extends readonly [string, ...string[]]>(
+  values: T,
+  raw: unknown,
+): T[number] | unknown {
+  if (typeof raw !== "string") return raw;
+  const matched = values.find((value) => value.toLowerCase() === raw.toLowerCase());
+  return matched ?? raw;
+}
+
 export const portfolioPlanTypeSchema = z.enum(["Standard", "Premium"]);
 
 export const portfolioItemTypeSchema = z.enum([
@@ -14,17 +28,24 @@ export const portfolioItemTypeSchema = z.enum([
 
 export const portfolioItemSourceSchema = z.enum(["AutoImported", "StudentEdited"]);
 
-export const portfolioFontScaleSchema = z.enum(["Sm", "Base", "Lg", "Xl"]);
-export const portfolioLineHeightSchema = z.enum(["Tight", "Normal", "Relaxed"]);
-export const portfolioDensitySchema = z.enum(["Compact", "Cozy", "Spacious"]);
-export const portfolioBackgroundStyleSchema = z.enum([
+export const PORTFOLIO_FONT_SCALE_VALUES = ["Sm", "Base", "Lg", "Xl"] as const;
+export const PORTFOLIO_LINE_HEIGHT_VALUES = ["Tight", "Normal", "Relaxed"] as const;
+export const PORTFOLIO_DENSITY_VALUES = ["Compact", "Cozy", "Spacious"] as const;
+export const PORTFOLIO_BACKGROUND_STYLE_VALUES = [
   "Plain",
   "Gradient",
   "Pattern",
   "Image",
-]);
-export const portfolioCardStyleSchema = z.enum(["Outline", "Soft", "Elevated"]);
-export const portfolioItemSpanSchema = z.enum(["Single", "Wide", "Tall", "Large"]);
+] as const;
+export const PORTFOLIO_CARD_STYLE_VALUES = ["Outline", "Soft", "Elevated"] as const;
+export const PORTFOLIO_ITEM_SPAN_VALUES = ["Single", "Wide", "Tall", "Large"] as const;
+
+export const portfolioFontScaleSchema = z.enum(PORTFOLIO_FONT_SCALE_VALUES);
+export const portfolioLineHeightSchema = z.enum(PORTFOLIO_LINE_HEIGHT_VALUES);
+export const portfolioDensitySchema = z.enum(PORTFOLIO_DENSITY_VALUES);
+export const portfolioBackgroundStyleSchema = z.enum(PORTFOLIO_BACKGROUND_STYLE_VALUES);
+export const portfolioCardStyleSchema = z.enum(PORTFOLIO_CARD_STYLE_VALUES);
+export const portfolioItemSpanSchema = z.enum(PORTFOLIO_ITEM_SPAN_VALUES);
 export const portfolioMediaTypeSchema = z.enum(["Image"]);
 export const portfolioSectionKindSchema = z.enum([
   "ProjectsGroup",
@@ -70,6 +91,41 @@ export const portfolioThemeSchema = z.object({
   sectionOrder: z.array(z.string()).nullable(),
 });
 
+/**
+ * Response theme: BE `CamelCaseJsonStringEnumConverter` sends `sm`/`base`/…
+ * Coerce to PascalCase before the strict theme schema.
+ */
+export const portfolioThemeApiSchema = z
+  .object({
+    templateId: z.string().nullable(),
+    primaryColor: z.string().nullable(),
+    secondaryColor: z.string().nullable(),
+    fontFamily: z.string().nullable(),
+    headingFontFamily: z.string().nullable(),
+    fontScale: z.string().nullable(),
+    lineHeight: z.string().nullable(),
+    density: z.string().nullable(),
+    accentColor: z.string().nullable(),
+    backgroundStyle: z.string().nullable(),
+    backgroundImageUrl: z.string().nullable(),
+    cardStyle: z.string().nullable(),
+    layoutStyle: z.string().nullable(),
+    settingsJson: z.string().max(2000).nullable(),
+    sectionOrder: z.array(z.string()).nullable(),
+  })
+  .transform((theme) =>
+    portfolioThemeSchema.parse({
+      ...theme,
+      fontScale: coercePascalEnum(PORTFOLIO_FONT_SCALE_VALUES, theme.fontScale),
+      lineHeight: coercePascalEnum(PORTFOLIO_LINE_HEIGHT_VALUES, theme.lineHeight),
+      density: coercePascalEnum(PORTFOLIO_DENSITY_VALUES, theme.density),
+      backgroundStyle: coercePascalEnum(
+        PORTFOLIO_BACKGROUND_STYLE_VALUES,
+        theme.backgroundStyle,
+      ),
+      cardStyle: coercePascalEnum(PORTFOLIO_CARD_STYLE_VALUES, theme.cardStyle),
+    }),
+  );
 export const portfolioLinkSchema = z.object({
   label: z.string().nullable(),
   url: z.string().nullable(),
@@ -124,7 +180,15 @@ export const portfolioItemSchema = z.object({
   source: portfolioItemSourceSchema,
   accentColor: z.string().nullable(),
   isFeatured: z.boolean().nullable(),
-  span: portfolioItemSpanSchema.nullable(),
+  span: z
+    .string()
+    .nullable()
+    .transform((raw) => {
+      if (raw == null) return null;
+      return portfolioItemSpanSchema.parse(
+        coercePascalEnum(PORTFOLIO_ITEM_SPAN_VALUES, raw),
+      );
+    }),
   mediaAssets: z.array(portfolioMediaAssetSchema).nullable(),
   programId: z.string().uuid().nullable(),
   programName: z.string().nullable(),
@@ -166,7 +230,7 @@ export const portfolioSchema = z.object({
   isPublic: z.boolean(),
   lastPublishedAt: z.string().nullable(),
   hasUnpublishedChanges: z.boolean(),
-  theme: portfolioThemeSchema,
+  theme: portfolioThemeApiSchema,
   links: z.array(portfolioLinkSchema).nullable(),
   items: z.array(portfolioItemSchema).nullable(),
   sections: z.array(portfolioSectionSchema).nullable(),
@@ -183,7 +247,7 @@ export const publicPortfolioSchema = z.object({
   studentName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   coverImageUrl: z.string().nullable(),
-  theme: portfolioThemeSchema,
+  theme: portfolioThemeApiSchema,
   links: z.array(portfolioLinkSchema).nullable(),
   items: z.array(portfolioItemSchema).nullable(),
   sections: z.array(portfolioSectionSchema).nullable(),
@@ -243,6 +307,24 @@ export function serializeThemeSettingsJson(
   );
   if (Object.keys(cleaned).length === 0) return null;
   return JSON.stringify(cleaned);
+}
+
+/**
+ * Map theme enums to BE camelCase wire values before PUT.
+ * Response parsing already normalizes camelCase → PascalCase.
+ */
+export function themeToApiWire(theme: PortfolioTheme) {
+  const wire = (value: string | null) =>
+    value == null ? null : toPortfolioEnumWire(value);
+
+  return {
+    ...theme,
+    fontScale: wire(theme.fontScale),
+    lineHeight: wire(theme.lineHeight),
+    density: wire(theme.density),
+    backgroundStyle: wire(theme.backgroundStyle),
+    cardStyle: wire(theme.cardStyle),
+  };
 }
 
 /** Parse `section.settingsJson`; returns null on empty/invalid. */
