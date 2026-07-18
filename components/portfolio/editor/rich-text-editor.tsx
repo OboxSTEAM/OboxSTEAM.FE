@@ -23,8 +23,14 @@ import {
 } from "lucide-react";
 
 import { EditableFieldFrame } from "@/components/portfolio/editor/editable-frame";
+import { PortfolioColorPicker } from "@/components/portfolio/editor/portfolio-color-picker";
 import { Button } from "@/components/ui/button";
-import { PORTFOLIO_COLOR_SWATCHES } from "@/lib/portfolio/constants";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { normalizeHexColor } from "@/lib/portfolio/color-utils";
 import {
   isEmptyPortfolioHtml,
   sanitizePortfolioHtml,
@@ -84,46 +90,42 @@ function ToolbarDivider() {
 function ColorSwatchControl({ editor }: { editor: Editor }) {
   const activeColor =
     (editor.getAttributes("textStyle").color as string | undefined) ?? "";
+  const color = normalizeHexColor(activeColor, "#2D2D2D");
 
   return (
-    <div className="flex items-center gap-1 px-1">
-      <label className="relative flex size-7 cursor-pointer items-center justify-center">
-        <span
-          className={cn(
-            "size-5 rounded-full border-2 border-white shadow-[0_0_0_1.5px_#7CB342]",
-          )}
-          style={{ backgroundColor: activeColor || "#2D2D2D" }}
-        />
-        <input
-          type="color"
-          aria-label="Màu chữ"
-          value={/^#[0-9a-fA-F]{6}$/.test(activeColor) ? activeColor : "#2D2D2D"}
-          onMouseDown={(event) => event.preventDefault()}
-          onChange={(event) => {
-            editor.chain().focus().setColor(event.target.value).run();
-          }}
-          className="absolute inset-0 cursor-pointer opacity-0"
-        />
-      </label>
-      <div className="hidden items-center gap-0.5 sm:flex">
-        {PORTFOLIO_COLOR_SWATCHES.slice(0, 5).map((swatch) => (
+    <Popover>
+      <PopoverTrigger
+        render={
           <button
-            key={swatch.value}
             type="button"
-            title={swatch.label}
-            aria-label={swatch.label}
+            aria-label="Màu chữ"
             onMouseDown={(event) => event.preventDefault()}
-            onClick={() => editor.chain().focus().setColor(swatch.value).run()}
-            className={cn(
-              "size-3.5 rounded-full border border-white shadow-[0_0_0_1px_#D0D0C8]",
-              activeColor.toLowerCase() === swatch.value.toLowerCase() &&
-                "shadow-[0_0_0_1.5px_#7CB342]",
-            )}
-            style={{ backgroundColor: swatch.value }}
+            className="mx-0.5 flex size-7 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
           />
-        ))}
-      </div>
-    </div>
+        }
+      >
+        <span
+          className="size-5 rounded-full border-2 border-white shadow-[0_0_0_1.5px_#4FC3F7]"
+          style={{ backgroundColor: color }}
+        />
+      </PopoverTrigger>
+      <PopoverContent
+        align="start"
+        side="bottom"
+        sideOffset={8}
+        className="w-[min(17.5rem,calc(100vw-2rem))] rounded-2xl border border-[#E5E5E0] bg-white p-3 shadow-lg"
+        onMouseDown={(event) => event.preventDefault()}
+      >
+        <PortfolioColorPicker
+          value={color}
+          onChange={(next) => {
+            editor.chain().setColor(next).run();
+          }}
+          label="Màu chữ"
+          compact
+        />
+      </PopoverContent>
+    </Popover>
   );
 }
 

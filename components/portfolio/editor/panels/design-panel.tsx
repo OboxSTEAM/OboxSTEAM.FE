@@ -1,9 +1,9 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import { MediaUploader } from "@/components/portfolio/editor/media-uploader";
+import { PortfolioColorPicker } from "@/components/portfolio/editor/portfolio-color-picker";
 import type {
   PortfolioTheme,
   PortfolioThemeSlotOverrides,
@@ -19,7 +19,6 @@ import {
   getPortfolioTemplateId,
   PORTFOLIO_BACKGROUND_STYLES,
   PORTFOLIO_CARD_STYLES,
-  PORTFOLIO_COLOR_SWATCHES,
   PORTFOLIO_DENSITIES,
   PORTFOLIO_FONTS,
   PORTFOLIO_LAYOUT_STYLES,
@@ -292,98 +291,6 @@ function ThemeSlider({
   );
 }
 
-function PrimaryColorPicker({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-}) {
-  const hex = /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#574040";
-
-  return (
-    <div className="space-y-3">
-      <PanelLabel>Màu chủ đề</PanelLabel>
-      <div className="flex flex-wrap gap-2.5">
-        {PORTFOLIO_COLOR_SWATCHES.map((swatch) => {
-          const selected = value.toLowerCase() === swatch.value.toLowerCase();
-          return (
-            <button
-              key={swatch.value}
-              type="button"
-              title={swatch.label}
-              aria-label={swatch.label}
-              aria-pressed={selected}
-              onClick={() => onChange(swatch.value)}
-              className={cn(
-                "size-8 rounded-full transition hover:scale-105",
-                selected
-                  ? "shadow-[0_0_0_3px_#fff,0_0_0_5px_#4FC3F7]"
-                  : "shadow-[0_0_0_1px_#E5E5E0]",
-              )}
-              style={{ backgroundColor: swatch.value }}
-            />
-          );
-        })}
-      </div>
-
-      <div className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white p-3">
-        <div className="flex gap-3">
-          <label className="relative block h-36 w-8 shrink-0 cursor-pointer overflow-hidden rounded-full">
-            <span
-              className="absolute inset-0"
-              style={{
-                background:
-                  "linear-gradient(to bottom, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)",
-              }}
-            />
-            <input
-              type="color"
-              value={hex}
-              onChange={(event) => onChange(event.target.value)}
-              aria-label="Thanh màu"
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            />
-          </label>
-          <label className="relative min-w-0 flex-1 cursor-pointer overflow-hidden rounded-2xl">
-            <span
-              className="absolute inset-0"
-              style={{
-                background: `
-                  linear-gradient(to top, #000, transparent),
-                  linear-gradient(to right, #fff, ${hex})
-                `,
-              }}
-            />
-            <input
-              type="color"
-              value={hex}
-              onChange={(event) => onChange(event.target.value)}
-              aria-label="Bảng chọn màu"
-              className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
-            />
-          </label>
-        </div>
-        <div className="mt-3 flex items-center gap-2">
-          <span
-            className="size-9 shrink-0 rounded-xl border border-[#E5E5E0]"
-            style={{ backgroundColor: hex }}
-          />
-          <Input
-            value={value.replace(/^#/, "").toUpperCase()}
-            onChange={(event) => {
-              const raw = event.target.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
-              onChange(`#${raw}`);
-            }}
-            className="h-10 rounded-xl border-[#E5E5E0] bg-[#F5F5F0] font-mono text-sm uppercase"
-            aria-label="Mã màu hex"
-          />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
   const templateId = getPortfolioTemplateId(theme.templateId);
   const preset = THEME_PRESETS[templateId];
@@ -592,7 +499,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
           rightHint="2.0"
           accent="#4FC3F7"
         />
-        <PrimaryColorPicker value={primary} onChange={setPrimaryColor} />
+        <PortfolioColorPicker value={primary} onChange={setPrimaryColor} />
       </div>
 
       <div className="space-y-3">
