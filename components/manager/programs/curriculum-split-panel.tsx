@@ -588,12 +588,21 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
 /* ══════════════════════════════════════════════════════════════════════════════
    ACTIVITY FORM PANEL
 ══════════════════════════════════════════════════════════════════════════════ */
-function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
-  courseId: string; activityToEdit: ActivityType | null; onSuccess: () => void;
+function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuccess }: {
+  courseId: string;
+  activityToEdit: ActivityType | null;
+  /** Sibling activities in the same course — used to default create order to max+1. */
+  activitiesInCourse: ActivityType[];
+  onSuccess: () => void;
 }) {
   const isEdit = !!activityToEdit;
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
+
+  const nextOrder = useMemo(() => {
+    const max = activitiesInCourse.reduce((m, a) => Math.max(m, a.activityOrder), 0);
+    return max + 1;
+  }, [activitiesInCourse]);
 
   const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateActivitySchema : createActivitySchema),
@@ -606,7 +615,7 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
       maxCapacity: activityToEdit.maxCapacity,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
-      code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: 1,
+      code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
       location: "", startTime: "", endTime: "", maxCapacity: null as number | null,
       requireQrCheckin: false, requireMediaEvidence: false,
     },
@@ -665,8 +674,7 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
         requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
       };
       if (isEdit && activityToEdit) {
-        // The backend re-validates ActivityOrder against the course max on update,
-        // so omit it when unchanged to avoid a false "must be greater" rejection.
+        // Omit activityOrder when unchanged so BE keeps the current slot without a no-op reorder.
         const orderUnchanged = orderNum === activityToEdit.activityOrder;
         await updateActivity(activityToEdit.id, {
           ...payload,
@@ -727,6 +735,11 @@ function ActivityFormPanel({ courseId, activityToEdit, onSuccess }: {
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
             <input type="number" {...register("activityOrder", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
+            <p className="text-[11px] leading-snug" style={{ color: W.faint }}>
+              {isEdit
+                ? "Đổi thứ tự sẽ tự dồn các hoạt động khác trong khóa học."
+                : `Mặc định thêm cuối (#${nextOrder}). Nhập số nhỏ hơn để chèn — các hoạt động sau sẽ được dồn.`}
+            </p>
           </div>
 
           {actType !== "SelfPaced" && (
@@ -1580,11 +1593,15 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       );
     }
     if (sel.kind === "activity-new") {
+      const course = modules
+        .flatMap((m) => m.courses || [])
+        .find((c) => c.id === sel.courseId);
       return (
         <ActivityFormPanel
           key={`activity-new-${sel.courseId}`}
           courseId={sel.courseId}
           activityToEdit={null}
+          activitiesInCourse={course?.activities ?? []}
           onSuccess={() => {
             onRefresh();
             const mod = modules.find((m) => m.courses?.some((c) => c.id === sel.courseId));
@@ -1599,7 +1616,13 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         .find((c) => c.activities?.some((a) => a.id === sel.id));
       const act = course?.activities?.find((a) => a.id === sel.id) || null;
       return (
-        <ActivityFormPanel key={sel.id} courseId={sel.courseId} activityToEdit={act} onSuccess={onRefresh} />
+        <ActivityFormPanel
+          key={sel.id}
+          courseId={sel.courseId}
+          activityToEdit={act}
+          activitiesInCourse={course?.activities ?? []}
+          onSuccess={onRefresh}
+        />
       );
     }
     if (sel.kind === "assignment-new") {

@@ -152,6 +152,31 @@
         "method": "post"
       },
       {
+        "path": "/api/certificates/me",
+        "method": "get",
+        "description": "Students see their own certificates. Parents see linked students. Admins see all program certificates."
+      },
+      {
+        "path": "/api/certificates/{id}",
+        "method": "get",
+        "description": "Full show-page payload for an issued program certificate."
+      },
+      {
+        "path": "/api/certificates/by-enrollment/{programEnrollmentId}",
+        "method": "get",
+        "description": "Returns the program certificate for an enrollment when issued; otherwise null data."
+      },
+      {
+        "path": "/api/certificates/verify/{code}",
+        "method": "get",
+        "description": "Public endpoint for the FE share/verify page."
+      },
+      {
+        "path": "/api/certificates/program-enrollments/{programEnrollmentId}/ensure",
+        "method": "post",
+        "description": "Issues a program certificate when all activities are Done. Regenerates and re-uploads the PDF (including avatar/thumbnail images). Reuses the same certificate code when already issued."
+      },
+      {
         "path": "/api/classes",
         "method": "get",
         "description": "Retrieve a paginated list of cohort classes with basic information only. Use GET /api/classes/{id} for full details including SeatsTaken."
@@ -367,6 +392,11 @@
         "description": "Returns the invoice created automatically after a successful payment. Returns 404 if the payment has not been confirmed."
       },
       {
+        "path": "/api/materials",
+        "method": "get",
+        "description": "Retrieve a paginated list of materials, each carrying program/course/activity context for the Edit deep-link. Supports search, filter, and sort options."
+      },
+      {
         "path": "/api/materials/upload",
         "method": "post",
         "description": "Uploads learning material to S3 for a SelfPaced activity. Supported formats: PDF (≤50 MB), DOC/DOCX (≤50 MB), Video .mp4/.mov/.avi/.mkv (≤3 GB), Image .jpg/.jpeg/.png/.gif/.webp (≤10 MB). ActivityId is required."
@@ -447,6 +477,26 @@
         "description": "Retrieve a module enrollment. Students see their own; parents see linked students; admins see all."
       },
       {
+        "path": "/api/notifications",
+        "method": "get",
+        "description": "Returns a paginated inbox for the current user. Optionally filter to unread only."
+      },
+      {
+        "path": "/api/notifications/unread-count",
+        "method": "get",
+        "description": "Returns the number of unread notifications for the current user."
+      },
+      {
+        "path": "/api/notifications/{id}/read",
+        "method": "patch",
+        "description": "Marks a single notification as read. Only the recipient may do this."
+      },
+      {
+        "path": "/api/notifications/read-all",
+        "method": "patch",
+        "description": "Marks all unread notifications for the current user as read."
+      },
+      {
         "path": "/api/parent/request-link",
         "method": "post"
       },
@@ -507,6 +557,66 @@
         "description": "Called by the front-end when the user is redirected back to the cancelUrl. Marks the Payment as Cancelled and, if applicable, rolls back the parent's PaymentRequest to Pending so they can retry. Idempotent — safe to call multiple times."
       },
       {
+        "path": "/api/portfolios/me",
+        "method": "get",
+        "description": "Returns the authenticated student's root portfolio with all items."
+      },
+      {
+        "path": "/api/portfolios/me",
+        "method": "put",
+        "description": "Updates portfolio profile, theme, and links. Subdomain and publication state use dedicated endpoints."
+      },
+      {
+        "path": "/api/portfolios",
+        "method": "post",
+        "description": "Creates an unpublished portfolio without a subdomain. One portfolio per student."
+      },
+      {
+        "path": "/api/portfolios/subdomain-available",
+        "method": "get",
+        "description": "Live check while the student types a subdomain. Excludes the caller's current subdomain."
+      },
+      {
+        "path": "/api/portfolios/me/subdomain",
+        "method": "put",
+        "description": "Validates and claims a unique subdomain. Send null or blank to remove it while unpublished. Using for debounce checking on frontend"
+      },
+      {
+        "path": "/api/portfolios/me/publication",
+        "method": "put",
+        "description": "Sets the desired publication state idempotently. Publishing requires a valid unique subdomain."
+      },
+      {
+        "path": "/api/portfolios/me/items",
+        "method": "post",
+        "description": "Creates ExternalCert, Hobby, Extracurricular, or Project items."
+      },
+      {
+        "path": "/api/portfolios/me/items/{itemId}",
+        "method": "put",
+        "description": "Updates manual items fully. Auto-imported items can be hidden, reordered, and narrative-edited."
+      },
+      {
+        "path": "/api/portfolios/me/items/{itemId}",
+        "method": "delete",
+        "description": "Soft-deletes manual items only. Auto-imported items must be hidden instead."
+      },
+      {
+        "path": "/api/portfolios/me/items/reorder",
+        "method": "put",
+        "description": "Updates display order for the provided item ids."
+      },
+      {
+        "path": "/api/portfolios/me/sync",
+        "method": "post",
+        "description": "Idempotently imports certificates and graded capstone projects. Highlight reels are not imported."
+      },
+      {
+        "path": "/api/portfolios/by-subdomain/{subdomain}",
+        "method": "get",
+        "description": "Anonymous endpoint for the public portfolio page. Returns only visible items."
+      },
+      {
         "path": "/api/programs",
         "method": "get",
         "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options."
@@ -562,9 +672,14 @@
         "description": "Returns the active class cohort linked to this program enrollment. ClassId is null when the student has not joined a class yet. Students see their own; parents see linked students; admins see all."
       },
       {
+        "path": "/api/program-enrollments/{enrollmentId}/module-enrollments",
+        "method": "get",
+        "description": "Returns the latest module enrollment per module for the program enrollment. Use the returned Id as moduleEnrollmentId for module-scoped flows such as research milestone progress."
+      },
+      {
         "path": "/api/program-enrollments/{enrollmentId}/curriculum",
         "method": "get",
-        "description": "Returns the curriculum tree with per-student activity status, module locks, and current activity."
+        "description": "Returns the curriculum tree with per-student activity and assignment status, module locks, and current activity."
       },
       {
         "path": "/api/program-enrollments/{enrollmentId}/activities/{activityId}/checkpoint",
@@ -702,6 +817,11 @@
         "description": "Mentor, Manager, or SuperAdmin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window."
       },
       {
+        "path": "/api/research-submissions/start-for-class",
+        "method": "post",
+        "description": "Mentor, Manager, or SuperAdmin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped."
+      },
+      {
         "path": "/api/research-submissions/{submissionId}",
         "method": "get",
         "description": "Returns a research milestone submission. Access is enforced per role."
@@ -837,6 +957,33 @@
       },
       {
         "name": "BooleanResponseDataContent"
+      },
+      {
+        "name": "CertificateDetailDto"
+      },
+      {
+        "name": "CertificateDetailDtoApiResult"
+      },
+      {
+        "name": "CertificateDetailDtoResponseDataContent"
+      },
+      {
+        "name": "CertificateListItemDto"
+      },
+      {
+        "name": "CertificateListItemDtoListApiResult"
+      },
+      {
+        "name": "CertificateListItemDtoListResponseDataContent"
+      },
+      {
+        "name": "CertificateModuleDto"
+      },
+      {
+        "name": "CertificateProgramDto"
+      },
+      {
+        "name": "CertificateStudentDto"
       },
       {
         "name": "CheckoutRequestDto"
@@ -987,6 +1134,9 @@
       },
       {
         "name": "CreateModuleRequestDto"
+      },
+      {
+        "name": "CreatePortfolioItemRequestDto"
       },
       {
         "name": "CreateProgramRequestDto"
@@ -1172,6 +1322,18 @@
         "name": "MagicLoginDto"
       },
       {
+        "name": "MaterialListItemDto"
+      },
+      {
+        "name": "MaterialListItemDtoPagination"
+      },
+      {
+        "name": "MaterialListItemDtoPaginationApiResult"
+      },
+      {
+        "name": "MaterialListItemDtoPaginationResponseDataContent"
+      },
+      {
         "name": "MaterialResponseDto"
       },
       {
@@ -1205,6 +1367,12 @@
         "name": "ModuleEnrollmentResponseDtoApiResult"
       },
       {
+        "name": "ModuleEnrollmentResponseDtoListApiResult"
+      },
+      {
+        "name": "ModuleEnrollmentResponseDtoListResponseDataContent"
+      },
+      {
         "name": "ModuleEnrollmentResponseDtoResponseDataContent"
       },
       {
@@ -1229,6 +1397,27 @@
         "name": "ModulesResponseDtoResponseDataContent"
       },
       {
+        "name": "NotificationDto"
+      },
+      {
+        "name": "NotificationDtoPagination"
+      },
+      {
+        "name": "NotificationDtoPaginationApiResult"
+      },
+      {
+        "name": "NotificationDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "NotificationUnreadCountDto"
+      },
+      {
+        "name": "NotificationUnreadCountDtoApiResult"
+      },
+      {
+        "name": "NotificationUnreadCountDtoResponseDataContent"
+      },
+      {
         "name": "ObjectApiResult"
       },
       {
@@ -1251,6 +1440,30 @@
       },
       {
         "name": "PaymentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "PortfolioAppendixItemDto"
+      },
+      {
+        "name": "PortfolioCustomItemResponseDto"
+      },
+      {
+        "name": "PortfolioCustomItemResponseDtoApiResult"
+      },
+      {
+        "name": "PortfolioCustomItemResponseDtoResponseDataContent"
+      },
+      {
+        "name": "PortfolioLinkDto"
+      },
+      {
+        "name": "PortfolioResponseDto"
+      },
+      {
+        "name": "PortfolioResponseDtoApiResult"
+      },
+      {
+        "name": "PortfolioResponseDtoResponseDataContent"
       },
       {
         "name": "ProblemDetails"
@@ -1358,6 +1571,15 @@
         "name": "ProgramsResponseDtoResponseDataContent"
       },
       {
+        "name": "PublicPortfolioResponseDto"
+      },
+      {
+        "name": "PublicPortfolioResponseDtoApiResult"
+      },
+      {
+        "name": "PublicPortfolioResponseDtoResponseDataContent"
+      },
+      {
         "name": "QuestionBankResponseDto"
       },
       {
@@ -1392,6 +1614,12 @@
       },
       {
         "name": "QuizResultResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ReorderPortfolioItemEntryDto"
+      },
+      {
+        "name": "ReorderPortfolioItemsRequestDto"
       },
       {
         "name": "RequestLinkDto"
@@ -1502,6 +1730,21 @@
         "name": "SessionAttendanceResponseDtoResponseDataContent"
       },
       {
+        "name": "StartResearchSubmissionForClassRequestDto"
+      },
+      {
+        "name": "StartResearchSubmissionForClassResponseDto"
+      },
+      {
+        "name": "StartResearchSubmissionForClassResponseDtoApiResult"
+      },
+      {
+        "name": "StartResearchSubmissionForClassResponseDtoResponseDataContent"
+      },
+      {
+        "name": "StartResearchSubmissionForClassSkippedDto"
+      },
+      {
         "name": "StartResearchSubmissionRequestDto"
       },
       {
@@ -1526,6 +1769,15 @@
         "name": "StudentMilestoneProgressDtoResponseDataContent"
       },
       {
+        "name": "SubdomainAvailabilityResponseDto"
+      },
+      {
+        "name": "SubdomainAvailabilityResponseDtoApiResult"
+      },
+      {
+        "name": "SubdomainAvailabilityResponseDtoResponseDataContent"
+      },
+      {
         "name": "SubmitAssignmentRequestDto"
       },
       {
@@ -1533,6 +1785,9 @@
       },
       {
         "name": "SubmitRetrospectiveRequestDto"
+      },
+      {
+        "name": "ThemeConfigDto"
       },
       {
         "name": "TimeRangeDto"
@@ -1575,6 +1830,18 @@
       },
       {
         "name": "UpdateModuleRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioItemRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioPublicationRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioSubdomainRequestDto"
       },
       {
         "name": "UpdateProgramRequestDto"
