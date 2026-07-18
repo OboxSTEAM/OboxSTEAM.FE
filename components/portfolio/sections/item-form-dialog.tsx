@@ -37,9 +37,9 @@ import {
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   MANUAL_PORTFOLIO_ITEM_TYPES,
-  nullIfEmptyHtml,
   PORTFOLIO_ITEM_TYPE_LABELS,
 } from "@/lib/portfolio/constants";
+import { nullIfEmptyHtml } from "@/lib/portfolio/sanitize-html";
 import {
   LIGHT_SELECT_CONTENT_PANEL,
   LIGHT_SELECT_ITEM_PANEL,

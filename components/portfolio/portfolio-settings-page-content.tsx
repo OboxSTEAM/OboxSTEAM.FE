@@ -55,11 +55,11 @@ import {
   getPortfolioLayoutStyleId,
   getPortfolioTemplateId,
   normalizeSectionOrder,
-  nullIfEmptyHtml,
   PORTFOLIO_FONTS,
   PORTFOLIO_SECTION_KIND_LABELS,
   PORTFOLIO_SECTIONS,
 } from "@/lib/portfolio/constants";
+import { nullIfEmptyHtml, preferAlignedHtml } from "@/lib/portfolio/sanitize-html";
 
 const PANEL_TITLES: Record<PortfolioPanelId, string> = {
   design: "Thiết kế & Font",
@@ -422,7 +422,25 @@ export function PortfolioSettingsPageContent() {
               studentEditedBody: body,
             };
         const result = await updatePortfolioItem(item.id, patch);
-        updatedItems.push(result.data);
+        const saved = result.data;
+        updatedItems.push({
+          ...saved,
+          studentEditedBody: preferAlignedHtml(
+            body,
+            saved.studentEditedBody,
+          ),
+          ...(isAuto
+            ? {}
+            : {
+                title: preferAlignedHtml(item.title, saved.title) ?? saved.title,
+                subtitle:
+                  preferAlignedHtml(item.subtitle, saved.subtitle) ??
+                  saved.subtitle,
+                organization:
+                  preferAlignedHtml(item.organization, saved.organization) ??
+                  saved.organization,
+              }),
+        });
       }
 
       const updatedById = new Map(updatedItems.map((item) => [item.id, item]));
@@ -614,7 +632,18 @@ export function PortfolioSettingsPageContent() {
           settingsJson: patch.settingsJson,
           mediaAssets,
         });
-        const saved = result.data;
+        const saved = {
+          ...result.data,
+          contentHtml:
+            patch.contentHtml !== undefined
+              ? preferAlignedHtml(patch.contentHtml, result.data.contentHtml)
+              : result.data.contentHtml,
+          title:
+            patch.title !== undefined
+              ? (preferAlignedHtml(patch.title, result.data.title) ??
+                result.data.title)
+              : result.data.title,
+        };
         setBaseline((current) => {
           if (!current) return current;
           return {

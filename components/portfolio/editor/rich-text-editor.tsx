@@ -6,9 +6,6 @@ import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
 import Underline from "@tiptap/extension-underline";
-import TextAlign from "@tiptap/extension-text-align";
-import { TextStyle } from "@tiptap/extension-text-style";
-import { Color } from "@tiptap/extension-color";
 import {
   AlignCenter,
   AlignJustify,
@@ -23,14 +20,8 @@ import {
 } from "lucide-react";
 
 import { EditableFieldFrame } from "@/components/portfolio/editor/editable-frame";
-import { PortfolioColorPicker } from "@/components/portfolio/editor/portfolio-color-picker";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { normalizeHexColor } from "@/lib/portfolio/color-utils";
+import { PortfolioTextAlign } from "@/lib/portfolio/tiptap-text-align";
 import {
   isEmptyPortfolioHtml,
   sanitizePortfolioHtml,
@@ -46,11 +37,13 @@ type RichTextEditorProps = {
   /** Compact chrome for canvas inline editing. */
   variant?: "panel" | "inline";
   /**
-   * `compact` — titles / one-liners (marks + color + align, no lists).
+   * `compact` — titles / one-liners (marks + align, no lists).
    * `full` — detail body text (lists, link, headings marks).
    */
   mode?: "compact" | "full";
   isDark?: boolean;
+  /** Plain-text character cap (ignores HTML tags). */
+  maxLength?: number;
 };
 
 function ToolbarButton({
@@ -74,7 +67,7 @@ function ToolbarButton({
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       className={cn(
-        "size-8 rounded-md text-[#2D2D2D]",
+        "size-7 shrink-0 rounded-md text-[#2D2D2D]",
         active && "bg-[#2D2D2D]/12 text-[#2D2D2D]",
       )}
     >
@@ -84,49 +77,7 @@ function ToolbarButton({
 }
 
 function ToolbarDivider() {
-  return <span className="mx-0.5 h-5 w-px shrink-0 bg-[#E5E5E0]" aria-hidden />;
-}
-
-function ColorSwatchControl({ editor }: { editor: Editor }) {
-  const activeColor =
-    (editor.getAttributes("textStyle").color as string | undefined) ?? "";
-  const color = normalizeHexColor(activeColor, "#2D2D2D");
-
-  return (
-    <Popover>
-      <PopoverTrigger
-        render={
-          <button
-            type="button"
-            aria-label="Màu chữ"
-            onMouseDown={(event) => event.preventDefault()}
-            className="mx-0.5 flex size-7 items-center justify-center rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
-          />
-        }
-      >
-        <span
-          className="size-5 rounded-full border-2 border-white shadow-[0_0_0_1.5px_#4FC3F7]"
-          style={{ backgroundColor: color }}
-        />
-      </PopoverTrigger>
-      <PopoverContent
-        align="start"
-        side="bottom"
-        sideOffset={8}
-        className="w-[min(17.5rem,calc(100vw-2rem))] rounded-2xl border border-[#E5E5E0] bg-white p-3 shadow-lg"
-        onMouseDown={(event) => event.preventDefault()}
-      >
-        <PortfolioColorPicker
-          value={color}
-          onChange={(next) => {
-            editor.chain().setColor(next).run();
-          }}
-          label="Màu chữ"
-          compact
-        />
-      </PopoverContent>
-    </Popover>
-  );
+  return <span className="mx-0.5 h-4 w-px shrink-0 bg-[#E5E5E0]" aria-hidden />;
 }
 
 /** Floating toolbar anchored above the editor field (escapes overflow:hidden parents). */
@@ -139,9 +90,7 @@ function FloatingToolbar({
   anchorRef: React.RefObject<HTMLElement | null>;
   children: React.ReactNode;
 }) {
-  const [pos, setPos] = useState<{ top: number; left: number; width: number } | null>(
-    null,
-  );
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -153,7 +102,7 @@ function FloatingToolbar({
       const el = anchorRef.current;
       if (!el) return;
       const rect = el.getBoundingClientRect();
-      setPos({ top: rect.top, left: rect.left, width: Math.max(rect.width, 280) });
+      setPos({ top: rect.top, left: rect.left });
     };
 
     update();
@@ -170,11 +119,10 @@ function FloatingToolbar({
   return createPortal(
     <div
       data-portfolio-rte-toolbar
-      className="pointer-events-auto fixed z-[80]"
+      className="pointer-events-auto fixed z-[80] w-max max-w-[calc(100vw-1rem)]"
       style={{
         top: Math.max(8, pos.top - 8),
-        left: pos.left,
-        width: Math.min(pos.width, window.innerWidth - 16),
+        left: Math.min(pos.left, window.innerWidth - 16),
         transform: "translateY(-100%)",
       }}
       onMouseDown={(event) => event.preventDefault()}
@@ -202,9 +150,7 @@ function buildExtensions(mode: "compact" | "full", placeholder: string) {
       },
     }),
     Underline,
-    TextStyle,
-    Color,
-    TextAlign.configure({
+    PortfolioTextAlign.configure({
       types: isCompact ? ["paragraph"] : ["heading", "paragraph"],
     }),
     Placeholder.configure({ placeholder }),
@@ -230,29 +176,27 @@ function EditorToolbar({
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-0.5 rounded-lg border border-[#C9C9C2] bg-white p-1 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
-      <ColorSwatchControl editor={editor} />
-      <ToolbarDivider />
+    <div className="flex flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-[#C9C9C2] bg-white p-0.5 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
       <ToolbarButton
         label="Đậm"
         active={editor.isActive("bold")}
         onClick={() => editor.chain().focus().toggleBold().run()}
       >
-        <Bold className="size-[16px]" strokeWidth={2.5} />
+        <Bold className="size-[15px]" strokeWidth={2.5} />
       </ToolbarButton>
       <ToolbarButton
         label="Nghiêng"
         active={editor.isActive("italic")}
         onClick={() => editor.chain().focus().toggleItalic().run()}
       >
-        <Italic className="size-[16px]" />
+        <Italic className="size-[15px]" />
       </ToolbarButton>
       <ToolbarButton
         label="Gạch dưới"
         active={editor.isActive("underline")}
         onClick={() => editor.chain().focus().toggleUnderline().run()}
       >
-        <UnderlineIcon className="size-[16px]" />
+        <UnderlineIcon className="size-[15px]" />
       </ToolbarButton>
       {mode === "full" ? (
         <>
@@ -262,21 +206,21 @@ function EditorToolbar({
             active={editor.isActive("orderedList")}
             onClick={() => editor.chain().focus().toggleOrderedList().run()}
           >
-            <ListOrdered className="size-[16px]" />
+            <ListOrdered className="size-[15px]" />
           </ToolbarButton>
           <ToolbarButton
             label="Danh sách"
             active={editor.isActive("bulletList")}
             onClick={() => editor.chain().focus().toggleBulletList().run()}
           >
-            <List className="size-[16px]" />
+            <List className="size-[15px]" />
           </ToolbarButton>
           <ToolbarButton
             label="Liên kết"
             active={editor.isActive("link")}
             onClick={setLink}
           >
-            <Link2 className="size-[16px]" />
+            <Link2 className="size-[15px]" />
           </ToolbarButton>
         </>
       ) : null}
@@ -286,21 +230,21 @@ function EditorToolbar({
         active={editor.isActive({ textAlign: "left" })}
         onClick={() => editor.chain().focus().setTextAlign("left").run()}
       >
-        <AlignLeft className="size-[16px]" />
+        <AlignLeft className="size-[15px]" />
       </ToolbarButton>
       <ToolbarButton
         label="Căn giữa"
         active={editor.isActive({ textAlign: "center" })}
         onClick={() => editor.chain().focus().setTextAlign("center").run()}
       >
-        <AlignCenter className="size-[16px]" />
+        <AlignCenter className="size-[15px]" />
       </ToolbarButton>
       <ToolbarButton
         label="Căn phải"
         active={editor.isActive({ textAlign: "right" })}
         onClick={() => editor.chain().focus().setTextAlign("right").run()}
       >
-        <AlignRight className="size-[16px]" />
+        <AlignRight className="size-[15px]" />
       </ToolbarButton>
       {mode === "full" ? (
         <ToolbarButton
@@ -308,7 +252,7 @@ function EditorToolbar({
           active={editor.isActive({ textAlign: "justify" })}
           onClick={() => editor.chain().focus().setTextAlign("justify").run()}
         >
-          <AlignJustify className="size-[16px]" />
+          <AlignJustify className="size-[15px]" />
         </ToolbarButton>
       ) : null}
     </div>
@@ -322,6 +266,15 @@ function toEditorContent(value: string): string {
   return `<p>${cleaned}</p>`;
 }
 
+function emitHtml(html: string): string {
+  const cleaned = sanitizePortfolioHtml(html);
+  return isEmptyPortfolioHtml(cleaned) ? "" : cleaned;
+}
+
+function plainTextLength(editor: Editor): number {
+  return editor.state.doc.textContent.length;
+}
+
 export function RichTextEditor({
   value,
   onChange,
@@ -331,9 +284,12 @@ export function RichTextEditor({
   variant = "panel",
   mode = "full",
   isDark = false,
+  maxLength,
 }: RichTextEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
+  const maxLengthRef = useRef(maxLength);
+  maxLengthRef.current = maxLength;
   const isCompact = mode === "compact";
 
   const editor = useEditor({
@@ -343,15 +299,15 @@ export function RichTextEditor({
       attributes: {
         "aria-label": ariaLabel,
         class: cn(
-          "outline-none",
+          "outline-none break-words [overflow-wrap:anywhere]",
           "[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5",
           "[&_p]:m-0",
           "[&_.is-editor-empty:first-child::before]:text-[#5C5C5C] [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
           isCompact
-            ? "min-h-[1.5em] px-1.5 py-0.5 leading-inherit text-inherit [font:inherit]"
+            ? "min-h-[1.25em] max-w-full px-1.5 py-0.5 leading-inherit text-inherit [font:inherit]"
             : variant === "inline"
-              ? "min-h-[6.5rem] px-3 py-2.5 text-base leading-relaxed text-inherit [font:inherit]"
-              : "min-h-[6.5rem] rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
+              ? "min-h-[3.75rem] max-w-full px-2 py-1.5 text-base leading-relaxed text-inherit [font:inherit]"
+              : "min-h-[4.5rem] rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
         ),
       },
       handleKeyDown: (_view, event) => {
@@ -361,10 +317,41 @@ export function RichTextEditor({
         }
         return false;
       },
+      handleTextInput: (view, from, to, text) => {
+        const limit = maxLengthRef.current;
+        if (limit == null || !text) return false;
+        const selected = view.state.doc.textBetween(from, to, "").length;
+        const nextLen =
+          view.state.doc.textContent.length - selected + text.length;
+        return nextLen > limit;
+      },
+      handlePaste: (view, event) => {
+        const limit = maxLengthRef.current;
+        if (limit == null) return false;
+        const pasted = event.clipboardData?.getData("text/plain") ?? "";
+        if (!pasted) return false;
+        const { from, to } = view.state.selection;
+        const selected = view.state.doc.textBetween(from, to, "").length;
+        const room = limit - (view.state.doc.textContent.length - selected);
+        if (room <= 0) {
+          event.preventDefault();
+          return true;
+        }
+        if (pasted.length > room) {
+          event.preventDefault();
+          const slice = pasted.slice(0, room);
+          view.dispatch(view.state.tr.insertText(slice));
+          return true;
+        }
+        return false;
+      },
     },
     onUpdate: ({ editor: current }) => {
-      const html = current.getHTML();
-      onChange(isEmptyPortfolioHtml(html) ? "" : html);
+      const limit = maxLengthRef.current;
+      if (limit != null && plainTextLength(current) > limit) {
+        return;
+      }
+      onChange(emitHtml(current.getHTML()));
     },
     immediatelyRender: false,
   });
@@ -383,11 +370,11 @@ export function RichTextEditor({
 
   useEffect(() => {
     if (!editor) return;
-    const current = editor.getHTML();
-    const next = toEditorContent(value);
+    const current = emitHtml(editor.getHTML());
+    const next = emitHtml(toEditorContent(value));
     if (isEmptyPortfolioHtml(current) && isEmptyPortfolioHtml(next)) return;
     if (current !== next) {
-      editor.commands.setContent(next, { emitUpdate: false });
+      editor.commands.setContent(toEditorContent(value), { emitUpdate: false });
     }
   }, [editor, value]);
 
@@ -397,19 +384,26 @@ export function RichTextEditor({
 
   if (variant === "inline") {
     return (
-      <div ref={fieldRef} data-portfolio-rte className={cn("relative", className)}>
+      <div
+        ref={fieldRef}
+        data-portfolio-rte
+        className={cn("relative min-w-0 max-w-full", className)}
+      >
         <FloatingToolbar open={isFocused} anchorRef={fieldRef}>
           {toolbar}
         </FloatingToolbar>
-        <EditableFieldFrame isDark={isDark}>
-          <EditorContent editor={editor} />
+        <EditableFieldFrame isDark={isDark} className="min-w-0 max-w-full">
+          <EditorContent editor={editor} className="min-w-0 max-w-full" />
         </EditableFieldFrame>
       </div>
     );
   }
 
   return (
-    <div data-portfolio-rte className={cn("space-y-1.5", className)}>
+    <div
+      data-portfolio-rte
+      className={cn("min-w-0 space-y-1.5", className)}
+    >
       {toolbar}
       <EditorContent editor={editor} />
     </div>

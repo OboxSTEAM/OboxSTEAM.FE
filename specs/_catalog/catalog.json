@@ -207,6 +207,11 @@
         "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires SuperAdmin or Manager role."
       },
       {
+        "path": "/api/classes/{id}",
+        "method": "delete",
+        "description": "Soft-deletes a Draft or Open class cohort and its sessions. Open classes may only be deleted when they have no active students. Requires Manager role."
+      },
+      {
         "path": "/api/classes/{id}/open",
         "method": "post",
         "description": "Transitions a class from Draft to Open. Requires SuperAdmin or Manager role."
@@ -235,6 +240,11 @@
         "path": "/api/class-enrollments/{id}",
         "method": "get",
         "description": "Retrieve a class enrollment. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/class-enrollments/manager-transfer/{id}",
+        "method": "put",
+        "description": "Marks the student's current active class enrollment as Transferred and creates a new Active enrollment in another Open cohort within the same program. Target class must be Open (not yet started). Requires Manager role."
       },
       {
         "path": "/api/class-enrollments/program-enrollment/{programEnrollmentId}",
@@ -1429,6 +1439,9 @@
       },
       {
         "name": "MagicLoginDto"
+      },
+      {
+        "name": "ManagerTransferClassRequestDto"
       },
       {
         "name": "MaterialListItemDto"

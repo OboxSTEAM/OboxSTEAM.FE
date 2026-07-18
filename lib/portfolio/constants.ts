@@ -227,16 +227,3 @@ export function normalizeSectionOrder(
   );
   return [...fromTheme, ...missing];
 }
-
-/** Empty rich-text HTML → null for API save. */
-export function nullIfEmptyHtml(html: string | null | undefined): string | null {
-  if (html == null) return null;
-  const trimmed = html.trim();
-  if (!trimmed) return null;
-  const textOnly = trimmed
-    .replace(/<br\s*\/?>/gi, "")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/<[^>]+>/g, "")
-    .trim();
-  return textOnly ? trimmed : null;
-}

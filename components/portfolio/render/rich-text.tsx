@@ -15,7 +15,7 @@ export function RichText({ html, className, as: Tag = "div" }: RichTextProps) {
   return (
     <Tag
       className={cn(
-        "portfolio-rich-text prose prose-sm max-w-none text-inherit",
+        "portfolio-rich-text prose prose-sm max-w-none min-w-0 break-words text-inherit [overflow-wrap:anywhere]",
         "prose-p:my-2 prose-headings:font-heading prose-a:text-[#0f7cad]",
         className,
       )}

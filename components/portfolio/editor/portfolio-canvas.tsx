@@ -135,6 +135,7 @@ function CompactRichField({
   placeholder,
   isDark,
   className,
+  maxLength = 200,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -142,6 +143,7 @@ function CompactRichField({
   placeholder?: string;
   isDark?: boolean;
   className?: string;
+  maxLength?: number;
 }) {
   return (
     <RichTextEditor
@@ -152,7 +154,8 @@ function CompactRichField({
       onChange={onChange}
       ariaLabel={ariaLabel}
       placeholder={placeholder}
-      className={className}
+      maxLength={maxLength}
+      className={cn("min-w-0 max-w-full", className)}
     />
   );
 }
@@ -183,7 +186,8 @@ function EditableSectionTitle({
         ariaLabel="Tiêu đề phần"
         placeholder={placeholder}
         isDark
-        className="min-w-[8rem] text-base font-bold tracking-tight text-white [&_*]:text-white"
+        maxLength={200}
+        className="min-w-0 max-w-full text-base font-bold tracking-tight text-white [&_*]:text-white"
       />
     </div>
   );
@@ -526,6 +530,7 @@ function ItemCardEditable({
               ariaLabel="Tiêu đề mục"
               placeholder="Tiêu đề mục…"
               isDark={resolved.isDark}
+              maxLength={200}
             />
           )}
         </div>
@@ -542,15 +547,16 @@ function ItemCardEditable({
             </p>
           ) : null
         ) : (
-          <div className="mt-1 flex flex-col gap-1 text-sm sm:flex-row sm:gap-2">
+          <div className="mt-1 flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:gap-2">
             <CompactRichField
               value={item.subtitle ?? ""}
               onChange={(next) => onPatchItemText(item.id, { subtitle: next })}
               ariaLabel="Phụ đề"
               placeholder="Phụ đề…"
               isDark={resolved.isDark}
+              maxLength={200}
               className={cn(
-                "sm:flex-1",
+                "min-w-0 sm:flex-1",
                 resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
               )}
             />
@@ -562,8 +568,9 @@ function ItemCardEditable({
               ariaLabel="Tổ chức"
               placeholder="Tổ chức…"
               isDark={resolved.isDark}
+              maxLength={200}
               className={cn(
-                "sm:flex-1",
+                "min-w-0 sm:flex-1",
                 resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
               )}
             />

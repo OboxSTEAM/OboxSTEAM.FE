@@ -298,7 +298,7 @@ export function PortfolioCardShell({
   const body = (
     <div
       className={cn(
-        "relative z-[1] h-full rounded-2xl p-4 sm:p-5",
+        "relative z-[1] h-full min-w-0 overflow-hidden rounded-2xl p-4 sm:p-5",
         surfaceClass,
         slotChrome.className,
         className,

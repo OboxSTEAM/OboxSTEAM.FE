@@ -21,7 +21,7 @@ export function EditableSection({
   return (
     <div
       className={cn(
-        "group/editable relative rounded-xl border border-dashed p-3 transition-colors duration-150 sm:p-4",
+        "group/editable relative min-w-0 overflow-hidden rounded-xl border border-dashed p-3 transition-colors duration-150 sm:p-4",
         isDark
           ? [
               "border-[#FAFAF5]/28",
