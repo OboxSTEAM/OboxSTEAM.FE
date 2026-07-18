@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Plus,
@@ -24,6 +24,7 @@ import {
   Save,
   FolderPlus,
   ChevronRight,
+  ChevronDown,
   AlertTriangle,
   type LucideIcon,
 } from "lucide-react";
@@ -31,6 +32,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Select,
   SelectTrigger,
@@ -142,6 +148,43 @@ type SelectedNode =
 /* ─── Micro helpers ─────────────────────────────────────────────────────────── */
 function STitle({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: W.faint }}>{children}</p>;
+}
+
+function AdvancedSection({
+  open,
+  onOpenChange,
+  summary,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  summary: string;
+  children: ReactNode;
+}) {
+  return (
+    <Collapsible open={open} onOpenChange={onOpenChange}>
+      <div className="rounded-xl border bg-white" style={{ borderColor: W.border }}>
+        <CollapsibleTrigger className="group flex min-h-12 w-full items-center justify-between gap-4 px-4 py-3 text-left">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: W.textStrong }}>
+              Thiết lập nâng cao
+            </p>
+            <p className="mt-1 text-xs" style={{ color: W.muted }}>{summary}</p>
+          </div>
+          <ChevronDown
+            className={cn(
+              "size-4 shrink-0 transition-transform duration-200",
+              open && "rotate-180",
+            )}
+            style={{ color: W.faint }}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent className="border-t px-4 py-4" style={{ borderColor: W.border }}>
+          {children}
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
+  );
 }
 function FErr({ msg }: { msg?: string }) {
   return msg ? <p className="text-xs font-semibold mt-1" style={{ color: W.primary }}>{msg}</p> : null;
@@ -354,11 +397,13 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 }) {
   const isEdit = !!moduleToEdit;
   const [busy, setBusy] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
-  const { register, handleSubmit, control, reset, getValues, formState: { errors } } = useForm<MFV>({
+  const { register, handleSubmit, control, getValues, formState: { errors } } = useForm<MFV>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(isEdit ? updateModuleSchema : createModuleSchema) as any,
+    shouldUnregister: false,
     values: moduleToEdit ? {
       code: moduleToEdit.code || "",
       programId: moduleToEdit.programId,
@@ -373,7 +418,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
       learningOutcomesText: (moduleToEdit as any).learningOutcomes?.join("\n") || "",
     } : {
       code: "", programId, name: "", moduleType: "Theory" as const,
-      moduleOrder: (modulesInProgram.length || 0) + 1,
+      moduleOrder: modulesInProgram.reduce((max, module) => Math.max(max, module.moduleOrder), 0) + 1,
       prerequisiteModuleId: null, isMandatory: true, price: 0, retakeFee: 0, learningOutcomesText: "",
     },
   });
@@ -408,7 +453,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   const others = modulesInProgram.filter((m) => !isEdit || m.id !== moduleToEdit?.id);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col h-full overflow-hidden">
       <PHdr icon={FolderOpen} color={W.success}
         title={isEdit ? `Chỉnh sửa: ${moduleToEdit!.name}` : "Tạo Module mới"}
         sub="Học phần trong chương trình học" />
@@ -421,20 +466,30 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
               <FErr msg={errors.name?.message} />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Module</Label>
-              <input type="text" placeholder="MOD-001" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-            </div>
-            <div className="space-y-1.5">
+            <div className="col-span-2 space-y-1.5 sm:col-span-1">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
               <input type="number" {...register("moduleOrder", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
               <FErr msg={errors.moduleOrder?.message} />
+              <p className="text-[11px]" style={{ color: W.faint }}>
+                Đã tự điền vị trí cuối. Chỉ đổi khi cần sắp xếp lại.
+              </p>
             </div>
           </div>
         </div>
-        <div>
-          <STitle>Cấu hình học tập</STitle>
-          <div className="grid grid-cols-2 gap-4">
+        <AdvancedSection
+          open={advancedOpen}
+          onOpenChange={setAdvancedOpen}
+          summary="Mã, loại module, tiên quyết, kiến thức và học phí"
+        >
+          <div className="space-y-6">
+            <div>
+              <STitle>Cấu hình học tập</STitle>
+              <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Module</Label>
+              <input type="text" placeholder="Để trống nếu không cần mã riêng" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
+              <p className="text-[11px]" style={{ color: W.faint }}>Trường này không bắt buộc.</p>
+            </div>
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
@@ -489,11 +544,11 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
               <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
             </div>
-          </div>
-        </div>
-        <div>
-          <STitle>Học phí</STitle>
-          <div className="grid grid-cols-2 gap-4">
+              </div>
+            </div>
+            <div>
+              <STitle>Học phí</STitle>
+              <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Học phí (VND) <span style={{ color: W.primary }}>*</span></Label>
               <input type="number" placeholder="0" {...register("price", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
@@ -504,8 +559,10 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <input type="number" placeholder="0" {...register("retakeFee", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
               <FErr msg={errors.retakeFee?.message} />
             </div>
+              </div>
+            </div>
           </div>
-        </div>
+        </AdvancedSection>
       </div>
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Module"} />
@@ -522,10 +579,12 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
 }) {
   const isEdit = !!courseToEdit;
   const [busy, setBusy] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateCourseSchema : createCourseSchema),
+    shouldUnregister: false,
     values: courseToEdit
       ? { code: courseToEdit.code || "", moduleId: courseToEdit.moduleId, name: courseToEdit.name, description: courseToEdit.description || "" }
       : { code: "", moduleId, name: "", description: "" },
@@ -559,13 +618,21 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
           <FErr msg={errors.name?.message} />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học</Label>
-          <input type="text" placeholder="CRS-001" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-        </div>
-        <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
           <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
         </div>
+
+        <AdvancedSection
+          open={advancedOpen}
+          onOpenChange={setAdvancedOpen}
+          summary="Mã nội bộ của khóa học"
+        >
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học</Label>
+            <input type="text" placeholder="Để trống nếu không cần mã riêng" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
+            <p className="text-[11px]" style={{ color: W.faint }}>Trường này không bắt buộc.</p>
+          </div>
+        </AdvancedSection>
 
         {isEdit && courseToEdit ? (
           <QuestionBankSection courseId={courseToEdit.id} />
@@ -597,6 +664,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 }) {
   const isEdit = !!activityToEdit;
   const [busy, setBusy] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
   const nextOrder = useMemo(() => {
@@ -604,8 +672,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     return max + 1;
   }, [activitiesInCourse]);
 
-  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateActivitySchema : createActivitySchema),
+    shouldUnregister: false,
     values: activityToEdit ? {
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
       activityType: activityToEdit.activityType, description: activityToEdit.description || "",
@@ -621,7 +690,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     },
   });
 
-  const actType = watch("activityType");
+  const actType = useWatch({ control, name: "activityType" });
   const activityId = activityToEdit?.id;
   const [existingMaterial, setExistingMaterial] = useState<ActivityMaterial | null>(
     activityToEdit?.material ?? null,
@@ -691,19 +760,15 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col h-full overflow-hidden">
       <PHdr icon={ActivityIcon} color="#9c27b0" title={isEdit ? `Chỉnh sửa: ${activityToEdit!.name}` : "Tạo Hoạt động mới"} sub="Hoạt động học tập trong khóa học" />
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         <STitle>Thông tin hoạt động</STitle>
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2 md:col-span-1 space-y-1.5">
+          <div className="col-span-2 space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Hoạt động <span style={{ color: W.primary }}>*</span></Label>
             <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
-          </div>
-          <div className="col-span-2 md:col-span-1 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động</Label>
-            <input type="text" placeholder="ACT-001" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
           </div>
           <div className="flex flex-col space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Hoạt động <span style={{ color: W.primary }}>*</span></Label>
@@ -772,15 +837,42 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kết thúc <span style={{ color: W.primary }}>*</span></Label>
                 <input type="datetime-local" {...register("endTime")} className={IN} style={{ borderColor: W.border }} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Sức chứa tối đa</Label>
-                <input type="number" placeholder="Không giới hạn" {...register("maxCapacity")} className={IN} style={{ borderColor: W.border }} />
-              </div>
             </>
           )}
 
-          <div className="col-span-2 grid grid-cols-2 gap-4 pt-1">
-            <div className="flex items-center gap-2">
+          <div className="col-span-2 space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
+            <textarea rows={3} placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+          </div>
+        </div>
+
+        <AdvancedSection
+          open={advancedOpen}
+          onOpenChange={setAdvancedOpen}
+          summary="Mã, sức chứa, check-in QR và minh chứng"
+        >
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động</Label>
+              <input type="text" placeholder="Để trống nếu không cần mã riêng" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
+              <p className="text-[11px]" style={{ color: W.faint }}>Trường này không bắt buộc.</p>
+            </div>
+            {actType !== "SelfPaced" ? (
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Sức chứa tối đa</Label>
+                <input
+                  type="number"
+                  placeholder="Không giới hạn"
+                  {...register("maxCapacity", {
+                    setValueAs: (value) => value === "" ? null : Number(value),
+                  })}
+                  className={IN}
+                  style={{ borderColor: errors.maxCapacity ? W.primary : W.border }}
+                />
+                <FErr msg={errors.maxCapacity?.message} />
+              </div>
+            ) : null}
+            <div className="flex min-h-10 items-center gap-2">
               <Controller name="requireQrCheckin" control={control} render={({ field }) => (
                 <Checkbox
                   id="qr"
@@ -789,9 +881,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   className="border-[#8c8678] bg-white data-checked:border-primary"
                 />
               )} />
-              <Label htmlFor="qr" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
+              <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex min-h-10 items-center gap-2">
               <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
                 <Checkbox
                   id="med"
@@ -800,15 +892,10 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   className="border-[#8c8678] bg-white data-checked:border-primary"
                 />
               )} />
-              <Label htmlFor="med" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
+              <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
             </div>
           </div>
-
-          <div className="col-span-2 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
-            <textarea rows={3} placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
-          </div>
-        </div>
+        </AdvancedSection>
 
         {actType === "SelfPaced" ? (
           <div className="border-t pt-5" style={{ borderColor: W.border }}>

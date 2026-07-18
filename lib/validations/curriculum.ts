@@ -18,7 +18,10 @@ export const activityIdParamSchema = z.object({
 });
 
 export const createModuleSchema = z.object({
-  code: z.string().min(1, "Mã module là bắt buộc.").nullable().optional(),
+  code: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.string().min(1, "Mã module không hợp lệ.").nullable(),
+  ),
   programId: z.string().uuid("ID chương trình không hợp lệ."),
   name: z.string().min(1, "Tên module là bắt buộc."),
   moduleType: moduleTypeSchema,
@@ -52,7 +55,10 @@ export const updateCourseSchema = createCourseSchema.partial().extend({
 });
 
 export const createActivitySchema = z.object({
-  code: z.string().min(1, "Mã hoạt động là bắt buộc.").nullable().optional(),
+  code: z.preprocess(
+    (val) => (val === "" || val === undefined ? null : val),
+    z.string().min(1, "Mã hoạt động không hợp lệ.").nullable(),
+  ),
   courseId: z.string().uuid("ID khóa học không hợp lệ."),
   name: z.string().min(1, "Tên hoạt động là bắt buộc."),
   activityType: activityTypeSchema,

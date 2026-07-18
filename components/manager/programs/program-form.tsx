@@ -1,6 +1,7 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
+import { useState } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
@@ -9,9 +10,15 @@ import {
   Upload,
   Trash2,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 
 import {
   Select,
@@ -91,14 +98,17 @@ export function ProgramForm({
   onSubmit,
   isLoading = false,
 }: ProgramFormProps) {
+  const isEdit = Boolean(initialValues?.name);
+  const [isImageOpen, setIsImageOpen] = useState(!isEdit);
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(!isEdit);
   const {
     register,
     handleSubmit,
     control,
-    watch,
     formState: { errors },
   } = useForm<ProgramFormValues>({
     resolver: zodResolver(programUpsertSchema),
+    shouldUnregister: false,
     defaultValues: {
       code:              initialValues?.code              ?? "",
       name:              initialValues?.name              ?? "",
@@ -114,22 +124,51 @@ export function ProgramForm({
     },
   });
 
-  const w = watch();
-  const thumbUrl  = w.thumbnailUrl ?? "";
-  const catColor  = CATEGORIES.find((c) => c.value === w.category)?.color ?? "#4FC3F7";
-
-  const onFormSubmit = handleSubmit(async (data) => {
-    await onSubmit(data);
+  const [thumbUrl = "", category] = useWatch({
+    control,
+    name: ["thumbnailUrl", "category"],
   });
+  const catColor = CATEGORIES.find((item) => item.value === category)?.color ?? "#4FC3F7";
+
+  const onFormSubmit = handleSubmit(
+    async (data) => {
+      await onSubmit(data);
+    },
+    (validationErrors) => {
+      if (validationErrors.thumbnailUrl) setIsImageOpen(true);
+      if (validationErrors.price || validationErrors.skillsGained) {
+        setIsAdvancedOpen(true);
+      }
+    },
+  );
 
   return (
     <form onSubmit={onFormSubmit} className="flex flex-col gap-6">
 
       {/* ── Top: Image panel (Hero Banner) ─────────────────────────── */}
-      <div className="rounded-2xl border border-[#E8E8E3] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
-        <p className="mb-4 text-sm font-bold text-[#1A1A1A] uppercase tracking-wider">Ảnh chương trình</p>
-        
-        <div className="flex flex-col md:flex-row gap-5 items-start">
+      <Collapsible open={isImageOpen} onOpenChange={setIsImageOpen}>
+        <div className="rounded-2xl border border-[#E8E8E3] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+          <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-4 text-left">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">
+                Ảnh chương trình
+              </p>
+              {!isImageOpen ? (
+                <p className="mt-1 text-xs text-[#8C8C8A]">
+                  {thumbUrl ? "Đã có ảnh đại diện" : "Chưa có ảnh đại diện"}
+                </p>
+              ) : null}
+            </div>
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-[#6B6B6B] transition-transform duration-200",
+                isImageOpen && "rotate-180",
+              )}
+            />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="pt-4">
+            <div className="flex flex-col md:flex-row gap-5 items-start">
           {/* Thumbnail preview - Wide banner aspect ratio */}
           <div
             className="relative w-full md:w-2/3 overflow-hidden rounded-xl border border-[#E0E0DA] bg-[#FAFAF9]"
@@ -194,17 +233,19 @@ export function ProgramForm({
             </p>
 
             {/* STEAM category accent strip */}
-            {w.category && (
+            {category && (
               <div className="flex items-center gap-2 rounded-lg bg-[#FAFAF9] px-3 py-2 border border-[#E8E8E3] w-fit">
                 <span className="size-2 rounded-full shrink-0" style={{ background: catColor }} />
                 <span className="text-xs font-semibold text-[#555]">
-                  {CATEGORIES.find((c) => c.value === w.category)?.label ?? w.category}
+                  {CATEGORIES.find((item) => item.value === category)?.label ?? category}
                 </span>
               </div>
             )}
           </div>
+            </div>
+          </CollapsibleContent>
         </div>
-      </div>
+      </Collapsible>
 
       {/* ── Bottom: Combined form box with dividers ───────────────── */}
       <div className="rounded-2xl border border-[#E8E8E3] bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)] space-y-6">
@@ -446,60 +487,79 @@ export function ProgramForm({
 
         <hr className="border-[#F0F0EC]" />
 
-        {/* Section 3: Pricing */}
-        <div>
-          <FormSectionTitle>Học phí</FormSectionTitle>
-          <div className="grid grid-cols-2 gap-4">
+        <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
+          <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-4 text-left">
             <div>
-              <label className={LBL}>
-                Học phí (VND) <span className="text-[#E94B3C]">*</span>
-              </label>
-              <div className="relative">
-                <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-[#8C8C8A]">₫</span>
-                <Input
-                  id="price"
-                  type="number"
-                  placeholder="0"
-                  {...register("price", { valueAsNumber: true })}
-                  aria-invalid={!!errors.price}
-                  className={cn(INPUT_CLS, "pl-7 font-mono", errors.price && "border-[#E94B3C]")}
-                />
-              </div>
-              <FieldError message={errors.price?.message} />
-            </div>
-            <div className="flex items-end pb-1.5">
-              <p className="text-xs text-[#8C8C8A] leading-relaxed">
-                Học phí nhập bằng VND. Không cần thêm ký hiệu đơn vị tiền tệ.
+              <p className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">
+                Thiết lập bổ sung
+              </p>
+              <p className="mt-1 text-xs font-normal normal-case tracking-normal text-[#8C8C8A]">
+                Học phí và kỹ năng đạt được
               </p>
             </div>
-          </div>
-        </div>
-
-        <hr className="border-[#F0F0EC]" />
-
-        {/* Section 4: Skills */}
-        <div>
-          <FormSectionTitle>Kỹ năng đạt được</FormSectionTitle>
-          <div>
-            <label className={LBL}>
-              Kỹ năng đạt được <span className="text-[#E94B3C]">*</span>
-            </label>
-            <textarea
-              id="skillsGained"
-              rows={3}
-              placeholder="Liệt kê các kỹ năng học viên đạt được sau khoá học (mỗi kỹ năng một dòng hoặc phân cách bằng dấu phẩy)..."
-              {...register("skillsGained")}
-              aria-invalid={!!errors.skillsGained}
-              className={cn(TEXTAREA_CLS, errors.skillsGained && "border-[#E94B3C]")}
+            <ChevronDown
+              className={cn(
+                "size-4 shrink-0 text-[#6B6B6B] transition-transform duration-200",
+                isAdvancedOpen && "rotate-180",
+              )}
             />
-            <FieldError message={errors.skillsGained?.message} />
-          </div>
-        </div>
+          </CollapsibleTrigger>
+
+          <CollapsibleContent className="space-y-6 pt-5">
+            <div>
+              <FormSectionTitle>Học phí</FormSectionTitle>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className={LBL}>
+                    Học phí (VND) <span className="text-[#E94B3C]">*</span>
+                  </label>
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-[#8C8C8A]">₫</span>
+                    <Input
+                      id="price"
+                      type="number"
+                      placeholder="0"
+                      {...register("price", { valueAsNumber: true })}
+                      aria-invalid={!!errors.price}
+                      className={cn(INPUT_CLS, "pl-7 font-mono", errors.price && "border-[#E94B3C]")}
+                    />
+                  </div>
+                  <FieldError message={errors.price?.message} />
+                </div>
+                <div className="flex items-end pb-1.5">
+                  <p className="text-xs leading-relaxed text-[#8C8C8A]">
+                    Học phí nhập bằng VND. Không cần thêm ký hiệu đơn vị tiền tệ.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <hr className="border-[#F0F0EC]" />
+
+            <div>
+              <FormSectionTitle>Kỹ năng đạt được</FormSectionTitle>
+              <div>
+                <label className={LBL}>
+                  Kỹ năng đạt được <span className="text-[#E94B3C]">*</span>
+                </label>
+                <textarea
+                  id="skillsGained"
+                  rows={3}
+                  placeholder="Liệt kê các kỹ năng học viên đạt được sau khoá học (mỗi kỹ năng một dòng hoặc phân cách bằng dấu phẩy)..."
+                  {...register("skillsGained")}
+                  aria-invalid={!!errors.skillsGained}
+                  className={cn(TEXTAREA_CLS, errors.skillsGained && "border-[#E94B3C]")}
+                />
+                <FieldError message={errors.skillsGained?.message} />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
 
       </div>
 
       {/* Hidden submit – triggered by outer action bar */}
-      <button type="submit" id="__program-form-submit" className="hidden" aria-hidden />
+      <button type="submit" id="__program-form-submit" className="hidden" aria-hidden disabled={isLoading} />
     </form>
   );
 }
