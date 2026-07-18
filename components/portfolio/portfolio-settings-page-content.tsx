@@ -149,7 +149,16 @@ function normalizeThemeForSave(theme: PortfolioTheme): PortfolioTheme {
     primaryColor: theme.primaryColor || "#E94B3C",
     secondaryColor: theme.secondaryColor || "#4FC3F7",
     fontFamily: theme.fontFamily || PORTFOLIO_FONTS[0].id,
+    headingFontFamily: theme.headingFontFamily,
+    fontScale: theme.fontScale,
+    lineHeight: theme.lineHeight,
+    density: theme.density,
+    accentColor: theme.accentColor,
+    backgroundStyle: theme.backgroundStyle,
+    backgroundImageUrl: theme.backgroundImageUrl,
+    cardStyle: theme.cardStyle,
     layoutStyle: getPortfolioLayoutStyleId(theme.layoutStyle),
+    settingsJson: theme.settingsJson,
     sectionOrder: normalizeSectionOrder(theme.sectionOrder),
   };
 }

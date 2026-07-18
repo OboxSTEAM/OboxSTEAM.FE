@@ -8442,6 +8442,166 @@
         }
       }
     },
+    "/api/materials": {
+      "get": {
+        "tags": [
+          "Material"
+        ],
+        "summary": "Get all materials",
+        "description": "Retrieve a paginated list of materials, each carrying program/course/activity context for the Edit deep-link. Supports search, filter, and sort options.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search by material title, activity, course, or program name (optional)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Sort by field: title, materialType, uploadedAt, activityName, courseName, programName (optional)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "description": "Sort in descending order? Default: false",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Number of items per page",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "materialType",
+            "in": "query",
+            "description": "Filter by material type (optional)",
+            "schema": {
+              "enum": [
+                "PDF",
+                "DOC",
+                "Video",
+                "Image",
+                "ExternalLink"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "description": "Filter by program (optional)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "courseId",
+            "in": "query",
+            "description": "Filter by course (optional)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "activityId",
+            "in": "query",
+            "description": "Filter by activity (optional)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialListItemDtoPaginationApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialListItemDtoPaginationApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MaterialListItemDtoPaginationApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/materials/upload": {
       "post": {
         "tags": [
@@ -11218,7 +11378,7 @@
           "Portfolio"
         ],
         "summary": "Get my portfolio",
-        "description": "Returns the authenticated student's root portfolio with all items.",
+        "description": "Returns the authenticated student's editable draft portfolio with all items and sections.",
         "responses": {
           "200": {
             "description": "OK",
@@ -11307,7 +11467,7 @@
           "Portfolio"
         ],
         "summary": "Update my portfolio",
-        "description": "Updates portfolio profile, theme, and links. Subdomain and publication state use dedicated endpoints.",
+        "description": "Updates portfolio profile, theme, avatar, cover image, and links. Subdomain and publication state use dedicated endpoints.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -11629,7 +11789,7 @@
           "Portfolio"
         ],
         "summary": "Claim or change my portfolio subdomain",
-        "description": "Validates and claims a unique subdomain. Send null or blank to remove it while unpublished. Using for debounce checking on frontend",
+        "description": "Validates and claims a unique subdomain. Send null or blank to remove it while unpublished.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -11779,7 +11939,7 @@
           "Portfolio"
         ],
         "summary": "Publish or unpublish my portfolio",
-        "description": "Sets the desired publication state idempotently. Publishing requires a valid unique subdomain.",
+        "description": "On publish, snapshots the draft for public serving. On unpublish, removes public availability while retaining the last snapshot.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -11902,6 +12062,343 @@
           },
           "409": {
             "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolios/me/media": {
+      "post": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Upload portfolio media",
+        "description": "Uploads a portfolio-scoped image (jpg/jpeg/png, max 5 MB) to blob storage.",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "List my portfolio media",
+        "description": "Returns media assets uploaded to the caller's portfolio.",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoListApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolios/me/media/{mediaId}": {
+      "delete": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Delete portfolio media",
+        "description": "Soft-deletes a portfolio media asset that is not referenced by any item or section gallery.",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
             "content": {
               "text/plain": {
                 "schema": {
@@ -12444,6 +12941,527 @@
         }
       }
     },
+    "/api/portfolios/me/sections": {
+      "post": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Create a custom portfolio section",
+        "description": "Creates RichText, Gallery, or Embed blocks. Built-in group sections are seeded automatically.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePortfolioSectionRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePortfolioSectionRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePortfolioSectionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSectionResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSectionResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSectionResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolios/me/sections/{sectionId}": {
+      "put": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Update a portfolio section",
+        "description": "Updates custom blocks fully. Built-in group sections can be hidden, reordered, and retitled.",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePortfolioSectionRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePortfolioSectionRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePortfolioSectionRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSectionResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSectionResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSectionResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Delete a custom portfolio section",
+        "description": "Soft-deletes custom blocks only. Built-in group sections must be hidden instead.",
+        "parameters": [
+          {
+            "name": "sectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolios/me/sections/reorder": {
+      "put": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Reorder portfolio sections",
+        "description": "Updates display order for the provided section ids.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderPortfolioSectionsRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderPortfolioSectionsRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReorderPortfolioSectionsRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/portfolios/me/sync": {
       "post": {
         "tags": [
@@ -12541,7 +13559,7 @@
           "Portfolio"
         ],
         "summary": "Get public portfolio by subdomain",
-        "description": "Anonymous endpoint for the public portfolio page. Returns only visible items.",
+        "description": "Anonymous endpoint serving the published snapshot (not the live draft).",
         "parameters": [
           {
             "name": "subdomain",
@@ -14129,6 +15147,108 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EnrollmentCurriculumDtoApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/program-enrollments/{enrollmentId}/curriculum-mind-map": {
+      "get": {
+        "tags": [
+          "ProgramEnrollment"
+        ],
+        "summary": "Get the current student's curriculum mind map",
+        "description": "Returns the full program learning tree for a radial mind-map UI (class data excluded). Hub includes program progress. Modules expand to courses/milestones, then activities and assignments — locked nodes are still included so the client can open them. Supports parallel learning via currentPaths and per-node status (completed, current, in_progress, available, submitted, locked). Each node includes navigation target ids for section deep-links.",
+        "parameters": [
+          {
+            "name": "enrollmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentCurriculumMindMapDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentCurriculumMindMapDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentCurriculumMindMapDtoApiResult"
                 }
               }
             }
@@ -22247,6 +23367,84 @@
           "isVisible": {
             "type": "boolean",
             "nullable": true
+          },
+          "accentColor": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "span": {
+            "enum": [
+              "Single",
+              "Wide",
+              "Tall",
+              "Large"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "mediaAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaAssetInputDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreatePortfolioSectionRequestDto": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "enum": [
+              "ProjectsGroup",
+              "ActivitiesGroup",
+              "LinksGroup",
+              "RichText",
+              "Gallery",
+              "Embed"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isVisible": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "contentHtml": {
+            "type": "string",
+            "nullable": true
+          },
+          "settingsJson": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "mediaAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaAssetInputDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -22718,6 +23916,551 @@
           },
           "assignment": {
             "$ref": "#/components/schemas/EnrollmentCurriculumAssignmentDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapActivityDto": {
+        "type": "object",
+        "properties": {
+          "activityInfo": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapActivityInfoDto"
+          },
+          "learning": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapActivityLearningDto"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapNavigationDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapActivityInfoDto": {
+        "type": "object",
+        "properties": {
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "activityCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "activityOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activityType": {
+            "enum": [
+              "SelfPaced",
+              "LiveOnline",
+              "Offline"
+            ],
+            "type": "string"
+          },
+          "schedulingMode": {
+            "enum": [
+              "SelfPaced",
+              "ClassSynchronized",
+              "OptionalBooking"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "material": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMaterialDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapActivityLearningDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "resumeState": {
+            "$ref": "#/components/schemas/ActivityResumeStateDto"
+          },
+          "lastAccessedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "assignmentInfo": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapAssignmentInfoDto"
+          },
+          "learning": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapAssignmentLearningDto"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapNavigationDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapAssignmentInfoDto": {
+        "type": "object",
+        "properties": {
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentType": {
+            "enum": [
+              "Retrospective",
+              "FileUpload",
+              "Quiz"
+            ],
+            "type": "string"
+          },
+          "maxPoints": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "isRequiredForModulePass": {
+            "type": "boolean"
+          },
+          "dueDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapAssignmentLearningDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapChildProgressDto": {
+        "type": "object",
+        "properties": {
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "progressPercent": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapContainerLearningDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "progressPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapCourseDto": {
+        "type": "object",
+        "properties": {
+          "courseInfo": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapCourseInfoDto"
+          },
+          "learning": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapContainerLearningDto"
+          },
+          "childProgress": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapChildProgressDto"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapNavigationDto"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapActivityDto"
+            },
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapAssignmentDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapCourseInfoDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "courseName": {
+            "type": "string",
+            "nullable": true
+          },
+          "courseOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapDto": {
+        "type": "object",
+        "properties": {
+          "enrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "hub": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapHubDto"
+          },
+          "currentPaths": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapPathDto"
+            },
+            "nullable": true
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapModuleDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapHubDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
+          "progressPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "completedModuleCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalModuleCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapNavigationDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapMilestoneDto": {
+        "type": "object",
+        "properties": {
+          "milestoneInfo": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapMilestoneInfoDto"
+          },
+          "learning": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapContainerLearningDto"
+          },
+          "childProgress": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapChildProgressDto"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapNavigationDto"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapActivityDto"
+            },
+            "nullable": true
+          },
+          "assignment": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapAssignmentDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapMilestoneInfoDto": {
+        "type": "object",
+        "properties": {
+          "milestoneId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "milestoneName": {
+            "type": "string",
+            "nullable": true
+          },
+          "milestoneOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isCapstone": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapModuleDto": {
+        "type": "object",
+        "properties": {
+          "moduleInfo": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapModuleInfoDto"
+          },
+          "learning": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapModuleLearningDto"
+          },
+          "childProgress": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapChildProgressDto"
+          },
+          "navigation": {
+            "$ref": "#/components/schemas/EnrollmentCurriculumMindMapNavigationDto"
+          },
+          "courses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapCourseDto"
+            },
+            "nullable": true
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapMilestoneDto"
+            },
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapAssignmentDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapModuleInfoDto": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "moduleCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "moduleOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "moduleType": {
+            "enum": [
+              "Theory",
+              "Experiential",
+              "Research"
+            ],
+            "type": "string"
+          },
+          "prerequisiteModuleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isMandatory": {
+            "type": "boolean"
+          },
+          "learningOutcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapModuleLearningDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "progressPercent": {
+            "type": "number",
+            "format": "double"
+          },
+          "isLocked": {
+            "type": "boolean"
+          },
+          "lockReason": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapNavigationDto": {
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapPathDto": {
+        "type": "object",
+        "properties": {
+          "nodes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EnrollmentCurriculumMindMapPathNodeDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentCurriculumMindMapPathNodeDto": {
+        "type": "object",
+        "properties": {
+          "nodeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "nodeId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -23846,6 +25589,127 @@
           "token": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "materialType": {
+            "enum": [
+              "PDF",
+              "DOC",
+              "Video",
+              "Image",
+              "ExternalLink"
+            ],
+            "type": "string"
+          },
+          "uploadedAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityName": {
+            "type": "string",
+            "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "courseName": {
+            "type": "string",
+            "nullable": true
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialListItemDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialListItemDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialListItemDtoPaginationApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/MaterialListItemDtoPaginationResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MaterialListItemDtoPaginationResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/MaterialListItemDtoPagination"
           }
         },
         "additionalProperties": false
@@ -24987,6 +26851,31 @@
             ],
             "type": "string"
           },
+          "accentColor": {
+            "type": "string",
+            "nullable": true
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "span": {
+            "enum": [
+              "Single",
+              "Wide",
+              "Tall",
+              "Large"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "mediaAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaAssetResponseDto"
+            },
+            "nullable": true
+          },
           "programId": {
             "type": "string",
             "format": "uuid",
@@ -25082,6 +26971,160 @@
         },
         "additionalProperties": false
       },
+      "PortfolioMediaAssetInputDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "caption": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioMediaAssetResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "Image"
+            ],
+            "type": "string"
+          },
+          "caption": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioMediaUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "Image"
+            ],
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "contentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioMediaUploadResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioMediaUploadResponseDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/PortfolioMediaUploadResponseDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioMediaUploadResponseDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaUploadResponseDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioMediaUploadResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/PortfolioMediaUploadResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "PortfolioResponseDto": {
         "type": "object",
         "properties": {
@@ -25102,6 +27145,10 @@
             "nullable": true
           },
           "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "coverImageUrl": {
             "type": "string",
             "nullable": true
           },
@@ -25135,6 +27182,14 @@
           "isPublic": {
             "type": "boolean"
           },
+          "lastPublishedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "hasUnpublishedChanges": {
+            "type": "boolean"
+          },
           "theme": {
             "$ref": "#/components/schemas/ThemeConfigDto"
           },
@@ -25149,6 +27204,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PortfolioCustomItemResponseDto"
+            },
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSectionResponseDto"
             },
             "nullable": true
           },
@@ -25192,6 +27254,95 @@
           },
           "data": {
             "$ref": "#/components/schemas/PortfolioResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioSectionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "kind": {
+            "enum": [
+              "ProjectsGroup",
+              "ActivitiesGroup",
+              "LinksGroup",
+              "RichText",
+              "Gallery",
+              "Embed"
+            ],
+            "type": "string"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "contentHtml": {
+            "type": "string",
+            "nullable": true
+          },
+          "settingsJson": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "mediaAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaAssetResponseDto"
+            },
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioSectionResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/PortfolioSectionResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioSectionResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/PortfolioSectionResponseDto"
           }
         },
         "additionalProperties": false
@@ -26261,6 +28412,10 @@
             "type": "string",
             "nullable": true
           },
+          "coverImageUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "theme": {
             "$ref": "#/components/schemas/ThemeConfigDto"
           },
@@ -26275,6 +28430,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PortfolioCustomItemResponseDto"
+            },
+            "nullable": true
+          },
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSectionResponseDto"
             },
             "nullable": true
           }
@@ -26638,6 +28800,37 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReorderPortfolioItemEntryDto"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReorderPortfolioSectionEntryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "displayOrder": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ReorderPortfolioSectionsRequestDto": {
+        "required": [
+          "sections"
+        ],
+        "type": "object",
+        "properties": {
+          "sections": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReorderPortfolioSectionEntryDto"
             }
           }
         },
@@ -27894,22 +30087,95 @@
         "type": "object",
         "properties": {
           "templateId": {
+            "maxLength": 100,
             "type": "string",
             "nullable": true
           },
           "primaryColor": {
+            "maxLength": 20,
             "type": "string",
             "nullable": true
           },
           "secondaryColor": {
+            "maxLength": 20,
             "type": "string",
             "nullable": true
           },
           "fontFamily": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "headingFontFamily": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "fontScale": {
+            "enum": [
+              "Sm",
+              "Base",
+              "Lg",
+              "Xl"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "lineHeight": {
+            "enum": [
+              "Tight",
+              "Normal",
+              "Relaxed"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "density": {
+            "enum": [
+              "Compact",
+              "Cozy",
+              "Spacious"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "accentColor": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "backgroundStyle": {
+            "enum": [
+              "Plain",
+              "Gradient",
+              "Pattern",
+              "Image"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "backgroundImageUrl": {
+            "maxLength": 500,
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "cardStyle": {
+            "enum": [
+              "Outline",
+              "Soft",
+              "Elevated"
+            ],
             "type": "string",
             "nullable": true
           },
           "layoutStyle": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
+          },
+          "settingsJson": {
+            "maxLength": 2000,
             "type": "string",
             "nullable": true
           },
@@ -28490,6 +30756,32 @@
           "isVisible": {
             "type": "boolean",
             "nullable": true
+          },
+          "accentColor": {
+            "maxLength": 20,
+            "type": "string",
+            "nullable": true
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "span": {
+            "enum": [
+              "Single",
+              "Wide",
+              "Tall",
+              "Large"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "mediaAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaAssetInputDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -28528,6 +30820,18 @@
             "type": "string",
             "nullable": true
           },
+          "avatarUrl": {
+            "maxLength": 500,
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "coverImageUrl": {
+            "maxLength": 500,
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
           "theme": {
             "$ref": "#/components/schemas/ThemeConfigDto"
           },
@@ -28535,6 +30839,44 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PortfolioLinkDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdatePortfolioSectionRequestDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "displayOrder": {
+            "maximum": 2147483647,
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isVisible": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "contentHtml": {
+            "type": "string",
+            "nullable": true
+          },
+          "settingsJson": {
+            "maxLength": 2000,
+            "type": "string",
+            "nullable": true
+          },
+          "mediaAssets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaAssetInputDto"
             },
             "nullable": true
           }
