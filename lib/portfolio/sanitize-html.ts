@@ -150,12 +150,23 @@ export function sanitizePortfolioHtml(html: string | null | undefined): string {
 
 export function isEmptyPortfolioHtml(html: string | null | undefined): boolean {
   if (!html) return true;
-  const text = sanitizePortfolioHtml(html)
-    .replace(/<br\s*\/?>/gi, "")
+  return stripPortfolioHtmlText(html).length === 0;
+}
+
+/** Plain text from rich-text HTML (titles, list previews). */
+export function stripPortfolioHtmlText(html: string | null | undefined): string {
+  if (!html) return "";
+  return html
+    .replace(/<br\s*\/?>/gi, " ")
     .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
     .replace(/<[^>]+>/g, "")
+    .replace(/\s+/g, " ")
     .trim();
-  return text.length === 0;
 }
 
 /** True when the string contains HTML tags (rich-text payloads). */
