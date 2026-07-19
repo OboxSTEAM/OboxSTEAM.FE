@@ -29,6 +29,7 @@ import {
   PortfolioHeroCover,
   PortfolioHeroShell,
 } from "@/components/portfolio/hero/portfolio-hero-shell";
+import { PortfolioLinkTiles } from "@/components/portfolio/links/portfolio-link-tiles";
 import {
   PortfolioBackground,
   PortfolioCardShell,
@@ -1317,11 +1318,6 @@ function LinksSectionEditable({
 }) {
   const chrome = useChrome();
   const links = (draft.links ?? []).filter((link) => Boolean(link.url));
-  const linkPalette = [
-    resolved.primaryColor,
-    resolved.secondaryColor,
-    resolved.accentColor,
-  ];
 
   return (
     <div className="relative space-y-3">
@@ -1393,23 +1389,11 @@ function LinksSectionEditable({
           Thêm GitHub, Behance, LinkedIn…
         </button>
       ) : (
-        <div className="flex flex-wrap gap-2">
-          {links.map((link, index) => {
-            const bg = linkPalette[index % linkPalette.length]!;
-            return (
-            <span
-              key={`${link.url}-${index}`}
-              className="rounded-full px-3.5 py-1.5 text-sm font-medium"
-              style={{
-                backgroundColor: bg,
-                color: getReadableTextColor(bg),
-              }}
-            >
-              {link.label || link.url}
-            </span>
-            );
-          })}
-        </div>
+        <PortfolioLinkTiles
+          links={links}
+          isDark={resolved.isDark}
+          interactive={false}
+        />
       )}
     </div>
   );

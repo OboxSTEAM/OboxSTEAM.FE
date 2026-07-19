@@ -22,6 +22,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -67,6 +75,10 @@ const PANEL_TITLES: Record<PortfolioPanelId, string> = {
   items: "Mục portfolio",
   links: "Liên kết ngoài",
 };
+
+type PendingDelete =
+  | { kind: "item"; item: PortfolioItem }
+  | { kind: "section"; sectionId: string; label: string };
 
 /** Inline-editable fields that the global Save persists per item. */
 const ITEM_TEXT_FIELDS = [
@@ -270,6 +282,10 @@ export function PortfolioSettingsPageContent() {
   const [activePanel, setActivePanel] = useState<PortfolioPanelId | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [focusItemId, setFocusItemId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const draftRef = useRef<Portfolio | null>(null);
   const baselineRef = useRef<Portfolio | null>(null);
@@ -577,22 +593,9 @@ export function PortfolioSettingsPageContent() {
     }
   }, [applyServerPortfolio]);
 
-  const handleDeleteItem = useCallback(async (item: PortfolioItem) => {
+  const requestDeleteItem = useCallback((item: PortfolioItem) => {
     if (item.source === "AutoImported") return;
-    if (!window.confirm(`Xóa mục “${item.title ?? "không tiêu đề"}”?`)) return;
-
-    try {
-      await deletePortfolioItem(item.id);
-      setBaseline((current) =>
-        current ? removeItemById(current, item.id) : current,
-      );
-      setDraft((current) =>
-        current ? removeItemById(current, item.id) : current,
-      );
-      showAppSuccess({ title: "Đã xóa mục" });
-    } catch (error) {
-      showAppErrorFromUnknown(error, "portfolio.item");
-    }
+    setPendingDelete({ kind: "item", item });
   }, []);
 
   const handleSync = useCallback(async () => {
@@ -744,35 +747,68 @@ export function PortfolioSettingsPageContent() {
     [],
   );
 
-  const handleDeleteSection = useCallback(async (sectionId: string) => {
-    if (!window.confirm("Xóa section này?")) return;
-    try {
-      await deletePortfolioSection(sectionId);
-      setBaseline((current) =>
-        current
-          ? {
-              ...current,
-              sections: (current.sections ?? []).filter(
-                (section) => section.id !== sectionId,
-              ),
-            }
-          : current,
-      );
-      setDraft((current) =>
-        current
-          ? {
-              ...current,
-              sections: (current.sections ?? []).filter(
-                (section) => section.id !== sectionId,
-              ),
-            }
-          : current,
-      );
-      showAppSuccess({ title: "Đã xóa section" });
-    } catch (error) {
-      showAppErrorFromUnknown(error, "portfolio.section");
-    }
+  const requestDeleteSection = useCallback((sectionId: string) => {
+    const section = draftRef.current?.sections?.find(
+      (entry) => entry.id === sectionId,
+    );
+    const label =
+      section?.title ||
+      (section
+        ? PORTFOLIO_SECTION_KIND_LABELS[section.kind] || section.kind
+        : "section này");
+    setPendingDelete({ kind: "section", sectionId, label });
   }, []);
+
+  const confirmPendingDelete = useCallback(async () => {
+    if (!pendingDelete || isDeleting) return;
+
+    setIsDeleting(true);
+    try {
+      if (pendingDelete.kind === "item") {
+        const { item } = pendingDelete;
+        await deletePortfolioItem(item.id);
+        setBaseline((current) =>
+          current ? removeItemById(current, item.id) : current,
+        );
+        setDraft((current) =>
+          current ? removeItemById(current, item.id) : current,
+        );
+        showAppSuccess({ title: "Đã xóa mục" });
+      } else {
+        const { sectionId } = pendingDelete;
+        await deletePortfolioSection(sectionId);
+        setBaseline((current) =>
+          current
+            ? {
+                ...current,
+                sections: (current.sections ?? []).filter(
+                  (section) => section.id !== sectionId,
+                ),
+              }
+            : current,
+        );
+        setDraft((current) =>
+          current
+            ? {
+                ...current,
+                sections: (current.sections ?? []).filter(
+                  (section) => section.id !== sectionId,
+                ),
+              }
+            : current,
+        );
+        showAppSuccess({ title: "Đã xóa section" });
+      }
+      setPendingDelete(null);
+    } catch (error) {
+      showAppErrorFromUnknown(
+        error,
+        pendingDelete.kind === "item" ? "portfolio.item" : "portfolio.section",
+      );
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [isDeleting, pendingDelete]);
 
   /** Draft-only section reorder while dragging on the canvas. */
   const handlePreviewReorderSections = useCallback((orderedIds: string[]) => {
@@ -1070,7 +1106,7 @@ export function PortfolioSettingsPageContent() {
                 isAdding={isAddingItem}
                 onSync={() => void handleSync()}
                 onAdd={() => void handleAddItem("Project")}
-                onDelete={(item) => void handleDeleteItem(item)}
+                onDelete={requestDeleteItem}
                 onToggleVisibility={(item, visible) =>
                   void handleToggleVisibility(item, visible)
                 }
@@ -1090,7 +1126,7 @@ export function PortfolioSettingsPageContent() {
             onToggleItemVisibility={(item, visible) =>
               void handleToggleVisibility(item, visible)
             }
-            onDeleteItem={(item) => void handleDeleteItem(item)}
+            onDeleteItem={requestDeleteItem}
             onAddItem={(itemType) => void handleAddItem(itemType)}
             onSyncItems={() => void handleSync()}
             isSyncing={isSyncing}
@@ -1102,13 +1138,53 @@ export function PortfolioSettingsPageContent() {
             onUpdateSection={(sectionId, patch) =>
               void handleUpdateSection(sectionId, patch)
             }
-            onDeleteSection={(sectionId) => void handleDeleteSection(sectionId)}
+            onDeleteSection={requestDeleteSection}
             onReorderSections={handlePreviewReorderSections}
             onCommitReorderSections={() => void handleCommitReorderSections()}
             onToggleSectionVisibility={handleToggleSectionVisibility}
           />
         </main>
       </div>
+
+      <Dialog
+        open={pendingDelete != null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) setPendingDelete(null);
+        }}
+      >
+        <DialogPopup className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {pendingDelete?.kind === "item" ? "Xóa mục?" : "Xóa section?"}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingDelete?.kind === "item"
+                ? `Bạn sắp xóa “${pendingDelete.item.title?.trim() || "không tiêu đề"}”. Thao tác này không thể hoàn tác.`
+                : `Bạn sắp xóa “${pendingDelete?.label ?? "section này"}”. Thao tác này không thể hoàn tác.`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              className="min-h-[44px] rounded-xl"
+              disabled={isDeleting}
+              onClick={() => setPendingDelete(null)}
+            >
+              Hủy
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              className="min-h-[44px] rounded-xl"
+              disabled={isDeleting}
+              onClick={() => void confirmPendingDelete()}
+            >
+              {isDeleting ? "Đang xóa…" : "Xóa"}
+            </Button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </div>
   );
 }

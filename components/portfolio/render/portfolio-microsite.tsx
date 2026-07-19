@@ -13,6 +13,7 @@ import {
   PortfolioReveal,
   type GalleryImage,
 } from "@/components/portfolio/reactbits/slots";
+import { PortfolioLinkTiles } from "@/components/portfolio/links/portfolio-link-tiles";
 import { RichText } from "@/components/portfolio/render/rich-text";
 import type {
   Portfolio,
@@ -438,30 +439,7 @@ function LinksSection({
   return (
     <section className="space-y-3">
       <SectionHeading title={title} resolved={resolved} />
-      <div className="flex flex-wrap gap-2">
-        {visible.map((link, index) => {
-          const palette = [
-            resolved.primaryColor,
-            resolved.secondaryColor,
-            resolved.accentColor,
-          ];
-          return (
-            <a
-              key={`${link.url}-${index}`}
-              href={link.url!}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-full px-4 py-2 text-sm font-semibold transition hover:brightness-110"
-              style={{
-                backgroundColor: palette[index % palette.length],
-                color: getReadableTextColor(palette[index % palette.length]!),
-              }}
-            >
-              {link.label || link.url}
-            </a>
-          );
-        })}
-      </div>
+      <PortfolioLinkTiles links={visible} isDark={resolved.isDark} />
     </section>
   );
 }
