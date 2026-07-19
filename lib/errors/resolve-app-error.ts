@@ -140,6 +140,61 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chuyên gia có thể đang được sử dụng hoặc không còn tồn tại.",
     action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
   },
+  "classes.list": {
+    title: "Không tải được danh sách lớp",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "classes.detail": {
+    title: "Không tải được thông tin lớp",
+    reason: "Lớp không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Quay lại danh sách lớp hoặc thử lại sau vài giây.",
+  },
+  "classes.create": {
+    title: "Không tạo được lớp học",
+    reason: "Thông tin lớp chưa hợp lệ hoặc mã lớp đã tồn tại.",
+    action: "Kiểm tra mã, tên, chương trình và lịch học rồi thử lại.",
+  },
+  "classes.update": {
+    title: "Không cập nhật được lớp học",
+    reason: "Thông tin chưa hợp lệ hoặc lớp không còn tồn tại.",
+    action: "Tải lại trang, kiểm tra thông tin rồi thử lưu lại.",
+  },
+  "classes.lifecycle": {
+    title: "Không chuyển được trạng thái lớp",
+    reason: "Lớp không ở trạng thái phù hợp hoặc yêu cầu bị từ chối.",
+    action: "Tải lại thông tin lớp và thử lại thao tác.",
+  },
+  "classSessions.list": {
+    title: "Không tải được lịch học",
+    reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
+    action: "Chọn lại lớp hoặc thử tải lại sau vài giây.",
+  },
+  "classSessions.create": {
+    title: "Không tạo được buổi học",
+    reason: "Thông tin buổi học chưa hợp lệ hoặc lịch bị trùng.",
+    action: "Kiểm tra tiêu đề, module và khung giờ rồi thử lại.",
+  },
+  "classSessions.update": {
+    title: "Không cập nhật được buổi học",
+    reason: "Thông tin chưa hợp lệ hoặc buổi học không còn tồn tại.",
+    action: "Tải lại lịch học, kiểm tra thông tin rồi thử lưu lại.",
+  },
+  "classSessions.delete": {
+    title: "Không xóa được buổi học",
+    reason: "Buổi học có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại lịch học và thử lại.",
+  },
+  "attendance.list": {
+    title: "Không tải được danh sách điểm danh",
+    reason: "Máy chủ tạm thời không phản hồi hoặc buổi học không tồn tại.",
+    action: "Chọn lại buổi học hoặc thử tải lại sau vài giây.",
+  },
+  "attendance.update": {
+    title: "Không cập nhật được điểm danh",
+    reason: "Trạng thái không hợp lệ hoặc bạn không có quyền thao tác.",
+    action: "Tải lại roster và thử cập nhật lại.",
+  },
   "curriculum.module.save": {
     title: "Không lưu được module",
     reason: "Thông tin module chưa hợp lệ hoặc đã trùng mã.",
@@ -250,6 +305,13 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "experts.create",
   "experts.update",
   "experts.delete",
+  "classes.create",
+  "classes.update",
+  "classes.lifecycle",
+  "classSessions.create",
+  "classSessions.update",
+  "classSessions.delete",
+  "attendance.update",
   "curriculum.module.save",
   "curriculum.course.save",
   "curriculum.activity.save",
@@ -283,6 +345,9 @@ function reasonForHttpStatus(
   if (status === 409) {
     if (context === "programs.create" || context === "programs.update") {
       return "Mã hoặc tên chương trình đã tồn tại.";
+    }
+    if (context === "classes.create" || context === "classes.update") {
+      return "Mã lớp đã tồn tại hoặc xung đột dữ liệu lớp.";
     }
     if (context.startsWith("curriculum.")) {
       return "Mã hoặc tên đã tồn tại trong chương trình.";

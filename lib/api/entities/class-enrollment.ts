@@ -4,7 +4,8 @@ import { classSchema } from "@/lib/api/entities/class";
 
 export const classEnrollmentStatusSchema = z.enum([
   "Active",
-  "Cancelled",
+  "Transferred",
+  "Withdrawn",
   "Completed",
 ]);
 
@@ -13,9 +14,9 @@ export const classEnrollmentSchema = z.object({
   studentId: z.string().uuid(),
   programEnrollmentId: z.string().uuid(),
   status: classEnrollmentStatusSchema,
-  enrolledAt: z.string(),
+  enrolledAt: z.string().nullable(),
   createdAt: z.string(),
-  updatedAt: z.string(),
+  updatedAt: z.string().nullable(),
   class: classSchema,
 });
 

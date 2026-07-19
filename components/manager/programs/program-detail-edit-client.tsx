@@ -3,8 +3,8 @@
 import { Suspense, useState } from "react";
 import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 
+import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
-import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
@@ -146,11 +146,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
         {activeTab === "classes" && (
           <div className="py-4">
-            <ManagerEmptyState
-              title="Lớp học của Chương trình"
-              description={`Danh sách các lớp đang mở, đã kết thúc hoặc chuẩn bị tuyển sinh của ${program.name}.`}
-              icon={GraduationCap}
-            />
+            <ClassManager fixedProgramId={program.id} embedded />
           </div>
         )}
       </div>

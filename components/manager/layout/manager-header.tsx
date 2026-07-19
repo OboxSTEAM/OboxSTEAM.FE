@@ -69,6 +69,12 @@ export function ManagerHeader({
           if (res?.data?.name) {
             setResolvedLabels((prev) => ({ ...prev, [id]: res.data.name }));
           }
+        } else if (prevSegment === "classes") {
+          const { getClassById } = await import("@/lib/api");
+          const res = await getClassById(id);
+          if (res?.data?.name) {
+            setResolvedLabels((prev) => ({ ...prev, [id]: res.data.name }));
+          }
         }
       } catch (err) {
         console.error("Failed to load breadcrumb label for id:", id, err);

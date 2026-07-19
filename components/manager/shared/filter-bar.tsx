@@ -8,8 +8,13 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
+import {
+  LIGHT_SELECT_CONTENT,
+  LIGHT_SELECT_ITEM,
+  LIGHT_SELECT_TRIGGER,
+} from "@/components/programs/program-select-styles";
+import { cn } from "@/lib/utils";
 
 export type FilterOption = {
   label: string;
@@ -22,6 +27,8 @@ export type FilterDef = {
   value: string;
   onChange: (value: string) => void;
   options: FilterOption[];
+  /** Wider dropdown for long labels (e.g. program names). */
+  wide?: boolean;
 };
 
 type ManagerFilterBarProps = {
@@ -70,22 +77,43 @@ export function ManagerFilterBar({
         {filters.map((filter) => {
           const activeOption = filter.options.find((opt) => opt.value === filter.value);
           const labelToDisplay = activeOption ? activeOption.label : filter.placeholder;
+          const isWide = filter.wide === true;
 
           return (
             <Select
               key={filter.key}
-              value={filter.value || ""}
+              value={filter.value || null}
               onValueChange={(val) => filter.onChange(val ?? "")}
             >
-              <SelectTrigger className="h-9 min-w-[140px] rounded-lg border-[#E5E5E0] bg-white text-xs font-semibold text-[#2D2D2D] hover:bg-[#FAFAF5]">
+              <SelectTrigger
+                className={cn(
+                  LIGHT_SELECT_TRIGGER,
+                  isWide && "max-w-[16rem]",
+                )}
+              >
                 <span className="truncate">{labelToDisplay}</span>
               </SelectTrigger>
-              <SelectContent className="z-50 bg-white border border-[#E5E5E0]">
+              <SelectContent
+                align="start"
+                alignItemWithTrigger={false}
+                sideOffset={8}
+                className={cn(
+                  LIGHT_SELECT_CONTENT,
+                  isWide &&
+                    "w-auto! min-w-[min(100vw-2rem,22rem)] max-w-[min(100vw-2rem,28rem)]",
+                )}
+              >
                 {filter.options.map((opt) => (
                   <SelectItem
                     key={opt.value}
                     value={opt.value}
-                    className="cursor-pointer text-xs"
+                    className={cn(
+                      LIGHT_SELECT_ITEM,
+                      "cursor-pointer",
+                      isWide &&
+                        "items-start leading-snug [&_span]:shrink [&_span]:break-words [&_span]:whitespace-normal!",
+                    )}
+                    title={opt.label}
                   >
                     {opt.label}
                   </SelectItem>

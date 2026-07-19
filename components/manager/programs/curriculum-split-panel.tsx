@@ -460,19 +460,16 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
       <div className="flex-1 overflow-y-auto p-5 space-y-6">
         <div>
           <STitle>Thông tin cơ bản</STitle>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
+          <div className="flex items-start gap-3">
+            <div className="flex-1 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Module <span style={{ color: W.primary }}>*</span></Label>
               <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
               <FErr msg={errors.name?.message} />
             </div>
-            <div className="col-span-2 space-y-1.5 sm:col-span-1">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
-              <input type="number" {...register("moduleOrder", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
+            <div className="w-20 shrink-0 space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }} title="Đã tự điền vị trí cuối. Chỉ đổi khi cần sắp xếp lại.">Thứ tự <span style={{ color: W.primary }}>*</span></Label>
+              <input type="number" {...register("moduleOrder", { valueAsNumber: true })} className={cn(IN, "px-2 text-center")} style={{ borderColor: W.border }} />
               <FErr msg={errors.moduleOrder?.message} />
-              <p className="text-[11px]" style={{ color: W.faint }}>
-                Đã tự điền vị trí cuối. Chỉ đổi khi cần sắp xếp lại.
-              </p>
             </div>
           </div>
         </div>
@@ -494,7 +491,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 w-full rounded-lg")} style={{ borderColor: W.border }}>
                     <span className="truncate">
                       {MODULE_TYPE_LABELS[field.value] ?? field.value}
                     </span>
@@ -511,7 +508,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Module tiên quyết</Label>
               <Controller name="prerequisiteModuleId" control={control} render={({ field }) => (
                 <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? null : v)}>
-                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 w-full rounded-lg")} style={{ borderColor: W.border }}>
                     <span className="truncate">
                       {!field.value || field.value === "none"
                         ? "Không có"
@@ -770,41 +767,50 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
           </div>
-          <div className="flex flex-col space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-            <Controller name="activityType" control={control} render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => {
-                field.onChange(v);
-                // Self-paced activities have no schedule; clear stale values so they
-                // are not resurfaced (and are sent as null on save).
-                if (v === "SelfPaced") {
-                  setValue("location", "");
-                  setValue("startTime", "");
-                  setValue("endTime", "");
-                  setValue("maxCapacity", null);
-                }
-              }}>
-                <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
-                  <span className="truncate">
-                    {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent className={LIGHT_SELECT_CONTENT}>
-                  <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học</SelectItem>
-                  <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online trực tiếp</SelectItem>
-                  <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline tại lớp</SelectItem>
-                </SelectContent>
-              </Select>
-            )} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
-            <input type="number" {...register("activityOrder", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
-            <p className="text-[11px] leading-snug" style={{ color: W.faint }}>
-              {isEdit
-                ? "Đổi thứ tự sẽ tự dồn các hoạt động khác trong khóa học."
-                : `Mặc định thêm cuối (#${nextOrder}). Nhập số nhỏ hơn để chèn — các hoạt động sau sẽ được dồn.`}
-            </p>
+          <div className="col-span-2 flex flex-col gap-4 sm:flex-row">
+            <div className="w-full shrink-0 space-y-4 sm:w-44">
+              <div className="flex flex-col space-y-1.5">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Hoạt động <span style={{ color: W.primary }}>*</span></Label>
+                <Controller name="activityType" control={control} render={({ field }) => (
+                  <Select value={field.value} onValueChange={(v) => {
+                    field.onChange(v);
+                    // Self-paced activities have no schedule; clear stale values so they
+                    // are not resurfaced (and are sent as null on save).
+                    if (v === "SelfPaced") {
+                      setValue("location", "");
+                      setValue("startTime", "");
+                      setValue("endTime", "");
+                      setValue("maxCapacity", null);
+                    }
+                  }}>
+                    <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 w-44 rounded-lg")} style={{ borderColor: W.border }}>
+                      <span className="truncate">
+                        {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent className={LIGHT_SELECT_CONTENT}>
+                      <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học</SelectItem>
+                      <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online trực tiếp</SelectItem>
+                      <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline tại lớp</SelectItem>
+                    </SelectContent>
+                  </Select>
+                )} />
+              </div>
+              <div className="space-y-1.5">
+                <Label
+                  className="text-sm font-semibold"
+                  style={{ color: W.textStrong }}
+                  title={isEdit
+                    ? "Đổi thứ tự sẽ tự dồn các hoạt động khác trong khóa học."
+                    : `Mặc định thêm cuối (#${nextOrder}). Nhập số nhỏ hơn để chèn.`}
+                >Thứ tự <span style={{ color: W.primary }}>*</span></Label>
+                <input type="number" {...register("activityOrder", { valueAsNumber: true })} className={cn(IN, "w-44 px-2 text-center")} style={{ borderColor: W.border }} />
+              </div>
+            </div>
+            <div className="flex flex-1 flex-col space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
+              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full flex-1 min-h-28 text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+            </div>
           </div>
 
           {actType !== "SelfPaced" && (
@@ -840,10 +846,6 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             </>
           )}
 
-          <div className="col-span-2 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
-            <textarea rows={3} placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
-          </div>
         </div>
 
         <AdvancedSection
