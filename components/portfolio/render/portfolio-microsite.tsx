@@ -1,6 +1,10 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
 
+import {
+  HeroAvatarFrame,
+  PortfolioHeroCover,
+  PortfolioHeroShell,
+} from "@/components/portfolio/hero/portfolio-hero-shell";
 import {
   PortfolioBackground,
   PortfolioCardShell,
@@ -20,13 +24,16 @@ import type {
   PublicPortfolio,
 } from "@/lib/api/entities/portfolio";
 import { parseSectionSettingsJson } from "@/lib/api/entities/portfolio";
+import { getReadableTextColor } from "@/lib/portfolio/color-utils";
 import {
   normalizeSectionOrder,
   PORTFOLIO_ITEM_TYPE_LABELS,
   type PortfolioSectionId,
 } from "@/lib/portfolio/constants";
+import { getHeroStyle } from "@/lib/portfolio/hero-styles";
 import {
   GALLERY_SLOT_OPTIONS,
+  getPresetPersonality,
   resolvePortfolioTheme,
   type GallerySlotId,
   type ResolvedPortfolioTheme,
@@ -241,6 +248,7 @@ function ItemCard({
         surfaceClass={cardSurface}
         isDark={resolved.isDark}
         accentColor={resolved.primaryColor}
+        radiusClass={getPresetPersonality(resolved.templateId).cardRadiusClass}
         className="h-full"
       >
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -252,8 +260,11 @@ function ItemCard({
         </p>
         {item.isFeatured ? (
           <span
-            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-            style={{ backgroundColor: resolved.primaryColor }}
+            className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+            style={{
+              backgroundColor: resolved.primaryColor,
+              color: getReadableTextColor(resolved.primaryColor),
+            }}
           >
             Nổi bật
           </span>
@@ -335,16 +346,26 @@ function SectionHeading({
   title: string;
   resolved: ResolvedPortfolioTheme;
 }) {
+  const personality = getPresetPersonality(resolved.templateId);
+  const onPrimary = getReadableTextColor(resolved.primaryColor);
   return (
     <h2
-      className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight text-white sm:text-lg"
+      className={cn(
+        "inline-flex max-w-full items-center px-4 py-1.5 text-base font-bold tracking-tight sm:text-lg",
+        personality.monoLabels ? "font-mono text-sm uppercase tracking-[0.12em]" : "",
+        personality.playfulChrome ? "rounded-full" : "rounded-full",
+      )}
       style={{
         fontFamily: resolved.headingFontCss,
         backgroundColor: resolved.primaryColor,
+        color: onPrimary,
       }}
     >
       {/<[^>]+>/.test(title) ? (
-        <RichText html={title} className="prose-p:my-0 text-inherit [&_*]:text-inherit" />
+        <RichText
+          html={title}
+          className="prose-p:my-0 text-inherit [&_*]:text-inherit"
+        />
       ) : (
         title
       )}
@@ -410,8 +431,11 @@ function LinksSection({
               href={link.url!}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
-              style={{ backgroundColor: palette[index % palette.length] }}
+              className="rounded-full px-4 py-2 text-sm font-semibold transition hover:brightness-110"
+              style={{
+                backgroundColor: palette[index % palette.length],
+                color: getReadableTextColor(palette[index % palette.length]!),
+              }}
             >
               {link.label || link.url}
             </a>
@@ -438,146 +462,99 @@ function ProfileSection({
     data.studentName ||
     "Học viên OboxSTEAM";
   const summaryIsHtml = data.summary ? hasHtmlTags(data.summary) : false;
+  const heroStyle = getHeroStyle(resolved.heroText);
+  const onFill = getReadableTextColor(resolved.primaryColor);
 
   return (
-    <section
-      className={cn(
-        "relative overflow-hidden rounded-[1.5rem]",
-        resolved.isDark ? "bg-[#1a1a1a]/80" : "bg-white/80 backdrop-blur-sm",
-        compact ? "p-5" : "p-6 sm:p-8",
-      )}
-      style={{ boxShadow: `inset 0 4px 0 0 ${resolved.primaryColor}` }}
-    >
-      {data.coverImageUrl ? (
-        <div className="relative -mx-6 -mt-6 mb-5 h-36 overflow-hidden sm:-mx-8 sm:-mt-8 sm:h-44">
-          <Image
-            src={data.coverImageUrl}
-            alt=""
-            fill
-            unoptimized
-            className="object-cover"
-            sizes="(max-width: 768px) 100vw, 896px"
-          />
-          <div
-            className="absolute inset-x-0 bottom-0 h-16"
-            style={{
-              background: `linear-gradient(to top, ${resolved.isDark ? "#1a1a1a" : "#ffffff"}ee, transparent)`,
-            }}
-          />
-        </div>
-      ) : (
-        <div
-          className="relative -mx-6 -mt-6 mb-5 h-28 sm:-mx-8 sm:-mt-8 sm:h-36"
-          style={{
-            background: `linear-gradient(135deg, ${resolved.primaryColor}55 0%, ${resolved.secondaryColor}40 48%, ${resolved.accentColor}35 100%)`,
-          }}
+    <PortfolioHeroShell
+      slot={resolved.heroText}
+      isDark={resolved.isDark}
+      primaryColor={resolved.primaryColor}
+      secondaryColor={resolved.secondaryColor}
+      accentColor={resolved.accentColor}
+      compact={compact}
+      cover={
+        <PortfolioHeroCover
+          slot={resolved.heroText}
+          coverImageUrl={data.coverImageUrl}
+          isDark={resolved.isDark}
+          primaryColor={resolved.primaryColor}
+          secondaryColor={resolved.secondaryColor}
+          accentColor={resolved.accentColor}
         />
-      )}
-
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="max-w-2xl">
-          <p
-            className="font-mono text-[11px] font-semibold uppercase tracking-[0.18em]"
-            style={{ color: resolved.primaryColor }}
-          >
-            Portfolio STEAM
-          </p>
-
-          <div className={cn("mt-2", compact && "scale-[0.95] origin-top-left")}>
-            <PortfolioHeroText
-              slot={resolved.heroText}
-              name={name}
-              headline={
-                data.headline && hasHtmlTags(data.headline)
-                  ? null
-                  : data.headline
-              }
-              colors={[
-                resolved.primaryColor,
-                resolved.accentColor,
-                resolved.secondaryColor,
-              ]}
-            />
-            {data.headline && hasHtmlTags(data.headline) ? (
-              <RichText
-                html={data.headline}
-                className={cn(
-                  "mt-2 text-base font-semibold sm:text-lg",
-                  resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
-                )}
-              />
-            ) : null}
-          </div>
-
-          {data.tagline ? (
-            /<[^>]+>/.test(data.tagline) ? (
-              <RichText
-                html={data.tagline}
-                className={cn(
-                  "mt-2 text-sm leading-relaxed",
-                  resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
-                )}
-              />
-            ) : (
-              <p
-                className={cn(
-                  "mt-2 text-sm leading-relaxed",
-                  resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
-                )}
-              >
-                {data.tagline}
-              </p>
-            )
-          ) : null}
-
-          {data.summary ? (
-            summaryIsHtml ? (
-              <RichText html={data.summary} className="mt-4 max-w-xl text-sm" />
-            ) : (
-              <p
-                className={cn(
-                  "mt-4 max-w-xl text-sm leading-relaxed",
-                  resolved.isDark ? "text-[#FAFAF5]/85" : "text-[#2D2D2D]/85",
-                )}
-              >
-                {data.summary}
-              </p>
-            )
-          ) : null}
-        </div>
-
-        {data.avatarUrl ? (
-          <div
+      }
+      avatar={
+        <HeroAvatarFrame
+          style={heroStyle}
+          primaryColor={resolved.primaryColor}
+          accentColor={resolved.accentColor}
+          name={name}
+          avatarUrl={data.avatarUrl}
+          textColor={onFill}
+          compact={compact}
+        />
+      }
+    >
+      <div className={cn(compact && "scale-[0.95] origin-top-left")}>
+        <PortfolioHeroText
+          slot={resolved.heroText}
+          name={name}
+          headline={
+            data.headline && hasHtmlTags(data.headline) ? null : data.headline
+          }
+          colors={[
+            resolved.primaryColor,
+            resolved.accentColor,
+            resolved.secondaryColor,
+          ]}
+        />
+        {data.headline && hasHtmlTags(data.headline) ? (
+          <RichText
+            html={data.headline}
             className={cn(
-              "relative shrink-0 overflow-hidden rounded-2xl shadow-lg",
-              compact ? "h-20 w-20" : "h-28 w-28 sm:h-32 sm:w-32",
+              heroStyle.headlineClass,
+              resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
             )}
-            style={{ boxShadow: `0 0 0 3px ${resolved.primaryColor}` }}
-          >
-            <Image
-              src={data.avatarUrl}
-              alt={name}
-              fill
-              unoptimized
-              className="object-cover"
-              sizes={compact ? "80px" : "128px"}
-            />
-          </div>
-        ) : (
-          <div
-            className={cn(
-              "flex shrink-0 items-center justify-center rounded-2xl font-bold text-white",
-              compact ? "h-20 w-20 text-xl" : "h-28 w-28 text-3xl sm:h-32 sm:w-32",
-            )}
-            style={{
-              background: `linear-gradient(145deg, ${resolved.primaryColor}, ${resolved.accentColor})`,
-            }}
-          >
-            {name.slice(0, 1).toUpperCase()}
-          </div>
-        )}
+          />
+        ) : null}
       </div>
-    </section>
+
+      {data.tagline ? (
+        /<[^>]+>/.test(data.tagline) ? (
+          <RichText
+            html={data.tagline}
+            className={cn(
+              heroStyle.taglineClass,
+              resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
+            )}
+          />
+        ) : (
+          <p
+            className={cn(
+              heroStyle.taglineClass,
+              resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#6B6B6B]",
+            )}
+          >
+            {data.tagline}
+          </p>
+        )
+      ) : null}
+
+      {data.summary ? (
+        summaryIsHtml ? (
+          <RichText html={data.summary} className="mt-4 max-w-xl text-sm" />
+        ) : (
+          <p
+            className={cn(
+              "mt-4 max-w-xl text-sm leading-relaxed",
+              resolved.isDark ? "text-[#FAFAF5]/85" : "text-[#2D2D2D]/85",
+            )}
+          >
+            {data.summary}
+          </p>
+        )
+      ) : null}
+    </PortfolioHeroShell>
   );
 }
 
@@ -746,13 +723,16 @@ export function PortfolioMicrosite({
   };
 
   const gapClass = compact ? "space-y-5" : resolved.densityGapClass;
+  const personality = getPresetPersonality(resolved.templateId);
 
   return (
     <div
       className={cn(
         "relative min-h-full",
         resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
+        personality.paperWash && !resolved.isDark && "bg-[#FDFBF7]/40",
         compact ? "p-4" : "px-4 py-8 sm:px-6 sm:py-12",
+        personality.sectionPadClass,
         className,
       )}
       style={{
@@ -765,6 +745,16 @@ export function PortfolioMicrosite({
       }}
     >
       <PortfolioBackground slot={resolved.background} theme={resolved} />
+      {personality.grainOverlay ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] opacity-[0.03]"
+          aria-hidden
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+          }}
+        />
+      ) : null}
 
       <div
         className={cn(

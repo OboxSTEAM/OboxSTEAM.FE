@@ -1,7 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  type ReactNode,
+} from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
 import {
   Eye,
@@ -16,6 +21,11 @@ import {
 import { EditableSection } from "@/components/portfolio/editor/editable-frame";
 import { MediaUploader } from "@/components/portfolio/editor/media-uploader";
 import { RichTextEditor } from "@/components/portfolio/editor/rich-text-editor";
+import {
+  HeroAvatarFrame,
+  PortfolioHeroCover,
+  PortfolioHeroShell,
+} from "@/components/portfolio/hero/portfolio-hero-shell";
 import {
   PortfolioBackground,
   PortfolioCardShell,
@@ -45,6 +55,8 @@ import {
   parseSectionSettingsJson,
   serializeSectionSettingsJson,
 } from "@/lib/api/entities/portfolio";
+import { getReadableTextColor, relativeLuminance } from "@/lib/portfolio/color-utils";
+import { editorChrome } from "@/lib/portfolio/editor-chrome";
 import {
   normalizeSectionOrder,
   PORTFOLIO_ITEM_TYPE_LABELS,
@@ -52,10 +64,12 @@ import {
   PORTFOLIO_SECTIONS,
   type PortfolioSectionId,
 } from "@/lib/portfolio/constants";
+import { getHeroStyle } from "@/lib/portfolio/hero-styles";
 import { hasPortfolioHtmlTags } from "@/lib/portfolio/sanitize-html";
 import {
   GALLERY_SLOT_OPTIONS,
   HERO_TEXT_SLOT_OPTIONS,
+  getPresetPersonality,
   resolvePortfolioTheme,
   type GallerySlotId,
   type ResolvedPortfolioTheme,
@@ -66,6 +80,12 @@ import {
   LIGHT_SELECT_TRIGGER_FULL,
 } from "@/lib/ui/select-styles";
 import { cn } from "@/lib/utils";
+
+const EditorChromeContext = createContext(editorChrome(false));
+
+function useChrome() {
+  return useContext(EditorChromeContext);
+}
 
 const PROJECT_TYPES = new Set([
   "CapstoneProject",
@@ -82,14 +102,6 @@ const CUSTOM_SECTION_KINDS = new Set<PortfolioSectionKind>([
   "Gallery",
   "Embed",
 ]);
-
-const STEAM_CHIPS = [
-  { label: "Science", colorKey: "primary" as const },
-  { label: "Tech", colorKey: "secondary" as const },
-  { label: "Engineering", colorKey: "accent" as const },
-  { label: "Arts", colorKey: "secondary" as const },
-  { label: "Math", colorKey: "primary" as const },
-];
 
 /** Drag-only tween — no layout projection (avoids TipTap remeasure thrash). */
 const EDITOR_DRAG_TRANSITION = {
@@ -189,27 +201,40 @@ function EditableSectionTitle({
   placeholder,
   primaryColor,
   headingFontCss,
+  monoLabels = false,
 }: {
   value: string;
   onChange: (next: string) => void;
   placeholder: string;
+  /** Kept for call-site compatibility; pill contrast drives field tone. */
   isDark: boolean;
   primaryColor: string;
   headingFontCss: string;
+  monoLabels?: boolean;
 }) {
+  const onPrimary = getReadableTextColor(primaryColor);
+  /** Light text means the pill bg is dark — TipTap placeholders need dark-tone. */
+  const fieldIsDark = relativeLuminance(onPrimary) > 0.5;
   return (
     <div
-      className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-white"
-      style={{ backgroundColor: primaryColor, fontFamily: headingFontCss }}
+      className={cn(
+        "inline-flex max-w-full items-center rounded-full px-4 py-1.5",
+        monoLabels && "font-mono text-sm uppercase tracking-[0.12em]",
+      )}
+      style={{
+        backgroundColor: primaryColor,
+        fontFamily: monoLabels ? undefined : headingFontCss,
+        color: onPrimary,
+      }}
     >
       <CompactRichField
         value={value}
         onChange={onChange}
         ariaLabel="Tiêu đề phần"
         placeholder={placeholder}
-        isDark
+        isDark={fieldIsDark}
         maxLength={200}
-        className="min-w-0 max-w-full text-base font-bold tracking-tight text-white [&_*]:text-white"
+        className="min-w-0 max-w-full text-base font-bold tracking-tight [&_*]:text-inherit"
       />
     </div>
   );
@@ -315,10 +340,12 @@ function HoverChrome({
   /** Keep chrome visible (e.g. while item/section is hidden). */
   alwaysVisible?: boolean;
 }) {
+  const chrome = useChrome();
   return (
     <div
       className={cn(
-        "absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1 py-0.5 shadow-sm transition-opacity duration-100",
+        "absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-full border px-1 py-0.5 transition-opacity duration-100",
+        chrome.hoverBar,
         alwaysVisible
           ? "opacity-100"
           : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
@@ -348,6 +375,7 @@ function ChromeButton({
   emphasized?: boolean;
   children: ReactNode;
 }) {
+  const chrome = useChrome();
   return (
     <button
       type="button"
@@ -358,9 +386,10 @@ function ChromeButton({
       className={cn(
         "flex size-7 items-center justify-center rounded-full transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
         emphasized
-          ? "bg-[#2D2D2D] text-white hover:bg-[#1a1a1a]"
-          : "text-[#2D2D2D] hover:bg-[#F0F0EA]",
-        destructive && !emphasized && "text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]",
+          ? chrome.iconBtnEmphasized
+          : destructive
+            ? chrome.iconBtnDestructive
+            : chrome.iconBtn,
         grabbable && "cursor-grab touch-none active:cursor-grabbing",
       )}
     >
@@ -371,8 +400,14 @@ function ChromeButton({
 
 /** Compact badge when an item/section is hidden in the editor. */
 function HiddenBadge({ label = "Đang ẩn" }: { label?: string }) {
+  const chrome = useChrome();
   return (
-    <span className="inline-flex shrink-0 items-center rounded-md bg-[#2D2D2D]/8 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#2D2D2D]">
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center rounded-md px-2 py-0.5 text-[10px] font-semibold tracking-wide",
+        chrome.iconBtnEmphasized,
+      )}
+    >
       {label}
     </span>
   );
@@ -461,6 +496,7 @@ function ItemCardEditable({
         isDark={resolved.isDark}
         accentColor={resolved.primaryColor}
         effectsEnabled={false}
+        radiusClass={getPresetPersonality(resolved.templateId).cardRadiusClass}
         className={cn("h-full", isHidden && "py-2.5")}
       >
         <HoverChrome alwaysVisible={isHidden}>
@@ -528,8 +564,11 @@ function ItemCardEditable({
               <div className="flex flex-wrap items-center gap-1.5">
                 {item.isFeatured ? (
                   <span
-                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-                    style={{ backgroundColor: resolved.primaryColor }}
+                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                    style={{
+                      backgroundColor: resolved.primaryColor,
+                      color: getReadableTextColor(resolved.primaryColor),
+                    }}
                   >
                     Nổi bật
                   </span>
@@ -716,6 +755,7 @@ function ItemsGroupEditable({
 
   const groupIds = items.map((item) => item.id);
   const layoutClass = itemsLayoutClass(resolved.layoutStyle);
+  const chrome = useChrome();
 
   return (
     <div className="relative space-y-3">
@@ -728,13 +768,21 @@ function ItemsGroupEditable({
             isDark={resolved.isDark}
             primaryColor={resolved.primaryColor}
             headingFontCss={resolved.headingFontCss}
+            monoLabels={getPresetPersonality(resolved.templateId).monoLabels}
           />
         ) : (
           <h2
-            className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight text-white"
+            className={cn(
+              "inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight",
+              getPresetPersonality(resolved.templateId).monoLabels &&
+                "font-mono text-sm uppercase tracking-[0.12em]",
+            )}
             style={{
-              fontFamily: resolved.headingFontCss,
+              fontFamily: getPresetPersonality(resolved.templateId).monoLabels
+                ? undefined
+                : resolved.headingFontCss,
               backgroundColor: resolved.primaryColor,
+              color: getReadableTextColor(resolved.primaryColor),
             }}
           >
             {hasHtmlTags(title) ? (
@@ -750,13 +798,18 @@ function ItemsGroupEditable({
       {dimmed ? null : (
         <div className="space-y-3">
           {items.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#C9C9C2] bg-white/60 px-4 py-6 text-center">
-              <p className="text-sm text-[#6B6B6B]">{emptyHint}</p>
+            <div
+              className={cn(
+                "flex flex-col items-center gap-3 px-4 py-6 text-center",
+                chrome.panel,
+              )}
+            >
+              <p className={cn("text-sm", chrome.muted)}>{emptyHint}</p>
               {showSyncInEmptyState ? (
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-9 rounded-xl"
+                  className={cn("h-9 rounded-xl", chrome.outlineBtn)}
                   disabled={isSyncing}
                   onClick={onSyncItems}
                 >
@@ -799,11 +852,18 @@ function ItemsGroupEditable({
             type="button"
             disabled={isAddingItem}
             onClick={() => onAddItem(defaultItemType)}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-2.5 text-xs font-medium transition-colors hover:border-[var(--pf-primary)] focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none disabled:pointer-events-none disabled:opacity-50"
-            style={{
-              borderColor: `${resolved.primaryColor}66`,
-              color: resolved.primaryColor,
-            }}
+            className={cn(
+              "flex w-full items-center justify-center gap-1.5 px-3 py-2.5 text-xs font-medium transition-colors focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none disabled:pointer-events-none disabled:opacity-50",
+              chrome.dashedCta,
+            )}
+            style={
+              resolved.isDark
+                ? undefined
+                : {
+                    borderColor: `${resolved.primaryColor}66`,
+                    color: resolved.primaryColor,
+                  }
+            }
           >
             <Plus className="size-3.5" />
             {isAddingItem ? "Đang thêm…" : "Thêm mục"}
@@ -828,21 +888,17 @@ function ProfileSectionEditable({
     stripHtmlText(draft.displayName) ||
     draft.studentName ||
     "Học viên OboxSTEAM";
-  const chipColors = {
-    primary: resolved.primaryColor,
-    secondary: resolved.secondaryColor,
-    accent: resolved.accentColor,
-  };
 
   const heroHint =
     HERO_TEXT_SLOT_OPTIONS.find((option) => option.id === resolved.heroText)
       ?.label ?? resolved.heroText;
+  const heroStyle = getHeroStyle(resolved.heroText);
+  const onAccent = getReadableTextColor(resolved.accentColor);
+  const onPrimary = getReadableTextColor(resolved.primaryColor);
 
   const nameClass = cn(
-    "text-2xl font-extrabold tracking-tight sm:text-4xl",
-    resolved.heroText === "Decrypted" && "font-mono tracking-[0.08em]",
-    resolved.heroText === "TrueFocus" && "tracking-tighter underline decoration-2 underline-offset-8",
-    resolved.heroText === "BlurShiny" && "italic tracking-wide opacity-95",
+    heroStyle.nameClass,
+    resolved.heroText === "Decrypted" && "font-mono",
     resolved.heroText === "SplitGradient" && "bg-clip-text text-transparent",
   );
 
@@ -860,187 +916,66 @@ function ProfileSectionEditable({
         : { fontFamily: resolved.headingFontCss };
 
   return (
-    <section
-      className={cn(
-        "relative overflow-hidden rounded-[1.25rem]",
-        resolved.isDark ? "bg-[#1a1a1a]/80" : "bg-white/90",
-        "p-5 sm:p-6",
-        "ring-2",
-      )}
-      style={{
-        ["--pf-primary" as string]: resolved.primaryColor,
-        boxShadow: `inset 0 4px 0 0 ${resolved.primaryColor}`,
-        borderColor: `${resolved.primaryColor}33`,
-      }}
-    >
-      <div className="relative -mx-5 -mt-5 mb-4 sm:-mx-6 sm:-mt-6">
-        {draft.coverImageUrl ? (
-          <div className="relative h-32 overflow-hidden sm:h-40">
-            <Image
-              src={draft.coverImageUrl}
-              alt=""
-              fill
-              unoptimized
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 896px"
-            />
-            <div
-              className="absolute inset-x-0 bottom-0 h-16"
-              style={{
-                background: `linear-gradient(to top, ${resolved.isDark ? "#1a1a1a" : "#ffffff"}ee, transparent)`,
-              }}
-            />
-          </div>
-        ) : (
-          <div
-            className="flex h-28 items-center justify-center sm:h-36"
+    <PortfolioHeroShell
+      slot={resolved.heroText}
+      isDark={resolved.isDark}
+      primaryColor={resolved.primaryColor}
+      secondaryColor={resolved.secondaryColor}
+      accentColor={resolved.accentColor}
+      cover={
+        <PortfolioHeroCover
+          slot={resolved.heroText}
+          coverImageUrl={draft.coverImageUrl}
+          isDark={resolved.isDark}
+          primaryColor={resolved.primaryColor}
+          secondaryColor={resolved.secondaryColor}
+          accentColor={resolved.accentColor}
+          overlay={
+            <div className="rounded-xl bg-white p-2 text-[#2D2D2D] shadow-sm ring-1 ring-[#E5E5E0]">
+              <MediaUploader
+                label="ảnh bìa"
+                isDark={false}
+                onUploadedUrl={(url) => onPatchDraft({ coverImageUrl: url })}
+                crop={{
+                  aspect: 2.5,
+                  cropShape: "rect",
+                  title: "Cắt ảnh bìa",
+                  description:
+                    "Kéo và thu phóng để chọn vùng hiển thị trên portfolio.",
+                  outputWidth: 1600,
+                  outputHeight: 640,
+                }}
+              />
+            </div>
+          }
+        />
+      }
+      eyebrowExtra={
+        resolved.heroText !== "Plain" ? (
+          <span
+            className="rounded-md px-2 py-0.5 text-[10px] font-semibold"
             style={{
-              background: `linear-gradient(135deg, ${resolved.primaryColor}55 0%, ${resolved.secondaryColor}40 48%, ${resolved.accentColor}35 100%)`,
+              backgroundColor: resolved.accentColor,
+              color: onAccent,
             }}
           >
-            <p className="rounded-lg bg-white/80 px-3 py-1.5 text-sm font-medium text-[#2D2D2D]">
-              Chưa có ảnh bìa
-            </p>
-          </div>
-        )}
-        <div className="absolute bottom-2 right-2 rounded-xl bg-white p-2 shadow-sm ring-1 ring-[#E5E5E0]">
-          <MediaUploader
-            label="ảnh bìa"
-            onUploadedUrl={(url) => onPatchDraft({ coverImageUrl: url })}
-            crop={{
-              aspect: 2.5,
-              cropShape: "rect",
-              title: "Cắt ảnh bìa",
-              description: "Kéo và thu phóng để chọn vùng hiển thị trên portfolio.",
-              outputWidth: 1600,
-              outputHeight: 640,
-            }}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="min-w-0 max-w-2xl flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p
-              className="font-mono text-[10px] font-semibold uppercase tracking-[0.18em]"
-              style={{ color: resolved.primaryColor }}
-            >
-              Portfolio STEAM
-            </p>
-            {resolved.heroText !== "Plain" ? (
-              <span
-                className="rounded-md px-2 py-0.5 text-[10px] font-semibold text-white"
-                style={{ backgroundColor: resolved.accentColor }}
-              >
-                Hero: {heroHint}
-              </span>
-            ) : null}
-          </div>
-
-          <div className="mt-1.5 flex flex-wrap gap-1.5">
-            {STEAM_CHIPS.map((chip) => (
-              <span
-                key={chip.label}
-                className="rounded-full px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-                style={{ backgroundColor: chipColors[chip.colorKey] }}
-              >
-                {chip.label}
-              </span>
-            ))}
-          </div>
-
-          <div className="mt-3 space-y-2">
-            <div className={nameClass} style={nameStyle}>
-              <CompactRichField
-                value={draft.displayName ?? ""}
-                onChange={(next) => onPatchDraft({ displayName: next })}
-                ariaLabel="Tên hiển thị"
-                placeholder={draft.studentName ?? "Tên của bạn…"}
-                isDark={
-                  resolved.heroText === "SplitGradient" ? false : tone === "dark"
-                }
-              />
-            </div>
-
-            <div
-              className={cn(
-                "text-base font-semibold sm:text-lg",
-                resolved.heroText === "Decrypted" && "font-mono text-sm sm:text-base",
-                resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
-              )}
-              style={{ fontFamily: resolved.headingFontCss }}
-            >
-              <CompactRichField
-                value={draft.headline ?? ""}
-                onChange={(next) => onPatchDraft({ headline: next })}
-                ariaLabel="Tiêu đề"
-                placeholder="VD: Học viên STEAM · Robotics"
-                isDark={resolved.isDark}
-              />
-            </div>
-          </div>
-
-          <div
-            className={cn(
-              "mt-2 text-sm leading-relaxed",
-              resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#5C5C5C]",
-            )}
-          >
-            <CompactRichField
-              value={draft.tagline ?? ""}
-              onChange={(next) => onPatchDraft({ tagline: next })}
-              ariaLabel="Tagline"
-              placeholder="Một câu ngắn về hành trình của bạn…"
-              isDark={resolved.isDark}
-            />
-          </div>
-
-          <div
-            className={cn(
-              "mt-3 max-w-xl",
-              resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
-            )}
-          >
-            <RichTextEditor
-              mode="full"
-              variant="inline"
-              isDark={resolved.isDark}
-              value={draft.summary ?? ""}
-              onChange={(next) => onPatchDraft({ summary: next })}
-              ariaLabel="Tóm tắt"
-              placeholder="Giới thiệu bản thân, mục tiêu học tập, định hướng…"
-            />
-          </div>
-        </div>
-
+            Hero: {heroHint}
+          </span>
+        ) : null
+      }
+      avatar={
         <div className="flex shrink-0 flex-col items-center gap-2">
-          {draft.avatarUrl ? (
-            <div
-              className="relative h-24 w-24 overflow-hidden rounded-xl shadow-lg sm:h-28 sm:w-28"
-              style={{ boxShadow: `0 0 0 3px ${resolved.primaryColor}` }}
-            >
-              <Image
-                src={draft.avatarUrl}
-                alt={name}
-                fill
-                unoptimized
-                className="object-cover"
-                sizes="112px"
-              />
-            </div>
-          ) : (
-            <div
-              className="flex h-24 w-24 items-center justify-center rounded-xl text-2xl font-bold text-white sm:h-28 sm:w-28"
-              style={{
-                background: `linear-gradient(145deg, ${resolved.primaryColor}, ${resolved.accentColor})`,
-              }}
-            >
-              {name.slice(0, 1).toUpperCase()}
-            </div>
-          )}
+          <HeroAvatarFrame
+            style={heroStyle}
+            primaryColor={resolved.primaryColor}
+            accentColor={resolved.accentColor}
+            name={name}
+            avatarUrl={draft.avatarUrl}
+            textColor={onPrimary}
+          />
           <MediaUploader
             label="avatar"
+            isDark={resolved.isDark}
             onUploadedUrl={(url) => onPatchDraft({ avatarUrl: url })}
             crop={{
               aspect: 1,
@@ -1052,8 +987,71 @@ function ProfileSectionEditable({
             }}
           />
         </div>
+      }
+    >
+      <div className="mt-3 space-y-2">
+        <div className={nameClass} style={nameStyle}>
+          <CompactRichField
+            value={draft.displayName ?? ""}
+            onChange={(next) => onPatchDraft({ displayName: next })}
+            ariaLabel="Tên hiển thị"
+            placeholder={draft.studentName ?? "Tên của bạn…"}
+            isDark={
+              resolved.heroText === "SplitGradient" ? false : tone === "dark"
+            }
+          />
+        </div>
+
+        <div
+          className={cn(
+            heroStyle.headlineClass,
+            resolved.heroText === "Decrypted" && "font-mono",
+            resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
+          )}
+          style={{ fontFamily: resolved.headingFontCss }}
+        >
+          <CompactRichField
+            value={draft.headline ?? ""}
+            onChange={(next) => onPatchDraft({ headline: next })}
+            ariaLabel="Tiêu đề"
+            placeholder="VD: Học viên STEAM · Robotics"
+            isDark={resolved.isDark}
+          />
+        </div>
       </div>
-    </section>
+
+      <div
+        className={cn(
+          heroStyle.taglineClass,
+          resolved.isDark ? "text-[#FAFAF5]/75" : "text-[#5C5C5C]",
+        )}
+      >
+        <CompactRichField
+          value={draft.tagline ?? ""}
+          onChange={(next) => onPatchDraft({ tagline: next })}
+          ariaLabel="Tagline"
+          placeholder="Một câu ngắn về hành trình của bạn…"
+          isDark={resolved.isDark}
+        />
+      </div>
+
+      <div
+        className={cn(
+          "mt-3 max-w-xl",
+          resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]",
+        )}
+      >
+        <RichTextEditor
+          mode="full"
+          variant="inline"
+          isDark={resolved.isDark}
+          value={draft.summary ?? ""}
+          onChange={(next) => onPatchDraft({ summary: next })}
+          ariaLabel="Tóm tắt"
+          placeholder="Giới thiệu bản thân, mục tiêu học tập, định hướng…"
+        />
+      </div>
+    </PortfolioHeroShell>
   );
 }
 
@@ -1072,6 +1070,7 @@ function LinksSectionEditable({
   onTitleChange?: (next: string) => void;
   dimmed?: boolean;
 }) {
+  const chrome = useChrome();
   const links = (draft.links ?? []).filter((link) => Boolean(link.url));
   const linkPalette = [
     resolved.primaryColor,
@@ -1090,13 +1089,21 @@ function LinksSectionEditable({
             isDark={resolved.isDark}
             primaryColor={resolved.primaryColor}
             headingFontCss={resolved.headingFontCss}
+            monoLabels={getPresetPersonality(resolved.templateId).monoLabels}
           />
         ) : (
           <h2
-            className="inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight text-white"
+            className={cn(
+              "inline-flex max-w-full items-center rounded-full px-4 py-1.5 text-base font-bold tracking-tight",
+              getPresetPersonality(resolved.templateId).monoLabels &&
+                "font-mono text-sm uppercase tracking-[0.12em]",
+            )}
             style={{
-              fontFamily: resolved.headingFontCss,
+              fontFamily: getPresetPersonality(resolved.templateId).monoLabels
+                ? undefined
+                : resolved.headingFontCss,
               backgroundColor: resolved.primaryColor,
+              color: getReadableTextColor(resolved.primaryColor),
             }}
           >
             {title}
@@ -1107,8 +1114,11 @@ function LinksSectionEditable({
           <button
             type="button"
             onClick={onOpenLinksPanel}
-            className="ml-auto flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity duration-100 group-hover/section:opacity-100 focus-visible:opacity-100"
-            style={{ backgroundColor: resolved.primaryColor }}
+            className="ml-auto flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold opacity-0 transition-opacity duration-100 group-hover/section:opacity-100 focus-visible:opacity-100"
+            style={{
+              backgroundColor: resolved.primaryColor,
+              color: getReadableTextColor(resolved.primaryColor),
+            }}
           >
             <Pencil className="size-3" />
             Chỉnh liên kết
@@ -1120,29 +1130,40 @@ function LinksSectionEditable({
         <button
           type="button"
           onClick={onOpenLinksPanel}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
-          style={{
-            borderColor: `${resolved.primaryColor}66`,
-            color: resolved.primaryColor,
-            backgroundColor: `${resolved.primaryColor}0d`,
-          }}
+          className={cn(
+            "flex w-full items-center justify-center gap-2 border-2 px-4 py-5 text-sm font-medium transition-colors outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+            chrome.dashedCta,
+          )}
+          style={
+            resolved.isDark
+              ? undefined
+              : {
+                  borderColor: `${resolved.primaryColor}66`,
+                  color: resolved.primaryColor,
+                  backgroundColor: `${resolved.primaryColor}0d`,
+                }
+          }
         >
           <Plus className="size-4" />
           Thêm GitHub, Behance, LinkedIn…
         </button>
       ) : (
         <div className="flex flex-wrap gap-2">
-          {links.map((link, index) => (
+          {links.map((link, index) => {
+            const bg = linkPalette[index % linkPalette.length]!;
+            return (
             <span
               key={`${link.url}-${index}`}
-              className="rounded-full px-3.5 py-1.5 text-sm font-medium text-white"
+              className="rounded-full px-3.5 py-1.5 text-sm font-medium"
               style={{
-                backgroundColor: linkPalette[index % linkPalette.length],
+                backgroundColor: bg,
+                color: getReadableTextColor(bg),
               }}
             >
               {link.label || link.url}
             </span>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -1206,6 +1227,7 @@ function CustomSectionEditable({
           isDark={resolved.isDark}
           primaryColor={resolved.primaryColor}
           headingFontCss={resolved.headingFontCss}
+          monoLabels={getPresetPersonality(resolved.templateId).monoLabels}
         />
         {dimmed ? <HiddenBadge label="Phần đang ẩn" /> : null}
       </div>
@@ -1269,6 +1291,7 @@ function CustomSectionEditable({
                 assets={section.mediaAssets}
                 onChange={(assets) => patch({ mediaAssets: assets })}
                 label="Ảnh thư viện"
+                isDark={resolved.isDark}
               />
               <PortfolioGallery
                 slot={resolveGalleryVariant(section, resolved)}
@@ -1469,20 +1492,26 @@ function AddSectionBar({
 }: {
   onAddSection?: PortfolioCanvasProps["onAddSection"];
 }) {
+  const chrome = useChrome();
   if (!onAddSection) return null;
 
   const kinds: PortfolioSectionKind[] = ["RichText", "Gallery", "Embed"];
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2 rounded-xl border border-dashed border-[#C9C9C2] bg-white/50 px-4 py-3">
-      <span className="text-xs font-medium text-[#6B6B6B]">Thêm phần:</span>
+    <div
+      className={cn(
+        "flex flex-wrap items-center justify-center gap-2 px-4 py-3",
+        chrome.panel,
+      )}
+    >
+      <span className={cn("text-xs font-medium", chrome.muted)}>Thêm phần:</span>
       {kinds.map((kind) => (
         <Button
           key={kind}
           type="button"
           variant="outline"
           size="sm"
-          className="h-8 rounded-lg text-xs"
+          className={cn("h-8 rounded-lg text-xs", chrome.outlineBtn)}
           onClick={() => onAddSection(kind)}
         >
           <Plus className="size-3.5" />
@@ -1685,12 +1714,19 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
   };
 
   const dynamicSectionIds = dynamicSections.map((section) => section.id);
+  const personality = getPresetPersonality(resolved.templateId);
+  const chrome = useMemo(
+    () => editorChrome(resolved.isDark),
+    [resolved.isDark],
+  );
 
   return (
+    <EditorChromeContext.Provider value={chrome}>
     <div
       className={cn(
         "relative mx-auto w-full max-w-[880px] overflow-hidden rounded-[1.5rem]",
         resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
+        personality.paperWash && !resolved.isDark && "bg-[#FDFBF7]/50",
         "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1",
         resolved.isDark ? "ring-[#FAFAF5]/10" : "ring-[#E5E5E0]",
       )}
@@ -1704,8 +1740,23 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
       }}
     >
       <PortfolioBackground slot={resolved.background} theme={resolved} />
+      {personality.grainOverlay ? (
+        <div
+          className="pointer-events-none absolute inset-0 z-[1] opacity-[0.03]"
+          aria-hidden
+          style={{
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
+          }}
+        />
+      ) : null}
 
-      <div className="relative z-10 px-4 py-8 sm:px-8 sm:py-10">
+      <div
+        className={cn(
+          "relative z-10 px-4 py-8 sm:px-8 sm:py-10",
+          personality.sectionPadClass,
+        )}
+      >
         {useDynamicSections ? (
           <div className={resolved.densityGapClass}>
             <div data-portfolio-section="profile" className="scroll-mt-28">
@@ -1760,5 +1811,6 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
         )}
       </div>
     </div>
+    </EditorChromeContext.Provider>
   );
 }

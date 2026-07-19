@@ -13,6 +13,7 @@ import {
   uploadPortfolioMedia,
 } from "@/lib/api/portfolios";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { editorChrome } from "@/lib/portfolio/editor-chrome";
 import { cn } from "@/lib/utils";
 
 const ACCEPT = "image/jpeg,image/jpg,image/png";
@@ -37,6 +38,11 @@ type MediaUploaderProps = {
   crop?: MediaUploadCropOptions;
   className?: string;
   label?: string;
+  /**
+   * When true (e.g. Neo Lab canvas), force dark chrome so text is not
+   * inherited as light-on-light from the parent portfolio surface.
+   */
+  isDark?: boolean;
 };
 
 type CropSource = {
@@ -51,6 +57,7 @@ export function MediaUploader({
   crop,
   className,
   label = "Ảnh",
+  isDark = false,
 }: MediaUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -59,6 +66,9 @@ export function MediaUploader({
   const [cropSource, setCropSource] = useState<CropSource | null>(null);
 
   const attached = assets ?? [];
+  const chrome = editorChrome(isDark);
+  const uploadButtonClass = cn("h-9 rounded-xl", chrome.outlineBtn);
+  const ghostButtonClass = cn("h-9 rounded-xl", chrome.ghostBtn);
 
   useEffect(() => {
     return () => {
@@ -185,7 +195,7 @@ export function MediaUploader({
         <Button
           type="button"
           variant="outline"
-          className="h-9 rounded-xl"
+          className={uploadButtonClass}
           disabled={isUploading || Boolean(cropSource)}
           onClick={() => inputRef.current?.click()}
         >
@@ -200,7 +210,7 @@ export function MediaUploader({
           <Button
             type="button"
             variant="ghost"
-            className="h-9 rounded-xl text-[#6B6B6B]"
+            className={ghostButtonClass}
             disabled={isLoadingLibrary}
             onClick={() => void loadLibrary()}
           >

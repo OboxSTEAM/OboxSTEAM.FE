@@ -7,7 +7,10 @@ import type {
   PortfolioTheme,
   PortfolioThemeSlotOverrides,
 } from "@/lib/api/entities/portfolio";
-import { parseThemeSettingsJson } from "@/lib/api/entities/portfolio";
+import {
+  parseThemeSettingsJson,
+  serializeThemeSettingsJson,
+} from "@/lib/api/entities/portfolio";
 import {
   getPortfolioFontCss,
   getPortfolioLayoutStyleId,
@@ -72,7 +75,8 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
   "aurora-signature": {
     id: "aurora-signature",
     label: "Aurora Signature",
-    description: "Năng lượng STEAM — aurora, spotlight, circular gallery.",
+    description:
+      "Năng lượng STEAM — aurora, tiêu đề gradient, thẻ spotlight, lưới bento.",
     isDark: false,
     background: "Aurora",
     heroText: "SplitGradient",
@@ -94,7 +98,8 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
   "editorial-ink": {
     id: "editorial-ink",
     label: "Editorial Ink",
-    description: "Tạp chí êm — serif, tilt cards, masonry.",
+    description:
+      "Tạp chí in — serif Georgia, khoảng trắng rộng, thẻ nghiêng, giấy grain.",
     isDark: false,
     background: "GradientSoft",
     heroText: "TrueFocus",
@@ -116,7 +121,8 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
   "neo-lab": {
     id: "neo-lab",
     label: "Neo Lab",
-    description: "Lab tối — grid, decrypted, star border.",
+    description:
+      "Lab tối — mono JetBrains, decrypt, viền sao, lưới chấm phát sáng.",
     isDark: true,
     background: "DotGrid",
     heroText: "Decrypted",
@@ -138,7 +144,8 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
   "studio-play": {
     id: "studio-play",
     label: "Studio Play",
-    description: "Sáng tạo vui — bounce, blur, carousel.",
+    description:
+      "Sáng tạo vui — violet/vàng, bounce shadow, blur + shiny, sóng nhẹ.",
     isDark: false,
     background: "Waves",
     heroText: "BlurShiny",
@@ -160,7 +167,8 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
   "quiet-minimal": {
     id: "quiet-minimal",
     label: "Quiet Minimal",
-    description: "Ít chuyển động — nền nhẹ, thẻ soft.",
+    description:
+      "Phòng trưng bày — gần monochrome, khoảng trắng lớn, không hiệu ứng.",
     isDark: false,
     background: "None",
     heroText: "Plain",
@@ -181,6 +189,70 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
   },
 };
 
+/** Render-layer personality tokens — makes each preset feel distinct beyond color. */
+export type PresetPersonality = {
+  /** Extra section rhythm on top of density. */
+  sectionPadClass: string;
+  cardRadiusClass: string;
+  grainOverlay: boolean;
+  /** Soft paper wash behind content (Editorial Ink). */
+  paperWash: boolean;
+  /** Mono micro-labels (Neo Lab). */
+  monoLabels: boolean;
+  /** Chunky playful card radius (Studio Play). */
+  playfulChrome: boolean;
+};
+
+export const PRESET_PERSONALITY: Record<PortfolioTemplateId, PresetPersonality> =
+  {
+    "aurora-signature": {
+      sectionPadClass: "py-1",
+      cardRadiusClass: "rounded-2xl",
+      grainOverlay: false,
+      paperWash: false,
+      monoLabels: false,
+      playfulChrome: false,
+    },
+    "editorial-ink": {
+      sectionPadClass: "py-3",
+      cardRadiusClass: "rounded-xl",
+      grainOverlay: true,
+      paperWash: true,
+      monoLabels: false,
+      playfulChrome: false,
+    },
+    "neo-lab": {
+      sectionPadClass: "py-0",
+      cardRadiusClass: "rounded-lg",
+      grainOverlay: false,
+      paperWash: false,
+      monoLabels: true,
+      playfulChrome: false,
+    },
+    "studio-play": {
+      sectionPadClass: "py-2",
+      cardRadiusClass: "rounded-[1.75rem]",
+      grainOverlay: false,
+      paperWash: false,
+      monoLabels: false,
+      playfulChrome: true,
+    },
+    "quiet-minimal": {
+      sectionPadClass: "py-4",
+      cardRadiusClass: "rounded-2xl",
+      grainOverlay: false,
+      paperWash: false,
+      monoLabels: false,
+      playfulChrome: false,
+    },
+  };
+
+export function getPresetPersonality(
+  templateId: PortfolioTemplateId,
+): PresetPersonality {
+  return PRESET_PERSONALITY[templateId] ?? PRESET_PERSONALITY["quiet-minimal"];
+}
+
 export const BACKGROUND_SLOT_OPTIONS: Array<{ id: BackgroundSlotId; label: string }> = [
   { id: "Aurora", label: "Aurora" },
   { id: "Waves", label: "Waves" },
@@ -190,11 +262,11 @@ export const BACKGROUND_SLOT_OPTIONS: Array<{ id: BackgroundSlotId; label: strin
 ];
 
 export const HERO_TEXT_SLOT_OPTIONS: Array<{ id: HeroTextSlotId; label: string }> = [
-  { id: "SplitGradient", label: "Split + Gradient" },
-  { id: "TrueFocus", label: "True Focus" },
-  { id: "Decrypted", label: "Decrypted" },
-  { id: "BlurShiny", label: "Blur + Shiny" },
-  { id: "Plain", label: "Plain" },
+  { id: "SplitGradient", label: "Editorial Split" },
+  { id: "TrueFocus", label: "Editorial Ink" },
+  { id: "Decrypted", label: "Neo Lab" },
+  { id: "BlurShiny", label: "Studio Play" },
+  { id: "Plain", label: "Quiet Minimal" },
 ];
 
 export const CARD_SLOT_OPTIONS: Array<{ id: CardSlotId; label: string }> = [
@@ -444,12 +516,25 @@ export function resolvePortfolioTheme(theme: PortfolioTheme): ResolvedPortfolioT
   };
 }
 
-/** Apply preset defaults onto a theme (keeps settingsJson overrides). */
+/**
+ * Apply preset defaults onto a theme.
+ * Resets card / background / reveal / backgroundMode overrides so the new
+ * preset shows its identity — but **preserves** the user's `heroText`
+ * choice (and typography slider steps).
+ */
 export function applyPresetToTheme(
   theme: PortfolioTheme,
   presetId: PortfolioTemplateId,
 ): PortfolioTheme {
   const preset = THEME_PRESETS[presetId];
+  const current = parseThemeSettingsJson(theme.settingsJson) ?? {};
+  const preserved: PortfolioThemeSlotOverrides = {};
+  if (current.heroText) preserved.heroText = current.heroText;
+  if (current.fontScaleStep != null) preserved.fontScaleStep = current.fontScaleStep;
+  if (current.lineHeightStep != null) {
+    preserved.lineHeightStep = current.lineHeightStep;
+  }
+
   return {
     ...theme,
     templateId: preset.id,
@@ -464,5 +549,6 @@ export function applyPresetToTheme(
     cardStyle: preset.cardStyle,
     backgroundStyle: preset.backgroundStyle,
     layoutStyle: preset.layoutStyle,
+    settingsJson: serializeThemeSettingsJson(preserved),
   };
 }

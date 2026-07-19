@@ -140,3 +140,47 @@ export function deriveCompanionColors(primary: string): {
     accent: mixHex(primary, "#7E57C2", 0.42),
   };
 }
+
+function srgbChannelToLinear(channel: number): number {
+  const c = channel / 255;
+  return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+}
+
+/** WCAG relative luminance for `#RRGGBB`. */
+export function relativeLuminance(hex: string): number {
+  const rgb = parseHexColor(hex);
+  if (!rgb) return 0;
+  const r = srgbChannelToLinear(rgb.r);
+  const g = srgbChannelToLinear(rgb.g);
+  const b = srgbChannelToLinear(rgb.b);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG contrast ratio between two hex colors (1–21). */
+export function contrastRatio(a: string, b: string): number {
+  const l1 = relativeLuminance(a);
+  const l2 = relativeLuminance(b);
+  const lighter = Math.max(l1, l2);
+  const darker = Math.min(l1, l2);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+const DEFAULT_DARK_TEXT = "#1a1a1a";
+const DEFAULT_LIGHT_TEXT = "#FAFAF5";
+
+/**
+ * Pick dark or light text for a filled background so buttons/badges
+ * stay readable on both light and dark portfolio presets (e.g. cyan
+ * primary on Neo Lab must not use white text).
+ */
+export function getReadableTextColor(
+  background: string,
+  options?: { dark?: string; light?: string },
+): string {
+  const dark = options?.dark ?? DEFAULT_DARK_TEXT;
+  const light = options?.light ?? DEFAULT_LIGHT_TEXT;
+  const bg = normalizeHexColor(background, "#2D2D2D");
+  const darkContrast = contrastRatio(bg, dark);
+  const lightContrast = contrastRatio(bg, light);
+  return lightContrast >= darkContrast ? light : dark;
+}

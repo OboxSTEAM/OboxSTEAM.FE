@@ -42,6 +42,7 @@ import {
   type RevealSlotId,
 } from "@/lib/portfolio/theme-presets";
 import { cn } from "@/lib/utils";
+import type { CSSProperties } from "react";
 
 type DesignPanelProps = {
   theme: PortfolioTheme;
@@ -291,6 +292,90 @@ function ThemeSlider({
   );
 }
 
+function PresetIdentityPreview({
+  preset,
+}: {
+  preset: (typeof THEME_PRESETS)[PortfolioTemplateId];
+}) {
+  const heroHint =
+    preset.heroText === "SplitGradient"
+      ? "bg-gradient-to-r from-[var(--p)] to-[var(--a)] bg-clip-text text-transparent font-extrabold"
+      : preset.heroText === "Decrypted"
+        ? "font-mono tracking-wider"
+        : preset.heroText === "BlurShiny"
+          ? "italic"
+          : preset.heroText === "TrueFocus"
+            ? "tracking-tighter underline decoration-2"
+            : "font-semibold";
+
+  const bgClass =
+    preset.background === "Aurora"
+      ? "from-[#4FC3F7]/40 via-[#7E57C2]/25 to-[#E94B3C]/20"
+      : preset.background === "Waves"
+        ? "from-[#7E57C2]/20 to-[#FDD835]/25"
+        : preset.background === "DotGrid"
+          ? "from-[#1a1a1a] to-[#2a2a2a]"
+          : preset.background === "GradientSoft"
+            ? "from-[#2D2D2D]/10 to-[#E94B3C]/15"
+            : "from-[#F5F5F0] to-[#FAFAF5]";
+
+  return (
+    <div
+      className={cn(
+        "relative mt-2.5 overflow-hidden rounded-xl border border-[#E5E5E0] p-2",
+        preset.isDark ? "bg-[#121212] text-[#FAFAF5]" : "bg-white text-[#2D2D2D]",
+      )}
+      style={
+        {
+          ["--p" as string]: preset.primaryColor,
+          ["--s" as string]: preset.secondaryColor,
+          ["--a" as string]: preset.accentColor,
+        } as CSSProperties
+      }
+    >
+      <div
+        className={cn(
+          "mb-1.5 h-5 w-full rounded-md bg-gradient-to-br",
+          bgClass,
+        )}
+      />
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className={cn("truncate text-[11px] leading-tight", heroHint)}>
+            Aa Name
+          </p>
+          <p
+            className="mt-0.5 truncate text-[9px] opacity-70"
+            style={{
+              fontFamily:
+                preset.headingFontFamily === "georgia"
+                  ? "Georgia, serif"
+                  : preset.headingFontFamily === "mono"
+                    ? "ui-monospace, monospace"
+                    : undefined,
+            }}
+          >
+            Headline
+          </p>
+        </div>
+        <div
+          className={cn(
+            "size-7 shrink-0",
+            preset.card === "Tilted" && "rotate-6 rounded-md",
+            preset.card === "Bounce" && "rounded-xl shadow-[0_3px_0_0_var(--a)]",
+            preset.card === "StarBorder" &&
+              "rounded-md border border-dashed border-[var(--p)]",
+            preset.card === "Spotlight" && "rounded-lg ring-2 ring-[var(--p)]",
+            preset.card === "Soft" && "rounded-2xl",
+            preset.isDark ? "bg-[#2a2a2a]" : "bg-[#F0F0EA]",
+          )}
+          style={{ backgroundColor: `${preset.primaryColor}33` }}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
   const templateId = getPortfolioTemplateId(theme.templateId);
   const preset = THEME_PRESETS[templateId];
@@ -460,7 +545,8 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                 <p className="mt-1 text-xs leading-relaxed text-[#5C5C5C]">
                   {presetOption.description}
                 </p>
-                <div className="mt-2.5 flex gap-1.5">
+                <PresetIdentityPreview preset={presetOption} />
+                <div className="mt-2 flex gap-1.5">
                   {[
                     presetOption.primaryColor,
                     presetOption.secondaryColor,
@@ -468,10 +554,15 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   ].map((color) => (
                     <span
                       key={`${presetOption.id}-${color}`}
-                      className="size-4 rounded-full border border-[#E5E5E0]"
+                      className="size-3.5 rounded-full border border-[#E5E5E0]"
                       style={{ backgroundColor: color }}
                     />
                   ))}
+                  {presetOption.isDark ? (
+                    <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide text-[#6B6B6B]">
+                      Dark
+                    </span>
+                  ) : null}
                 </div>
               </SelectBox>
             );

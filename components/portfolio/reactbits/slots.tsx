@@ -12,6 +12,7 @@ import type {
   RevealSlotId,
   ResolvedPortfolioTheme,
 } from "@/lib/portfolio/theme-presets";
+import { getHeroStyle, HERO_MOTION } from "@/lib/portfolio/hero-styles";
 import { cn } from "@/lib/utils";
 
 const Aurora = dynamic(() => import("@/components/Aurora"), { ssr: false });
@@ -183,32 +184,39 @@ export function PortfolioHeroText({
 }) {
   const animate = useShouldAnimate();
   const [c0, c1, c2] = colors;
+  const style = getHeroStyle(slot);
+  const motion = HERO_MOTION;
 
   if (!animate || slot === "Plain") {
     return (
-      <div className={className}>
-        <p className="font-heading text-3xl font-extrabold tracking-tight sm:text-4xl">
-          {name}
-        </p>
+      <div className={cn("mt-3", className)}>
+        <p className={cn("font-heading", style.nameClass)}>{name}</p>
         {headline ? (
-          <p className="mt-2 text-lg font-medium opacity-90">{headline}</p>
+          <p className={cn(style.headlineClass, "opacity-90")}>{headline}</p>
         ) : null}
       </div>
     );
   }
 
   return (
-    <div className={className}>
+    <div className={cn("mt-3", className)}>
       {slot === "SplitGradient" ? (
         <>
           <SplitText
             text={name}
-            className="font-heading text-3xl font-extrabold tracking-tight sm:text-4xl"
-            delay={40}
+            className={cn("font-heading", style.nameClass)}
+            delay={motion.splitText.delay}
+            duration={motion.splitText.duration}
+            ease={motion.splitText.ease}
+            textAlign="left"
           />
           {headline ? (
-            <div className="mt-2 text-lg font-semibold">
-              <GradientText colors={[c0, c1, c2]} showBorder={false}>
+            <div className={style.headlineClass}>
+              <GradientText
+                colors={[c0, c1, c2]}
+                showBorder={false}
+                animationSpeed={motion.gradientText.animationSpeed}
+              >
                 {headline}
               </GradientText>
             </div>
@@ -219,8 +227,11 @@ export function PortfolioHeroText({
         <TrueFocus
           sentence={headline ? `${name} — ${headline}` : name}
           manualMode={false}
-          blurAmount={4}
+          blurAmount={motion.trueFocus.blurAmount}
           borderColor={c0}
+          glowColor={`${c0}99`}
+          animationDuration={motion.trueFocus.animationDuration}
+          pauseBetweenAnimations={motion.trueFocus.pauseBetweenAnimations}
         />
       ) : null}
       {slot === "Decrypted" ? (
@@ -228,19 +239,32 @@ export function PortfolioHeroText({
           <DecryptedText
             text={name}
             animateOn="view"
-            className="font-heading text-3xl font-bold"
+            speed={motion.decrypted.speed}
+            maxIterations={motion.decrypted.maxIterations}
+            className={cn("font-heading", style.nameClass)}
+            parentClassName="font-heading"
           />
           {headline ? (
-            <p className="mt-2 font-mono text-sm opacity-80">{headline}</p>
+            <p className={style.headlineClass}>{headline}</p>
           ) : null}
         </>
       ) : null}
       {slot === "BlurShiny" ? (
         <>
-          <BlurText text={name} className="font-heading text-3xl font-extrabold" />
+          <BlurText
+            text={name}
+            className={cn("font-heading", style.nameClass)}
+            delay={motion.blurText.delay}
+            stepDuration={motion.blurText.stepDuration}
+          />
           {headline ? (
-            <div className="mt-2">
-              <ShinyText text={headline} speed={3} className="text-lg font-medium" />
+            <div className={style.headlineClass}>
+              <ShinyText
+                text={headline}
+                speed={motion.shinyText.speed}
+                className="text-lg font-medium"
+                color={c0}
+              />
             </div>
           ) : null}
         </>
@@ -257,6 +281,7 @@ export function PortfolioCardShell({
   accentColor = "#4FC3F7",
   /** Skip pointer-tracking wrappers (Spotlight/Glare/StarBorder) — keep static chrome. */
   effectsEnabled = true,
+  radiusClass = "rounded-2xl",
   children,
 }: {
   slot: CardSlotId;
@@ -267,6 +292,8 @@ export function PortfolioCardShell({
   /** Theme primary — drives distinct card chrome per slot. */
   accentColor?: string;
   effectsEnabled?: boolean;
+  /** Preset personality radius (e.g. Studio Play squircles). */
+  radiusClass?: string;
   children: ReactNode;
 }) {
   const animate = useShouldAnimate();
@@ -301,7 +328,8 @@ export function PortfolioCardShell({
   const body = (
     <div
       className={cn(
-        "relative z-[1] h-full min-w-0 overflow-hidden rounded-2xl p-4 sm:p-5",
+        "relative z-[1] h-full min-w-0 overflow-hidden p-4 sm:p-5",
+        radiusClass,
         surfaceClass,
         slotChrome.className,
         className,
