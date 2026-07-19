@@ -7,6 +7,7 @@ import {
 } from "@/components/portfolio/render/portfolio-microsite";
 import { ApiRequestError } from "@/lib/api/errors";
 import { getPublicPortfolioBySubdomain } from "@/lib/api/portfolios";
+import { stripPortfolioHtmlText } from "@/lib/portfolio/sanitize-html";
 import { portfolioSubdomainParamSchema } from "@/lib/validations/portfolios";
 
 type PublicPortfolioPageProps = {
@@ -40,17 +41,19 @@ export async function generateMetadata({
   }
 
   const title =
-    portfolio.displayName ??
-    portfolio.studentName ??
+    stripPortfolioHtmlText(portfolio.displayName) ||
+    stripPortfolioHtmlText(portfolio.studentName) ||
     parsed.data.subdomain;
+
+  const description =
+    stripPortfolioHtmlText(portfolio.headline) ||
+    stripPortfolioHtmlText(portfolio.tagline) ||
+    stripPortfolioHtmlText(portfolio.summary) ||
+    "Portfolio STEAM công khai trên OboxSTEAM.";
 
   return {
     title: `${title} — Portfolio OboxSTEAM`,
-    description:
-      portfolio.headline ??
-      portfolio.tagline ??
-      portfolio.summary ??
-      "Portfolio STEAM công khai trên OboxSTEAM.",
+    description,
   };
 }
 

@@ -281,7 +281,7 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-8 rounded-lg border-white/20 bg-transparent text-xs text-white hover:bg-white/10"
+                  className="h-8 rounded-lg border-white/20 bg-transparent text-xs text-white hover:bg-white/10 hover:text-white"
                   onClick={() => window.open(pathUrl, "_blank", "noreferrer")}
                 >
                   <ExternalLink className="size-3.5" />
