@@ -89,9 +89,9 @@ export function PortfolioToolbar({
         "shadow-[0_1px_0_rgba(45,45,45,0.04)]",
       )}
     >
-      <div className="mx-auto flex h-14 max-w-[110rem] items-center gap-3 px-4 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2.5">
-          <h1 className="min-w-0 truncate font-heading text-base font-bold text-[#2D2D2D] sm:text-lg">
+      <div className="mx-auto flex h-14 max-w-[110rem] items-center gap-2 px-3 sm:gap-3 sm:px-6">
+        <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
+          <h1 className="min-w-0 truncate font-heading text-sm font-bold text-[#2D2D2D] sm:text-lg">
             Portfolio của tôi
           </h1>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -99,7 +99,7 @@ export function PortfolioToolbar({
               <span
                 key={chip.key}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-medium whitespace-nowrap",
+                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap sm:px-2.5",
                   TONE_CHIP[chip.tone],
                   // Keep save status always visible; publish chip from sm up.
                   index > 0 && "hidden sm:inline-flex",
@@ -115,12 +115,13 @@ export function PortfolioToolbar({
           </div>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Button
             type="button"
             variant="outline"
-            className="h-10 rounded-xl"
+            className="size-10 rounded-xl p-0 sm:h-10 sm:w-auto sm:px-3"
             onClick={() => setPreviewOpen(true)}
+            aria-label="Xem trước"
           >
             <Eye className="size-4" />
             <span className="hidden sm:inline">Xem trước</span>
@@ -129,10 +130,12 @@ export function PortfolioToolbar({
             type="button"
             disabled={!isDirty || isSaving}
             onClick={onSave}
-            className="h-10 rounded-xl bg-[#7CB342] px-4 text-white hover:bg-[#7CB342]/90"
+            className="h-10 rounded-xl bg-[#7CB342] px-2.5 text-white hover:bg-[#7CB342]/90 sm:px-4"
           >
             <Save className="size-4" />
-            {isSaving ? "Đang lưu…" : "Lưu"}
+            <span className="hidden min-[380px]:inline">
+              {isSaving ? "Đang lưu…" : "Lưu"}
+            </span>
           </Button>
           <PublishPopover portfolio={draft} onUpdated={onServerUpdate} />
         </div>

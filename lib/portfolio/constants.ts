@@ -71,7 +71,7 @@ export const PORTFOLIO_LAYOUT_STYLES = [
   {
     id: "stacked",
     label: "Stacked",
-    description: "Một cột, khoảng cách gọn.",
+    description: "Danh sách một cột, khoảng cách gọn.",
   },
   {
     id: "bento",
@@ -81,7 +81,7 @@ export const PORTFOLIO_LAYOUT_STYLES = [
   {
     id: "timeline",
     label: "Timeline",
-    description: "Trục thời gian cho các mục.",
+    description: "Trục dọc + mốc thời gian cho từng mục.",
   },
   {
     id: "masonry",

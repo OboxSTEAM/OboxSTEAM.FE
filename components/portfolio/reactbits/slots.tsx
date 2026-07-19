@@ -284,7 +284,7 @@ export function PortfolioCardShell({
         }
       : slot === "Tilted"
         ? {
-            className: "origin-center rotate-2",
+            className: "origin-center sm:rotate-2",
             style: {
               boxShadow: `6px 10px 0 0 ${accentColor}33`,
             } as CSSProperties,
@@ -306,7 +306,7 @@ export function PortfolioCardShell({
   return (
     <div
       className={cn(
-        "relative z-[1] h-full min-w-0 overflow-hidden p-4 sm:p-5",
+        "relative z-[1] h-full min-w-0 overflow-hidden p-3.5 sm:p-5",
         radiusClass,
         surfaceClass,
         slotChrome.className,
@@ -444,7 +444,7 @@ export function PortfolioGallery({
     return (
       <div
         className={cn(
-          "h-[380px] w-full overflow-hidden rounded-2xl",
+          "h-[260px] w-full overflow-hidden rounded-xl sm:h-[320px] sm:rounded-2xl md:h-[380px]",
           isEditable && "cursor-pointer",
           className,
         )}
@@ -467,7 +467,7 @@ export function PortfolioGallery({
             alt: image.caption?.trim() || image.alt || "",
           }))}
           fit={0.72}
-          minRadius={480}
+          minRadius={320}
           maxRadius={620}
           grayscale={false}
           overlayBlurColor={domeSurface.overlay}
@@ -492,8 +492,8 @@ export function PortfolioGallery({
     <div
       className={cn(
         slot === "Carousel"
-          ? "flex gap-3 overflow-x-auto pb-2 snap-x"
-          : "grid grid-cols-2 gap-3 sm:grid-cols-3",
+          ? "flex gap-2.5 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x sm:gap-3 [&::-webkit-scrollbar]:hidden"
+          : "grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3",
         className,
       )}
     >
@@ -505,7 +505,7 @@ export function PortfolioGallery({
             key={`${image.src}-${index}`}
             className={cn(
               "min-w-0",
-              slot === "Carousel" && "w-72 shrink-0 snap-center",
+              slot === "Carousel" && "w-[min(18rem,78vw)] shrink-0 snap-center sm:w-72",
             )}
           >
             <button
@@ -525,7 +525,7 @@ export function PortfolioGallery({
                 alt={caption}
                 className={cn(
                   "rounded-xl object-cover",
-                  slot === "Carousel" ? "h-48 w-full" : "aspect-square w-full",
+                  slot === "Carousel" ? "h-40 w-full sm:h-48" : "aspect-square w-full",
                 )}
               />
             </button>

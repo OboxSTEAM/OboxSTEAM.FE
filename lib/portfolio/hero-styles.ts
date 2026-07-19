@@ -76,7 +76,7 @@ export const HERO_STYLES: Record<HeroTextSlotId, HeroStyleDescriptor> = {
     avatarRing: "double",
     eyebrowClass: "tracking-[0.2em]",
     nameClass:
-      "text-3xl font-extrabold tracking-tighter sm:text-5xl leading-none",
+      "text-2xl font-extrabold tracking-tighter sm:text-5xl leading-none",
     headlineClass: "mt-2 text-lg font-semibold sm:text-xl",
     taglineClass: "mt-3 text-sm leading-relaxed sm:text-base",
     decoration: "none",
@@ -93,7 +93,7 @@ export const HERO_STYLES: Record<HeroTextSlotId, HeroStyleDescriptor> = {
     avatarRing: "circle",
     eyebrowClass: "tracking-[0.22em]",
     nameClass:
-      "text-3xl font-extrabold tracking-tighter sm:text-4xl underline decoration-2 underline-offset-8",
+      "text-2xl font-extrabold tracking-tighter sm:text-4xl underline decoration-2 underline-offset-8",
     headlineClass: "mt-3 text-base font-medium sm:text-lg",
     taglineClass: "mt-4 max-w-xl text-sm leading-relaxed",
     decoration: "paper-grain",
@@ -127,7 +127,7 @@ export const HERO_STYLES: Record<HeroTextSlotId, HeroStyleDescriptor> = {
     avatarClass: "h-28 w-28 sm:h-32 sm:w-32",
     avatarRing: "play",
     eyebrowClass: "tracking-[0.16em]",
-    nameClass: "text-3xl font-extrabold italic tracking-wide sm:text-4xl",
+    nameClass: "text-2xl font-extrabold italic tracking-wide sm:text-4xl",
     headlineClass: "mt-2 text-lg font-medium",
     taglineClass: "mt-3 text-sm leading-relaxed",
     decoration: "accent-block",

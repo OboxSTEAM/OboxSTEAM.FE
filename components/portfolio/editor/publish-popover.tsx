@@ -156,12 +156,12 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
         render={
           <Button
             type="button"
-            className="h-10 rounded-xl bg-[#2D2D2D] px-4 text-white hover:bg-[#2D2D2D]/90"
+            className="h-10 rounded-xl bg-[#2D2D2D] px-2.5 text-white hover:bg-[#2D2D2D]/90 sm:px-4"
           />
         }
       >
         <Globe className="size-4" />
-        Xuất bản
+        <span className="hidden min-[380px]:inline">Xuất bản</span>
         <span
           className={cn(
             "size-2 rounded-full",
@@ -187,16 +187,16 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
 
           <div className="space-y-2">
             <Label htmlFor="publish-subdomain">Subdomain</Label>
-            <div className="flex items-center overflow-hidden rounded-xl border border-[#E5E5E0] bg-[#FAFAF5]">
+            <div className="flex min-w-0 items-center overflow-hidden rounded-xl border border-[#E5E5E0] bg-[#FAFAF5]">
               <Input
                 id="publish-subdomain"
                 value={subdomain}
                 onChange={(event) => setSubdomain(event.target.value)}
-                className="h-10 rounded-none border-0 bg-transparent"
+                className="h-10 min-w-0 flex-1 rounded-none border-0 bg-transparent"
                 placeholder="ten-ban"
                 autoComplete="off"
               />
-              <span className="shrink-0 border-l border-[#E5E5E0] px-3 font-mono text-xs text-[#6B6B6B]">
+              <span className="max-w-[40%] shrink-0 truncate border-l border-[#E5E5E0] px-2 font-mono text-[10px] text-[#6B6B6B] sm:max-w-none sm:px-3 sm:text-xs">
                 .{rootDomain}
               </span>
             </div>

@@ -14,6 +14,13 @@ import {
   type GalleryImage,
 } from "@/components/portfolio/reactbits/slots";
 import { PortfolioLinkTiles } from "@/components/portfolio/links/portfolio-link-tiles";
+import {
+  itemSpanClass,
+  itemsLayoutClass,
+  isTimelineLayout,
+  TimelineEntry,
+  TimelineList,
+} from "@/components/portfolio/render/items-layout";
 import { RichText } from "@/components/portfolio/render/rich-text";
 import type {
   Portfolio,
@@ -143,38 +150,6 @@ function sectionMediaToGalleryImages(
     }));
 }
 
-function itemSpanClass(
-  span: PortfolioItem["span"],
-  layoutStyle: ResolvedPortfolioTheme["layoutStyle"],
-): string {
-  if (layoutStyle !== "bento") return "";
-  switch (span) {
-    case "Wide":
-      return "sm:col-span-2";
-    case "Tall":
-      return "sm:row-span-2";
-    case "Large":
-      return "sm:col-span-2 sm:row-span-2";
-    default:
-      return "";
-  }
-}
-
-function itemsLayoutClass(
-  layoutStyle: ResolvedPortfolioTheme["layoutStyle"],
-): string {
-  switch (layoutStyle) {
-    case "bento":
-      return "grid auto-rows-auto gap-4 sm:grid-cols-2";
-    case "timeline":
-      return "relative space-y-4";
-    case "masonry":
-      return "columns-1 gap-4 sm:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid";
-    default:
-      return "space-y-4";
-  }
-}
-
 function itemMediaSources(item: PortfolioItem): PortfolioMediaAsset[] {
   if (item.mediaAssets?.length) {
     return item.mediaAssets.filter((asset) => Boolean(asset.url));
@@ -244,7 +219,7 @@ function ItemCard({
   const cardSurface = resolved.cardSurfaceClass;
   const dateRange = formatPortfolioItemDateRange(item.startDate, item.endDate);
 
-  return (
+  const card = (
     <div className={cn("h-full", itemSpanClass(item.span, layoutStyle))}>
       <PortfolioCardShell
         slot={resolved.card}
@@ -318,7 +293,7 @@ function ItemCard({
         </div>
       ) : null}
 
-      {dateRange ? (
+      {dateRange && !isTimelineLayout(layoutStyle) ? (
         <p
           className={cn(
             "mt-1 text-xs",
@@ -357,6 +332,18 @@ function ItemCard({
       ) : null}
       </PortfolioCardShell>
     </div>
+  );
+
+  if (!isTimelineLayout(layoutStyle)) return card;
+
+  return (
+    <TimelineEntry
+      primaryColor={resolved.primaryColor}
+      isDark={resolved.isDark}
+      dateLabel={dateRange}
+    >
+      {card}
+    </TimelineEntry>
   );
 }
 
@@ -406,20 +393,34 @@ function ItemsSection({
   if (items.length === 0) return null;
 
   const layoutClass = itemsLayoutClass(resolved.layoutStyle);
+  const timeline = isTimelineLayout(resolved.layoutStyle);
+
+  const list = (
+    <div className={layoutClass}>
+      {items.map((item) => (
+        <ItemCard
+          key={item.id}
+          item={item}
+          resolved={resolved}
+          layoutStyle={resolved.layoutStyle}
+        />
+      ))}
+    </div>
+  );
 
   return (
     <section className="space-y-4">
       <SectionHeading title={title} resolved={resolved} />
-      <div className={layoutClass}>
-        {items.map((item) => (
-          <ItemCard
-            key={item.id}
-            item={item}
-            resolved={resolved}
-            layoutStyle={resolved.layoutStyle}
-          />
-        ))}
-      </div>
+      {timeline ? (
+        <TimelineList
+          primaryColor={resolved.primaryColor}
+          isDark={resolved.isDark}
+        >
+          {list}
+        </TimelineList>
+      ) : (
+        list
+      )}
     </section>
   );
 }
@@ -732,7 +733,7 @@ export function PortfolioMicrosite({
         "relative min-h-full",
         resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         personality.paperWash && !resolved.isDark && "bg-[#FDFBF7]/40",
-        compact ? "p-4" : "px-4 py-8 sm:px-6 sm:py-12",
+        compact ? "p-4" : "px-3 py-6 sm:px-6 sm:py-12",
         personality.sectionPadClass,
         className,
       )}

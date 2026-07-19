@@ -36,7 +36,7 @@ export default function AccordionGallery({
   return (
     <div
       className={cn(
-        "flex h-[280px] w-full gap-1.5 overflow-hidden sm:h-[320px]",
+        "flex h-[220px] w-full gap-1 overflow-hidden sm:h-[280px] sm:gap-1.5 md:h-[320px]",
         className,
       )}
       onMouseLeave={() => {
@@ -60,10 +60,10 @@ export default function AccordionGallery({
               onImageActivate?.(index);
             }}
             className={cn(
-              "relative min-w-0 overflow-hidden rounded-2xl outline-none",
+              "relative min-w-0 overflow-hidden rounded-xl outline-none sm:rounded-2xl",
               "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/60",
               "transition-[flex-grow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
-              isActive ? "flex-[3.2]" : "flex-[0.85]",
+              isActive ? "flex-[3.2]" : "flex-[0.7] sm:flex-[0.85]",
             )}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}

@@ -179,7 +179,7 @@ export function SectionOutlinePanel({
         className,
       )}
     >
-      <div className="sticky top-[8.5rem] max-h-[calc(100vh-9.5rem)] overflow-y-auto px-2.5 py-4">
+      <div className="sticky top-[8.5rem] max-h-[calc(100dvh-9.5rem)] overflow-y-auto px-2.5 py-4">
         <p className="px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0f7cad]">
           Cấu trúc
         </p>

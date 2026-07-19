@@ -31,6 +31,13 @@ import {
 } from "@/components/portfolio/hero/portfolio-hero-shell";
 import { PortfolioLinkTiles } from "@/components/portfolio/links/portfolio-link-tiles";
 import {
+  itemSpanClass,
+  itemsLayoutClass,
+  isTimelineLayout,
+  TimelineEntry,
+  TimelineList,
+} from "@/components/portfolio/render/items-layout";
+import {
   PortfolioBackground,
   PortfolioCardShell,
   PortfolioGallery,
@@ -344,38 +351,6 @@ function sectionMediaToGalleryImages(
     }));
 }
 
-function itemSpanClass(
-  span: PortfolioItem["span"],
-  layoutStyle: ResolvedPortfolioTheme["layoutStyle"],
-): string {
-  if (layoutStyle !== "bento") return "";
-  switch (span) {
-    case "Wide":
-      return "sm:col-span-2";
-    case "Tall":
-      return "sm:row-span-2";
-    case "Large":
-      return "sm:col-span-2 sm:row-span-2";
-    default:
-      return "";
-  }
-}
-
-function itemsLayoutClass(
-  layoutStyle: ResolvedPortfolioTheme["layoutStyle"],
-): string {
-  switch (layoutStyle) {
-    case "bento":
-      return "grid auto-rows-auto gap-3 sm:grid-cols-2";
-    case "timeline":
-      return "relative space-y-3";
-    case "masonry":
-      return "columns-1 gap-3 sm:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid";
-    default:
-      return "space-y-3";
-  }
-}
-
 function itemMediaSources(item: PortfolioItem): PortfolioMediaAsset[] {
   if (item.mediaAssets?.length) {
     return item.mediaAssets.filter((asset) => Boolean(asset.url));
@@ -417,7 +392,8 @@ function HoverChrome({
         chrome.hoverBar,
         alwaysVisible
           ? "opacity-100"
-          : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
+          : // Touch / coarse pointers: always show. Fine pointer: reveal on hover/focus.
+            "opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:group-focus-within:opacity-100",
         className,
       )}
     >
@@ -567,6 +543,7 @@ function ItemCardEditable({
   /** Free 2D drag in grid layouts — Reorder still sorts on the group axis (y). */
   const isGridLayout =
     resolved.layoutStyle === "bento" || resolved.layoutStyle === "masonry";
+  const timeline = isTimelineLayout(resolved.layoutStyle);
 
   const fieldInputClass = cn(
     "h-8 rounded-lg border-dashed px-2 text-xs shadow-none",
@@ -616,15 +593,21 @@ function ItemCardEditable({
       )}
       style={isGridLayout ? { touchAction: "none" } : undefined}
     >
-      <PortfolioCardShell
-        slot={resolved.card}
-        surfaceClass={cardSurface}
+      <TimelineEntry
+        enabled={timeline}
+        primaryColor={resolved.primaryColor}
         isDark={resolved.isDark}
-        accentColor={resolved.primaryColor}
-        effectsEnabled={false}
-        radiusClass={getPresetPersonality(resolved.templateId).cardRadiusClass}
-        className={cn("h-full", isHidden && "py-2.5")}
+        dateLabel={timeline && !isHidden ? dateRangeLabel : null}
       >
+        <PortfolioCardShell
+          slot={resolved.card}
+          surfaceClass={cardSurface}
+          isDark={resolved.isDark}
+          accentColor={resolved.primaryColor}
+          effectsEnabled={false}
+          radiusClass={getPresetPersonality(resolved.templateId).cardRadiusClass}
+          className={cn("h-full", isHidden && "py-2.5")}
+        >
         <HoverChrome alwaysVisible={isHidden}>
           <ChromeButton
             label="Kéo để sắp xếp"
@@ -763,7 +746,7 @@ function ItemCardEditable({
             ) : (
               <div
                 className={cn(
-                  "grid min-w-0 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 text-sm",
+                  "grid min-w-0 shrink-0 grid-cols-1 items-stretch gap-1.5 text-sm sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] sm:items-center",
                   resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
                 )}
               >
@@ -776,7 +759,7 @@ function ItemCardEditable({
                   maxLength={200}
                   className="min-w-0"
                 />
-                <span className="shrink-0 opacity-40" aria-hidden>
+                <span className="hidden shrink-0 opacity-40 sm:inline" aria-hidden>
                   ·
                 </span>
                 <CompactRichField
@@ -794,8 +777,8 @@ function ItemCardEditable({
             )}
 
             {!isAuto ? (
-              <div className="flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto">
-                <div className="relative w-[9.25rem] shrink-0">
+              <div className="grid shrink-0 grid-cols-1 gap-2 min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[420px]:items-center">
+                <div className="relative min-w-0">
                   <label className="sr-only" htmlFor={`${item.id}-start`}>
                     Ngày bắt đầu
                   </label>
@@ -821,14 +804,14 @@ function ItemCardEditable({
                 </div>
                 <span
                   className={cn(
-                    "shrink-0 text-xs opacity-40",
+                    "hidden text-center text-xs opacity-40 min-[420px]:block",
                     resolved.isDark ? "text-[#FAFAF5]" : "text-[#6B6B6B]",
                   )}
                   aria-hidden
                 >
                   –
                 </span>
-                <div className="relative w-[9.25rem] shrink-0">
+                <div className="relative min-w-0">
                   <label className="sr-only" htmlFor={`${item.id}-end`}>
                     Ngày kết thúc
                   </label>
@@ -853,7 +836,7 @@ function ItemCardEditable({
                   />
                 </div>
               </div>
-            ) : dateRangeLabel ? (
+            ) : dateRangeLabel && !timeline ? (
               <p
                 className={cn(
                   "shrink-0 truncate text-xs",
@@ -901,7 +884,7 @@ function ItemCardEditable({
             </div>
 
             <div className="mt-0.5 shrink-0 space-y-2">
-              <div className="flex min-w-0 items-center gap-2">
+              <div className="flex min-w-0 flex-col gap-2 min-[420px]:flex-row min-[420px]:items-center">
                 <MediaUploader
                   compact
                   hideAttachedList
@@ -972,6 +955,7 @@ function ItemCardEditable({
           </div>
         )}
       </PortfolioCardShell>
+      </TimelineEntry>
     </Reorder.Item>
   );
 }
@@ -1019,7 +1003,8 @@ function ItemsGroupEditable({
   } = canvasProps;
 
   const groupIds = items.map((item) => item.id);
-  const layoutClass = itemsLayoutClass(resolved.layoutStyle);
+  const layoutClass = itemsLayoutClass(resolved.layoutStyle, "editor");
+  const timeline = isTimelineLayout(resolved.layoutStyle);
   const chrome = useChrome();
 
   return (
@@ -1086,30 +1071,45 @@ function ItemsGroupEditable({
               ) : null}
             </div>
           ) : (
-            <Reorder.Group
-              as="div"
-              axis="y"
-              values={groupIds}
-              onReorder={(nextIds: string[]) =>
-                onPreviewReorder(toGlobalOrder(nextIds))
-              }
-              className={layoutClass}
-            >
-              {items.map((item) => (
-                <ItemCardEditable
-                  key={item.id}
-                  item={item}
-                  resolved={resolved}
-                  reduceMotion={reduceMotion}
-                  onPatchItemText={onPatchItemText}
-                  onCommitReorder={onCommitReorder}
-                  onToggleVisibility={onToggleItemVisibility}
-                  onDelete={onDeleteItem}
-                  autoFocusTitle={focusItemId === item.id}
-                  onAutoFocusHandled={onFocusItemHandled}
-                />
-              ))}
-            </Reorder.Group>
+            (() => {
+              const list = (
+                <Reorder.Group
+                  as="div"
+                  axis="y"
+                  values={groupIds}
+                  onReorder={(nextIds: string[]) =>
+                    onPreviewReorder(toGlobalOrder(nextIds))
+                  }
+                  className={layoutClass}
+                >
+                  {items.map((item) => (
+                    <ItemCardEditable
+                      key={item.id}
+                      item={item}
+                      resolved={resolved}
+                      reduceMotion={reduceMotion}
+                      onPatchItemText={onPatchItemText}
+                      onCommitReorder={onCommitReorder}
+                      onToggleVisibility={onToggleItemVisibility}
+                      onDelete={onDeleteItem}
+                      autoFocusTitle={focusItemId === item.id}
+                      onAutoFocusHandled={onFocusItemHandled}
+                    />
+                  ))}
+                </Reorder.Group>
+              );
+
+              return timeline ? (
+                <TimelineList
+                  primaryColor={resolved.primaryColor}
+                  isDark={resolved.isDark}
+                >
+                  {list}
+                </TimelineList>
+              ) : (
+                list
+              );
+            })()
           )}
 
           <button
@@ -1751,11 +1751,11 @@ function LegacySectionShell({
     >
       <div
         className={cn(
-          "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity duration-100",
-          "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
+          "absolute -top-3 right-2 z-20 flex max-w-[calc(100%-1rem)] items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity duration-100 sm:right-3",
+          "opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover/section:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:focus-within:opacity-100",
         )}
       >
-        <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B6B]">
+        <span className="max-w-[6rem] truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B6B] sm:max-w-none">
           {label}
         </span>
         <button
@@ -1859,13 +1859,13 @@ function DynamicSectionShell({
     >
       <div
         className={cn(
-          "absolute -top-3 right-3 z-20 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1.5 py-0.5 shadow-sm transition-opacity duration-100",
+          "absolute -top-3 right-2 z-20 flex max-w-[calc(100%-1rem)] items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1.5 py-0.5 shadow-sm transition-opacity duration-100 sm:right-3",
           isHidden
             ? "opacity-100"
-            : "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
+            : "opacity-100 [@media(hover:hover)_and_(pointer:fine)]:opacity-0 [@media(hover:hover)_and_(pointer:fine)]:group-hover/section:opacity-100 [@media(hover:hover)_and_(pointer:fine)]:focus-within:opacity-100",
         )}
       >
-        <span className="max-w-[10rem] truncate px-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2D2D2D]">
+        <span className="max-w-[6rem] truncate px-1 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2D2D2D] sm:max-w-[10rem] sm:px-1.5">
           {label}
         </span>
         {onToggleSectionVisibility ? (
@@ -2145,7 +2145,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     <EditorChromeContext.Provider value={chrome}>
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[880px] overflow-hidden rounded-[1.5rem]",
+        "relative mx-auto w-full max-w-[880px] overflow-x-clip overflow-y-visible rounded-2xl sm:rounded-[1.5rem]",
         resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         personality.paperWash && !resolved.isDark && "bg-[#FDFBF7]/50",
         "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1",
@@ -2174,7 +2174,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
 
       <div
         className={cn(
-          "relative z-10 px-4 py-8 sm:px-8 sm:py-10",
+          "relative z-10 px-3 py-6 sm:px-8 sm:py-10",
           personality.sectionPadClass,
         )}
       >

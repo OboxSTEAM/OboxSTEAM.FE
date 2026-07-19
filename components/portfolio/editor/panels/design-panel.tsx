@@ -106,13 +106,24 @@ function LayoutPreview({ id }: { id: string }) {
   }
   if (id === "timeline") {
     return (
-      <div className="flex h-10 items-stretch gap-1.5 pl-1">
-        <span className="w-0.5 rounded-full bg-[#7CB342]/50" />
-        <div className="flex flex-1 flex-col justify-center gap-1">
-          <span className="h-2 w-full rounded-sm bg-[#7CB342]/30" />
-          <span className="h-2 w-[80%] rounded-sm bg-[#7CB342]/20" />
-          <span className="h-2 w-[60%] rounded-sm bg-[#7CB342]/15" />
-        </div>
+      <div className="relative flex h-10 flex-col justify-between py-0.5 pl-3">
+        <span
+          className="absolute top-1 bottom-1 left-[7px] w-0.5 rounded-full bg-[#7CB342]/40"
+          aria-hidden
+        />
+        {[0, 1, 2].map((index) => (
+          <div key={index} className="relative flex items-center gap-1.5">
+            <span className="absolute left-[-7px] size-2.5 -translate-x-1/2 rounded-full bg-[#7CB342] shadow-[0_0_0_2px_#fff]" />
+            <span
+              className={cn(
+                "h-1.5 rounded-sm bg-[#7CB342]/30",
+                index === 0 && "w-full",
+                index === 1 && "w-[85%]",
+                index === 2 && "w-[70%]",
+              )}
+            />
+          </div>
+        ))}
       </div>
     );
   }

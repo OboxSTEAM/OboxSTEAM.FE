@@ -1115,7 +1115,7 @@ export function PortfolioSettingsPageContent() {
           </PortfolioPanelHost>
         ) : null}
 
-        <main className="min-w-0 flex-1 bg-[#F5F5F0] px-3 py-6 pb-24 sm:px-8 sm:py-10 lg:pb-10">
+        <main className="min-w-0 flex-1 overflow-x-hidden bg-[#F5F5F0] px-2.5 py-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-8 md:px-8 md:py-10 lg:pb-10">
           <PortfolioCanvas
             draft={draft}
             onPatchDraft={patchDraft}
