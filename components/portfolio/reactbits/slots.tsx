@@ -31,10 +31,12 @@ const AnimatedContent = dynamic(() => import("@/components/AnimatedContent"), {
   ssr: false,
 });
 const FadeContent = dynamic(() => import("@/components/FadeContent"), { ssr: false });
-const CircularGallery = dynamic(() => import("@/components/CircularGallery"), {
+const DomeGallery = dynamic(() => import("@/components/DomeGallery"), {
   ssr: false,
 });
-const Masonry = dynamic(() => import("@/components/Masonry"), { ssr: false });
+const AccordionGallery = dynamic(() => import("@/components/AccordionGallery"), {
+  ssr: false,
+});
 
 function useShouldAnimate() {
   const reduce = useReducedMotion();
@@ -420,17 +422,50 @@ export function PortfolioReveal({
 
 export type GalleryImage = { src: string; alt?: string; caption?: string | null };
 
+function GalleryCaption({
+  caption,
+  className,
+}: {
+  caption?: string | null;
+  className?: string;
+}) {
+  const text = caption?.trim();
+  if (!text) return null;
+  return (
+    <p
+      className={cn(
+        "mt-1.5 line-clamp-2 text-xs leading-snug text-[#6B6B6B]",
+        className,
+      )}
+    >
+      {text}
+    </p>
+  );
+}
+
+function galleryActivateHandler(
+  onImageActivate: ((index: number) => void) | undefined,
+  index: number,
+) {
+  if (!onImageActivate) return undefined;
+  return () => onImageActivate(index);
+}
+
 export function PortfolioGallery({
   slot,
   images,
   className,
+  onImageActivate,
 }: {
   slot: GallerySlotId;
   images: GalleryImage[];
   className?: string;
+  /** When set (editor), clicking an image opens caption edit. */
+  onImageActivate?: (index: number) => void;
 }) {
   const animate = useShouldAnimate();
   const items = images.filter((image) => Boolean(image.src));
+  const isEditable = Boolean(onImageActivate);
 
   if (items.length === 0) {
     return (
@@ -440,59 +475,98 @@ export function PortfolioGallery({
     );
   }
 
-  if (!animate || slot === "Grid" || slot === "Carousel") {
+  if (slot === "DomeGallery" && animate) {
     return (
       <div
         className={cn(
-          slot === "Carousel"
-            ? "flex gap-3 overflow-x-auto pb-2 snap-x"
-            : "grid grid-cols-2 gap-2 sm:grid-cols-3",
+          "h-[380px] w-full overflow-hidden rounded-2xl",
+          isEditable && "cursor-pointer",
           className,
         )}
+        onClick={
+          onImageActivate
+            ? (event) => {
+                const img = (event.target as HTMLElement).closest("img");
+                if (!img) return;
+                const src = img.getAttribute("src");
+                const index = items.findIndex((item) => item.src === src);
+                if (index >= 0) onImageActivate(index);
+              }
+            : undefined
+        }
       >
-        {items.map((image, index) => (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            key={`${image.src}-${index}`}
-            src={image.src}
-            alt={image.alt ?? image.caption ?? ""}
-            className={cn(
-              "rounded-xl object-cover",
-              slot === "Carousel"
-                ? "h-48 w-72 shrink-0 snap-center"
-                : "aspect-square w-full",
-            )}
-          />
-        ))}
-      </div>
-    );
-  }
-
-  if (slot === "CircularGallery") {
-    return (
-      <div className={cn("h-[360px] w-full", className)}>
-        <CircularGallery
-          items={items.map((image) => ({
-            image: image.src,
-            text: image.caption ?? "",
+        <DomeGallery
+          images={items.map((image) => ({
+            src: image.src,
+            alt: image.caption?.trim() || image.alt || "",
           }))}
-          bend={2}
-          borderRadius={0.08}
+          fit={0.72}
+          minRadius={480}
+          maxRadius={620}
+          grayscale={false}
+          overlayBlurColor="rgba(250, 250, 245, 0.92)"
         />
       </div>
     );
   }
 
-  return (
-    <div className={cn("w-full", className)}>
-      <Masonry
-        items={items.map((image, index) => ({
-          id: String(index),
-          img: image.src,
-          url: image.src,
-          height: 220 + (index % 3) * 40,
-        }))}
+  if (slot === "Accordion") {
+    return (
+      <AccordionGallery
+        items={items}
+        reduceMotion={!animate}
+        className={className}
+        onImageActivate={onImageActivate}
       />
+    );
+  }
+
+  // Grid / Carousel / reduced-motion fallbacks
+  return (
+    <div
+      className={cn(
+        slot === "Carousel"
+          ? "flex gap-3 overflow-x-auto pb-2 snap-x"
+          : "grid grid-cols-2 gap-3 sm:grid-cols-3",
+        className,
+      )}
+    >
+      {items.map((image, index) => {
+        const caption = image.caption?.trim() || image.alt?.trim() || "";
+        const activate = galleryActivateHandler(onImageActivate, index);
+        return (
+          <figure
+            key={`${image.src}-${index}`}
+            className={cn(
+              "min-w-0",
+              slot === "Carousel" && "w-72 shrink-0 snap-center",
+            )}
+          >
+            <button
+              type="button"
+              disabled={!activate}
+              onClick={activate}
+              className={cn(
+                "block w-full overflow-hidden rounded-xl text-left outline-none",
+                activate &&
+                  "cursor-pointer transition hover:brightness-[0.97] focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/55",
+                !activate && "cursor-default",
+              )}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={image.src}
+                alt={caption}
+                className={cn(
+                  "rounded-xl object-cover",
+                  slot === "Carousel" ? "h-48 w-full" : "aspect-square w-full",
+                )}
+              />
+            </button>
+            <GalleryCaption caption={caption} />
+          </figure>
+        );
+      })}
     </div>
   );
 }

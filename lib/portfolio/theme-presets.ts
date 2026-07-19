@@ -41,9 +41,9 @@ export type CardSlotId =
   | "Soft";
 
 export type GallerySlotId =
-  | "CircularGallery"
+  | "DomeGallery"
+  | "Accordion"
   | "Carousel"
-  | "Masonry"
   | "Grid";
 
 export type RevealSlotId = "AnimatedContent" | "FadeContent" | "None";
@@ -81,7 +81,7 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
     background: "Aurora",
     heroText: "SplitGradient",
     card: "Spotlight",
-    gallery: "CircularGallery",
+    gallery: "DomeGallery",
     reveal: "AnimatedContent",
     layoutStyle: "bento",
     fontFamily: "nunito",
@@ -104,7 +104,7 @@ export const THEME_PRESETS: Record<PortfolioTemplateId, ThemePreset> = {
     background: "GradientSoft",
     heroText: "TrueFocus",
     card: "Tilted",
-    gallery: "Masonry",
+    gallery: "Accordion",
     reveal: "FadeContent",
     layoutStyle: "masonry",
     fontFamily: "inter",
@@ -278,9 +278,9 @@ export const CARD_SLOT_OPTIONS: Array<{ id: CardSlotId; label: string }> = [
 ];
 
 export const GALLERY_SLOT_OPTIONS: Array<{ id: GallerySlotId; label: string }> = [
-  { id: "CircularGallery", label: "Circular" },
+  { id: "DomeGallery", label: "Dome" },
+  { id: "Accordion", label: "Accordion" },
   { id: "Carousel", label: "Carousel" },
-  { id: "Masonry", label: "Masonry" },
   { id: "Grid", label: "Grid" },
 ];
 

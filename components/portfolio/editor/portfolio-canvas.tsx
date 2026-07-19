@@ -5,6 +5,7 @@ import {
   createContext,
   useContext,
   useMemo,
+  useState,
   type ReactNode,
 } from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
@@ -36,12 +37,16 @@ import {
 import { RichText } from "@/components/portfolio/render/rich-text";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type {
   Portfolio,
   PortfolioItem,
@@ -74,11 +79,6 @@ import {
   type GallerySlotId,
   type ResolvedPortfolioTheme,
 } from "@/lib/portfolio/theme-presets";
-import {
-  LIGHT_SELECT_CONTENT_PANEL,
-  LIGHT_SELECT_ITEM_PANEL,
-  LIGHT_SELECT_TRIGGER_FULL,
-} from "@/lib/ui/select-styles";
 import { cn } from "@/lib/utils";
 
 const EditorChromeContext = createContext(editorChrome(false));
@@ -260,6 +260,44 @@ function resolveGalleryVariant(
     return variant as GallerySlotId;
   }
   return resolved.gallery;
+}
+
+/** Mini preview tiles — mirrors design-panel SelectBox pattern. */
+function GalleryStylePreview({ id }: { id: GallerySlotId }) {
+  if (id === "DomeGallery") {
+    return (
+      <div className="relative flex h-10 items-end justify-center overflow-hidden rounded-lg bg-[#F0F0EA]">
+        <span className="absolute inset-x-2 bottom-0 h-7 rounded-t-full bg-gradient-to-t from-[#0f7cad]/45 to-[#4FC3F7]/15" />
+        <span className="absolute bottom-1 left-1/2 size-2 -translate-x-1/2 rounded-full bg-[#0f7cad]" />
+      </div>
+    );
+  }
+  if (id === "Accordion") {
+    return (
+      <div className="flex h-10 gap-0.5 overflow-hidden rounded-lg bg-[#F5F5F0] p-1">
+        <span className="w-2 flex-none rounded-sm bg-[#7CB342]/35" />
+        <span className="flex-1 rounded-sm bg-[#7CB342]/55" />
+        <span className="w-2 flex-none rounded-sm bg-[#7CB342]/25" />
+        <span className="w-2 flex-none rounded-sm bg-[#7CB342]/20" />
+      </div>
+    );
+  }
+  if (id === "Carousel") {
+    return (
+      <div className="flex h-10 items-center gap-1 overflow-hidden rounded-lg bg-[#F5F5F0] px-1">
+        <span className="h-6 w-8 shrink-0 rounded-sm bg-[#4FC3F7]/25" />
+        <span className="h-7 w-10 shrink-0 rounded-sm bg-[#4FC3F7]/55" />
+        <span className="h-6 w-8 shrink-0 rounded-sm bg-[#4FC3F7]/25" />
+      </div>
+    );
+  }
+  return (
+    <div className="grid h-10 grid-cols-3 gap-0.5 overflow-hidden rounded-lg bg-[#F5F5F0] p-1">
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <span key={i} className="rounded-sm bg-[#4FC3F7]/30" />
+      ))}
+    </div>
+  );
 }
 
 function sectionMediaToGalleryImages(
@@ -1185,9 +1223,58 @@ function CustomSectionEditable({
 }) {
   const isCustom = CUSTOM_SECTION_KINDS.has(section.kind);
   const dimmed = !section.isVisible;
+  const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
+  const [draftCaption, setDraftCaption] = useState("");
 
   const patch = (next: Partial<PortfolioSection>) => {
     onUpdateSection?.(section.id, next);
+  };
+
+  const sortedAssets = useMemo(
+    () =>
+      [...(section.mediaAssets ?? [])]
+        .filter((asset) => Boolean(asset.url))
+        .sort((a, b) => a.displayOrder - b.displayOrder),
+    [section.mediaAssets],
+  );
+
+  const editingAsset =
+    editingAssetId == null
+      ? null
+      : (sortedAssets.find((asset) => asset.id === editingAssetId) ?? null);
+
+  const openCaptionEditor = (index: number) => {
+    const asset = sortedAssets[index];
+    if (!asset) return;
+    setEditingAssetId(asset.id);
+    setDraftCaption(asset.caption ?? "");
+  };
+
+  const closeCaptionEditor = () => {
+    setEditingAssetId(null);
+    setDraftCaption("");
+  };
+
+  const saveCaption = () => {
+    if (!editingAsset) return;
+    patch({
+      mediaAssets: (section.mediaAssets ?? []).map((asset) =>
+        asset.id === editingAsset.id
+          ? { ...asset, caption: draftCaption.trim() || null }
+          : asset,
+      ),
+    });
+    closeCaptionEditor();
+  };
+
+  const removeEditingAsset = () => {
+    if (!editingAsset) return;
+    patch({
+      mediaAssets: (section.mediaAssets ?? []).filter(
+        (asset) => asset.id !== editingAsset.id,
+      ),
+    });
+    closeCaptionEditor();
   };
 
   return (
@@ -1247,56 +1334,167 @@ function CustomSectionEditable({
           ) : null}
 
           {section.kind === "Gallery" ? (
-            <div className="space-y-3">
-              <div className="space-y-1.5">
+            <div className="space-y-4">
+              <div className="space-y-2">
                 <p
                   className={cn(
-                    "text-xs font-medium",
-                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                    "text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]",
                   )}
                 >
                   Kiểu thư viện
                 </p>
-                <Select
-                  value={resolveGalleryVariant(section, resolved)}
-                  onValueChange={(value) => {
-                    if (value == null) return;
-                    const current =
-                      parseSectionSettingsJson(section.settingsJson) ?? {};
-                    patch({
-                      settingsJson: serializeSectionSettingsJson({
-                        ...current,
-                        variant: value,
-                      }),
-                    });
-                  }}
-                >
-                  <SelectTrigger className={LIGHT_SELECT_TRIGGER_FULL}>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className={LIGHT_SELECT_CONTENT_PANEL}>
-                    {GALLERY_SLOT_OPTIONS.map((option) => (
-                      <SelectItem
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {GALLERY_SLOT_OPTIONS.map((option) => {
+                    const selected =
+                      resolveGalleryVariant(section, resolved) === option.id;
+                    return (
+                      <button
                         key={option.id}
-                        value={option.id}
-                        className={LIGHT_SELECT_ITEM_PANEL}
+                        type="button"
+                        aria-pressed={selected}
+                        aria-label={option.label}
+                        onClick={() => {
+                          const current =
+                            parseSectionSettingsJson(section.settingsJson) ??
+                            {};
+                          patch({
+                            settingsJson: serializeSectionSettingsJson({
+                              ...current,
+                              variant: option.id,
+                            }),
+                          });
+                        }}
+                        className={cn(
+                          "rounded-2xl border bg-white p-2 text-left transition-colors outline-none",
+                          "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
+                          "active:scale-[0.98]",
+                          selected
+                            ? "border-[#4FC3F7] bg-[rgba(79,195,247,0.08)]"
+                            : "border-[#E5E5E0] hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
+                          resolved.isDark &&
+                            !selected &&
+                            "border-[#FAFAF5]/15 bg-[#1a1a1a]/60 hover:bg-[#1a1a1a]",
+                          resolved.isDark &&
+                            selected &&
+                            "border-[#4FC3F7] bg-[rgba(79,195,247,0.12)]",
+                        )}
                       >
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                        <GalleryStylePreview id={option.id} />
+                        <p
+                          className={cn(
+                            "mt-1.5 truncate text-[11px] font-semibold tracking-tight",
+                            resolved.isDark
+                              ? "text-[#FAFAF5]/90"
+                              : "text-[#2D2D2D]",
+                          )}
+                        >
+                          {option.label}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
+
               <MediaUploader
                 assets={section.mediaAssets}
                 onChange={(assets) => patch({ mediaAssets: assets })}
                 label="Ảnh thư viện"
                 isDark={resolved.isDark}
+                hideAttachedList
               />
+
+              {sortedAssets.length > 0 ? (
+                <p
+                  className={cn(
+                    "text-[11px]",
+                    resolved.isDark ? "text-[#FAFAF5]/45" : "text-[#8A8A84]",
+                  )}
+                >
+                  Nhấp vào ảnh để sửa chú thích hoặc gỡ ảnh
+                </p>
+              ) : null}
+
               <PortfolioGallery
                 slot={resolveGalleryVariant(section, resolved)}
                 images={sectionMediaToGalleryImages(section.mediaAssets)}
+                onImageActivate={openCaptionEditor}
               />
+
+              <Dialog
+                open={editingAsset != null}
+                onOpenChange={(open) => {
+                  if (!open) closeCaptionEditor();
+                }}
+              >
+                <DialogPopup className="max-w-sm">
+                  <DialogClose />
+                  <DialogHeader>
+                    <DialogTitle>Chỉnh ảnh</DialogTitle>
+                    <DialogDescription>
+                      Cập nhật chú thích hiển thị trên thư viện, hoặc gỡ ảnh
+                      khỏi phần này.
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  {editingAsset?.url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={editingAsset.url}
+                      alt=""
+                      className="mt-1 aspect-video w-full rounded-xl object-cover"
+                    />
+                  ) : null}
+
+                  <div className="space-y-2">
+                    <Label htmlFor="gallery-caption">Chú thích</Label>
+                    <Input
+                      id="gallery-caption"
+                      value={draftCaption}
+                      onChange={(event) => setDraftCaption(event.target.value)}
+                      placeholder="Mô tả ngắn cho ảnh…"
+                      className="rounded-xl"
+                      autoFocus
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          saveCaption();
+                        }
+                      }}
+                    />
+                  </div>
+
+                  <DialogFooter className="gap-2 sm:justify-between">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="rounded-xl text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]"
+                      onClick={removeEditingAsset}
+                    >
+                      <Trash2 className="size-3.5" />
+                      Gỡ ảnh
+                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={closeCaptionEditor}
+                      >
+                        Hủy
+                      </Button>
+                      <Button
+                        type="button"
+                        className="rounded-xl"
+                        onClick={saveCaption}
+                      >
+                        Lưu
+                      </Button>
+                    </div>
+                  </DialogFooter>
+                </DialogPopup>
+              </Dialog>
             </div>
           ) : null}
 

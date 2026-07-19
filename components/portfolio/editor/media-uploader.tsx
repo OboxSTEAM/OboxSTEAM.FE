@@ -43,6 +43,13 @@ type MediaUploaderProps = {
    * inherited as light-on-light from the parent portfolio surface.
    */
   isDark?: boolean;
+  /**
+   * Gallery sections already preview images in the style renderer —
+   * skip duplicate thumbnails and keep caption + remove controls only.
+   */
+  hideThumbnails?: boolean;
+  /** Hide the attached-asset list entirely (e.g. gallery click-to-edit). */
+  hideAttachedList?: boolean;
 };
 
 type CropSource = {
@@ -58,12 +65,15 @@ export function MediaUploader({
   className,
   label = "Ảnh",
   isDark = false,
+  hideThumbnails = false,
+  hideAttachedList = false,
 }: MediaUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [library, setLibrary] = useState<PortfolioMediaUpload[] | null>(null);
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
   const [cropSource, setCropSource] = useState<CropSource | null>(null);
+  const isLibraryOpen = library != null;
 
   const attached = assets ?? [];
   const chrome = editorChrome(isDark);
@@ -139,7 +149,11 @@ export function MediaUploader({
     });
   };
 
-  const loadLibrary = async () => {
+  const toggleLibrary = async () => {
+    if (isLibraryOpen) {
+      setLibrary(null);
+      return;
+    }
     setIsLoadingLibrary(true);
     try {
       const result = await listPortfolioMedia();
@@ -212,9 +226,14 @@ export function MediaUploader({
             variant="ghost"
             className={ghostButtonClass}
             disabled={isLoadingLibrary}
-            onClick={() => void loadLibrary()}
+            aria-expanded={isLibraryOpen}
+            onClick={() => void toggleLibrary()}
           >
-            {isLoadingLibrary ? "Đang mở thư viện…" : "Chọn từ thư viện"}
+            {isLoadingLibrary
+              ? "Đang mở thư viện…"
+              : isLibraryOpen
+                ? "Đóng thư viện"
+                : "Chọn từ thư viện"}
           </Button>
         ) : null}
         <input
@@ -226,14 +245,18 @@ export function MediaUploader({
         />
       </div>
 
-      {onChange && attached.length > 0 ? (
+      {onChange && !hideAttachedList && attached.length > 0 ? (
         <ul className="space-y-2">
-          {attached.map((asset) => (
+          {attached.map((asset, index) => (
             <li
               key={asset.id}
               className="flex items-center gap-2 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-2"
             >
-              {asset.url ? (
+              {hideThumbnails ? (
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#E5E5E0] font-mono text-[10px] font-semibold text-[#6B6B6B]">
+                  {index + 1}
+                </span>
+              ) : asset.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={asset.url}
@@ -246,7 +269,7 @@ export function MediaUploader({
               <Input
                 value={asset.caption ?? ""}
                 onChange={(event) => updateCaption(asset.id, event.target.value)}
-                placeholder="Chú thích"
+                placeholder="Chú thích — hiện trên ảnh"
                 className="h-9 flex-1 rounded-lg"
               />
               <Button
