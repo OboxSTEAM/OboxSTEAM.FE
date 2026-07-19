@@ -3,18 +3,9 @@
 import { useState } from "react";
 import { Eye, Save } from "lucide-react";
 
+import { PortfolioPreviewDialog } from "@/components/portfolio/editor/portfolio-preview-dialog";
 import { PublishPopover } from "@/components/portfolio/editor/publish-popover";
-import {
-  PortfolioMicrosite,
-  toPortfolioMicrositeData,
-} from "@/components/portfolio/render/portfolio-microsite";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogPopup,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import type { Portfolio } from "@/lib/api/entities/portfolio";
 import { cn } from "@/lib/utils";
 
@@ -147,17 +138,11 @@ export function PortfolioToolbar({
         </div>
       </div>
 
-      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogPopup className="h-[92dvh] max-w-5xl gap-0 overflow-hidden p-0">
-          <div className="flex items-center justify-between border-b border-[#E5E5E0] px-5 py-3">
-            <DialogTitle className="text-base">Xem trước portfolio</DialogTitle>
-            <DialogClose className="static" />
-          </div>
-          <div id="portfolio-preview-scroll" className="h-full overflow-y-auto">
-            <PortfolioMicrosite data={toPortfolioMicrositeData(draft)} />
-          </div>
-        </DialogPopup>
-      </Dialog>
+      <PortfolioPreviewDialog
+        draft={draft}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+      />
     </div>
   );
 }

@@ -118,6 +118,14 @@ const EDITOR_DRAG_TRANSITION = {
   ease: "easeOut" as const,
 };
 
+/** Smoother spring for item cards (bento/grid siblings move on layout). */
+const EDITOR_ITEM_LAYOUT_TRANSITION = {
+  type: "spring" as const,
+  stiffness: 420,
+  damping: 36,
+  mass: 0.55,
+};
+
 export type PortfolioCanvasProps = {
   draft: Portfolio;
   onPatchDraft: (patch: Partial<Portfolio>) => void;
@@ -556,6 +564,9 @@ function ItemCardEditable({
   const isHidden = !item.isVisible;
   const titlePlain =
     stripHtmlText(item.title) || item.title || "Không có tiêu đề";
+  /** Free 2D drag in grid layouts — Reorder still sorts on the group axis (y). */
+  const isGridLayout =
+    resolved.layoutStyle === "bento" || resolved.layoutStyle === "masonry";
 
   const fieldInputClass = cn(
     "h-8 rounded-lg border-dashed px-2 text-xs shadow-none",
@@ -589,13 +600,21 @@ function ItemCardEditable({
       dragListener={false}
       dragControls={controls}
       onDragEnd={onCommitReorder}
-      layout={false}
-      transition={reduceMotion ? { duration: 0 } : EDITOR_DRAG_TRANSITION}
+      {...(isGridLayout ? { drag: true as const } : {})}
+      layout={reduceMotion ? undefined : "position"}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : isGridLayout
+            ? EDITOR_ITEM_LAYOUT_TRANSITION
+            : EDITOR_DRAG_TRANSITION
+      }
       className={cn(
         "group relative list-none",
         isHidden ? "h-auto" : "h-full",
         itemSpanClass(item.span, resolved.layoutStyle),
       )}
+      style={isGridLayout ? { touchAction: "none" } : undefined}
     >
       <PortfolioCardShell
         slot={resolved.card}
@@ -1403,16 +1422,11 @@ function CustomSectionEditable({
   section,
   resolved,
   onUpdateSection,
-  onDeleteSection,
-  onToggleSectionVisibility,
 }: {
   section: PortfolioSection;
   resolved: ResolvedPortfolioTheme;
   onUpdateSection?: PortfolioCanvasProps["onUpdateSection"];
-  onDeleteSection?: PortfolioCanvasProps["onDeleteSection"];
-  onToggleSectionVisibility?: PortfolioCanvasProps["onToggleSectionVisibility"];
 }) {
-  const isCustom = CUSTOM_SECTION_KINDS.has(section.kind);
   const dimmed = !section.isVisible;
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [draftCaption, setDraftCaption] = useState("");
@@ -1469,33 +1483,8 @@ function CustomSectionEditable({
   };
 
   return (
-    <div className="group relative space-y-3">
-      {isCustom ? (
-        <HoverChrome alwaysVisible={dimmed}>
-          <ChromeButton
-            label={section.isVisible ? "Ẩn phần" : "Hiện phần"}
-            emphasized={dimmed}
-            onClick={() =>
-              onToggleSectionVisibility?.(section, !section.isVisible)
-            }
-          >
-            {section.isVisible ? (
-              <EyeOff className="size-3.5" strokeWidth={2.25} />
-            ) : (
-              <Eye className="size-3.5" strokeWidth={2.25} />
-            )}
-          </ChromeButton>
-          <ChromeButton
-            label="Xóa phần"
-            destructive
-            onClick={() => onDeleteSection?.(section.id)}
-          >
-            <Trash2 className="size-3.5" />
-          </ChromeButton>
-        </HoverChrome>
-      ) : null}
-
-      <div className="flex flex-wrap items-center gap-2 pr-20">
+    <div className="relative space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
         <EditableSectionTitle
           value={section.title ?? ""}
           onChange={(next) => patch({ title: next })}
@@ -1789,6 +1778,47 @@ function LegacySectionShell({
   );
 }
 
+/** Shared section toolbar — always light chrome so icons stay readable on dark themes. */
+function SectionToolbarButton({
+  label,
+  onClick,
+  onPointerDown,
+  destructive = false,
+  emphasized = false,
+  grabbable = false,
+  children,
+}: {
+  label: string;
+  onClick?: () => void;
+  onPointerDown?: (event: React.PointerEvent) => void;
+  destructive?: boolean;
+  emphasized?: boolean;
+  grabbable?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      onClick={onClick}
+      onPointerDown={onPointerDown}
+      className={cn(
+        "flex size-7 items-center justify-center rounded-full transition-colors outline-none",
+        "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
+        emphasized
+          ? "bg-[#2D2D2D] text-white hover:bg-[#1a1a1a]"
+          : destructive
+            ? "text-[#E94B3C] hover:bg-[#E94B3C]/12 hover:text-[#c53e32]"
+            : "text-[#2D2D2D] hover:bg-[#F0F0EA]",
+        grabbable && "cursor-grab touch-none active:cursor-grabbing",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 function DynamicSectionShell({
   section,
   reduceMotion,
@@ -1813,7 +1843,7 @@ function DynamicSectionShell({
     section.title ||
     PORTFOLIO_SECTION_KIND_LABELS[section.kind] ||
     section.kind;
-  const isCustom = CUSTOM_SECTION_KINDS.has(section.kind);
+  const isHidden = !section.isVisible;
 
   return (
     <Reorder.Item
@@ -1829,49 +1859,49 @@ function DynamicSectionShell({
     >
       <div
         className={cn(
-          "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity duration-100",
-          !section.isVisible
+          "absolute -top-3 right-3 z-20 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1.5 py-0.5 shadow-sm transition-opacity duration-100",
+          isHidden
             ? "opacity-100"
             : "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
         )}
       >
-        <span className="max-w-[10rem] truncate font-mono text-[10px] uppercase tracking-[0.14em] text-[#6B6B6B]">
+        <span className="max-w-[10rem] truncate px-1.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#2D2D2D]">
           {label}
         </span>
-        {!isCustom && onToggleSectionVisibility ? (
-          <ChromeButton
+        {onToggleSectionVisibility ? (
+          <SectionToolbarButton
             label={section.isVisible ? "Ẩn phần" : "Hiện phần"}
-            emphasized={!section.isVisible}
-            onClick={() => onToggleSectionVisibility(section, !section.isVisible)}
+            emphasized={isHidden}
+            onClick={() =>
+              onToggleSectionVisibility(section, !section.isVisible)
+            }
           >
             {section.isVisible ? (
-              <EyeOff className="size-3" strokeWidth={2.25} />
+              <EyeOff className="size-3.5" strokeWidth={2.25} />
             ) : (
-              <Eye className="size-3" strokeWidth={2.25} />
+              <Eye className="size-3.5" strokeWidth={2.25} />
             )}
-          </ChromeButton>
+          </SectionToolbarButton>
         ) : null}
-        {!isCustom && onDeleteSection ? (
-          <ChromeButton
+        {onDeleteSection ? (
+          <SectionToolbarButton
             label="Xóa phần"
             destructive
             onClick={() => onDeleteSection(section.id)}
           >
-            <Trash2 className="size-3" />
-          </ChromeButton>
+            <Trash2 className="size-3.5" strokeWidth={2.25} />
+          </SectionToolbarButton>
         ) : null}
-        <button
-          type="button"
-          aria-label={`Kéo để sắp xếp phần ${label}`}
-          title="Kéo để sắp xếp"
+        <SectionToolbarButton
+          label={`Kéo để sắp xếp phần ${label}`}
+          grabbable
           onPointerDown={(event) => {
             event.preventDefault();
             controls.start(event);
           }}
-          className="flex size-6 cursor-grab touch-none items-center justify-center rounded-full text-[#6B6B6B] transition-colors hover:bg-[#F5F5F0] hover:text-[#2D2D2D] focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none active:cursor-grabbing"
         >
-          <GripVertical className="size-3.5" />
-        </button>
+          <GripVertical className="size-3.5" strokeWidth={2.25} />
+        </SectionToolbarButton>
       </div>
       <EditableSection isDark={isDark}>
         <PortfolioReveal slot="None">{children}</PortfolioReveal>
@@ -2023,8 +2053,6 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
             section={section}
             resolved={resolved}
             onUpdateSection={onUpdateSection}
-            onDeleteSection={onDeleteSection}
-            onToggleSectionVisibility={onToggleSectionVisibility}
           />
         );
       default:

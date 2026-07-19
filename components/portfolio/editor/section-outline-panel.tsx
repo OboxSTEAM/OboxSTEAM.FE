@@ -58,9 +58,9 @@ function OutlineRow({
         <button
           type="button"
           onClick={scrollToSection}
-          className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-medium text-[#2D2D2D] transition-colors hover:bg-white outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
+          className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-xs font-semibold text-[#2D2D2D] transition-colors hover:bg-white outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
         >
-          <UserRound className="size-3.5 shrink-0 text-[#0f7cad]" />
+          <UserRound className="size-4 shrink-0 text-[#0f7cad]" strokeWidth={2.25} />
           <span className="min-w-0 flex-1 truncate">{entry.label}</span>
         </button>
       </li>
@@ -80,8 +80,7 @@ function OutlineRow({
     >
       <div
         className={cn(
-          "group flex items-center gap-1 rounded-lg px-1 py-1 transition-colors hover:bg-white",
-          !entry.isVisible && "opacity-70",
+          "group flex items-center gap-0.5 rounded-lg px-1 py-1 transition-colors hover:bg-white",
         )}
       >
         <button
@@ -92,14 +91,17 @@ function OutlineRow({
             event.preventDefault();
             controls.start(event);
           }}
-          className="flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md text-[#6B6B6B] outline-none hover:bg-[#F0F0EA] hover:text-[#2D2D2D] active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
+          className="flex size-7 shrink-0 cursor-grab items-center justify-center rounded-md text-[#2D2D2D] outline-none hover:bg-[#F0F0EA] active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
         >
-          <GripVertical className="size-3.5" />
+          <GripVertical className="size-4" strokeWidth={2.25} />
         </button>
         <button
           type="button"
           onClick={scrollToSection}
-          className="min-w-0 flex-1 truncate rounded-md px-1 py-1.5 text-left text-xs font-medium text-[#2D2D2D] outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
+          className={cn(
+            "min-w-0 flex-1 truncate rounded-md px-1 py-1.5 text-left text-xs font-semibold outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
+            entry.isVisible ? "text-[#2D2D2D]" : "text-[#6B6B6B] line-through decoration-[#C9C9C2]",
+          )}
         >
           {entry.label}
         </button>
@@ -117,9 +119,9 @@ function OutlineRow({
             )}
           >
             {entry.isVisible ? (
-              <EyeOff className="size-3.5" strokeWidth={2.25} />
+              <EyeOff className="size-4" strokeWidth={2.5} />
             ) : (
-              <Eye className="size-3.5" strokeWidth={2.25} />
+              <Eye className="size-4" strokeWidth={2.5} />
             )}
           </button>
         ) : null}
@@ -181,7 +183,7 @@ export function SectionOutlinePanel({
         <p className="px-2 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0f7cad]">
           Cấu trúc
         </p>
-        <p className="mt-1 px-2 text-[11px] leading-snug text-[#6B6B6B]">
+        <p className="mt-1 px-2 text-[11px] leading-snug text-[#5C5C5C]">
           Kéo để đổi thứ tự phần
         </p>
 

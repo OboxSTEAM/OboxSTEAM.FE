@@ -35,11 +35,11 @@ export function PortfolioRail({ active, onSelect }: PortfolioRailProps) {
           "flex w-full flex-col items-center gap-1 rounded-lg px-1 py-2.5 text-[10px] font-semibold leading-tight transition-colors outline-none",
           "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
           isActive
-            ? "bg-[#4FC3F7]/12 text-[#0f7cad]"
-            : "text-[#5C5C5C] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
+            ? "bg-[#4FC3F7]/15 text-[#0f7cad]"
+            : "text-[#2D2D2D] hover:bg-[#F5F5F0]",
         )}
       >
-        <item.icon className="size-4" strokeWidth={1.75} />
+        <item.icon className="size-[1.125rem]" strokeWidth={2.25} />
         <span className="max-w-[4.25rem] text-center tracking-tight">{item.label}</span>
       </button>
     );
@@ -99,9 +99,9 @@ export function PortfolioPanelHost({
             type="button"
             aria-label="Đóng bảng"
             onClick={onClose}
-            className="rounded-lg p-1.5 text-[#5C5C5C] transition-colors hover:bg-white hover:text-[#2D2D2D] focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50 outline-none"
+            className="rounded-lg p-1.5 text-[#2D2D2D] transition-colors hover:bg-white focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50 outline-none"
           >
-            <X className="size-4" />
+            <X className="size-4" strokeWidth={2.25} />
           </button>
         </div>
         <div className="px-5 py-5">{children}</div>
