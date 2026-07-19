@@ -5,50 +5,76 @@ import { createApiPost } from "@/lib/api/create-endpoint";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   createPortfolioItemSchema,
+  createPortfolioSectionSchema,
   portfolioItemIdParamSchema,
+  portfolioMediaIdParamSchema,
+  portfolioSectionIdParamSchema,
   portfolioSubdomainAvailabilityQuerySchema,
   portfolioSubdomainParamSchema,
   reorderPortfolioItemsSchema,
+  reorderPortfolioSectionsSchema,
   updatePortfolioItemSchema,
   updatePortfolioPublicationSchema,
   updatePortfolioSchema,
+  updatePortfolioSectionSchema,
   updatePortfolioSubdomainSchema,
 } from "@/lib/validations/portfolios";
 import type {
   CreatePortfolioItemInput,
+  CreatePortfolioSectionInput,
   PortfolioSubdomainAvailabilityQuery,
   ReorderPortfolioItemsInput,
+  ReorderPortfolioSectionsInput,
   UpdatePortfolioInput,
   UpdatePortfolioItemInput,
   UpdatePortfolioPublicationInput,
+  UpdatePortfolioSectionInput,
   UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
-
+import {
+  themeToApiWire,
+  toPortfolioEnumWire,
+} from "@/lib/api/entities/portfolio";
 import {
   checkPortfolioSubdomainAvailabilityResponseSchema,
   createPortfolioResponseSchema,
+  createPortfolioSectionResponseSchema,
+  createPortfolioItemResponseSchema,
   deletePortfolioItemResponseSchema,
+  deletePortfolioMediaResponseSchema,
+  deletePortfolioSectionResponseSchema,
   getMyPortfolioResponseSchema,
   getPublicPortfolioBySubdomainResponseSchema,
-  portfolioItemValueSchema,
+  listPortfolioMediaResponseSchema,
+  portfolioSectionValueSchema,
   reorderPortfolioItemsResponseSchema,
+  reorderPortfolioSectionsResponseSchema,
   syncPortfolioItemsResponseSchema,
   updatePortfolioItemResponseSchema,
   updatePortfolioPublicationResponseSchema,
   updatePortfolioResponseSchema,
+  updatePortfolioSectionResponseSchema,
   updatePortfolioSubdomainResponseSchema,
+  uploadPortfolioMediaResponseSchema,
   type CheckPortfolioSubdomainAvailabilityResult,
   type CreatePortfolioItemResult,
   type CreatePortfolioResult,
+  type CreatePortfolioSectionResult,
   type DeletePortfolioItemResult,
+  type DeletePortfolioMediaResult,
+  type DeletePortfolioSectionResult,
   type GetMyPortfolioResult,
   type GetPublicPortfolioBySubdomainResult,
+  type ListPortfolioMediaResult,
   type ReorderPortfolioItemsResult,
+  type ReorderPortfolioSectionsResult,
   type SyncPortfolioItemsResult,
   type UpdatePortfolioItemResult,
   type UpdatePortfolioPublicationResult,
   type UpdatePortfolioResult,
+  type UpdatePortfolioSectionResult,
   type UpdatePortfolioSubdomainResult,
+  type UploadPortfolioMediaResult,
 } from "./schemas";
 
 export type {
@@ -58,14 +84,24 @@ export type {
   CreatePortfolioItemResult,
   CreatePortfolioResponse,
   CreatePortfolioResult,
+  CreatePortfolioSectionResponse,
+  CreatePortfolioSectionResult,
   DeletePortfolioItemResponse,
   DeletePortfolioItemResult,
+  DeletePortfolioMediaResponse,
+  DeletePortfolioMediaResult,
+  DeletePortfolioSectionResponse,
+  DeletePortfolioSectionResult,
   GetMyPortfolioResponse,
   GetMyPortfolioResult,
   GetPublicPortfolioBySubdomainResponse,
   GetPublicPortfolioBySubdomainResult,
+  ListPortfolioMediaResponse,
+  ListPortfolioMediaResult,
   ReorderPortfolioItemsResponse,
   ReorderPortfolioItemsResult,
+  ReorderPortfolioSectionsResponse,
+  ReorderPortfolioSectionsResult,
   SyncPortfolioItemsResponse,
   SyncPortfolioItemsResult,
   UpdatePortfolioItemResponse,
@@ -74,32 +110,62 @@ export type {
   UpdatePortfolioPublicationResult,
   UpdatePortfolioResponse,
   UpdatePortfolioResult,
+  UpdatePortfolioSectionResponse,
+  UpdatePortfolioSectionResult,
   UpdatePortfolioSubdomainResponse,
   UpdatePortfolioSubdomainResult,
+  UploadPortfolioMediaResponse,
+  UploadPortfolioMediaResult,
 } from "./schemas";
 
 export type {
   Portfolio,
   PortfolioAppendixItem,
+  PortfolioBackgroundStyle,
+  PortfolioCardStyle,
+  PortfolioDensity,
+  PortfolioFontScale,
   PortfolioItem,
   PortfolioItemSource,
+  PortfolioItemSpan,
   PortfolioItemType,
+  PortfolioLineHeight,
   PortfolioLink,
+  PortfolioMediaAsset,
+  PortfolioMediaType,
+  PortfolioMediaUpload,
   PortfolioPlanType,
+  PortfolioSection,
+  PortfolioSectionKind,
+  PortfolioSectionSettings,
   PortfolioTheme,
+  PortfolioThemeSlotOverrides,
   PublicPortfolio,
   SubdomainAvailability,
 } from "@/lib/api/entities/portfolio";
 
+export {
+  parseSectionSettingsJson,
+  parseThemeSettingsJson,
+  serializeSectionSettingsJson,
+  serializeThemeSettingsJson,
+} from "@/lib/api/entities/portfolio";
+
 export type {
   CreatePortfolioItemInput,
+  CreatePortfolioSectionInput,
   PortfolioItemIdParam,
+  PortfolioMediaAssetRef,
+  PortfolioMediaIdParam,
+  PortfolioSectionIdParam,
   PortfolioSubdomainAvailabilityQuery,
   PortfolioSubdomainParam,
   ReorderPortfolioItemsInput,
+  ReorderPortfolioSectionsInput,
   UpdatePortfolioInput,
   UpdatePortfolioItemInput,
   UpdatePortfolioPublicationInput,
+  UpdatePortfolioSectionInput,
   UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
 
@@ -145,11 +211,15 @@ export async function updateMyPortfolio(
   input: UpdatePortfolioInput,
 ): Promise<UpdatePortfolioResult> {
   const body = updatePortfolioSchema.parse(input);
+  const wireBody = {
+    ...body,
+    theme: body.theme ? themeToApiWire(body.theme) : undefined,
+  };
 
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me`,
     updatePortfolioResponseSchema,
-    { method: "PUT", body },
+    { method: "PUT", body: wireBody },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
@@ -213,11 +283,26 @@ export async function checkPortfolioSubdomainAvailability(
 }
 
 /** `POST /api/portfolios/me/items` */
-export const createPortfolioItem = createApiPost({
-  path: `${PORTFOLIOS_BASE}/me/items`,
-  input: createPortfolioItemSchema,
-  value: portfolioItemValueSchema,
-});
+export async function createPortfolioItem(
+  input: CreatePortfolioItemInput,
+): Promise<CreatePortfolioItemResult> {
+  const body = createPortfolioItemSchema.parse(input);
+  const wireBody = {
+    ...body,
+    span:
+      body.span == null || body.span === undefined
+        ? body.span
+        : toPortfolioEnumWire(body.span),
+  };
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/items`,
+    createPortfolioItemResponseSchema,
+    { method: "POST", body: wireBody },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
 
 /** `PUT /api/portfolios/me/items/{itemId}` */
 export async function updatePortfolioItem(
@@ -226,11 +311,20 @@ export async function updatePortfolioItem(
 ): Promise<UpdatePortfolioItemResult> {
   const { itemId: parsedItemId } = portfolioItemIdParamSchema.parse({ itemId });
   const body = updatePortfolioItemSchema.parse(input);
+  const wireBody = {
+    ...body,
+    span:
+      body.span === undefined
+        ? undefined
+        : body.span == null
+          ? null
+          : toPortfolioEnumWire(body.span),
+  };
 
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me/items/${parsedItemId}`,
     updatePortfolioItemResponseSchema,
-    { method: "PUT", body },
+    { method: "PUT", body: wireBody },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
@@ -277,6 +371,100 @@ export async function syncPortfolioItems(): Promise<SyncPortfolioItemsResult> {
   return requireApiValue(response.value);
 }
 
+/** `POST /api/portfolios/me/media` — multipart image upload (jpg/jpeg/png, max 5 MB). */
+export async function uploadPortfolioMedia(file: File): Promise<UploadPortfolioMediaResult> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media`,
+    uploadPortfolioMediaResponseSchema,
+    { method: "POST", body: formData },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `GET /api/portfolios/me/media` */
+export async function listPortfolioMedia(): Promise<ListPortfolioMediaResult> {
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media`,
+    listPortfolioMediaResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `DELETE /api/portfolios/me/media/{mediaId}` */
+export async function deletePortfolioMedia(
+  mediaId: string,
+): Promise<DeletePortfolioMediaResult> {
+  const { mediaId: parsedMediaId } = portfolioMediaIdParamSchema.parse({ mediaId });
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media/${parsedMediaId}`,
+    deletePortfolioMediaResponseSchema,
+    { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/portfolios/me/sections` */
+export const createPortfolioSection = createApiPost({
+  path: `${PORTFOLIOS_BASE}/me/sections`,
+  input: createPortfolioSectionSchema,
+  value: portfolioSectionValueSchema,
+});
+
+/** `PUT /api/portfolios/me/sections/{sectionId}` */
+export async function updatePortfolioSection(
+  sectionId: string,
+  input: UpdatePortfolioSectionInput,
+): Promise<UpdatePortfolioSectionResult> {
+  const { sectionId: parsedSectionId } = portfolioSectionIdParamSchema.parse({ sectionId });
+  const body = updatePortfolioSectionSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/sections/${parsedSectionId}`,
+    updatePortfolioSectionResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `DELETE /api/portfolios/me/sections/{sectionId}` */
+export async function deletePortfolioSection(
+  sectionId: string,
+): Promise<DeletePortfolioSectionResult> {
+  const { sectionId: parsedSectionId } = portfolioSectionIdParamSchema.parse({ sectionId });
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/sections/${parsedSectionId}`,
+    deletePortfolioSectionResponseSchema,
+    { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/portfolios/me/sections/reorder` */
+export async function reorderPortfolioSections(
+  input: ReorderPortfolioSectionsInput,
+): Promise<ReorderPortfolioSectionsResult> {
+  const body = reorderPortfolioSectionsSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/sections/reorder`,
+    reorderPortfolioSectionsResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
 /** `GET /api/portfolios/by-subdomain/{subdomain}` — anonymous public portfolio page. */
 export async function getPublicPortfolioBySubdomain(
   subdomain: string,
@@ -286,7 +474,7 @@ export async function getPublicPortfolioBySubdomain(
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/by-subdomain/${encodeURIComponent(parsedSubdomain)}`,
     getPublicPortfolioBySubdomainResponseSchema,
-    { method: "GET" },
+    { method: "GET", skipAuth: true },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
