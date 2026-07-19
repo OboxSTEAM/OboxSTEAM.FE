@@ -1743,7 +1743,6 @@ function LegacySectionShell({
       value={sectionId}
       dragListener={false}
       dragControls={controls}
-      layout={false}
       transition={reduceMotion ? { duration: 0 } : EDITOR_DRAG_TRANSITION}
       onDragEnd={onCommitReorder}
       className="group/section relative list-none"
@@ -1851,7 +1850,6 @@ function DynamicSectionShell({
       value={section.id}
       dragListener={false}
       dragControls={controls}
-      layout={false}
       transition={reduceMotion ? { duration: 0 } : EDITOR_DRAG_TRANSITION}
       onDragEnd={onCommitReorder}
       className="group/section relative list-none"
