@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Reorder, useDragControls } from "motion/react";
 import { Eye, EyeOff, GripVertical, UserRound } from "lucide-react";
 
@@ -15,17 +16,26 @@ export type SectionOutlineEntry = {
 
 type SectionOutlinePanelProps = {
   entries: SectionOutlineEntry[];
+  /** Called once when a drag ends with the final order (not during drag). */
   onReorder: (orderedIds: string[]) => void;
   onToggleVisibility?: (id: string, visible: boolean) => void;
   className?: string;
 };
 
+const OUTLINE_DRAG_TRANSITION = {
+  type: "tween" as const,
+  duration: 0.15,
+  ease: "easeOut" as const,
+};
+
 function OutlineRow({
   entry,
   onToggleVisibility,
+  onDragEnd,
 }: {
   entry: SectionOutlineEntry;
   onToggleVisibility?: SectionOutlinePanelProps["onToggleVisibility"];
+  onDragEnd?: () => void;
 }) {
   const controls = useDragControls();
 
@@ -33,7 +43,13 @@ function OutlineRow({
     const target = document.querySelector(
       `[data-portfolio-section="${entry.id}"]`,
     );
-    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+    const reduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    target?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
   };
 
   if (entry.pinned) {
@@ -57,6 +73,9 @@ function OutlineRow({
       value={entry.id}
       dragListener={false}
       dragControls={controls}
+      layout="position"
+      transition={OUTLINE_DRAG_TRANSITION}
+      onDragEnd={onDragEnd}
       className="list-none"
     >
       <div
@@ -111,6 +130,7 @@ function OutlineRow({
 
 /**
  * Sticky left hierarchy — quick jump + drag-reorder for portfolio sections.
+ * Order is local while dragging; parent is notified once on drop.
  */
 export function SectionOutlinePanel({
   entries,
@@ -120,7 +140,34 @@ export function SectionOutlinePanel({
 }: SectionOutlinePanelProps) {
   const pinned = entries.filter((entry) => entry.pinned);
   const reorderable = entries.filter((entry) => !entry.pinned);
-  const reorderIds = reorderable.map((entry) => entry.id);
+  const entryIds = reorderable.map((entry) => entry.id);
+  const entryIdsKey = entryIds.join("|");
+
+  const [dragOrder, setDragOrder] = useState<string[] | null>(null);
+  const isDraggingRef = useRef(false);
+  const dragOrderRef = useRef<string[] | null>(null);
+
+  useEffect(() => {
+    if (isDraggingRef.current) return;
+    setDragOrder(null);
+    dragOrderRef.current = null;
+  }, [entryIdsKey]);
+
+  const values = dragOrder ?? entryIds;
+  const orderedEntries = values
+    .map((id) => reorderable.find((entry) => entry.id === id))
+    .filter((entry): entry is SectionOutlineEntry => entry != null);
+
+  const commitDrag = () => {
+    if (!isDraggingRef.current) return;
+    isDraggingRef.current = false;
+    const next = dragOrderRef.current;
+    setDragOrder(null);
+    dragOrderRef.current = null;
+    if (next && next.join("|") !== entryIdsKey) {
+      onReorder(next);
+    }
+  };
 
   return (
     <aside
@@ -144,19 +191,24 @@ export function SectionOutlinePanel({
           ))}
         </ul>
 
-        {reorderable.length > 0 ? (
+        {orderedEntries.length > 0 ? (
           <Reorder.Group
             as="ul"
             axis="y"
-            values={reorderIds}
-            onReorder={onReorder}
+            values={values}
+            onReorder={(nextIds) => {
+              isDraggingRef.current = true;
+              dragOrderRef.current = nextIds;
+              setDragOrder(nextIds);
+            }}
             className="mt-1 space-y-0.5"
           >
-            {reorderable.map((entry) => (
+            {orderedEntries.map((entry) => (
               <OutlineRow
                 key={entry.id}
                 entry={entry}
                 onToggleVisibility={onToggleVisibility}
+                onDragEnd={commitDrag}
               />
             ))}
           </Reorder.Group>

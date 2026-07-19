@@ -255,6 +255,8 @@ export function PortfolioCardShell({
   className,
   isDark = false,
   accentColor = "#4FC3F7",
+  /** Skip pointer-tracking wrappers (Spotlight/Glare/StarBorder) — keep static chrome. */
+  effectsEnabled = true,
   children,
 }: {
   slot: CardSlotId;
@@ -264,6 +266,7 @@ export function PortfolioCardShell({
   isDark?: boolean;
   /** Theme primary — drives distinct card chrome per slot. */
   accentColor?: string;
+  effectsEnabled?: boolean;
   children: ReactNode;
 }) {
   const animate = useShouldAnimate();
@@ -309,7 +312,7 @@ export function PortfolioCardShell({
     </div>
   );
 
-  if (!animate || slot === "Soft") {
+  if (!animate || !effectsEnabled || slot === "Soft") {
     return body;
   }
 

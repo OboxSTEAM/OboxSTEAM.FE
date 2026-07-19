@@ -29,6 +29,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import type {
   Portfolio,
   PortfolioItem,
+  PortfolioItemType,
   PortfolioLink,
   PortfolioMediaAsset,
   PortfolioSection,
@@ -37,6 +38,7 @@ import type {
 } from "@/lib/api/entities/portfolio";
 import {
   createPortfolio,
+  createPortfolioItem,
   createPortfolioSection,
   deletePortfolioItem,
   deletePortfolioSection,
@@ -244,6 +246,8 @@ export function PortfolioSettingsPageContent() {
   const [activePanel, setActivePanel] = useState<PortfolioPanelId | null>(null);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
+  const [isAddingItem, setIsAddingItem] = useState(false);
+  const [focusItemId, setFocusItemId] = useState<string | null>(null);
 
   const draftRef = useRef<Portfolio | null>(null);
   const baselineRef = useRef<Portfolio | null>(null);
@@ -567,10 +571,45 @@ export function PortfolioSettingsPageContent() {
     }
   }, [applyServerPortfolio]);
 
-  const openAddItem = useCallback(() => {
-    setEditingItem(null);
-    setItemDialogOpen(true);
-  }, []);
+  const handleAddItem = useCallback(
+    async (itemType: PortfolioItemType) => {
+      if (isAddingItem) return;
+      setIsAddingItem(true);
+      try {
+        const maxOrder = Math.max(
+          0,
+          ...(draftRef.current?.items ?? []).map((item) => item.displayOrder),
+        );
+        const result = await createPortfolioItem({
+          itemType,
+          title: "Mục mới",
+          isVisible: true,
+          displayOrder: maxOrder + 1,
+        });
+        // Baseline keeps the API title; draft clears text so the card shows placeholders.
+        setBaseline((current) =>
+          current ? replaceOrAddItem(current, result.data) : current,
+        );
+        setDraft((current) =>
+          current
+            ? replaceOrAddItem(current, {
+                ...result.data,
+                title: "",
+                subtitle: null,
+                organization: null,
+                studentEditedBody: null,
+              })
+            : current,
+        );
+        setFocusItemId(result.data.id);
+      } catch (error) {
+        showAppErrorFromUnknown(error, "portfolio.item");
+      } finally {
+        setIsAddingItem(false);
+      }
+    },
+    [isAddingItem],
+  );
 
   const openEditItem = useCallback((item: PortfolioItem) => {
     setEditingItem(item);
@@ -634,6 +673,7 @@ export function PortfolioSettingsPageContent() {
         });
         const saved = {
           ...result.data,
+          isVisible: patch.isVisible ?? result.data.isVisible,
           contentHtml:
             patch.contentHtml !== undefined
               ? preferAlignedHtml(patch.contentHtml, result.data.contentHtml)
@@ -699,30 +739,72 @@ export function PortfolioSettingsPageContent() {
     }
   }, []);
 
-  const handleReorderSections = useCallback(
-    async (orderedIds: string[]) => {
-      setDraft((current) => {
-        if (!current) return current;
-        const orderIndex = new Map(orderedIds.map((id, index) => [id, index]));
-        return {
-          ...current,
-          sections: (current.sections ?? []).map((section) => ({
-            ...section,
-            displayOrder: orderIndex.get(section.id) ?? section.displayOrder,
-          })),
-        };
-      });
+  /** Draft-only section reorder while dragging on the canvas. */
+  const handlePreviewReorderSections = useCallback((orderedIds: string[]) => {
+    setDraft((current) => {
+      if (!current) return current;
+      const orderIndex = new Map(orderedIds.map((id, index) => [id, index]));
+      return {
+        ...current,
+        sections: (current.sections ?? []).map((section) => ({
+          ...section,
+          displayOrder: orderIndex.get(section.id) ?? section.displayOrder,
+        })),
+      };
+    });
+  }, []);
+
+  /** Persist section order after drop (outline or canvas). */
+  const handleCommitReorderSections = useCallback(
+    async (orderedIds?: string[]) => {
+      const currentBaseline = baselineRef.current;
+      if (!currentBaseline?.sections?.length) return;
+
+      const sortIds = (sections: Portfolio["sections"]) =>
+        [...(sections ?? [])]
+          .sort((a, b) => a.displayOrder - b.displayOrder)
+          .map((section) => section.id);
+
+      const draftOrder =
+        orderedIds ?? sortIds(draftRef.current?.sections ?? null);
+      if (draftOrder.length === 0) return;
+      if (draftOrder.join("|") === sortIds(currentBaseline.sections).join("|")) {
+        return;
+      }
+
+      if (orderedIds) {
+        handlePreviewReorderSections(orderedIds);
+      }
 
       try {
         const result = await reorderPortfolioSections({
-          sections: orderedIds.map((id, index) => ({ id, displayOrder: index })),
+          sections: draftOrder.map((id, index) => ({
+            id,
+            displayOrder: index,
+          })),
         });
         applyServerPortfolio(result.data);
       } catch (error) {
+        setDraft((current) => {
+          if (!current || !baselineRef.current) return current;
+          const baseOrder = new Map(
+            (baselineRef.current.sections ?? []).map((section) => [
+              section.id,
+              section.displayOrder,
+            ]),
+          );
+          return {
+            ...current,
+            sections: (current.sections ?? []).map((section) => ({
+              ...section,
+              displayOrder: baseOrder.get(section.id) ?? section.displayOrder,
+            })),
+          };
+        });
         showAppErrorFromUnknown(error, "portfolio.section");
       }
     },
-    [applyServerPortfolio],
+    [applyServerPortfolio, handlePreviewReorderSections],
   );
 
   const handleToggleSectionVisibility = useCallback(
@@ -921,7 +1003,7 @@ export function PortfolioSettingsPageContent() {
           entries={outlineEntries}
           onReorder={(orderedIds) => {
             if ((draft.sections ?? []).length > 0) {
-              void handleReorderSections(orderedIds);
+              void handleCommitReorderSections(orderedIds);
               return;
             }
             patchTheme({
@@ -950,8 +1032,9 @@ export function PortfolioSettingsPageContent() {
               <ItemsPanel
                 items={draft.items ?? []}
                 isSyncing={isSyncing}
+                isAdding={isAddingItem}
                 onSync={() => void handleSync()}
-                onAdd={openAddItem}
+                onAdd={() => void handleAddItem("Project")}
                 onEdit={openEditItem}
                 onDelete={(item) => void handleDeleteItem(item)}
                 onToggleVisibility={(item, visible) =>
@@ -975,18 +1058,20 @@ export function PortfolioSettingsPageContent() {
             }
             onDeleteItem={(item) => void handleDeleteItem(item)}
             onEditItem={openEditItem}
-            onAddItem={openAddItem}
+            onAddItem={(itemType) => void handleAddItem(itemType)}
             onSyncItems={() => void handleSync()}
             isSyncing={isSyncing}
+            isAddingItem={isAddingItem}
+            focusItemId={focusItemId}
+            onFocusItemHandled={() => setFocusItemId(null)}
             onOpenLinksPanel={() => setActivePanel("links")}
             onAddSection={(kind) => void handleAddSection(kind)}
             onUpdateSection={(sectionId, patch) =>
               void handleUpdateSection(sectionId, patch)
             }
             onDeleteSection={(sectionId) => void handleDeleteSection(sectionId)}
-            onReorderSections={(orderedIds) =>
-              void handleReorderSections(orderedIds)
-            }
+            onReorderSections={handlePreviewReorderSections}
+            onCommitReorderSections={() => void handleCommitReorderSections()}
             onToggleSectionVisibility={handleToggleSectionVisibility}
           />
         </main>

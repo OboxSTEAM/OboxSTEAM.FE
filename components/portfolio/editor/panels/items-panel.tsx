@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 type ItemsPanelProps = {
   items: PortfolioItem[];
   isSyncing: boolean;
+  isAdding?: boolean;
   onSync: () => void;
   onAdd: () => void;
   onEdit: (item: PortfolioItem) => void;
@@ -22,6 +23,7 @@ type ItemsPanelProps = {
 export function ItemsPanel({
   items,
   isSyncing,
+  isAdding = false,
   onSync,
   onAdd,
   onEdit,
@@ -37,7 +39,8 @@ export function ItemsPanel({
     <div className="space-y-4">
       <p className="text-xs leading-relaxed text-[#6B6B6B]">
         Mục tự động nhập chỉ ẩn/hiện và chỉnh tường thuật; mục thủ công có thể
-        xóa. Kéo thả trực tiếp trên trang để sắp xếp.
+        xóa. Kéo thả trực tiếp trên trang để sắp xếp. Bấm Thêm mục để tạo thẻ
+        trống và chỉnh ngay trên trang.
       </p>
 
       <div className="flex gap-2">
@@ -54,10 +57,11 @@ export function ItemsPanel({
         <Button
           type="button"
           className="h-10 flex-1 rounded-xl bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90"
+          disabled={isAdding}
           onClick={onAdd}
         >
           <Plus className="size-4" />
-          Thêm mục
+          {isAdding ? "Đang thêm…" : "Thêm mục"}
         </Button>
       </div>
 
@@ -74,25 +78,12 @@ export function ItemsPanel({
               <li
                 key={item.id}
                 className={cn(
-                  "relative overflow-hidden rounded-2xl border bg-white p-3 shadow-sm",
-                  item.isVisible ? "border-[#E5E5E0]" : "border-[#2D2D2D]/40",
+                  "relative overflow-hidden rounded-2xl border bg-white shadow-sm",
+                  item.isVisible
+                    ? "border-[#E5E5E0] p-3"
+                    : "border-[#E5E5E0] px-3 py-2",
                 )}
               >
-                {!item.isVisible ? (
-                  <div
-                    aria-hidden
-                    className="pointer-events-none absolute inset-0 z-[1]"
-                    style={{
-                      backgroundImage: `
-                        linear-gradient(45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%),
-                        linear-gradient(-45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%)
-                      `,
-                      backgroundSize: "18px 18px",
-                      opacity: 0.35,
-                    }}
-                  />
-                ) : null}
-                <div className="relative z-[2]">
                 <div className="flex items-center gap-2">
                   <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-[#6B6B6B]">
                     {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
@@ -106,14 +97,20 @@ export function ItemsPanel({
                     {isAuto ? "Tự động" : "Thủ công"}
                   </span>
                   {!item.isVisible ? (
-                    <span className="rounded-full bg-[#2D2D2D] px-2 py-0.5 text-[10px] font-semibold text-white">
+                    <span className="rounded-md bg-[#2D2D2D]/8 px-2 py-0.5 text-[10px] font-semibold text-[#2D2D2D]">
                       Đang ẩn
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1.5 truncate text-sm font-semibold text-[#2D2D2D]">
+                <p
+                  className={cn(
+                    "truncate text-sm font-semibold text-[#2D2D2D]",
+                    item.isVisible ? "mt-1.5" : "mt-1",
+                  )}
+                >
                   {item.title ?? "Không có tiêu đề"}
                 </p>
+                {item.isVisible ? (
                 <div className="mt-2 flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <Switch
@@ -156,7 +153,31 @@ export function ItemsPanel({
                     ) : null}
                   </div>
                 </div>
+                ) : (
+                <div className="mt-1.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={item.isVisible}
+                      onCheckedChange={(checked) =>
+                        onToggleVisibility(item, Boolean(checked))
+                      }
+                    />
+                    <span className="text-xs font-medium text-[#2D2D2D]">Ẩn</span>
+                  </div>
+                  {!isAuto ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="rounded-lg text-[#E94B3C]"
+                      onClick={() => onDelete(item)}
+                      aria-label="Xóa"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  ) : null}
                 </div>
+                )}
               </li>
             );
           })}

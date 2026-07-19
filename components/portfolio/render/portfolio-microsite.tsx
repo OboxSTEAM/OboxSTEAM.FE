@@ -713,8 +713,9 @@ export function PortfolioMicrosite({
   compact = false,
 }: PortfolioMicrositeProps) {
   const resolved = resolvePortfolioTheme(data.theme);
+  /** Prefer dynamic section model whenever any sections exist — even if all are hidden. */
+  const hasDynamicSections = (data.sections?.length ?? 0) > 0;
   const sections = visibleSections(data.sections);
-  const useDynamicSections = sections.length > 0;
 
   const items = visibleItems(data.items);
   const projectItems = items.filter((item) => PROJECT_TYPES.has(item.itemType));
@@ -776,7 +777,7 @@ export function PortfolioMicrosite({
           <ProfileSection data={data} resolved={resolved} compact={compact} />
         </PortfolioReveal>
 
-        {useDynamicSections
+        {hasDynamicSections
           ? sections.map((section) => {
               const content = renderDynamicSection(
                 section,

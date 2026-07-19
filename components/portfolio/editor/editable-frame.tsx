@@ -21,7 +21,7 @@ export function EditableSection({
   return (
     <div
       className={cn(
-        "group/editable relative min-w-0 overflow-hidden rounded-xl border border-dashed p-3 transition-colors duration-150 sm:p-4",
+        "group/editable relative min-w-0 overflow-hidden rounded-xl border border-dashed p-3 transition-colors duration-100 sm:p-4",
         isDark
           ? [
               "border-[#FAFAF5]/28",
@@ -58,7 +58,7 @@ export function EditableFieldFrame({
   return (
     <div
       className={cn(
-        "rounded-lg border border-dashed transition-colors duration-150",
+        "rounded-lg border border-dashed transition-colors duration-100",
         isDark
           ? "border-[#FAFAF5]/20 hover:border-[#FAFAF5]/40 focus-within:border-[#4FC3F7] focus-within:bg-white/8"
           : "border-[#D0D0C8] bg-white/70 hover:border-[#A8A8A0] focus-within:border-[#4FC3F7] focus-within:bg-white",

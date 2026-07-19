@@ -35,6 +35,7 @@ import {
 import type {
   Portfolio,
   PortfolioItem,
+  PortfolioItemType,
   PortfolioMediaAsset,
   PortfolioSection,
   PortfolioSectionKind,
@@ -90,6 +91,13 @@ const STEAM_CHIPS = [
   { label: "Math", colorKey: "primary" as const },
 ];
 
+/** Drag-only tween — no layout projection (avoids TipTap remeasure thrash). */
+const EDITOR_DRAG_TRANSITION = {
+  type: "tween" as const,
+  duration: 0.14,
+  ease: "easeOut" as const,
+};
+
 export type PortfolioCanvasProps = {
   draft: Portfolio;
   onPatchDraft: (patch: Partial<Portfolio>) => void;
@@ -102,14 +110,22 @@ export type PortfolioCanvasProps = {
   onToggleItemVisibility: (item: PortfolioItem, visible: boolean) => void;
   onDeleteItem: (item: PortfolioItem) => void;
   onEditItem: (item: PortfolioItem) => void;
-  onAddItem: () => void;
+  /** Create a placeholder item of the given type and append it for inline editing. */
+  onAddItem: (itemType: PortfolioItemType) => void;
   onSyncItems: () => void;
   isSyncing: boolean;
+  isAddingItem?: boolean;
+  /** When set, focus the title field of this newly created item. */
+  focusItemId?: string | null;
+  onFocusItemHandled?: () => void;
   onOpenLinksPanel: () => void;
   onAddSection?: (kind: PortfolioSectionKind) => void;
   onUpdateSection?: (sectionId: string, patch: Partial<PortfolioSection>) => void;
   onDeleteSection?: (sectionId: string) => void;
+  /** Draft-only section reorder while dragging. */
   onReorderSections?: (orderedIds: string[]) => void;
+  /** Persist section order after a drop. */
+  onCommitReorderSections?: () => void;
   onToggleSectionVisibility?: (section: PortfolioSection, visible: boolean) => void;
 };
 
@@ -136,6 +152,8 @@ function CompactRichField({
   isDark,
   className,
   maxLength = 200,
+  autoFocus = false,
+  onAutoFocusHandled,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -144,6 +162,8 @@ function CompactRichField({
   isDark?: boolean;
   className?: string;
   maxLength?: number;
+  autoFocus?: boolean;
+  onAutoFocusHandled?: () => void;
 }) {
   return (
     <RichTextEditor
@@ -155,6 +175,8 @@ function CompactRichField({
       ariaLabel={ariaLabel}
       placeholder={placeholder}
       maxLength={maxLength}
+      autoFocus={autoFocus}
+      onAutoFocusHandled={onAutoFocusHandled}
       className={cn("min-w-0 max-w-full", className)}
     />
   );
@@ -296,7 +318,7 @@ function HoverChrome({
   return (
     <div
       className={cn(
-        "absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1 py-0.5 shadow-sm transition-opacity",
+        "absolute top-2 right-2 z-20 flex items-center gap-0.5 rounded-full border border-[#E5E5E0] bg-white px-1 py-0.5 shadow-sm transition-opacity duration-100",
         alwaysVisible
           ? "opacity-100"
           : "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100",
@@ -347,31 +369,12 @@ function ChromeButton({
   );
 }
 
-/** Diagonal X hatch + badge when an item/section is hidden in the editor. */
-function HiddenOverlay({ label = "Đang ẩn" }: { label?: string }) {
+/** Compact badge when an item/section is hidden in the editor. */
+function HiddenBadge({ label = "Đang ẩn" }: { label?: string }) {
   return (
-    <div
-      aria-hidden
-      className="pointer-events-none absolute inset-0 z-[8] overflow-hidden rounded-[inherit]"
-    >
-      <div className="absolute inset-0 bg-[#FAFAF5]/55" />
-      <div
-        className="absolute inset-0 opacity-70"
-        style={{
-          backgroundImage: `
-            linear-gradient(45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%),
-            linear-gradient(-45deg, transparent 44%, #2D2D2D 44%, #2D2D2D 56%, transparent 56%)
-          `,
-          backgroundSize: "22px 22px",
-          backgroundPosition: "center",
-        }}
-      />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <span className="rounded-lg bg-[#2D2D2D] px-3 py-1.5 text-xs font-semibold tracking-wide text-white shadow-md">
-          {label}
-        </span>
-      </div>
-    </div>
+    <span className="inline-flex shrink-0 items-center rounded-md bg-[#2D2D2D]/8 px-2 py-0.5 text-[10px] font-semibold tracking-wide text-[#2D2D2D]">
+      {label}
+    </span>
   );
 }
 
@@ -412,6 +415,8 @@ type ItemCardEditableProps = {
   onToggleVisibility: (item: PortfolioItem, visible: boolean) => void;
   onDelete: (item: PortfolioItem) => void;
   onEdit: (item: PortfolioItem) => void;
+  autoFocusTitle?: boolean;
+  onAutoFocusHandled?: () => void;
 };
 
 function ItemCardEditable({
@@ -423,11 +428,17 @@ function ItemCardEditable({
   onToggleVisibility,
   onDelete,
   onEdit,
+  autoFocusTitle = false,
+  onAutoFocusHandled,
 }: ItemCardEditableProps) {
   const controls = useDragControls();
   const isAuto = item.source === "AutoImported";
   const cardSurface = resolved.cardSurfaceClass;
   const media = itemMediaSources(item);
+
+  const isHidden = !item.isVisible;
+  const titlePlain =
+    stripHtmlText(item.title) || item.title || "Không có tiêu đề";
 
   return (
     <Reorder.Item
@@ -436,10 +447,11 @@ function ItemCardEditable({
       dragListener={false}
       dragControls={controls}
       onDragEnd={onCommitReorder}
-      layout="position"
-      transition={reduceMotion ? { duration: 0 } : undefined}
+      layout={false}
+      transition={reduceMotion ? { duration: 0 } : EDITOR_DRAG_TRANSITION}
       className={cn(
-        "group relative h-full list-none",
+        "group relative list-none",
+        isHidden ? "h-auto" : "h-full",
         itemSpanClass(item.span, resolved.layoutStyle),
       )}
     >
@@ -448,10 +460,10 @@ function ItemCardEditable({
         surfaceClass={cardSurface}
         isDark={resolved.isDark}
         accentColor={resolved.primaryColor}
-        className="h-full"
+        effectsEnabled={false}
+        className={cn("h-full", isHidden && "py-2.5")}
       >
-        {!item.isVisible ? <HiddenOverlay /> : null}
-        <HoverChrome alwaysVisible={!item.isVisible}>
+        <HoverChrome alwaysVisible={isHidden}>
           <ChromeButton
             label="Kéo để sắp xếp"
             grabbable
@@ -463,19 +475,21 @@ function ItemCardEditable({
             <GripVertical className="size-3.5" />
           </ChromeButton>
           <ChromeButton
-            label={item.isVisible ? "Ẩn mục" : "Hiện mục"}
-            emphasized={!item.isVisible}
+            label={isHidden ? "Hiện mục" : "Ẩn mục"}
+            emphasized={isHidden}
             onClick={() => onToggleVisibility(item, !item.isVisible)}
           >
-            {item.isVisible ? (
-              <EyeOff className="size-3.5" strokeWidth={2.25} />
-            ) : (
+            {isHidden ? (
               <Eye className="size-3.5" strokeWidth={2.25} />
+            ) : (
+              <EyeOff className="size-3.5" strokeWidth={2.25} />
             )}
           </ChromeButton>
-          <ChromeButton label="Chỉnh sửa chi tiết" onClick={() => onEdit(item)}>
-            <Pencil className="size-3.5" />
-          </ChromeButton>
+          {!isHidden ? (
+            <ChromeButton label="Chỉnh sửa chi tiết" onClick={() => onEdit(item)}>
+              <Pencil className="size-3.5" />
+            </ChromeButton>
+          ) : null}
           {!isAuto ? (
             <ChromeButton label="Xóa mục" destructive onClick={() => onDelete(item)}>
               <Trash2 className="size-3.5" />
@@ -483,155 +497,175 @@ function ItemCardEditable({
           ) : null}
         </HoverChrome>
 
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <p
-            className="font-mono text-[10px] uppercase tracking-[0.16em]"
-            style={{ color: resolved.primaryColor }}
-          >
-            {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
-          </p>
-          <div className="flex flex-wrap items-center gap-1.5">
-            {item.isFeatured ? (
-              <span
-                className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
-                style={{ backgroundColor: resolved.primaryColor }}
-              >
-                Nổi bật
-              </span>
-            ) : null}
-            {!item.isVisible ? (
-              <span className="rounded-full bg-[#2D2D2D] px-2 py-0.5 text-[10px] font-semibold text-white">
-                Đang ẩn
-              </span>
-            ) : null}
-          </div>
-        </div>
-
-        <div
-          className={cn(
-            "mt-1.5 text-base font-semibold tracking-tight",
-            resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
-          )}
-          style={{ fontFamily: resolved.headingFontCss }}
-        >
-          {isAuto ? (
-            hasHtmlTags(item.title ?? "") ? (
-              <RichText
-                html={item.title}
-                className="prose-p:my-0 text-base font-semibold"
-              />
-            ) : (
-              <p>{item.title ?? "Không có tiêu đề"}</p>
-            )
-          ) : (
-            <CompactRichField
-              value={item.title ?? ""}
-              onChange={(next) => onPatchItemText(item.id, { title: next })}
-              ariaLabel="Tiêu đề mục"
-              placeholder="Tiêu đề mục…"
-              isDark={resolved.isDark}
-              maxLength={200}
-            />
-          )}
-        </div>
-
-        {isAuto ? (
-          item.subtitle || item.organization ? (
+        {isHidden ? (
+          <div className="flex min-w-0 items-center gap-2 pr-24">
+            <p
+              className="shrink-0 font-mono text-[10px] uppercase tracking-[0.16em]"
+              style={{ color: resolved.primaryColor }}
+            >
+              {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
+            </p>
             <p
               className={cn(
-                "mt-1 text-sm",
-                resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                "min-w-0 flex-1 truncate text-sm font-semibold tracking-tight",
+                resolved.isDark ? "text-[#FAFAF5]/80" : "text-[#2D2D2D]/80",
               )}
+              style={{ fontFamily: resolved.headingFontCss }}
             >
-              {[item.subtitle, item.organization].filter(Boolean).join(" · ")}
+              {titlePlain}
             </p>
-          ) : null
+            <HiddenBadge />
+          </div>
         ) : (
-          <div className="mt-1 flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:gap-2">
-            <CompactRichField
-              value={item.subtitle ?? ""}
-              onChange={(next) => onPatchItemText(item.id, { subtitle: next })}
-              ariaLabel="Phụ đề"
-              placeholder="Phụ đề…"
-              isDark={resolved.isDark}
-              maxLength={200}
-              className={cn(
-                "min-w-0 sm:flex-1",
-                resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
-              )}
-            />
-            <CompactRichField
-              value={item.organization ?? ""}
-              onChange={(next) =>
-                onPatchItemText(item.id, { organization: next })
-              }
-              ariaLabel="Tổ chức"
-              placeholder="Tổ chức…"
-              isDark={resolved.isDark}
-              maxLength={200}
-              className={cn(
-                "min-w-0 sm:flex-1",
-                resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
-              )}
-            />
-          </div>
-        )}
+          <>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <p
+                className="font-mono text-[10px] uppercase tracking-[0.16em]"
+                style={{ color: resolved.primaryColor }}
+              >
+                {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
+              </p>
+              <div className="flex flex-wrap items-center gap-1.5">
+                {item.isFeatured ? (
+                  <span
+                    className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white"
+                    style={{ backgroundColor: resolved.primaryColor }}
+                  >
+                    Nổi bật
+                  </span>
+                ) : null}
+              </div>
+            </div>
 
-        {isAuto && item.description ? (
-          hasHtmlTags(item.description) ? (
-            <RichText html={item.description} className="mt-2 text-sm" />
-          ) : (
-            <p
+            <div
               className={cn(
-                "mt-2 text-sm leading-relaxed",
-                resolved.isDark ? "text-[#FAFAF5]/85" : "text-[#6B6B6B]",
+                "mt-1.5 text-base font-semibold tracking-tight",
+                resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
               )}
+              style={{ fontFamily: resolved.headingFontCss }}
             >
-              {item.description}
-            </p>
-          )
-        ) : null}
+              {isAuto ? (
+                hasHtmlTags(item.title ?? "") ? (
+                  <RichText
+                    html={item.title}
+                    className="prose-p:my-0 text-base font-semibold"
+                  />
+                ) : (
+                  <p>{item.title ?? "Không có tiêu đề"}</p>
+                )
+              ) : (
+                <CompactRichField
+                  value={item.title ?? ""}
+                  onChange={(next) => onPatchItemText(item.id, { title: next })}
+                  ariaLabel="Tiêu đề mục"
+                  placeholder="Tiêu đề mục…"
+                  isDark={resolved.isDark}
+                  maxLength={200}
+                  autoFocus={autoFocusTitle}
+                  onAutoFocusHandled={onAutoFocusHandled}
+                />
+              )}
+            </div>
 
-        <div className="mt-2">
-          <RichTextEditor
-            mode="full"
-            variant="inline"
-            isDark={resolved.isDark}
-            value={item.studentEditedBody ?? ""}
-            onChange={(next) =>
-              onPatchItemText(item.id, { studentEditedBody: next })
-            }
-            ariaLabel="Nội dung tường thuật"
-            placeholder="Kể câu chuyện của bạn: đã học được gì, tạo ra điều gì…"
-            className={cn(
-              resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]/90",
+            {isAuto ? (
+              item.subtitle || item.organization ? (
+                <p
+                  className={cn(
+                    "mt-1 text-sm",
+                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                  )}
+                >
+                  {[item.subtitle, item.organization].filter(Boolean).join(" · ")}
+                </p>
+              ) : null
+            ) : (
+              <div className="mt-1 flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:gap-2">
+                <CompactRichField
+                  value={item.subtitle ?? ""}
+                  onChange={(next) => onPatchItemText(item.id, { subtitle: next })}
+                  ariaLabel="Phụ đề"
+                  placeholder="Phụ đề…"
+                  isDark={resolved.isDark}
+                  maxLength={200}
+                  className={cn(
+                    "min-w-0 sm:flex-1",
+                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                  )}
+                />
+                <CompactRichField
+                  value={item.organization ?? ""}
+                  onChange={(next) =>
+                    onPatchItemText(item.id, { organization: next })
+                  }
+                  ariaLabel="Tổ chức"
+                  placeholder="Tổ chức…"
+                  isDark={resolved.isDark}
+                  maxLength={200}
+                  className={cn(
+                    "min-w-0 sm:flex-1",
+                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                  )}
+                />
+              </div>
             )}
-          />
-        </div>
 
-        <ItemMediaRow assets={media} isDark={resolved.isDark} />
+            {isAuto && item.description ? (
+              hasHtmlTags(item.description) ? (
+                <RichText html={item.description} className="mt-2 text-sm" />
+              ) : (
+                <p
+                  className={cn(
+                    "mt-2 text-sm leading-relaxed",
+                    resolved.isDark ? "text-[#FAFAF5]/85" : "text-[#6B6B6B]",
+                  )}
+                >
+                  {item.description}
+                </p>
+              )
+            ) : null}
 
-        {item.mentorEndorsement ? (
-          <blockquote
-            className={cn(
-              "mt-2.5 border-l-2 pl-3 text-sm italic",
-              resolved.isDark
-                ? "border-[#4FC3F7] text-[#FAFAF5]/75"
-                : "border-[#4FC3F7] text-[#6B6B6B]",
-            )}
-          >
-            {item.mentorEndorsement}
-          </blockquote>
-        ) : null}
+            <div className="mt-2">
+              <RichTextEditor
+                mode="full"
+                variant="inline"
+                isDark={resolved.isDark}
+                value={item.studentEditedBody ?? ""}
+                onChange={(next) =>
+                  onPatchItemText(item.id, { studentEditedBody: next })
+                }
+                ariaLabel="Nội dung tường thuật"
+                placeholder="Kể câu chuyện của bạn: đã học được gì, tạo ra điều gì…"
+                className={cn(
+                  resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]/90",
+                )}
+              />
+            </div>
 
-        {item.externalUrl ? (
-          <p
-            className="mt-2.5 text-sm font-semibold"
-            style={{ color: resolved.primaryColor }}
-          >
-            {item.externalUrl}
-          </p>
-        ) : null}
+            <ItemMediaRow assets={media} isDark={resolved.isDark} />
+
+            {item.mentorEndorsement ? (
+              <blockquote
+                className={cn(
+                  "mt-2.5 border-l-2 pl-3 text-sm italic",
+                  resolved.isDark
+                    ? "border-[#4FC3F7] text-[#FAFAF5]/75"
+                    : "border-[#4FC3F7] text-[#6B6B6B]",
+                )}
+              >
+                {item.mentorEndorsement}
+              </blockquote>
+            ) : null}
+
+            {item.externalUrl ? (
+              <p
+                className="mt-2.5 text-sm font-semibold"
+                style={{ color: resolved.primaryColor }}
+              >
+                {item.externalUrl}
+              </p>
+            ) : null}
+          </>
+        )}
       </PortfolioCardShell>
     </Reorder.Item>
   );
@@ -646,6 +680,8 @@ type ItemsGroupEditableProps = {
   reduceMotion: boolean;
   toGlobalOrder: (groupIds: string[]) => string[];
   canvasProps: PortfolioCanvasProps;
+  /** Item type created when pressing Thêm mục in this section. */
+  defaultItemType: PortfolioItemType;
   onTitleChange?: (next: string) => void;
   dimmed?: boolean;
 };
@@ -659,6 +695,7 @@ function ItemsGroupEditable({
   reduceMotion,
   toGlobalOrder,
   canvasProps,
+  defaultItemType,
   onTitleChange,
   dimmed = false,
 }: ItemsGroupEditableProps) {
@@ -672,6 +709,9 @@ function ItemsGroupEditable({
     onAddItem,
     onSyncItems,
     isSyncing,
+    isAddingItem = false,
+    focusItemId,
+    onFocusItemHandled,
   } = canvasProps;
 
   const groupIds = items.map((item) => item.id);
@@ -679,8 +719,7 @@ function ItemsGroupEditable({
 
   return (
     <div className="relative space-y-3">
-      {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {onTitleChange ? (
           <EditableSectionTitle
             value={title}
@@ -705,71 +744,71 @@ function ItemsGroupEditable({
             )}
           </h2>
         )}
-        <button
-          type="button"
-          onClick={onAddItem}
-          className="flex items-center gap-1 rounded-full border border-dashed px-3 py-1 text-xs font-medium opacity-0 transition-opacity hover:border-[var(--pf-primary)] focus-visible:opacity-100 focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none group-hover/section:opacity-100"
-          style={{
-            borderColor: `${resolved.primaryColor}66`,
-            color: resolved.primaryColor,
-          }}
-        >
-          <Plus className="size-3.5" />
-          Thêm mục
-        </button>
+        {dimmed ? <HiddenBadge label="Phần đang ẩn" /> : null}
       </div>
 
-      {items.length === 0 ? (
-        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#C9C9C2] bg-white/60 px-4 py-6 text-center">
-          <p className="text-sm text-[#6B6B6B]">{emptyHint}</p>
-          <div className="flex flex-wrap justify-center gap-2">
-            {showSyncInEmptyState ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-9 rounded-xl"
-                disabled={isSyncing}
-                onClick={onSyncItems}
-              >
-                <RefreshCw className={cn("size-4", isSyncing && "animate-spin")} />
-                Đồng bộ
-              </Button>
-            ) : null}
-            <Button
-              type="button"
-              variant="outline"
-              className="h-9 rounded-xl"
-              onClick={onAddItem}
+      {dimmed ? null : (
+        <div className="space-y-3">
+          {items.length === 0 ? (
+            <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-[#C9C9C2] bg-white/60 px-4 py-6 text-center">
+              <p className="text-sm text-[#6B6B6B]">{emptyHint}</p>
+              {showSyncInEmptyState ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-9 rounded-xl"
+                  disabled={isSyncing}
+                  onClick={onSyncItems}
+                >
+                  <RefreshCw
+                    className={cn("size-4", isSyncing && "animate-spin")}
+                  />
+                  Đồng bộ
+                </Button>
+              ) : null}
+            </div>
+          ) : (
+            <Reorder.Group
+              as="div"
+              axis="y"
+              values={groupIds}
+              onReorder={(nextIds: string[]) =>
+                onPreviewReorder(toGlobalOrder(nextIds))
+              }
+              className={layoutClass}
             >
-              <Plus className="size-4" />
-              Thêm mục
-            </Button>
-          </div>
+              {items.map((item) => (
+                <ItemCardEditable
+                  key={item.id}
+                  item={item}
+                  resolved={resolved}
+                  reduceMotion={reduceMotion}
+                  onPatchItemText={onPatchItemText}
+                  onCommitReorder={onCommitReorder}
+                  onToggleVisibility={onToggleItemVisibility}
+                  onDelete={onDeleteItem}
+                  onEdit={onEditItem}
+                  autoFocusTitle={focusItemId === item.id}
+                  onAutoFocusHandled={onFocusItemHandled}
+                />
+              ))}
+            </Reorder.Group>
+          )}
+
+          <button
+            type="button"
+            disabled={isAddingItem}
+            onClick={() => onAddItem(defaultItemType)}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed px-3 py-2.5 text-xs font-medium transition-colors hover:border-[var(--pf-primary)] focus-visible:ring-2 focus-visible:ring-[#4FC3F7] outline-none disabled:pointer-events-none disabled:opacity-50"
+            style={{
+              borderColor: `${resolved.primaryColor}66`,
+              color: resolved.primaryColor,
+            }}
+          >
+            <Plus className="size-3.5" />
+            {isAddingItem ? "Đang thêm…" : "Thêm mục"}
+          </button>
         </div>
-      ) : (
-        <Reorder.Group
-          as="div"
-          axis="y"
-          values={groupIds}
-          onReorder={(nextIds: string[]) =>
-            onPreviewReorder(toGlobalOrder(nextIds))
-          }
-          className={layoutClass}
-        >
-          {items.map((item) => (
-            <ItemCardEditable
-              key={item.id}
-              item={item}
-              resolved={resolved}
-              reduceMotion={reduceMotion}
-              onPatchItemText={onPatchItemText}
-              onCommitReorder={onCommitReorder}
-              onToggleVisibility={onToggleItemVisibility}
-              onDelete={onDeleteItem}
-              onEdit={onEditItem}
-            />
-          ))}
-        </Reorder.Group>
       )}
     </div>
   );
@@ -1042,8 +1081,7 @@ function LinksSectionEditable({
 
   return (
     <div className="relative space-y-3">
-      {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {onTitleChange ? (
           <EditableSectionTitle
             value={title}
@@ -1064,18 +1102,21 @@ function LinksSectionEditable({
             {title}
           </h2>
         )}
-        <button
-          type="button"
-          onClick={onOpenLinksPanel}
-          className="flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity group-hover/section:opacity-100 focus-visible:opacity-100"
-          style={{ backgroundColor: resolved.primaryColor }}
-        >
-          <Pencil className="size-3" />
-          Chỉnh liên kết
-        </button>
+        {dimmed ? <HiddenBadge label="Phần đang ẩn" /> : null}
+        {dimmed ? null : (
+          <button
+            type="button"
+            onClick={onOpenLinksPanel}
+            className="ml-auto flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold text-white opacity-0 transition-opacity duration-100 group-hover/section:opacity-100 focus-visible:opacity-100"
+            style={{ backgroundColor: resolved.primaryColor }}
+          >
+            <Pencil className="size-3" />
+            Chỉnh liên kết
+          </button>
+        )}
       </div>
 
-      {links.length === 0 ? (
+      {dimmed ? null : links.length === 0 ? (
         <button
           type="button"
           onClick={onOpenLinksPanel}
@@ -1095,7 +1136,9 @@ function LinksSectionEditable({
             <span
               key={`${link.url}-${index}`}
               className="rounded-full px-3.5 py-1.5 text-sm font-medium text-white"
-              style={{ backgroundColor: linkPalette[index % linkPalette.length] }}
+              style={{
+                backgroundColor: linkPalette[index % linkPalette.length],
+              }}
             >
               {link.label || link.url}
             </span>
@@ -1128,7 +1171,6 @@ function CustomSectionEditable({
 
   return (
     <div className="group relative space-y-3">
-      {dimmed ? <HiddenOverlay label="Phần đang ẩn" /> : null}
       {isCustom ? (
         <HoverChrome alwaysVisible={dimmed}>
           <ChromeButton
@@ -1154,107 +1196,117 @@ function CustomSectionEditable({
         </HoverChrome>
       ) : null}
 
-      <EditableSectionTitle
-        value={section.title ?? ""}
-        onChange={(next) => patch({ title: next })}
-        placeholder={
-          PORTFOLIO_SECTION_KIND_LABELS[section.kind] ?? "Tiêu đề phần…"
-        }
-        isDark={resolved.isDark}
-        primaryColor={resolved.primaryColor}
-        headingFontCss={resolved.headingFontCss}
-      />
-
-      {section.kind === "RichText" ? (
-        <RichTextEditor
-          mode="full"
-          variant="inline"
+      <div className="flex flex-wrap items-center gap-2 pr-20">
+        <EditableSectionTitle
+          value={section.title ?? ""}
+          onChange={(next) => patch({ title: next })}
+          placeholder={
+            PORTFOLIO_SECTION_KIND_LABELS[section.kind] ?? "Tiêu đề phần…"
+          }
           isDark={resolved.isDark}
-          value={section.contentHtml ?? ""}
-          onChange={(next) => patch({ contentHtml: next })}
-          ariaLabel="Nội dung văn bản"
-          placeholder="Viết nội dung cho phần này…"
+          primaryColor={resolved.primaryColor}
+          headingFontCss={resolved.headingFontCss}
         />
-      ) : null}
+        {dimmed ? <HiddenBadge label="Phần đang ẩn" /> : null}
+      </div>
 
-      {section.kind === "Gallery" ? (
-        <div className="space-y-3">
-          <div className="space-y-1.5">
-            <p
-              className={cn(
-                "text-xs font-medium",
-                resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
-              )}
-            >
-              Kiểu thư viện
-            </p>
-            <Select
-              value={resolveGalleryVariant(section, resolved)}
-              onValueChange={(value) => {
-                if (value == null) return;
-                const current =
-                  parseSectionSettingsJson(section.settingsJson) ?? {};
-                patch({
-                  settingsJson: serializeSectionSettingsJson({
-                    ...current,
-                    variant: value,
-                  }),
-                });
-              }}
-            >
-              <SelectTrigger className={LIGHT_SELECT_TRIGGER_FULL}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className={LIGHT_SELECT_CONTENT_PANEL}>
-                {GALLERY_SLOT_OPTIONS.map((option) => (
-                  <SelectItem
-                    key={option.id}
-                    value={option.id}
-                    className={LIGHT_SELECT_ITEM_PANEL}
-                  >
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <MediaUploader
-            assets={section.mediaAssets}
-            onChange={(assets) => patch({ mediaAssets: assets })}
-            label="Ảnh thư viện"
-          />
-          <PortfolioGallery
-            slot={resolveGalleryVariant(section, resolved)}
-            images={sectionMediaToGalleryImages(section.mediaAssets)}
-          />
-        </div>
-      ) : null}
-
-      {section.kind === "Embed" ? (
-        <div className="space-y-3">
-          <RichTextEditor
-            mode="full"
-            variant="inline"
-            isDark={resolved.isDark}
-            value={section.contentHtml ?? ""}
-            onChange={(next) => patch({ contentHtml: next })}
-            ariaLabel="URL hoặc mã nhúng"
-            placeholder="Dán URL (YouTube, Figma…) hoặc HTML nhúng…"
-          />
-          {section.contentHtml?.trim() && looksLikeUrl(section.contentHtml) ? (
-            <iframe
-              src={normalizeEmbedUrl(section.contentHtml)}
-              title={section.title ?? "Nhúng nội dung"}
-              className={cn(
-                "h-56 w-full rounded-xl border",
-                resolved.isDark ? "border-[#FAFAF5]/15" : "border-[#E5E5E0]",
-              )}
+      {dimmed ? null : (
+        <>
+          {section.kind === "RichText" ? (
+            <RichTextEditor
+              mode="full"
+              variant="inline"
+              isDark={resolved.isDark}
+              value={section.contentHtml ?? ""}
+              onChange={(next) => patch({ contentHtml: next })}
+              ariaLabel="Nội dung văn bản"
+              placeholder="Viết nội dung cho phần này…"
             />
-          ) : section.contentHtml?.trim() ? (
-            <RichText html={section.contentHtml} />
           ) : null}
-        </div>
-      ) : null}
+
+          {section.kind === "Gallery" ? (
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <p
+                  className={cn(
+                    "text-xs font-medium",
+                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                  )}
+                >
+                  Kiểu thư viện
+                </p>
+                <Select
+                  value={resolveGalleryVariant(section, resolved)}
+                  onValueChange={(value) => {
+                    if (value == null) return;
+                    const current =
+                      parseSectionSettingsJson(section.settingsJson) ?? {};
+                    patch({
+                      settingsJson: serializeSectionSettingsJson({
+                        ...current,
+                        variant: value,
+                      }),
+                    });
+                  }}
+                >
+                  <SelectTrigger className={LIGHT_SELECT_TRIGGER_FULL}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={LIGHT_SELECT_CONTENT_PANEL}>
+                    {GALLERY_SLOT_OPTIONS.map((option) => (
+                      <SelectItem
+                        key={option.id}
+                        value={option.id}
+                        className={LIGHT_SELECT_ITEM_PANEL}
+                      >
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <MediaUploader
+                assets={section.mediaAssets}
+                onChange={(assets) => patch({ mediaAssets: assets })}
+                label="Ảnh thư viện"
+              />
+              <PortfolioGallery
+                slot={resolveGalleryVariant(section, resolved)}
+                images={sectionMediaToGalleryImages(section.mediaAssets)}
+              />
+            </div>
+          ) : null}
+
+          {section.kind === "Embed" ? (
+            <div className="space-y-3">
+              <RichTextEditor
+                mode="full"
+                variant="inline"
+                isDark={resolved.isDark}
+                value={section.contentHtml ?? ""}
+                onChange={(next) => patch({ contentHtml: next })}
+                ariaLabel="URL hoặc mã nhúng"
+                placeholder="Dán URL (YouTube, Figma…) hoặc HTML nhúng…"
+              />
+              {section.contentHtml?.trim() &&
+              looksLikeUrl(section.contentHtml) ? (
+                <iframe
+                  src={normalizeEmbedUrl(section.contentHtml)}
+                  title={section.title ?? "Nhúng nội dung"}
+                  className={cn(
+                    "h-56 w-full rounded-xl border",
+                    resolved.isDark
+                      ? "border-[#FAFAF5]/15"
+                      : "border-[#E5E5E0]",
+                  )}
+                />
+              ) : section.contentHtml?.trim() ? (
+                <RichText html={section.contentHtml} />
+              ) : null}
+            </div>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -1265,12 +1317,14 @@ function LegacySectionShell({
   reduceMotion,
   isDark,
   reveal,
+  onCommitReorder,
   children,
 }: {
   sectionId: PortfolioSectionId;
   reduceMotion: boolean;
   isDark: boolean;
   reveal: ResolvedPortfolioTheme["reveal"];
+  onCommitReorder?: () => void;
   children: ReactNode;
 }) {
   const controls = useDragControls();
@@ -1284,14 +1338,15 @@ function LegacySectionShell({
       value={sectionId}
       dragListener={false}
       dragControls={controls}
-      layout="position"
-      transition={reduceMotion ? { duration: 0 } : undefined}
+      layout={false}
+      transition={reduceMotion ? { duration: 0 } : EDITOR_DRAG_TRANSITION}
+      onDragEnd={onCommitReorder}
       className="group/section relative list-none"
       data-portfolio-section={sectionId}
     >
       <div
         className={cn(
-          "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity",
+          "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity duration-100",
           "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
         )}
       >
@@ -1325,6 +1380,7 @@ function DynamicSectionShell({
   reveal,
   onToggleSectionVisibility,
   onDeleteSection,
+  onCommitReorder,
   children,
 }: {
   section: PortfolioSection;
@@ -1333,6 +1389,7 @@ function DynamicSectionShell({
   reveal: ResolvedPortfolioTheme["reveal"];
   onToggleSectionVisibility?: PortfolioCanvasProps["onToggleSectionVisibility"];
   onDeleteSection?: PortfolioCanvasProps["onDeleteSection"];
+  onCommitReorder?: () => void;
   children: ReactNode;
 }) {
   const controls = useDragControls();
@@ -1348,14 +1405,15 @@ function DynamicSectionShell({
       value={section.id}
       dragListener={false}
       dragControls={controls}
-      layout="position"
-      transition={reduceMotion ? { duration: 0 } : undefined}
+      layout={false}
+      transition={reduceMotion ? { duration: 0 } : EDITOR_DRAG_TRANSITION}
+      onDragEnd={onCommitReorder}
       className="group/section relative list-none"
       data-portfolio-section={section.id}
     >
       <div
         className={cn(
-          "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity",
+          "absolute -top-3 right-3 z-20 flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2 py-1 shadow-sm transition-opacity duration-100",
           !section.isVisible
             ? "opacity-100"
             : "opacity-0 group-hover/section:opacity-100 focus-within:opacity-100",
@@ -1444,6 +1502,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     onUpdateSection,
     onDeleteSection,
     onReorderSections,
+    onCommitReorderSections,
     onToggleSectionVisibility,
     onAddSection,
   } = props;
@@ -1503,6 +1562,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
             reduceMotion={reduceMotion}
             toGlobalOrder={toGlobalOrder}
             canvasProps={props}
+            defaultItemType="Project"
             onTitleChange={(next) => patchSectionTitle(section.id, next)}
             dimmed={dimmed}
           />
@@ -1517,6 +1577,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
             reduceMotion={reduceMotion}
             toGlobalOrder={toGlobalOrder}
             canvasProps={props}
+            defaultItemType="Hobby"
             onTitleChange={(next) => patchSectionTitle(section.id, next)}
             dimmed={dimmed}
           />
@@ -1582,6 +1643,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
           reduceMotion={reduceMotion}
           toGlobalOrder={toGlobalOrder}
           canvasProps={props}
+          defaultItemType="Project"
         />
       </LegacySectionShell>
     ),
@@ -1601,6 +1663,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
           reduceMotion={reduceMotion}
           toGlobalOrder={toGlobalOrder}
           canvasProps={props}
+          defaultItemType="Hobby"
         />
       </LegacySectionShell>
     ),
@@ -1673,6 +1736,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
                   reveal={resolved.reveal}
                   onToggleSectionVisibility={onToggleSectionVisibility}
                   onDeleteSection={onDeleteSection}
+                  onCommitReorder={onCommitReorderSections}
                 >
                   {renderDynamicSectionBody(section)}
                 </DynamicSectionShell>

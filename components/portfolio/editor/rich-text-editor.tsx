@@ -44,6 +44,9 @@ type RichTextEditorProps = {
   isDark?: boolean;
   /** Plain-text character cap (ignores HTML tags). */
   maxLength?: number;
+  /** Focus and select contents once when the editor mounts. */
+  autoFocus?: boolean;
+  onAutoFocusHandled?: () => void;
 };
 
 function ToolbarButton({
@@ -285,11 +288,14 @@ export function RichTextEditor({
   mode = "full",
   isDark = false,
   maxLength,
+  autoFocus = false,
+  onAutoFocusHandled,
 }: RichTextEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
   const maxLengthRef = useRef(maxLength);
   maxLengthRef.current = maxLength;
+  const autoFocusHandledRef = useRef(false);
   const isCompact = mode === "compact";
 
   const editor = useEditor({
@@ -377,6 +383,17 @@ export function RichTextEditor({
       editor.commands.setContent(toEditorContent(value), { emitUpdate: false });
     }
   }, [editor, value]);
+
+  useEffect(() => {
+    if (!editor || !autoFocus || autoFocusHandledRef.current) return;
+    autoFocusHandledRef.current = true;
+    requestAnimationFrame(() => {
+      editor.commands.focus();
+      editor.commands.selectAll();
+      fieldRef.current?.scrollIntoView({ behavior: "auto", block: "nearest" });
+      onAutoFocusHandled?.();
+    });
+  }, [editor, autoFocus, onAutoFocusHandled]);
 
   if (!editor) return null;
 
