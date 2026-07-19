@@ -24,9 +24,6 @@ const TrueFocus = dynamic(() => import("@/components/TrueFocus"), { ssr: false }
 const DecryptedText = dynamic(() => import("@/components/DecryptedText"), { ssr: false });
 const BlurText = dynamic(() => import("@/components/BlurText"), { ssr: false });
 const ShinyText = dynamic(() => import("@/components/ShinyText"), { ssr: false });
-const SpotlightCard = dynamic(() => import("@/components/SpotlightCard"), { ssr: false });
-const StarBorder = dynamic(() => import("@/components/StarBorder"), { ssr: false });
-const GlareHover = dynamic(() => import("@/components/GlareHover"), { ssr: false });
 const AnimatedContent = dynamic(() => import("@/components/AnimatedContent"), {
   ssr: false,
 });
@@ -41,23 +38,6 @@ const AccordionGallery = dynamic(() => import("@/components/AccordionGallery"), 
 function useShouldAnimate() {
   const reduce = useReducedMotion();
   return !(reduce ?? false);
-}
-
-/** Convert #RGB / #RRGGBB to rgba() for components that require that format. */
-function hexToRgba(hex: string, alpha: number): `rgba(${number}, ${number}, ${number}, ${number})` {
-  const raw = hex.replace("#", "");
-  const full =
-    raw.length === 3
-      ? raw
-          .split("")
-          .map((ch) => ch + ch)
-          .join("")
-      : raw.padEnd(6, "0").slice(0, 6);
-  const n = Number.parseInt(full, 16);
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 function resolvePageBackgroundStyle(
@@ -279,27 +259,23 @@ export function PortfolioCardShell({
   slot,
   surfaceClass,
   className,
-  isDark = false,
   accentColor = "#4FC3F7",
-  /** Skip pointer-tracking wrappers (Spotlight/Glare/StarBorder) — keep static chrome. */
-  effectsEnabled = true,
   radiusClass = "rounded-2xl",
   children,
 }: {
   slot: CardSlotId;
   surfaceClass: string;
   className?: string;
-  /** When false, effect wrappers must stay transparent so light card surfaces remain readable. */
+  /** Kept for call-site compatibility; card chrome is static (no hover glitter). */
   isDark?: boolean;
   /** Theme primary — drives distinct card chrome per slot. */
   accentColor?: string;
+  /** @deprecated Hover glare/spotlight wrappers removed — ignored. */
   effectsEnabled?: boolean;
   /** Preset personality radius (e.g. Studio Play squircles). */
   radiusClass?: string;
   children: ReactNode;
 }) {
-  const animate = useShouldAnimate();
-
   const slotChrome =
     slot === "Spotlight"
       ? {
@@ -327,7 +303,7 @@ export function PortfolioCardShell({
               }
             : { className: "", style: undefined };
 
-  const body = (
+  return (
     <div
       className={cn(
         "relative z-[1] h-full min-w-0 overflow-hidden p-4 sm:p-5",
@@ -341,56 +317,6 @@ export function PortfolioCardShell({
       {children}
     </div>
   );
-
-  if (!animate || !effectsEnabled || slot === "Soft") {
-    return body;
-  }
-
-  // Bounce/Tilted reactbits are image-oriented; glare overlay only — never paint a black shell.
-  if (slot === "Bounce" || slot === "Tilted") {
-    return (
-      <GlareHover
-        className="!h-full !w-full cursor-auto rounded-2xl border-transparent"
-        width="100%"
-        height="100%"
-        background="transparent"
-        borderColor="transparent"
-        borderRadius="1rem"
-        glareColor={isDark ? "#ffffff" : accentColor}
-        glareOpacity={isDark ? 0.22 : 0.28}
-        style={{ width: "100%", height: "100%", display: "block" }}
-      >
-        {body}
-      </GlareHover>
-    );
-  }
-
-  if (slot === "Spotlight") {
-    return (
-      <SpotlightCard
-        className="h-full rounded-2xl bg-transparent p-0"
-        spotlightColor={hexToRgba(accentColor, isDark ? 0.28 : 0.2)}
-      >
-        {body}
-      </SpotlightCard>
-    );
-  }
-
-  if (slot === "StarBorder") {
-    return (
-      <StarBorder
-        as="div"
-        className="block h-full w-full"
-        color={accentColor}
-        speed="6s"
-        contentClassName="!border-0 !bg-transparent !p-0 !text-left !text-inherit"
-      >
-        {body}
-      </StarBorder>
-    );
-  }
-
-  return body;
 }
 
 export function PortfolioReveal({
@@ -425,16 +351,19 @@ export type GalleryImage = { src: string; alt?: string; caption?: string | null 
 function GalleryCaption({
   caption,
   className,
+  isDark = false,
 }: {
   caption?: string | null;
   className?: string;
+  isDark?: boolean;
 }) {
   const text = caption?.trim();
   if (!text) return null;
   return (
     <p
       className={cn(
-        "mt-1.5 line-clamp-2 text-xs leading-snug text-[#6B6B6B]",
+        "mt-1.5 line-clamp-2 text-xs leading-snug",
+        isDark ? "text-[#FAFAF5]/65" : "text-[#6B6B6B]",
         className,
       )}
     >
@@ -451,25 +380,61 @@ function galleryActivateHandler(
   return () => onImageActivate(index);
 }
 
+/** Dome vignette must match page wash — cream on Studio Play / Aurora Gradient looks broken. */
+function resolveGalleryDomeSurface(theme?: {
+  isDark?: boolean;
+  primaryColor?: string;
+  backgroundStyle?: ResolvedPortfolioTheme["backgroundStyle"];
+}): { fill: string; overlay: string } {
+  if (theme?.isDark) {
+    return { fill: "#121212", overlay: "rgba(18, 18, 18, 0.97)" };
+  }
+  const primary = theme?.primaryColor ?? "#4FC3F7";
+  if (theme?.backgroundStyle === "Gradient") {
+    return {
+      fill: `color-mix(in srgb, ${primary} 20%, #FAFAF5)`,
+      overlay: `color-mix(in srgb, ${primary} 26%, rgba(250, 250, 245, 0.94))`,
+    };
+  }
+  return { fill: "#FAFAF5", overlay: "rgba(250, 250, 245, 0.92)" };
+}
+
 export function PortfolioGallery({
   slot,
   images,
   className,
   onImageActivate,
+  isDark = false,
+  primaryColor,
+  backgroundStyle,
 }: {
   slot: GallerySlotId;
   images: GalleryImage[];
   className?: string;
   /** When set (editor), clicking an image opens caption edit. */
   onImageActivate?: (index: number) => void;
+  isDark?: boolean;
+  primaryColor?: string;
+  backgroundStyle?: ResolvedPortfolioTheme["backgroundStyle"];
 }) {
   const animate = useShouldAnimate();
   const items = images.filter((image) => Boolean(image.src));
   const isEditable = Boolean(onImageActivate);
+  const domeSurface = resolveGalleryDomeSurface({
+    isDark,
+    primaryColor,
+    backgroundStyle,
+  });
 
   if (items.length === 0) {
     return (
-      <p className={cn("text-sm text-[#6B6B6B]", className)}>
+      <p
+        className={cn(
+          "text-sm",
+          isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]",
+          className,
+        )}
+      >
         Chưa có ảnh trong thư viện này.
       </p>
     );
@@ -483,6 +448,7 @@ export function PortfolioGallery({
           isEditable && "cursor-pointer",
           className,
         )}
+        style={{ backgroundColor: domeSurface.fill }}
         onClick={
           onImageActivate
             ? (event) => {
@@ -504,7 +470,7 @@ export function PortfolioGallery({
           minRadius={480}
           maxRadius={620}
           grayscale={false}
-          overlayBlurColor="rgba(250, 250, 245, 0.92)"
+          overlayBlurColor={domeSurface.overlay}
         />
       </div>
     );
@@ -563,7 +529,7 @@ export function PortfolioGallery({
                 )}
               />
             </button>
-            <GalleryCaption caption={caption} />
+            <GalleryCaption caption={caption} isDark={isDark} />
           </figure>
         );
       })}

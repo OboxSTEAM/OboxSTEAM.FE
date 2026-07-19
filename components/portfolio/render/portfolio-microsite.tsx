@@ -595,6 +595,9 @@ function GallerySection({
       <PortfolioGallery
         slot={resolveGalleryVariant(section, resolved)}
         images={images}
+        isDark={resolved.isDark}
+        primaryColor={resolved.primaryColor}
+        backgroundStyle={resolved.backgroundStyle}
       />
     </section>
   );

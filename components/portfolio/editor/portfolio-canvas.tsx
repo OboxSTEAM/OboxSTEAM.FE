@@ -263,10 +263,22 @@ function resolveGalleryVariant(
 }
 
 /** Mini preview tiles — mirrors design-panel SelectBox pattern. */
-function GalleryStylePreview({ id }: { id: GallerySlotId }) {
+function GalleryStylePreview({
+  id,
+  isDark = false,
+}: {
+  id: GallerySlotId;
+  isDark?: boolean;
+}) {
+  const well = isDark ? "bg-[#2a2a2a]" : "bg-[#F5F5F0]";
   if (id === "DomeGallery") {
     return (
-      <div className="relative flex h-10 items-end justify-center overflow-hidden rounded-lg bg-[#F0F0EA]">
+      <div
+        className={cn(
+          "relative flex h-10 items-end justify-center overflow-hidden rounded-lg",
+          isDark ? "bg-[#2a2a2a]" : "bg-[#F0F0EA]",
+        )}
+      >
         <span className="absolute inset-x-2 bottom-0 h-7 rounded-t-full bg-gradient-to-t from-[#0f7cad]/45 to-[#4FC3F7]/15" />
         <span className="absolute bottom-1 left-1/2 size-2 -translate-x-1/2 rounded-full bg-[#0f7cad]" />
       </div>
@@ -274,7 +286,7 @@ function GalleryStylePreview({ id }: { id: GallerySlotId }) {
   }
   if (id === "Accordion") {
     return (
-      <div className="flex h-10 gap-0.5 overflow-hidden rounded-lg bg-[#F5F5F0] p-1">
+      <div className={cn("flex h-10 gap-0.5 overflow-hidden rounded-lg p-1", well)}>
         <span className="w-2 flex-none rounded-sm bg-[#7CB342]/35" />
         <span className="flex-1 rounded-sm bg-[#7CB342]/55" />
         <span className="w-2 flex-none rounded-sm bg-[#7CB342]/25" />
@@ -284,7 +296,7 @@ function GalleryStylePreview({ id }: { id: GallerySlotId }) {
   }
   if (id === "Carousel") {
     return (
-      <div className="flex h-10 items-center gap-1 overflow-hidden rounded-lg bg-[#F5F5F0] px-1">
+      <div className={cn("flex h-10 items-center gap-1 overflow-hidden rounded-lg px-1", well)}>
         <span className="h-6 w-8 shrink-0 rounded-sm bg-[#4FC3F7]/25" />
         <span className="h-7 w-10 shrink-0 rounded-sm bg-[#4FC3F7]/55" />
         <span className="h-6 w-8 shrink-0 rounded-sm bg-[#4FC3F7]/25" />
@@ -292,7 +304,7 @@ function GalleryStylePreview({ id }: { id: GallerySlotId }) {
     );
   }
   return (
-    <div className="grid h-10 grid-cols-3 gap-0.5 overflow-hidden rounded-lg bg-[#F5F5F0] p-1">
+    <div className={cn("grid h-10 grid-cols-3 gap-0.5 overflow-hidden rounded-lg p-1", well)}>
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <span key={i} className="rounded-sm bg-[#4FC3F7]/30" />
       ))}
@@ -1366,21 +1378,22 @@ function CustomSectionEditable({
                           });
                         }}
                         className={cn(
-                          "rounded-2xl border bg-white p-2 text-left transition-colors outline-none",
+                          "rounded-2xl border p-2 text-left transition-colors outline-none",
                           "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
                           "active:scale-[0.98]",
                           selected
-                            ? "border-[#4FC3F7] bg-[rgba(79,195,247,0.08)]"
-                            : "border-[#E5E5E0] hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
-                          resolved.isDark &&
-                            !selected &&
-                            "border-[#FAFAF5]/15 bg-[#1a1a1a]/60 hover:bg-[#1a1a1a]",
-                          resolved.isDark &&
-                            selected &&
-                            "border-[#4FC3F7] bg-[rgba(79,195,247,0.12)]",
+                            ? resolved.isDark
+                              ? "border-[#4FC3F7] bg-[rgba(79,195,247,0.14)]"
+                              : "border-[#4FC3F7] bg-[rgba(79,195,247,0.08)]"
+                            : resolved.isDark
+                              ? "border-[#FAFAF5]/12 bg-[#1a1a1a]/80 hover:border-[#FAFAF5]/22 hover:bg-[#222]"
+                              : "border-[#E5E5E0] bg-white hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
                         )}
                       >
-                        <GalleryStylePreview id={option.id} />
+                        <GalleryStylePreview
+                          id={option.id}
+                          isDark={resolved.isDark}
+                        />
                         <p
                           className={cn(
                             "mt-1.5 truncate text-[11px] font-semibold tracking-tight",
@@ -1420,6 +1433,9 @@ function CustomSectionEditable({
                 slot={resolveGalleryVariant(section, resolved)}
                 images={sectionMediaToGalleryImages(section.mediaAssets)}
                 onImageActivate={openCaptionEditor}
+                isDark={resolved.isDark}
+                primaryColor={resolved.primaryColor}
+                backgroundStyle={resolved.backgroundStyle}
               />
 
               <Dialog
