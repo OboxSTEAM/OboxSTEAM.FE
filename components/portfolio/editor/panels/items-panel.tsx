@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import { Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { Plus, RefreshCw, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -15,7 +15,6 @@ type ItemsPanelProps = {
   isAdding?: boolean;
   onSync: () => void;
   onAdd: () => void;
-  onEdit: (item: PortfolioItem) => void;
   onDelete: (item: PortfolioItem) => void;
   onToggleVisibility: (item: PortfolioItem, visible: boolean) => void;
 };
@@ -26,7 +25,6 @@ export function ItemsPanel({
   isAdding = false,
   onSync,
   onAdd,
-  onEdit,
   onDelete,
   onToggleVisibility,
 }: ItemsPanelProps) {
@@ -38,9 +36,9 @@ export function ItemsPanel({
   return (
     <div className="space-y-4">
       <p className="text-xs leading-relaxed text-[#6B6B6B]">
-        Mục tự động nhập chỉ ẩn/hiện và chỉnh tường thuật; mục thủ công có thể
-        xóa. Kéo thả trực tiếp trên trang để sắp xếp. Bấm Thêm mục để tạo thẻ
-        trống và chỉnh ngay trên trang.
+        Mục tự động nhập chỉ ẩn/hiện và chỉnh tường thuật; mục thủ công chỉnh
+        trực tiếp trên thẻ. Kéo thả trên trang để sắp xếp. Bấm Thêm mục để tạo
+        thẻ trống.
       </p>
 
       <div className="flex gap-2">
@@ -111,34 +109,23 @@ export function ItemsPanel({
                   {item.title ?? "Không có tiêu đề"}
                 </p>
                 {item.isVisible ? (
-                <div className="mt-2 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={item.isVisible}
-                      onCheckedChange={(checked) =>
-                        onToggleVisibility(item, Boolean(checked))
-                      }
-                    />
-                    <span
-                      className={cn(
-                        "text-xs font-medium",
-                        item.isVisible ? "text-[#6B6B6B]" : "text-[#2D2D2D]",
-                      )}
-                    >
-                      {item.isVisible ? "Hiện" : "Ẩn"}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="rounded-lg"
-                      onClick={() => onEdit(item)}
-                      aria-label="Sửa"
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={item.isVisible}
+                        onCheckedChange={(checked) =>
+                          onToggleVisibility(item, Boolean(checked))
+                        }
+                      />
+                      <span
+                        className={cn(
+                          "text-xs font-medium",
+                          item.isVisible ? "text-[#6B6B6B]" : "text-[#2D2D2D]",
+                        )}
+                      >
+                        {item.isVisible ? "Hiện" : "Ẩn"}
+                      </span>
+                    </div>
                     {!isAuto ? (
                       <Button
                         type="button"
@@ -152,31 +139,30 @@ export function ItemsPanel({
                       </Button>
                     ) : null}
                   </div>
-                </div>
                 ) : (
-                <div className="mt-1.5 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={item.isVisible}
-                      onCheckedChange={(checked) =>
-                        onToggleVisibility(item, Boolean(checked))
-                      }
-                    />
-                    <span className="text-xs font-medium text-[#2D2D2D]">Ẩn</span>
+                  <div className="mt-1.5 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={item.isVisible}
+                        onCheckedChange={(checked) =>
+                          onToggleVisibility(item, Boolean(checked))
+                        }
+                      />
+                      <span className="text-xs font-medium text-[#2D2D2D]">Ẩn</span>
+                    </div>
+                    {!isAuto ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        className="rounded-lg text-[#E94B3C]"
+                        onClick={() => onDelete(item)}
+                        aria-label="Xóa"
+                      >
+                        <Trash2 className="size-3.5" />
+                      </Button>
+                    ) : null}
                   </div>
-                  {!isAuto ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="rounded-lg text-[#E94B3C]"
-                      onClick={() => onDelete(item)}
-                      aria-label="Xóa"
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  ) : null}
-                </div>
                 )}
               </li>
             );

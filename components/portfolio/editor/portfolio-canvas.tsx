@@ -10,6 +10,7 @@ import {
 } from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
 import {
+  Calendar,
   Eye,
   EyeOff,
   GripVertical,
@@ -17,6 +18,7 @@ import {
   Plus,
   RefreshCw,
   Trash2,
+  X,
 } from "lucide-react";
 
 import { EditableSection } from "@/components/portfolio/editor/editable-frame";
@@ -62,6 +64,11 @@ import {
 } from "@/lib/api/entities/portfolio";
 import { getReadableTextColor, relativeLuminance } from "@/lib/portfolio/color-utils";
 import { editorChrome } from "@/lib/portfolio/editor-chrome";
+import {
+  fromDateInputValue,
+  formatPortfolioItemDateRange,
+  toDateInputValue,
+} from "@/lib/portfolio/item-dates";
 import {
   normalizeSectionOrder,
   PORTFOLIO_ITEM_TYPE_LABELS,
@@ -121,7 +128,6 @@ export type PortfolioCanvasProps = {
   onCommitReorder: () => void;
   onToggleItemVisibility: (item: PortfolioItem, visible: boolean) => void;
   onDeleteItem: (item: PortfolioItem) => void;
-  onEditItem: (item: PortfolioItem) => void;
   /** Create a placeholder item of the given type and append it for inline editing. */
   onAddItem: (itemType: PortfolioItemType) => void;
   onSyncItems: () => void;
@@ -166,6 +172,8 @@ function CompactRichField({
   maxLength = 200,
   autoFocus = false,
   onAutoFocusHandled,
+  /** Keep one line (item cards). Hero name should pass false so large type isn't clipped. */
+  singleLine = true,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -176,11 +184,13 @@ function CompactRichField({
   maxLength?: number;
   autoFocus?: boolean;
   onAutoFocusHandled?: () => void;
+  singleLine?: boolean;
 }) {
   return (
     <RichTextEditor
       mode="compact"
       variant="inline"
+      singleLine={singleLine}
       isDark={isDark}
       value={value}
       onChange={onChange}
@@ -466,26 +476,44 @@ function HiddenBadge({ label = "Đang ẩn" }: { label?: string }) {
 function ItemMediaRow({
   assets,
   isDark,
+  onRemove,
 }: {
   assets: PortfolioMediaAsset[];
   isDark: boolean;
+  onRemove?: (assetId: string) => void;
 }) {
   const sorted = [...assets].sort((a, b) => a.displayOrder - b.displayOrder);
   if (sorted.length === 0) return null;
 
   return (
-    <div className="mt-2.5 flex flex-wrap gap-1.5">
+    <div className="mt-2 flex max-h-14 flex-wrap gap-1.5 overflow-hidden">
       {sorted.map((asset, index) => (
-        // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote media URLs
-        <img
-          key={asset.id ?? `${asset.url}-${index}`}
-          src={asset.url!}
-          alt={asset.caption ?? ""}
-          className={cn(
-            "h-14 w-14 rounded-lg object-cover ring-1",
-            isDark ? "ring-[#FAFAF5]/15" : "ring-[#E5E5E0]",
-          )}
-        />
+        <div key={asset.id ?? `${asset.url}-${index}`} className="group/thumb relative shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element -- arbitrary remote media URLs */}
+          <img
+            src={asset.url!}
+            alt={asset.caption ?? ""}
+            className={cn(
+              "size-14 rounded-lg object-cover ring-1",
+              isDark ? "ring-[#FAFAF5]/15" : "ring-[#E5E5E0]",
+            )}
+          />
+          {onRemove && asset.id ? (
+            <button
+              type="button"
+              aria-label="Gỡ ảnh"
+              className={cn(
+                "absolute -right-1 -top-1 flex size-5 items-center justify-center rounded-full opacity-0 transition-opacity group-hover/thumb:opacity-100",
+                isDark
+                  ? "bg-[#FAFAF5] text-[#1a1a1a]"
+                  : "bg-[#2D2D2D] text-white",
+              )}
+              onClick={() => onRemove(asset.id)}
+            >
+              <X className="size-3" strokeWidth={2.5} />
+            </button>
+          ) : null}
+        </div>
       ))}
     </div>
   );
@@ -499,7 +527,6 @@ type ItemCardEditableProps = {
   onCommitReorder: () => void;
   onToggleVisibility: (item: PortfolioItem, visible: boolean) => void;
   onDelete: (item: PortfolioItem) => void;
-  onEdit: (item: PortfolioItem) => void;
   autoFocusTitle?: boolean;
   onAutoFocusHandled?: () => void;
 };
@@ -512,18 +539,47 @@ function ItemCardEditable({
   onCommitReorder,
   onToggleVisibility,
   onDelete,
-  onEdit,
   autoFocusTitle = false,
   onAutoFocusHandled,
 }: ItemCardEditableProps) {
   const controls = useDragControls();
   const isAuto = item.source === "AutoImported";
   const cardSurface = resolved.cardSurfaceClass;
-  const media = itemMediaSources(item);
+  const attachedMedia = (item.mediaAssets ?? []).filter((asset) =>
+    Boolean(asset.url),
+  );
+  const media =
+    attachedMedia.length > 0 ? attachedMedia : itemMediaSources(item);
+  const dateRangeLabel = formatPortfolioItemDateRange(item.startDate, item.endDate);
 
   const isHidden = !item.isVisible;
   const titlePlain =
     stripHtmlText(item.title) || item.title || "Không có tiêu đề";
+
+  const fieldInputClass = cn(
+    "h-8 rounded-lg border-dashed px-2 text-xs shadow-none",
+    resolved.isDark
+      ? "border-[#FAFAF5]/20 bg-white/5 text-[#FAFAF5] placeholder:text-[#FAFAF5]/40"
+      : "border-[#D0D0C8] bg-white/70 text-[#2D2D2D] placeholder:text-[#6B6B6B]/70",
+  );
+
+  const dateInputClass = cn(
+    fieldInputClass,
+    "w-full pr-8",
+    // Hide native indicator — Lucide icon below is theme-aware and always visible.
+    "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-y-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-8 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0",
+    resolved.isDark && "[color-scheme:dark]",
+  );
+
+  const setMediaAssets = (next: PortfolioMediaAsset[]) => {
+    onPatchItemText(item.id, {
+      mediaAssets: next.map((asset, index) => ({
+        ...asset,
+        displayOrder: index,
+      })),
+      mediaUrl: next[0]?.url ?? null,
+    });
+  };
 
   return (
     <Reorder.Item
@@ -571,11 +627,6 @@ function ItemCardEditable({
               <EyeOff className="size-3.5" strokeWidth={2.25} />
             )}
           </ChromeButton>
-          {!isHidden ? (
-            <ChromeButton label="Chỉnh sửa chi tiết" onClick={() => onEdit(item)}>
-              <Pencil className="size-3.5" />
-            </ChromeButton>
-          ) : null}
           {!isAuto ? (
             <ChromeButton label="Xóa mục" destructive onClick={() => onDelete(item)}>
               <Trash2 className="size-3.5" />
@@ -603,8 +654,8 @@ function ItemCardEditable({
             <HiddenBadge />
           </div>
         ) : (
-          <>
-            <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="flex min-h-0 min-w-0 flex-col gap-2">
+            <div className="flex shrink-0 flex-wrap items-start justify-between gap-2">
               <p
                 className="font-mono text-[10px] uppercase tracking-[0.16em]"
                 style={{ color: resolved.primaryColor }}
@@ -628,7 +679,7 @@ function ItemCardEditable({
 
             <div
               className={cn(
-                "mt-1.5 text-base font-semibold tracking-tight",
+                "min-w-0 shrink-0 text-base font-semibold tracking-tight",
                 resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
               )}
               style={{ fontFamily: resolved.headingFontCss }}
@@ -637,10 +688,10 @@ function ItemCardEditable({
                 hasHtmlTags(item.title ?? "") ? (
                   <RichText
                     html={item.title}
-                    className="prose-p:my-0 text-base font-semibold"
+                    className="line-clamp-2 prose-p:my-0 text-base font-semibold"
                   />
                 ) : (
-                  <p>{item.title ?? "Không có tiêu đề"}</p>
+                  <p className="line-clamp-2">{item.title ?? "Không có tiêu đề"}</p>
                 )
               ) : (
                 <CompactRichField
@@ -658,17 +709,44 @@ function ItemCardEditable({
 
             {isAuto ? (
               item.subtitle || item.organization ? (
-                <p
+                <div
                   className={cn(
-                    "mt-1 text-sm",
+                    "flex min-w-0 shrink-0 items-center gap-x-1.5 overflow-hidden text-sm",
                     resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
                   )}
                 >
-                  {[item.subtitle, item.organization].filter(Boolean).join(" · ")}
-                </p>
+                  {[item.subtitle, item.organization]
+                    .filter(Boolean)
+                    .map((part, index) => (
+                      <span
+                        key={`${item.id}-meta-${index}`}
+                        className="inline-flex min-w-0 max-w-[48%] items-center truncate"
+                      >
+                        {index > 0 ? (
+                          <span className="mr-1.5 shrink-0 opacity-50" aria-hidden>
+                            ·
+                          </span>
+                        ) : null}
+                        {part && hasHtmlTags(part) ? (
+                          <RichText
+                            html={part}
+                            inline
+                            className="min-w-0 truncate text-inherit"
+                          />
+                        ) : (
+                          <span className="min-w-0 truncate">{part}</span>
+                        )}
+                      </span>
+                    ))}
+                </div>
               ) : null
             ) : (
-              <div className="mt-1 flex min-w-0 flex-col gap-1 text-sm sm:flex-row sm:gap-2">
+              <div
+                className={cn(
+                  "grid min-w-0 shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1.5 text-sm",
+                  resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
+                )}
+              >
                 <CompactRichField
                   value={item.subtitle ?? ""}
                   onChange={(next) => onPatchItemText(item.id, { subtitle: next })}
@@ -676,11 +754,11 @@ function ItemCardEditable({
                   placeholder="Phụ đề…"
                   isDark={resolved.isDark}
                   maxLength={200}
-                  className={cn(
-                    "min-w-0 sm:flex-1",
-                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
-                  )}
+                  className="min-w-0"
                 />
+                <span className="shrink-0 opacity-40" aria-hidden>
+                  ·
+                </span>
                 <CompactRichField
                   value={item.organization ?? ""}
                   onChange={(next) =>
@@ -690,21 +768,92 @@ function ItemCardEditable({
                   placeholder="Tổ chức…"
                   isDark={resolved.isDark}
                   maxLength={200}
-                  className={cn(
-                    "min-w-0 sm:flex-1",
-                    resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
-                  )}
+                  className="min-w-0"
                 />
               </div>
             )}
 
+            {!isAuto ? (
+              <div className="flex shrink-0 flex-nowrap items-center gap-2 overflow-x-auto">
+                <div className="relative w-[9.25rem] shrink-0">
+                  <label className="sr-only" htmlFor={`${item.id}-start`}>
+                    Ngày bắt đầu
+                  </label>
+                  <Input
+                    id={`${item.id}-start`}
+                    type="date"
+                    value={toDateInputValue(item.startDate)}
+                    onChange={(event) =>
+                      onPatchItemText(item.id, {
+                        startDate: fromDateInputValue(event.target.value),
+                      })
+                    }
+                    className={dateInputClass}
+                    aria-label="Ngày bắt đầu"
+                  />
+                  <Calendar
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2",
+                      resolved.isDark ? "text-[#FAFAF5]" : "text-[#6B6B6B]",
+                    )}
+                  />
+                </div>
+                <span
+                  className={cn(
+                    "shrink-0 text-xs opacity-40",
+                    resolved.isDark ? "text-[#FAFAF5]" : "text-[#6B6B6B]",
+                  )}
+                  aria-hidden
+                >
+                  –
+                </span>
+                <div className="relative w-[9.25rem] shrink-0">
+                  <label className="sr-only" htmlFor={`${item.id}-end`}>
+                    Ngày kết thúc
+                  </label>
+                  <Input
+                    id={`${item.id}-end`}
+                    type="date"
+                    value={toDateInputValue(item.endDate)}
+                    onChange={(event) =>
+                      onPatchItemText(item.id, {
+                        endDate: fromDateInputValue(event.target.value),
+                      })
+                    }
+                    className={dateInputClass}
+                    aria-label="Ngày kết thúc"
+                  />
+                  <Calendar
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2",
+                      resolved.isDark ? "text-[#FAFAF5]" : "text-[#6B6B6B]",
+                    )}
+                  />
+                </div>
+              </div>
+            ) : dateRangeLabel ? (
+              <p
+                className={cn(
+                  "shrink-0 truncate text-xs",
+                  resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]",
+                )}
+              >
+                {dateRangeLabel}
+              </p>
+            ) : null}
+
             {isAuto && item.description ? (
               hasHtmlTags(item.description) ? (
-                <RichText html={item.description} className="mt-2 text-sm" />
+                <RichText
+                  html={item.description}
+                  className="line-clamp-3 shrink-0 text-sm"
+                />
               ) : (
                 <p
                   className={cn(
-                    "mt-2 text-sm leading-relaxed",
+                    "line-clamp-3 shrink-0 text-sm leading-relaxed",
                     resolved.isDark ? "text-[#FAFAF5]/85" : "text-[#6B6B6B]",
                   )}
                 >
@@ -713,7 +862,7 @@ function ItemCardEditable({
               )
             ) : null}
 
-            <div className="mt-2">
+            <div className="min-w-0 shrink-0">
               <RichTextEditor
                 mode="full"
                 variant="inline"
@@ -724,18 +873,74 @@ function ItemCardEditable({
                 }
                 ariaLabel="Nội dung tường thuật"
                 placeholder="Kể câu chuyện của bạn: đã học được gì, tạo ra điều gì…"
+                maxHeightClass="h-[5.25rem] max-h-[5.25rem]"
                 className={cn(
                   resolved.isDark ? "text-[#FAFAF5]/90" : "text-[#2D2D2D]/90",
                 )}
               />
             </div>
 
-            <ItemMediaRow assets={media} isDark={resolved.isDark} />
+            <div className="mt-0.5 shrink-0 space-y-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <MediaUploader
+                  compact
+                  hideAttachedList
+                  isDark={resolved.isDark}
+                  assets={attachedMedia}
+                  onChange={setMediaAssets}
+                  label="ảnh"
+                  className="shrink-0"
+                />
+                {!isAuto ? (
+                  <Input
+                    type="url"
+                    value={item.externalUrl ?? ""}
+                    onChange={(event) =>
+                      onPatchItemText(item.id, {
+                        externalUrl: event.target.value || null,
+                      })
+                    }
+                    placeholder="https:// — liên kết ngoài"
+                    className={cn(
+                      fieldInputClass,
+                      "min-w-0 flex-1 truncate",
+                    )}
+                    aria-label="URL ngoài"
+                  />
+                ) : item.externalUrl ? (
+                  <a
+                    href={item.externalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="min-w-0 flex-1 truncate text-xs font-medium underline-offset-2 hover:underline"
+                    style={{ color: resolved.primaryColor }}
+                  >
+                    {item.externalUrl}
+                  </a>
+                ) : null}
+              </div>
+              <ItemMediaRow
+                assets={media}
+                isDark={resolved.isDark}
+                onRemove={(assetId) => {
+                  if (attachedMedia.length === 0) {
+                    onPatchItemText(item.id, {
+                      mediaUrl: null,
+                      mediaAssets: [],
+                    });
+                    return;
+                  }
+                  setMediaAssets(
+                    attachedMedia.filter((asset) => asset.id !== assetId),
+                  );
+                }}
+              />
+            </div>
 
             {item.mentorEndorsement ? (
               <blockquote
                 className={cn(
-                  "mt-2.5 border-l-2 pl-3 text-sm italic",
+                  "line-clamp-3 shrink-0 border-l-2 pl-3 text-sm italic",
                   resolved.isDark
                     ? "border-[#4FC3F7] text-[#FAFAF5]/75"
                     : "border-[#4FC3F7] text-[#6B6B6B]",
@@ -744,16 +949,7 @@ function ItemCardEditable({
                 {item.mentorEndorsement}
               </blockquote>
             ) : null}
-
-            {item.externalUrl ? (
-              <p
-                className="mt-2.5 text-sm font-semibold"
-                style={{ color: resolved.primaryColor }}
-              >
-                {item.externalUrl}
-              </p>
-            ) : null}
-          </>
+          </div>
         )}
       </PortfolioCardShell>
     </Reorder.Item>
@@ -794,7 +990,6 @@ function ItemsGroupEditable({
     onPatchItemText,
     onToggleItemVisibility,
     onDeleteItem,
-    onEditItem,
     onAddItem,
     onSyncItems,
     isSyncing,
@@ -890,7 +1085,6 @@ function ItemsGroupEditable({
                   onCommitReorder={onCommitReorder}
                   onToggleVisibility={onToggleItemVisibility}
                   onDelete={onDeleteItem}
-                  onEdit={onEditItem}
                   autoFocusTitle={focusItemId === item.id}
                   onAutoFocusHandled={onFocusItemHandled}
                 />
@@ -1046,6 +1240,7 @@ function ProfileSectionEditable({
             onChange={(next) => onPatchDraft({ displayName: next })}
             ariaLabel="Tên hiển thị"
             placeholder={draft.studentName ?? "Tên của bạn…"}
+            singleLine={false}
             isDark={
               resolved.heroText === "SplitGradient" ? false : tone === "dark"
             }

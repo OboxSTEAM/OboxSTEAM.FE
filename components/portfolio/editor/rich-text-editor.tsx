@@ -47,6 +47,15 @@ type RichTextEditorProps = {
   /** Focus and select contents once when the editor mounts. */
   autoFocus?: boolean;
   onAutoFocusHandled?: () => void;
+  /**
+   * Keep compact fields on one line — overflow scrolls horizontally
+   * instead of growing the card.
+   */
+  singleLine?: boolean;
+  /**
+   * Cap editor height (e.g. `max-h-[5.25rem]`); overflow scrolls inside.
+   */
+  maxHeightClass?: string;
 };
 
 function ToolbarButton({
@@ -290,6 +299,8 @@ export function RichTextEditor({
   maxLength,
   autoFocus = false,
   onAutoFocusHandled,
+  singleLine = false,
+  maxHeightClass,
 }: RichTextEditorProps) {
   const [isFocused, setIsFocused] = useState(false);
   const fieldRef = useRef<HTMLDivElement>(null);
@@ -297,6 +308,7 @@ export function RichTextEditor({
   maxLengthRef.current = maxLength;
   const autoFocusHandledRef = useRef(false);
   const isCompact = mode === "compact";
+  const lockSingleLine = singleLine;
 
   const editor = useEditor({
     extensions: buildExtensions(mode, placeholder),
@@ -310,9 +322,19 @@ export function RichTextEditor({
           "[&_p]:m-0",
           "[&_.is-editor-empty:first-child::before]:text-[#5C5C5C] [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
           isCompact
-            ? "min-h-[1.25em] max-w-full px-1.5 py-0.5 leading-inherit text-inherit [font:inherit]"
+            ? cn(
+                "min-h-[1.25em] max-w-full px-1.5 text-inherit [font:inherit]",
+                lockSingleLine
+                  ? "overflow-x-auto overflow-y-hidden whitespace-nowrap py-0.5 leading-inherit [overflow-wrap:normal] [&_p]:inline [&_br]:hidden"
+                  : "break-words py-1 leading-[1.2] [overflow-wrap:anywhere]",
+              )
             : variant === "inline"
-              ? "min-h-[3.75rem] max-w-full px-2 py-1.5 text-base leading-relaxed text-inherit [font:inherit]"
+              ? cn(
+                  "min-h-[3.75rem] max-w-full px-2 py-1.5 text-sm leading-relaxed text-inherit [font:inherit]",
+                  maxHeightClass
+                    ? cn(maxHeightClass, "h-full overflow-y-auto")
+                    : null,
+                )
               : "min-h-[4.5rem] rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
         ),
       },
@@ -409,8 +431,19 @@ export function RichTextEditor({
         <FloatingToolbar open={isFocused} anchorRef={fieldRef}>
           {toolbar}
         </FloatingToolbar>
-        <EditableFieldFrame isDark={isDark} className="min-w-0 max-w-full">
-          <EditorContent editor={editor} className="min-w-0 max-w-full" />
+        <EditableFieldFrame
+          isDark={isDark}
+          className={cn(
+            "min-w-0 max-w-full",
+            lockSingleLine
+              ? "h-8 overflow-hidden"
+              : isCompact
+                ? "overflow-visible py-0.5"
+                : "overflow-hidden",
+            !lockSingleLine && !isCompact && maxHeightClass,
+          )}
+        >
+          <EditorContent editor={editor} className="min-h-0 min-w-0 max-w-full" />
         </EditableFieldFrame>
       </div>
     );

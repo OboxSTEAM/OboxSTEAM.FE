@@ -31,6 +31,7 @@ import {
   type PortfolioSectionId,
 } from "@/lib/portfolio/constants";
 import { getHeroStyle } from "@/lib/portfolio/hero-styles";
+import { formatPortfolioItemDateRange } from "@/lib/portfolio/item-dates";
 import {
   GALLERY_SLOT_OPTIONS,
   getPresetPersonality,
@@ -240,6 +241,7 @@ function ItemCard({
   layoutStyle: ResolvedPortfolioTheme["layoutStyle"];
 }) {
   const cardSurface = resolved.cardSurfaceClass;
+  const dateRange = formatPortfolioItemDateRange(item.startDate, item.endDate);
 
   return (
     <div className={cn("h-full", itemSpanClass(item.span, layoutStyle))}>
@@ -291,21 +293,39 @@ function ItemCard({
       {item.subtitle || item.organization ? (
         <div
           className={cn(
-            "mt-1 text-sm",
+            "mt-1 flex flex-wrap items-baseline gap-x-1.5 text-sm",
             resolved.isDark ? "text-[#FAFAF5]/70" : "text-[#6B6B6B]",
           )}
         >
           {[item.subtitle, item.organization].filter(Boolean).map((part, index) => (
-            <span key={`${item.id}-meta-${index}`}>
-              {index > 0 ? " · " : null}
-              {part && /<[^>]+>/.test(part) ? (
-                <RichText html={part} className="prose-p:my-0 inline text-inherit" />
+            <span
+              key={`${item.id}-meta-${index}`}
+              className="inline-flex min-w-0 max-w-full items-baseline"
+            >
+              {index > 0 ? (
+                <span className="mr-1.5 shrink-0 opacity-50" aria-hidden>
+                  ·
+                </span>
+              ) : null}
+              {part && hasHtmlTags(part) ? (
+                <RichText html={part} inline className="text-inherit" />
               ) : (
-                part
+                <span className="min-w-0 truncate">{part}</span>
               )}
             </span>
           ))}
         </div>
+      ) : null}
+
+      {dateRange ? (
+        <p
+          className={cn(
+            "mt-1 text-xs",
+            resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]",
+          )}
+        >
+          {dateRange}
+        </p>
       ) : null}
 
       <ItemBody item={item} isDark={resolved.isDark} />

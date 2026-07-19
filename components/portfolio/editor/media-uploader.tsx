@@ -50,6 +50,11 @@ type MediaUploaderProps = {
   hideThumbnails?: boolean;
   /** Hide the attached-asset list entirely (e.g. gallery click-to-edit). */
   hideAttachedList?: boolean;
+  /**
+   * Card-inline mode: only the upload button (no library / captions).
+   * Thumbnails are rendered by the parent.
+   */
+  compact?: boolean;
 };
 
 type CropSource = {
@@ -67,6 +72,7 @@ export function MediaUploader({
   isDark = false,
   hideThumbnails = false,
   hideAttachedList = false,
+  compact = false,
 }: MediaUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -77,8 +83,13 @@ export function MediaUploader({
 
   const attached = assets ?? [];
   const chrome = editorChrome(isDark);
-  const uploadButtonClass = cn("h-9 rounded-xl", chrome.outlineBtn);
+  const uploadButtonClass = cn(
+    compact ? "h-8 rounded-lg px-2.5 text-xs" : "h-9 rounded-xl",
+    chrome.outlineBtn,
+  );
   const ghostButtonClass = cn("h-9 rounded-xl", chrome.ghostBtn);
+  const showLibrary = Boolean(onChange) && !compact;
+  const showAttached = Boolean(onChange) && !hideAttachedList && !compact;
 
   useEffect(() => {
     return () => {
@@ -204,7 +215,7 @@ export function MediaUploader({
   };
 
   return (
-    <div className={cn("space-y-3", className)}>
+    <div className={cn(compact ? "inline-flex" : "space-y-3", className)}>
       <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
@@ -214,13 +225,13 @@ export function MediaUploader({
           onClick={() => inputRef.current?.click()}
         >
           {isUploading ? (
-            <Loader2 className="size-4 animate-spin" />
+            <Loader2 className={cn(compact ? "size-3.5" : "size-4", "animate-spin")} />
           ) : (
-            <ImagePlus className="size-4" />
+            <ImagePlus className={compact ? "size-3.5" : "size-4"} />
           )}
-          {isUploading ? "Đang tải…" : `Tải ${label}`}
+          {isUploading ? "Đang tải…" : compact ? "Tải ảnh" : `Tải ${label}`}
         </Button>
-        {onChange ? (
+        {showLibrary ? (
           <Button
             type="button"
             variant="ghost"
@@ -245,7 +256,7 @@ export function MediaUploader({
         />
       </div>
 
-      {onChange && !hideAttachedList && attached.length > 0 ? (
+      {showAttached && attached.length > 0 ? (
         <ul className="space-y-2">
           {attached.map((asset, index) => (
             <li
@@ -286,7 +297,7 @@ export function MediaUploader({
         </ul>
       ) : null}
 
-      {library ? (
+      {library && !compact ? (
         <div className="rounded-xl border border-[#E5E5E0] bg-white p-3">
           <p className="mb-2 text-xs font-medium text-[#6B6B6B]">Thư viện ảnh</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">

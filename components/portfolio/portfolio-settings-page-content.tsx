@@ -15,7 +15,6 @@ import { PortfolioToolbar } from "@/components/portfolio/editor/portfolio-toolba
 import { DesignPanel } from "@/components/portfolio/editor/panels/design-panel";
 import { ItemsPanel } from "@/components/portfolio/editor/panels/items-panel";
 import { LinksPanel } from "@/components/portfolio/editor/panels/links-panel";
-import { PortfolioItemFormDialog } from "@/components/portfolio/sections/item-form-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -69,24 +68,49 @@ const PANEL_TITLES: Record<PortfolioPanelId, string> = {
   links: "Liên kết ngoài",
 };
 
-/** Inline-editable text fields that the global Save persists per item. */
+/** Inline-editable fields that the global Save persists per item. */
 const ITEM_TEXT_FIELDS = [
   "title",
   "subtitle",
   "organization",
   "studentEditedBody",
+  "externalUrl",
+  "startDate",
+  "endDate",
 ] as const;
-
-type ItemTextField = (typeof ITEM_TEXT_FIELDS)[number];
 
 function textValue(value: string | null | undefined): string {
   return value ?? "";
 }
 
+function mediaAssetsSignature(
+  assets: PortfolioMediaAsset[] | null | undefined,
+): string {
+  return (assets ?? [])
+    .map(
+      (asset) =>
+        `${asset.id ?? ""}:${asset.caption ?? ""}:${asset.displayOrder ?? 0}`,
+    )
+    .join("|");
+}
+
 function isItemTextDirty(draftItem: PortfolioItem, baseItem: PortfolioItem): boolean {
-  return ITEM_TEXT_FIELDS.some(
+  const textDirty = ITEM_TEXT_FIELDS.some(
     (field) => textValue(draftItem[field]) !== textValue(baseItem[field]),
   );
+  if (textDirty) return true;
+  return (
+    mediaAssetsSignature(draftItem.mediaAssets) !==
+    mediaAssetsSignature(baseItem.mediaAssets)
+  );
+}
+
+function toMediaAssetRefs(item: PortfolioItem) {
+  return (item.mediaAssets ?? []).map((asset, index) => ({
+    id: asset.id,
+    caption: asset.caption,
+    displayOrder: asset.displayOrder ?? index,
+  }));
 }
 
 function isProfileDirty(draft: Portfolio, baseline: Portfolio): boolean {
@@ -244,8 +268,6 @@ export function PortfolioSettingsPageContent() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [activePanel, setActivePanel] = useState<PortfolioPanelId | null>(null);
-  const [itemDialogOpen, setItemDialogOpen] = useState(false);
-  const [editingItem, setEditingItem] = useState<PortfolioItem | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [focusItemId, setFocusItemId] = useState<string | null>(null);
 
@@ -369,6 +391,11 @@ export function PortfolioSettingsPageContent() {
                 subtitle: existing.subtitle,
                 organization: existing.organization,
                 studentEditedBody: existing.studentEditedBody,
+                externalUrl: existing.externalUrl,
+                startDate: existing.startDate,
+                endDate: existing.endDate,
+                mediaAssets: existing.mediaAssets,
+                mediaUrl: existing.mediaUrl,
               }
             : serverItem;
         return replaceOrAddItem(current, merged);
@@ -417,13 +444,22 @@ export function PortfolioSettingsPageContent() {
 
         const isAuto = item.source === "AutoImported";
         const body = nullIfEmptyHtml(item.studentEditedBody);
+        const mediaAssets = toMediaAssetRefs(item);
         const patch: UpdatePortfolioItemInput = isAuto
-          ? { studentEditedBody: body }
+          ? {
+              studentEditedBody: body,
+              mediaAssets,
+            }
           : {
               title: item.title || null,
               subtitle: item.subtitle || null,
               organization: item.organization || null,
               studentEditedBody: body,
+              externalUrl: item.externalUrl?.trim() || null,
+              startDate: item.startDate || null,
+              endDate: item.endDate || null,
+              mediaAssets,
+              mediaUrl: item.mediaUrl || null,
             };
         const result = await updatePortfolioItem(item.id, patch);
         const saved = result.data;
@@ -433,6 +469,7 @@ export function PortfolioSettingsPageContent() {
             body,
             saved.studentEditedBody,
           ),
+          mediaAssets: item.mediaAssets ?? saved.mediaAssets,
           ...(isAuto
             ? {}
             : {
@@ -443,6 +480,9 @@ export function PortfolioSettingsPageContent() {
                 organization:
                   preferAlignedHtml(item.organization, saved.organization) ??
                   saved.organization,
+                externalUrl: item.externalUrl,
+                startDate: item.startDate,
+                endDate: item.endDate,
               }),
         });
       }
@@ -610,11 +650,6 @@ export function PortfolioSettingsPageContent() {
     },
     [isAddingItem],
   );
-
-  const openEditItem = useCallback((item: PortfolioItem) => {
-    setEditingItem(item);
-    setItemDialogOpen(true);
-  }, []);
 
   const handleAddSection = useCallback(
     async (kind: PortfolioSectionKind) => {
@@ -1035,7 +1070,6 @@ export function PortfolioSettingsPageContent() {
                 isAdding={isAddingItem}
                 onSync={() => void handleSync()}
                 onAdd={() => void handleAddItem("Project")}
-                onEdit={openEditItem}
                 onDelete={(item) => void handleDeleteItem(item)}
                 onToggleVisibility={(item, visible) =>
                   void handleToggleVisibility(item, visible)
@@ -1057,7 +1091,6 @@ export function PortfolioSettingsPageContent() {
               void handleToggleVisibility(item, visible)
             }
             onDeleteItem={(item) => void handleDeleteItem(item)}
-            onEditItem={openEditItem}
             onAddItem={(itemType) => void handleAddItem(itemType)}
             onSyncItems={() => void handleSync()}
             isSyncing={isSyncing}
@@ -1076,14 +1109,6 @@ export function PortfolioSettingsPageContent() {
           />
         </main>
       </div>
-
-      <PortfolioItemFormDialog
-        open={itemDialogOpen}
-        onOpenChange={setItemDialogOpen}
-        item={editingItem}
-        narrativeOnly={editingItem?.source === "AutoImported"}
-        onSaved={(saved) => applyServerItem(saved, { commitText: true })}
-      />
     </div>
   );
 }
