@@ -17,13 +17,17 @@ export function itemsLayoutClass(
 
   switch (layoutStyle) {
     case "bento":
-      return cn("grid auto-rows-auto sm:grid-cols-2", gap);
+      // Container queries — preview frames (~390px) stay 1-col; 2-col from 640px up.
+      return cn(
+        "grid grid-cols-1 auto-rows-auto items-stretch @min-[640px]/pf:grid-cols-2",
+        gap,
+      );
     case "timeline":
-      return "relative flex flex-col gap-6 sm:gap-8 md:gap-10";
+      return "relative flex flex-col gap-6 @min-[640px]/pf:gap-8 @min-[768px]/pf:gap-10";
     case "masonry":
       return density === "editor"
-        ? "columns-1 gap-3 sm:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid"
-        : "columns-1 gap-4 sm:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid";
+        ? "columns-1 gap-3 @min-[640px]/pf:columns-2 [&>*]:mb-3 [&>*]:break-inside-avoid"
+        : "columns-1 gap-4 @min-[640px]/pf:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid";
     default:
       return spaceY;
   }
@@ -36,11 +40,11 @@ export function itemSpanClass(
   if (layoutStyle !== "bento") return "";
   switch (span) {
     case "Wide":
-      return "sm:col-span-2";
+      return "@min-[640px]/pf:col-span-2";
     case "Tall":
-      return "sm:row-span-2";
+      return "@min-[640px]/pf:row-span-2";
     case "Large":
-      return "sm:col-span-2 sm:row-span-2";
+      return "@min-[640px]/pf:col-span-2 @min-[640px]/pf:row-span-2";
     default:
       return "";
   }
@@ -74,7 +78,7 @@ export function TimelineList({
   return (
     <div className={cn("relative", className)}>
       <div
-        className="pointer-events-none absolute top-2 bottom-2 left-[calc((1.5rem-2px)/2)] z-0 w-0.5 rounded-full sm:left-[calc((2rem-2px)/2)]"
+        className="pointer-events-none absolute top-2 bottom-2 left-[calc((1.5rem-2px)/2)] z-0 w-0.5 rounded-full @min-[640px]/pf:left-[calc((2rem-2px)/2)]"
         style={{
           background: `linear-gradient(
             180deg,
@@ -117,13 +121,13 @@ export function TimelineEntry({
   return (
     <div
       className={cn(
-        "grid items-start gap-x-3 sm:gap-x-5",
-        "grid-cols-[1.5rem_minmax(0,1fr)] sm:grid-cols-[2rem_minmax(0,1fr)]",
+        "grid items-start gap-x-3 @min-[640px]/pf:gap-x-5",
+        "grid-cols-[1.5rem_minmax(0,1fr)] @min-[640px]/pf:grid-cols-[2rem_minmax(0,1fr)]",
         className,
       )}
     >
       {/* Marker column — same width as TimelineList gutter so the rail stays centered */}
-      <div className="relative flex justify-center pt-4 sm:pt-5">
+      <div className="relative flex justify-center pt-4 @min-[640px]/pf:pt-5">
         <span
           className="relative z-[1] block shrink-0 rounded-full"
           style={{
@@ -136,12 +140,12 @@ export function TimelineEntry({
         />
       </div>
 
-      <div className="min-w-0 space-y-2.5 pt-0.5 sm:space-y-3 sm:pt-1">
+      <div className="min-w-0 space-y-2.5 pt-0.5 @min-[640px]/pf:space-y-3 @min-[640px]/pf:pt-1">
         {dateLabel ? (
           <p
             className={cn(
-              "inline-flex max-w-full items-center rounded-full px-2.5 py-1 sm:px-3",
-              "font-mono text-[10px] font-semibold tracking-[0.08em] sm:text-[11px]",
+              "inline-flex max-w-full items-center rounded-full px-2.5 py-1 @min-[640px]/pf:px-3",
+              "font-mono text-[10px] font-semibold tracking-[0.08em] @min-[640px]/pf:text-[11px]",
               isDark
                 ? "bg-[#FAFAF5]/10 text-[#FAFAF5]"
                 : "bg-[#F0F0EA] text-[#2D2D2D]",
@@ -157,8 +161,8 @@ export function TimelineEntry({
         ) : (
           <p
             className={cn(
-              "inline-flex items-center rounded-full px-2.5 py-1 sm:px-3",
-              "font-mono text-[10px] font-semibold tracking-[0.08em] sm:text-[11px]",
+              "inline-flex items-center rounded-full px-2.5 py-1 @min-[640px]/pf:px-3",
+              "font-mono text-[10px] font-semibold tracking-[0.08em] @min-[640px]/pf:text-[11px]",
               isDark
                 ? "bg-[#FAFAF5]/08 text-[#FAFAF5]/55"
                 : "bg-[#F0F0EA] text-[#8A8A84]",

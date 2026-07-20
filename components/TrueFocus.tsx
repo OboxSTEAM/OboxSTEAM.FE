@@ -10,6 +10,10 @@ interface TrueFocusProps {
   glowColor?: string;
   animationDuration?: number;
   pauseBetweenAnimations?: number;
+  /** Outer flex container — defaults keep demo centering. */
+  className?: string;
+  /** Per-word typography — overrides the demo `text-[3rem]`. */
+  wordClassName?: string;
 }
 
 interface FocusRect {
@@ -27,7 +31,9 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
   borderColor = 'green',
   glowColor = 'rgba(0, 255, 0, 0.6)',
   animationDuration = 0.5,
-  pauseBetweenAnimations = 1
+  pauseBetweenAnimations = 1,
+  className,
+  wordClassName
 }) => {
   const words = sentence.split(separator);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -79,7 +85,7 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
 
   return (
     <div
-      className="relative flex gap-4 justify-center items-center flex-wrap"
+      className={`relative flex flex-wrap items-center justify-center gap-x-3 gap-y-2 ${className ?? ''}`}
       ref={containerRef}
       style={{ outline: 'none', userSelect: 'none' }}
     >
@@ -91,7 +97,10 @@ const TrueFocus: React.FC<TrueFocusProps> = ({
             ref={el => {
               wordRefs.current[index] = el;
             }}
-            className="relative text-[3rem] font-black cursor-pointer"
+            className={
+              wordClassName ??
+              'relative cursor-pointer text-[3rem] font-black'
+            }
             style={
               {
                 filter: manualMode

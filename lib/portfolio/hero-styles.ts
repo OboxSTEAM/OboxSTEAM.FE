@@ -62,91 +62,103 @@ export type HeroStyleDescriptor = {
   decoration: HeroDecoration;
 };
 
+/**
+ * Hero styles use `@container/pf` queries so the device preview frame
+ * (not the desktop viewport) drives layout — see PortfolioMicrosite root.
+ */
 export const HERO_STYLES: Record<HeroTextSlotId, HeroStyleDescriptor> = {
   SplitGradient: {
     id: "SplitGradient",
     label: "Editorial Split",
     containerClass: "rounded-[1.75rem] ring-1 ring-black/5",
-    coverHeightClass: "h-36 sm:h-44",
+    coverHeightClass: "h-28 @min-[640px]/pf:h-44",
     bodyClass:
-      "flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between sm:gap-8",
+      "flex flex-col gap-5 @min-[640px]/pf:flex-row @min-[640px]/pf:items-end @min-[640px]/pf:justify-between @min-[640px]/pf:gap-8",
     contentClass: "min-w-0 max-w-2xl flex-1",
     avatarPlacement: "right-large",
-    avatarClass: "h-28 w-28 sm:h-36 sm:w-36",
+    avatarClass: "h-24 w-24 @min-[640px]/pf:h-36 @min-[640px]/pf:w-36",
     avatarRing: "double",
     eyebrowClass: "tracking-[0.2em]",
     nameClass:
-      "text-2xl font-extrabold tracking-tighter sm:text-5xl leading-none",
-    headlineClass: "mt-2 text-lg font-semibold sm:text-xl",
-    taglineClass: "mt-3 text-sm leading-relaxed sm:text-base",
+      "break-words text-balance text-[1.65rem] font-extrabold leading-[1.15] tracking-tight @min-[640px]/pf:text-5xl @min-[640px]/pf:leading-none @min-[640px]/pf:tracking-tighter",
+    headlineClass:
+      "mt-2 break-words text-base font-semibold leading-snug @min-[640px]/pf:text-xl",
+    taglineClass:
+      "mt-3 break-words text-sm leading-relaxed @min-[640px]/pf:text-base",
     decoration: "none",
   },
   TrueFocus: {
     id: "TrueFocus",
     label: "Editorial Ink",
     containerClass: "rounded-[1.25rem]",
-    coverHeightClass: "h-28 sm:h-32",
-    bodyClass: "flex flex-col gap-8",
+    coverHeightClass: "h-24 @min-[640px]/pf:h-32",
+    bodyClass: "flex flex-col gap-6 @min-[640px]/pf:gap-8",
     contentClass: "min-w-0 max-w-3xl",
     avatarPlacement: "top-left",
-    avatarClass: "h-16 w-16 sm:h-20 sm:w-20",
+    avatarClass: "h-14 w-14 @min-[640px]/pf:h-20 @min-[640px]/pf:w-20",
     avatarRing: "circle",
     eyebrowClass: "tracking-[0.22em]",
     nameClass:
-      "text-2xl font-extrabold tracking-tighter sm:text-4xl underline decoration-2 underline-offset-8",
-    headlineClass: "mt-3 text-base font-medium sm:text-lg",
-    taglineClass: "mt-4 max-w-xl text-sm leading-relaxed",
+      "break-words text-balance text-[1.65rem] font-extrabold leading-[1.2] tracking-tight underline decoration-2 underline-offset-4 @min-[640px]/pf:text-4xl @min-[640px]/pf:tracking-tighter @min-[640px]/pf:underline-offset-8",
+    headlineClass:
+      "mt-3 break-words text-sm font-medium leading-snug @min-[640px]/pf:text-lg",
+    taglineClass: "mt-4 max-w-xl break-words text-sm leading-relaxed",
     decoration: "paper-grain",
   },
   Decrypted: {
     id: "Decrypted",
     label: "Neo Lab",
     containerClass: "rounded-xl ring-1 ring-white/10",
-    coverHeightClass: "h-24 sm:h-28",
+    coverHeightClass: "h-20 @min-[640px]/pf:h-28",
     bodyClass:
-      "flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between",
+      "flex flex-col gap-5 @min-[640px]/pf:flex-row @min-[640px]/pf:items-start @min-[640px]/pf:justify-between",
     contentClass: "min-w-0 max-w-2xl flex-1",
     avatarPlacement: "right",
-    avatarClass: "h-24 w-24 sm:h-28 sm:w-28",
+    avatarClass: "h-20 w-20 @min-[640px]/pf:h-28 @min-[640px]/pf:w-28",
     avatarRing: "id-card",
     eyebrowClass: "font-mono tracking-[0.28em]",
-    nameClass: "font-mono text-2xl font-bold tracking-[0.06em] sm:text-4xl",
-    headlineClass: "mt-2 font-mono text-sm opacity-80 sm:text-base",
-    taglineClass: "mt-3 font-mono text-xs leading-relaxed opacity-75",
+    nameClass:
+      "break-words font-mono text-xl font-bold leading-snug tracking-[0.04em] @min-[640px]/pf:text-4xl @min-[640px]/pf:tracking-[0.06em]",
+    headlineClass:
+      "mt-2 break-words font-mono text-sm leading-snug opacity-80 @min-[640px]/pf:text-base",
+    taglineClass:
+      "mt-3 break-words font-mono text-xs leading-relaxed opacity-75",
     decoration: "corner-ticks",
   },
   BlurShiny: {
     id: "BlurShiny",
     label: "Studio Play",
     containerClass: "rounded-[2rem]",
-    coverHeightClass: "h-32 sm:h-40",
+    coverHeightClass: "h-28 @min-[640px]/pf:h-40",
     bodyClass:
-      "relative flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between",
+      "relative flex flex-col gap-5 @min-[640px]/pf:flex-row @min-[640px]/pf:items-end @min-[640px]/pf:justify-between",
     contentClass: "relative z-[1] min-w-0 max-w-2xl flex-1",
     avatarPlacement: "right-play",
-    avatarClass: "h-28 w-28 sm:h-32 sm:w-32",
+    avatarClass: "h-24 w-24 @min-[640px]/pf:h-32 @min-[640px]/pf:w-32",
     avatarRing: "play",
     eyebrowClass: "tracking-[0.16em]",
-    nameClass: "text-2xl font-extrabold italic tracking-wide sm:text-4xl",
-    headlineClass: "mt-2 text-lg font-medium",
-    taglineClass: "mt-3 text-sm leading-relaxed",
+    nameClass:
+      "break-words text-balance text-[1.65rem] font-extrabold italic leading-[1.15] tracking-wide @min-[640px]/pf:text-4xl",
+    headlineClass: "mt-2 break-words text-base font-medium leading-snug @min-[640px]/pf:text-lg",
+    taglineClass: "mt-3 break-words text-sm leading-relaxed",
     decoration: "accent-block",
   },
   Plain: {
     id: "Plain",
     label: "Quiet Minimal",
-    containerClass: "rounded-none sm:rounded-2xl",
-    coverHeightClass: "h-24 sm:h-28",
+    containerClass: "rounded-none @min-[640px]/pf:rounded-2xl",
+    coverHeightClass: "h-20 @min-[640px]/pf:h-28",
     bodyClass:
-      "flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between",
+      "flex flex-col gap-6 @min-[640px]/pf:flex-row @min-[640px]/pf:items-start @min-[640px]/pf:justify-between @min-[640px]/pf:gap-10",
     contentClass: "min-w-0 max-w-xl flex-1",
     avatarPlacement: "right-small",
-    avatarClass: "h-20 w-20 sm:h-24 sm:w-24",
+    avatarClass: "h-16 w-16 @min-[640px]/pf:h-24 @min-[640px]/pf:w-24",
     avatarRing: "soft",
     eyebrowClass: "tracking-[0.2em]",
-    nameClass: "text-2xl font-semibold tracking-tight sm:text-3xl",
-    headlineClass: "mt-2 text-base font-medium opacity-80",
-    taglineClass: "mt-4 text-sm leading-relaxed opacity-70",
+    nameClass:
+      "break-words text-balance text-[1.65rem] font-semibold leading-[1.2] tracking-tight @min-[640px]/pf:text-3xl",
+    headlineClass: "mt-2 break-words text-sm font-medium leading-snug opacity-80 @min-[640px]/pf:text-base",
+    taglineClass: "mt-4 break-words text-sm leading-relaxed opacity-70",
     decoration: "hairline",
   },
 };
@@ -165,12 +177,14 @@ export function heroSurfaceClass(
     style.containerClass,
     isDark ? "bg-[#1a1a1a]/90" : "bg-white/92",
     slot === "TrueFocus" && !isDark && "bg-[#FDFBF7]/95",
-    slot === "Plain" && !isDark && "bg-transparent sm:bg-white/70",
+    slot === "Plain" && !isDark && "bg-transparent @min-[640px]/pf:bg-white/70",
     slot === "Decrypted" && isDark && "bg-[#121212]/95",
     slot === "BlurShiny" && !isDark && "bg-white/85",
   );
 }
 
 export function heroPaddingClass(compact?: boolean): string {
-  return compact ? "p-5 sm:p-6" : "p-5 sm:p-6 lg:p-8";
+  return compact
+    ? "p-4 @min-[640px]/pf:p-6"
+    : "p-4 @min-[640px]/pf:p-6 @min-[1024px]/pf:p-8";
 }

@@ -251,7 +251,7 @@ function ItemCard({
 
       <h3
         className={cn(
-          "mt-2 text-lg font-semibold tracking-tight",
+          "mt-2 break-words text-lg font-semibold tracking-tight",
           resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         )}
         style={{ fontFamily: resolved.headingFontCss }}
@@ -359,7 +359,7 @@ function SectionHeading({
   return (
     <h2
       className={cn(
-        "inline-flex max-w-full items-center px-4 py-1.5 text-base font-bold tracking-tight sm:text-lg",
+        "inline-flex max-w-full items-center px-4 py-1.5 text-base font-bold tracking-tight @min-[640px]/pf:text-lg",
         personality.monoLabels ? "font-mono text-sm uppercase tracking-[0.12em]" : "",
         personality.playfulChrome ? "rounded-full" : "rounded-full",
       )}
@@ -733,7 +733,8 @@ export function PortfolioMicrosite({
         "relative min-h-full",
         resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         personality.paperWash && !resolved.isDark && "bg-[#FDFBF7]/40",
-        compact ? "p-4" : "px-3 py-6 sm:px-6 sm:py-12",
+        compact ? "p-4" : "px-3 py-6 @min-[640px]/pf:px-6 @min-[640px]/pf:py-12",
+        "@container/pf",
         personality.sectionPadClass,
         className,
       )}

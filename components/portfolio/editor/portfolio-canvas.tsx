@@ -2143,7 +2143,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     <EditorChromeContext.Provider value={chrome}>
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[880px] overflow-x-clip overflow-y-visible rounded-2xl sm:rounded-[1.5rem]",
+        "relative mx-auto w-full max-w-[880px] overflow-x-clip overflow-y-visible rounded-2xl @container/pf @min-[640px]/pf:rounded-[1.5rem]",
         resolved.isDark ? "text-[#FAFAF5]" : "text-[#2D2D2D]",
         personality.paperWash && !resolved.isDark && "bg-[#FDFBF7]/50",
         "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1",
@@ -2172,7 +2172,7 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
 
       <div
         className={cn(
-          "relative z-10 px-3 py-6 sm:px-8 sm:py-10",
+          "relative z-10 px-3 py-6 @min-[640px]/pf:px-8 @min-[640px]/pf:py-10",
           personality.sectionPadClass,
         )}
       >

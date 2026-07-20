@@ -30,7 +30,7 @@ export function PortfolioLinkTiles({
   return (
     <ul
       className={cn(
-        "grid grid-cols-1 gap-2.5 sm:grid-cols-2",
+        "grid grid-cols-1 gap-2.5 @min-[640px]/pf:grid-cols-2",
         className,
       )}
     >
