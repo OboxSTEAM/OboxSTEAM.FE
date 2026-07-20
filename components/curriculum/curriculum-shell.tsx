@@ -23,8 +23,11 @@ import { cn } from "@/lib/utils";
 import { ActivityPanel } from "./activity-panel";
 import { AssignmentPanel } from "./assignment-panel";
 import { CurriculumNav } from "./curriculum-nav";
+import { CurriculumMindMapPanel } from "./mind-map/curriculum-mind-map-panel";
 
 const DESKTOP_NAV_WIDTH = 320;
+
+export type CurriculumMainView = "content" | "mind-map";
 
 type CurriculumShellProps = {
   curriculum: EnrollmentCurriculum;
@@ -34,6 +37,7 @@ type CurriculumShellProps = {
   onSelectAssignment: (assignmentId: string) => void;
   onCurriculumRefresh: () => Promise<void>;
   classContext?: CurriculumClassContext | null;
+  initialView?: CurriculumMainView;
 };
 
 export function CurriculumShell({
@@ -44,23 +48,46 @@ export function CurriculumShell({
   onSelectAssignment,
   onCurriculumRefresh,
   classContext = null,
+  initialView = "content",
 }: CurriculumShellProps) {
   const reduceMotion = useReducedMotion();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [desktopNavOpen, setDesktopNavOpen] = useState(true);
+  const [mainView, setMainView] = useState<CurriculumMainView>(initialView);
 
   const flatAssignment = selectedAssignmentId
     ? findFlatAssignment(curriculum, selectedAssignmentId)
     : null;
 
   const handleSelectActivity = (activityId: string) => {
+    setMainView("content");
     onSelectActivity(activityId);
     setMobileNavOpen(false);
   };
 
   const handleSelectAssignment = (assignmentId: string) => {
+    setMainView("content");
     onSelectAssignment(assignmentId);
     setMobileNavOpen(false);
+  };
+
+  const handleOpenMindMap = () => {
+    setMainView("mind-map");
+    setMobileNavOpen(false);
+  };
+
+  const handleOpenLessonFromMap = (params: {
+    activityId?: string;
+    assignmentId?: string;
+  }) => {
+    setMainView("content");
+    if (params.assignmentId) {
+      onSelectAssignment(params.assignmentId);
+      return;
+    }
+    if (params.activityId) {
+      onSelectActivity(params.activityId);
+    }
   };
 
   const navTransition = reduceMotion
@@ -93,13 +120,15 @@ export function CurriculumShell({
               selectedAssignmentId={selectedAssignmentId}
               onSelectActivity={handleSelectActivity}
               onSelectAssignment={handleSelectAssignment}
+              onOpenMindMap={handleOpenMindMap}
+              mainView={mainView}
               classContext={classContext}
             />
           </ScrollArea>
         </motion.aside>
 
         <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden p-3 sm:p-4 lg:p-6">
-          <div className="mb-2 shrink-0 flex items-center gap-2">
+          <div className="mb-2 flex shrink-0 items-center gap-2">
             <Button
               type="button"
               variant="ghost"
@@ -119,7 +148,13 @@ export function CurriculumShell({
           </div>
 
           <div className="min-h-0 flex-1">
-            {selectedAssignmentId && flatAssignment ? (
+            {mainView === "mind-map" ? (
+              <CurriculumMindMapPanel
+                enrollmentId={curriculum.enrollmentId}
+                onOpenLesson={handleOpenLessonFromMap}
+                className="h-full"
+              />
+            ) : selectedAssignmentId && flatAssignment ? (
               <AssignmentPanel
                 curriculum={curriculum}
                 assignmentId={selectedAssignmentId}
@@ -169,6 +204,8 @@ export function CurriculumShell({
                 selectedAssignmentId={selectedAssignmentId}
                 onSelectActivity={handleSelectActivity}
                 onSelectAssignment={handleSelectAssignment}
+                onOpenMindMap={handleOpenMindMap}
+                mainView={mainView}
                 classContext={classContext}
               />
             </ScrollArea>

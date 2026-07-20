@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import {
   getClassSessions,
   getClassWithStudents,
   getEnrollmentCurriculum,
-  getMyProgramEnrollments,
   getProgramEnrollmentClass,
   getUserProfileById,
   type EnrollmentCurriculum,
@@ -18,8 +17,13 @@ import {
 } from "@/lib/api";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLASS_SESSIONS_QUERY } from "@/lib/classes/constants";
+import { resolveActiveProgramEnrollment } from "@/lib/curriculum/active-enrollment";
+import { findFlatAssignment } from "@/lib/curriculum/assignment-helpers";
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
-import { resolveInitialActivityId } from "@/lib/curriculum/helpers";
+import {
+  findFlatActivity,
+  resolveInitialActivityId,
+} from "@/lib/curriculum/helpers";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 
 import { CurriculumShell } from "./curriculum-shell";
@@ -27,11 +31,6 @@ import { CurriculumShell } from "./curriculum-shell";
 type CurriculumLearnContentProps = {
   programId: string;
 };
-
-const ENROLLMENT_GATE_STATUSES = new Set<ProgramEnrollment["status"]>([
-  "Active",
-  "Completed",
-]);
 
 function LearnSkeleton() {
   return (
@@ -74,8 +73,37 @@ async function loadMentorProfile(mentorId: string): Promise<UserProfile | null> 
   }
 }
 
+function applyCurriculumSelection(
+  nextCurriculum: EnrollmentCurriculum,
+  seed: {
+    activityId?: string | null;
+    assignmentId?: string | null;
+  },
+): {
+  activityId: string | null;
+  assignmentId: string | null;
+} {
+  if (seed.assignmentId && findFlatAssignment(nextCurriculum, seed.assignmentId)) {
+    return { activityId: null, assignmentId: seed.assignmentId };
+  }
+
+  if (seed.activityId && findFlatActivity(nextCurriculum, seed.activityId)) {
+    return { activityId: seed.activityId, assignmentId: null };
+  }
+
+  return {
+    activityId: resolveInitialActivityId(nextCurriculum),
+    assignmentId: null,
+  };
+}
+
 export function CurriculumLearnContent({ programId }: CurriculumLearnContentProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const seedActivityId = searchParams.get("activityId");
+  const seedAssignmentId = searchParams.get("assignmentId");
+  const initialView =
+    searchParams.get("view") === "mind-map" ? "mind-map" : "content";
   const { isAuthenticated, isHydrated, isLoading: isUserLoading } = useCurrentUser();
   const [curriculum, setCurriculum] = useState<EnrollmentCurriculum | null>(null);
   const [classContext, setClassContext] = useState<CurriculumClassContext | null>(null);
@@ -87,18 +115,23 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
   const [isClassPickerOpen, setIsClassPickerOpen] = useState(false);
 
   const loadCurriculum = useCallback(
-    async (enrollmentId: string, seedActivityId?: string | null) => {
+    async (
+      enrollmentId: string,
+      seed?: { activityId?: string | null; assignmentId?: string | null },
+    ) => {
       const result = await getEnrollmentCurriculum(enrollmentId);
       if (!result?.data) {
         throw new Error("Enrollment curriculum response missing data.");
       }
       const nextCurriculum = result.data;
       setCurriculum(nextCurriculum);
-      setSelectedActivityId((current) => {
-        if (seedActivityId) return seedActivityId;
-        if (current && resolveInitialActivityId(nextCurriculum) === current) return current;
-        return resolveInitialActivityId(nextCurriculum);
+
+      const selection = applyCurriculumSelection(nextCurriculum, {
+        activityId: seed?.activityId,
+        assignmentId: seed?.assignmentId,
       });
+      setSelectedActivityId(selection.activityId);
+      setSelectedAssignmentId(selection.assignmentId);
       return nextCurriculum;
     },
     [],
@@ -123,7 +156,10 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
   }, []);
 
   const loadLearningState = useCallback(
-    async (activeEnrollment: ProgramEnrollment, seedActivityId?: string | null) => {
+    async (
+      activeEnrollment: ProgramEnrollment,
+      seed?: { activityId?: string | null; assignmentId?: string | null },
+    ) => {
       const enrollmentClassResult = await getProgramEnrollmentClass(activeEnrollment.id);
       const classId = enrollmentClassResult?.data?.classId ?? null;
 
@@ -135,7 +171,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       }
 
       await Promise.all([
-        loadCurriculum(activeEnrollment.id, seedActivityId),
+        loadCurriculum(activeEnrollment.id, seed),
         loadClassContext(classId),
       ]);
     },
@@ -157,19 +193,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       setLoadError(null);
 
       try {
-        const enrollmentsResult = await getMyProgramEnrollments({
-          page: 1,
-          pageSize: 50,
-        });
-
-        if (!enrollmentsResult?.data) {
-          throw new Error("Program enrollments response missing data.");
-        }
-
-        const activeEnrollment = enrollmentsResult.data.items.find(
-          (item) =>
-            item.programId === programId && ENROLLMENT_GATE_STATUSES.has(item.status),
-        );
+        const activeEnrollment = await resolveActiveProgramEnrollment(programId);
 
         if (!activeEnrollment) {
           router.replace(`/programs/${programId}`);
@@ -179,7 +203,10 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         if (cancelled) return;
 
         setEnrollment(activeEnrollment);
-        await loadLearningState(activeEnrollment);
+        await loadLearningState(activeEnrollment, {
+          activityId: seedActivityId,
+          assignmentId: seedAssignmentId,
+        });
       } catch (error) {
         if (cancelled) return;
         showAppErrorFromUnknown(error, "generic");
@@ -196,7 +223,16 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
     return () => {
       cancelled = true;
     };
-  }, [isAuthenticated, isHydrated, isUserLoading, loadLearningState, programId, router]);
+  }, [
+    isAuthenticated,
+    isHydrated,
+    isUserLoading,
+    loadLearningState,
+    programId,
+    router,
+    seedActivityId,
+    seedAssignmentId,
+  ]);
 
   const handleSelectActivity = useCallback((activityId: string) => {
     setSelectedAssignmentId(null);
@@ -210,8 +246,16 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
 
   const handleCurriculumRefresh = useCallback(async () => {
     if (!curriculum) return;
-    await loadCurriculum(curriculum.enrollmentId, selectedActivityId);
-  }, [curriculum, loadCurriculum, selectedActivityId]);
+    await loadCurriculum(curriculum.enrollmentId, {
+      activityId: selectedActivityId,
+      assignmentId: selectedAssignmentId,
+    });
+  }, [
+    curriculum,
+    loadCurriculum,
+    selectedActivityId,
+    selectedAssignmentId,
+  ]);
 
   const handleClassEnrolled = useCallback(
     async (classId: string) => {
@@ -219,7 +263,10 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       setIsBootstrapping(true);
       try {
         await Promise.all([
-          loadCurriculum(enrollment.id),
+          loadCurriculum(enrollment.id, {
+            activityId: seedActivityId,
+            assignmentId: seedAssignmentId,
+          }),
           loadClassContext(classId),
         ]);
       } catch (error) {
@@ -229,7 +276,13 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         setIsBootstrapping(false);
       }
     },
-    [enrollment, loadClassContext, loadCurriculum],
+    [
+      enrollment,
+      loadClassContext,
+      loadCurriculum,
+      seedActivityId,
+      seedAssignmentId,
+    ],
   );
 
   if (!isHydrated || isUserLoading || isBootstrapping) {
@@ -296,6 +349,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         onSelectAssignment={handleSelectAssignment}
         onCurriculumRefresh={handleCurriculumRefresh}
         classContext={classContext}
+        initialView={initialView}
       />
 
       <ClassPickerDialog

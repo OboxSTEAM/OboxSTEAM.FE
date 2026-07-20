@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
-import { ChevronRight, Lock } from "lucide-react";
+import { ChevronRight, Lock, Map } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import {
@@ -43,6 +43,8 @@ type CurriculumNavProps = {
   selectedAssignmentId: string | null;
   onSelectActivity: (activityId: string) => void;
   onSelectAssignment: (assignmentId: string) => void;
+  onOpenMindMap?: () => void;
+  mainView?: "content" | "mind-map";
   classContext?: CurriculumClassContext | null;
   className?: string;
 };
@@ -144,6 +146,8 @@ export function CurriculumNav({
   selectedAssignmentId,
   onSelectActivity,
   onSelectAssignment,
+  onOpenMindMap,
+  mainView = "content",
   classContext = null,
   className,
 }: CurriculumNavProps) {
@@ -187,6 +191,34 @@ export function CurriculumNav({
             />
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={onOpenMindMap}
+          aria-pressed={mainView === "mind-map"}
+          className={cn(
+            "mt-3 flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent",
+            mainView === "mind-map"
+              ? "border-[#E94B3C]/40 bg-[#E94B3C]/08"
+              : "border-learn-border bg-learn-surface hover:bg-learn-surface-2",
+          )}
+        >
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#E94B3C]/10 text-[#E94B3C]">
+            <Map className="size-4" aria-hidden />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-heading text-sm font-semibold text-learn-text-strong">
+              Bản đồ học tập
+            </span>
+            <span className="mt-0.5 block text-xs text-learn-muted">
+              {curriculum.currentActivityId
+                ? "Xem vị trí hiện tại trên lộ trình"
+                : "Xem toàn bộ lộ trình học"}
+            </span>
+          </span>
+          <ChevronRight className="size-4 shrink-0 text-learn-faint" aria-hidden />
+        </button>
       </div>
 
       {classContext ? <CurriculumClassBar classContext={classContext} /> : null}
