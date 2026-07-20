@@ -14,6 +14,7 @@ import {
 
 import {
   completeActivityResponseSchema,
+  getEnrollmentCurriculumMindMapResponseSchema,
   getEnrollmentCurriculumResponseSchema,
   getMyProgramEnrollmentsResponseSchema,
   getProgramEnrollmentClassResponseSchema,
@@ -21,6 +22,7 @@ import {
   getStudentProgramEnrollmentsResponseSchema,
   saveActivityCheckpointResponseSchema,
   type CompleteActivityResult,
+  type GetEnrollmentCurriculumMindMapResult,
   type GetEnrollmentCurriculumResult,
   type GetMyProgramEnrollmentsResult,
   type GetProgramEnrollmentClassResult,
@@ -32,6 +34,8 @@ import {
 export type {
   CompleteActivityResponse,
   CompleteActivityResult,
+  GetEnrollmentCurriculumMindMapResponse,
+  GetEnrollmentCurriculumMindMapResult,
   GetEnrollmentCurriculumResponse,
   GetEnrollmentCurriculumResult,
   GetProgramEnrollmentClassResponse,
@@ -62,6 +66,32 @@ export type {
   EnrollmentCurriculumMilestone,
   EnrollmentCurriculumModule,
 } from "@/lib/api/entities/enrollment-curriculum";
+
+export type {
+  EnrollmentCurriculumMindMap,
+  MindMapActivity,
+  MindMapActivityInfo,
+  MindMapActivityLearning,
+  MindMapAssignment,
+  MindMapAssignmentInfo,
+  MindMapAssignmentLearning,
+  MindMapChildProgress,
+  MindMapContainerLearning,
+  MindMapCourse,
+  MindMapCourseInfo,
+  MindMapHub,
+  MindMapMaterial,
+  MindMapMilestone,
+  MindMapMilestoneInfo,
+  MindMapModule,
+  MindMapModuleInfo,
+  MindMapModuleLearning,
+  MindMapNavigation,
+  MindMapNodeStatus,
+  MindMapPath,
+  MindMapPathNode,
+  SchedulingMode,
+} from "@/lib/api/entities/enrollment-curriculum-mind-map";
 
 export type {
   AssignmentType,
@@ -154,6 +184,23 @@ export async function getEnrollmentCurriculum(
   const response = await apiFetchParsed(
     `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/curriculum`,
     getEnrollmentCurriculumResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `GET /api/program-enrollments/{enrollmentId}/curriculum-mind-map` */
+export async function getEnrollmentCurriculumMindMap(
+  enrollmentId: string,
+): Promise<GetEnrollmentCurriculumMindMapResult> {
+  const { enrollmentId: parsedEnrollmentId } = enrollmentIdParamSchema.parse({
+    enrollmentId,
+  });
+
+  const response = await apiFetchParsed(
+    `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/curriculum-mind-map`,
+    getEnrollmentCurriculumMindMapResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);
