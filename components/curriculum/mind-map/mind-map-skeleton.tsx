@@ -17,19 +17,30 @@ export function MindMapSkeleton({ className }: MindMapSkeletonProps) {
       aria-label="Đang tải bản đồ học tập"
     >
       <div
-        className="absolute inset-0 opacity-60"
+        className="absolute inset-0"
         style={{
           backgroundImage:
-            "radial-gradient(circle, rgba(45,45,45,0.12) 1px, transparent 1px)",
+            "radial-gradient(circle, rgba(45,43,39,0.1) 1px, transparent 1.15px)",
           backgroundSize: "18px 18px",
         }}
         aria-hidden
       />
-      <div className="absolute left-1/2 top-1/2 h-14 w-48 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-[#26A69A]/35" />
-      <div className="absolute left-[20%] top-[28%] h-24 w-36 animate-pulse rounded-2xl bg-[#E5E5E0]/80" />
-      <div className="absolute right-[18%] top-[26%] h-24 w-36 animate-pulse rounded-2xl bg-[#E5E5E0]/80" />
-      <div className="absolute bottom-[26%] left-[28%] h-10 w-28 animate-pulse rounded-lg bg-[#E5E5E0]/70" />
-      <div className="absolute bottom-[22%] right-[24%] h-10 w-28 animate-pulse rounded-lg bg-[#E5E5E0]/70" />
+
+      {/* Hub */}
+      <div className="absolute top-1/2 left-1/2 size-24 -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full border-2 border-dotted border-[#2D2D2D]/30 bg-white shadow-[0_0_0_8px_rgba(45,45,45,0.04)]" />
+
+      {/* Right branch modules + leaves */}
+      <div className="absolute top-[34%] left-[58%] h-14 w-36 animate-pulse rounded-2xl bg-white" />
+      <div className="absolute top-[32%] left-[76%] h-8 w-28 animate-pulse rounded-lg bg-[#EFEBE3]" />
+      <div className="absolute top-[40%] left-[76%] h-8 w-28 animate-pulse rounded-lg bg-[#EFEBE3]" />
+
+      <div className="absolute top-[58%] left-[58%] h-14 w-36 animate-pulse rounded-2xl bg-white" />
+      <div className="absolute top-[58%] left-[76%] h-8 w-28 animate-pulse rounded-lg bg-[#EFEBE3]" />
+
+      {/* Left branch */}
+      <div className="absolute top-[38%] right-[58%] left-auto h-14 w-36 animate-pulse rounded-2xl bg-white max-md:hidden" />
+      <div className="absolute top-[36%] right-[76%] left-auto h-8 w-28 animate-pulse rounded-lg bg-[#EFEBE3] max-md:hidden" />
+      <div className="absolute top-[44%] right-[76%] left-auto h-8 w-28 animate-pulse rounded-lg bg-[#EFEBE3] max-md:hidden" />
     </div>
   );
 }

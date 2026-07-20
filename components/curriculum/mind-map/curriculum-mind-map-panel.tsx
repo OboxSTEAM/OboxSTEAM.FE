@@ -194,29 +194,31 @@ export function CurriculumMindMapPanel({
             className="h-full"
           />
 
-          <AnimatePresence>
+          <AnimatePresence mode="popLayout">
             {selectedNode ? (
               <motion.div
                 key={selectedNode.id}
-                className="pointer-events-none absolute inset-x-3 top-3 z-20 flex justify-end sm:inset-x-4 sm:top-4"
+                className={cn(
+                  "pointer-events-none absolute z-20 flex items-start",
+                  "inset-x-3 bottom-3 max-sm:justify-center",
+                  "sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-[min(100%-2rem,20rem)]",
+                )}
                 initial={
                   reduceMotion
                     ? false
-                    : { opacity: 0, y: -12, scale: 0.96 }
+                    : { opacity: 0, y: 24, x: 0 }
                 }
-                animate={{ opacity: 1, y: 0, scale: 1 }}
+                animate={{ opacity: 1, y: 0, x: 0 }}
                 exit={
-                  reduceMotion
-                    ? undefined
-                    : { opacity: 0, y: -8, scale: 0.97 }
+                  reduceMotion ? undefined : { opacity: 0, y: 16 }
                 }
                 transition={
                   reduceMotion
                     ? { duration: 0 }
-                    : { type: "spring", stiffness: 380, damping: 28 }
+                    : { type: "spring", stiffness: 360, damping: 32 }
                 }
               >
-                <div className="pointer-events-auto w-full max-w-sm">
+                <div className="pointer-events-auto w-full max-sm:max-w-md">
                   <MindMapNodeInspector
                     node={selectedNode}
                     breadcrumb={breadcrumb}

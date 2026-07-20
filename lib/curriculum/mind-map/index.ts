@@ -4,7 +4,10 @@ export {
   fitTransform,
   focusTransform,
   layoutMindMap,
+  measureHubSize,
   MIND_MAP_BRANCH_COLORS,
+  MIND_MAP_MOBILE_BREAKPOINT,
+  preserveNodeScreenPosition,
 } from "./layout";
 export {
   canOpenMindMapTarget,
@@ -14,11 +17,15 @@ export {
 } from "./status";
 export type {
   BuildMindMapGraphOptions,
+  LayoutMindMapOptions,
+  MindMapBranchSide,
+  MindMapForkJunction,
   MindMapGraphBounds,
   MindMapGraphEdge,
   MindMapGraphModel,
   MindMapGraphNode,
   MindMapLaidOutNode,
+  MindMapLayoutMode,
   MindMapLayoutResult,
   MindMapNodeKind,
 } from "./types";

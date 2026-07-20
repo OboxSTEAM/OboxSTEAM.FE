@@ -1,9 +1,8 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { Crosshair, Maximize2, Minus, Plus } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { MIND_MAP_STATUS_LABELS } from "@/lib/curriculum/mind-map";
 import { cn } from "@/lib/utils";
 
 type MindMapFloatingControlsProps = {
@@ -13,6 +12,12 @@ type MindMapFloatingControlsProps = {
   onFocusCurrent: () => void;
   className?: string;
 };
+
+const LEGEND_ITEMS = [
+  { label: "Đang học", dot: "bg-[#E94B3C]" },
+  { label: "Hoàn thành", dot: "bg-[#7CB342]" },
+  { label: "Khóa", dot: "bg-[#C8C8C0]" },
+] as const;
 
 export function MindMapFloatingControls({
   onFit,
@@ -24,87 +29,82 @@ export function MindMapFloatingControls({
   return (
     <div
       className={cn(
-        "pointer-events-auto absolute bottom-4 left-4 z-20 flex max-w-[min(100%,20rem)] flex-col gap-2",
+        "pointer-events-auto absolute bottom-4 left-4 z-20 flex flex-col gap-2",
         className,
       )}
     >
-      <div className="flex items-center gap-1 rounded-2xl border border-[#E5E5E0] bg-white/95 p-1 shadow-[0_8px_24px_-14px_rgba(45,45,45,0.35)] backdrop-blur-md">
-        <Button
+      <div
+        className={cn(
+          "flex items-center gap-0.5 rounded-2xl border border-[#E5E5E0] bg-white/95 p-1.5",
+          "shadow-[0_8px_24px_-18px_rgba(45,43,39,0.45)] backdrop-blur-sm",
+        )}
+      >
+        <ControlIconButton onClick={onZoomOut} label="Thu nhỏ">
+          <Minus className="size-4" strokeWidth={2.35} aria-hidden />
+        </ControlIconButton>
+        <ControlIconButton onClick={onZoomIn} label="Phóng to">
+          <Plus className="size-4" strokeWidth={2.35} aria-hidden />
+        </ControlIconButton>
+        <ControlIconButton onClick={onFit} label="Vừa khung nhìn">
+          <Maximize2 className="size-4" strokeWidth={2.35} aria-hidden />
+        </ControlIconButton>
+        <button
           type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onZoomOut}
-          aria-label="Thu nhỏ"
-          className="min-h-10 min-w-10"
-        >
-          <Minus className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onZoomIn}
-          aria-label="Phóng to"
-          className="min-h-10 min-w-10"
-        >
-          <Plus className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon-sm"
-          onClick={onFit}
-          aria-label="Vừa khung nhìn"
-          className="min-h-10 min-w-10"
-        >
-          <Maximize2 className="size-4" aria-hidden />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
           onClick={onFocusCurrent}
-          className="min-h-10 gap-1.5 px-2.5"
+          className={cn(
+            "ml-0.5 flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-3",
+            "text-xs font-bold tracking-tight text-[#2D2D2D]",
+            "transition-colors hover:bg-[#F5F5F0]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+          )}
         >
-          <Crosshair className="size-4" aria-hidden />
-          <span className="text-xs">Hiện tại</span>
-        </Button>
+          <Crosshair className="size-3.5" strokeWidth={2.35} aria-hidden />
+          Hiện tại
+        </button>
       </div>
 
       <ul
-        className="flex flex-wrap gap-1 rounded-2xl border border-[#E5E5E0] bg-white/95 p-2 shadow-[0_8px_24px_-14px_rgba(45,45,45,0.28)] backdrop-blur-md"
+        className={cn(
+          "flex items-center gap-3 rounded-xl border border-[#E5E5E0] bg-white/90 px-3 py-2",
+          "shadow-[0_6px_16px_-14px_rgba(45,43,39,0.35)] backdrop-blur-sm",
+        )}
         aria-label="Chú thích trạng thái"
       >
-        {(
-          [
-            "current",
-            "in_progress",
-            "completed",
-            "available",
-            "submitted",
-            "locked",
-          ] as const
-        ).map((status) => (
+        {LEGEND_ITEMS.map(({ label, dot }) => (
           <li
-            key={status}
-            className="inline-flex items-center gap-1 rounded-full bg-[#F5F5F0] px-2 py-1 text-[10px] text-[#6B6B6B]"
+            key={label}
+            className="flex items-center gap-1.5 text-[11px] font-semibold tracking-tight text-[#6B6B6B]"
           >
-            <span
-              className={cn(
-                "size-1.5 rounded-full",
-                status === "current" && "bg-[#E94B3C]",
-                status === "in_progress" && "bg-[#4FC3F7]",
-                status === "completed" && "bg-[#7CB342]",
-                status === "available" && "bg-[#D6D6CE]",
-                status === "submitted" && "bg-[#7E57C2]",
-                status === "locked" && "bg-[#B0B0B0]",
-              )}
-              aria-hidden
-            />
-            {MIND_MAP_STATUS_LABELS[status]}
+            <span className={cn("size-2 shrink-0 rounded-full", dot)} aria-hidden />
+            {label}
           </li>
         ))}
       </ul>
     </div>
+  );
+}
+
+function ControlIconButton({
+  onClick,
+  label,
+  children,
+}: {
+  onClick: () => void;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className={cn(
+        "flex size-10 shrink-0 items-center justify-center rounded-xl text-[#2D2D2D]",
+        "transition-colors hover:bg-[#F5F5F0]",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+      )}
+    >
+      {children}
+    </button>
   );
 }

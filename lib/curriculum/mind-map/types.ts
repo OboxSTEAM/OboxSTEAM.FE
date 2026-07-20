@@ -21,6 +21,12 @@ export type MindMapNodeKind =
   | "activity"
   | "assignment";
 
+/** Desktop: modules fan left/right from hub. Mobile: single LTR column tree. */
+export type MindMapLayoutMode = "bilateral" | "ltr";
+
+/** Outward growth direction of a node’s branch. */
+export type MindMapBranchSide = "left" | "right";
+
 export type MindMapGraphNode = {
   id: string;
   kind: MindMapNodeKind;
@@ -59,7 +65,19 @@ export type MindMapLaidOutNode = MindMapGraphNode & {
   width: number;
   height: number;
   depth: number;
-  angle: number;
+  /** Outward branch side relative to the hub. */
+  side: MindMapBranchSide;
+};
+
+/** Y-split junction between a parent and its fan of children. */
+export type MindMapForkJunction = {
+  id: string;
+  parentId: string;
+  childIds: string[];
+  x: number;
+  y: number;
+  isOnCurrentPath: boolean;
+  side: MindMapBranchSide;
 };
 
 export type MindMapGraphBounds = {
@@ -84,10 +102,16 @@ export type MindMapGraphModel = {
 export type MindMapLayoutResult = {
   nodes: MindMapLaidOutNode[];
   edges: MindMapGraphEdge[];
+  forks: MindMapForkJunction[];
   bounds: MindMapGraphBounds;
   hubNodeId: string;
+  mode: MindMapLayoutMode;
 };
 
 export type BuildMindMapGraphOptions = {
   mindMap: EnrollmentCurriculumMindMap;
+};
+
+export type LayoutMindMapOptions = {
+  mode?: MindMapLayoutMode;
 };

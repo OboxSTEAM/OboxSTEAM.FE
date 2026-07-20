@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock } from "lucide-react";
+import { Lock, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,15 +24,14 @@ type MindMapNodeInspectorProps = {
     activityId?: string;
     assignmentId?: string;
   }) => void;
-  variant?: "side" | "sheet";
   className?: string;
 };
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-[#E5E5E0]/80 py-2.5 last:border-b-0">
-      <dt className="shrink-0 text-xs text-[#8a8a8a]">{label}</dt>
-      <dd className="min-w-0 text-right text-sm font-medium text-[#2D2D2D]">
+    <div className="flex items-start justify-between gap-3 border-b border-[#EAEAEA] py-2 last:border-b-0">
+      <dt className="shrink-0 text-xs font-medium text-[#8A8A8A]">{label}</dt>
+      <dd className="min-w-0 text-right text-sm font-semibold tracking-tight text-[#2D2D2D]">
         {value}
       </dd>
     </div>
@@ -44,7 +43,6 @@ export function MindMapNodeInspector({
   breadcrumb,
   onClose,
   onOpenLesson,
-  variant = "side",
   className,
 }: MindMapNodeInspectorProps) {
   if (!node) return null;
@@ -60,80 +58,95 @@ export function MindMapNodeInspector({
       ? node.assignment?.assignmentInfo.assignmentId
       : undefined;
 
+  const nextActionHint = canOpen
+    ? "Sẵn sàng mở bài học"
+    : node.isLocked
+      ? "Hoàn thành bước trước để mở khóa"
+      : "Chọn hoạt động hoặc bài tập để tiếp tục";
+
   return (
     <aside
       className={cn(
-        "flex min-h-0 flex-col bg-white",
-        variant === "side" && "h-full border-l border-[#E5E5E0]",
-        variant === "sheet" && "h-full",
+        "flex max-h-[min(62vh,30rem)] min-h-0 w-full flex-col overflow-hidden",
+        "rounded-2xl border border-[#E5E5E0] bg-white",
+        "shadow-[0_12px_32px_-22px_rgba(45,43,39,0.4)]",
         className,
       )}
       aria-label={`Chi tiết ${kindLabel}`}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-[#E5E5E0] px-4 py-4">
+      <div className="flex items-start justify-between gap-3 border-b border-[#EAEAEA] px-4 py-3">
         <div className="min-w-0">
-          <p className="font-mono text-[10px] font-semibold tracking-[0.14em] text-[#8a8a8a] uppercase">
+          <p className="text-[10px] font-bold tracking-[0.12em] text-[#9A9A9A] uppercase">
             {kindLabel}
           </p>
-          <h2 className="mt-1 font-heading text-lg font-bold leading-snug text-[#2D2D2D]">
+          <h2 className="mt-1 font-heading text-[15px] font-bold leading-snug tracking-tight text-[#2D2D2D]">
             {node.label}
           </h2>
           {breadcrumb.length > 0 ? (
-            <p className="mt-1.5 text-xs leading-relaxed text-[#6B6B6B]">
+            <p className="mt-1 text-xs font-medium leading-relaxed text-[#8A8A8A]">
               {breadcrumb.join(" · ")}
             </p>
           ) : null}
         </div>
-        <Button
+        <button
           type="button"
-          variant="ghost"
-          size="sm"
+          aria-label="Đóng chi tiết"
           onClick={onClose}
-          className="shrink-0"
+          className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[#2D2D2D] transition-colors hover:bg-[#F5F5F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
         >
-          Đóng
-        </Button>
+          <X className="size-4" strokeWidth={2.25} aria-hidden />
+        </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium",
-              tone.bgClass,
-              tone.textClass,
-            )}
-          >
-            {node.isLocked ? <Lock className="size-3" aria-hidden /> : null}
-            {tone.label}
-          </span>
-          {node.isOnCurrentPath ? (
-            <span className="rounded-full bg-[#E94B3C] px-2.5 py-1 text-xs font-semibold text-white">
-              Trên lộ trình hiện tại
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
+        <div className="rounded-xl bg-[#FAFAF5] px-3 py-2.5">
+          <p className="text-[10px] font-bold tracking-[0.1em] text-[#9A9A9A] uppercase">
+            Bạn đang ở đâu
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-bold",
+                tone.bgClass,
+                tone.textClass,
+              )}
+            >
+              {node.isLocked ? (
+                <Lock className="size-3" strokeWidth={2.25} aria-hidden />
+              ) : null}
+              {tone.label}
             </span>
+            {node.isOnCurrentPath ? (
+              <span className="rounded-lg bg-[#E94B3C] px-2.5 py-1 text-xs font-bold text-white">
+                Lộ trình hiện tại
+              </span>
+            ) : null}
+          </div>
+          {node.progressPercent != null ? (
+            <p className="mt-2 font-mono text-xs font-semibold tabular-nums text-[#6B6B6B]">
+              Tiến độ {Math.round(node.progressPercent)}%
+              {node.childProgress
+                ? ` · ${node.childProgress.completedCount}/${node.childProgress.totalCount}`
+                : ""}
+            </p>
+          ) : node.childProgress ? (
+            <p className="mt-2 font-mono text-xs font-semibold tabular-nums text-[#6B6B6B]">
+              {node.childProgress.completedCount}/{node.childProgress.totalCount} hoàn thành
+            </p>
           ) : null}
         </div>
 
-        {node.lockReason ? (
-          <p className="mt-3 rounded-xl border border-[#E5E5E0] bg-[#F5F5F0] px-3 py-2.5 text-sm text-[#6B6B6B]">
-            {node.lockReason}
+        <div className="mt-3 rounded-xl border border-[#EAEAEA] px-3 py-2.5">
+          <p className="text-[10px] font-bold tracking-[0.1em] text-[#9A9A9A] uppercase">
+            Bước tiếp theo
           </p>
-        ) : null}
-
-        <dl className="mt-4">
-          {node.progressPercent != null ? (
-            <MetaRow
-              label="Tiến độ"
-              value={`${Math.round(node.progressPercent)}%`}
-            />
+          <p className="mt-1.5 text-sm font-medium text-[#2D2D2D]">{nextActionHint}</p>
+          {node.lockReason ? (
+            <p className="mt-2 text-sm font-medium text-[#8A8A8A]">{node.lockReason}</p>
           ) : null}
-          {node.childProgress ? (
-            <MetaRow
-              label="Hoàn thành"
-              value={`${node.childProgress.completedCount}/${node.childProgress.totalCount}`}
-            />
-          ) : null}
+        </div>
 
+        <dl className="mt-3">
           {node.module ? (
             <>
               <MetaRow
@@ -143,10 +156,6 @@ export function MindMapNodeInspector({
               {node.module.moduleInfo.moduleCode ? (
                 <MetaRow label="Mã" value={node.module.moduleInfo.moduleCode} />
               ) : null}
-              <MetaRow
-                label="Bắt buộc"
-                value={node.module.moduleInfo.isMandatory ? "Có" : "Không"}
-              />
             </>
           ) : null}
 
@@ -166,28 +175,10 @@ export function MindMapNodeInspector({
                 label="Lịch học"
                 value={node.activity.activityInfo.schedulingMode}
               />
-              {node.activity.activityInfo.activityCode ? (
-                <MetaRow
-                  label="Mã"
-                  value={node.activity.activityInfo.activityCode}
-                />
-              ) : null}
               {node.activity.activityInfo.material?.materialName ? (
                 <MetaRow
                   label="Tài liệu"
                   value={node.activity.activityInfo.material.materialName}
-                />
-              ) : null}
-              {node.activity.learning.lastAccessedAt ? (
-                <MetaRow
-                  label="Truy cập gần nhất"
-                  value={node.activity.learning.lastAccessedAt}
-                />
-              ) : null}
-              {node.activity.learning.resumeState ? (
-                <MetaRow
-                  label="Tiếp tục từ"
-                  value={node.activity.learning.resumeState.kind}
                 />
               ) : null}
             </>
@@ -204,12 +195,8 @@ export function MindMapNodeInspector({
                 }
               />
               <MetaRow
-                label="Điểm tối đa"
-                value={String(node.assignment.assignmentInfo.maxPoints)}
-              />
-              <MetaRow
                 label="Điểm đạt"
-                value={String(node.assignment.assignmentInfo.passScore)}
+                value={`${node.assignment.assignmentInfo.passScore}/${node.assignment.assignmentInfo.maxPoints}`}
               />
               {node.assignment.assignmentInfo.dueDate ? (
                 <MetaRow
@@ -217,63 +204,34 @@ export function MindMapNodeInspector({
                   value={node.assignment.assignmentInfo.dueDate}
                 />
               ) : null}
-              <MetaRow
-                label="Bắt buộc để qua mô-đun"
-                value={
-                  node.assignment.assignmentInfo.isRequiredForModulePass
-                    ? "Có"
-                    : "Không"
-                }
-              />
             </>
           ) : null}
 
           {node.hub ? (
-            <>
-              <MetaRow
-                label="Mô-đun hoàn thành"
-                value={`${node.hub.completedModuleCount}/${node.hub.totalModuleCount}`}
-              />
-            </>
+            <MetaRow
+              label="Mô-đun hoàn thành"
+              value={`${node.hub.completedModuleCount}/${node.hub.totalModuleCount}`}
+            />
           ) : null}
         </dl>
 
-        {node.module?.moduleInfo.learningOutcomes &&
-        node.module.moduleInfo.learningOutcomes.length > 0 ? (
-          <div className="mt-4">
-            <p className="text-xs font-semibold tracking-wide text-[#8a8a8a] uppercase">
-              Chuẩn đầu ra
-            </p>
-            <ul className="mt-2 space-y-1.5">
-              {node.module.moduleInfo.learningOutcomes.map((outcome) => (
-                <li
-                  key={outcome}
-                  className="rounded-lg bg-[#F5F5F0] px-3 py-2 text-sm text-[#2D2D2D]"
-                >
-                  {outcome}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
         {node.activity?.activityInfo.description ? (
-          <div className="mt-4">
-            <p className="text-xs font-semibold tracking-wide text-[#8a8a8a] uppercase">
+          <div className="mt-3">
+            <p className="text-[10px] font-bold tracking-[0.1em] text-[#9A9A9A] uppercase">
               Mô tả
             </p>
-            <p className="mt-2 text-sm leading-relaxed text-[#6B6B6B]">
+            <p className="mt-1.5 text-sm font-medium leading-relaxed text-[#6B6B6B]">
               {node.activity.activityInfo.description}
             </p>
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-[#E5E5E0] p-4">
+      <div className="border-t border-[#EAEAEA] p-3">
         {canOpen && (activityId || assignmentId) ? (
           <Button
             type="button"
-            className="min-h-11 w-full bg-[#E94B3C] text-white hover:bg-[#d43e30]"
+            className="min-h-11 w-full rounded-xl bg-[#E94B3C] font-semibold text-white hover:bg-[#d43e30]"
             onClick={() =>
               onOpenLesson({
                 activityId,
@@ -284,7 +242,7 @@ export function MindMapNodeInspector({
             Mở bài học
           </Button>
         ) : (
-          <p className="text-center text-sm text-[#6B6B6B]">
+          <p className="text-center text-sm font-medium text-[#8A8A8A]">
             {node.isLocked
               ? "Nút này đang bị khóa."
               : "Chọn hoạt động hoặc bài tập để mở bài học."}

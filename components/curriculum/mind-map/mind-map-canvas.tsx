@@ -1,16 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type MutableRefObject,
+} from "react";
 import { useGesture } from "@use-gesture/react";
-import { useReducedMotion } from "motion/react";
+import { AnimatePresence, useReducedMotion } from "motion/react";
 
 import {
   branchColorForIndex,
   fitTransform,
   focusTransform,
   layoutMindMap,
+  MIND_MAP_MOBILE_BREAKPOINT,
+  preserveNodeScreenPosition,
   type MindMapGraphModel,
   type MindMapLaidOutNode,
+  type MindMapLayoutMode,
 } from "@/lib/curriculum/mind-map";
 import { cn } from "@/lib/utils";
 
@@ -38,7 +48,7 @@ export type MindMapViewportApi = {
   focusCurrent: () => void;
 };
 
-const MIN_SCALE = 0.35;
+const MIN_SCALE = 0.28;
 const MAX_SCALE = 2.2;
 
 export function MindMapCanvas({
@@ -55,10 +65,17 @@ export function MindMapCanvas({
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, scale: 1 });
   const [size, setSize] = useState({ width: 0, height: 0 });
   const hasFittedRef = useRef(false);
+  const layoutNodesRef = useRef<MindMapLaidOutNode[]>([]);
+  const pendingPreserveIdRef = useRef<string | null>(null);
+
+  const layoutMode: MindMapLayoutMode =
+    size.width > 0 && size.width < MIND_MAP_MOBILE_BREAKPOINT
+      ? "ltr"
+      : "bilateral";
 
   const layout = useMemo(
-    () => layoutMindMap(model, expandedIds),
-    [expandedIds, model],
+    () => layoutMindMap(model, expandedIds, { mode: layoutMode }),
+    [expandedIds, layoutMode, model],
   );
 
   const nodesById = useMemo(() => {
@@ -95,7 +112,7 @@ export function MindMapCanvas({
 
     for (const node of layout.nodes) {
       if (node.kind === "program") {
-        colors.set(node.id, "#26A69A");
+        colors.set(node.id, "#2D2D2D");
         continue;
       }
       colors.set(node.id, resolveModuleColor(node.id));
@@ -156,12 +173,44 @@ export function MindMapCanvas({
     if (!hasFittedRef.current) {
       applyFit();
       hasFittedRef.current = true;
+      // On first paint for small screens, prefer the current learning node.
+      if (size.width < MIND_MAP_MOBILE_BREAKPOINT) {
+        requestAnimationFrame(() => applyFocusCurrent());
+      }
     }
-  }, [applyFit, size.height, size.width]);
+  }, [applyFit, applyFocusCurrent, size.height, size.width]);
 
   useEffect(() => {
     hasFittedRef.current = false;
   }, [model.enrollmentId]);
+
+  // Re-fit when switching between bilateral and LTR layouts.
+  const prevModeRef = useRef(layoutMode);
+  useEffect(() => {
+    if (prevModeRef.current === layoutMode) return;
+    prevModeRef.current = layoutMode;
+    if (size.width <= 0 || size.height <= 0) return;
+    applyFit();
+  }, [applyFit, layoutMode, size.height, size.width]);
+
+  // Preserve the toggled parent’s screen position across expansion layout shifts.
+  useEffect(() => {
+    const preserveId = pendingPreserveIdRef.current;
+    const prevNodes = layoutNodesRef.current;
+    layoutNodesRef.current = layout.nodes;
+
+    if (!preserveId) return;
+
+    const prev = prevNodes.find((node) => node.id === preserveId);
+    const next = layout.nodes.find((node) => node.id === preserveId);
+    pendingPreserveIdRef.current = null;
+
+    if (!prev || !next) return;
+
+    setViewport((current) =>
+      preserveNodeScreenPosition(prev, next, current),
+    );
+  }, [layout.nodes]);
 
   useEffect(() => {
     if (!viewportApiRef) return;
@@ -183,6 +232,14 @@ export function MindMapCanvas({
       viewportApiRef.current = null;
     };
   }, [applyFit, applyFocusCurrent, viewportApiRef]);
+
+  const handleToggleExpand = useCallback(
+    (nodeId: string) => {
+      pendingPreserveIdRef.current = nodeId;
+      onToggleExpand(nodeId);
+    },
+    [onToggleExpand],
+  );
 
   useGesture(
     {
@@ -243,23 +300,22 @@ export function MindMapCanvas({
     },
   );
 
-  const dotScale = Math.max(12, 18 / viewport.scale);
+  const dotScale = Math.max(14, 20 / viewport.scale);
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        "relative min-h-0 flex-1 cursor-grab touch-none overflow-hidden active:cursor-grabbing",
+        "relative min-h-0 flex-1 cursor-grab touch-none overflow-hidden bg-[#FAFAF5] active:cursor-grabbing",
         className,
       )}
       role="application"
       aria-label="Bản đồ học tập tương tác"
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-70"
+        className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage:
-            "radial-gradient(circle, rgba(45,45,45,0.14) 1px, transparent 1px)",
+          backgroundImage: `radial-gradient(circle, rgba(45,43,39,0.12) 1px, transparent 1.15px)`,
           backgroundSize: `${dotScale}px ${dotScale}px`,
           backgroundPosition: `${viewport.x % dotScale}px ${viewport.y % dotScale}px`,
         }}
@@ -267,7 +323,7 @@ export function MindMapCanvas({
       />
 
       <div
-        className="absolute left-0 top-0 origin-top-left will-change-transform"
+        className="absolute top-0 left-0 origin-top-left will-change-transform"
         style={{
           transform: `translate3d(${viewport.x}px, ${viewport.y}px, 0) scale(${viewport.scale})`,
           transition: reduceMotion ? undefined : "transform 120ms ease-out",
@@ -275,24 +331,27 @@ export function MindMapCanvas({
       >
         <MindMapEdges
           edges={layout.edges}
+          forks={layout.forks}
           nodesById={nodesById}
           bounds={layout.bounds}
           branchColorByNodeId={branchColorByNodeId}
         />
 
-        {layout.nodes.map((node) => (
-          <MindMapNodeCard
-            key={node.id}
-            node={node}
-            isSelected={selectedNodeId === node.id}
-            isExpanded={expandedIds.has(node.id)}
-            branchColor={branchColorByNodeId.get(node.id) ?? branchColorForIndex(0)}
-            onSelect={onSelectNode}
-            onToggleExpand={
-              node.isExpandable ? onToggleExpand : undefined
-            }
-          />
-        ))}
+        <AnimatePresence initial={false}>
+          {layout.nodes.map((node) => (
+            <MindMapNodeCard
+              key={node.id}
+              node={node}
+              isSelected={selectedNodeId === node.id}
+              isExpanded={expandedIds.has(node.id)}
+              branchColor={branchColorByNodeId.get(node.id) ?? branchColorForIndex(0)}
+              onSelect={onSelectNode}
+              onToggleExpand={
+                node.isExpandable ? handleToggleExpand : undefined
+              }
+            />
+          ))}
+        </AnimatePresence>
       </div>
 
       <MindMapFloatingControls
