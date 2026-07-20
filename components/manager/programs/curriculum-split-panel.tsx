@@ -11,6 +11,7 @@ import {
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Reorder, useDragControls } from "motion/react";
 import {
   Plus,
   Trash,
@@ -26,6 +27,7 @@ import {
   ChevronRight,
   ChevronDown,
   AlertTriangle,
+  GripVertical,
   type LucideIcon,
 } from "lucide-react";
 
@@ -83,6 +85,7 @@ import {
   updateActivitySchema,
 } from "@/lib/validations/curriculum";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
 import {
   LIGHT_SELECT_TRIGGER,
@@ -128,6 +131,12 @@ const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
 /* ─── Constants ─────────────────────────────────────────────────────────────── */
 const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
+};
+
+const STRUCTURE_DRAG_TRANSITION = {
+  type: "tween" as const,
+  duration: 0.15,
+  ease: "easeOut" as const,
 };
 
 /* ─── Selected node ─────────────────────────────────────────────────────────── */
@@ -460,17 +469,10 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
       <div className="flex-1 overflow-y-auto p-5 space-y-6">
         <div>
           <STitle>Thông tin cơ bản</STitle>
-          <div className="flex items-start gap-3">
-            <div className="flex-1 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Module <span style={{ color: W.primary }}>*</span></Label>
-              <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
-              <FErr msg={errors.name?.message} />
-            </div>
-            <div className="w-20 shrink-0 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }} title="Đã tự điền vị trí cuối. Chỉ đổi khi cần sắp xếp lại.">Thứ tự <span style={{ color: W.primary }}>*</span></Label>
-              <input type="number" {...register("moduleOrder", { valueAsNumber: true })} className={cn(IN, "px-2 text-center")} style={{ borderColor: W.border }} />
-              <FErr msg={errors.moduleOrder?.message} />
-            </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Module <span style={{ color: W.primary }}>*</span></Label>
+            <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
+            <FErr msg={errors.name?.message} />
           </div>
         </div>
         <AdvancedSection
@@ -796,16 +798,6 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   </Select>
                 )} />
               </div>
-              <div className="space-y-1.5">
-                <Label
-                  className="text-sm font-semibold"
-                  style={{ color: W.textStrong }}
-                  title={isEdit
-                    ? "Đổi thứ tự sẽ tự dồn các hoạt động khác trong khóa học."
-                    : `Mặc định thêm cuối (#${nextOrder}). Nhập số nhỏ hơn để chèn.`}
-                >Thứ tự <span style={{ color: W.primary }}>*</span></Label>
-                <input type="number" {...register("activityOrder", { valueAsNumber: true })} className={cn(IN, "w-44 px-2 text-center")} style={{ borderColor: W.border }} />
-              </div>
             </div>
             <div className="flex flex-1 flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
@@ -1046,6 +1038,9 @@ function StructureTreeRow({
   addLabel,
   defaultOpen = false,
   forceOpen = false,
+  reorderable = false,
+  reorderValue,
+  onReorderDragEnd,
   children,
 }: {
   depth: number;
@@ -1062,8 +1057,14 @@ function StructureTreeRow({
   defaultOpen?: boolean;
   /** Keep open when selection / create-flow lives under this node. */
   forceOpen?: boolean;
+  /** Enable drag-reorder via grip handle (parent must wrap in Reorder.Group). */
+  reorderable?: boolean;
+  /** Stable id for Reorder.Item — required when reorderable. */
+  reorderValue?: string;
+  onReorderDragEnd?: () => void;
   children?: ReactNode;
 }) {
+  const dragControls = useDragControls();
   const childItems = useMemo(
     () => (Array.isArray(children) ? children : [children]).filter(Boolean),
     [children],
@@ -1086,140 +1087,200 @@ function StructureTreeRow({
     onAdd?.();
   };
 
-  return (
-    <li className="relative">
-      {/* Guides live in a gutter; content box starts after so it never covers the lines */}
-      {depth > 0 && (
-        <>
-          <span
+  const rowInner = (
+    <div
+      className="group/tr flex items-center gap-0.5 rounded-lg"
+      style={{
+        background: selected ? "rgba(79,195,247,0.13)" : "transparent",
+        border: selected
+          ? "1px solid rgba(79,195,247,0.28)"
+          : "1px solid transparent",
+      }}
+    >
+      {reorderable ? (
+        <button
+          type="button"
+          aria-label={`Kéo sắp xếp ${label}`}
+          title="Kéo để sắp xếp"
+          onPointerDown={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            dragControls.start(event);
+          }}
+          className="flex size-6 shrink-0 cursor-grab items-center justify-center rounded outline-none hover:bg-[#F0F0EA] active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
+          style={{ color: W.faint }}
+        >
+          <GripVertical className="size-3.5" strokeWidth={2.25} />
+        </button>
+      ) : hasBranch ? (
+        <button
+          type="button"
+          title={open ? "Thu gọn" : "Mở rộng"}
+          aria-expanded={open}
+          aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
+          onClick={handleToggle}
+          className="flex size-6 shrink-0 items-center justify-center rounded"
+          style={{ color: W.faint }}
+        >
+          <ChevronRight
             className={cn(
-              "pointer-events-none absolute left-0 z-0 w-px",
-              isLast ? "top-0 h-[1.125rem]" : "inset-y-0",
+              "size-3.5 transition-transform duration-200",
+              open && "rotate-90",
             )}
-            style={{ background: W.border }}
-            aria-hidden
           />
-          <span
-            className="pointer-events-none absolute top-[1.125rem] left-0 z-0 h-px w-3"
-            style={{ background: W.border }}
-            aria-hidden
-          />
-        </>
+        </button>
+      ) : (
+        <span className="size-6 shrink-0" aria-hidden />
       )}
 
-      <div className={cn("relative z-10", depth > 0 && "ml-3")}>
-        <div
-          className="group/tr flex items-center gap-0.5 rounded-lg"
+      {reorderable && hasBranch ? (
+        <button
+          type="button"
+          title={open ? "Thu gọn" : "Mở rộng"}
+          aria-expanded={open}
+          aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
+          onClick={handleToggle}
+          className="flex size-5 shrink-0 items-center justify-center rounded"
+          style={{ color: W.faint }}
+        >
+          <ChevronRight
+            className={cn(
+              "size-3 transition-transform duration-200",
+              open && "rotate-90",
+            )}
+          />
+        </button>
+      ) : null}
+
+      <span
+        className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
+        style={{
+          background: iconBg,
+          borderColor: selected ? "rgba(79,195,247,0.35)" : W.border,
+          color: iconColor,
+        }}
+        aria-hidden
+      >
+        <NodeIcon className="size-3.5" strokeWidth={2.25} />
+      </span>
+
+      <button
+        type="button"
+        onClick={() => {
+          if (hasBranch) setOpen(true);
+          onSelect();
+        }}
+        className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
+      >
+        <span
+          className="truncate text-[12.5px] leading-snug"
           style={{
-            background: selected ? "rgba(79,195,247,0.13)" : "transparent",
-            border: selected
-              ? "1px solid rgba(79,195,247,0.28)"
-              : "1px solid transparent",
+            color: selected ? "#0d6e9c" : W.text,
+            fontWeight: selected ? 600 : 500,
           }}
         >
-          {hasBranch ? (
-            <button
-              type="button"
-              title={open ? "Thu gọn" : "Mở rộng"}
-              aria-expanded={open}
-              aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
-              onClick={handleToggle}
-              className="flex size-6 shrink-0 items-center justify-center rounded"
-              style={{ color: W.faint }}
-            >
-              <ChevronRight
-                className={cn(
-                  "size-3.5 transition-transform duration-200",
-                  open && "rotate-90",
-                )}
-              />
-            </button>
-          ) : (
-            <span className="size-6 shrink-0" aria-hidden />
-          )}
-
-          <span
-            className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
-            style={{
-              background: iconBg,
-              borderColor: selected ? "rgba(79,195,247,0.35)" : W.border,
-              color: iconColor,
-            }}
-            aria-hidden
-          >
-            <NodeIcon className="size-3.5" strokeWidth={2.25} />
+          {label}
+        </span>
+        {meta && (
+          <span className="mt-0.5 truncate text-[10px]" style={{ color: W.faint }}>
+            {meta}
           </span>
+        )}
+      </button>
 
+      <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100">
+        {onAdd && (
           <button
             type="button"
-            onClick={() => {
-              if (hasBranch) setOpen(true);
-              onSelect();
+            title={addLabel || "Thêm"}
+            onClick={handleAdd}
+            className="flex size-6 items-center justify-center rounded"
+            style={{ color: W.faint }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = W.success;
             }}
-            className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = W.faint;
+            }}
           >
-            <span
-              className="truncate text-[12.5px] leading-snug"
-              style={{
-                color: selected ? "#0d6e9c" : W.text,
-                fontWeight: selected ? 600 : 500,
-              }}
-            >
-              {label}
-            </span>
-            {meta && (
-              <span className="mt-0.5 truncate text-[10px]" style={{ color: W.faint }}>
-                {meta}
-              </span>
-            )}
+            <Plus className="size-3" />
           </button>
-
-          <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100">
-            {onAdd && (
-              <button
-                type="button"
-                title={addLabel || "Thêm"}
-                onClick={handleAdd}
-                className="flex size-6 items-center justify-center rounded"
-                style={{ color: W.faint }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = W.success;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = W.faint;
-                }}
-              >
-                <Plus className="size-3" />
-              </button>
-            )}
-            {onDelete && (
-              <button
-                type="button"
-                title="Xóa"
-                onClick={onDelete}
-                className="flex size-6 items-center justify-center rounded"
-                style={{ color: W.faint }}
-                onMouseEnter={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = W.primary;
-                }}
-                onMouseLeave={(e) => {
-                  (e.currentTarget as HTMLElement).style.color = W.faint;
-                }}
-              >
-                <Trash className="size-3" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {hasBranch && open ? (
-          <ul className="relative mt-0.5" role="list">
-            {children}
-          </ul>
-        ) : null}
+        )}
+        {onDelete && (
+          <button
+            type="button"
+            title="Xóa"
+            onClick={onDelete}
+            className="flex size-6 items-center justify-center rounded"
+            style={{ color: W.faint }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.color = W.primary;
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.color = W.faint;
+            }}
+          >
+            <Trash className="size-3" />
+          </button>
+        )}
       </div>
-    </li>
+    </div>
   );
+
+  const branchContent =
+    hasBranch && open ? (
+      <ul className="relative mt-0.5" role="list">
+        {children}
+      </ul>
+    ) : null;
+
+  const depthGuides =
+    depth > 0 ? (
+      <>
+        <span
+          className={cn(
+            "pointer-events-none absolute left-0 z-0 w-px",
+            isLast ? "top-0 h-[1.125rem]" : "inset-y-0",
+          )}
+          style={{ background: W.border }}
+          aria-hidden
+        />
+        <span
+          className="pointer-events-none absolute top-[1.125rem] left-0 z-0 h-px w-3"
+          style={{ background: W.border }}
+          aria-hidden
+        />
+      </>
+    ) : null;
+
+  const body = (
+    <>
+      {depthGuides}
+      <div className={cn("relative z-10", depth > 0 && "ml-3")}>
+        {rowInner}
+        {branchContent}
+      </div>
+    </>
+  );
+
+  if (reorderable && reorderValue) {
+    return (
+      <Reorder.Item
+        as="li"
+        value={reorderValue}
+        dragListener={false}
+        dragControls={dragControls}
+        layout="position"
+        transition={STRUCTURE_DRAG_TRANSITION}
+        onDragEnd={onReorderDragEnd}
+        className="relative list-none"
+      >
+        {body}
+      </Reorder.Item>
+    );
+  }
+
+  return <li className="relative">{body}</li>;
 }
 
 function ParentPathBreadcrumb({
@@ -1290,6 +1351,88 @@ function selToQuery(sel: SelectedNode): string {
     params.set("moduleId", sel.moduleId);
   }
   return params.toString();
+}
+
+function movedItemNewOrder(currentIds: string[], orderedIds: string[]): number | null {
+  if (currentIds.join("|") === orderedIds.join("|")) return null;
+  const movedId = orderedIds.find((id, index) => currentIds[index] !== id);
+  if (!movedId) return null;
+  return orderedIds.indexOf(movedId) + 1;
+}
+
+function CourseActivityRows({
+  course,
+  sel,
+  select,
+  setDelTarget,
+  onReorder,
+}: {
+  course: Course;
+  sel: SelectedNode;
+  select: (next: SelectedNode) => void;
+  setDelTarget: React.Dispatch<
+    React.SetStateAction<{
+      type: "module" | "course" | "activity" | "assignment" | "milestone";
+      id: string;
+      name: string;
+      moduleId?: string;
+    } | null>
+  >;
+  onReorder: (courseId: string, orderedIds: string[]) => void;
+}) {
+  const acts = useMemo(
+    () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
+    [course.activities],
+  );
+  const actIds = useMemo(() => acts.map((activity) => activity.id), [acts]);
+  const reorder = useDragReorderList(actIds);
+
+  const orderedActs = reorder.values
+    .map((id) => acts.find((activity) => activity.id === id))
+    .filter((activity): activity is ActivityType => activity != null);
+
+  if (orderedActs.length === 0) return null;
+
+  return (
+    <Reorder.Group
+      axis="y"
+      values={reorder.values}
+      onReorder={reorder.onReorder}
+      className="contents"
+    >
+      {orderedActs.map((act, aIdx) => {
+        const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
+        const schedule =
+          act.activityType !== "SelfPaced"
+            ? formatActivityScheduleRange(act.startTime, act.endTime)
+            : "";
+        const metaBase = schedule ? `${typeLabel} · ${schedule}` : typeLabel;
+        const activityMeta = act.material ? `${metaBase} · Có tài liệu` : metaBase;
+
+        return (
+          <StructureTreeRow
+            key={act.id}
+            depth={3}
+            isLast={
+              aIdx === orderedActs.length - 1 &&
+              !(sel?.kind === "activity-new" && sel.courseId === course.id)
+            }
+            kind="activity"
+            reorderable
+            reorderValue={act.id}
+            onReorderDragEnd={() =>
+              reorder.commitDrag((ids) => onReorder(course.id, ids))
+            }
+            selected={sel?.kind === "activity" && sel.id === act.id}
+            label={act.name}
+            meta={activityMeta}
+            onSelect={() => select({ kind: "activity", id: act.id, courseId: course.id })}
+            onDelete={() => setDelTarget({ type: "activity", id: act.id, name: act.name })}
+          />
+        );
+      })}
+    </Reorder.Group>
+  );
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
@@ -1490,6 +1633,65 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       return { ...prev, [moduleId]: list.filter((m) => m.id !== id) };
     });
   }, []);
+
+  const moduleIds = useMemo(() => modules.map((mod) => mod.id), [modules]);
+  const moduleReorder = useDragReorderList(moduleIds);
+
+  const orderedModules = useMemo(
+    () =>
+      moduleReorder.values
+        .map((id) => modules.find((mod) => mod.id === id))
+        .filter((mod): mod is Module => mod != null),
+    [moduleReorder.values, modules],
+  );
+
+  const handleModuleReorder = useCallback(
+    async (orderedIds: string[]) => {
+      const currentIds = modules.map((mod) => mod.id);
+      const newOrder = movedItemNewOrder(currentIds, orderedIds);
+      if (newOrder == null) return;
+
+      const movedId = orderedIds.find((id, index) => currentIds[index] !== id);
+      const mod = modules.find((item) => item.id === movedId);
+      if (!movedId || !mod || mod.moduleOrder === newOrder) return;
+
+      try {
+        await updateModule(movedId, { moduleOrder: newOrder });
+        onRefresh();
+      } catch (err) {
+        showAppErrorFromUnknown(err, "curriculum.module.save");
+      }
+    },
+    [modules, onRefresh],
+  );
+
+  const handleActivityReorder = useCallback(
+    async (courseId: string, orderedIds: string[]) => {
+      const course = modules
+        .flatMap((mod) => mod.courses ?? [])
+        .find((item) => item.id === courseId);
+      if (!course) return;
+
+      const acts = [...(course.activities || [])].sort(
+        (a, b) => a.activityOrder - b.activityOrder,
+      );
+      const currentIds = acts.map((act) => act.id);
+      const newOrder = movedItemNewOrder(currentIds, orderedIds);
+      if (newOrder == null) return;
+
+      const movedId = orderedIds.find((id, index) => currentIds[index] !== id);
+      const act = acts.find((item) => item.id === movedId);
+      if (!movedId || !act || act.activityOrder === newOrder) return;
+
+      try {
+        await updateActivity(movedId, { activityOrder: newOrder });
+        onRefresh();
+      } catch (err) {
+        showAppErrorFromUnknown(err, "curriculum.activity.save");
+      }
+    },
+    [modules, onRefresh],
+  );
 
   const select = useCallback(
     (next: SelectedNode) => {
@@ -1807,9 +2009,15 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         onAdd={() => select({ kind: "module-new" })}
         addLabel="Thêm Module"
       >
-        {modules.map((mod, mIdx) => {
+        <Reorder.Group
+          axis="y"
+          values={moduleReorder.values}
+          onReorder={moduleReorder.onReorder}
+          className="contents"
+        >
+          {orderedModules.map((mod, mIdx) => {
           const courses = [...(mod.courses || [])];
-          const isLastMod = mIdx === modules.length - 1 && sel?.kind !== "module-new";
+          const isLastMod = mIdx === orderedModules.length - 1 && sel?.kind !== "module-new";
           const moduleForceOpen =
             (sel?.kind === "module" && sel.id === mod.id) ||
             (sel?.kind === "course" && sel.moduleId === mod.id) ||
@@ -1829,6 +2037,11 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
               isLast={isLastMod}
               kind="module"
               forceOpen={moduleForceOpen}
+              reorderable
+              reorderValue={mod.id}
+              onReorderDragEnd={() =>
+                moduleReorder.commitDrag(handleModuleReorder)
+              }
               selected={sel?.kind === "module" && sel.id === mod.id}
               label={mod.name}
               meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
@@ -1838,9 +2051,6 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
               addLabel="Thêm khóa học"
             >
               {courses.map((course, cIdx) => {
-                const acts = [...(course.activities || [])].sort(
-                  (a, b) => a.activityOrder - b.activityOrder,
-                );
                 const isLastCourse =
                   cIdx === courses.length - 1 &&
                   !(sel?.kind === "course-new" && sel.moduleId === mod.id);
@@ -1867,37 +2077,13 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                     onAdd={() => select({ kind: "activity-new", courseId: course.id })}
                     addLabel="Thêm hoạt động"
                   >
-                    {acts.map((act, aIdx) => {
-                      const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
-                      const schedule =
-                        act.activityType !== "SelfPaced"
-                          ? formatActivityScheduleRange(act.startTime, act.endTime)
-                          : "";
-                      const metaBase = schedule ? `${typeLabel} · ${schedule}` : typeLabel;
-                      const activityMeta = act.material
-                        ? `${metaBase} · Có tài liệu`
-                        : metaBase;
-                      return (
-                        <StructureTreeRow
-                          key={act.id}
-                          depth={3}
-                          isLast={
-                            aIdx === acts.length - 1 &&
-                            !(sel?.kind === "activity-new" && sel.courseId === course.id)
-                          }
-                          kind="activity"
-                          selected={sel?.kind === "activity" && sel.id === act.id}
-                          label={act.name}
-                          meta={activityMeta}
-                          onSelect={() =>
-                            select({ kind: "activity", id: act.id, courseId: course.id })
-                          }
-                          onDelete={() =>
-                            setDelTarget({ type: "activity", id: act.id, name: act.name })
-                          }
-                        />
-                      );
-                    })}
+                    <CourseActivityRows
+                      course={course}
+                      sel={sel}
+                      select={select}
+                      setDelTarget={setDelTarget}
+                      onReorder={handleActivityReorder}
+                    />
                     <li className="relative">
                       <span
                         className="pointer-events-none absolute top-0 left-0 h-4 w-px"
@@ -2061,6 +2247,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
             </StructureTreeRow>
           );
         })}
+        </Reorder.Group>
         <li className="relative">
           {modules.length > 0 && (
             <>
@@ -2104,12 +2291,17 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
           className="flex items-center justify-between border-b px-3 py-2.5 shrink-0"
           style={{ borderColor: W.border }}
         >
-          <span
-            className="text-[10px] font-bold uppercase tracking-widest"
-            style={{ color: W.faint }}
-          >
-            Cấu trúc
-          </span>
+          <div>
+            <span
+              className="text-[10px] font-bold uppercase tracking-widest"
+              style={{ color: W.faint }}
+            >
+              Cấu trúc
+            </span>
+            <p className="mt-0.5 text-[11px] leading-snug" style={{ color: W.muted }}>
+              Kéo để đổi thứ tự module và hoạt động
+            </p>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">{structureTree}</div>
