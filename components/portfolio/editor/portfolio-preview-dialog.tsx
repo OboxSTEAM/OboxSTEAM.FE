@@ -69,9 +69,10 @@ function resolveAddressBar(draft: Portfolio): {
   }
 
   if (draft.isPublic) {
+    const publicUrl = buildPortfolioPublicUrl(subdomain);
     return {
-      displayUrl: buildPortfolioPublicUrl(subdomain),
-      openUrl: buildPortfolioPathUrl(subdomain),
+      displayUrl: publicUrl,
+      openUrl: publicUrl,
       isLive: true,
     };
   }

@@ -20,7 +20,6 @@ import {
 } from "@/lib/api/portfolios";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
-  buildPortfolioPathUrl,
   buildPortfolioPublicUrl,
   getPortfolioRootDomain,
 } from "@/lib/portfolio/url";
@@ -82,12 +81,6 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
     const current = portfolio.subdomain?.trim();
     if (!current) return null;
     return buildPortfolioPublicUrl(current);
-  }, [portfolio.subdomain]);
-
-  const pathUrl = useMemo(() => {
-    const current = portfolio.subdomain?.trim();
-    if (!current) return null;
-    return buildPortfolioPathUrl(current);
   }, [portfolio.subdomain]);
 
   const canPublish = Boolean(portfolio.subdomain?.trim());
@@ -258,7 +251,7 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
             />
           </div>
 
-          {canonicalUrl && pathUrl ? (
+          {canonicalUrl ? (
             <div className="space-y-2 rounded-xl bg-[#2D2D2D] p-3 text-[#FAFAF5]">
               <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/60">
                 Liên kết công khai
@@ -282,7 +275,9 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
                   type="button"
                   variant="outline"
                   className="h-8 rounded-lg border-white/20 bg-transparent text-xs text-white hover:bg-white/10 hover:text-white"
-                  onClick={() => window.open(pathUrl, "_blank", "noreferrer")}
+                  onClick={() =>
+                    window.open(canonicalUrl, "_blank", "noreferrer")
+                  }
                 >
                   <ExternalLink className="size-3.5" />
                   Xem trang công khai
