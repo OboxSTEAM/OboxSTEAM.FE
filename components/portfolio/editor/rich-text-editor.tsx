@@ -1,0 +1,461 @@
+"use client";
+
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+import Underline from "@tiptap/extension-underline";
+import {
+  AlignCenter,
+  AlignJustify,
+  AlignLeft,
+  AlignRight,
+  Bold,
+  Italic,
+  Link2,
+  List,
+  ListOrdered,
+  Underline as UnderlineIcon,
+} from "lucide-react";
+
+import { EditableFieldFrame } from "@/components/portfolio/editor/editable-frame";
+import { Button } from "@/components/ui/button";
+import { PortfolioTextAlign } from "@/lib/portfolio/tiptap-text-align";
+import {
+  isEmptyPortfolioHtml,
+  sanitizePortfolioHtml,
+} from "@/lib/portfolio/sanitize-html";
+import { cn } from "@/lib/utils";
+
+type RichTextEditorProps = {
+  value: string;
+  onChange: (next: string) => void;
+  placeholder?: string;
+  ariaLabel?: string;
+  className?: string;
+  /** Compact chrome for canvas inline editing. */
+  variant?: "panel" | "inline";
+  /**
+   * `compact` — titles / one-liners (marks + align, no lists).
+   * `full` — detail body text (lists, link, headings marks).
+   */
+  mode?: "compact" | "full";
+  isDark?: boolean;
+  /** Plain-text character cap (ignores HTML tags). */
+  maxLength?: number;
+  /** Focus and select contents once when the editor mounts. */
+  autoFocus?: boolean;
+  onAutoFocusHandled?: () => void;
+  /**
+   * Keep compact fields on one line — overflow scrolls horizontally
+   * instead of growing the card.
+   */
+  singleLine?: boolean;
+  /**
+   * Cap editor height (e.g. `max-h-[5.25rem]`); overflow scrolls inside.
+   */
+  maxHeightClass?: string;
+};
+
+function ToolbarButton({
+  active,
+  onClick,
+  label,
+  children,
+}: {
+  active?: boolean;
+  onClick: () => void;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon-sm"
+      aria-label={label}
+      aria-pressed={active}
+      onMouseDown={(event) => event.preventDefault()}
+      onClick={onClick}
+      className={cn(
+        "size-7 shrink-0 rounded-md text-[#2D2D2D]",
+        active && "bg-[#2D2D2D]/12 text-[#2D2D2D]",
+      )}
+    >
+      {children}
+    </Button>
+  );
+}
+
+function ToolbarDivider() {
+  return <span className="mx-0.5 h-4 w-px shrink-0 bg-[#E5E5E0]" aria-hidden />;
+}
+
+/** Floating toolbar anchored above the editor field (escapes overflow:hidden parents). */
+function FloatingToolbar({
+  open,
+  anchorRef,
+  children,
+}: {
+  open: boolean;
+  anchorRef: React.RefObject<HTMLElement | null>;
+  children: React.ReactNode;
+}) {
+  const [pos, setPos] = useState<{ top: number; left: number } | null>(null);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setPos(null);
+      return;
+    }
+
+    const update = () => {
+      const el = anchorRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      setPos({ top: rect.top, left: rect.left });
+    };
+
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open, anchorRef]);
+
+  if (!open || !pos || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      data-portfolio-rte-toolbar
+      className="pointer-events-auto fixed z-[80] w-max max-w-[calc(100vw-1rem)]"
+      style={{
+        top: Math.max(8, pos.top - 8),
+        left: Math.min(pos.left, window.innerWidth - 16),
+        transform: "translateY(-100%)",
+      }}
+      onMouseDown={(event) => event.preventDefault()}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+function buildExtensions(mode: "compact" | "full", placeholder: string) {
+  const isCompact = mode === "compact";
+
+  return [
+    StarterKit.configure({
+      heading: isCompact ? false : { levels: [2, 3] },
+      bulletList: isCompact ? false : undefined,
+      orderedList: isCompact ? false : undefined,
+      blockquote: isCompact ? false : undefined,
+      codeBlock: false,
+      horizontalRule: false,
+      link: {
+        openOnClick: false,
+        HTMLAttributes: { rel: "noopener noreferrer", target: "_blank" },
+      },
+    }),
+    Underline,
+    PortfolioTextAlign.configure({
+      types: isCompact ? ["paragraph"] : ["heading", "paragraph"],
+    }),
+    Placeholder.configure({ placeholder }),
+  ];
+}
+
+function EditorToolbar({
+  editor,
+  mode,
+}: {
+  editor: Editor;
+  mode: "compact" | "full";
+}) {
+  const setLink = () => {
+    const previous = editor.getAttributes("link").href as string | undefined;
+    const url = window.prompt("URL liên kết", previous ?? "https://");
+    if (url === null) return;
+    if (!url.trim()) {
+      editor.chain().focus().extendMarkRange("link").unsetLink().run();
+      return;
+    }
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url.trim() }).run();
+  };
+
+  return (
+    <div className="flex flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-[#C9C9C2] bg-white p-0.5 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
+      <ToolbarButton
+        label="Đậm"
+        active={editor.isActive("bold")}
+        onClick={() => editor.chain().focus().toggleBold().run()}
+      >
+        <Bold className="size-[15px]" strokeWidth={2.5} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Nghiêng"
+        active={editor.isActive("italic")}
+        onClick={() => editor.chain().focus().toggleItalic().run()}
+      >
+        <Italic className="size-[15px]" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Gạch dưới"
+        active={editor.isActive("underline")}
+        onClick={() => editor.chain().focus().toggleUnderline().run()}
+      >
+        <UnderlineIcon className="size-[15px]" />
+      </ToolbarButton>
+      {mode === "full" ? (
+        <>
+          <ToolbarDivider />
+          <ToolbarButton
+            label="Danh sách số"
+            active={editor.isActive("orderedList")}
+            onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          >
+            <ListOrdered className="size-[15px]" />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Danh sách"
+            active={editor.isActive("bulletList")}
+            onClick={() => editor.chain().focus().toggleBulletList().run()}
+          >
+            <List className="size-[15px]" />
+          </ToolbarButton>
+          <ToolbarButton
+            label="Liên kết"
+            active={editor.isActive("link")}
+            onClick={setLink}
+          >
+            <Link2 className="size-[15px]" />
+          </ToolbarButton>
+        </>
+      ) : null}
+      <ToolbarDivider />
+      <ToolbarButton
+        label="Căn trái"
+        active={editor.isActive({ textAlign: "left" })}
+        onClick={() => editor.chain().focus().setTextAlign("left").run()}
+      >
+        <AlignLeft className="size-[15px]" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Căn giữa"
+        active={editor.isActive({ textAlign: "center" })}
+        onClick={() => editor.chain().focus().setTextAlign("center").run()}
+      >
+        <AlignCenter className="size-[15px]" />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Căn phải"
+        active={editor.isActive({ textAlign: "right" })}
+        onClick={() => editor.chain().focus().setTextAlign("right").run()}
+      >
+        <AlignRight className="size-[15px]" />
+      </ToolbarButton>
+      {mode === "full" ? (
+        <ToolbarButton
+          label="Căn đều"
+          active={editor.isActive({ textAlign: "justify" })}
+          onClick={() => editor.chain().focus().setTextAlign("justify").run()}
+        >
+          <AlignJustify className="size-[15px]" />
+        </ToolbarButton>
+      ) : null}
+    </div>
+  );
+}
+
+function toEditorContent(value: string): string {
+  const cleaned = sanitizePortfolioHtml(value);
+  if (!cleaned) return "";
+  if (/<[^>]+>/.test(cleaned)) return cleaned;
+  return `<p>${cleaned}</p>`;
+}
+
+function emitHtml(html: string): string {
+  const cleaned = sanitizePortfolioHtml(html);
+  return isEmptyPortfolioHtml(cleaned) ? "" : cleaned;
+}
+
+function plainTextLength(editor: Editor): number {
+  return editor.state.doc.textContent.length;
+}
+
+export function RichTextEditor({
+  value,
+  onChange,
+  placeholder = "Viết nội dung…",
+  ariaLabel = "Trình soạn thảo văn bản",
+  className,
+  variant = "panel",
+  mode = "full",
+  isDark = false,
+  maxLength,
+  autoFocus = false,
+  onAutoFocusHandled,
+  singleLine = false,
+  maxHeightClass,
+}: RichTextEditorProps) {
+  const [isFocused, setIsFocused] = useState(false);
+  const fieldRef = useRef<HTMLDivElement>(null);
+  const maxLengthRef = useRef(maxLength);
+  maxLengthRef.current = maxLength;
+  const autoFocusHandledRef = useRef(false);
+  const isCompact = mode === "compact";
+  const lockSingleLine = singleLine;
+
+  const editor = useEditor({
+    extensions: buildExtensions(mode, placeholder),
+    content: toEditorContent(value),
+    editorProps: {
+      attributes: {
+        "aria-label": ariaLabel,
+        class: cn(
+          "outline-none break-words [overflow-wrap:anywhere]",
+          "[&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5",
+          "[&_p]:m-0",
+          "[&_.is-editor-empty:first-child::before]:text-[#5C5C5C] [&_.is-editor-empty:first-child::before]:float-left [&_.is-editor-empty:first-child::before]:h-0 [&_.is-editor-empty:first-child::before]:pointer-events-none [&_.is-editor-empty:first-child::before]:content-[attr(data-placeholder)]",
+          isCompact
+            ? cn(
+                "min-h-[1.25em] max-w-full px-1.5 text-inherit [font:inherit]",
+                lockSingleLine
+                  ? "overflow-x-auto overflow-y-hidden whitespace-nowrap py-0.5 leading-inherit [overflow-wrap:normal] [&_p]:inline [&_br]:hidden"
+                  : "break-words py-1 leading-[1.2] [overflow-wrap:anywhere]",
+              )
+            : variant === "inline"
+              ? cn(
+                  "min-h-[3.75rem] max-w-full px-2 py-1.5 text-sm leading-relaxed text-inherit [font:inherit]",
+                  maxHeightClass
+                    ? cn(maxHeightClass, "h-full overflow-y-auto")
+                    : null,
+                )
+              : "min-h-[4.5rem] rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
+        ),
+      },
+      handleKeyDown: (_view, event) => {
+        if (isCompact && event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
+      },
+      handleTextInput: (view, from, to, text) => {
+        const limit = maxLengthRef.current;
+        if (limit == null || !text) return false;
+        const selected = view.state.doc.textBetween(from, to, "").length;
+        const nextLen =
+          view.state.doc.textContent.length - selected + text.length;
+        return nextLen > limit;
+      },
+      handlePaste: (view, event) => {
+        const limit = maxLengthRef.current;
+        if (limit == null) return false;
+        const pasted = event.clipboardData?.getData("text/plain") ?? "";
+        if (!pasted) return false;
+        const { from, to } = view.state.selection;
+        const selected = view.state.doc.textBetween(from, to, "").length;
+        const room = limit - (view.state.doc.textContent.length - selected);
+        if (room <= 0) {
+          event.preventDefault();
+          return true;
+        }
+        if (pasted.length > room) {
+          event.preventDefault();
+          const slice = pasted.slice(0, room);
+          view.dispatch(view.state.tr.insertText(slice));
+          return true;
+        }
+        return false;
+      },
+    },
+    onUpdate: ({ editor: current }) => {
+      const limit = maxLengthRef.current;
+      if (limit != null && plainTextLength(current) > limit) {
+        return;
+      }
+      onChange(emitHtml(current.getHTML()));
+    },
+    immediatelyRender: false,
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+    const syncFocus = () => setIsFocused(editor.isFocused);
+    editor.on("focus", syncFocus);
+    editor.on("blur", syncFocus);
+    syncFocus();
+    return () => {
+      editor.off("focus", syncFocus);
+      editor.off("blur", syncFocus);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = emitHtml(editor.getHTML());
+    const next = emitHtml(toEditorContent(value));
+    if (isEmptyPortfolioHtml(current) && isEmptyPortfolioHtml(next)) return;
+    if (current !== next) {
+      editor.commands.setContent(toEditorContent(value), { emitUpdate: false });
+    }
+  }, [editor, value]);
+
+  useEffect(() => {
+    if (!editor || !autoFocus || autoFocusHandledRef.current) return;
+    autoFocusHandledRef.current = true;
+    requestAnimationFrame(() => {
+      editor.commands.focus();
+      editor.commands.selectAll();
+      fieldRef.current?.scrollIntoView({ behavior: "auto", block: "nearest" });
+      onAutoFocusHandled?.();
+    });
+  }, [editor, autoFocus, onAutoFocusHandled]);
+
+  if (!editor) return null;
+
+  const toolbar = <EditorToolbar editor={editor} mode={mode} />;
+
+  if (variant === "inline") {
+    return (
+      <div
+        ref={fieldRef}
+        data-portfolio-rte
+        className={cn("relative min-w-0 max-w-full", className)}
+      >
+        <FloatingToolbar open={isFocused} anchorRef={fieldRef}>
+          {toolbar}
+        </FloatingToolbar>
+        <EditableFieldFrame
+          isDark={isDark}
+          className={cn(
+            "min-w-0 max-w-full",
+            lockSingleLine
+              ? "h-8 overflow-hidden"
+              : isCompact
+                ? "overflow-visible py-0.5"
+                : "overflow-hidden",
+            !lockSingleLine && !isCompact && maxHeightClass,
+          )}
+        >
+          <EditorContent editor={editor} className="min-h-0 min-w-0 max-w-full" />
+        </EditableFieldFrame>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      data-portfolio-rte
+      className={cn("min-w-0 space-y-1.5", className)}
+    >
+      {toolbar}
+      <EditorContent editor={editor} />
+    </div>
+  );
+}

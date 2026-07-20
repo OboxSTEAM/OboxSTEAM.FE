@@ -80,16 +80,17 @@ export function ProgramHeroEnrollmentHead({ price }: { price: number }) {
   }
 
   const priceParts = getProgramPriceParts(price);
-  if (priceParts.isFree) {
-    return null;
-  }
 
   return (
     <p className="mb-3 text-sm text-[#6B6B6B]">
       Học phí{" "}
-      <span className="font-semibold text-[#2D2D2D]">
-        {priceParts.amount} {priceParts.unit}
-      </span>
+      {priceParts.isFree ? (
+        <span className="font-semibold text-[#4FC3F7]">{priceParts.label}</span>
+      ) : (
+        <span className="font-semibold text-[#2D2D2D]">
+          {priceParts.amount} {priceParts.unit}
+        </span>
+      )}
     </p>
   );
 }

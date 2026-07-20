@@ -207,6 +207,11 @@
         "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires SuperAdmin or Manager role."
       },
       {
+        "path": "/api/classes/{id}",
+        "method": "delete",
+        "description": "Soft-deletes a Draft or Open class cohort and its sessions. Open classes may only be deleted when they have no active students. Requires Manager role."
+      },
+      {
         "path": "/api/classes/{id}/open",
         "method": "post",
         "description": "Transitions a class from Draft to Open. Requires SuperAdmin or Manager role."
@@ -235,6 +240,11 @@
         "path": "/api/class-enrollments/{id}",
         "method": "get",
         "description": "Retrieve a class enrollment. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/class-enrollments/manager-transfer/{id}",
+        "method": "put",
+        "description": "Marks the student's current active class enrollment as Transferred and creates a new Active enrollment in another Open cohort within the same program. Target class must be Open (not yet started). Requires Manager role."
       },
       {
         "path": "/api/class-enrollments/program-enrollment/{programEnrollmentId}",
@@ -559,12 +569,12 @@
       {
         "path": "/api/portfolios/me",
         "method": "get",
-        "description": "Returns the authenticated student's root portfolio with all items."
+        "description": "Returns the authenticated student's editable draft portfolio with all items and sections."
       },
       {
         "path": "/api/portfolios/me",
         "method": "put",
-        "description": "Updates portfolio profile, theme, and links. Subdomain and publication state use dedicated endpoints."
+        "description": "Updates portfolio profile, theme, avatar, cover image, and links. Subdomain and publication state use dedicated endpoints."
       },
       {
         "path": "/api/portfolios",
@@ -579,12 +589,27 @@
       {
         "path": "/api/portfolios/me/subdomain",
         "method": "put",
-        "description": "Validates and claims a unique subdomain. Send null or blank to remove it while unpublished. Using for debounce checking on frontend"
+        "description": "Validates and claims a unique subdomain. Send null or blank to remove it while unpublished."
       },
       {
         "path": "/api/portfolios/me/publication",
         "method": "put",
-        "description": "Sets the desired publication state idempotently. Publishing requires a valid unique subdomain."
+        "description": "On publish, snapshots the draft for public serving. On unpublish, removes public availability while retaining the last snapshot."
+      },
+      {
+        "path": "/api/portfolios/me/media",
+        "method": "post",
+        "description": "Uploads a portfolio-scoped image (jpg/jpeg/png, max 5 MB) to blob storage."
+      },
+      {
+        "path": "/api/portfolios/me/media",
+        "method": "get",
+        "description": "Returns media assets uploaded to the caller's portfolio."
+      },
+      {
+        "path": "/api/portfolios/me/media/{mediaId}",
+        "method": "delete",
+        "description": "Soft-deletes a portfolio media asset that is not referenced by any item or section gallery."
       },
       {
         "path": "/api/portfolios/me/items",
@@ -607,6 +632,26 @@
         "description": "Updates display order for the provided item ids."
       },
       {
+        "path": "/api/portfolios/me/sections",
+        "method": "post",
+        "description": "Creates RichText, Gallery, or Embed blocks. Built-in group sections are seeded automatically."
+      },
+      {
+        "path": "/api/portfolios/me/sections/{sectionId}",
+        "method": "put",
+        "description": "Updates custom blocks fully. Built-in group sections can be hidden, reordered, and retitled."
+      },
+      {
+        "path": "/api/portfolios/me/sections/{sectionId}",
+        "method": "delete",
+        "description": "Soft-deletes custom blocks only. Built-in group sections must be hidden instead."
+      },
+      {
+        "path": "/api/portfolios/me/sections/reorder",
+        "method": "put",
+        "description": "Updates display order for the provided section ids."
+      },
+      {
         "path": "/api/portfolios/me/sync",
         "method": "post",
         "description": "Idempotently imports certificates and graded capstone projects. Highlight reels are not imported."
@@ -614,7 +659,7 @@
       {
         "path": "/api/portfolios/by-subdomain/{subdomain}",
         "method": "get",
-        "description": "Anonymous endpoint for the public portfolio page. Returns only visible items."
+        "description": "Anonymous endpoint serving the published snapshot (not the live draft)."
       },
       {
         "path": "/api/programs",
@@ -680,6 +725,11 @@
         "path": "/api/program-enrollments/{enrollmentId}/curriculum",
         "method": "get",
         "description": "Returns the curriculum tree with per-student activity and assignment status, module locks, and current activity."
+      },
+      {
+        "path": "/api/program-enrollments/{enrollmentId}/curriculum-mind-map",
+        "method": "get",
+        "description": "Returns the full program learning tree for a radial mind-map UI (class data excluded). Hub includes program progress. Modules expand to courses/milestones, then activities and assignments — locked nodes are still included so the client can open them. Supports parallel learning via currentPaths and per-node status (completed, current, in_progress, available, submitted, locked). Each node includes navigation target ids for section deep-links."
       },
       {
         "path": "/api/program-enrollments/{enrollmentId}/activities/{activityId}/checkpoint",
@@ -1139,6 +1189,9 @@
         "name": "CreatePortfolioItemRequestDto"
       },
       {
+        "name": "CreatePortfolioSectionRequestDto"
+      },
+      {
         "name": "CreateProgramRequestDto"
       },
       {
@@ -1182,6 +1235,72 @@
       },
       {
         "name": "EnrollmentCurriculumMilestoneDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapActivityDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapActivityInfoDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapActivityLearningDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapAssignmentDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapAssignmentInfoDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapAssignmentLearningDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapChildProgressDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapContainerLearningDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapCourseDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapCourseInfoDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapDtoApiResult"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapDtoResponseDataContent"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapHubDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapMilestoneDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapMilestoneInfoDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapModuleDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapModuleInfoDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapModuleLearningDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapNavigationDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapPathDto"
+      },
+      {
+        "name": "EnrollmentCurriculumMindMapPathNodeDto"
       },
       {
         "name": "EnrollmentCurriculumModuleDto"
@@ -1322,6 +1441,9 @@
         "name": "MagicLoginDto"
       },
       {
+        "name": "ManagerTransferClassRequestDto"
+      },
+      {
         "name": "MaterialListItemDto"
       },
       {
@@ -1457,6 +1579,27 @@
         "name": "PortfolioLinkDto"
       },
       {
+        "name": "PortfolioMediaAssetInputDto"
+      },
+      {
+        "name": "PortfolioMediaAssetResponseDto"
+      },
+      {
+        "name": "PortfolioMediaUploadResponseDto"
+      },
+      {
+        "name": "PortfolioMediaUploadResponseDtoApiResult"
+      },
+      {
+        "name": "PortfolioMediaUploadResponseDtoListApiResult"
+      },
+      {
+        "name": "PortfolioMediaUploadResponseDtoListResponseDataContent"
+      },
+      {
+        "name": "PortfolioMediaUploadResponseDtoResponseDataContent"
+      },
+      {
         "name": "PortfolioResponseDto"
       },
       {
@@ -1464,6 +1607,15 @@
       },
       {
         "name": "PortfolioResponseDtoResponseDataContent"
+      },
+      {
+        "name": "PortfolioSectionResponseDto"
+      },
+      {
+        "name": "PortfolioSectionResponseDtoApiResult"
+      },
+      {
+        "name": "PortfolioSectionResponseDtoResponseDataContent"
       },
       {
         "name": "ProblemDetails"
@@ -1620,6 +1772,12 @@
       },
       {
         "name": "ReorderPortfolioItemsRequestDto"
+      },
+      {
+        "name": "ReorderPortfolioSectionEntryDto"
+      },
+      {
+        "name": "ReorderPortfolioSectionsRequestDto"
       },
       {
         "name": "RequestLinkDto"
@@ -1839,6 +1997,9 @@
       },
       {
         "name": "UpdatePortfolioRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioSectionRequestDto"
       },
       {
         "name": "UpdatePortfolioSubdomainRequestDto"

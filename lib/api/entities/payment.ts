@@ -9,14 +9,19 @@ export const paymentStatusSchema = z.enum([
   "Failed",
 ]);
 
+/** Student checkout — `checkoutUrl` is null when the program is free (enrolled immediately). */
 export const checkoutSessionSchema = z.object({
   paymentId: z.string().uuid(),
   enrollmentId: z.string().uuid(),
-  checkoutUrl: z.string().url(),
+  checkoutUrl: z.string().url().nullable(),
+  accessToken: z.string().nullable().optional(),
 });
 
 /** Parent email-link checkout — includes short-lived access for post-Stripe receipt. */
-export const parentCheckoutSessionSchema = checkoutSessionSchema.extend({
+export const parentCheckoutSessionSchema = z.object({
+  paymentId: z.string().uuid(),
+  enrollmentId: z.string().uuid(),
+  checkoutUrl: z.string().url(),
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1).optional(),
 });

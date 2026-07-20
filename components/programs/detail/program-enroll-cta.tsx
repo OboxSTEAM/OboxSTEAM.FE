@@ -7,9 +7,17 @@ import { Loader2 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { checkoutPayment } from "@/lib/api/payments";
 import { isParentRole, isStudentRole } from "@/lib/auth/roles";
+import {
+  showAppErrorFromUnknown,
+  showAppSuccess,
+} from "@/lib/errors";
 import { getProgramPriceParts } from "@/lib/programs/constants";
-import { resolveProgramDetailEnrollmentCta } from "@/lib/programs/enrollments";
+import {
+  getProgramLearnHref,
+  resolveProgramDetailEnrollmentCta,
+} from "@/lib/programs/enrollments";
 import { cn } from "@/lib/utils";
 
 import { useProgramEnrollmentLookup } from "./program-enrollment-lookup";
@@ -31,6 +39,7 @@ export function ProgramEnrollCta({
   const router = useRouter();
   const { isAuthenticated, isHydrated, isLoading, profile } = useCurrentUser();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isEnrollingFree, setIsEnrollingFree] = useState(false);
 
   const priceParts = getProgramPriceParts(price);
   const isHero = variant === "hero";
@@ -46,9 +55,33 @@ export function ProgramEnrollCta({
     [enrollment],
   );
 
+  const handleFreeEnroll = async () => {
+    setIsEnrollingFree(true);
+    try {
+      const result = await checkoutPayment({
+        programId,
+        gateway: "Stripe",
+      });
+      const checkoutUrl = result?.data?.checkoutUrl;
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      showAppSuccess({
+        title: "Đăng ký thành công",
+        description: "Chương trình miễn phí đã được thêm vào khóa học của bạn.",
+      });
+      router.push(getProgramLearnHref(programId));
+      router.refresh();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "payments.checkout");
+      setIsEnrollingFree(false);
+    }
+  };
+
   const handleEnrollClick = () => {
-    if (isFree) return;
-    if (!isHydrated) return;
+    if (!isHydrated || isEnrollingFree) return;
 
     if (!isAuthenticated) {
       router.push(
@@ -59,22 +92,31 @@ export function ProgramEnrollCta({
 
     if (!isStudent) return;
 
+    if (isFree) {
+      void handleFreeEnroll();
+      return;
+    }
+
     setDialogOpen(true);
   };
 
   const getEnrollSubtext = (): string => {
-    if (isFree) return "Tính năng đăng ký miễn phí sẽ sớm ra mắt";
     if (isAuthenticated && isParent) {
       return "Chỉ học viên mới có thể đăng ký trực tiếp";
     }
     if (isAuthenticated && !isStudent) {
       return "Tài khoản này không thể đăng ký chương trình";
     }
+    if (isFree) {
+      if (!isAuthenticated) return "Đăng nhập để đăng ký miễn phí";
+      return "Không cần thanh toán · bắt đầu học ngay";
+    }
     if (!isAuthenticated) return "Đăng nhập để đăng ký và thanh toán";
     return "Thanh toán trực tiếp hoặc nhờ phụ huynh";
   };
 
-  const isEnrollDisabled = isFree || (isAuthenticated && !isStudent);
+  const isEnrollDisabled =
+    isEnrollingFree || (isAuthenticated && !isStudent);
   const canFetchEnrollment =
     isHydrated && !isLoading && isAuthenticated && isStudent;
   const isCheckingEnrollment = canFetchEnrollment && isEnrollmentLoading;
@@ -135,11 +177,21 @@ export function ProgramEnrollCta({
       <Button
         type="button"
         className={buttonClassName}
-        aria-label="Đăng ký chương trình"
+        aria-label={isFree ? "Đăng ký miễn phí" : "Đăng ký chương trình"}
         disabled={isEnrollDisabled}
+        aria-busy={isEnrollingFree}
         onClick={handleEnrollClick}
       >
-        {priceParts.isFree ? "Đăng ký miễn phí" : "Đăng ký chương trình"}
+        {isEnrollingFree ? (
+          <>
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+            Đang đăng ký…
+          </>
+        ) : isFree ? (
+          "Đăng ký miễn phí"
+        ) : (
+          "Đăng ký chương trình"
+        )}
       </Button>
     );
   };

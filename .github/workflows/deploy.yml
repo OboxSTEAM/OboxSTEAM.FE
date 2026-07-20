@@ -34,6 +34,7 @@ jobs:
             ${{ secrets.DOCKERHUB_USERNAME }}/oboxsteam-fe:latest
           build-args: |
             NEXT_PUBLIC_API_URL=${{ vars.NEXT_PUBLIC_API_URL || 'https://oboxsteam.com' }}
+            NEXT_PUBLIC_ROOT_DOMAIN=${{ vars.NEXT_PUBLIC_ROOT_DOMAIN || 'oboxsteam.website' }}
 
       - name: Sync compose file to VPS
         uses: appleboy/scp-action@v1

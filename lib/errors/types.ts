@@ -69,4 +69,17 @@ export type AppErrorContext =
   | "payments.cancel"
   | "payments.request-parent"
   | "payments.parent-checkout"
-  | "enrollments.list";
+  | "enrollments.list"
+  | "research.upload"
+  | "research.submit"
+  | "portfolio.load"
+  | "portfolio.create"
+  | "portfolio.update"
+  | "portfolio.subdomain"
+  | "portfolio.publish"
+  | "portfolio.item"
+  | "portfolio.reorder"
+  | "portfolio.sync"
+  | "portfolio.public"
+  | "portfolio.media"
+  | "portfolio.section";

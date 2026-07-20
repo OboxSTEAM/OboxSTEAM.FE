@@ -4,17 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { Star } from "lucide-react";
 
-import { ImageSlot } from "@/components/common/image-slot";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Program } from "@/lib/api/programs";
-import {
-  getProgramPriceParts,
-  PROGRAM_CATEGORY_META,
-} from "@/lib/programs/constants";
+import { getProgramPriceParts } from "@/lib/programs/constants";
 import {
   formatProgramCardFooterMeta,
   formatProgramSkillsPreview,
   getProgramCardExpert,
+  getProgramThumbnailUrl,
 } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
@@ -59,11 +56,9 @@ function ProgramCardFooterMeta({ program }: { program: Program }) {
 }
 
 export function ProgramCard({ program, className }: ProgramCardProps) {
-  const categoryMeta = program.category
-    ? PROGRAM_CATEGORY_META[program.category]
-    : null;
   const priceParts = getProgramPriceParts(program.price);
   const skillsPreview = formatProgramSkillsPreview(program.skillsGained);
+  const thumbnailUrl = getProgramThumbnailUrl(program.thumbnailUrl);
 
   return (
     <Link
@@ -81,28 +76,18 @@ export function ProgramCard({ program, className }: ProgramCardProps) {
     >
       <div className="p-3 pb-0">
         <div className="relative aspect-[16/9] overflow-hidden rounded-lg border border-white/8 bg-[#141414]">
-          {program.thumbnailUrl ? (
-            <Image
-              src={program.thumbnailUrl}
-              alt=""
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-              className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-            />
-          ) : (
-            <ImageSlot
-              ratio="16:9"
-              alt={program.name}
-              tone={categoryMeta?.steamKey ?? "neutral"}
-              className="absolute inset-0 rounded-none"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
-          )}
-          {priceParts.isFree && (
+          <Image
+            src={thumbnailUrl}
+            alt=""
+            fill
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            className="object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+          />
+          {priceParts.isFree ? (
             <span className="absolute top-2 right-2 rounded-md bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white">
               {priceParts.label}
             </span>
-          )}
+          ) : null}
         </div>
       </div>
 
@@ -145,7 +130,14 @@ export function ProgramCard({ program, className }: ProgramCardProps) {
         <div className="mt-auto space-y-1.5 pt-1">
           <ProgramCardFooterMeta program={program} />
 
-          {!priceParts.isFree && (
+          {priceParts.isFree ? (
+            <p
+              className="text-right text-sm font-bold text-[#FDD835]"
+              aria-label={priceParts.label}
+            >
+              {priceParts.label}
+            </p>
+          ) : (
             <p
               className="text-right text-sm font-bold tabular-nums text-[#FDD835]"
               aria-label={`Giá ${priceParts.amount} ${priceParts.unit}`}

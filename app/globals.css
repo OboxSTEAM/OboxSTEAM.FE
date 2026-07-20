@@ -212,3 +212,21 @@
     font-family: var(--font-heading), var(--font-sans), sans-serif;
   }
 }
+
+/* Portfolio TipTap alignment — class-based so BE HTML sanitizers that strip `style` still persist align. */
+.portfolio-rich-text .pf-align-left,
+.ProseMirror .pf-align-left {
+  text-align: left;
+}
+.portfolio-rich-text .pf-align-center,
+.ProseMirror .pf-align-center {
+  text-align: center;
+}
+.portfolio-rich-text .pf-align-right,
+.ProseMirror .pf-align-right {
+  text-align: right;
+}
+.portfolio-rich-text .pf-align-justify,
+.ProseMirror .pf-align-justify {
+  text-align: justify;
+}

@@ -4,6 +4,7 @@ import type { EnrollmentCurriculum } from "@/lib/api";
 import type { FlatCurriculumAssignment } from "@/lib/curriculum/assignment-helpers";
 
 import { QuizPanel } from "./quiz-panel";
+import { ResearchSubmissionPanel } from "./research-submission-panel";
 import { RetrospectivePanel } from "./retrospective-panel";
 
 type AssignmentPanelProps = {
@@ -33,6 +34,17 @@ export function AssignmentPanel({
   if (flatAssignment.assignmentType === "Retrospective") {
     return (
       <RetrospectivePanel
+        curriculum={curriculum}
+        assignmentId={assignmentId}
+        flatAssignment={flatAssignment}
+        onCurriculumRefresh={onCurriculumRefresh}
+      />
+    );
+  }
+
+  if (flatAssignment.assignmentType === "FileUpload") {
+    return (
+      <ResearchSubmissionPanel
         curriculum={curriculum}
         assignmentId={assignmentId}
         flatAssignment={flatAssignment}

@@ -75,6 +75,14 @@ export {
   requestParentPaymentSchema,
 } from "./payments";
 export {
+  certificateCodeParamSchema,
+  certificateIdParamSchema,
+  programEnrollmentIdParamSchema,
+  type CertificateCodeParam,
+  type CertificateIdParam,
+  type ProgramEnrollmentIdParam,
+} from "./certificates";
+export {
   classEnrollmentIdParamSchema,
   classEnrollmentSortBySchema,
   classEnrollmentsByProgramQuerySchema,
@@ -135,6 +143,10 @@ export {
   type CompleteActivityInput,
 } from "./program-enrollments";
 export {
+  moduleEnrollmentIdParamSchema,
+  type ModuleEnrollmentIdParam,
+} from "./module-enrollments";
+export {
   createResearchMilestoneSchema,
   linkMilestoneActivitySchema,
   milestoneIdParamSchema,
@@ -176,3 +188,47 @@ export {
   type SubmitRetrospectiveInput,
   type UpdateAssignmentInput,
 } from "./assignments";
+export {
+  createPortfolioItemSchema,
+  createPortfolioSectionSchema,
+  portfolioItemIdParamSchema,
+  portfolioMediaAssetRefSchema,
+  portfolioMediaIdParamSchema,
+  portfolioSectionIdParamSchema,
+  portfolioSubdomainAvailabilityQuerySchema,
+  portfolioSubdomainParamSchema,
+  reorderPortfolioItemsSchema,
+  reorderPortfolioSectionsSchema,
+  updatePortfolioItemSchema,
+  updatePortfolioPublicationSchema,
+  updatePortfolioSchema,
+  updatePortfolioSectionSchema,
+  updatePortfolioSubdomainSchema,
+  type CreatePortfolioItemInput,
+  type CreatePortfolioSectionInput,
+  type PortfolioItemIdParam,
+  type PortfolioMediaAssetRef,
+  type PortfolioMediaIdParam,
+  type PortfolioSectionIdParam,
+  type PortfolioSubdomainAvailabilityQuery,
+  type PortfolioSubdomainParam,
+  type ReorderPortfolioItemsInput,
+  type ReorderPortfolioSectionsInput,
+  type UpdatePortfolioInput,
+  type UpdatePortfolioItemInput,
+  type UpdatePortfolioPublicationInput,
+  type UpdatePortfolioSectionInput,
+  type UpdatePortfolioSubdomainInput,
+} from "./portfolios";
+export {
+  gradeResearchSubmissionSchema,
+  researchSubmissionIdParamSchema,
+  startResearchSubmissionSchema,
+  submitResearchSubmissionSchema,
+  uploadResearchSubmissionQuerySchema,
+  type GradeResearchSubmissionInput,
+  type ResearchSubmissionIdParam,
+  type StartResearchSubmissionInput,
+  type SubmitResearchSubmissionInput,
+  type UploadResearchSubmissionQuery,
+} from "./research-submissions";
