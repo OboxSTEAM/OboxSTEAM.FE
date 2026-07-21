@@ -93,12 +93,6 @@ import {
   LIGHT_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
-import {
-  formatActivityScheduleRange,
-  formatApiDateTimeDisplay,
-  fromApiDateTimeToLocalInput,
-  toApiDateTimeFromLocalInput,
-} from "@/lib/curriculum/datetime";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const W = {
@@ -677,14 +671,12 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     values: activityToEdit ? {
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
       activityType: activityToEdit.activityType, description: activityToEdit.description || "",
-      activityOrder: activityToEdit.activityOrder, location: activityToEdit.location || "",
-      startTime: fromApiDateTimeToLocalInput(activityToEdit.startTime),
-      endTime: fromApiDateTimeToLocalInput(activityToEdit.endTime),
+      activityOrder: activityToEdit.activityOrder,
       maxCapacity: activityToEdit.maxCapacity,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
       code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
-      location: "", startTime: "", endTime: "", maxCapacity: null as number | null,
+      maxCapacity: null as number | null,
       requireQrCheckin: false, requireMediaEvidence: false,
     },
   });
@@ -735,9 +727,10 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       const payload = {
         code: data.code || null, courseId: data.courseId, name: data.name, activityType: data.activityType,
         description: data.description || "", activityOrder: orderNum,
-        location: live ? data.location || null : null,
-        startTime: live ? toApiDateTimeFromLocalInput(data.startTime) : null,
-        endTime: live ? toApiDateTimeFromLocalInput(data.endTime) : null,
+        // Time & location live on the class session (cohort schedule), not the activity template.
+        location: null,
+        startTime: null,
+        endTime: null,
         maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
       };
@@ -776,12 +769,8 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 <Controller name="activityType" control={control} render={({ field }) => (
                   <Select value={field.value} onValueChange={(v) => {
                     field.onChange(v);
-                    // Self-paced activities have no schedule; clear stale values so they
-                    // are not resurfaced (and are sent as null on save).
+                    // Self-paced activities have no capacity; clear stale value.
                     if (v === "SelfPaced") {
-                      setValue("location", "");
-                      setValue("startTime", "");
-                      setValue("endTime", "");
                       setValue("maxCapacity", null);
                     }
                   }}>
@@ -806,36 +795,14 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           </div>
 
           {actType !== "SelfPaced" && (
-            <>
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Địa điểm / Đường dẫn <span style={{ color: W.primary }}>*</span></Label>
-                <input type="text" placeholder={actType === "LiveOnline" ? "Zoom, Google Meet..." : "Phòng 201, Tòa nhà A..."} {...register("location")} className={IN} style={{ borderColor: W.border }} />
-              </div>
-              {isEdit && activityToEdit?.startTime ? (
-                <div
-                  className="col-span-2 rounded-lg px-3 py-2.5 text-sm"
-                  style={{ background: W.surface2, color: W.text }}
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: W.faint }}>
-                    Lịch hiện tại
-                  </p>
-                  <p className="mt-0.5 font-medium" style={{ color: W.textStrong }}>
-                    {formatApiDateTimeDisplay(activityToEdit.startTime)}
-                    {activityToEdit.endTime
-                      ? ` → ${formatApiDateTimeDisplay(activityToEdit.endTime)}`
-                      : ""}
-                  </p>
-                </div>
-              ) : null}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Bắt đầu <span style={{ color: W.primary }}>*</span></Label>
-                <input type="datetime-local" {...register("startTime")} className={IN} style={{ borderColor: W.border }} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kết thúc <span style={{ color: W.primary }}>*</span></Label>
-                <input type="datetime-local" {...register("endTime")} className={IN} style={{ borderColor: W.border }} />
-              </div>
-            </>
+            <div
+              className="col-span-2 rounded-lg border border-dashed px-3 py-2.5 text-sm"
+              style={{ borderColor: W.border, background: W.surface2, color: W.faint }}
+            >
+              Thời gian và địa điểm/link buổi học được xếp theo từng lớp trong mục{" "}
+              <span className="font-semibold" style={{ color: W.textStrong }}>Lịch học</span>,
+              không đặt ở cấp hoạt động.
+            </div>
           )}
 
         </div>
@@ -1402,12 +1369,7 @@ function CourseActivityRows({
     >
       {orderedActs.map((act, aIdx) => {
         const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
-        const schedule =
-          act.activityType !== "SelfPaced"
-            ? formatActivityScheduleRange(act.startTime, act.endTime)
-            : "";
-        const metaBase = schedule ? `${typeLabel} · ${schedule}` : typeLabel;
-        const activityMeta = act.material ? `${metaBase} · Có tài liệu` : metaBase;
+        const activityMeta = act.material ? `${typeLabel} · Có tài liệu` : typeLabel;
 
         return (
           <StructureTreeRow

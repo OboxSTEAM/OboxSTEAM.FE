@@ -13,7 +13,6 @@ export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
 
 export const CLASS_SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
   Lesson: "Buổi học",
-  LiveOnline: "Trực tuyến",
   FieldTrip: "Thực địa",
   AssignmentWindow: "Bài tập",
   MentorCheckIn: "Gặp mentor",

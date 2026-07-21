@@ -9,12 +9,15 @@ import {
   Plus,
   Trash2,
   CalendarDays,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 
 import {
   SessionFormDialog,
   type ClassSessionFormSubmitPayload,
 } from "@/components/manager/classes/session-form-dialog";
+import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
@@ -61,16 +64,25 @@ function SessionManagerInner() {
   const searchParams = useSearchParams();
   const classId = searchParams.get("classId") ?? "";
 
+  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
   const [search, setSearch] = useState("");
   const [sessionKind, setSessionKind] = useState("all");
   const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
+  const isCalendar = viewMode === "calendar";
   const [formOpen, setFormOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<ClassSession | null>(
     null,
   );
+  const [createDefaultStart, setCreateDefaultStart] = useState<Date | null>(
+    null,
+  );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingFocus, setPendingFocus] = useState<{
+    id: string;
+    nonce: number;
+  } | null>(null);
 
   const { data: classesData, isLoading: isClassesLoading } = useClientFetch({
     fetcher: () =>
@@ -88,14 +100,15 @@ function SessionManagerInner() {
     isLoading: isSessionsLoading,
     markLoading,
     retry,
+    mutate: mutateSessions,
   } = useClientFetch({
     enabled: !!classId,
     fetcher: async () =>
       getClassSessions(classId, {
         sortBy: "startTime",
         isDescending: false,
-        page,
-        pageSize: 10,
+        page: isCalendar ? 1 : page,
+        pageSize: isCalendar ? 200 : 10,
         sessionKind:
           sessionKind === "all"
             ? undefined
@@ -103,7 +116,7 @@ function SessionManagerInner() {
         status:
           status === "all" ? undefined : (status as ClassSessionStatus),
       }),
-    deps: [classId, page, sessionKind, status],
+    deps: [classId, page, sessionKind, status, viewMode],
     onError: (error) => showAppErrorFromUnknown(error, "classSessions.list"),
   });
 
@@ -155,6 +168,13 @@ function SessionManagerInner() {
 
   function openCreate() {
     setEditingSession(null);
+    setCreateDefaultStart(null);
+    setFormOpen(true);
+  }
+
+  function openCreateAt(start: Date) {
+    setEditingSession(null);
+    setCreateDefaultStart(start);
     setFormOpen(true);
   }
 
@@ -162,17 +182,75 @@ function SessionManagerInner() {
     if (!classId) return;
     setIsSubmitting(true);
     try {
+      let focusId: string | null = null;
+
       if (editingSession) {
-        await updateClassSession(classId, editingSession.id, values);
+        const updated = await updateClassSession(
+          classId,
+          editingSession.id,
+          values,
+        );
+        focusId = editingSession.id;
+        const nextSession = updated.data;
+        if (nextSession) {
+          mutateSessions((prev) => {
+            if (!prev?.data) return prev;
+            return {
+              ...prev,
+              data: {
+                ...prev.data,
+                items: prev.data.items.map((session) =>
+                  session.id === nextSession.id ? nextSession : session,
+                ),
+              },
+            };
+          });
+        }
         showAppSuccess({
           title: "Đã cập nhật buổi học",
           description: `Buổi “${values.title}” đã được lưu.`,
         });
       } else {
-        await createClassSession({
+        const created = await createClassSession({
           classId,
           ...values,
         });
+        const nextSession = created.data;
+        focusId = nextSession?.id ?? null;
+        if (nextSession) {
+          mutateSessions((prev) => {
+            if (!prev?.data) {
+              return {
+                code: created.code,
+                message: created.message,
+                data: {
+                  items: [nextSession],
+                  currentPage: 1,
+                  pageSize: isCalendar ? 200 : 10,
+                  totalCount: 1,
+                  totalPages: 1,
+                  hasNext: false,
+                  hasPrevious: false,
+                },
+              };
+            }
+            const exists = prev.data.items.some((s) => s.id === nextSession.id);
+            return {
+              ...prev,
+              data: {
+                ...prev.data,
+                items: exists
+                  ? prev.data.items.map((s) =>
+                      s.id === nextSession.id ? nextSession : s,
+                    )
+                  : [...prev.data.items, nextSession],
+                totalCount: exists
+                  ? prev.data.totalCount
+                  : prev.data.totalCount + 1,
+              },
+            };
+          });
+        }
         showAppSuccess({
           title: "Đã tạo buổi học",
           description: `Buổi “${values.title}” đã được thêm vào lịch.`,
@@ -180,6 +258,11 @@ function SessionManagerInner() {
       }
       setFormOpen(false);
       setEditingSession(null);
+      setCreateDefaultStart(null);
+      setViewMode("calendar");
+      if (focusId) {
+        setPendingFocus({ id: focusId, nonce: Date.now() });
+      }
       retry();
     } catch (error) {
       showAppErrorFromUnknown(
@@ -193,13 +276,25 @@ function SessionManagerInner() {
 
   async function handleDelete() {
     if (!deleteTarget || !classId) return;
+    const deletedId = deleteTarget.id;
     try {
-      await deleteClassSession(classId, deleteTarget.id);
+      await deleteClassSession(classId, deletedId);
       showAppSuccess({
         title: "Đã xóa buổi học",
         description: `Buổi “${deleteTarget.title || ""}” đã được xóa.`,
       });
       setDeleteTarget(null);
+      mutateSessions((prev) => {
+        if (!prev?.data) return prev;
+        return {
+          ...prev,
+          data: {
+            ...prev.data,
+            items: prev.data.items.filter((session) => session.id !== deletedId),
+            totalCount: Math.max(0, prev.data.totalCount - 1),
+          },
+        };
+      });
       retry();
     } catch (error) {
       showAppErrorFromUnknown(error, "classSessions.delete");
@@ -297,6 +392,36 @@ function SessionManagerInner() {
         title="Lịch học"
         description="Quản lý buổi học theo từng lớp cohort."
       >
+        <div className="flex items-center rounded-xl border border-[#D8D8D2] bg-white p-1">
+          <button
+            type="button"
+            onClick={() => setViewMode("calendar")}
+            aria-pressed={isCalendar}
+            className={cn(
+              "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition",
+              isCalendar
+                ? "bg-[#E94B3C] text-white"
+                : "text-[#6B6B6B] hover:bg-[#F5F5F0]",
+            )}
+          >
+            <LayoutGrid className="size-4" />
+            Lịch
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            aria-pressed={!isCalendar}
+            className={cn(
+              "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition",
+              !isCalendar
+                ? "bg-[#E94B3C] text-white"
+                : "text-[#6B6B6B] hover:bg-[#F5F5F0]",
+            )}
+          >
+            <List className="size-4" />
+            Danh sách
+          </button>
+        </div>
         <Button
           type="button"
           onClick={openCreate}
@@ -417,18 +542,9 @@ function SessionManagerInner() {
                   setPage(1);
                 }}
               />
-              <div className="overflow-x-auto p-6">
-                <ManagerDataTable
-                  columns={columns}
-                  data={filteredSessions}
-                  isLoading={isSessionsLoading}
-                  currentPage={page}
-                  totalPages={totalPages}
-                  onPageChange={(nextPage) => {
-                    markLoading();
-                    setPage(nextPage);
-                  }}
-                  emptyState={
+              {isCalendar ? (
+                filteredSessions.length === 0 && !isSessionsLoading ? (
+                  <div className="p-6">
                     <ManagerEmptyState
                       title="Chưa có buổi học"
                       description="Tạo buổi học đầu tiên cho lớp này để bắt đầu lịch cohort."
@@ -436,9 +552,43 @@ function SessionManagerInner() {
                       actionLabel="Tạo buổi học"
                       onAction={openCreate}
                     />
-                  }
-                />
-              </div>
+                  </div>
+                ) : (
+                  <SessionCalendar
+                    sessions={filteredSessions}
+                    focusSession={pendingFocus}
+                    onSelectSession={(session) => {
+                      setCreateDefaultStart(null);
+                      setEditingSession(session);
+                      setFormOpen(true);
+                    }}
+                    onCreateAt={openCreateAt}
+                  />
+                )
+              ) : (
+                <div className="overflow-x-auto p-6">
+                  <ManagerDataTable
+                    columns={columns}
+                    data={filteredSessions}
+                    isLoading={isSessionsLoading}
+                    currentPage={page}
+                    totalPages={totalPages}
+                    onPageChange={(nextPage) => {
+                      markLoading();
+                      setPage(nextPage);
+                    }}
+                    emptyState={
+                      <ManagerEmptyState
+                        title="Chưa có buổi học"
+                        description="Tạo buổi học đầu tiên cho lớp này để bắt đầu lịch cohort."
+                        icon={CalendarDays}
+                        actionLabel="Tạo buổi học"
+                        onAction={openCreate}
+                      />
+                    }
+                  />
+                </div>
+              )}
             </>
           ) : (
             <div className="p-6">
@@ -458,9 +608,13 @@ function SessionManagerInner() {
         open={formOpen}
         onOpenChange={(open) => {
           setFormOpen(open);
-          if (!open) setEditingSession(null);
+          if (!open) {
+            setEditingSession(null);
+            setCreateDefaultStart(null);
+          }
         }}
         session={editingSession}
+        defaultStart={createDefaultStart}
         modules={modules}
         isModulesLoading={isModulesLoading}
         isSubmitting={isSubmitting}

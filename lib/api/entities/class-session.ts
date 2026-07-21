@@ -2,13 +2,15 @@ import { z } from "zod";
 
 import { sessionAttendanceStatusSchema } from "@/lib/api/entities/session-attendance";
 
-export const classSessionKindSchema = z.enum([
-  "Lesson",
-  "LiveOnline",
-  "FieldTrip",
-  "AssignmentWindow",
-  "MentorCheckIn",
-]);
+/**
+ * Session purpose only. Delivery mode (online/offline) comes from the linked
+ * activity's `activityType`, so it is intentionally not part of this enum.
+ * Legacy `LiveOnline` rows are coerced to `Lesson` for backward compatibility.
+ */
+export const classSessionKindSchema = z.preprocess(
+  (value) => (value === "LiveOnline" ? "Lesson" : value),
+  z.enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"]),
+);
 
 export const classSessionStatusSchema = z.enum([
   "Scheduled",

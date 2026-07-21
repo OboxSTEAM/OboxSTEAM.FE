@@ -30,6 +30,9 @@ async function executeRequest(
 
   const response = await fetch(url, {
     ...rest,
+    // Always hit the API — browser HTTP cache can otherwise serve a stale list
+    // after create/update/delete and make client `retry()` look like a no-op.
+    cache: "no-store",
     headers: {
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
       ...authHeaders,
