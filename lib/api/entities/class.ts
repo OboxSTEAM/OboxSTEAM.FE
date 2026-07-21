@@ -23,10 +23,13 @@ export const classSchema = z.object({
   seatsTaken: z.number().int(),
   status: classStatusSchema,
   minHoursBeforeAssignmentJoin: z.number().int(),
-  scheduleSummary: z.string(),
+  scheduleSummary: z.string().nullable(),
   createdAt: z.string(),
-  updatedAt: z.string(),
-  students: z.array(classStudentRosterSchema).default([]),
+  updatedAt: z.string().nullable(),
+  students: z
+    .array(classStudentRosterSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export const classWithSessionsSchema = z.object({
@@ -41,8 +44,11 @@ export const classWithSessionsSchema = z.object({
   seatsTaken: z.number().int(),
   status: classStatusSchema,
   createdAt: z.string(),
-  updatedAt: z.string(),
-  sessions: z.array(classSessionSchema).default([]),
+  updatedAt: z.string().nullable(),
+  sessions: z
+    .array(classSessionSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export type ClassStatus = z.infer<typeof classStatusSchema>;

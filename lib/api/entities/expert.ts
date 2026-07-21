@@ -9,8 +9,8 @@ const programExpertInputSchema = z.object({
   /** Program board payload uses `expertId`; some endpoints may send `id`. */
   expertId: z.string().uuid().nullish(),
   id: z.string().uuid().nullish(),
-  code: z.string(),
-  fullName: z.string(),
+  code: nullableStringSchema,
+  fullName: nullableStringSchema,
   title: nullableStringSchema,
   organization: nullableStringSchema,
   avatarUrl: nullableStringSchema,
@@ -47,9 +47,9 @@ export const programExpertSchema = programExpertInputSchema.transform(
 export type ProgramExpert = z.infer<typeof programExpertSchema>;
 
 export const expertProgramSchema = z.object({
-  programId: z.string(),
-  code: z.string(),
-  name: z.string(),
+  programId: z.string().uuid(),
+  code: nullableStringSchema,
+  name: nullableStringSchema,
   roleInBoard: nullableStringSchema,
 });
 
@@ -57,9 +57,9 @@ export type ExpertProgram = z.infer<typeof expertProgramSchema>;
 
 export const expertSchema = z.object({
   id: z.string().uuid(),
-  code: z.string(),
+  code: nullableStringSchema,
   userId: nullableStringSchema,
-  fullName: z.string(),
+  fullName: nullableStringSchema,
   title: nullableStringSchema,
   organization: nullableStringSchema,
   bio: nullableStringSchema,
@@ -67,8 +67,8 @@ export const expertSchema = z.object({
   linkedInUrl: nullableStringSchema,
   achievements: nullableStringSchema,
   createdAt: z.string(),
-  updatedAt: z.string(),
-  programs: z.array(expertProgramSchema).default([]),
+  updatedAt: nullableStringSchema,
+  programs: z.array(expertProgramSchema).nullish().transform((value) => value ?? []),
 });
 
 export type Expert = z.infer<typeof expertSchema>;

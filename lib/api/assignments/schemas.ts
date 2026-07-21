@@ -14,6 +14,21 @@ import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas
 
 export const assignmentDetailValueSchema = createApiValueSchema(assignmentDetailSchema);
 
+/* ─── Manager CRUD ─────────────────────────────────────────────────────────── */
+export const assignmentMutationValueSchema = createApiValueSchema(assignmentDetailSchema);
+export const createAssignmentResponseSchema = createApiResponseSchema(
+  assignmentMutationValueSchema,
+);
+export const updateAssignmentResponseSchema = createApiResponseSchema(
+  assignmentMutationValueSchema,
+);
+export const deleteAssignmentResponseSchema = createApiResponseSchema(z.unknown());
+
+export type CreateAssignmentResponse = z.infer<typeof createAssignmentResponseSchema>;
+export type CreateAssignmentResult = CreateAssignmentResponse["value"];
+export type UpdateAssignmentResponse = z.infer<typeof updateAssignmentResponseSchema>;
+export type UpdateAssignmentResult = UpdateAssignmentResponse["value"];
+
 export const quizAttemptValueSchema = createApiValueSchema(quizAttemptSchema);
 
 export const saveQuizDraftResultValueSchema = createApiValueSchema(saveQuizDraftResultSchema);

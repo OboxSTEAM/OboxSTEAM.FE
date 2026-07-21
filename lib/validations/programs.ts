@@ -33,6 +33,10 @@ export const programIdParamSchema = z.object({
   id: z.string().uuid("ID chương trình không hợp lệ."),
 });
 
+export const reviewIdParamSchema = z.object({
+  reviewId: z.string().uuid("ID đánh giá không hợp lệ."),
+});
+
 export const programReviewsSortBySchema = z.enum(["createdAt", "starRating"]);
 
 /** Query params for `GET /api/programs/{programId}/reviews`. */
@@ -49,10 +53,11 @@ export const programUpsertSchema = z.object({
   name: z.string().min(1, "Tên chương trình là bắt buộc."),
   seriesName: z.string().min(1, "Tên series là bắt buộc."),
   description: z.string().min(1, "Mô tả là bắt buộc."),
+  category: programCategorySchema,
   level: programLevelSchema,
   estimatedDuration: z.string().min(1, "Thời lượng dự kiến là bắt buộc."),
   skillsGained: z.string().min(1, "Kỹ năng đạt được là bắt buộc."),
-  thumbnailUrl: z.url("URL ảnh thumbnail không hợp lệ."),
+  thumbnailUrl: z.string().url("URL ảnh thumbnail không hợp lệ.").or(z.literal("")).nullable().optional(),
   status: z.string().min(1, "Trạng thái là bắt buộc."),
   price: z.number().min(0, "Giá không được âm."),
 });

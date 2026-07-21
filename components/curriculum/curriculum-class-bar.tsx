@@ -124,7 +124,7 @@ export function CurriculumClassBar({ classContext }: CurriculumClassBarProps) {
                           <AvatarImage src={student.avatarUrl} alt="" />
                         ) : null}
                         <AvatarFallback className="bg-[#e2e9d7] text-[10px] font-semibold text-[#5a6b52]">
-                          {getPersonInitials(student.studentName)}
+                          {getPersonInitials(student.studentName ?? "")}
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">

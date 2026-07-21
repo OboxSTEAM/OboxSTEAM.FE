@@ -90,15 +90,170 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chương trình không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Quay lại danh sách chương trình hoặc thử lại sau vài giây.",
   },
+  "programs.create": {
+    title: "Không tạo được chương trình",
+    reason: "Thông tin chương trình chưa hợp lệ hoặc đã trùng mã/tên.",
+    action: "Kiểm tra lại các trường bắt buộc rồi thử lưu lần nữa.",
+  },
+  "programs.update": {
+    title: "Không cập nhật được chương trình",
+    reason: "Thông tin chưa hợp lệ hoặc chương trình không còn tồn tại.",
+    action: "Kiểm tra lại thông tin, tải lại trang rồi thử lưu.",
+  },
+  "programs.delete": {
+    title: "Không xóa được chương trình",
+    reason: "Chương trình có thể đang được sử dụng hoặc không còn tồn tại.",
+    action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
+  },
   "programs.reviews": {
     title: "Không tải được đánh giá",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
     action: "Thử tải lại hoặc chuyển sang tab khác rồi quay lại.",
   },
+  "programs.reviews.delete": {
+    title: "Không xóa được đánh giá",
+    reason: "Đánh giá có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại danh sách đánh giá và thử lại.",
+  },
   "programs.expert": {
     title: "Không tải được thông tin chuyên gia",
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Đóng hộp thoại và thử lại sau vài giây.",
+  },
+  "experts.list": {
+    title: "Không tải được danh sách chuyên gia",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "experts.create": {
+    title: "Không tạo được chuyên gia",
+    reason: "Thông tin chưa hợp lệ hoặc mã chuyên gia đã tồn tại.",
+    action: "Kiểm tra mã, họ tên và các chương trình được gán rồi thử lại.",
+  },
+  "experts.update": {
+    title: "Không cập nhật được chuyên gia",
+    reason: "Thông tin chưa hợp lệ hoặc chuyên gia không còn tồn tại.",
+    action: "Tải lại danh sách, kiểm tra thông tin rồi thử lưu lại.",
+  },
+  "experts.delete": {
+    title: "Không xóa được chuyên gia",
+    reason: "Chuyên gia có thể đang được sử dụng hoặc không còn tồn tại.",
+    action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
+  },
+  "classes.list": {
+    title: "Không tải được danh sách lớp",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "classes.detail": {
+    title: "Không tải được thông tin lớp",
+    reason: "Lớp không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Quay lại danh sách lớp hoặc thử lại sau vài giây.",
+  },
+  "classes.create": {
+    title: "Không tạo được lớp học",
+    reason: "Thông tin lớp chưa hợp lệ hoặc mã lớp đã tồn tại.",
+    action: "Kiểm tra mã, tên, chương trình và lịch học rồi thử lại.",
+  },
+  "classes.update": {
+    title: "Không cập nhật được lớp học",
+    reason: "Thông tin chưa hợp lệ hoặc lớp không còn tồn tại.",
+    action: "Tải lại trang, kiểm tra thông tin rồi thử lưu lại.",
+  },
+  "classes.lifecycle": {
+    title: "Không chuyển được trạng thái lớp",
+    reason: "Lớp không ở trạng thái phù hợp hoặc yêu cầu bị từ chối.",
+    action: "Tải lại thông tin lớp và thử lại thao tác.",
+  },
+  "classSessions.list": {
+    title: "Không tải được lịch học",
+    reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
+    action: "Chọn lại lớp hoặc thử tải lại sau vài giây.",
+  },
+  "classSessions.create": {
+    title: "Không tạo được buổi học",
+    reason: "Thông tin buổi học chưa hợp lệ hoặc lịch bị trùng.",
+    action: "Kiểm tra tiêu đề, module và khung giờ rồi thử lại.",
+  },
+  "classSessions.update": {
+    title: "Không cập nhật được buổi học",
+    reason: "Thông tin chưa hợp lệ hoặc buổi học không còn tồn tại.",
+    action: "Tải lại lịch học, kiểm tra thông tin rồi thử lưu lại.",
+  },
+  "classSessions.delete": {
+    title: "Không xóa được buổi học",
+    reason: "Buổi học có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại lịch học và thử lại.",
+  },
+  "attendance.list": {
+    title: "Không tải được danh sách điểm danh",
+    reason: "Máy chủ tạm thời không phản hồi hoặc buổi học không tồn tại.",
+    action: "Chọn lại buổi học hoặc thử tải lại sau vài giây.",
+  },
+  "attendance.update": {
+    title: "Không cập nhật được điểm danh",
+    reason: "Trạng thái không hợp lệ hoặc bạn không có quyền thao tác.",
+    action: "Tải lại roster và thử cập nhật lại.",
+  },
+  "curriculum.module.save": {
+    title: "Không lưu được module",
+    reason: "Thông tin module chưa hợp lệ hoặc đã trùng mã.",
+    action: "Kiểm tra tên, mã, thứ tự và học phí rồi thử lại.",
+  },
+  "curriculum.course.save": {
+    title: "Không lưu được khóa học",
+    reason: "Thông tin khóa học chưa hợp lệ hoặc đã trùng mã.",
+    action: "Kiểm tra tên, mã và mô tả rồi thử lại.",
+  },
+  "curriculum.activity.save": {
+    title: "Không lưu được hoạt động",
+    reason: "Thông tin hoạt động chưa hợp lệ hoặc lịch học chưa đúng.",
+    action: "Kiểm tra tên, loại, thứ tự và thời gian (nếu có) rồi thử lại.",
+  },
+  "curriculum.material.save": {
+    title: "Không lưu được tài liệu",
+    reason: "Tệp không hợp lệ, thiếu tiêu đề, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn đúng loại tệp, đặt tiêu đề rõ ràng rồi thử lại.",
+  },
+  "curriculum.material.delete": {
+    title: "Không xóa được tài liệu",
+    reason: "Tài liệu có thể không còn tồn tại hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại trang rồi thử xóa lại.",
+  },
+  "curriculum.assignment.save": {
+    title: "Không lưu được bài tập",
+    reason: "Thông tin bài tập chưa hợp lệ hoặc đã trùng mã.",
+    action: "Kiểm tra tiêu đề, điểm, và cấu hình rồi thử lại.",
+  },
+  "curriculum.milestone.save": {
+    title: "Không lưu được milestone",
+    reason: "Thông tin milestone hoặc sản phẩm nộp chưa hợp lệ.",
+    action: "Kiểm tra mã, tiêu đề, thứ tự và sản phẩm nộp rồi thử lại.",
+  },
+  "curriculum.milestone.link": {
+    title: "Không cập nhật được liên kết hoạt động",
+    reason: "Hoạt động có thể đã được liên kết hoặc yêu cầu bị từ chối.",
+    action: "Tải lại và thử lại.",
+  },
+  "curriculum.questionBank.save": {
+    title: "Không lưu được ngân hàng câu hỏi",
+    reason: "Thông tin chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra tên ngân hàng câu hỏi rồi thử lại.",
+  },
+  "curriculum.questionBank.delete": {
+    title: "Không xóa được ngân hàng câu hỏi",
+    reason: "Ngân hàng có thể đang được sử dụng hoặc không còn tồn tại.",
+    action: "Tải lại và thử lại.",
+  },
+  "curriculum.questionBank.import": {
+    title: "Không import được câu hỏi",
+    reason: "Tệp CSV không hợp lệ hoặc máy chủ từ chối tải lên.",
+    action: "Kiểm tra định dạng tệp CSV rồi thử lại.",
+  },
+  "curriculum.node.delete": {
+    title: "Không xóa được mục này",
+    reason: "Mục có thể đang chứa nội dung con hoặc không còn tồn tại.",
+    action: "Xóa các mục con trước (nếu có), tải lại rồi thử lại.",
   },
   "payments.checkout": {
     title: "Không thể bắt đầu thanh toán",
@@ -197,6 +352,88 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
 };
 
+/** Contexts where a curated backend string may be shown (auth only). */
+const API_MESSAGE_ALLOWED: ReadonlySet<AppErrorContext> = new Set([
+  "auth.login",
+  "auth.register",
+  "auth.verify-otp",
+  "auth.forgot-password",
+  "auth.reset-password",
+]);
+
+/** Manager mutate flows — never surface raw BE messages. */
+const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
+  "programs.create",
+  "programs.update",
+  "programs.delete",
+  "programs.reviews.delete",
+  "experts.create",
+  "experts.update",
+  "experts.delete",
+  "classes.create",
+  "classes.update",
+  "classes.lifecycle",
+  "classSessions.create",
+  "classSessions.update",
+  "classSessions.delete",
+  "attendance.update",
+  "curriculum.module.save",
+  "curriculum.course.save",
+  "curriculum.activity.save",
+  "curriculum.material.save",
+  "curriculum.material.delete",
+  "curriculum.assignment.save",
+  "curriculum.milestone.save",
+  "curriculum.milestone.link",
+  "curriculum.questionBank.save",
+  "curriculum.questionBank.delete",
+  "curriculum.questionBank.import",
+  "curriculum.node.delete",
+]);
+
+function reasonForHttpStatus(
+  status: number,
+  context: AppErrorContext,
+): string | null {
+  if (status === 401) {
+    return "Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập.";
+  }
+  if (status === 403) {
+    return "Bạn không có quyền thực hiện thao tác này.";
+  }
+  if (status === 404) {
+    if (MANAGER_MUTATE.has(context)) {
+      return "Mục này không còn tồn tại hoặc đã bị xóa.";
+    }
+    return "Không tìm thấy dữ liệu yêu cầu.";
+  }
+  if (status === 409) {
+    if (context === "programs.create" || context === "programs.update") {
+      return "Mã hoặc tên chương trình đã tồn tại.";
+    }
+    if (context === "classes.create" || context === "classes.update") {
+      return "Mã lớp đã tồn tại hoặc xung đột dữ liệu lớp.";
+    }
+    if (context.startsWith("curriculum.")) {
+      return "Mã hoặc tên đã tồn tại trong chương trình.";
+    }
+    return "Dữ liệu bị trùng với mục đã có.";
+  }
+  if (status === 413) {
+    return "Tệp tải lên quá lớn so với giới hạn hệ thống.";
+  }
+  if (status === 400 || status === 422) {
+    if (MANAGER_MUTATE.has(context)) {
+      return CONTEXT_FALLBACKS[context].reason;
+    }
+    return "Thông tin gửi lên chưa hợp lệ.";
+  }
+  if (status >= 500) {
+    return "Hệ thống tạm thời không phản hồi.";
+  }
+  return null;
+}
+
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
   if (error instanceof ApiResponseError) {
     return error.message || null;
@@ -232,20 +469,36 @@ function mapHttpStatusToError(
     };
   }
 
+  if (status === 409 && context === "curriculum.material.save") {
+    return {
+      title: "Hoạt động đã có tài liệu",
+      reason: "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
+      action: "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+    };
+  }
+
+  const fallback = CONTEXT_FALLBACKS[context];
+  const statusReason = reasonForHttpStatus(status, context);
+  const useApi = API_MESSAGE_ALLOWED.has(context) && !!apiMessage;
+
   if (status >= 500) {
     return {
       title: "Máy chủ đang gặp sự cố",
-      reason: apiMessage ?? "Hệ thống tạm thời không phản hồi.",
+      reason: useApi ? apiMessage! : (statusReason ?? "Hệ thống tạm thời không phản hồi."),
       action: "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
     };
   }
 
   if (status === 0 || status >= 400) {
-    const fallback = CONTEXT_FALLBACKS[context];
     return {
       title: fallback.title,
-      reason: apiMessage ?? fallback.reason,
-      action: fallback.action,
+      reason: useApi
+        ? apiMessage!
+        : (statusReason ?? fallback.reason),
+      action:
+        status === 401
+          ? "Đăng nhập lại rồi thử tiếp."
+          : fallback.action,
     };
   }
 
@@ -261,8 +514,7 @@ function fromZodError(error: ZodError): AppErrorState {
   };
 }
 
-function fromNetworkError(context: AppErrorContext): AppErrorState {
-  const fallback = CONTEXT_FALLBACKS[context];
+function fromNetworkError(_context: AppErrorContext): AppErrorState {
   return {
     title: "Không thể kết nối máy chủ",
     reason: "Thiết bị của bạn không kết nối được với OboxSTEAM.",
@@ -272,23 +524,26 @@ function fromNetworkError(context: AppErrorContext): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
+ * Raw backend messages are only used for curated auth contexts.
  */
 export function resolveAppError(
   error: unknown,
   context: AppErrorContext = "generic",
 ): AppErrorState {
   if (error instanceof ApiResponseError) {
-    const mapped = mapHttpStatusToError(400, context, error.message);
+    const mapped = mapHttpStatusToError(
+      400,
+      context,
+      API_MESSAGE_ALLOWED.has(context) ? error.message : null,
+    );
     if (mapped) return mapped;
-    return {
-      title: CONTEXT_FALLBACKS[context].title,
-      reason: error.message,
-      action: CONTEXT_FALLBACKS[context].action,
-    };
+    return CONTEXT_FALLBACKS[context];
   }
 
   if (error instanceof ApiRequestError) {
-    const apiMessage = extractApiMessage(error);
+    const apiMessage = API_MESSAGE_ALLOWED.has(context)
+      ? extractApiMessage(error)
+      : null;
     const mapped = mapHttpStatusToError(error.status, context, apiMessage);
     if (mapped) return mapped;
 
@@ -305,13 +560,20 @@ export function resolveAppError(
     return fromNetworkError(context);
   }
 
+  // Intentional client-side tips — keep if message looks user-facing (Vietnamese), not technical.
   if (error instanceof Error && error.message) {
-    const fallback = CONTEXT_FALLBACKS[context];
-    return {
-      title: fallback.title,
-      reason: error.message,
-      action: fallback.action,
-    };
+    const looksTechnical =
+      /[A-Z][a-z]+Exception|\bDTO\b|\bUUID\b|\bHttpStatus\b|at\s+\w+\.|System\.|Request failed|NullReference|SqlException/i.test(
+        error.message,
+      );
+    if (!looksTechnical && !MANAGER_MUTATE.has(context)) {
+      const fallback = CONTEXT_FALLBACKS[context];
+      return {
+        title: fallback.title,
+        reason: error.message,
+        action: fallback.action,
+      };
+    }
   }
 
   return CONTEXT_FALLBACKS[context];

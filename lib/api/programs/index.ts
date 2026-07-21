@@ -8,11 +8,13 @@ import {
   programIdParamSchema,
   programListQuerySchema,
   programReviewsQuerySchema,
+  reviewIdParamSchema,
   updateProgramSchema,
 } from "@/lib/validations/programs";
 
 import {
   deleteProgramResponseSchema,
+  deleteProgramReviewResponseSchema,
   getProgramByIdResponseSchema,
   getProgramCurriculumResponseSchema,
   getProgramReviewsResponseSchema,
@@ -22,6 +24,7 @@ import {
   updateProgramResponseSchema,
   type CreateProgramResult,
   type DeleteProgramResult,
+  type DeleteProgramReviewResult,
   type GetProgramByIdResult,
   type GetProgramCurriculumResult,
   type GetProgramReviewsResult,
@@ -35,6 +38,8 @@ export type {
   CreateProgramResult,
   DeleteProgramResponse,
   DeleteProgramResult,
+  DeleteProgramReviewResponse,
+  DeleteProgramReviewResult,
   GetProgramByIdResponse,
   GetProgramByIdResult,
   GetProgramCurriculumResponse,
@@ -178,6 +183,23 @@ export async function getProgramReviews(
     `${PROGRAMS_BASE}/${programId}/reviews${buildProgramReviewsQuery(params)}`,
     getProgramReviewsResponseSchema,
     { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** Soft-deletes a review. Managers, SuperAdmin, or the review owner may call this. */
+export async function deleteProgramReview(
+  programId: string,
+  reviewId: string,
+): Promise<DeleteProgramReviewResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const { reviewId: parsedReviewId } = reviewIdParamSchema.parse({ reviewId });
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/reviews/${parsedReviewId}`,
+    deleteProgramReviewResponseSchema,
+    { method: "DELETE" },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

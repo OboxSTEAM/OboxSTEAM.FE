@@ -127,10 +127,13 @@ export function ClassPickerDialog({
   const { data, isLoading, hasError, retry } = useClientFetch({
     enabled: open,
     fetcher: async () => {
-      const result = await getClasses({
-        ...OPEN_CLASSES_QUERY,
-        programId,
-      });
+      const result = await getClasses(
+        {
+          ...OPEN_CLASSES_QUERY,
+          programId,
+        },
+        { includeSeatsTaken: true },
+      );
       return result?.data?.items ?? [];
     },
     deps: [open, programId],

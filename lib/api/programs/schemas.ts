@@ -49,6 +49,9 @@ export const programReviewsListValueSchema = createApiValueSchema(
 export const getProgramReviewsResponseSchema = createApiResponseSchema(
   programReviewsListValueSchema,
 );
+export const deleteProgramReviewResponseSchema = createApiResponseSchema(
+  programDeleteValueSchema,
+);
 
 export const programCurriculumValueSchema = createApiValueSchema(programCurriculumSchema);
 export const getProgramCurriculumResponseSchema = createApiResponseSchema(
@@ -72,6 +75,10 @@ export type GetProgramReviewsResponse = z.infer<
   typeof getProgramReviewsResponseSchema
 >;
 export type GetProgramReviewsResult = GetProgramReviewsResponse["value"];
+export type DeleteProgramReviewResponse = z.infer<
+  typeof deleteProgramReviewResponseSchema
+>;
+export type DeleteProgramReviewResult = DeleteProgramReviewResponse["value"];
 export type GetProgramCurriculumResponse = z.infer<
   typeof getProgramCurriculumResponseSchema
 >;

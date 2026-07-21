@@ -1,21 +1,27 @@
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
+import { createApiPost } from "@/lib/api/create-endpoint";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   assignmentIdParamSchema,
+  createAssignmentSchema,
   saveQuizAnswersSchema,
   saveRetrospectiveDraftSchema,
   submissionIdParamSchema,
   submitQuizSchema,
   submitRetrospectiveSchema,
+  updateAssignmentSchema,
 } from "@/lib/validations/assignments";
 import type {
   SaveQuizAnswersInput,
   SaveRetrospectiveDraftInput,
   SubmitQuizInput,
   SubmitRetrospectiveInput,
+  UpdateAssignmentInput,
 } from "@/lib/validations/assignments";
 
 import {
+  assignmentMutationValueSchema,
+  deleteAssignmentResponseSchema,
   getAssignmentByIdResponseSchema,
   getInProgressQuizResponseSchema,
   getQuizResultResponseSchema,
@@ -26,6 +32,7 @@ import {
   startRetrospectiveAttemptResponseSchema,
   submitQuizResponseSchema,
   submitRetrospectiveResponseSchema,
+  updateAssignmentResponseSchema,
   type GetAssignmentByIdResult,
   type GetInProgressQuizResult,
   type GetQuizResultResult,
@@ -36,6 +43,7 @@ import {
   type StartRetrospectiveAttemptResult,
   type SubmitQuizResult,
   type SubmitRetrospectiveResult,
+  type UpdateAssignmentResult,
 } from "./schemas";
 
 export type {
@@ -89,7 +97,17 @@ export type {
   SaveRetrospectiveDraftInput,
   SubmitQuizInput,
   SubmitRetrospectiveInput,
+  AssignmentTypeInput,
+  CreateAssignmentInput,
+  UpdateAssignmentInput,
 } from "@/lib/validations/assignments";
+
+export type {
+  CreateAssignmentResponse,
+  CreateAssignmentResult,
+  UpdateAssignmentResponse,
+  UpdateAssignmentResult,
+} from "./schemas";
 
 const ASSIGNMENTS_BASE = "/api/assignments";
 const SUBMISSIONS_BASE = "/api/submissions";
@@ -99,6 +117,42 @@ function requireApiValue<T>(value: T | null): T {
     throw new ApiResponseError("Request failed.");
   }
   return value;
+}
+
+/** `POST /api/assignments` — create an assignment (Manager/SuperAdmin). */
+export const createAssignment = createApiPost({
+  path: ASSIGNMENTS_BASE,
+  input: createAssignmentSchema,
+  value: assignmentMutationValueSchema,
+});
+
+/** `PUT /api/assignments/{assignmentId}` — update an assignment. */
+export async function updateAssignment(
+  assignmentId: string,
+  input: UpdateAssignmentInput,
+): Promise<UpdateAssignmentResult> {
+  const { assignmentId: id } = assignmentIdParamSchema.parse({ assignmentId });
+  const body = updateAssignmentSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENTS_BASE}/${id}`,
+    updateAssignmentResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `DELETE /api/assignments/{assignmentId}` — soft-delete an assignment. */
+export async function deleteAssignment(assignmentId: string): Promise<void> {
+  const { assignmentId: id } = assignmentIdParamSchema.parse({ assignmentId });
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENTS_BASE}/${id}`,
+    deleteAssignmentResponseSchema,
+    { method: "DELETE" },
+  );
+  assertApiSuccess(response);
 }
 
 /** `GET /api/assignments/{assignmentId}` */

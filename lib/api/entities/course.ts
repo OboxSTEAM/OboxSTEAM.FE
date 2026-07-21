@@ -12,14 +12,17 @@ export const curriculumCourseSchema = z.object({
 
 export const courseSchema = z.object({
   id: z.string(),
-  code: z.string(),
+  code: z.string().nullable().optional(),
   moduleId: z.string(),
-  mentorId: z.string(),
+  mentorId: z.string().nullable().optional(),
   name: z.string(),
-  description: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  activities: z.array(activitySchema).default([]),
+  description: z.string().nullable().optional(),
+  createdAt: z.string().nullable().optional(),
+  updatedAt: z.string().nullable().optional(),
+  activities: z.preprocess(
+    (val) => val ?? [],
+    z.array(activitySchema)
+  ),
 });
 
 export type CurriculumCourse = z.infer<typeof curriculumCourseSchema>;

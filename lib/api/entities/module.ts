@@ -8,19 +8,25 @@ export const moduleCourseSchema = courseSchema;
 
 export const moduleSchema = z.object({
   id: z.string(),
-  code: z.string(),
+  code: z.string().nullable().optional(),
   programId: z.string(),
   name: z.string(),
   moduleType: moduleTypeSchema,
   moduleOrder: z.number(),
-  prerequisiteModuleId: z.string().nullable(),
+  prerequisiteModuleId: z.string().nullable().optional(),
   isMandatory: z.boolean(),
   price: z.number(),
   retakeFee: z.number(),
-  learningOutcomes: z.array(z.string()).default([]),
+  learningOutcomes: z.preprocess(
+    (val) => val ?? [],
+    z.array(z.string())
+  ),
   createdAt: z.string(),
-  updatedAt: z.string(),
-  courses: z.array(moduleCourseSchema),
+  updatedAt: z.string().nullable().optional(),
+  courses: z.preprocess(
+    (val) => val ?? [],
+    z.array(moduleCourseSchema)
+  ),
 });
 
 export type ModuleType = z.infer<typeof moduleTypeSchema>;
