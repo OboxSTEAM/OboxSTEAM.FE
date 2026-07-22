@@ -177,6 +177,11 @@
         "description": "Issues a program certificate when all activities are Done. Regenerates and re-uploads the PDF (including avatar/thumbnail images). Reuses the same certificate code when already issued."
       },
       {
+        "path": "/api/classes/mentor-board",
+        "method": "get",
+        "description": "Lists Draft/Open classes with no assigned mentor. Prefer GET /api/class-mentor-requests/board."
+      },
+      {
         "path": "/api/classes",
         "method": "get",
         "description": "Retrieve a paginated list of cohort classes with basic information only. Use GET /api/classes/{id} for full details including SeatsTaken."
@@ -250,6 +255,35 @@
         "path": "/api/class-enrollments/program-enrollment/{programEnrollmentId}",
         "method": "get",
         "description": "Lists class enrollments for a program enrollment. Access is enforced per role."
+      },
+      {
+        "path": "/api/class-mentor-requests/board",
+        "method": "get",
+        "description": "Lists Draft/Open classes with no assigned mentor that mentors can request."
+      },
+      {
+        "path": "/api/class-mentor-requests",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-mentor-requests",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-mentor-requests/{id}",
+        "method": "delete"
+      },
+      {
+        "path": "/api/class-mentor-requests/mine",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-mentor-requests/{id}/approve",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-mentor-requests/{id}/reject",
+        "method": "post"
       },
       {
         "path": "/api/classes/{classId}/sessions",
@@ -354,12 +388,12 @@
       {
         "path": "/api/highlight-video/stacks",
         "method": "post",
-        "description": "Creates a highlight stack for a student in a program and starts the first video job. If StudentId is omitted, the authenticated user from the JWT is used."
+        "description": "Creates a highlight stack for a student in a class and starts the first video job. If StudentId is omitted, the authenticated user from the JWT is used."
       },
       {
         "path": "/api/highlight-video/stacks",
         "method": "get",
-        "description": "Lists highlight stacks for a program and student. If studentId is omitted, the authenticated user from the JWT is used."
+        "description": "Lists highlight stacks for a class and student. If studentId is omitted, the authenticated user from the JWT is used."
       },
       {
         "path": "/api/highlight-video/stacks/{stackId}",
@@ -429,12 +463,42 @@
       {
         "path": "/api/media/upload",
         "method": "post",
-        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) to an activity. Images are auto face-tagged immediately. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed."
+        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. Images are auto face-tagged immediately. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed."
       },
       {
-        "path": "/api/media/activity/{activityId}",
+        "path": "/api/media",
         "method": "get",
-        "description": "Retrieves all media assets for a specific activity, including face recognition tags."
+        "description": "Returns ready media (images, or videos with TaggingComplete), scoped by role. Manager/SuperAdmin may omit filters to list all ready media. Mentor is limited to mentored classes. Student always sees own tags; Parent requires linked studentId."
+      },
+      {
+        "path": "/api/media/{mediaId}",
+        "method": "get",
+        "description": "Returns one media asset including face tags. Access is role-scoped: Manager/SuperAdmin any media; Mentor only mentored classes; Student only ready media they are tagged in; Parent only ready media tagged for linked students."
+      },
+      {
+        "path": "/api/media/{mediaId}",
+        "method": "delete",
+        "description": "Soft-deletes a media asset and removes the file from S3 storage."
+      },
+      {
+        "path": "/api/media/class-session/{classSessionId}",
+        "method": "get",
+        "description": "Retrieves media assets for a specific class session, including face recognition tags. Students and parents only receive ready media they (or linked students) are tagged in."
+      },
+      {
+        "path": "/api/media/{mediaId}/tags",
+        "method": "post",
+        "description": "Manually tags a student onto ready media. Creates a verified tag. Mentors may only tag students enrolled in the media's class."
+      },
+      {
+        "path": "/api/media/{mediaId}/tags/{studentId}",
+        "method": "patch",
+        "description": "Sets IsVerified for mentor review of face tags."
+      },
+      {
+        "path": "/api/media/{mediaId}/tags/{studentId}",
+        "method": "delete",
+        "description": "Soft-deletes a media tag for the given student."
       },
       {
         "path": "/api/media/{mediaId}/process-tags",
@@ -442,9 +506,28 @@
         "description": "Submits a new Rekognition face-search job on the transcoded video output, restarts label detection, then polls once for results. Returns 202 while VideoStatus is PendingTagging; call again until TaggingComplete."
       },
       {
-        "path": "/api/media/{mediaId}",
-        "method": "delete",
-        "description": "Soft-deletes a media asset and removes the file from S3 storage."
+        "path": "/api/mentors/me/skills",
+        "method": "get"
+      },
+      {
+        "path": "/api/mentors/me/skills",
+        "method": "post"
+      },
+      {
+        "path": "/api/mentors/me/skills/{id}",
+        "method": "delete"
+      },
+      {
+        "path": "/api/mentors",
+        "method": "get"
+      },
+      {
+        "path": "/api/mentors/{id}",
+        "method": "get"
+      },
+      {
+        "path": "/api/mentors/{id}/class-limit",
+        "method": "put"
       },
       {
         "path": "/api/modules",
@@ -654,7 +737,7 @@
       {
         "path": "/api/portfolios/me/sync",
         "method": "post",
-        "description": "Idempotently imports certificates and graded capstone projects. Highlight reels are not imported."
+        "description": "Idempotently imports certificates, graded capstone projects, and completed highlight reels."
       },
       {
         "path": "/api/portfolios/by-subdomain/{subdomain}",
@@ -970,6 +1053,9 @@
         "name": "AddHighlightSegmentRequest"
       },
       {
+        "name": "AddMediaTagRequest"
+      },
+      {
         "name": "AddProgramToExpertDto"
       },
       {
@@ -1064,6 +1150,36 @@
       },
       {
         "name": "ClassEnrollmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassMentorBoardItemDto"
+      },
+      {
+        "name": "ClassMentorBoardItemDtoPagination"
+      },
+      {
+        "name": "ClassMentorBoardItemDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassMentorBoardItemDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ClassMentorRequestResponseDto"
+      },
+      {
+        "name": "ClassMentorRequestResponseDtoApiResult"
+      },
+      {
+        "name": "ClassMentorRequestResponseDtoPagination"
+      },
+      {
+        "name": "ClassMentorRequestResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassMentorRequestResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ClassMentorRequestResponseDtoResponseDataContent"
       },
       {
         "name": "ClassResponseDto"
@@ -1171,6 +1287,9 @@
         "name": "CreateClassEnrollmentRequestDto"
       },
       {
+        "name": "CreateClassMentorRequestDto"
+      },
+      {
         "name": "CreateClassRequestDto"
       },
       {
@@ -1181,6 +1300,9 @@
       },
       {
         "name": "CreateHighlightStackRequest"
+      },
+      {
+        "name": "CreateMentorSkillRequestDto"
       },
       {
         "name": "CreateModuleRequestDto"
@@ -1211,6 +1333,9 @@
       },
       {
         "name": "CreateResearchSubmissionRequestDtoResponseDataContent"
+      },
+      {
+        "name": "DecideClassMentorRequestDto"
       },
       {
         "name": "EnrollmentCurriculumActivityDto"
@@ -1481,6 +1606,45 @@
       },
       {
         "name": "MediaTagDto"
+      },
+      {
+        "name": "MediaTagDtoApiResult"
+      },
+      {
+        "name": "MediaTagDtoResponseDataContent"
+      },
+      {
+        "name": "MentorProfileDto"
+      },
+      {
+        "name": "MentorProfileDtoApiResult"
+      },
+      {
+        "name": "MentorProfileDtoPagination"
+      },
+      {
+        "name": "MentorProfileDtoPaginationApiResult"
+      },
+      {
+        "name": "MentorProfileDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "MentorProfileDtoResponseDataContent"
+      },
+      {
+        "name": "MentorSkillDto"
+      },
+      {
+        "name": "MentorSkillDtoApiResult"
+      },
+      {
+        "name": "MentorSkillDtoListApiResult"
+      },
+      {
+        "name": "MentorSkillDtoListResponseDataContent"
+      },
+      {
+        "name": "MentorSkillDtoResponseDataContent"
       },
       {
         "name": "ModuleEnrollmentResponseDto"
@@ -1888,6 +2052,9 @@
         "name": "SessionAttendanceResponseDtoResponseDataContent"
       },
       {
+        "name": "SkillSummaryDto"
+      },
+      {
         "name": "StartResearchSubmissionForClassRequestDto"
       },
       {
@@ -1979,6 +2146,12 @@
       },
       {
         "name": "UpdateMaterialRequestDto"
+      },
+      {
+        "name": "UpdateMediaTagVerificationRequest"
+      },
+      {
+        "name": "UpdateMentorClassLimitRequestDto"
       },
       {
         "name": "UpdateMilestoneActivityLinkRequestDto"

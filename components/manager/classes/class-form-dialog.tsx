@@ -142,8 +142,9 @@ export function ClassFormDialog({
               {classItem ? "Cập nhật lớp học" : "Tạo lớp học mới"}
             </DialogTitle>
             <DialogDescription>
-              Lớp được tạo ở trạng thái Bản nháp. Mentor hiện tại của lớp được
-              giữ nguyên khi cập nhật.
+              {classItem
+                ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết."
+                : "Lớp tạo ở trạng thái Bản nháp, chưa gán mentor. Mentor xin nhận lớp và bạn duyệt tại chi tiết lớp."}
             </DialogDescription>
           </DialogHeader>
           <DialogClose />

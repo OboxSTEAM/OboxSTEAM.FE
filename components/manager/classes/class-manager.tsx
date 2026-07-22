@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   completeClass,
+  createClass,
   getClasses,
   getPrograms,
   openClass,
@@ -185,8 +186,6 @@ export function ClassManager({
     setIsSubmitting(true);
     try {
       if (editingClass) {
-        // Preserve the class's assigned mentor — BE has no mentor-list API yet,
-        // so the form cannot reassign it.
         await updateClass(editingClass.id, {
           ...values,
           mentorId: editingClass.mentorId,
@@ -196,12 +195,11 @@ export function ClassManager({
           description: `Lớp ${values.name} đã được lưu.`,
         });
       } else {
-        // Blocked until BE ships a mentor-list API (create requires a real mentorId).
-        showAppErrorFromUnknown(
-          new Error("Missing mentor list API"),
-          "classes.create",
-        );
-        return;
+        await createClass(values);
+        showAppSuccess({
+          title: "Đã tạo lớp học",
+          description: `Lớp ${values.name} ở trạng thái Bản nháp. Mentor sẽ được gán sau khi duyệt yêu cầu.`,
+        });
       }
       setFormOpen(false);
       setEditingClass(null);
@@ -239,6 +237,8 @@ export function ClassManager({
   const columns: ColumnDef<Class>[] = [
     {
       header: "Lớp học",
+      sticky: "left",
+      className: "min-w-44 max-w-56",
       render: (classItem) => (
         <div className="min-w-0">
           <p className="truncate font-semibold text-[#2D2D2D]">
@@ -263,6 +263,33 @@ export function ClassManager({
       render: (classItem) => <ClassStatusBadge status={classItem.status} />,
     },
     {
+      header: "Mentor",
+      className: "w-44",
+      render: (classItem) => {
+        if (classItem.mentorId) {
+          return (
+            <span className="inline-flex items-center rounded-full border border-[#7CB342]/20 bg-[#7CB342]/15 px-2.5 py-0.5 text-xs font-semibold text-[#3d5c22]">
+              Đã gán
+            </span>
+          );
+        }
+
+        const pending = classItem.pendingMentorRequestCount ?? 0;
+        return (
+          <Link
+            href={`/manager/classes/${classItem.id}`}
+            className={
+              pending > 0
+                ? "inline-flex items-center rounded-full border border-[#4FC3F7]/25 bg-[#4FC3F7]/15 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[#0D6E9C] transition-colors hover:bg-[#4FC3F7]/25"
+                : "inline-flex items-center rounded-full border border-[#E5E5E0] bg-[#F5F5F0] px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[#6B6B6B] transition-colors hover:bg-[#EFEFEA]"
+            }
+          >
+            {pending} yêu cầu
+          </Link>
+        );
+      },
+    },
+    {
       header: "Sĩ số",
       className: "w-24 font-mono tabular-nums",
       render: (classItem) =>
@@ -280,6 +307,7 @@ export function ClassManager({
     },
     {
       header: "Thao tác",
+      sticky: "right",
       className: "w-44 text-right",
       render: (classItem) => {
         const next = getNextClassLifecycleAction(classItem.status);
@@ -394,9 +422,11 @@ export function ClassManager({
         >
           <Button
             type="button"
-            disabled
-            title="Tạm khóa: chờ backend bổ sung API danh sách Mentor để gán mentor cho lớp"
-            className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98] disabled:opacity-50"
+            onClick={() => {
+              setEditingClass(null);
+              setFormOpen(true);
+            }}
+            className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
           >
             <Plus className="size-4" />
             Tạo lớp
@@ -416,16 +446,18 @@ export function ClassManager({
             {embedded ? (
               <Button
                 type="button"
-                disabled
-                title="Tạm khóa: chờ backend bổ sung API danh sách Mentor để gán mentor cho lớp"
-                className="h-9 gap-2 rounded-lg bg-[#E94B3C] px-4 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98] disabled:opacity-50"
+                onClick={() => {
+                  setEditingClass(null);
+                  setFormOpen(true);
+                }}
+                className="h-9 gap-2 rounded-lg bg-[#E94B3C] px-4 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
               >
                 <Plus className="size-4" />
                 Tạo lớp
               </Button>
             ) : (
               <p className="hidden text-xs text-[#6B6B6B] sm:block">
-                Tạo lớp tạm khóa — chờ API danh sách Mentor từ backend
+                Mentor được gán bằng cách duyệt yêu cầu tại chi tiết lớp
               </p>
             )}
           </div>
@@ -450,7 +482,7 @@ export function ClassManager({
               setPage(1);
             }}
           />
-          <div className="overflow-x-auto p-6">
+          <div className="p-6">
             <ManagerDataTable
               columns={columns}
               data={classes}
@@ -464,7 +496,7 @@ export function ClassManager({
               emptyState={
                 <ManagerEmptyState
                   title="Chưa có lớp học phù hợp"
-                  description="Thử đổi bộ lọc. Tạo lớp đang tạm khóa cho đến khi backend bổ sung API danh sách Mentor."
+                  description="Thử đổi bộ lọc hoặc tạo lớp mới. Mentor sẽ được gán sau khi duyệt yêu cầu."
                   icon={UsersRound}
                 />
               }

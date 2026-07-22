@@ -405,6 +405,43 @@ export {
 } from "./classes";
 
 export {
+  approveClassMentorRequest,
+  createClassMentorRequest,
+  getClassMentorRequests,
+  getMentorBoard,
+  getMyClassMentorRequests,
+  rejectClassMentorRequest,
+  withdrawClassMentorRequest,
+  type ClassMentorRequest,
+  type ClassMentorRequestDecisionInput,
+  type ClassMentorRequestListQuery,
+  type ClassMentorRequestResponse,
+  type ClassMentorRequestResult,
+  type ClassMentorRequestStatus,
+  type CreateClassMentorRequestInput,
+  type GetClassMentorRequestsResponse,
+  type GetClassMentorRequestsResult,
+  type GetMentorBoardResponse,
+  type GetMentorBoardResult,
+  type MentorBoardClass,
+  type MentorBoardQuery,
+  type MyClassMentorRequestListQuery,
+  type WithdrawClassMentorRequestResponse,
+  type WithdrawClassMentorRequestResult,
+} from "./class-mentor-requests";
+
+export {
+  getMentorById,
+  type MentorAssignmentProfile,
+  type MentorResponse,
+  type MentorResult,
+  type MentorSkill,
+  type MentorSkillProficiency,
+} from "./mentors";
+
+export type { SkillCategory, SkillSummary } from "./entities/skill";
+
+export {
   completeActivity,
   getEnrollmentCurriculum,
   getEnrollmentCurriculumMindMap,

@@ -14,6 +14,7 @@ import {
   ClassFormDialog,
   type ClassFormSubmitPayload,
 } from "@/components/manager/classes/class-form-dialog";
+import { ClassMentorAssignmentPanel } from "@/components/manager/classes/class-mentor-assignment-panel";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
@@ -89,7 +90,6 @@ export function ClassDetail({ classId }: ClassDetailProps) {
     if (!classItem) return;
     setIsSubmitting(true);
     try {
-      // Preserve the class's assigned mentor — no mentor-list API to reassign yet.
       await updateClass(classItem.id, {
         ...values,
         mentorId: classItem.mentorId,
@@ -285,6 +285,13 @@ export function ClassDetail({ classId }: ClassDetailProps) {
             </div>
           ) : null}
         </section>
+
+        <ClassMentorAssignmentPanel
+          classId={classItem.id}
+          mentorId={classItem.mentorId}
+          requiredSkills={classItem.requiredSkills}
+          onChanged={retry}
+        />
 
         <section className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
           <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">

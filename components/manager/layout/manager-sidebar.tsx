@@ -324,7 +324,6 @@ export function ManagerSidebar() {
             { title: "Đăng ký học", url: "/manager/enrollments" },
             { title: "Đánh giá", url: "/manager/reviews" },
             { title: "Chuyên gia", url: "/manager/experts" },
-            { title: "Duyệt Mentor", url: "/manager/mentors" },
           ],
         },
       ],

@@ -123,6 +123,20 @@ export {
   type UpdateSessionAttendanceInput,
 } from "./classes";
 export {
+  classMentorRequestDecisionSchema,
+  classMentorRequestIdParamSchema,
+  classMentorRequestListQuerySchema,
+  createClassMentorRequestSchema,
+  mentorBoardQuerySchema,
+  myClassMentorRequestListQuerySchema,
+  type ClassMentorRequestDecisionInput,
+  type ClassMentorRequestIdParam,
+  type ClassMentorRequestListQuery,
+  type CreateClassMentorRequestInput,
+  type MentorBoardQuery,
+  type MyClassMentorRequestListQuery,
+} from "./class-mentor-requests";
+export {
   myProgramEnrollmentsQuerySchema,
   programEnrollmentSortBySchema,
   studentProgramEnrollmentsQuerySchema,

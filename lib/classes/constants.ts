@@ -33,6 +33,17 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
   Late: "Đi muộn",
 };
 
+export const CLASS_MENTOR_REQUEST_STATUS_LABELS = {
+  Pending: "Chờ duyệt",
+  Approved: "Đã duyệt",
+  Rejected: "Từ chối",
+  Withdrawn: "Đã rút",
+} as const;
+
+/** Note applied when auto-rejecting remaining pending requests after an approve. */
+export const AUTO_REJECT_AFTER_APPROVE_NOTE =
+  "Lớp đã được gán mentor khác.";
+
 export const OPEN_CLASSES_QUERY = {
   page: 1,
   pageSize: 50,

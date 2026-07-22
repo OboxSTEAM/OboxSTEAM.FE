@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
+import { getClassMentorRequests } from "@/lib/api/class-mentor-requests";
 import {
   classIdParamSchema,
   classListQuerySchema,
@@ -145,6 +146,7 @@ export type GetClassesOptions = {
 
 /**
  * List omits accurate SeatsTaken — fill from class detail for visible items.
+ * For unassigned classes, also resolve pending mentor request count.
  * @see catalog: GET /api/classes vs GET /api/classes/{id}
  */
 async function enrichClassesListWithSeatsTaken(
@@ -157,9 +159,38 @@ async function enrichClassesListWithSeatsTaken(
     page.items.map(async (item) => {
       try {
         const detail = await getClassById(item.id);
-        const seatsTaken = detail?.data?.seatsTaken;
-        if (typeof seatsTaken !== "number") return item;
-        return { ...item, seatsTaken };
+        const detailData = detail?.data;
+        if (!detailData) return item;
+
+        const mentorId = detailData.mentorId ?? item.mentorId;
+        let pendingMentorRequestCount =
+          detailData.pendingMentorRequestCount ??
+          item.pendingMentorRequestCount ??
+          0;
+
+        if (!mentorId) {
+          try {
+            const pending = await getClassMentorRequests({
+              classId: item.id,
+              status: "Pending",
+              page: 1,
+              pageSize: 1,
+            });
+            pendingMentorRequestCount = pending?.data?.totalCount ?? pendingMentorRequestCount;
+          } catch {
+            // Keep detail/list count if request list fails.
+          }
+        }
+
+        return {
+          ...item,
+          seatsTaken:
+            typeof detailData.seatsTaken === "number"
+              ? detailData.seatsTaken
+              : item.seatsTaken,
+          mentorId,
+          pendingMentorRequestCount,
+        };
       } catch {
         return item;
       }
