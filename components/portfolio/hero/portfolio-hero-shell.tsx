@@ -97,7 +97,7 @@ export function HeroAvatarFrame({
 }) {
   const sizeClass = cn(
     style.avatarClass,
-    compact && "h-20 w-20 sm:h-24 sm:w-24",
+    compact && "h-16 w-16 @min-[640px]/pf:h-24 @min-[640px]/pf:w-24",
   );
 
   const shapeClass =
@@ -137,7 +137,7 @@ export function HeroAvatarFrame({
     />
   ) : (
     <div
-      className="flex size-full items-center justify-center text-2xl font-bold sm:text-3xl"
+      className="flex size-full items-center justify-center text-xl font-bold @min-[640px]/pf:text-3xl"
       style={{
         background: `linear-gradient(145deg, ${primaryColor}, ${accentColor})`,
         color: textColor,
@@ -206,7 +206,7 @@ export function PortfolioHeroShell({
       ) : null}
       {style.decoration === "accent-block" ? (
         <div
-          className="pointer-events-none absolute -right-6 top-16 size-28 rounded-[2rem] opacity-40 sm:size-36"
+          className="pointer-events-none absolute -right-6 top-16 size-24 rounded-[2rem] opacity-40 @min-[640px]/pf:size-36"
           aria-hidden
           style={{
             background: `linear-gradient(145deg, ${secondaryColor}aa, ${accentColor}66)`,
@@ -263,8 +263,8 @@ export function PortfolioHeroCover({
   const style = getHeroStyle(slot);
   const bleed =
     slot === "Plain"
-      ? "-mx-5 -mt-5 mb-6 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8"
-      : "-mx-5 -mt-5 mb-5 sm:-mx-6 sm:-mt-6 lg:-mx-8 lg:-mt-8";
+      ? "-mx-4 -mt-4 mb-5 @min-[640px]/pf:-mx-6 @min-[640px]/pf:-mt-6 @min-[1024px]/pf:-mx-8 @min-[1024px]/pf:-mt-8 @min-[640px]/pf:mb-6"
+      : "-mx-4 -mt-4 mb-4 @min-[640px]/pf:-mx-6 @min-[640px]/pf:-mt-6 @min-[1024px]/pf:-mx-8 @min-[1024px]/pf:-mt-8 @min-[640px]/pf:mb-5";
 
   return (
     <div className={cn("relative", bleed)}>

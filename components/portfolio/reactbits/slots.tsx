@@ -171,7 +171,7 @@ export function PortfolioHeroText({
 
   if (!animate || slot === "Plain") {
     return (
-      <div className={cn("mt-3", className)}>
+      <div className={cn("mt-3 min-w-0", className)}>
         <p className={cn("font-heading", style.nameClass)}>{name}</p>
         {headline ? (
           <p className={cn(style.headlineClass, "opacity-90")}>{headline}</p>
@@ -181,12 +181,15 @@ export function PortfolioHeroText({
   }
 
   return (
-    <div className={cn("mt-3", className)}>
+    <div className={cn("mt-3 min-w-0", className)}>
       {slot === "SplitGradient" ? (
         <>
           <SplitText
             text={name}
-            className={cn("font-heading", style.nameClass)}
+            className={cn(
+              "font-heading !block w-full max-w-full",
+              style.nameClass,
+            )}
             delay={motion.splitText.delay}
             duration={motion.splitText.duration}
             ease={motion.splitText.ease}
@@ -206,15 +209,25 @@ export function PortfolioHeroText({
         </>
       ) : null}
       {slot === "TrueFocus" ? (
-        <TrueFocus
-          sentence={headline ? `${name} — ${headline}` : name}
-          manualMode={false}
-          blurAmount={motion.trueFocus.blurAmount}
-          borderColor={c0}
-          glowColor={`${c0}99`}
-          animationDuration={motion.trueFocus.animationDuration}
-          pauseBetweenAnimations={motion.trueFocus.pauseBetweenAnimations}
-        />
+        <>
+          <TrueFocus
+            sentence={name}
+            manualMode={false}
+            blurAmount={motion.trueFocus.blurAmount}
+            borderColor={c0}
+            glowColor={`${c0}99`}
+            animationDuration={motion.trueFocus.animationDuration}
+            pauseBetweenAnimations={motion.trueFocus.pauseBetweenAnimations}
+            className="!justify-start"
+            wordClassName={cn(
+              "relative cursor-pointer font-heading",
+              style.nameClass,
+            )}
+          />
+          {headline ? (
+            <p className={cn(style.headlineClass, "opacity-90")}>{headline}</p>
+          ) : null}
+        </>
       ) : null}
       {slot === "Decrypted" ? (
         <>
@@ -224,7 +237,7 @@ export function PortfolioHeroText({
             speed={motion.decrypted.speed}
             maxIterations={motion.decrypted.maxIterations}
             className={cn("font-heading", style.nameClass)}
-            parentClassName="font-heading"
+            parentClassName="font-heading block w-full max-w-full break-words"
           />
           {headline ? (
             <p className={style.headlineClass}>{headline}</p>
@@ -244,7 +257,7 @@ export function PortfolioHeroText({
               <ShinyText
                 text={headline}
                 speed={motion.shinyText.speed}
-                className="text-lg font-medium"
+                className="text-base font-medium @min-[640px]/pf:text-lg"
                 color={c0}
               />
             </div>
@@ -282,13 +295,13 @@ export function PortfolioCardShell({
           className: "ring-2",
           style: { boxShadow: `0 0 0 2px ${accentColor}` } as CSSProperties,
         }
-      : slot === "Tilted"
-        ? {
-            className: "origin-center sm:rotate-2",
-            style: {
-              boxShadow: `6px 10px 0 0 ${accentColor}33`,
-            } as CSSProperties,
-          }
+        : slot === "Tilted"
+          ? {
+              className: "origin-center @min-[640px]/pf:rotate-2",
+              style: {
+                boxShadow: `6px 10px 0 0 ${accentColor}33`,
+              } as CSSProperties,
+            }
         : slot === "Bounce"
           ? {
               className: "",
@@ -306,7 +319,7 @@ export function PortfolioCardShell({
   return (
     <div
       className={cn(
-        "relative z-[1] h-full min-w-0 overflow-hidden p-3.5 sm:p-5",
+        "relative z-[1] h-full min-w-0 overflow-hidden p-3.5 @min-[640px]/pf:p-5",
         radiusClass,
         surfaceClass,
         slotChrome.className,
@@ -444,7 +457,7 @@ export function PortfolioGallery({
     return (
       <div
         className={cn(
-          "h-[260px] w-full overflow-hidden rounded-xl sm:h-[320px] sm:rounded-2xl md:h-[380px]",
+          "h-[220px] w-full overflow-hidden rounded-xl @min-[640px]/pf:h-[320px] @min-[640px]/pf:rounded-2xl @min-[768px]/pf:h-[380px]",
           isEditable && "cursor-pointer",
           className,
         )}
@@ -492,8 +505,8 @@ export function PortfolioGallery({
     <div
       className={cn(
         slot === "Carousel"
-          ? "flex gap-2.5 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x sm:gap-3 [&::-webkit-scrollbar]:hidden"
-          : "grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3",
+          ? "flex gap-2.5 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x @min-[640px]/pf:gap-3 [&::-webkit-scrollbar]:hidden"
+          : "grid grid-cols-2 gap-2.5 @min-[640px]/pf:grid-cols-3 @min-[640px]/pf:gap-3",
         className,
       )}
     >
@@ -505,7 +518,8 @@ export function PortfolioGallery({
             key={`${image.src}-${index}`}
             className={cn(
               "min-w-0",
-              slot === "Carousel" && "w-[min(18rem,78vw)] shrink-0 snap-center sm:w-72",
+              slot === "Carousel" &&
+                "w-[min(16rem,78%)] shrink-0 snap-center @min-[640px]/pf:w-72",
             )}
           >
             <button
@@ -525,7 +539,7 @@ export function PortfolioGallery({
                 alt={caption}
                 className={cn(
                   "rounded-xl object-cover",
-                  slot === "Carousel" ? "h-40 w-full sm:h-48" : "aspect-square w-full",
+                  slot === "Carousel" ? "h-36 w-full @min-[640px]/pf:h-48" : "aspect-square w-full",
                 )}
               />
             </button>

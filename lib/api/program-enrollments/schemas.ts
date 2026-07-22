@@ -5,6 +5,7 @@ import {
   completeActivityDataSchema,
 } from "@/lib/api/entities/activity-progress";
 import { enrollmentCurriculumSchema } from "@/lib/api/entities/enrollment-curriculum";
+import { enrollmentCurriculumMindMapSchema } from "@/lib/api/entities/enrollment-curriculum-mind-map";
 import { moduleEnrollmentSchema } from "@/lib/api/entities/module-enrollment";
 import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import { programEnrollmentClassSchema } from "@/lib/api/entities/program-enrollment-class";
@@ -25,6 +26,10 @@ export const studentProgramEnrollmentsValueSchema = createApiValueSchema(
 
 export const enrollmentCurriculumValueSchema = createApiValueSchema(
   enrollmentCurriculumSchema,
+);
+
+export const enrollmentCurriculumMindMapValueSchema = createApiValueSchema(
+  enrollmentCurriculumMindMapSchema,
 );
 
 export const programEnrollmentClassValueSchema = createApiValueSchema(
@@ -53,6 +58,10 @@ export const getStudentProgramEnrollmentsResponseSchema = createApiResponseSchem
 
 export const getEnrollmentCurriculumResponseSchema = createApiResponseSchema(
   enrollmentCurriculumValueSchema,
+);
+
+export const getEnrollmentCurriculumMindMapResponseSchema = createApiResponseSchema(
+  enrollmentCurriculumMindMapValueSchema,
 );
 
 export const getProgramEnrollmentClassResponseSchema = createApiResponseSchema(
@@ -85,6 +94,12 @@ export type GetEnrollmentCurriculumResponse = z.infer<
   typeof getEnrollmentCurriculumResponseSchema
 >;
 export type GetEnrollmentCurriculumResult = GetEnrollmentCurriculumResponse["value"];
+
+export type GetEnrollmentCurriculumMindMapResponse = z.infer<
+  typeof getEnrollmentCurriculumMindMapResponseSchema
+>;
+export type GetEnrollmentCurriculumMindMapResult =
+  GetEnrollmentCurriculumMindMapResponse["value"];
 
 export type GetProgramEnrollmentClassResponse = z.infer<
   typeof getProgramEnrollmentClassResponseSchema
