@@ -156,7 +156,9 @@ export const classSessionFormSchema = z
     moduleId: z.string().uuid("Vui lòng chọn module."),
     activityId: z.string().optional(),
     assignmentId: z.string().optional(),
-    sessionKind: classSessionKindSchema.optional(),
+    sessionKind: z
+      .enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"])
+      .optional(),
     title: z
       .string()
       .min(1, "Tiêu đề buổi học không được để trống.")

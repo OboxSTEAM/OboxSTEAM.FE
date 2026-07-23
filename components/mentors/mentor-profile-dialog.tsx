@@ -16,12 +16,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useClientFetch } from "@/hooks/use-client-fetch";
-import type { SkillSummary } from "@/lib/api";
+import type { ClassMentorSummary, Mentor } from "@/lib/api/entities/mentor";
+import type { SkillSummary } from "@/lib/api/entities/skill";
 import { getMentorById } from "@/lib/api/mentors";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { getExpertAvatarUrl } from "@/lib/programs/format";
 
 export type MentorDialogPreview = {
   fullName?: string | null;
+  title?: string | null;
+  organization?: string | null;
   code?: string | null;
   status?: string | null;
   email?: string | null;
@@ -32,7 +36,10 @@ type MentorProfileDialogProps = {
   mentorId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  preview?: MentorDialogPreview | null;
+  preview?: MentorDialogPreview | Pick<
+    Mentor | ClassMentorSummary,
+    "fullName" | "title" | "organization" | "avatarUrl"
+  > & { code?: string | null } | null;
   requiredSkills?: SkillSummary[];
   requestMessage?: string | null;
 };
@@ -63,6 +70,10 @@ export function MentorProfileDialog({
     [onOpenChange],
   );
 
+  const previewAvatarUrl = preview
+    ? getExpertAvatarUrl(preview.avatarUrl)
+    : null;
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogPopup className="flex max-h-[min(90vh,44rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
@@ -70,7 +81,7 @@ export function MentorProfileDialog({
           <DialogClose className="top-4 right-4" />
           <DialogTitle className="text-lg">Thông tin mentor</DialogTitle>
           <DialogDescription className="sr-only">
-            Chi tiết hồ sơ mentor, liên hệ và kỹ năng.
+            Chi tiết mentor, tiểu sử, thành tựu và kỹ năng.
           </DialogDescription>
         </div>
 
@@ -94,26 +105,20 @@ export function MentorProfileDialog({
             preview ? (
               <div className="space-y-4">
                 <MentorProfilePreview
-                  fullName={preview.fullName || "Mentor"}
+                  fullName={preview.fullName?.trim() || "Mentor"}
+                  title={"title" in preview ? preview.title?.trim() || "" : ""}
+                  organization={
+                    "organization" in preview
+                      ? preview.organization?.trim() || ""
+                      : ""
+                  }
+                  avatarUrl={previewAvatarUrl}
                   code={preview.code}
-                  status={preview.status}
-                  email={preview.email}
-                  avatarUrl={preview.avatarUrl}
                 />
                 <MentorProfileSkeleton />
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="size-20 shrink-0 animate-pulse rounded-full bg-[#F5F5F0] sm:size-24" />
-                  <div className="flex-1 space-y-2 pt-1">
-                    <div className="h-5 w-48 animate-pulse rounded bg-[#F5F5F0]" />
-                    <div className="h-4 w-36 animate-pulse rounded bg-[#F5F5F0]" />
-                    <div className="h-4 w-28 animate-pulse rounded bg-[#F5F5F0]" />
-                  </div>
-                </div>
-                <MentorProfileSkeleton />
-              </div>
+              <MentorProfileSkeleton />
             )
           ) : data && data.id === mentorId ? (
             <MentorProfileContent

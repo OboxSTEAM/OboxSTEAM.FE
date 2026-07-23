@@ -42,6 +42,50 @@ export {
 } from "./experts";
 
 export {
+  addMyMentorSkill,
+  deleteMyMentorSkill,
+  getMentorById,
+  getMentors,
+  getMyMentorProfile,
+  getMyMentorSkills,
+  updateMentorClassLimit,
+  updateMyMentorProfile,
+  type AddMentorSkillInput,
+  type AddMyMentorSkillResponse,
+  type AddMyMentorSkillResult,
+  type ClassMentorSummary,
+  type DeleteMyMentorSkillResponse,
+  type DeleteMyMentorSkillResult,
+  type GetMentorByIdResponse,
+  type GetMentorByIdResult,
+  type GetMentorsResponse,
+  type GetMentorsResult,
+  type GetMyMentorProfileResponse,
+  type GetMyMentorProfileResult,
+  type GetMyMentorSkillsResponse,
+  type GetMyMentorSkillsResult,
+  type Mentor,
+  type MentorAssignmentProfile,
+  type MentorIdParam,
+  type MentorListQuery,
+  type MentorResponse,
+  type MentorResult,
+  type MentorRole,
+  type MentorSkill,
+  type MentorSkillIdParam,
+  type MentorSkillInfo,
+  type MentorSkillProficiency,
+  type MentorStatus,
+  type SkillProficiencyLevel,
+  type UpdateMentorClassLimitInput,
+  type UpdateMentorClassLimitResponse,
+  type UpdateMentorClassLimitResult,
+  type UpdateMentorProfileInput,
+  type UpdateMyMentorProfileResponse,
+  type UpdateMyMentorProfileResult,
+} from "./mentors";
+
+export {
   createProgram,
   deleteProgram,
   deleteProgramReview,
@@ -441,15 +485,6 @@ export {
   type WithdrawClassMentorRequestResponse,
   type WithdrawClassMentorRequestResult,
 } from "./class-mentor-requests";
-
-export {
-  getMentorById,
-  type MentorAssignmentProfile,
-  type MentorResponse,
-  type MentorResult,
-  type MentorSkill,
-  type MentorSkillProficiency,
-} from "./mentors";
 
 export type { SkillCategory, SkillSummary } from "./entities/skill";
 

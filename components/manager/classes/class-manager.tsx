@@ -188,7 +188,7 @@ export function ClassManager({
       if (editingClass) {
         await updateClass(editingClass.id, {
           ...values,
-          mentorId: editingClass.mentorId,
+          mentorId: editingClass.mentorId ?? undefined,
         });
         showAppSuccess({
           title: "Đã cập nhật lớp học",

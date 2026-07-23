@@ -9,17 +9,20 @@ import {
   getClassSessions,
   getClassWithStudents,
   getEnrollmentCurriculum,
+  getMentorById,
   getProgramEnrollmentClass,
-  getUserProfileById,
   type EnrollmentCurriculum,
+  type Mentor,
   type ProgramEnrollment,
-  type UserProfile,
 } from "@/lib/api";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLASS_SESSIONS_QUERY } from "@/lib/classes/constants";
 import { resolveActiveProgramEnrollment } from "@/lib/curriculum/active-enrollment";
 import { findFlatAssignment } from "@/lib/curriculum/assignment-helpers";
-import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
+import {
+  mentorFromClassSummary,
+  type CurriculumClassContext,
+} from "@/lib/curriculum/class-context";
 import {
   findFlatActivity,
   resolveInitialActivityId,
@@ -47,7 +50,7 @@ function LearnSkeleton() {
 function buildClassContext(
   classWithStudentsResult: Awaited<ReturnType<typeof getClassWithStudents>>,
   sessionsResult: Awaited<ReturnType<typeof getClassSessions>>,
-  mentor: UserProfile | null,
+  mentor: Mentor | null,
 ): CurriculumClassContext | null {
   const classWithStudents = classWithStudentsResult?.data;
   if (!classWithStudents) return null;
@@ -64,9 +67,9 @@ function buildClassContext(
   };
 }
 
-async function loadMentorProfile(mentorId: string): Promise<UserProfile | null> {
+async function loadMentorProfile(mentorId: string): Promise<Mentor | null> {
   try {
-    const result = await getUserProfileById(mentorId);
+    const result = await getMentorById(mentorId);
     return result?.data ?? null;
   } catch {
     return null;
@@ -143,13 +146,17 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       getClassSessions(classId, CLASS_SESSIONS_QUERY),
     ]);
 
-    const mentorId = classWithStudentsResult?.data?.mentorId;
-    const mentor = mentorId ? await loadMentorProfile(mentorId) : null;
+    const classData = classWithStudentsResult?.data;
+    const mentorId = classData?.mentorId ?? classData?.mentor?.id ?? null;
+    const embeddedMentor = classData?.mentor
+      ? mentorFromClassSummary(classData.mentor)
+      : null;
+    const fetchedMentor = mentorId ? await loadMentorProfile(mentorId) : null;
 
     const nextClassContext = buildClassContext(
       classWithStudentsResult,
       sessionsResult,
-      mentor,
+      fetchedMentor ?? embeddedMentor,
     );
     setClassContext(nextClassContext);
     return nextClassContext;

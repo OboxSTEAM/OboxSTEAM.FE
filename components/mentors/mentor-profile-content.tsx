@@ -2,31 +2,31 @@
 
 import type { ReactNode } from "react";
 import {
-  Briefcase,
+  Award,
   CheckCircle2,
-  Mail,
+  ExternalLink,
+  GraduationCap,
   MessageSquareText,
-  Phone,
   Sparkles,
   UserRound,
 } from "lucide-react";
 
+import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type {
-  MentorAssignmentProfile,
-  MentorSkillProficiency,
+  Mentor,
+  MentorSkill,
+  SkillCategory,
+  SkillProficiencyLevel,
 } from "@/lib/api/entities/mentor";
-import type { SkillSummary } from "@/lib/api";
+import type { SkillSummary } from "@/lib/api/entities/skill";
+import {
+  getExpertAvatarUrl,
+  getExpertInitials,
+} from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
-const PROFICIENCY_LABELS: Record<MentorSkillProficiency, string> = {
-  Beginner: "Cơ bản",
-  Intermediate: "Trung bình",
-  Advanced: "Nâng cao",
-  Expert: "Chuyên gia",
-};
-
-const CATEGORY_LABELS: Record<string, string> = {
+const SKILL_CATEGORY_LABELS: Record<SkillCategory, string> = {
   Science: "Science",
   Technology: "Technology",
   Engineering: "Engineering",
@@ -35,14 +35,34 @@ const CATEGORY_LABELS: Record<string, string> = {
   SoftSkill: "Soft skill",
 };
 
+const PROFICIENCY_LABELS: Record<SkillProficiencyLevel, string> = {
+  Beginner: "Cơ bản",
+  Intermediate: "Trung cấp",
+  Advanced: "Nâng cao",
+  Expert: "Chuyên gia",
+};
+
 export function getMentorInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "GV";
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(-2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
+  return getExpertInitials(name);
+}
+
+type MentorProfileContentProps = {
+  mentor: Mentor;
+  requiredSkills?: SkillSummary[];
+  requestMessage?: string | null;
+  className?: string;
+};
+
+function isUsableExternalUrl(url: string | null | undefined): boolean {
+  if (!url?.trim()) return false;
+
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function ProfileSection({
@@ -89,21 +109,22 @@ function ProfileSection({
 
 function MentorIdentityHeader({
   fullName,
+  title,
+  organization,
   code,
-  status,
-  email,
   avatarUrl,
+  linkedInUrl,
   className,
 }: {
   fullName: string;
+  title: string;
+  organization: string;
   code?: string | null;
-  status?: string | null;
-  email?: string | null;
-  avatarUrl?: string | null;
+  avatarUrl: string | null;
+  linkedInUrl?: string | null;
   className?: string;
 }) {
-  const statusLabel =
-    status === "Active" ? "Đang hoạt động" : status || "Mentor";
+  const hasLinkedIn = isUsableExternalUrl(linkedInUrl);
 
   return (
     <div className={cn("flex items-start gap-4", className)}>
@@ -114,30 +135,99 @@ function MentorIdentityHeader({
         </AvatarFallback>
       </Avatar>
 
-      <div className="min-w-0 flex-1 space-y-1">
-        <p className="font-heading text-lg font-bold leading-tight text-[#2D2D2D] sm:text-xl">
-          {fullName || "Mentor chưa đặt tên"}
-        </p>
-        <p className="text-sm font-medium text-[#4A4A4A]">{statusLabel}</p>
-        <p className="truncate text-sm text-[#6B6B6B]">
-          {email || "Chưa có email"}
-        </p>
-        {code ? (
-          <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B6B6B]/75">
-            {code}
+      <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <p className="font-heading text-lg font-bold leading-tight text-[#2D2D2D] sm:text-xl">
+            {fullName}
           </p>
+          {title ? (
+            <p className="text-sm font-medium text-[#4A4A4A]">{title}</p>
+          ) : null}
+          {organization ? (
+            <p className="text-sm text-[#6B6B6B]">{organization}</p>
+          ) : null}
+          {code ? (
+            <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B6B6B]/75">
+              {code}
+            </p>
+          ) : null}
+        </div>
+
+        {hasLinkedIn && linkedInUrl ? (
+          <a
+            href={linkedInUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={buttonVariants({
+              variant: "outline",
+              size: "sm",
+              className: "shrink-0 gap-1.5",
+            })}
+          >
+            LinkedIn
+            <ExternalLink className="size-3.5" aria-hidden />
+          </a>
         ) : null}
       </div>
     </div>
   );
 }
 
-type MentorProfileContentProps = {
-  mentor: MentorAssignmentProfile;
-  requiredSkills?: SkillSummary[];
-  requestMessage?: string | null;
-  className?: string;
-};
+function SkillList({
+  skills,
+  requiredSkillIds,
+}: {
+  skills: MentorSkill[];
+  requiredSkillIds: Set<string>;
+}) {
+  if (skills.length === 0) {
+    return (
+      <p className="text-sm text-[#6B6B6B]">Mentor chưa cập nhật kỹ năng.</p>
+    );
+  }
+
+  return (
+    <ul className="flex flex-wrap gap-2">
+      {skills.map((item) => {
+        const skillName =
+          item.skill?.name?.trim() || item.skill?.code || "Kỹ năng";
+        const category = item.skill?.category
+          ? SKILL_CATEGORY_LABELS[item.skill.category]
+          : null;
+        const isMatch = requiredSkillIds.has(item.skillId);
+
+        return (
+          <li
+            key={item.id}
+            className={cn(
+              "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5",
+              isMatch
+                ? "border-[#7CB342]/35 bg-[#7CB342]/10"
+                : "border-[#E5E5E0] bg-[#FAFAF5]",
+            )}
+          >
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 truncate text-sm font-medium",
+                isMatch ? "text-[#3d5c22]" : "text-[#2D2D2D]",
+              )}
+            >
+              {isMatch ? (
+                <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
+              ) : null}
+              {skillName}
+            </span>
+            <span className="truncate text-[11px] text-[#6B6B6B]">
+              {[category, PROFICIENCY_LABELS[item.proficiencyLevel]]
+                .filter(Boolean)
+                .join(" · ")}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 export function MentorProfileContent({
   mentor,
@@ -145,6 +235,14 @@ export function MentorProfileContent({
   requestMessage,
   className,
 }: MentorProfileContentProps) {
+  const displayName =
+    mentor.fullName?.trim() || mentor.email?.trim() || "Mentor";
+  const avatarUrl = getExpertAvatarUrl(mentor.avatarUrl);
+  const title = mentor.title?.trim() ?? "";
+  const organization = mentor.organization?.trim() ?? "";
+  const hasBio = Boolean(mentor.bio?.trim());
+  const hasAchievements = Boolean(mentor.achievements?.trim());
+
   const requiredSkillIds = new Set(requiredSkills.map((skill) => skill.id));
   const skills = [...(mentor.skills ?? [])].sort((left, right) => {
     const leftMatch = requiredSkillIds.has(left.skillId) ? 0 : 1;
@@ -158,52 +256,41 @@ export function MentorProfileContent({
     requiredSkillIds.has(item.skillId),
   ).length;
 
-  const hasPhone = Boolean(mentor.phone?.trim());
-  const hasEmail = Boolean(mentor.email?.trim());
-
   return (
     <div className={cn("space-y-4", className)}>
       <MentorIdentityHeader
-        fullName={mentor.fullName || "Mentor chưa đặt tên"}
+        fullName={displayName}
+        title={title}
+        organization={organization}
         code={mentor.code}
-        status={mentor.status}
-        email={mentor.email}
-        avatarUrl={mentor.avatarUrl}
+        avatarUrl={avatarUrl}
+        linkedInUrl={mentor.linkedInUrl}
       />
 
-      {(hasEmail || hasPhone) && (
+      {hasBio || hasAchievements ? (
         <div
           className={cn(
             "grid gap-4",
-            hasEmail && hasPhone && "sm:grid-cols-2",
+            hasBio && hasAchievements && "sm:grid-cols-2",
           )}
         >
-          {hasEmail ? (
-            <ProfileSection title="Email" icon={Mail}>
-              <p className="break-all text-sm leading-relaxed text-[#6B6B6B]">
-                {mentor.email}
+          {hasBio ? (
+            <ProfileSection title="Giới thiệu" icon={UserRound}>
+              <p className="text-sm leading-relaxed whitespace-pre-line text-[#6B6B6B]">
+                {mentor.bio}
               </p>
             </ProfileSection>
           ) : null}
-          {hasPhone ? (
-            <ProfileSection title="Số điện thoại" icon={Phone}>
+
+          {hasAchievements ? (
+            <ProfileSection title="Thành tựu" icon={Award} tone="highlight">
               <p className="text-sm leading-relaxed text-[#2D2D2D]">
-                {mentor.phone}
+                {mentor.achievements}
               </p>
             </ProfileSection>
           ) : null}
         </div>
-      )}
-
-      <ProfileSection title="Tải lớp" icon={Briefcase} tone="accent">
-        <p className="text-sm font-medium text-[#2D2D2D]">
-          {mentor.assignedClassCount} đang dạy
-          <span className="font-normal text-[#6B6B6B]">
-            {" "}
-            · {mentor.pendingRequestCount} chờ duyệt
-          </span>
-        </p>
-      </ProfileSection>
+      ) : null}
 
       {requestMessage ? (
         <ProfileSection title="Lời nhắn xin nhận lớp" icon={MessageSquareText}>
@@ -220,7 +307,7 @@ export function MentorProfileContent({
             : `Kỹ năng${skills.length ? ` · ${skills.length}` : ""}`
         }
         icon={Sparkles}
-        tone="highlight"
+        tone="accent"
       >
         {requiredSkills.length > 0 ? (
           <div className="mb-3 flex flex-wrap gap-1.5">
@@ -245,49 +332,19 @@ export function MentorProfileContent({
             })}
           </div>
         ) : null}
+        <SkillList skills={skills} requiredSkillIds={requiredSkillIds} />
+      </ProfileSection>
 
-        {skills.length === 0 ? (
-          <p className="text-sm text-[#6B6B6B]">
-            Mentor chưa cập nhật kỹ năng.
-          </p>
-        ) : (
-          <ul className="flex flex-wrap gap-x-4 gap-y-2">
-            {skills.map((item) => {
-              const isMatch = requiredSkillIds.has(item.skillId);
-              return (
-                <li key={item.id}>
-                  <div
-                    className={cn(
-                      "group inline-flex max-w-full flex-col rounded-md px-1.5 py-0.5 text-sm transition-colors",
-                      isMatch
-                        ? "bg-[#7CB342]/10"
-                        : "hover:bg-[#4FC3F7]/10",
-                    )}
-                  >
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 truncate font-medium",
-                        isMatch ? "text-[#3d5c22]" : "text-[#4FC3F7]",
-                      )}
-                    >
-                      {isMatch ? (
-                        <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
-                      ) : null}
-                      {item.skill?.name || item.skill?.code || "Skill"}
-                    </span>
-                    <span className="truncate text-xs text-[#6B6B6B]">
-                      {PROFICIENCY_LABELS[item.proficiencyLevel]}
-                      {" · "}
-                      {CATEGORY_LABELS[item.skill?.category ?? ""] ??
-                        item.skill?.category ??
-                        "—"}
-                    </span>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        )}
+      <ProfileSection title="Vai trò" icon={GraduationCap}>
+        <p className="text-sm font-medium text-[#2D2D2D]">
+          Mentor phụ trách lớp
+          {mentor.assignedClassCount > 0 ? (
+            <span className="font-normal text-[#6B6B6B]">
+              {" "}
+              · {mentor.assignedClassCount} lớp đang dạy
+            </span>
+          ) : null}
+        </p>
       </ProfileSection>
     </div>
   );
@@ -295,25 +352,25 @@ export function MentorProfileContent({
 
 export function MentorProfilePreview({
   fullName,
-  code,
-  status,
-  email,
+  title,
+  organization,
   avatarUrl,
+  code,
   className,
 }: {
   fullName: string;
+  title?: string;
+  organization?: string;
+  avatarUrl: string | null;
   code?: string | null;
-  status?: string | null;
-  email?: string | null;
-  avatarUrl?: string | null;
   className?: string;
 }) {
   return (
     <MentorIdentityHeader
       fullName={fullName}
+      title={title?.trim() || ""}
+      organization={organization?.trim() || ""}
       code={code}
-      status={status}
-      email={email}
       avatarUrl={avatarUrl}
       className={className}
     />
@@ -323,6 +380,14 @@ export function MentorProfilePreview({
 export function MentorProfileSkeleton() {
   return (
     <div className="space-y-4">
+      <div className="flex items-start gap-4">
+        <div className="size-20 shrink-0 animate-pulse rounded-full bg-[#F5F5F0] sm:size-24" />
+        <div className="flex-1 space-y-2 pt-1">
+          <div className="h-5 w-48 animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="h-4 w-36 animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="h-4 w-28 animate-pulse rounded bg-[#F5F5F0]" />
+        </div>
+      </div>
       <div className="border-t border-[#E5E5E0] pt-4">
         <div className="mb-2 flex items-center gap-2.5">
           <div className="size-7 animate-pulse rounded-full bg-[#F5F5F0]" />
@@ -332,13 +397,6 @@ export function MentorProfileSkeleton() {
           <div className="h-3.5 w-full animate-pulse rounded bg-[#F5F5F0]" />
           <div className="h-3.5 w-[90%] animate-pulse rounded bg-[#F5F5F0]" />
         </div>
-      </div>
-      <div className="border-t border-[#E5E5E0] pt-4">
-        <div className="mb-2 flex items-center gap-2.5">
-          <div className="size-7 animate-pulse rounded-full bg-[#F5F5F0]" />
-          <div className="h-4 w-20 animate-pulse rounded bg-[#F5F5F0]" />
-        </div>
-        <div className="h-3.5 w-48 animate-pulse rounded bg-[#F5F5F0]" />
       </div>
     </div>
   );
