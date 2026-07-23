@@ -18,8 +18,7 @@ export function SessionActivity({
   nextSession = null,
   className,
 }: SessionActivityProps) {
-  const isLive =
-    nextSession?.sessionKind === "LiveOnline" || activity.activityType === "LiveOnline";
+  const isLive = activity.activityType === "LiveOnline";
 
   // Schedule & location are owned by the class session (cohort), not the activity template.
   const startTime = nextSession?.startTime ?? null;

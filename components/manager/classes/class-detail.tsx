@@ -92,7 +92,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
     try {
       await updateClass(classItem.id, {
         ...values,
-        mentorId: classItem.mentorId,
+        mentorId: classItem.mentorId ?? undefined,
       });
       showAppSuccess({
         title: "Đã cập nhật lớp học",

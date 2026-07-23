@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { classSessionSchema } from "@/lib/api/entities/class-session";
 import { classStudentRosterSchema } from "@/lib/api/entities/class-student";
+import { classMentorSummarySchema } from "@/lib/api/entities/mentor";
 import { skillSummarySchema } from "@/lib/api/entities/skill";
 
 export const classStatusSchema = z.enum([
@@ -24,6 +25,7 @@ export const classSchema = z.object({
     .transform((value) => value ?? ""),
   programId: z.string().uuid(),
   mentorId: z.string().uuid().nullable(),
+  mentor: classMentorSummarySchema.nullable().optional(),
   startDate: z.string(),
   endDate: z.string(),
   maxCapacity: z.number().int(),

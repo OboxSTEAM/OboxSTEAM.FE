@@ -191,7 +191,7 @@ function SessionManagerInner() {
           values,
         );
         focusId = editingSession.id;
-        const nextSession = updated.data;
+        const nextSession = updated?.data;
         if (nextSession) {
           mutateSessions((prev) => {
             if (!prev?.data) return prev;
@@ -215,14 +215,14 @@ function SessionManagerInner() {
           classId,
           ...values,
         });
-        const nextSession = created.data;
+        const nextSession = created?.data;
         focusId = nextSession?.id ?? null;
         if (nextSession) {
           mutateSessions((prev) => {
             if (!prev?.data) {
               return {
-                code: created.code,
-                message: created.message,
+                code: created?.code ?? "OK",
+                message: created?.message ?? "",
                 data: {
                   items: [nextSession],
                   currentPage: 1,
