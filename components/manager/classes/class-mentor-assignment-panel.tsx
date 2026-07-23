@@ -10,7 +10,8 @@ import {
   X,
 } from "lucide-react";
 
-import { MentorQuickPreviewSheet } from "@/components/manager/classes/mentor-quick-preview-sheet";
+import { MentorProfileDialog } from "@/components/mentors/mentor-profile-dialog";
+import { getMentorInitials } from "@/components/mentors/mentor-profile-content";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,18 +43,13 @@ import { cn } from "@/lib/utils";
 
 const REQUEST_DRAG_TYPE = "application/x-obox-mentor-request";
 
-function getInitials(name: string | null | undefined): string {
-  if (!name?.trim()) return "GV";
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(-2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 type PreviewTarget = {
   mentorId: string;
+  fullName?: string | null;
+  code?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
+  status?: string | null;
   requestMessage?: string | null;
 };
 
@@ -100,7 +96,8 @@ export function ClassMentorAssignmentPanel({
     enabled: !!mentorId,
     fetcher: async () => {
       if (!mentorId) return null;
-      return getMentorById(mentorId);
+      const result = await getMentorById(mentorId);
+      return result?.data ?? null;
     },
     deps: [mentorId],
     onError: (error) => showAppErrorFromUnknown(error, "mentors.detail"),
@@ -116,7 +113,7 @@ export function ClassMentorAssignmentPanel({
       item.mentorId === mentorId,
   );
   const mentorDisplayName =
-    assignedMentor?.data?.fullName ||
+    assignedMentor?.fullName ||
     assignedFromRequest?.mentorName ||
     assignedFromRequest?.mentorCode ||
     null;
@@ -266,17 +263,26 @@ export function ClassMentorAssignmentPanel({
               <button
                 type="button"
                 onClick={() =>
-                  setPreviewTarget({ mentorId, requestMessage: null })
+                  setPreviewTarget({
+                    mentorId,
+                    fullName: mentorDisplayName,
+                    code:
+                      assignedMentor?.code || assignedFromRequest?.mentorCode,
+                    email: assignedMentor?.email,
+                    avatarUrl: assignedMentor?.avatarUrl,
+                    status: assignedMentor?.status,
+                    requestMessage: null,
+                  })
                 }
                 className="flex h-10 w-full items-center gap-2.5 rounded-lg px-1 text-left transition-colors hover:bg-[#FAFAF5]"
               >
                 <Avatar className="size-8 rounded-lg border border-[#E5E5E0]">
                   <AvatarImage
-                    src={assignedMentor?.data?.avatarUrl || undefined}
+                    src={assignedMentor?.avatarUrl || undefined}
                     alt=""
                   />
                   <AvatarFallback className="rounded-lg bg-[#7CB342]/15 text-[10px] font-bold text-[#3d5c22]">
-                    {getInitials(mentorDisplayName)}
+                    {getMentorInitials(mentorDisplayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
@@ -284,7 +290,7 @@ export function ClassMentorAssignmentPanel({
                     {mentorDisplayName || "Mentor đã gán"}
                   </p>
                   <p className="truncate font-mono text-[11px] text-[#6B6B6B]">
-                    {assignedMentor?.data?.code ||
+                    {assignedMentor?.code ||
                       assignedFromRequest?.mentorCode ||
                       "Đã gán"}
                   </p>
@@ -345,6 +351,8 @@ export function ClassMentorAssignmentPanel({
                         onClick={() =>
                           setPreviewTarget({
                             mentorId: request.mentorId,
+                            fullName: request.mentorName,
+                            code: request.mentorCode,
                             requestMessage: request.message,
                           })
                         }
@@ -352,7 +360,7 @@ export function ClassMentorAssignmentPanel({
                       >
                         <Avatar className="size-8 rounded-lg border border-[#E5E5E0]">
                           <AvatarFallback className="rounded-lg bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
-                            {getInitials(request.mentorName)}
+                            {getMentorInitials(request.mentorName)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
@@ -486,12 +494,23 @@ export function ClassMentorAssignmentPanel({
           </DialogFooter>
         </DialogPopup>
       </Dialog>
-      <MentorQuickPreviewSheet
+      <MentorProfileDialog
         mentorId={previewTarget?.mentorId ?? null}
         open={previewTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setPreviewTarget(null);
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) setPreviewTarget(null);
         }}
+        preview={
+          previewTarget
+            ? {
+                fullName: previewTarget.fullName,
+                code: previewTarget.code,
+                email: previewTarget.email,
+                avatarUrl: previewTarget.avatarUrl,
+                status: previewTarget.status,
+              }
+            : null
+        }
         requiredSkills={requiredSkills}
         requestMessage={previewTarget?.requestMessage}
       />
