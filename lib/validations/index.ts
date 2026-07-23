@@ -27,6 +27,20 @@ export {
   type UpdateExpertInput,
 } from "./experts";
 export {
+  addMentorSkillSchema,
+  mentorIdParamSchema,
+  mentorListQuerySchema,
+  mentorSkillIdParamSchema,
+  updateMentorClassLimitSchema,
+  updateMentorProfileSchema,
+  type AddMentorSkillInput,
+  type MentorIdParam,
+  type MentorListQuery,
+  type MentorSkillIdParam,
+  type UpdateMentorClassLimitInput,
+  type UpdateMentorProfileInput,
+} from "./mentors";
+export {
   activityIdParamSchema,
   courseIdParamSchema,
   moduleIdParamSchema,

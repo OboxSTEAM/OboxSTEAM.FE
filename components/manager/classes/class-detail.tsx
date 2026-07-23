@@ -89,10 +89,10 @@ export function ClassDetail({ classId }: ClassDetailProps) {
     if (!classItem) return;
     setIsSubmitting(true);
     try {
-      // Preserve the class's assigned mentor — no mentor-list API to reassign yet.
+      // Preserve the class's assigned mentor — no mentor-list UI to reassign yet.
       await updateClass(classItem.id, {
         ...values,
-        mentorId: classItem.mentorId,
+        mentorId: classItem.mentorId ?? undefined,
       });
       showAppSuccess({
         title: "Đã cập nhật lớp học",

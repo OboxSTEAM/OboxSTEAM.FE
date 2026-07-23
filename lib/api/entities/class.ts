@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { classSessionSchema } from "@/lib/api/entities/class-session";
 import { classStudentRosterSchema } from "@/lib/api/entities/class-student";
+import { classMentorSummarySchema } from "@/lib/api/entities/mentor";
 
 export const classStatusSchema = z.enum([
   "Draft",
@@ -16,7 +17,8 @@ export const classSchema = z.object({
   code: z.string(),
   name: z.string(),
   programId: z.string().uuid(),
-  mentorId: z.string().uuid(),
+  mentorId: z.string().uuid().nullable(),
+  mentor: classMentorSummarySchema.nullable().optional(),
   startDate: z.string(),
   endDate: z.string(),
   maxCapacity: z.number().int(),
@@ -37,7 +39,7 @@ export const classWithSessionsSchema = z.object({
   code: z.string(),
   name: z.string(),
   programId: z.string().uuid(),
-  mentorId: z.string().uuid(),
+  mentorId: z.string().uuid().nullable(),
   startDate: z.string(),
   endDate: z.string(),
   maxCapacity: z.number().int(),

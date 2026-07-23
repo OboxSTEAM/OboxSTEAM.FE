@@ -185,11 +185,10 @@ export function ClassManager({
     setIsSubmitting(true);
     try {
       if (editingClass) {
-        // Preserve the class's assigned mentor — BE has no mentor-list API yet,
-        // so the form cannot reassign it.
+        // Preserve the class's assigned mentor — form cannot reassign it yet.
         await updateClass(editingClass.id, {
           ...values,
-          mentorId: editingClass.mentorId,
+          mentorId: editingClass.mentorId ?? undefined,
         });
         showAppSuccess({
           title: "Đã cập nhật lớp học",
