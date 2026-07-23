@@ -265,6 +265,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Ngân hàng có thể đang được sử dụng hoặc không còn tồn tại.",
     action: "Tải lại và thử lại.",
   },
+  "curriculum.questionBank.questionDelete": {
+    title: "Không xóa được câu hỏi",
+    reason: "Câu hỏi không còn tồn tại hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại ngân hàng đề và thử lại.",
+  },
   "curriculum.questionBank.import": {
     title: "Không import được câu hỏi",
     reason: "Tệp CSV không hợp lệ hoặc máy chủ từ chối tải lên.",
@@ -410,6 +415,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "curriculum.questionBank.save",
   "curriculum.questionBank.delete",
   "curriculum.questionBank.import",
+  "curriculum.questionBank.questionDelete",
   "curriculum.node.delete",
 ]);
 

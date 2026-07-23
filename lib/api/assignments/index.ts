@@ -3,6 +3,7 @@ import { createApiPost } from "@/lib/api/create-endpoint";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   assignmentIdParamSchema,
+  assignmentListQuerySchema,
   createAssignmentSchema,
   saveQuizAnswersSchema,
   saveRetrospectiveDraftSchema,
@@ -10,6 +11,7 @@ import {
   submitQuizSchema,
   submitRetrospectiveSchema,
   updateAssignmentSchema,
+  type AssignmentListQuery,
 } from "@/lib/validations/assignments";
 import type {
   SaveQuizAnswersInput,
@@ -23,6 +25,7 @@ import {
   assignmentMutationValueSchema,
   deleteAssignmentResponseSchema,
   getAssignmentByIdResponseSchema,
+  getAssignmentsResponseSchema,
   getInProgressQuizResponseSchema,
   getQuizResultResponseSchema,
   getRetrospectiveSubmissionResponseSchema,
@@ -34,6 +37,7 @@ import {
   submitRetrospectiveResponseSchema,
   updateAssignmentResponseSchema,
   type GetAssignmentByIdResult,
+  type GetAssignmentsResult,
   type GetInProgressQuizResult,
   type GetQuizResultResult,
   type GetRetrospectiveSubmissionResult,
@@ -49,6 +53,8 @@ import {
 export type {
   GetAssignmentByIdResponse,
   GetAssignmentByIdResult,
+  GetAssignmentsResponse,
+  GetAssignmentsResult,
   GetInProgressQuizResponse,
   GetInProgressQuizResult,
   GetQuizResultResponse,
@@ -71,10 +77,13 @@ export type {
 
 export type {
   AssignmentDetail,
+  AssignmentListItem,
   AssignmentType,
   EnrollmentAssignmentStatus,
   EnrollmentCurriculumAssignment,
 } from "@/lib/api/entities/assignment";
+
+export type { AssignmentListQuery } from "@/lib/validations/assignments";
 
 export type {
   QuestionType,
@@ -117,6 +126,30 @@ function requireApiValue<T>(value: T | null): T {
     throw new ApiResponseError("Request failed.");
   }
   return value;
+}
+
+function buildAssignmentListQuery(params?: AssignmentListQuery): string {
+  if (!params) return "";
+  const parsed = assignmentListQuerySchema.parse(params);
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(parsed)) {
+    if (value !== undefined) searchParams.set(key, String(value));
+  }
+  const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
+
+/** `GET /api/assignments` — paginated list with program/module context. */
+export async function getAssignments(
+  params?: AssignmentListQuery,
+): Promise<GetAssignmentsResult> {
+  const response = await apiFetchParsed(
+    `${ASSIGNMENTS_BASE}${buildAssignmentListQuery(params)}`,
+    getAssignmentsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
 }
 
 /** `POST /api/assignments` — create an assignment (Manager/SuperAdmin). */

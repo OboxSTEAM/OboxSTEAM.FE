@@ -63,6 +63,7 @@ import {
   deleteActivity,
   deleteAssignment,
   getAssignmentById,
+  getAssignments,
   getMaterialByActivityId,
   deleteResearchMilestone,
   getResearchMilestoneById,
@@ -74,6 +75,7 @@ import {
   type Activity as ActivityType,
   type ActivityMaterial,
   type AssignmentDetail,
+  type AssignmentListItem,
   type ResearchMilestone,
 } from "@/lib/api";
 import {
@@ -1535,23 +1537,68 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
   } | null>(null);
 
   /**
-   * Assignments created/edited this session, keyed by moduleId. The backend has no
-   * "list assignments by module" endpoint yet (see plan.md), so the tree can only
-   * surface assignments the manager touched in this session.
+   * Assignments keyed by moduleId — loaded from `GET /api/assignments?moduleId=`.
    */
   const [sessionAssignments, setSessionAssignments] = useState<
-    Record<string, AssignmentDetail[]>
+    Record<string, AssignmentListItem[]>
   >({});
 
-  const upsertSessionAssignment = useCallback((assignment: AssignmentDetail) => {
-    setSessionAssignments((prev) => {
-      const list = prev[assignment.moduleId] ?? [];
-      const next = list.some((a) => a.id === assignment.id)
-        ? list.map((a) => (a.id === assignment.id ? assignment : a))
-        : [...list, assignment];
-      return { ...prev, [assignment.moduleId]: next };
+  const moduleIdsKey = modules.map((m) => m.id).join(",");
+
+  useEffect(() => {
+    if (!moduleIdsKey) return;
+    const ids = moduleIdsKey.split(",");
+    let active = true;
+    ids.forEach((mid) => {
+      getAssignments({ moduleId: mid, page: 1, pageSize: 100 })
+        .then((res) => {
+          if (active) {
+            setSessionAssignments((prev) => ({
+              ...prev,
+              [mid]: res?.data?.items ?? [],
+            }));
+          }
+        })
+        .catch(() => {
+          /* module may have no assignments yet — ignore */
+        });
     });
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [moduleIdsKey]);
+
+  const upsertSessionAssignment = useCallback(
+    (assignment: AssignmentDetail) => {
+      const mod = modules.find((m) => m.id === assignment.moduleId);
+      const item: AssignmentListItem = {
+        id: assignment.id,
+        code: assignment.code,
+        title: assignment.title,
+        assignmentType: assignment.assignmentType,
+        moduleId: assignment.moduleId,
+        courseId: assignment.courseId,
+        maxPoints: assignment.maxPoints,
+        passScore: assignment.passScore,
+        dueDate: assignment.dueDate,
+        questionBankId: assignment.questionBankId,
+        questionCount: assignment.questionCount,
+        moduleName: mod?.name ?? null,
+        programId: program.id,
+        programName: program.name,
+        createdAt: assignment.createdAt,
+        updatedAt: assignment.updatedAt,
+      };
+      setSessionAssignments((prev) => {
+        const list = prev[assignment.moduleId] ?? [];
+        const next = list.some((a) => a.id === assignment.id)
+          ? list.map((a) => (a.id === assignment.id ? item : a))
+          : [...list, item];
+        return { ...prev, [assignment.moduleId]: next };
+      });
+    },
+    [modules, program.id, program.name],
+  );
 
   const removeSessionAssignment = useCallback((moduleId: string, id: string) => {
     setSessionAssignments((prev) => {
@@ -1909,15 +1956,13 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
     if (sel.kind === "assignment") {
       const mod = modules.find((m) => m.id === sel.moduleId);
       const courseOptions = (mod?.courses ?? []).map((c) => ({ id: c.id, name: c.name }));
-      const fromSession =
-        (sessionAssignments[sel.moduleId] ?? []).find((a) => a.id === sel.id) ?? null;
       return (
         <AssignmentDetailLoader
           key={sel.id}
           assignmentId={sel.id}
           moduleId={sel.moduleId}
           courseOptions={courseOptions}
-          initial={fromSession}
+          initial={null}
           onSuccess={upsertSessionAssignment}
         />
       );
@@ -2127,14 +2172,14 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                   }
                   kind="assignment"
                   selected={sel?.kind === "assignment" && sel.id === asg.id}
-                  label={asg.title}
+                  label={asg.title ?? "Không tiêu đề"}
                   meta={ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ?? asg.assignmentType}
                   onSelect={() => select({ kind: "assignment", id: asg.id, moduleId: mod.id })}
                   onDelete={() =>
                     setDelTarget({
                       type: "assignment",
                       id: asg.id,
-                      name: asg.title,
+                      name: asg.title ?? "Bài tập",
                       moduleId: mod.id,
                     })
                   }

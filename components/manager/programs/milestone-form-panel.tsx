@@ -490,13 +490,16 @@ function MilestoneActivityLinker({
       {options.length > 0 ? (
         <div className="flex items-end gap-2">
           <div className="min-w-0 flex-1">
-            <Select value={picked} onValueChange={(v) => setPicked(v ?? "")}>
+            <Select value={picked || "none"} onValueChange={(v) => setPicked(!v || v === "none" ? "" : v)}>
               <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg")} style={{ borderColor: W.border }}>
                 <span className="truncate">
                   {picked ? options.find((o) => o.id === picked)?.name ?? "Chọn hoạt động" : "Chọn hoạt động"}
                 </span>
               </SelectTrigger>
               <SelectContent className={LIGHT_SELECT_CONTENT}>
+                <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
+                  Chọn hoạt động
+                </SelectItem>
                 {options.map((o) => (
                   <SelectItem key={o.id} value={o.id} className={LIGHT_SELECT_ITEM}>
                     {o.name}

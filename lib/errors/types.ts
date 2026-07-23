@@ -67,6 +67,7 @@ export type AppErrorContext =
   | "curriculum.questionBank.save"
   | "curriculum.questionBank.delete"
   | "curriculum.questionBank.import"
+  | "curriculum.questionBank.questionDelete"
   | "curriculum.node.delete"
   | "payments.checkout"
   | "payments.detail"

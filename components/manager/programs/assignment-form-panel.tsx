@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClipboardList, Check, Save } from "lucide-react";
@@ -21,8 +21,10 @@ import {
 } from "@/components/programs/program-select-styles";
 import {
   createAssignment,
+  getQuestionBanks,
   updateAssignment,
   type AssignmentDetail,
+  type QuestionBankListItem,
 } from "@/lib/api";
 import {
   createAssignmentSchema,
@@ -200,7 +202,30 @@ export function AssignmentFormPanel({
   });
 
   const assignmentType = watch("assignmentType");
+  const selectedCourseId = watch("courseId");
   const isQuiz = assignmentType === "Quiz";
+  const bankCourseId =
+    selectedCourseId && selectedCourseId !== NO_COURSE ? selectedCourseId : "";
+
+  const [banks, setBanks] = useState<QuestionBankListItem[]>([]);
+
+  useEffect(() => {
+    if (!bankCourseId) {
+      setBanks([]);
+      return;
+    }
+    let active = true;
+    getQuestionBanks({ courseId: bankCourseId, page: 1, pageSize: 100 })
+      .then((res) => {
+        if (active) setBanks(res?.data?.items ?? []);
+      })
+      .catch(() => {
+        if (active) setBanks([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [bankCourseId]);
 
   const onSubmit = async (data: FormValues) => {
     setBusy(true);
@@ -421,16 +446,72 @@ export function AssignmentFormPanel({
             <div className="grid grid-cols-2 gap-4">
               <div className="col-span-2 space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                  ID ngân hàng câu hỏi
-                  <span className="text-xs font-normal" style={{ color: W.muted }}> (UUID)</span>
+                  Ngân hàng câu hỏi
                 </Label>
-                <input
-                  type="text"
-                  placeholder="Dán ID ngân hàng câu hỏi (chưa có API danh sách)"
-                  {...register("questionBankId")}
-                  className={cn(IN, "font-mono")}
-                  style={{ borderColor: W.border }}
-                />
+                {!bankCourseId ? (
+                  <p className="text-xs" style={{ color: W.muted }}>
+                    Chọn khóa học ở trên để tải danh sách ngân hàng đề.
+                  </p>
+                ) : (
+                  <Controller
+                    name="questionBankId"
+                    control={control}
+                    render={({ field }) => {
+                      const known = banks.some((b) => b.id === field.value);
+                      const selectValue = field.value || "none";
+                      return (
+                      <Select
+                        value={selectValue}
+                        onValueChange={(v) =>
+                          field.onChange(!v || v === "none" ? "" : v)
+                        }
+                      >
+                        <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "w-full")}>
+                          <span className="truncate">
+                            {banks.find((b) => b.id === field.value)?.name ||
+                              (field.value
+                                ? `ID: ${field.value.slice(0, 8)}…`
+                                : "Chọn ngân hàng đề")}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent className={LIGHT_SELECT_CONTENT}>
+                          <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
+                            Chọn ngân hàng đề
+                          </SelectItem>
+                          {field.value && !known ? (
+                            <SelectItem
+                              value={field.value}
+                              className={LIGHT_SELECT_ITEM}
+                            >
+                              ID đã lưu: {field.value.slice(0, 8)}…
+                            </SelectItem>
+                          ) : null}
+                          {banks.map((bank) => (
+                            <SelectItem
+                              key={bank.id}
+                              value={bank.id}
+                              className={LIGHT_SELECT_ITEM}
+                            >
+                              {bank.name || "Không tên"}
+                              {bank.questionCount
+                                ? ` (${bank.questionCount} câu)`
+                                : ""}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      );
+                    }}
+                  />
+                )}
+                {watch("questionBankId") &&
+                  bankCourseId &&
+                  !banks.some((b) => b.id === watch("questionBankId")) && (
+                    <p className="text-[11px]" style={{ color: W.muted }}>
+                      Đang dùng ID đã lưu trên bài tập (không có trong cache trình
+                      duyệt). Vẫn gửi được khi cập nhật.
+                    </p>
+                  )}
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Số câu hỏi</Label>

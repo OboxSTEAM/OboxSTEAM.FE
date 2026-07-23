@@ -75,7 +75,7 @@
       {
         "path": "/api/assignments/{assignmentId}",
         "method": "put",
-        "description": "Updates an assignment by its ID. Requires SuperAdmin or Manager role."
+        "description": "Updates an assignment by its ID. Managers/SuperAdmins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach."
       },
       {
         "path": "/api/assignments/{assignmentId}",
@@ -284,6 +284,20 @@
       {
         "path": "/api/class-mentor-requests/{id}/reject",
         "method": "post"
+      },
+      {
+        "path": "/api/assignments/{assignmentId}/classes/{classId}/quiz-set/pull",
+        "method": "post",
+        "description": "Draws questions from the assignment's question bank into a class-scoped editable copy. Re-pull replaces any prior unlocked set."
+      },
+      {
+        "path": "/api/assignments/{assignmentId}/classes/{classId}/quiz-set",
+        "method": "get"
+      },
+      {
+        "path": "/api/assignments/{assignmentId}/classes/{classId}/quiz-set/questions/{questionId}",
+        "method": "put",
+        "description": "Edits the class-scoped copy only. Locked after any student submission exists for this assignment in the class."
       },
       {
         "path": "/api/classes/{classId}/sessions",
@@ -504,6 +518,15 @@
         "path": "/api/media/{mediaId}/process-tags",
         "method": "post",
         "description": "Submits a new Rekognition face-search job on the transcoded video output, restarts label detection, then polls once for results. Returns 202 while VideoStatus is PendingTagging; call again until TaggingComplete."
+      },
+      {
+        "path": "/api/mentors/me/profile",
+        "method": "get"
+      },
+      {
+        "path": "/api/mentors/me/profile",
+        "method": "put",
+        "description": "Partial update of Title, Organization, Bio, Achievements, and LinkedInUrl. FullName/Phone/Avatar stay on account endpoints."
       },
       {
         "path": "/api/mentors/me/skills",
@@ -1182,6 +1205,27 @@
         "name": "ClassMentorRequestResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassQuizQuestionOptionResponseDto"
+      },
+      {
+        "name": "ClassQuizQuestionResponseDto"
+      },
+      {
+        "name": "ClassQuizQuestionResponseDtoApiResult"
+      },
+      {
+        "name": "ClassQuizQuestionResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassQuizQuestionSetResponseDto"
+      },
+      {
+        "name": "ClassQuizQuestionSetResponseDtoApiResult"
+      },
+      {
+        "name": "ClassQuizQuestionSetResponseDtoResponseDataContent"
+      },
+      {
         "name": "ClassResponseDto"
       },
       {
@@ -1645,6 +1689,9 @@
       },
       {
         "name": "MentorSkillDtoResponseDataContent"
+      },
+      {
+        "name": "MentorSummaryDto"
       },
       {
         "name": "ModuleEnrollmentResponseDto"
@@ -2136,6 +2183,12 @@
         "name": "UpdateClassEnrollmentRequestDto"
       },
       {
+        "name": "UpdateClassQuizQuestionOptionRequestDto"
+      },
+      {
+        "name": "UpdateClassQuizQuestionRequestDto"
+      },
+      {
         "name": "UpdateClassRequestDto"
       },
       {
@@ -2152,6 +2205,9 @@
       },
       {
         "name": "UpdateMentorClassLimitRequestDto"
+      },
+      {
+        "name": "UpdateMentorProfileRequestDto"
       },
       {
         "name": "UpdateMilestoneActivityLinkRequestDto"

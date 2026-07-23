@@ -18,6 +18,19 @@ export const createQuestionBankSchema = z.object({
   description: z.string().nullable().optional(),
 });
 
+/** Query params for `GET /api/question-banks`. */
+export const questionBankListQuerySchema = z.object({
+  search: z.string().optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).optional(),
+  courseId: z.string().uuid().optional(),
+  programId: z.string().uuid().optional(),
+  moduleId: z.string().uuid().optional(),
+});
+
 export type QuestionBankIdParam = z.infer<typeof questionBankIdParamSchema>;
 export type BankQuestionParam = z.infer<typeof bankQuestionParamSchema>;
 export type CreateQuestionBankInput = z.infer<typeof createQuestionBankSchema>;
+export type QuestionBankListQuery = z.infer<typeof questionBankListQuerySchema>;
