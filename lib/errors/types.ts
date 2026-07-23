@@ -75,6 +75,7 @@ export type AppErrorContext =
   | "payments.request-parent"
   | "payments.parent-checkout"
   | "enrollments.list"
+  | "dashboard.load"
   | "research.upload"
   | "research.submit"
   | "portfolio.load"

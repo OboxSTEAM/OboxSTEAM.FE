@@ -310,6 +310,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
   },
+  "dashboard.load": {
+    title: "Không tải được dashboard",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại trang sau vài giây.",
+  },
   "research.upload": {
     title: "Không tải lên được tệp",
     reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",

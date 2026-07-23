@@ -250,3 +250,9 @@ export {
   type SubmitResearchSubmissionInput,
   type UploadResearchSubmissionQuery,
 } from "./research-submissions";
+export {
+  dashboardQuerySchema,
+  dashboardRangeSchema,
+  type DashboardQuery,
+  type DashboardRange,
+} from "./dashboard";
