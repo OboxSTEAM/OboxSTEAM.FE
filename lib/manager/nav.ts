@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LayoutGrid,
   Layers,
-  Star,
   Target,
   Upload,
   UserCheck,
@@ -100,21 +99,6 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         label: "Điểm danh",
         href: "/manager/attendance",
         icon: CheckSquare,
-      },
-    ],
-  },
-  {
-    title: "Vận hành",
-    items: [
-      {
-        label: "Đăng ký học",
-        href: "/manager/enrollments",
-        icon: ClipboardList,
-      },
-      {
-        label: "Đánh giá",
-        href: "/manager/reviews",
-        icon: Star,
       },
       {
         label: "Chuyên gia",

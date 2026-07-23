@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 import { MentorQuickPreviewSheet } from "@/components/manager/classes/mentor-quick-preview-sheet";
-import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,7 +37,6 @@ import {
   AUTO_REJECT_AFTER_APPROVE_NOTE,
   CLASS_MENTOR_REQUEST_STATUS_LABELS,
 } from "@/lib/classes/constants";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -122,6 +120,10 @@ export function ClassMentorAssignmentPanel({
     assignedFromRequest?.mentorName ||
     assignedFromRequest?.mentorCode ||
     null;
+
+  const showPendingSection = !mentorId;
+  const showHistory =
+    showPendingSection && historyRequests.length > 0 && pendingRequests.length === 0;
 
   async function rejectRemainingPending(
     approvedId: string,
@@ -226,249 +228,189 @@ export function ClassMentorAssignmentPanel({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-      <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">
+      <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-4 py-2.5">
         <p className="flex items-center gap-2 text-sm font-semibold text-[#2D2D2D]">
           <UserRound className="size-4 text-[#E94B3C]" />
           Mentor lớp
         </p>
-        <p className="font-mono text-xs text-[#6B6B6B]">
-          {pendingRequests.length} chờ duyệt
-        </p>
+        {showPendingSection && pendingRequests.length > 0 ? (
+          <p className="font-mono text-[11px] text-[#6B6B6B]">
+            {pendingRequests.length} chờ duyệt
+          </p>
+        ) : null}
       </div>
 
-      <div className="grid gap-6 p-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+      <div className="p-2">
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           className={cn(
-            "flex min-h-44 flex-col justify-center rounded-2xl border-2 border-dashed p-5 transition-colors",
-            mentorId
-              ? "border-[#7CB342]/35 bg-[#7CB342]/5"
-              : isDropActive
-                ? "border-[#E94B3C] bg-[#E94B3C]/8"
-                : "border-[#D8D8D2] bg-[#FAFAF5]/80",
+            "rounded-xl px-2 py-1.5 transition-colors",
+            !mentorId &&
+              (isDropActive
+                ? "bg-[#E94B3C]/8 ring-1 ring-[#E94B3C]/40"
+                : "ring-1 ring-dashed ring-[#D8D8D2]"),
           )}
         >
           {mentorId ? (
             isMentorLoading && !mentorDisplayName ? (
-              <div className="flex items-center gap-3">
-                <Skeleton className="size-12 rounded-full" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-36" />
-                  <Skeleton className="h-3 w-24" />
+              <div className="flex h-10 items-center gap-2.5 px-1">
+                <Skeleton className="size-8 rounded-lg" />
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3.5 w-28" />
+                  <Skeleton className="h-2.5 w-16" />
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <Avatar className="size-12 border border-[#E5E5E0]">
+              <button
+                type="button"
+                onClick={() =>
+                  setPreviewTarget({ mentorId, requestMessage: null })
+                }
+                className="flex h-10 w-full items-center gap-2.5 rounded-lg px-1 text-left transition-colors hover:bg-[#FAFAF5]"
+              >
+                <Avatar className="size-8 rounded-lg border border-[#E5E5E0]">
                   <AvatarImage
                     src={assignedMentor?.data?.avatarUrl || undefined}
                     alt=""
                   />
-                  <AvatarFallback className="bg-[#7CB342]/15 text-xs font-bold text-[#3d5c22]">
+                  <AvatarFallback className="rounded-lg bg-[#7CB342]/15 text-[10px] font-bold text-[#3d5c22]">
                     {getInitials(mentorDisplayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
-                    Đã gán mentor
-                  </p>
-                  <p className="truncate font-semibold text-[#2D2D2D]">
+                  <p className="truncate text-sm font-semibold text-[#2D2D2D]">
                     {mentorDisplayName || "Mentor đã gán"}
                   </p>
-                  {assignedMentor?.data?.email ? (
-                    <p className="truncate text-xs text-[#6B6B6B]">
-                      {assignedMentor.data.email}
-                    </p>
-                  ) : null}
-                  <p className="mt-1 text-xs text-[#3d5c22]">
-                    {assignedMentor?.data?.skills.length ?? 0} kỹ năng
+                  <p className="truncate font-mono text-[11px] text-[#6B6B6B]">
+                    {assignedMentor?.data?.code ||
+                      assignedFromRequest?.mentorCode ||
+                      "Đã gán"}
                   </p>
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPreviewTarget({ mentorId, requestMessage: null })
-                  }
-                  className="h-9 shrink-0 gap-1.5 rounded-lg border-[#E5E5E0]"
-                >
-                  <Eye className="size-3.5" />
-                  Xem
-                </Button>
-              </div>
+                <Eye
+                  className="size-3.5 shrink-0 text-[#8A8A84]"
+                  aria-hidden
+                />
+                <span className="sr-only">Xem hồ sơ mentor</span>
+              </button>
             )
           ) : (
-            <div className="text-center">
-              <div className="mx-auto mb-3 flex size-12 items-center justify-center rounded-full bg-[#E94B3C]/10 text-[#E94B3C]">
-                <Inbox className="size-5" />
+            <div className="flex h-10 items-center gap-2.5 px-1 text-[#6B6B6B]">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-[#FAFAF5] ring-1 ring-[#E5E5E0]">
+                <Inbox className="size-3.5 text-[#B0B0A8]" />
               </div>
-              <p className="font-semibold text-[#2D2D2D]">Chưa có mentor</p>
-              <p className="mt-1 text-sm text-[#6B6B6B]">
-                Kéo một yêu cầu bên phải vào đây để duyệt, hoặc bấm Duyệt trên
-                từng thẻ.
-              </p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-medium text-[#2D2D2D]">
+                  Chưa có mentor
+                </p>
+                <p className="truncate text-[11px] text-[#8A8A84]">
+                  {pendingRequests.length > 0
+                    ? "Kéo yêu cầu vào đây hoặc bấm Duyệt"
+                    : "Chờ mentor xin nhận lớp"}
+                </p>
+              </div>
             </div>
           )}
         </div>
 
-        <div className="space-y-4">
-          <div>
-            <h3 className="text-sm font-semibold text-[#2D2D2D]">
-              Yêu cầu chờ duyệt
-            </h3>
-            <p className="mt-0.5 text-xs text-[#6B6B6B]">
-              Duyệt một mentor sẽ tự từ chối các yêu cầu còn lại của lớp này.
-            </p>
-          </div>
-
-          {isRequestsLoading && pendingRequests.length === 0 ? (
-            <div className="space-y-3">
-              <Skeleton className="h-24 w-full rounded-xl" />
-              <Skeleton className="h-24 w-full rounded-xl" />
-            </div>
-          ) : pendingRequests.length === 0 ? (
-            <ManagerEmptyState
-              title={
-                mentorId
-                  ? "Không còn yêu cầu chờ duyệt"
-                  : "Chưa có mentor xin nhận lớp"
-              }
-              description={
-                mentorId
-                  ? "Lớp đã có mentor. Yêu cầu mới sẽ không còn ở trạng thái chờ."
-                  : "Khi mentor gửi yêu cầu, thẻ sẽ xuất hiện tại đây để bạn duyệt."
-              }
-              icon={Inbox}
-            />
-          ) : (
-            <ul className="space-y-3">
-              {pendingRequests.map((request) => (
-                <li key={request.id}>
-                  <article
-                    draggable={!mentorId && !isBusy}
-                    onDragStart={(event) => handleDragStart(event, request)}
-                    onDragEnd={handleDragEnd}
-                    className={cn(
-                      "rounded-xl border border-[#E5E5E0] bg-white p-4 transition-shadow",
-                      !mentorId && !isBusy
-                        ? "cursor-grab active:cursor-grabbing hover:shadow-[0_6px_18px_rgba(45,45,45,0.06)]"
-                        : "opacity-70",
-                      draggingId === request.id && "opacity-50",
-                    )}
-                  >
-                    <div className="flex items-start gap-3">
-                      {!mentorId ? (
-                        <GripVertical
-                          className="mt-1 size-4 shrink-0 text-[#B0B0A8]"
-                          aria-hidden
-                        />
-                      ) : null}
-                      <Avatar className="size-10 border border-[#E5E5E0]">
-                        <AvatarFallback className="bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
-                          {getInitials(request.mentorName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setPreviewTarget({
-                              mentorId: request.mentorId,
-                              requestMessage: request.message,
-                            })
-                          }
-                          className="group block w-full min-w-0 text-left"
-                        >
-                          <p className="truncate font-semibold text-[#2D2D2D] group-hover:text-[#0D6E9C]">
-                            {request.mentorName || "Mentor chưa đặt tên"}
-                          </p>
-                          <p className="font-mono text-xs text-[#6B6B6B]">
-                            {request.mentorCode || "—"}
-                          </p>
-                        </button>
-                        {request.message ? (
-                          <p className="mt-2 line-clamp-2 text-sm text-[#4A4A4A]">
-                            {request.message}
-                          </p>
-                        ) : null}
-                        <p className="mt-2 text-[11px] text-[#8A8A84]">
-                          Gửi lúc{" "}
-                          {formatApiDateTimeDisplay(request.createdAt) || "—"}
-                        </p>
-                      </div>
-                      <Button
+        {showPendingSection ? (
+          <div className="mt-1">
+            {isRequestsLoading && pendingRequests.length === 0 ? (
+              <div className="space-y-1 px-1 py-1">
+                <Skeleton className="h-10 w-full rounded-lg" />
+                <Skeleton className="h-10 w-full rounded-lg" />
+              </div>
+            ) : pendingRequests.length > 0 ? (
+              <ul className="space-y-0.5">
+                {pendingRequests.map((request) => (
+                  <li key={request.id}>
+                    <div
+                      draggable={!isBusy}
+                      onDragStart={(event) => handleDragStart(event, request)}
+                      onDragEnd={handleDragEnd}
+                      className={cn(
+                        "group flex items-center gap-1 rounded-lg px-1 py-1 transition-colors hover:bg-[#FAFAF5]",
+                        !isBusy && "cursor-grab active:cursor-grabbing",
+                        draggingId === request.id && "opacity-50",
+                      )}
+                    >
+                      <GripVertical
+                        className="size-3.5 shrink-0 text-[#D0D0C8] opacity-0 transition-opacity group-hover:opacity-100"
+                        aria-hidden
+                      />
+                      <button
                         type="button"
-                        variant="ghost"
-                        size="icon"
                         onClick={() =>
                           setPreviewTarget({
                             mentorId: request.mentorId,
                             requestMessage: request.message,
                           })
                         }
-                        aria-label={`Xem hồ sơ ${request.mentorName || "mentor"}`}
-                        className="size-9 shrink-0 rounded-lg text-[#6B6B6B] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
+                        className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                       >
-                        <Eye className="size-4" />
-                      </Button>
-                    </div>
-                    {!mentorId ? (
-                      <div className="mt-3 flex justify-end gap-2">
+                        <Avatar className="size-8 rounded-lg border border-[#E5E5E0]">
+                          <AvatarFallback className="rounded-lg bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
+                            {getInitials(request.mentorName)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium text-[#2D2D2D]">
+                            {request.mentorName || "Mentor chưa đặt tên"}
+                          </p>
+                          <p className="truncate font-mono text-[11px] text-[#6B6B6B]">
+                            {request.mentorCode || "—"}
+                            {request.message ? " · có lời nhắn" : ""}
+                          </p>
+                        </div>
+                      </button>
+                      <div className="flex shrink-0 items-center gap-0.5">
                         <Button
                           type="button"
-                          variant="outline"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
                           disabled={isBusy}
                           onClick={() => {
                             setRejectNote("");
                             setRejectTarget(request);
                           }}
-                          className="h-9 gap-1.5 rounded-lg border-[#E5E5E0] text-[#a82a1e] hover:bg-[#E94B3C]/8"
+                          aria-label={`Từ chối ${request.mentorName || "mentor"}`}
+                          className="size-7 rounded-md text-[#a82a1e] hover:bg-[#E94B3C]/10 hover:text-[#a82a1e]"
                         >
                           <X className="size-3.5" />
-                          Từ chối
                         </Button>
                         <Button
                           type="button"
-                          size="sm"
+                          variant="ghost"
+                          size="icon"
                           disabled={isBusy}
                           onClick={() => handleApprove(request)}
-                          className="h-9 gap-1.5 rounded-lg bg-[#7CB342] px-3 font-semibold text-white hover:bg-[#6BA338]"
+                          aria-label={`Duyệt ${request.mentorName || "mentor"}`}
+                          className="size-7 rounded-md text-[#3d5c22] hover:bg-[#7CB342]/15 hover:text-[#3d5c22]"
                         >
                           <Check className="size-3.5" />
-                          Duyệt
                         </Button>
                       </div>
-                    ) : null}
-                  </article>
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {historyRequests.length > 0 ? (
-            <div className="border-t border-[#ECECE7] pt-4">
-              <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-[#6B6B6B]">
-                Lịch sử gần đây
-              </h4>
-              <ul className="space-y-2">
-                {historyRequests.slice(0, 5).map((request) => (
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : showHistory ? (
+              <ul className="space-y-0.5 px-1">
+                {historyRequests.slice(0, 3).map((request) => (
                   <li
                     key={request.id}
-                    className="flex items-center justify-between gap-3 rounded-lg bg-[#FAFAF5] px-3 py-2 text-sm"
+                    className="flex h-8 items-center justify-between gap-2 rounded-lg px-2 text-xs text-[#6B6B6B]"
                   >
-                    <span className="truncate text-[#2D2D2D]">
+                    <span className="truncate">
                       {request.mentorName || request.mentorCode || "Mentor"}
                     </span>
                     <span
                       className={cn(
-                        "shrink-0 text-xs font-semibold",
+                        "shrink-0 font-medium",
                         request.status === "Approved" && "text-[#3d5c22]",
                         request.status === "Rejected" && "text-[#a82a1e]",
-                        request.status === "Withdrawn" && "text-[#6B6B6B]",
                       )}
                     >
                       {CLASS_MENTOR_REQUEST_STATUS_LABELS[request.status]}
@@ -476,9 +418,13 @@ export function ClassMentorAssignmentPanel({
                   </li>
                 ))}
               </ul>
-            </div>
-          ) : null}
-        </div>
+            ) : !isRequestsLoading ? (
+              <p className="px-3 py-2 text-[11px] text-[#8A8A84]">
+                Chưa có yêu cầu xin nhận lớp
+              </p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <Dialog

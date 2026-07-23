@@ -127,10 +127,12 @@ const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
 };
 
+/** Smooth sibling swaps without bounce — high damping spring. */
 const STRUCTURE_DRAG_TRANSITION = {
-  type: "tween" as const,
-  duration: 0.15,
-  ease: "easeOut" as const,
+  type: "spring" as const,
+  stiffness: 520,
+  damping: 42,
+  mass: 0.7,
 };
 
 /* ─── Selected node ─────────────────────────────────────────────────────────── */
@@ -1240,7 +1242,15 @@ function StructureTreeRow({
         layout="position"
         transition={STRUCTURE_DRAG_TRANSITION}
         onDragEnd={onReorderDragEnd}
+        whileDrag={{
+          zIndex: 30,
+          scale: 1.01,
+          boxShadow: "0 10px 28px rgba(45, 45, 45, 0.12)",
+          borderRadius: 10,
+          backgroundColor: "rgba(250, 250, 245, 0.96)",
+        }}
         className="relative list-none"
+        style={{ position: "relative" }}
       >
         {body}
       </Reorder.Item>
@@ -1345,7 +1355,7 @@ function CourseActivityRows({
       moduleId?: string;
     } | null>
   >;
-  onReorder: (courseId: string, orderedIds: string[]) => void;
+  onReorder: (courseId: string, orderedIds: string[]) => void | Promise<void>;
 }) {
   const acts = useMemo(
     () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
@@ -1362,10 +1372,11 @@ function CourseActivityRows({
 
   return (
     <Reorder.Group
+      as="div"
       axis="y"
       values={reorder.values}
       onReorder={reorder.onReorder}
-      className="contents"
+      className="relative"
     >
       {orderedActs.map((act, aIdx) => {
         const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
@@ -1622,6 +1633,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         onRefresh();
       } catch (err) {
         showAppErrorFromUnknown(err, "curriculum.module.save");
+        throw err;
       }
     },
     [modules, onRefresh],
@@ -1650,6 +1662,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         onRefresh();
       } catch (err) {
         showAppErrorFromUnknown(err, "curriculum.activity.save");
+        throw err;
       }
     },
     [modules, onRefresh],
@@ -1972,10 +1985,11 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         addLabel="Thêm Module"
       >
         <Reorder.Group
+          as="div"
           axis="y"
           values={moduleReorder.values}
           onReorder={moduleReorder.onReorder}
-          className="contents"
+          className="relative"
         >
           {orderedModules.map((mod, mIdx) => {
           const courses = [...(mod.courses || [])];

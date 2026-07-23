@@ -11,7 +11,6 @@ import {
   ChevronsUpDown,
   LayoutDashboard,
   LogOut,
-  Settings2,
   Users,
   User,
   Sparkles,
@@ -314,15 +313,6 @@ export function ManagerSidebar() {
             { title: "Lớp học", url: "/manager/classes" },
             { title: "Lịch học", url: "/manager/sessions" },
             { title: "Điểm danh", url: "/manager/attendance" },
-          ],
-        },
-        {
-          title: "Vận hành",
-          url: "/manager/enrollments",
-          icon: Settings2,
-          items: [
-            { title: "Đăng ký học", url: "/manager/enrollments" },
-            { title: "Đánh giá", url: "/manager/reviews" },
             { title: "Chuyên gia", url: "/manager/experts" },
           ],
         },
