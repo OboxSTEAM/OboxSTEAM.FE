@@ -5,14 +5,18 @@ import {
   bankQuestionParamSchema,
   createQuestionBankSchema,
   questionBankIdParamSchema,
+  questionBankListQuerySchema,
+  type QuestionBankListQuery,
 } from "@/lib/validations/question-banks";
 
 import {
   deleteQuestionBankResponseSchema,
   getQuestionBankResponseSchema,
+  getQuestionBanksResponseSchema,
   importQuestionsResponseSchema,
   questionBankValueSchema,
   type GetQuestionBankResult,
+  type GetQuestionBanksResult,
   type ImportQuestionsResult,
 } from "./schemas";
 
@@ -21,15 +25,25 @@ export type {
   CreateQuestionBankResult,
   GetQuestionBankResponse,
   GetQuestionBankResult,
+  GetQuestionBanksResponse,
+  GetQuestionBanksResult,
   ImportQuestionsResponse,
   ImportQuestionsResult,
   ImportRowError,
 } from "./schemas";
 
-export type { QuestionBank } from "@/lib/api/entities/question-bank";
+export type {
+  BankQuestion,
+  BankQuestionOption,
+} from "@/lib/api/entities/bank-question";
+export type {
+  QuestionBank,
+  QuestionBankListItem,
+} from "@/lib/api/entities/question-bank";
 export type {
   CreateQuestionBankInput,
   QuestionBankIdParam,
+  QuestionBankListQuery,
 } from "@/lib/validations/question-banks";
 
 const QUESTION_BANKS_BASE = "/api/question-banks";
@@ -39,6 +53,30 @@ function requireApiValue<T>(value: T | null): T {
     throw new ApiResponseError("Request failed.");
   }
   return value;
+}
+
+function buildQuestionBankListQuery(params?: QuestionBankListQuery): string {
+  if (!params) return "";
+  const parsed = questionBankListQuerySchema.parse(params);
+  const searchParams = new URLSearchParams();
+  for (const [key, value] of Object.entries(parsed)) {
+    if (value !== undefined) searchParams.set(key, String(value));
+  }
+  const query = searchParams.toString();
+  return query ? `?${query}` : "";
+}
+
+/** `GET /api/question-banks` — paginated list with program/module/course context. */
+export async function getQuestionBanks(
+  params?: QuestionBankListQuery,
+): Promise<GetQuestionBanksResult> {
+  const response = await apiFetchParsed(
+    `${QUESTION_BANKS_BASE}${buildQuestionBankListQuery(params)}`,
+    getQuestionBanksResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
 }
 
 /** `POST /api/question-banks` — create a question bank for a course. */

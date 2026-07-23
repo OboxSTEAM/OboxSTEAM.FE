@@ -3,8 +3,10 @@
 import type { ReactNode } from "react";
 import {
   Award,
+  CheckCircle2,
   ExternalLink,
   GraduationCap,
+  MessageSquareText,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -17,6 +19,7 @@ import type {
   SkillCategory,
   SkillProficiencyLevel,
 } from "@/lib/api/entities/mentor";
+import type { SkillSummary } from "@/lib/api/entities/skill";
 import {
   getExpertAvatarUrl,
   getExpertInitials,
@@ -39,8 +42,15 @@ const PROFICIENCY_LABELS: Record<SkillProficiencyLevel, string> = {
   Expert: "Chuyên gia",
 };
 
+export function getMentorInitials(name: string | null | undefined): string {
+  if (!name?.trim()) return "GV";
+  return getExpertInitials(name);
+}
+
 type MentorProfileContentProps = {
   mentor: Mentor;
+  requiredSkills?: SkillSummary[];
+  requestMessage?: string | null;
   className?: string;
 };
 
@@ -121,7 +131,7 @@ function MentorIdentityHeader({
       <Avatar className="size-20 shrink-0 ring-2 ring-[#E5E5E0] sm:size-24">
         {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
         <AvatarFallback className="bg-[#F5F5F0] text-lg font-semibold text-[#6B6B6B]">
-          {getExpertInitials(fullName)}
+          {getMentorInitials(fullName)}
         </AvatarFallback>
       </Avatar>
 
@@ -163,30 +173,52 @@ function MentorIdentityHeader({
   );
 }
 
-function SkillList({ skills }: { skills: MentorSkill[] }) {
-  if (skills.length === 0) return null;
+function SkillList({
+  skills,
+  requiredSkillIds,
+}: {
+  skills: MentorSkill[];
+  requiredSkillIds: Set<string>;
+}) {
+  if (skills.length === 0) {
+    return (
+      <p className="text-sm text-[#6B6B6B]">Mentor chưa cập nhật kỹ năng.</p>
+    );
+  }
 
   return (
     <ul className="flex flex-wrap gap-2">
       {skills.map((item) => {
-        const skillName = item.skill?.name?.trim() || item.skill?.code || "Kỹ năng";
+        const skillName =
+          item.skill?.name?.trim() || item.skill?.code || "Kỹ năng";
         const category = item.skill?.category
           ? SKILL_CATEGORY_LABELS[item.skill.category]
           : null;
+        const isMatch = requiredSkillIds.has(item.skillId);
 
         return (
           <li
             key={item.id}
-            className="inline-flex max-w-full flex-col rounded-lg border border-[#E5E5E0] bg-[#FAFAF5] px-2.5 py-1.5"
+            className={cn(
+              "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5",
+              isMatch
+                ? "border-[#7CB342]/35 bg-[#7CB342]/10"
+                : "border-[#E5E5E0] bg-[#FAFAF5]",
+            )}
           >
-            <span className="truncate text-sm font-medium text-[#2D2D2D]">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1 truncate text-sm font-medium",
+                isMatch ? "text-[#3d5c22]" : "text-[#2D2D2D]",
+              )}
+            >
+              {isMatch ? (
+                <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
+              ) : null}
               {skillName}
             </span>
             <span className="truncate text-[11px] text-[#6B6B6B]">
-              {[
-                category,
-                PROFICIENCY_LABELS[item.proficiencyLevel],
-              ]
+              {[category, PROFICIENCY_LABELS[item.proficiencyLevel]]
                 .filter(Boolean)
                 .join(" · ")}
             </span>
@@ -199,6 +231,8 @@ function SkillList({ skills }: { skills: MentorSkill[] }) {
 
 export function MentorProfileContent({
   mentor,
+  requiredSkills = [],
+  requestMessage,
   className,
 }: MentorProfileContentProps) {
   const displayName =
@@ -208,7 +242,19 @@ export function MentorProfileContent({
   const organization = mentor.organization?.trim() ?? "";
   const hasBio = Boolean(mentor.bio?.trim());
   const hasAchievements = Boolean(mentor.achievements?.trim());
-  const skills = mentor.skills ?? [];
+
+  const requiredSkillIds = new Set(requiredSkills.map((skill) => skill.id));
+  const skills = [...(mentor.skills ?? [])].sort((left, right) => {
+    const leftMatch = requiredSkillIds.has(left.skillId) ? 0 : 1;
+    const rightMatch = requiredSkillIds.has(right.skillId) ? 0 : 1;
+    if (leftMatch !== rightMatch) return leftMatch - rightMatch;
+    const leftName = left.skill?.name || left.skill?.code || "";
+    const rightName = right.skill?.name || right.skill?.code || "";
+    return leftName.localeCompare(rightName, "vi");
+  });
+  const matchedCount = skills.filter((item) =>
+    requiredSkillIds.has(item.skillId),
+  ).length;
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -246,15 +292,58 @@ export function MentorProfileContent({
         </div>
       ) : null}
 
-      {skills.length > 0 ? (
-        <ProfileSection title="Kỹ năng" icon={Sparkles} tone="accent">
-          <SkillList skills={skills} />
+      {requestMessage ? (
+        <ProfileSection title="Lời nhắn xin nhận lớp" icon={MessageSquareText}>
+          <p className="text-sm leading-relaxed whitespace-pre-line text-[#6B6B6B]">
+            {requestMessage}
+          </p>
         </ProfileSection>
       ) : null}
+
+      <ProfileSection
+        title={
+          requiredSkills.length > 0
+            ? `Kỹ năng · ${matchedCount}/${requiredSkills.length} khớp lớp`
+            : `Kỹ năng${skills.length ? ` · ${skills.length}` : ""}`
+        }
+        icon={Sparkles}
+        tone="accent"
+      >
+        {requiredSkills.length > 0 ? (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {requiredSkills.map((skill) => {
+              const matched = skills.some((item) => item.skillId === skill.id);
+              return (
+                <span
+                  key={skill.id}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
+                    matched
+                      ? "bg-[#7CB342]/12 text-[#3d5c22]"
+                      : "bg-[#F5F5F0] text-[#6B6B6B]",
+                  )}
+                >
+                  {matched ? (
+                    <CheckCircle2 className="size-3" aria-hidden />
+                  ) : null}
+                  {skill.name || skill.code || "Skill"}
+                </span>
+              );
+            })}
+          </div>
+        ) : null}
+        <SkillList skills={skills} requiredSkillIds={requiredSkillIds} />
+      </ProfileSection>
 
       <ProfileSection title="Vai trò" icon={GraduationCap}>
         <p className="text-sm font-medium text-[#2D2D2D]">
           Mentor phụ trách lớp
+          {mentor.assignedClassCount > 0 ? (
+            <span className="font-normal text-[#6B6B6B]">
+              {" "}
+              · {mentor.assignedClassCount} lớp đang dạy
+            </span>
+          ) : null}
         </p>
       </ProfileSection>
     </div>
@@ -270,8 +359,8 @@ export function MentorProfilePreview({
   className,
 }: {
   fullName: string;
-  title: string;
-  organization: string;
+  title?: string;
+  organization?: string;
   avatarUrl: string | null;
   code?: string | null;
   className?: string;
@@ -279,8 +368,8 @@ export function MentorProfilePreview({
   return (
     <MentorIdentityHeader
       fullName={fullName}
-      title={title}
-      organization={organization}
+      title={title?.trim() || ""}
+      organization={organization?.trim() || ""}
       code={code}
       avatarUrl={avatarUrl}
       className={className}

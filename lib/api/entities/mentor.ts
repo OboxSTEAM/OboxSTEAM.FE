@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+import {
+  skillCategorySchema,
+  skillSummarySchema,
+} from "@/lib/api/entities/skill";
+
+export { skillCategorySchema, skillSummarySchema };
+
 export const mentorRoleSchema = z.enum([
   "SuperAdmin",
   "Manager",
@@ -10,15 +17,6 @@ export const mentorRoleSchema = z.enum([
 
 export const mentorStatusSchema = z.enum(["Active", "Locked"]);
 
-export const skillCategorySchema = z.enum([
-  "Science",
-  "Technology",
-  "Engineering",
-  "Arts",
-  "Math",
-  "SoftSkill",
-]);
-
 export const skillProficiencyLevelSchema = z.enum([
   "Beginner",
   "Intermediate",
@@ -26,21 +24,18 @@ export const skillProficiencyLevelSchema = z.enum([
   "Expert",
 ]);
 
-/** Skill catalog row nested under mentor skill links. */
-export const mentorSkillInfoSchema = z.object({
-  id: z.string().uuid(),
-  code: z.string().nullable(),
-  name: z.string().nullable(),
-  category: skillCategorySchema,
-  subcategory: z.string().nullable(),
-});
+/** @deprecated Prefer `skillProficiencyLevelSchema` — alias for manager callers. */
+export const mentorSkillProficiencySchema = skillProficiencyLevelSchema;
+
+/** @deprecated Prefer `skillSummarySchema` — identical shape. */
+export const mentorSkillInfoSchema = skillSummarySchema;
 
 /** Mentor ↔ skill assignment (`GET/POST /api/mentors/.../skills`). */
 export const mentorSkillSchema = z.object({
   id: z.string().uuid(),
   mentorId: z.string().uuid(),
   skillId: z.string().uuid(),
-  skill: mentorSkillInfoSchema.nullable().optional(),
+  skill: skillSummarySchema.nullable().optional(),
   proficiencyLevel: skillProficiencyLevelSchema,
   notes: z.string().nullable(),
   createdAt: z.string(),
@@ -78,6 +73,9 @@ export const mentorSchema = z.object({
     .transform((value) => value ?? []),
 });
 
+/** Alias used by manager mentor-assignment flows — same DTO as `mentorSchema`. */
+export const mentorAssignmentProfileSchema = mentorSchema;
+
 /**
  * Compact mentor embedded on `GET /api/classes/with-students/{classId}`.
  * Missing `code` / `email` — use `GET /api/mentors/{id}` for the full row.
@@ -97,7 +95,9 @@ export type MentorRole = z.infer<typeof mentorRoleSchema>;
 export type MentorStatus = z.infer<typeof mentorStatusSchema>;
 export type SkillCategory = z.infer<typeof skillCategorySchema>;
 export type SkillProficiencyLevel = z.infer<typeof skillProficiencyLevelSchema>;
+export type MentorSkillProficiency = SkillProficiencyLevel;
 export type MentorSkillInfo = z.infer<typeof mentorSkillInfoSchema>;
 export type MentorSkill = z.infer<typeof mentorSkillSchema>;
 export type Mentor = z.infer<typeof mentorSchema>;
+export type MentorAssignmentProfile = Mentor;
 export type ClassMentorSummary = z.infer<typeof classMentorSummarySchema>;

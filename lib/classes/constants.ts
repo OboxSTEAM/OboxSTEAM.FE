@@ -13,7 +13,6 @@ export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
 
 export const CLASS_SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
   Lesson: "Buổi học",
-  LiveOnline: "Trực tuyến",
   FieldTrip: "Thực địa",
   AssignmentWindow: "Bài tập",
   MentorCheckIn: "Gặp mentor",
@@ -33,6 +32,17 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
   Excused: "Có phép",
   Late: "Đi muộn",
 };
+
+export const CLASS_MENTOR_REQUEST_STATUS_LABELS = {
+  Pending: "Chờ duyệt",
+  Approved: "Đã duyệt",
+  Rejected: "Từ chối",
+  Withdrawn: "Đã rút",
+} as const;
+
+/** Note applied when auto-rejecting remaining pending requests after an approve. */
+export const AUTO_REJECT_AFTER_APPROVE_NOTE =
+  "Lớp đã được gán mentor khác.";
 
 export const OPEN_CLASSES_QUERY = {
   page: 1,

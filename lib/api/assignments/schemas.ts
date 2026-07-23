@@ -1,6 +1,10 @@
 import { z } from "zod";
 
-import { assignmentDetailSchema } from "@/lib/api/entities/assignment";
+import {
+  assignmentDetailSchema,
+  assignmentListItemSchema,
+} from "@/lib/api/entities/assignment";
+import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import {
   quizAttemptSchema,
   quizResultSchema,
@@ -13,6 +17,12 @@ import {
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
 export const assignmentDetailValueSchema = createApiValueSchema(assignmentDetailSchema);
+
+export const paginatedAssignmentsSchema = createPaginatedSchema(assignmentListItemSchema);
+export const assignmentsListValueSchema = createApiValueSchema(paginatedAssignmentsSchema);
+export const getAssignmentsResponseSchema = createApiResponseSchema(
+  assignmentsListValueSchema,
+);
 
 /* ─── Manager CRUD ─────────────────────────────────────────────────────────── */
 export const assignmentMutationValueSchema = createApiValueSchema(assignmentDetailSchema);
@@ -28,6 +38,9 @@ export type CreateAssignmentResponse = z.infer<typeof createAssignmentResponseSc
 export type CreateAssignmentResult = CreateAssignmentResponse["value"];
 export type UpdateAssignmentResponse = z.infer<typeof updateAssignmentResponseSchema>;
 export type UpdateAssignmentResult = UpdateAssignmentResponse["value"];
+
+export type GetAssignmentsResponse = z.infer<typeof getAssignmentsResponseSchema>;
+export type GetAssignmentsResult = GetAssignmentsResponse["value"];
 
 export const quizAttemptValueSchema = createApiValueSchema(quizAttemptSchema);
 

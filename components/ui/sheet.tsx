@@ -19,7 +19,9 @@ function SheetBackdrop({ className, ...props }: DialogPrimitive.Backdrop.Props) 
     <DialogPrimitive.Backdrop
       data-slot="sheet-backdrop"
       className={cn(
-        "fixed inset-0 z-50 bg-black/40 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
+        "fixed inset-0 z-50 bg-black/40 transition-opacity duration-300 ease-out",
+        "data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
+        "motion-reduce:transition-none",
         className,
       )}
       {...props}
@@ -47,8 +49,8 @@ function SheetPopup({
           data-slot="sheet-popup"
           className={cn(
             "relative z-50 flex h-full w-[min(20rem,88vw)] flex-col border-[#E5E5E0] bg-white shadow-xl outline-none",
+            "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
             side === "left" ? "border-r" : "border-l",
-            "data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
             side === "left"
               ? "data-[ending-style]:-translate-x-full data-[starting-style]:-translate-x-full"
               : "data-[ending-style]:translate-x-full data-[starting-style]:translate-x-full",

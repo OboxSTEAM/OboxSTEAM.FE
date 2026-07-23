@@ -18,12 +18,12 @@ export function SessionActivity({
   nextSession = null,
   className,
 }: SessionActivityProps) {
-  const isLive =
-    nextSession?.sessionKind === "LiveOnline" || activity.activityType === "LiveOnline";
+  const isLive = activity.activityType === "LiveOnline";
 
-  const startTime = nextSession?.startTime ?? activity.startTime;
-  const endTime = nextSession?.endTime ?? activity.endTime;
-  const location = nextSession?.location ?? activity.location;
+  // Schedule & location are owned by the class session (cohort), not the activity template.
+  const startTime = nextSession?.startTime ?? null;
+  const endTime = nextSession?.endTime ?? null;
+  const location = nextSession?.location ?? null;
   const maxCapacity = nextSession?.maxCapacity ?? activity.maxCapacity;
   const hasSchedule = Boolean(nextSession);
   const schedule = startTime ? formatClassSessionSchedule(startTime, endTime) : null;

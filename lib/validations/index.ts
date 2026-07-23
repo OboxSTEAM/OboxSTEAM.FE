@@ -137,6 +137,20 @@ export {
   type UpdateSessionAttendanceInput,
 } from "./classes";
 export {
+  classMentorRequestDecisionSchema,
+  classMentorRequestIdParamSchema,
+  classMentorRequestListQuerySchema,
+  createClassMentorRequestSchema,
+  mentorBoardQuerySchema,
+  myClassMentorRequestListQuerySchema,
+  type ClassMentorRequestDecisionInput,
+  type ClassMentorRequestIdParam,
+  type ClassMentorRequestListQuery,
+  type CreateClassMentorRequestInput,
+  type MentorBoardQuery,
+  type MyClassMentorRequestListQuery,
+} from "./class-mentor-requests";
+export {
   myProgramEnrollmentsQuerySchema,
   programEnrollmentSortBySchema,
   studentProgramEnrollmentsQuerySchema,
@@ -176,12 +190,15 @@ export {
   bankQuestionParamSchema,
   createQuestionBankSchema,
   questionBankIdParamSchema,
+  questionBankListQuerySchema,
   type BankQuestionParam,
   type CreateQuestionBankInput,
   type QuestionBankIdParam,
+  type QuestionBankListQuery,
 } from "./question-banks";
 export {
   assignmentIdParamSchema,
+  assignmentListQuerySchema,
   assignmentTypeInputSchema,
   createAssignmentSchema,
   submissionIdParamSchema,
@@ -192,6 +209,7 @@ export {
   submitRetrospectiveSchema,
   updateAssignmentSchema,
   type AssignmentIdParam,
+  type AssignmentListQuery,
   type AssignmentTypeInput,
   type CreateAssignmentInput,
   type SubmissionIdParam,

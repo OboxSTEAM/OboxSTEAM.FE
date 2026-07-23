@@ -31,6 +31,19 @@ import {
 } from "./schemas";
 
 export type {
+  ClassMentorSummary,
+  Mentor,
+  MentorAssignmentProfile,
+  MentorRole,
+  MentorSkill,
+  MentorSkillInfo,
+  MentorSkillProficiency,
+  MentorStatus,
+  SkillCategory,
+  SkillProficiencyLevel,
+} from "@/lib/api/entities/mentor";
+
+export type {
   AddMyMentorSkillResponse,
   AddMyMentorSkillResult,
   DeleteMyMentorSkillResponse,
@@ -49,16 +62,9 @@ export type {
   UpdateMyMentorProfileResult,
 } from "./schemas";
 
-export type {
-  ClassMentorSummary,
-  Mentor,
-  MentorRole,
-  MentorSkill,
-  MentorSkillInfo,
-  MentorStatus,
-  SkillCategory,
-  SkillProficiencyLevel,
-} from "@/lib/api/entities/mentor";
+/** Aliases for manager callers that used the older naming. */
+export type MentorResponse = import("./schemas").GetMentorByIdResponse;
+export type MentorResult = import("./schemas").GetMentorByIdResult;
 
 export type {
   AddMentorSkillInput,

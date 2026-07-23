@@ -25,6 +25,8 @@ export type UseClientFetchResult<T> = {
   /** Show skeleton immediately before query state updates. */
   markLoading: () => void;
   retry: () => void;
+  /** Patch cached data immediately (e.g. after create/update) before refetch. */
+  mutate: (updater: T | null | ((prev: T | null) => T | null)) => void;
   /** Increments after each successful load — key list animations. */
   resultsEpoch: number;
 };
@@ -51,6 +53,17 @@ export function useClientFetch<T>({
   const markLoading = useCallback(() => {
     setIsLoading(true);
   }, []);
+
+  const mutate = useCallback(
+    (updater: T | null | ((prev: T | null) => T | null)) => {
+      setData((prev) =>
+        typeof updater === "function"
+          ? (updater as (prev: T | null) => T | null)(prev)
+          : updater,
+      );
+    },
+    [],
+  );
 
   const retry = useCallback(() => {
     setHasError(false);
@@ -117,6 +130,7 @@ export function useClientFetch<T>({
     hasError,
     markLoading,
     retry,
+    mutate,
     resultsEpoch,
   };
 }

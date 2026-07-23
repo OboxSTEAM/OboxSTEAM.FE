@@ -3,6 +3,7 @@ import { z } from "zod";
 import { classSessionSchema } from "@/lib/api/entities/class-session";
 import { classStudentRosterSchema } from "@/lib/api/entities/class-student";
 import { classMentorSummarySchema } from "@/lib/api/entities/mentor";
+import { skillSummarySchema } from "@/lib/api/entities/skill";
 
 export const classStatusSchema = z.enum([
   "Draft",
@@ -14,8 +15,14 @@ export const classStatusSchema = z.enum([
 
 export const classSchema = z.object({
   id: z.string().uuid(),
-  code: z.string(),
-  name: z.string(),
+  code: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  name: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   programId: z.string().uuid(),
   mentorId: z.string().uuid().nullable(),
   mentor: classMentorSummarySchema.nullable().optional(),
@@ -26,6 +33,15 @@ export const classSchema = z.object({
   status: classStatusSchema,
   minHoursBeforeAssignmentJoin: z.number().int(),
   scheduleSummary: z.string().nullable(),
+  requiredSkills: z
+    .array(skillSummarySchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  pendingMentorRequestCount: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? 0),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   students: z

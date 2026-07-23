@@ -14,6 +14,7 @@ import {
   ClassFormDialog,
   type ClassFormSubmitPayload,
 } from "@/components/manager/classes/class-form-dialog";
+import { ClassMentorAssignmentPanel } from "@/components/manager/classes/class-mentor-assignment-panel";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
@@ -89,7 +90,6 @@ export function ClassDetail({ classId }: ClassDetailProps) {
     if (!classItem) return;
     setIsSubmitting(true);
     try {
-      // Preserve the class's assigned mentor — no mentor-list UI to reassign yet.
       await updateClass(classItem.id, {
         ...values,
         mentorId: classItem.mentorId ?? undefined,
@@ -286,31 +286,42 @@ export function ClassDetail({ classId }: ClassDetailProps) {
           ) : null}
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-[#2D2D2D]">
-              <Users className="size-4 text-[#E94B3C]" />
-              Danh sách học viên
-            </p>
-            <p className="font-mono text-xs text-[#6B6B6B]">
-              {roster.length} học viên
-            </p>
-          </div>
-          <div className="overflow-x-auto p-6">
-            <ManagerDataTable
-              columns={columns}
-              data={roster}
-              isLoading={isLoading}
-              emptyState={
-                <ManagerEmptyState
-                  title="Chưa có học viên trong lớp"
-                  description="Học viên sẽ xuất hiện sau khi ghi danh lớp từ chương trình đã thanh toán."
-                  icon={Users}
-                />
-              }
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:items-start">
+          <div className="min-w-0 lg:sticky lg:top-4">
+            <ClassMentorAssignmentPanel
+              classId={classItem.id}
+              mentorId={classItem.mentorId}
+              requiredSkills={classItem.requiredSkills}
+              onChanged={retry}
             />
           </div>
-        </section>
+
+          <section className="min-w-0 overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+            <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">
+              <p className="flex items-center gap-2 text-sm font-semibold text-[#2D2D2D]">
+                <Users className="size-4 text-[#E94B3C]" />
+                Danh sách học viên
+              </p>
+              <p className="font-mono text-xs text-[#6B6B6B]">
+                {roster.length} học viên
+              </p>
+            </div>
+            <div className="overflow-x-auto p-6">
+              <ManagerDataTable
+                columns={columns}
+                data={roster}
+                isLoading={isLoading}
+                emptyState={
+                  <ManagerEmptyState
+                    title="Chưa có học viên trong lớp"
+                    description="Học viên sẽ xuất hiện sau khi ghi danh lớp từ chương trình đã thanh toán."
+                    icon={Users}
+                  />
+                }
+              />
+            </div>
+          </section>
+        </div>
       </div>
 
       <ClassFormDialog

@@ -57,6 +57,21 @@ export type AssignmentTypeInput = z.infer<typeof assignmentTypeInputSchema>;
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
 export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;
 
+/** Query params for `GET /api/assignments`. */
+export const assignmentListQuerySchema = z.object({
+  search: z.string().optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().min(1).optional(),
+  pageSize: z.number().int().min(1).optional(),
+  moduleId: z.string().uuid().optional(),
+  programId: z.string().uuid().optional(),
+  courseId: z.string().uuid().optional(),
+  assignmentType: assignmentTypeInputSchema.optional(),
+});
+
+export type AssignmentListQuery = z.infer<typeof assignmentListQuerySchema>;
+
 /** Path param for submission-scoped quiz routes. */
 export const submissionIdParamSchema = z.object({
   submissionId: z.string().uuid("ID bài nộp không hợp lệ."),

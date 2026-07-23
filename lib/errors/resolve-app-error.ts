@@ -165,6 +165,26 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Lớp không ở trạng thái phù hợp hoặc yêu cầu bị từ chối.",
     action: "Tải lại thông tin lớp và thử lại thao tác.",
   },
+  "classMentorRequests.list": {
+    title: "Không tải được yêu cầu mentor",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "classMentorRequests.approve": {
+    title: "Không duyệt được yêu cầu mentor",
+    reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc lớp đã có mentor.",
+    action: "Tải lại danh sách yêu cầu và thử lại.",
+  },
+  "classMentorRequests.reject": {
+    title: "Không từ chối được yêu cầu mentor",
+    reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc đã được xử lý.",
+    action: "Tải lại danh sách yêu cầu và thử lại.",
+  },
+  "mentors.detail": {
+    title: "Không tải được hồ sơ mentor",
+    reason: "Mentor không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử lại sau vài giây.",
+  },
   "classSessions.list": {
     title: "Không tải được lịch học",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
@@ -244,6 +264,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không xóa được ngân hàng câu hỏi",
     reason: "Ngân hàng có thể đang được sử dụng hoặc không còn tồn tại.",
     action: "Tải lại và thử lại.",
+  },
+  "curriculum.questionBank.questionDelete": {
+    title: "Không xóa được câu hỏi",
+    reason: "Câu hỏi không còn tồn tại hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại ngân hàng đề và thử lại.",
   },
   "curriculum.questionBank.import": {
     title: "Không import được câu hỏi",
@@ -373,6 +398,8 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classes.create",
   "classes.update",
   "classes.lifecycle",
+  "classMentorRequests.approve",
+  "classMentorRequests.reject",
   "classSessions.create",
   "classSessions.update",
   "classSessions.delete",
@@ -388,6 +415,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "curriculum.questionBank.save",
   "curriculum.questionBank.delete",
   "curriculum.questionBank.import",
+  "curriculum.questionBank.questionDelete",
   "curriculum.node.delete",
 ]);
 

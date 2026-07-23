@@ -60,4 +60,27 @@ export const assignmentDetailSchema = z.object({
   updatedAt: z.string(),
 });
 
+/** Row in `GET /api/assignments` — carries deep-link context (`AssignmentListItemDto`). */
+export const assignmentListItemSchema = z
+  .object({
+    id: z.string(),
+    code: z.string().nullable().optional(),
+    title: z.string().nullable().optional(),
+    assignmentType: assignmentTypeSchema,
+    moduleId: z.string(),
+    courseId: z.string().nullable().optional(),
+    maxPoints: z.number().nullable().optional(),
+    passScore: z.number().nullable().optional(),
+    dueDate: z.string().nullable().optional(),
+    questionBankId: z.string().nullable().optional(),
+    questionCount: z.number().nullable().optional(),
+    moduleName: z.string().nullable().optional(),
+    programId: z.string(),
+    programName: z.string().nullable().optional(),
+    createdAt: z.string().nullable().optional(),
+    updatedAt: z.string().nullable().optional(),
+  })
+  .passthrough();
+
 export type AssignmentDetail = z.infer<typeof assignmentDetailSchema>;
+export type AssignmentListItem = z.infer<typeof assignmentListItemSchema>;

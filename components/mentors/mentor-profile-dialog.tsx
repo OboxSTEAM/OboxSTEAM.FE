@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 import {
   MentorProfileContent,
@@ -17,18 +17,31 @@ import {
 } from "@/components/ui/dialog";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import type { ClassMentorSummary, Mentor } from "@/lib/api/entities/mentor";
+import type { SkillSummary } from "@/lib/api/entities/skill";
 import { getMentorById } from "@/lib/api/mentors";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { getExpertAvatarUrl } from "@/lib/programs/format";
+
+export type MentorDialogPreview = {
+  fullName?: string | null;
+  title?: string | null;
+  organization?: string | null;
+  code?: string | null;
+  status?: string | null;
+  email?: string | null;
+  avatarUrl?: string | null;
+};
 
 type MentorProfileDialogProps = {
   mentorId: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  preview?: Pick<
+  preview?: MentorDialogPreview | Pick<
     Mentor | ClassMentorSummary,
     "fullName" | "title" | "organization" | "avatarUrl"
-  > & { code?: string | null };
+  > & { code?: string | null } | null;
+  requiredSkills?: SkillSummary[];
+  requestMessage?: string | null;
 };
 
 export function MentorProfileDialog({
@@ -36,6 +49,8 @@ export function MentorProfileDialog({
   open,
   onOpenChange,
   preview,
+  requiredSkills = [],
+  requestMessage,
 }: MentorProfileDialogProps) {
   const { data, isLoading, hasError, retry } = useClientFetch({
     enabled: open && mentorId != null,
@@ -45,7 +60,7 @@ export function MentorProfileDialog({
       return result?.data ?? null;
     },
     deps: [open, mentorId],
-    onError: (error) => showAppErrorFromUnknown(error, "generic"),
+    onError: (error) => showAppErrorFromUnknown(error, "mentors.detail"),
   });
 
   const handleOpenChange = useCallback(
@@ -61,7 +76,7 @@ export function MentorProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="flex flex-col gap-0 p-0 sm:max-w-2xl">
+      <DialogPopup className="flex max-h-[min(90vh,44rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <div className="relative shrink-0 border-b border-[#E5E5E0] px-7 pb-4 pt-5">
           <DialogClose className="top-4 right-4" />
           <DialogTitle className="text-lg">Thông tin mentor</DialogTitle>
@@ -70,7 +85,7 @@ export function MentorProfileDialog({
           </DialogDescription>
         </div>
 
-        <div className="px-7 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-5">
           {hasError ? (
             <div className="py-6 text-center">
               <p className="text-sm text-[#6B6B6B]">
@@ -91,8 +106,12 @@ export function MentorProfileDialog({
               <div className="space-y-4">
                 <MentorProfilePreview
                   fullName={preview.fullName?.trim() || "Mentor"}
-                  title={preview.title?.trim() || ""}
-                  organization={preview.organization?.trim() || ""}
+                  title={"title" in preview ? preview.title?.trim() || "" : ""}
+                  organization={
+                    "organization" in preview
+                      ? preview.organization?.trim() || ""
+                      : ""
+                  }
                   avatarUrl={previewAvatarUrl}
                   code={preview.code}
                 />
@@ -102,10 +121,55 @@ export function MentorProfileDialog({
               <MentorProfileSkeleton />
             )
           ) : data && data.id === mentorId ? (
-            <MentorProfileContent mentor={data} />
+            <MentorProfileContent
+              mentor={data}
+              requiredSkills={requiredSkills}
+              requestMessage={requestMessage}
+            />
           ) : null}
         </div>
       </DialogPopup>
     </Dialog>
   );
+}
+
+export type MentorDialogSelection = {
+  mentorId: string;
+  preview?: MentorDialogPreview;
+  requestMessage?: string | null;
+};
+
+export function useMentorProfileDialog() {
+  const [selection, setSelection] = useState<MentorDialogSelection | null>(
+    null,
+  );
+
+  const openMentor = useCallback(
+    (
+      mentorId: string,
+      options?: {
+        preview?: MentorDialogPreview;
+        requestMessage?: string | null;
+      },
+    ) => {
+      if (!mentorId) return;
+      setSelection({
+        mentorId,
+        preview: options?.preview,
+        requestMessage: options?.requestMessage,
+      });
+    },
+    [],
+  );
+
+  const closeMentor = useCallback(() => {
+    setSelection(null);
+  }, []);
+
+  return {
+    selection,
+    openMentor,
+    closeMentor,
+    isOpen: selection != null,
+  };
 }

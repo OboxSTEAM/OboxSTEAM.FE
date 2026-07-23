@@ -63,6 +63,7 @@ import {
   deleteActivity,
   deleteAssignment,
   getAssignmentById,
+  getAssignments,
   getMaterialByActivityId,
   deleteResearchMilestone,
   getResearchMilestoneById,
@@ -74,6 +75,7 @@ import {
   type Activity as ActivityType,
   type ActivityMaterial,
   type AssignmentDetail,
+  type AssignmentListItem,
   type ResearchMilestone,
 } from "@/lib/api";
 import {
@@ -93,12 +95,6 @@ import {
   LIGHT_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
-import {
-  formatActivityScheduleRange,
-  formatApiDateTimeDisplay,
-  fromApiDateTimeToLocalInput,
-  toApiDateTimeFromLocalInput,
-} from "@/lib/curriculum/datetime";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const W = {
@@ -133,10 +129,12 @@ const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
 };
 
+/** Smooth sibling swaps without bounce — high damping spring. */
 const STRUCTURE_DRAG_TRANSITION = {
-  type: "tween" as const,
-  duration: 0.15,
-  ease: "easeOut" as const,
+  type: "spring" as const,
+  stiffness: 520,
+  damping: 42,
+  mass: 0.7,
 };
 
 /* ─── Selected node ─────────────────────────────────────────────────────────── */
@@ -677,14 +675,12 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     values: activityToEdit ? {
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
       activityType: activityToEdit.activityType, description: activityToEdit.description || "",
-      activityOrder: activityToEdit.activityOrder, location: activityToEdit.location || "",
-      startTime: fromApiDateTimeToLocalInput(activityToEdit.startTime),
-      endTime: fromApiDateTimeToLocalInput(activityToEdit.endTime),
+      activityOrder: activityToEdit.activityOrder,
       maxCapacity: activityToEdit.maxCapacity,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
       code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
-      location: "", startTime: "", endTime: "", maxCapacity: null as number | null,
+      maxCapacity: null as number | null,
       requireQrCheckin: false, requireMediaEvidence: false,
     },
   });
@@ -735,9 +731,10 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       const payload = {
         code: data.code || null, courseId: data.courseId, name: data.name, activityType: data.activityType,
         description: data.description || "", activityOrder: orderNum,
-        location: live ? data.location || null : null,
-        startTime: live ? toApiDateTimeFromLocalInput(data.startTime) : null,
-        endTime: live ? toApiDateTimeFromLocalInput(data.endTime) : null,
+        // Time & location live on the class session (cohort schedule), not the activity template.
+        location: null,
+        startTime: null,
+        endTime: null,
         maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
       };
@@ -776,12 +773,8 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 <Controller name="activityType" control={control} render={({ field }) => (
                   <Select value={field.value} onValueChange={(v) => {
                     field.onChange(v);
-                    // Self-paced activities have no schedule; clear stale values so they
-                    // are not resurfaced (and are sent as null on save).
+                    // Self-paced activities have no capacity; clear stale value.
                     if (v === "SelfPaced") {
-                      setValue("location", "");
-                      setValue("startTime", "");
-                      setValue("endTime", "");
                       setValue("maxCapacity", null);
                     }
                   }}>
@@ -806,36 +799,14 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           </div>
 
           {actType !== "SelfPaced" && (
-            <>
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Địa điểm / Đường dẫn <span style={{ color: W.primary }}>*</span></Label>
-                <input type="text" placeholder={actType === "LiveOnline" ? "Zoom, Google Meet..." : "Phòng 201, Tòa nhà A..."} {...register("location")} className={IN} style={{ borderColor: W.border }} />
-              </div>
-              {isEdit && activityToEdit?.startTime ? (
-                <div
-                  className="col-span-2 rounded-lg px-3 py-2.5 text-sm"
-                  style={{ background: W.surface2, color: W.text }}
-                >
-                  <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: W.faint }}>
-                    Lịch hiện tại
-                  </p>
-                  <p className="mt-0.5 font-medium" style={{ color: W.textStrong }}>
-                    {formatApiDateTimeDisplay(activityToEdit.startTime)}
-                    {activityToEdit.endTime
-                      ? ` → ${formatApiDateTimeDisplay(activityToEdit.endTime)}`
-                      : ""}
-                  </p>
-                </div>
-              ) : null}
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Bắt đầu <span style={{ color: W.primary }}>*</span></Label>
-                <input type="datetime-local" {...register("startTime")} className={IN} style={{ borderColor: W.border }} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kết thúc <span style={{ color: W.primary }}>*</span></Label>
-                <input type="datetime-local" {...register("endTime")} className={IN} style={{ borderColor: W.border }} />
-              </div>
-            </>
+            <div
+              className="col-span-2 rounded-lg border border-dashed px-3 py-2.5 text-sm"
+              style={{ borderColor: W.border, background: W.surface2, color: W.faint }}
+            >
+              Thời gian và địa điểm/link buổi học được xếp theo từng lớp trong mục{" "}
+              <span className="font-semibold" style={{ color: W.textStrong }}>Lịch học</span>,
+              không đặt ở cấp hoạt động.
+            </div>
           )}
 
         </div>
@@ -1273,7 +1244,15 @@ function StructureTreeRow({
         layout="position"
         transition={STRUCTURE_DRAG_TRANSITION}
         onDragEnd={onReorderDragEnd}
+        whileDrag={{
+          zIndex: 30,
+          scale: 1.01,
+          boxShadow: "0 10px 28px rgba(45, 45, 45, 0.12)",
+          borderRadius: 10,
+          backgroundColor: "rgba(250, 250, 245, 0.96)",
+        }}
         className="relative list-none"
+        style={{ position: "relative" }}
       >
         {body}
       </Reorder.Item>
@@ -1378,7 +1357,7 @@ function CourseActivityRows({
       moduleId?: string;
     } | null>
   >;
-  onReorder: (courseId: string, orderedIds: string[]) => void;
+  onReorder: (courseId: string, orderedIds: string[]) => void | Promise<void>;
 }) {
   const acts = useMemo(
     () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
@@ -1395,19 +1374,15 @@ function CourseActivityRows({
 
   return (
     <Reorder.Group
+      as="div"
       axis="y"
       values={reorder.values}
       onReorder={reorder.onReorder}
-      className="contents"
+      className="relative"
     >
       {orderedActs.map((act, aIdx) => {
         const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
-        const schedule =
-          act.activityType !== "SelfPaced"
-            ? formatActivityScheduleRange(act.startTime, act.endTime)
-            : "";
-        const metaBase = schedule ? `${typeLabel} · ${schedule}` : typeLabel;
-        const activityMeta = act.material ? `${metaBase} · Có tài liệu` : metaBase;
+        const activityMeta = act.material ? `${typeLabel} · Có tài liệu` : typeLabel;
 
         return (
           <StructureTreeRow
@@ -1562,23 +1537,68 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
   } | null>(null);
 
   /**
-   * Assignments created/edited this session, keyed by moduleId. The backend has no
-   * "list assignments by module" endpoint yet (see plan.md), so the tree can only
-   * surface assignments the manager touched in this session.
+   * Assignments keyed by moduleId — loaded from `GET /api/assignments?moduleId=`.
    */
   const [sessionAssignments, setSessionAssignments] = useState<
-    Record<string, AssignmentDetail[]>
+    Record<string, AssignmentListItem[]>
   >({});
 
-  const upsertSessionAssignment = useCallback((assignment: AssignmentDetail) => {
-    setSessionAssignments((prev) => {
-      const list = prev[assignment.moduleId] ?? [];
-      const next = list.some((a) => a.id === assignment.id)
-        ? list.map((a) => (a.id === assignment.id ? assignment : a))
-        : [...list, assignment];
-      return { ...prev, [assignment.moduleId]: next };
+  const moduleIdsKey = modules.map((m) => m.id).join(",");
+
+  useEffect(() => {
+    if (!moduleIdsKey) return;
+    const ids = moduleIdsKey.split(",");
+    let active = true;
+    ids.forEach((mid) => {
+      getAssignments({ moduleId: mid, page: 1, pageSize: 100 })
+        .then((res) => {
+          if (active) {
+            setSessionAssignments((prev) => ({
+              ...prev,
+              [mid]: res?.data?.items ?? [],
+            }));
+          }
+        })
+        .catch(() => {
+          /* module may have no assignments yet — ignore */
+        });
     });
-  }, []);
+    return () => {
+      active = false;
+    };
+  }, [moduleIdsKey]);
+
+  const upsertSessionAssignment = useCallback(
+    (assignment: AssignmentDetail) => {
+      const mod = modules.find((m) => m.id === assignment.moduleId);
+      const item: AssignmentListItem = {
+        id: assignment.id,
+        code: assignment.code,
+        title: assignment.title,
+        assignmentType: assignment.assignmentType,
+        moduleId: assignment.moduleId,
+        courseId: assignment.courseId,
+        maxPoints: assignment.maxPoints,
+        passScore: assignment.passScore,
+        dueDate: assignment.dueDate,
+        questionBankId: assignment.questionBankId,
+        questionCount: assignment.questionCount,
+        moduleName: mod?.name ?? null,
+        programId: program.id,
+        programName: program.name,
+        createdAt: assignment.createdAt,
+        updatedAt: assignment.updatedAt,
+      };
+      setSessionAssignments((prev) => {
+        const list = prev[assignment.moduleId] ?? [];
+        const next = list.some((a) => a.id === assignment.id)
+          ? list.map((a) => (a.id === assignment.id ? item : a))
+          : [...list, item];
+        return { ...prev, [assignment.moduleId]: next };
+      });
+    },
+    [modules, program.id, program.name],
+  );
 
   const removeSessionAssignment = useCallback((moduleId: string, id: string) => {
     setSessionAssignments((prev) => {
@@ -1660,6 +1680,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         onRefresh();
       } catch (err) {
         showAppErrorFromUnknown(err, "curriculum.module.save");
+        throw err;
       }
     },
     [modules, onRefresh],
@@ -1688,6 +1709,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         onRefresh();
       } catch (err) {
         showAppErrorFromUnknown(err, "curriculum.activity.save");
+        throw err;
       }
     },
     [modules, onRefresh],
@@ -1934,15 +1956,13 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
     if (sel.kind === "assignment") {
       const mod = modules.find((m) => m.id === sel.moduleId);
       const courseOptions = (mod?.courses ?? []).map((c) => ({ id: c.id, name: c.name }));
-      const fromSession =
-        (sessionAssignments[sel.moduleId] ?? []).find((a) => a.id === sel.id) ?? null;
       return (
         <AssignmentDetailLoader
           key={sel.id}
           assignmentId={sel.id}
           moduleId={sel.moduleId}
           courseOptions={courseOptions}
-          initial={fromSession}
+          initial={null}
           onSuccess={upsertSessionAssignment}
         />
       );
@@ -2010,10 +2030,11 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         addLabel="Thêm Module"
       >
         <Reorder.Group
+          as="div"
           axis="y"
           values={moduleReorder.values}
           onReorder={moduleReorder.onReorder}
-          className="contents"
+          className="relative"
         >
           {orderedModules.map((mod, mIdx) => {
           const courses = [...(mod.courses || [])];
@@ -2151,14 +2172,14 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                   }
                   kind="assignment"
                   selected={sel?.kind === "assignment" && sel.id === asg.id}
-                  label={asg.title}
+                  label={asg.title ?? "Không tiêu đề"}
                   meta={ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ?? asg.assignmentType}
                   onSelect={() => select({ kind: "assignment", id: asg.id, moduleId: mod.id })}
                   onDelete={() =>
                     setDelTarget({
                       type: "assignment",
                       id: asg.id,
-                      name: asg.title,
+                      name: asg.title ?? "Bài tập",
                       moduleId: mod.id,
                     })
                   }

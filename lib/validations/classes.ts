@@ -62,7 +62,7 @@ export const classSessionParamsSchema = z.object({
   sessionId: z.string().uuid("ID buổi học không hợp lệ."),
 });
 
-/** Body for `POST /api/classes`. */
+/** Body for `POST /api/classes`. Mentor is assigned later via mentor requests. */
 export const createClassSchema = z.object({
   code: z
     .string()
@@ -73,7 +73,7 @@ export const createClassSchema = z.object({
     .min(1, "Tên lớp không được để trống.")
     .max(255, "Tên lớp tối đa 255 ký tự."),
   programId: z.string().uuid("ID chương trình không hợp lệ."),
-  mentorId: z.string().uuid("ID mentor không hợp lệ."),
+  mentorId: z.string().uuid("ID mentor không hợp lệ.").nullable().optional(),
   startDate: z.string().min(1, "Ngày bắt đầu không được để trống."),
   endDate: z.string().min(1, "Ngày kết thúc không được để trống."),
   maxCapacity: z
@@ -87,14 +87,15 @@ export const createClassSchema = z.object({
     .max(255, "Tóm tắt lịch học tối đa 255 ký tự.")
     .nullable()
     .optional(),
+  requiredSkillIds: z.array(z.string().uuid()).nullable().optional(),
 });
 
 /** Body for `PUT /api/classes/{id}`. Status changes must use open/start/complete endpoints. */
 export const updateClassSchema = createClassSchema.partial();
 
 /**
- * Manager class form fields (datetime-local). `mentorId` is injected from the
- * current Manager profile at submit time — not collected in the UI.
+ * Manager class form fields (datetime-local). Mentor is not collected here —
+ * assigned later by approving a mentor request on the class detail page.
  * Optional numbers stay as strings in the form, then coerce on submit.
  */
 export const classFormSchema = z
@@ -155,7 +156,9 @@ export const classSessionFormSchema = z
     moduleId: z.string().uuid("Vui lòng chọn module."),
     activityId: z.string().optional(),
     assignmentId: z.string().optional(),
-    sessionKind: classSessionKindSchema.optional(),
+    sessionKind: z
+      .enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"])
+      .optional(),
     title: z
       .string()
       .min(1, "Tiêu đề buổi học không được để trống.")

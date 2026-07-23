@@ -60,11 +60,6 @@ import {
   LIGHT_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
-import {
-  formatApiDateTimeDisplay,
-  fromApiDateTimeToLocalInput,
-  toApiDateTimeFromLocalInput,
-} from "@/lib/curriculum/datetime";
 
 // ==========================================
 // 1. Module Form Dialog
@@ -651,9 +646,6 @@ export function ActivityFormDialog({
       activityType: "SelfPaced" as const,
       description: "",
       activityOrder: 1,
-      location: "",
-      startTime: "",
-      endTime: "",
       maxCapacity: null as number | null,
       requireQrCheckin: false,
       requireMediaEvidence: false,
@@ -672,9 +664,6 @@ export function ActivityFormDialog({
           activityType: activityToEdit.activityType,
           description: activityToEdit.description || "",
           activityOrder: activityToEdit.activityOrder,
-          location: activityToEdit.location || "",
-          startTime: fromApiDateTimeToLocalInput(activityToEdit.startTime),
-          endTime: fromApiDateTimeToLocalInput(activityToEdit.endTime),
           maxCapacity: activityToEdit.maxCapacity,
           requireQrCheckin: activityToEdit.requireQrCheckin,
           requireMediaEvidence: activityToEdit.requireMediaEvidence,
@@ -687,9 +676,6 @@ export function ActivityFormDialog({
           activityType: "SelfPaced",
           description: "",
           activityOrder: 1,
-          location: "",
-          startTime: "",
-          endTime: "",
           maxCapacity: null,
           requireQrCheckin: false,
           requireMediaEvidence: false,
@@ -709,13 +695,10 @@ export function ActivityFormDialog({
         activityType: data.activityType,
         description: data.description || "",
         activityOrder: Number(data.activityOrder),
-        location: isOnlineOrOffline ? data.location || null : null,
-        startTime: isOnlineOrOffline
-          ? toApiDateTimeFromLocalInput(data.startTime)
-          : null,
-        endTime: isOnlineOrOffline
-          ? toApiDateTimeFromLocalInput(data.endTime)
-          : null,
+        // Time & location live on the class session (cohort schedule), not the activity template.
+        location: null,
+        startTime: null,
+        endTime: null,
         maxCapacity: isOnlineOrOffline && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin,
         requireMediaEvidence: data.requireMediaEvidence,
@@ -827,55 +810,11 @@ export function ActivityFormDialog({
 
             {activityType !== "SelfPaced" && (
               <>
-                <div className="space-y-1.5 col-span-2">
-                  <Label htmlFor="act-location" className="text-sm font-semibold text-[#2D2D2D]">
-                    Địa điểm / Đường dẫn phòng học <span className="text-[#E94B3C]">*</span>
-                  </Label>
-                  <Input
-                    id="act-location"
-                    type="text"
-                    placeholder={activityType === "LiveOnline" ? "Ví dụ: Zoom link, Google Meet..." : "Ví dụ: Phòng học 201, Tòa nhà A..."}
-                    {...register("location")}
-                    className="h-10 rounded-lg border-[#D8D8D3] focus-visible:ring-[#4FC3F7]/50"
-                  />
-                </div>
-
-                {isEdit && activityToEdit?.startTime ? (
-                  <div className="col-span-2 rounded-lg bg-[#E7E2D8] px-3 py-2.5 text-sm text-[#3A3833]">
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#8C8678]">
-                      Lịch hiện tại
-                    </p>
-                    <p className="mt-0.5 font-medium text-[#2D2B27]">
-                      {formatApiDateTimeDisplay(activityToEdit.startTime)}
-                      {activityToEdit.endTime
-                        ? ` → ${formatApiDateTimeDisplay(activityToEdit.endTime)}`
-                        : ""}
-                    </p>
-                  </div>
-                ) : null}
-
-                <div className="space-y-1.5 col-span-2 md:col-span-1">
-                  <Label htmlFor="startTime" className="text-sm font-semibold text-[#2D2D2D]">
-                    Thời gian bắt đầu <span className="text-[#E94B3C]">*</span>
-                  </Label>
-                  <Input
-                    id="startTime"
-                    type="datetime-local"
-                    {...register("startTime")}
-                    className="h-10 rounded-lg border-[#D8D8D3] focus-visible:ring-[#4FC3F7]/50"
-                  />
-                </div>
-
-                <div className="space-y-1.5 col-span-2 md:col-span-1">
-                  <Label htmlFor="endTime" className="text-sm font-semibold text-[#2D2D2D]">
-                    Thời gian kết thúc <span className="text-[#E94B3C]">*</span>
-                  </Label>
-                  <Input
-                    id="endTime"
-                    type="datetime-local"
-                    {...register("endTime")}
-                    className="h-10 rounded-lg border-[#D8D8D3] focus-visible:ring-[#4FC3F7]/50"
-                  />
+                <div className="col-span-2 rounded-lg border border-dashed border-[#D8D8D3] bg-[#FAFAF5] px-3 py-2.5 text-sm text-[#6B6B6B]">
+                  Thời gian và địa điểm/link buổi học được xếp theo từng lớp
+                  trong mục{" "}
+                  <span className="font-semibold text-[#2D2D2D]">Lịch học</span>,
+                  không đặt ở cấp hoạt động.
                 </div>
 
                 <div className="space-y-1.5 col-span-2 md:col-span-1">
