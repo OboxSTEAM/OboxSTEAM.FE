@@ -68,6 +68,16 @@
         "description": "Test-only endpoint that forces any activity to Done for a given student, bypassing all business rules (enrollment status, ownership, activity type, sequential lock, schedule windows). The module enrollment is resolved automatically. Requires Mentor or Manager role."
       },
       {
+        "path": "/api/assignments",
+        "method": "get",
+        "description": "Retrieve a paginated list of assignments, each carrying module/program context for the Edit deep-link. Supports search, filter, and sort options."
+      },
+      {
+        "path": "/api/assignments",
+        "method": "post",
+        "description": "Creates a new assignment for a module. Requires SuperAdmin or Manager role."
+      },
+      {
         "path": "/api/assignments/{assignmentId}",
         "method": "get",
         "description": "Retrieve an assignment by its ID. Students must have an active enrollment in the assignment's module."
@@ -81,11 +91,6 @@
         "path": "/api/assignments/{assignmentId}",
         "method": "delete",
         "description": "Soft-deletes an assignment by its ID. Requires SuperAdmin or Manager role."
-      },
-      {
-        "path": "/api/assignments",
-        "method": "post",
-        "description": "Creates a new assignment for a module. Requires SuperAdmin or Manager role."
       },
       {
         "path": "/api/assignment-submissions/submit",
@@ -542,7 +547,8 @@
       },
       {
         "path": "/api/mentors",
-        "method": "get"
+        "method": "get",
+        "description": "Returns a paginated mentor directory with public profile fields (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent class usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments."
       },
       {
         "path": "/api/mentors/{id}",
@@ -873,6 +879,16 @@
         "description": "Soft-deletes a review. The review owner, SuperAdmin, or Manager may call this endpoint."
       },
       {
+        "path": "/api/question-banks",
+        "method": "get",
+        "description": "Retrieve a paginated list of question banks, each carrying program/module/course context for the Edit deep-link. Supports search, filter, and sort options."
+      },
+      {
+        "path": "/api/question-banks",
+        "method": "post",
+        "description": "Creates a new question bank for a course. Requires SuperAdmin or Manager role."
+      },
+      {
         "path": "/api/question-banks/{questionBankId}",
         "method": "get",
         "description": "Retrieve a question bank by its ID."
@@ -881,11 +897,6 @@
         "path": "/api/question-banks/{questionBankId}",
         "method": "delete",
         "description": "Soft-deletes a question bank and its questions. Requires SuperAdmin or Manager role."
-      },
-      {
-        "path": "/api/question-banks",
-        "method": "post",
-        "description": "Creates a new question bank for a course. Requires SuperAdmin or Manager role."
       },
       {
         "path": "/api/question-banks/{questionBankId}/questions/{questionId}",
@@ -1086,6 +1097,18 @@
       },
       {
         "name": "ApproveLinkDto"
+      },
+      {
+        "name": "AssignmentListItemDto"
+      },
+      {
+        "name": "AssignmentListItemDtoPagination"
+      },
+      {
+        "name": "AssignmentListItemDtoPaginationApiResult"
+      },
+      {
+        "name": "AssignmentListItemDtoPaginationResponseDataContent"
       },
       {
         "name": "AssignmentResponseDto"
@@ -1941,6 +1964,18 @@
       },
       {
         "name": "PublicPortfolioResponseDtoResponseDataContent"
+      },
+      {
+        "name": "QuestionBankListItemDto"
+      },
+      {
+        "name": "QuestionBankListItemDtoPagination"
+      },
+      {
+        "name": "QuestionBankListItemDtoPaginationApiResult"
+      },
+      {
+        "name": "QuestionBankListItemDtoPaginationResponseDataContent"
       },
       {
         "name": "QuestionBankResponseDto"
