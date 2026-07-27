@@ -7961,6 +7961,1260 @@
         }
       }
     },
+    "/api/dashboard/overview": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Manager dashboard trimmed KPIs",
+        "description": "Returns trimmed KPI summaries for revenue, enrollment, assessment, and operations (no trends / top-N). Prefer /landing for the home page to avoid duplicate section fetches. Status filters that do not apply to a section are ignored.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Last7Days",
+                "Last30Days",
+                "Last90Days",
+                "Last12Months"
+              ],
+              "type": "string",
+              "default": "Last30Days"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "moduleId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "Success",
+                "Failed",
+                "Cancelled",
+                "Refunded"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PendingPayment",
+                "Active",
+                "Deferred",
+                "Completed",
+                "Failed",
+                "Dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classEnrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Active",
+                "Transferred",
+                "Withdrawn",
+                "Completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "TurnedIn",
+                "Graded",
+                "ReturnedForRevision"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Open",
+                "InProgress",
+                "Completed",
+                "Cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverviewDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverviewDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverviewDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/landing": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Manager dashboard landing (single request)",
+        "description": "Returns full revenue, enrollment, assessment, and operations sections (KPIs + trends + top-N) in one response so the landing page does not call each section endpoint separately.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Last7Days",
+                "Last30Days",
+                "Last90Days",
+                "Last12Months"
+              ],
+              "type": "string",
+              "default": "Last30Days"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "moduleId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "Success",
+                "Failed",
+                "Cancelled",
+                "Refunded"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PendingPayment",
+                "Active",
+                "Deferred",
+                "Completed",
+                "Failed",
+                "Dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classEnrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Active",
+                "Transferred",
+                "Withdrawn",
+                "Completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "TurnedIn",
+                "Graded",
+                "ReturnedForRevision"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Open",
+                "InProgress",
+                "Completed",
+                "Cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLandingDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLandingDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLandingDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/revenue": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Manager dashboard revenue section",
+        "description": "Honors date range, programId/moduleId/classId, paymentStatus, and pagination for top programs. Other status filters are ignored.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Last7Days",
+                "Last30Days",
+                "Last90Days",
+                "Last12Months"
+              ],
+              "type": "string",
+              "default": "Last30Days"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "moduleId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "Success",
+                "Failed",
+                "Cancelled",
+                "Refunded"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PendingPayment",
+                "Active",
+                "Deferred",
+                "Completed",
+                "Failed",
+                "Dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classEnrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Active",
+                "Transferred",
+                "Withdrawn",
+                "Completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "TurnedIn",
+                "Graded",
+                "ReturnedForRevision"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Open",
+                "InProgress",
+                "Completed",
+                "Cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevenueOverviewDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevenueOverviewDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevenueOverviewDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/enrollment": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Manager dashboard enrollment section",
+        "description": "Honors date range, programId/moduleId/classId, enrollmentStatus, classEnrollmentStatus, and pagination for top programs. Other status filters are ignored.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Last7Days",
+                "Last30Days",
+                "Last90Days",
+                "Last12Months"
+              ],
+              "type": "string",
+              "default": "Last30Days"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "moduleId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "Success",
+                "Failed",
+                "Cancelled",
+                "Refunded"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PendingPayment",
+                "Active",
+                "Deferred",
+                "Completed",
+                "Failed",
+                "Dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classEnrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Active",
+                "Transferred",
+                "Withdrawn",
+                "Completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "TurnedIn",
+                "Graded",
+                "ReturnedForRevision"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Open",
+                "InProgress",
+                "Completed",
+                "Cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentOverviewDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentOverviewDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EnrollmentOverviewDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/assessment": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Manager dashboard assessment section",
+        "description": "Honors date range, programId/moduleId/classId, and submissionStatus. Other status filters and pagination are ignored.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Last7Days",
+                "Last30Days",
+                "Last90Days",
+                "Last12Months"
+              ],
+              "type": "string",
+              "default": "Last30Days"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "moduleId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "Success",
+                "Failed",
+                "Cancelled",
+                "Refunded"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PendingPayment",
+                "Active",
+                "Deferred",
+                "Completed",
+                "Failed",
+                "Dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classEnrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Active",
+                "Transferred",
+                "Withdrawn",
+                "Completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "TurnedIn",
+                "Graded",
+                "ReturnedForRevision"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Open",
+                "InProgress",
+                "Completed",
+                "Cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOverviewDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOverviewDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentOverviewDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/dashboard/operations": {
+      "get": {
+        "tags": [
+          "Dashboard"
+        ],
+        "summary": "Manager dashboard operations section",
+        "description": "Honors date range, programId/moduleId/classId, classStatus, and pagination for mentor utilization. Other status filters are ignored.",
+        "parameters": [
+          {
+            "name": "range",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Last7Days",
+                "Last30Days",
+                "Last90Days",
+                "Last12Months"
+              ],
+              "type": "string",
+              "default": "Last30Days"
+            }
+          },
+          {
+            "name": "fromDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "toDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "example": "15/06/2026 14:30:00"
+            }
+          },
+          {
+            "name": "programId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "moduleId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "paymentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "Success",
+                "Failed",
+                "Cancelled",
+                "Refunded"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "enrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PendingPayment",
+                "Active",
+                "Deferred",
+                "Completed",
+                "Failed",
+                "Dropped"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classEnrollmentStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Active",
+                "Transferred",
+                "Withdrawn",
+                "Completed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "submissionStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Pending",
+                "TurnedIn",
+                "Graded",
+                "ReturnedForRevision"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "classStatus",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Open",
+                "InProgress",
+                "Completed",
+                "Cancelled"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 5
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsOverviewDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsOverviewDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationsOverviewDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/experts": {
       "get": {
         "tags": [
@@ -11486,8 +12740,7 @@
         "tags": [
           "Mentor"
         ],
-        "summary": "List mentors for curriculum navigation and assignment decisions",
-        "description": "Returns a paginated mentor directory with public profile fields (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent class usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments.",
+        "summary": "List mentors with skills and concurrent usage",
         "parameters": [
           {
             "name": "search",
@@ -11544,7 +12797,8 @@
         "tags": [
           "Mentor"
         ],
-        "summary": "Get mentor profile for assignment decisions",
+        "summary": "Get mentor profile by ID",
+        "description": "Returns a mentor's public profile (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments.",
         "parameters": [
           {
             "name": "id",
@@ -23613,6 +24867,136 @@
         },
         "additionalProperties": false
       },
+      "AssessmentKpiSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalSubmissions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submissionsInRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submissionsInPreviousRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gradingBacklogCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gradingBacklogThresholdHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "passRateInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateUnit": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentOverviewDto": {
+        "type": "object",
+        "properties": {
+          "totalSubmissions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submissionsInRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submissionsInPreviousRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submissionsByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCountDto"
+            },
+            "nullable": true
+          },
+          "gradingBacklogCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gradingBacklogThresholdHours": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageGradingTurnaroundHours": {
+            "type": "number",
+            "format": "double"
+          },
+          "passRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "passRateInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateUnit": {
+            "type": "string",
+            "nullable": true
+          },
+          "submissionsTrend": {
+            "$ref": "#/components/schemas/TrendSeriesDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentOverviewDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AssessmentOverviewDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentOverviewDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AssessmentOverviewDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "AssignmentListItemDto": {
         "type": "object",
         "properties": {
@@ -26859,6 +28243,106 @@
         },
         "additionalProperties": false
       },
+      "DashboardLandingDto": {
+        "type": "object",
+        "properties": {
+          "revenue": {
+            "$ref": "#/components/schemas/RevenueOverviewDto"
+          },
+          "enrollment": {
+            "$ref": "#/components/schemas/EnrollmentOverviewDto"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentOverviewDto"
+          },
+          "operations": {
+            "$ref": "#/components/schemas/OperationsOverviewDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardLandingDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/DashboardLandingDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardLandingDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/DashboardLandingDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardOverviewDto": {
+        "type": "object",
+        "properties": {
+          "revenue": {
+            "$ref": "#/components/schemas/RevenueKpiSummaryDto"
+          },
+          "enrollment": {
+            "$ref": "#/components/schemas/EnrollmentKpiSummaryDto"
+          },
+          "assessment": {
+            "$ref": "#/components/schemas/AssessmentKpiSummaryDto"
+          },
+          "operations": {
+            "$ref": "#/components/schemas/OperationsKpiSummaryDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardOverviewDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/DashboardOverviewDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "DashboardOverviewDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/DashboardOverviewDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "DecideClassMentorRequestDto": {
         "type": "object",
         "properties": {
@@ -27712,6 +29196,141 @@
               "$ref": "#/components/schemas/EnrollmentCurriculumAssignmentDto"
             },
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentKpiSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalPrograms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeStudents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newEnrollmentsInRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newEnrollmentsInPreviousRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completionRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "completionRateInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateUnit": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentOverviewDto": {
+        "type": "object",
+        "properties": {
+          "totalPrograms": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalModules": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCourses": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "activeStudents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newEnrollmentsInRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "newEnrollmentsInPreviousRange": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completionRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "completionRateInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateUnit": {
+            "type": "string",
+            "nullable": true
+          },
+          "programEnrollmentsByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCountDto"
+            },
+            "nullable": true
+          },
+          "moduleEnrollmentsByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCountDto"
+            },
+            "nullable": true
+          },
+          "classEnrollmentsByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCountDto"
+            },
+            "nullable": true
+          },
+          "enrollmentTrend": {
+            "$ref": "#/components/schemas/TrendSeriesDto"
+          },
+          "topProgramsByEnrollment": {
+            "$ref": "#/components/schemas/TopProgramEnrollmentDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentOverviewDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/EnrollmentOverviewDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EnrollmentOverviewDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/EnrollmentOverviewDto"
           }
         },
         "additionalProperties": false
@@ -29543,6 +31162,69 @@
         },
         "additionalProperties": false
       },
+      "MentorUtilizationDto": {
+        "type": "object",
+        "properties": {
+          "mentorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mentorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "assigned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pending": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "max": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MentorUtilizationDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MentorUtilizationDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ModuleEnrollmentResponseDto": {
         "type": "object",
         "properties": {
@@ -30167,6 +31849,115 @@
           },
           "data": {
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OperationsKpiSummaryDto": {
+        "type": "object",
+        "properties": {
+          "activeClassCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageCapacityUtilization": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageCapacityUtilizationInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "pendingMentorRequestsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageAttendanceRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageAttendanceRateInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateUnit": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OperationsOverviewDto": {
+        "type": "object",
+        "properties": {
+          "classesByStatus": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StatusCountDto"
+            },
+            "nullable": true
+          },
+          "averageCapacityUtilization": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageCapacityUtilizationInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "pendingMentorRequestsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageAttendanceRate": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageAttendanceRateInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "rateUnit": {
+            "type": "string",
+            "nullable": true
+          },
+          "attendanceTrend": {
+            "$ref": "#/components/schemas/TrendSeriesDto"
+          },
+          "mentorUtilization": {
+            "$ref": "#/components/schemas/MentorUtilizationDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OperationsOverviewDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/OperationsOverviewDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OperationsOverviewDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/OperationsOverviewDto"
           }
         },
         "additionalProperties": false
@@ -33063,6 +34854,137 @@
         },
         "additionalProperties": false
       },
+      "RevenueByGatewayDto": {
+        "type": "object",
+        "properties": {
+          "gateway": {
+            "enum": [
+              "VnPay",
+              "Stripe",
+              "BankTransfer"
+            ],
+            "type": "string"
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevenueKpiSummaryDto": {
+        "type": "object",
+        "properties": {
+          "totalRevenue": {
+            "type": "number",
+            "format": "double"
+          },
+          "revenueInRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "revenueInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "pendingPaymentRequestsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingPaymentRequestsAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundedAmount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevenueOverviewDto": {
+        "type": "object",
+        "properties": {
+          "totalRevenue": {
+            "type": "number",
+            "format": "double"
+          },
+          "revenueInRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "revenueInPreviousRange": {
+            "type": "number",
+            "format": "double"
+          },
+          "averageOrderValue": {
+            "type": "number",
+            "format": "double"
+          },
+          "pendingPaymentRequestsCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pendingPaymentRequestsAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "refundedAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "invoiceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "revenueTrend": {
+            "$ref": "#/components/schemas/TrendSeriesDto"
+          },
+          "revenueByGateway": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RevenueByGatewayDto"
+            },
+            "nullable": true
+          },
+          "topProgramsByRevenue": {
+            "$ref": "#/components/schemas/TopProgramRevenueDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevenueOverviewDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/RevenueOverviewDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RevenueOverviewDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RevenueOverviewDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "SaveActivityCheckpointRequestDto": {
         "required": [
           "resumeState"
@@ -33547,6 +35469,20 @@
         },
         "additionalProperties": false
       },
+      "StatusCountDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
       "StringApiResult": {
         "type": "object",
         "properties": {
@@ -33960,6 +35896,171 @@
           "refreshToken": {
             "minLength": 1,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TopProgramEnrollmentDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TopProgramEnrollmentDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopProgramEnrollmentDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TopProgramRevenueDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
+          "amount": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TopProgramRevenueDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopProgramRevenueDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "TrendPointDto": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "bucketStart": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "TrendSeriesDto": {
+        "type": "object",
+        "properties": {
+          "fromDate": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "toDate": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "granularity": {
+            "enum": [
+              "Daily",
+              "Weekly",
+              "Monthly"
+            ],
+            "type": "string"
+          },
+          "valueKind": {
+            "enum": [
+              "Count",
+              "Currency",
+              "Percent"
+            ],
+            "type": "string"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendPointDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false

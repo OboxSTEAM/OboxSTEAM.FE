@@ -365,6 +365,36 @@
         "description": "Retrieve a single course by its exact name (case-insensitive)."
       },
       {
+        "path": "/api/dashboard/overview",
+        "method": "get",
+        "description": "Returns trimmed KPI summaries for revenue, enrollment, assessment, and operations (no trends / top-N). Prefer /landing for the home page to avoid duplicate section fetches. Status filters that do not apply to a section are ignored."
+      },
+      {
+        "path": "/api/dashboard/landing",
+        "method": "get",
+        "description": "Returns full revenue, enrollment, assessment, and operations sections (KPIs + trends + top-N) in one response so the landing page does not call each section endpoint separately."
+      },
+      {
+        "path": "/api/dashboard/revenue",
+        "method": "get",
+        "description": "Honors date range, programId/moduleId/classId, paymentStatus, and pagination for top programs. Other status filters are ignored."
+      },
+      {
+        "path": "/api/dashboard/enrollment",
+        "method": "get",
+        "description": "Honors date range, programId/moduleId/classId, enrollmentStatus, classEnrollmentStatus, and pagination for top programs. Other status filters are ignored."
+      },
+      {
+        "path": "/api/dashboard/assessment",
+        "method": "get",
+        "description": "Honors date range, programId/moduleId/classId, and submissionStatus. Other status filters and pagination are ignored."
+      },
+      {
+        "path": "/api/dashboard/operations",
+        "method": "get",
+        "description": "Honors date range, programId/moduleId/classId, classStatus, and pagination for mentor utilization. Other status filters are ignored."
+      },
+      {
         "path": "/api/experts",
         "method": "get",
         "description": "Retrieve a paginated list of experts with optional search, filter, and sort options."
@@ -547,12 +577,12 @@
       },
       {
         "path": "/api/mentors",
-        "method": "get",
-        "description": "Returns a paginated mentor directory with public profile fields (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent class usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments."
+        "method": "get"
       },
       {
         "path": "/api/mentors/{id}",
-        "method": "get"
+        "method": "get",
+        "description": "Returns a mentor's public profile (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments."
       },
       {
         "path": "/api/mentors/{id}/class-limit",
@@ -1099,6 +1129,18 @@
         "name": "ApproveLinkDto"
       },
       {
+        "name": "AssessmentKpiSummaryDto"
+      },
+      {
+        "name": "AssessmentOverviewDto"
+      },
+      {
+        "name": "AssessmentOverviewDtoApiResult"
+      },
+      {
+        "name": "AssessmentOverviewDtoResponseDataContent"
+      },
+      {
         "name": "AssignmentListItemDto"
       },
       {
@@ -1402,6 +1444,24 @@
         "name": "CreateResearchSubmissionRequestDtoResponseDataContent"
       },
       {
+        "name": "DashboardLandingDto"
+      },
+      {
+        "name": "DashboardLandingDtoApiResult"
+      },
+      {
+        "name": "DashboardLandingDtoResponseDataContent"
+      },
+      {
+        "name": "DashboardOverviewDto"
+      },
+      {
+        "name": "DashboardOverviewDtoApiResult"
+      },
+      {
+        "name": "DashboardOverviewDtoResponseDataContent"
+      },
+      {
         "name": "DecideClassMentorRequestDto"
       },
       {
@@ -1496,6 +1556,18 @@
       },
       {
         "name": "EnrollmentCurriculumModuleDto"
+      },
+      {
+        "name": "EnrollmentKpiSummaryDto"
+      },
+      {
+        "name": "EnrollmentOverviewDto"
+      },
+      {
+        "name": "EnrollmentOverviewDtoApiResult"
+      },
+      {
+        "name": "EnrollmentOverviewDtoResponseDataContent"
       },
       {
         "name": "ErrorContent"
@@ -1717,6 +1789,12 @@
         "name": "MentorSummaryDto"
       },
       {
+        "name": "MentorUtilizationDto"
+      },
+      {
+        "name": "MentorUtilizationDtoPagination"
+      },
+      {
         "name": "ModuleEnrollmentResponseDto"
       },
       {
@@ -1778,6 +1856,18 @@
       },
       {
         "name": "ObjectResponseDataContent"
+      },
+      {
+        "name": "OperationsKpiSummaryDto"
+      },
+      {
+        "name": "OperationsOverviewDto"
+      },
+      {
+        "name": "OperationsOverviewDtoApiResult"
+      },
+      {
+        "name": "OperationsOverviewDtoResponseDataContent"
       },
       {
         "name": "ParentCheckoutRequestDto"
@@ -2080,6 +2170,21 @@
         "name": "RetrospectiveAttemptResponseDtoResponseDataContent"
       },
       {
+        "name": "RevenueByGatewayDto"
+      },
+      {
+        "name": "RevenueKpiSummaryDto"
+      },
+      {
+        "name": "RevenueOverviewDto"
+      },
+      {
+        "name": "RevenueOverviewDtoApiResult"
+      },
+      {
+        "name": "RevenueOverviewDtoResponseDataContent"
+      },
+      {
         "name": "SaveActivityCheckpointRequestDto"
       },
       {
@@ -2155,6 +2260,9 @@
         "name": "StartResearchSubmissionRequestDto"
       },
       {
+        "name": "StatusCountDto"
+      },
+      {
         "name": "StringApiResult"
       },
       {
@@ -2201,6 +2309,24 @@
       },
       {
         "name": "TokenRefreshRequestDto"
+      },
+      {
+        "name": "TopProgramEnrollmentDto"
+      },
+      {
+        "name": "TopProgramEnrollmentDtoPagination"
+      },
+      {
+        "name": "TopProgramRevenueDto"
+      },
+      {
+        "name": "TopProgramRevenueDtoPagination"
+      },
+      {
+        "name": "TrendPointDto"
+      },
+      {
+        "name": "TrendSeriesDto"
       },
       {
         "name": "TrimHighlightVideoRequest"

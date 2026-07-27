@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   assessmentOverviewSchema,
+  dashboardLandingSchema,
   dashboardOverviewSchema,
   enrollmentOverviewSchema,
   operationsOverviewSchema,
@@ -34,6 +35,11 @@ export const getDashboardOperationsResponseSchema = createApiResponseSchema(
   operationsOverviewValueSchema,
 );
 
+export const dashboardLandingValueSchema = createApiValueSchema(dashboardLandingSchema);
+export const getDashboardLandingResponseSchema = createApiResponseSchema(
+  dashboardLandingValueSchema,
+);
+
 export type GetDashboardOverviewResponse = z.infer<typeof getDashboardOverviewResponseSchema>;
 export type GetDashboardOverviewResult = GetDashboardOverviewResponse["value"];
 
@@ -54,3 +60,6 @@ export type GetDashboardOperationsResponse = z.infer<
   typeof getDashboardOperationsResponseSchema
 >;
 export type GetDashboardOperationsResult = GetDashboardOperationsResponse["value"];
+
+export type GetDashboardLandingResponse = z.infer<typeof getDashboardLandingResponseSchema>;
+export type GetDashboardLandingResult = GetDashboardLandingResponse["value"];

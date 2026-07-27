@@ -8,11 +8,13 @@ import {
 import {
   getDashboardAssessmentResponseSchema,
   getDashboardEnrollmentResponseSchema,
+  getDashboardLandingResponseSchema,
   getDashboardOperationsResponseSchema,
   getDashboardOverviewResponseSchema,
   getDashboardRevenueResponseSchema,
   type GetDashboardAssessmentResult,
   type GetDashboardEnrollmentResult,
+  type GetDashboardLandingResult,
   type GetDashboardOperationsResult,
   type GetDashboardOverviewResult,
   type GetDashboardRevenueResult,
@@ -23,6 +25,8 @@ export type {
   GetDashboardAssessmentResult,
   GetDashboardEnrollmentResponse,
   GetDashboardEnrollmentResult,
+  GetDashboardLandingResponse,
+  GetDashboardLandingResult,
   GetDashboardOperationsResponse,
   GetDashboardOperationsResult,
   GetDashboardOverviewResponse,
@@ -34,6 +38,7 @@ export type {
 export type {
   AssessmentKpiSummary,
   AssessmentOverview,
+  DashboardLanding,
   DashboardOverview,
   EnrollmentKpiSummary,
   EnrollmentOverview,
@@ -43,9 +48,13 @@ export type {
   RevenueByGateway,
   RevenueKpiSummary,
   RevenueOverview,
+  StatusCount,
   TopProgramEnrollment,
   TopProgramRevenue,
+  TrendGranularity,
   TrendPoint,
+  TrendSeries,
+  TrendValueKind,
 } from "@/lib/api/entities/dashboard";
 
 export type { DashboardQuery, DashboardRange } from "@/lib/validations/dashboard";
@@ -70,13 +79,29 @@ function buildDashboardQuery(params?: DashboardQuery): string {
   return query ? `?${query}` : "";
 }
 
-/** `GET /api/dashboard/overview` — landing KPI summaries. */
+/** `GET /api/dashboard/overview` — trimmed KPI summaries (prefer `/landing` for home). */
 export async function getDashboardOverview(
   params?: DashboardQuery,
 ): Promise<GetDashboardOverviewResult> {
   const response = await apiFetchParsed(
     `${DASHBOARD_BASE}/overview${buildDashboardQuery(params)}`,
     getDashboardOverviewResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/dashboard/landing` — full revenue / enrollment / assessment / operations
+ * in one request for the manager home page.
+ */
+export async function getDashboardLanding(
+  params?: DashboardQuery,
+): Promise<GetDashboardLandingResult> {
+  const response = await apiFetchParsed(
+    `${DASHBOARD_BASE}/landing${buildDashboardQuery(params)}`,
+    getDashboardLandingResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

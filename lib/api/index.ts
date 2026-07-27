@@ -199,11 +199,13 @@ export {
 export {
   getDashboardAssessment,
   getDashboardEnrollment,
+  getDashboardLanding,
   getDashboardOperations,
   getDashboardOverview,
   getDashboardRevenue,
   type AssessmentKpiSummary,
   type AssessmentOverview,
+  type DashboardLanding,
   type DashboardOverview,
   type DashboardQuery,
   type DashboardRange,
@@ -213,6 +215,8 @@ export {
   type GetDashboardAssessmentResult,
   type GetDashboardEnrollmentResponse,
   type GetDashboardEnrollmentResult,
+  type GetDashboardLandingResponse,
+  type GetDashboardLandingResult,
   type GetDashboardOperationsResponse,
   type GetDashboardOperationsResult,
   type GetDashboardOverviewResponse,
@@ -225,9 +229,13 @@ export {
   type RevenueByGateway,
   type RevenueKpiSummary,
   type RevenueOverview,
+  type StatusCount,
   type TopProgramEnrollment,
   type TopProgramRevenue,
+  type TrendGranularity,
   type TrendPoint,
+  type TrendSeries,
+  type TrendValueKind,
 } from "./dashboard";
 
 export {
