@@ -362,7 +362,11 @@ export function ManagerDashboard() {
         />
       </div>
 
-      <MentorLoadPanel operations={operations} isLoading={isLoading} />
+      <MentorLoadPanel
+        operations={operations}
+        isLoading={isLoading}
+        revealSignature={range}
+      />
     </div>
   );
 }
