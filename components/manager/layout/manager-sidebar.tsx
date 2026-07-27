@@ -13,7 +13,6 @@ import {
   LogOut,
   Users,
   User,
-  Sparkles,
 } from "lucide-react";
 import {
   Sidebar,
@@ -470,25 +469,19 @@ export function ManagerSidebar() {
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
                 <DropdownMenuGroup>
-                  <DropdownMenuItem className="gap-2 p-2 focus:bg-[#F5F5F0] cursor-pointer rounded-lg text-xs font-medium text-[#6B6B6B] hover:text-[#2D2D2D] disabled:opacity-50">
-                    <Sparkles className="size-4 text-[#FDD835]" />
-                    Upgrade to Premium
-                  </DropdownMenuItem>
-                </DropdownMenuGroup>
-                <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
-                <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => router.push("/profile")}
-                    className="gap-2 p-2 focus:bg-[#F5F5F0] cursor-pointer rounded-lg text-[#2D2D2D]"
+                    className="gap-2 rounded-lg p-2 cursor-pointer text-[#2D2D2D] focus:bg-[#F5F5F0] focus:text-[#2D2D2D] not-data-[variant=destructive]:focus:**:!text-[#2D2D2D]"
                   >
-                    <User className="size-4 text-[#6B6B6B]" />
+                    <User className="size-4 !text-[#2D2D2D]" />
                     Hồ sơ cá nhân
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
                 <DropdownMenuItem
+                  variant="destructive"
                   onClick={handleLogout}
-                  className="gap-2 p-2 focus:bg-red-50 cursor-pointer rounded-lg text-[#E94B3C] focus:text-[#E94B3C]"
+                  className="gap-2 rounded-lg p-2 cursor-pointer focus:bg-red-50 focus:text-[#E94B3C] focus:**:text-[#E94B3C]"
                 >
                   <LogOut className="size-4" />
                   Đăng xuất

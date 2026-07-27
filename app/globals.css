@@ -24,6 +24,11 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-series-5: var(--chart-series-5);
+  --color-chart-series-4: var(--chart-series-4);
+  --color-chart-series-3: var(--chart-series-3);
+  --color-chart-series-2: var(--chart-series-2);
+  --color-chart-series-1: var(--chart-series-1);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -66,6 +71,32 @@
   --radius-2xl: calc(var(--radius) * 1.5);
   --radius-3xl: calc(var(--radius) * 2);
   --radius-4xl: calc(var(--radius) * 2.5);
+  --color-chart-scale-pattern-color: var(--chart-scale-pattern-color);
+  --color-chart-scale-05: var(--chart-scale-05);
+  --color-chart-scale-04: var(--chart-scale-04);
+  --color-chart-scale-03: var(--chart-scale-03);
+  --color-chart-scale-02: var(--chart-scale-02);
+  --color-chart-scale-01: var(--chart-scale-01);
+  --color-chart-label: var(--chart-label);
+  --color-chart-marker-foreground: var(--chart-marker-foreground);
+  --color-chart-marker-border: var(--chart-marker-border);
+  --color-chart-marker-background: var(--chart-marker-background);
+  --color-chart-tooltip-muted: var(--chart-tooltip-muted);
+  --color-chart-tooltip-foreground: var(--chart-tooltip-foreground);
+  --color-chart-tooltip-background: var(--chart-tooltip-background);
+  --color-chart-brush-border: var(--chart-brush-border);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-crosshair: var(--chart-crosshair);
+  --color-chart-line-secondary: var(--chart-line-secondary);
+  --color-chart-line-primary: var(--chart-line-primary);
+  --color-chart-foreground-muted: var(--chart-foreground-muted);
+  --color-chart-foreground: var(--chart-foreground);
+  --color-chart-background: var(--chart-background);
+  --color-legend-track: var(--legend-track);
+  --color-legend-muted-foreground: var(--legend-muted-foreground);
+  --color-legend-muted: var(--legend-muted);
+  --color-legend-foreground: var(--legend-foreground);
+  --color-legend: var(--legend);
 }
 
 :root {
@@ -99,6 +130,12 @@
   --chart-3: #4fc3f7;
   --chart-4: #fdd835;
   --chart-5: #7e57c2;
+  /* STEAM brand hues for dashboard chart fills (areas, bars, rings, gauges) */
+  --chart-series-1: #e94b3c;
+  --chart-series-2: #7cb342;
+  --chart-series-3: #4fc3f7;
+  --chart-series-4: #fdd835;
+  --chart-series-5: #7e57c2;
   --sidebar: #fafaf5;
   --sidebar-foreground: #2d2d2d;
   --sidebar-primary: #e94b3c;
@@ -109,6 +146,32 @@
   --sidebar-ring: #4fc3f7;
   --scrollbar-thumb: color-mix(in srgb, var(--muted-foreground) 45%, transparent);
   --scrollbar-thumb-hover: color-mix(in srgb, var(--muted-foreground) 65%, transparent);
+  --legend: #ffffff;
+  --legend-foreground: #2d2d2d;
+  --legend-muted: #f5f5f0;
+  --legend-muted-foreground: #6b6b6b;
+  --legend-track: #e5e5e0;
+  --chart-background: #ffffff;
+  --chart-foreground: #2d2d2d;
+  --chart-foreground-muted: #6b6b6b;
+  --chart-line-primary: #4fc3f7;
+  --chart-line-secondary: #7cb342;
+  --chart-crosshair: #c8c8c0;
+  --chart-grid: #ece9e2;
+  --chart-brush-border: var(--chart-grid);
+  --chart-tooltip-background: #2d2d2d;
+  --chart-tooltip-foreground: #fafaf5;
+  --chart-tooltip-muted: #c8c8c0;
+  --chart-marker-background: #f5f5f0;
+  --chart-marker-border: #e5e5e0;
+  --chart-marker-foreground: #2d2d2d;
+  --chart-label: #6b6b6b;
+  --chart-scale-01: #fafaf5;
+  --chart-scale-02: #f5f5f0;
+  --chart-scale-03: #e5e5e0;
+  --chart-scale-04: #c8c8c0;
+  --chart-scale-05: #6b6b6b;
+  --chart-scale-pattern-color: #f5f5f0;
 }
 
 /* Warm-dimmed palette for curriculum learn page (scoped via .learn-shell) */
@@ -230,3 +293,4 @@
 .ProseMirror .pf-align-justify {
   text-align: justify;
 }
+

@@ -172,10 +172,21 @@ Use Lucide React exclusively. Choose icons that are:
 Course cards and content cards are the primary building blocks. They should:
 - Use white backgrounds with subtle box shadows (not borders)
 - Have generous padding (24px)
-- Display a small colored accent (top border or badge) indicating STEAM category
+- Indicate STEAM category with a badge, icon color, or chart fill — never a thick colored edge stripe
 - Include clear visual hierarchy: thumbnail, title, description, metadata, CTA
 - Lift slightly on hover (translateY -4px) with shadow increase
 - Use 16px border radius for that friendly feel
+
+**Banned — left accent border / rail**
+
+Do **not** use a colored left border (`border-l-*`, `border-l-[3px]`, thick vertical rail, or `::before` edge stripe) on cards, panels, or dashboard tiles to mark category or status. It reads as a cheap admin-template accent and breaks the rounded card silhouette. Prefer:
+- Colored icon or typography (`text-steam-*`)
+- Small badge / chip
+- Chart series fill / gauge fill
+- Soft tinted background on a stat tile (`bg-steam-*/8`) — not an edge rail
+
+Incorrect: `border-l-[3px] border-l-steam-engineering` on a card  
+Correct: icon `text-steam-engineering` + chart fill `var(--chart-series-3)`
 
 ### Buttons
 
