@@ -170,6 +170,26 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
     action: "Kiểm tra mạng và thử tải lại sau vài giây.",
   },
+  "classMentorRequests.board": {
+    title: "Không tải được bảng lớp",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "classMentorRequests.mine": {
+    title: "Không tải được yêu cầu của bạn",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "classMentorRequests.create": {
+    title: "Không gửi được yêu cầu",
+    reason: "Lớp không còn nhận đăng ký hoặc bạn đã có yêu cầu đang chờ.",
+    action: "Tải lại bảng lớp và kiểm tra trạng thái yêu cầu.",
+  },
+  "classMentorRequests.withdraw": {
+    title: "Không rút được yêu cầu",
+    reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc đã được xử lý.",
+    action: "Tải lại danh sách yêu cầu và thử lại.",
+  },
   "classMentorRequests.approve": {
     title: "Không duyệt được yêu cầu mentor",
     reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc lớp đã có mentor.",
@@ -403,6 +423,8 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classes.create",
   "classes.update",
   "classes.lifecycle",
+  "classMentorRequests.create",
+  "classMentorRequests.withdraw",
   "classMentorRequests.approve",
   "classMentorRequests.reject",
   "classSessions.create",

@@ -23,3 +23,7 @@ export function isStudentRole(role: string | null | undefined): boolean {
 export function isManagerRole(role: string | null | undefined): boolean {
   return normalizeAccountRole(role) === "Manager";
 }
+
+export function isMentorRole(role: string | null | undefined): boolean {
+  return normalizeAccountRole(role) === "Mentor";
+}
