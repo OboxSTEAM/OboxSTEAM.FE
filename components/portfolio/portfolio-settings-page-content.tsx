@@ -228,23 +228,23 @@ function cleanLinksForSave(links: PortfolioLink[] | null): PortfolioLink[] {
 function PortfolioBuilderSkeleton() {
   return (
     <div className="animate-pulse">
-      <div className="border-b border-[#E5E5E0] bg-white">
+      <div className="border-b border-border bg-card">
         <div className="mx-auto flex h-14 max-w-[110rem] items-center justify-between px-4 sm:px-6">
-          <div className="h-6 w-44 rounded-lg bg-[#E5E5E0]" />
+          <div className="h-6 w-44 rounded-lg bg-border" />
           <div className="flex gap-2">
-            <div className="h-10 w-24 rounded-xl bg-[#E5E5E0]" />
-            <div className="h-10 w-20 rounded-xl bg-[#E5E5E0]" />
-            <div className="h-10 w-28 rounded-xl bg-[#E5E5E0]" />
+            <div className="h-10 w-24 rounded-xl bg-border" />
+            <div className="h-10 w-20 rounded-xl bg-border" />
+            <div className="h-10 w-28 rounded-xl bg-border" />
           </div>
         </div>
       </div>
       <div className="flex">
-        <div className="hidden w-[4.5rem] shrink-0 border-r border-[#E5E5E0] bg-white lg:block" />
-        <div className="flex-1 bg-[#F5F5F0] px-4 py-8 sm:px-8">
-          <div className="mx-auto max-w-[880px] space-y-6 rounded-[1.5rem] bg-white p-8 shadow-sm">
-            <div className="h-40 rounded-2xl bg-[#E5E5E0]" />
-            <div className="h-56 rounded-2xl bg-[#E5E5E0]" />
-            <div className="h-32 rounded-2xl bg-[#E5E5E0]" />
+        <div className="hidden w-[4.5rem] shrink-0 border-r border-border bg-card lg:block" />
+        <div className="flex-1 bg-muted px-4 py-8 sm:px-8">
+          <div className="mx-auto max-w-[880px] space-y-6 rounded-[1.5rem] bg-card p-8 shadow-sm">
+            <div className="h-40 rounded-2xl bg-border" />
+            <div className="h-56 rounded-2xl bg-border" />
+            <div className="h-32 rounded-2xl bg-border" />
           </div>
         </div>
       </div>
@@ -954,10 +954,10 @@ export function PortfolioSettingsPageContent() {
   if (profile && isParentRole(profile.role)) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="font-heading text-xl font-semibold text-[#2D2D2D]">
+        <p className="font-heading text-xl font-semibold text-foreground">
           Trang dành cho học viên
         </p>
-        <p className="mt-2 text-sm text-[#6B6B6B]">
+        <p className="mt-2 text-sm text-muted-foreground">
           Phụ huynh có thể theo dõi con tại mục Thông tin con.
         </p>
         <Button
@@ -974,10 +974,10 @@ export function PortfolioSettingsPageContent() {
   if (profile && !isStudentRole(profile.role)) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
-        <p className="font-heading text-xl font-semibold text-[#2D2D2D]">
+        <p className="font-heading text-xl font-semibold text-foreground">
           Không có quyền truy cập
         </p>
-        <p className="mt-2 text-sm text-[#6B6B6B]">
+        <p className="mt-2 text-sm text-muted-foreground">
           Chỉ học viên mới thiết lập được portfolio microsite.
         </p>
       </div>
@@ -991,12 +991,12 @@ export function PortfolioSettingsPageContent() {
   if (hasError && !draft) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
-        <Card className="border-[#E5E5E0] bg-white">
+        <Card className="border-border bg-card">
           <CardHeader className="text-center">
-            <CardTitle className="font-heading text-lg text-[#2D2D2D]">
+            <CardTitle className="font-heading text-lg text-foreground">
               Không tải được portfolio
             </CardTitle>
-            <CardDescription className="text-[#6B6B6B]">
+            <CardDescription className="text-muted-foreground">
               Vui lòng thử lại sau vài giây.
             </CardDescription>
             <Button type="button" className="mx-auto mt-4 w-fit" onClick={retry}>
@@ -1011,7 +1011,7 @@ export function PortfolioSettingsPageContent() {
   if (!draft) {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16">
-        <div className="overflow-hidden rounded-[2rem] border border-[#E5E5E0] bg-white shadow-[0_24px_60px_rgba(45,45,45,0.08)]">
+        <div className="overflow-hidden rounded-[2rem] border border-border bg-card shadow-[0_24px_60px_rgba(45,45,45,0.08)]">
           <div
             className="px-8 py-10 text-white sm:px-10"
             style={{
@@ -1031,9 +1031,9 @@ export function PortfolioSettingsPageContent() {
             </p>
           </div>
           <div className="space-y-5 px-8 py-8 sm:px-10">
-            <ul className="space-y-3 text-sm text-[#6B6B6B]">
+            <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex gap-2">
-                <Sparkles className="mt-0.5 size-4 shrink-0 text-[#E94B3C]" />
+                <Sparkles className="mt-0.5 size-4 shrink-0 text-primary" />
                 Đồng bộ tự động chứng chỉ & dự án đã chấm
               </li>
               <li className="flex gap-2">
@@ -1045,7 +1045,7 @@ export function PortfolioSettingsPageContent() {
               type="button"
               disabled={isCreating}
               onClick={() => void handleCreate()}
-              className="h-12 w-full rounded-xl bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90 sm:w-auto sm:min-w-48"
+              className="h-12 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 sm:w-auto sm:min-w-48"
             >
               {isCreating ? "Đang tạo…" : "Tạo portfolio"}
             </Button>
@@ -1115,7 +1115,7 @@ export function PortfolioSettingsPageContent() {
           </PortfolioPanelHost>
         ) : null}
 
-        <main className="min-w-0 flex-1 overflow-x-hidden bg-[#F5F5F0] px-2.5 py-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-8 md:px-8 md:py-10 lg:pb-10">
+        <main className="min-w-0 flex-1 overflow-x-hidden bg-muted px-2.5 py-5 pb-[calc(5.75rem+env(safe-area-inset-bottom))] sm:px-6 sm:py-8 md:px-8 md:py-10 lg:pb-10">
           <PortfolioCanvas
             draft={draft}
             onPatchDraft={patchDraft}

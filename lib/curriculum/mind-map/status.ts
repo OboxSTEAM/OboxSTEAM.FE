@@ -28,51 +28,52 @@ export function mindMapStatusTone(status: MindMapNodeStatus | null): {
   switch (status) {
     case "completed":
       return {
-        textClass: "text-[#5a7a32]",
-        bgClass: "bg-[#7CB342]/15",
-        ringClass: "ring-[#7CB342]/45",
+        textClass: "text-learn-success",
+        bgClass: "bg-learn-success/15",
+        ringClass: "ring-learn-success/45",
         label: MIND_MAP_STATUS_LABELS.completed,
       };
     case "current":
       return {
-        textClass: "text-[#c43a2e]",
-        bgClass: "bg-[#E94B3C]/12",
-        ringClass: "ring-[#E94B3C]/50",
+        textClass: "text-learn-primary",
+        bgClass: "bg-learn-primary/12",
+        ringClass: "ring-learn-primary/50",
         label: MIND_MAP_STATUS_LABELS.current,
       };
     case "in_progress":
       return {
-        textClass: "text-[#2d7a9c]",
-        bgClass: "bg-[#4FC3F7]/15",
-        ringClass: "ring-[#4FC3F7]/45",
+        textClass: "text-learn-accent",
+        bgClass: "bg-learn-accent/15",
+        ringClass: "ring-learn-accent/45",
         label: MIND_MAP_STATUS_LABELS.in_progress,
       };
     case "submitted":
+      // No dedicated learn-* token for purple; reuse the themed STEAM math hue.
       return {
-        textClass: "text-[#6a4aa8]",
-        bgClass: "bg-[#7E57C2]/12",
-        ringClass: "ring-[#7E57C2]/40",
+        textClass: "text-[var(--steam-mathematics)]",
+        bgClass: "bg-[var(--steam-mathematics)]/12",
+        ringClass: "ring-[var(--steam-mathematics)]/40",
         label: MIND_MAP_STATUS_LABELS.submitted,
       };
     case "available":
       return {
-        textClass: "text-[#2D2D2D]",
-        bgClass: "bg-[#F5F5F0]",
-        ringClass: "ring-[#E5E5E0]",
+        textClass: "text-learn-text-strong",
+        bgClass: "bg-learn-surface-2",
+        ringClass: "ring-learn-border",
         label: MIND_MAP_STATUS_LABELS.available,
       };
     case "locked":
       return {
-        textClass: "text-[#8a8a8a]",
-        bgClass: "bg-[#E5E5E0]/70",
-        ringClass: "ring-[#E5E5E0]",
+        textClass: "text-learn-muted",
+        bgClass: "bg-learn-border/70",
+        ringClass: "ring-learn-border",
         label: MIND_MAP_STATUS_LABELS.locked,
       };
     default:
       return {
-        textClass: "text-[#6B6B6B]",
-        bgClass: "bg-[#F5F5F0]",
-        ringClass: "ring-[#E5E5E0]",
+        textClass: "text-learn-muted",
+        bgClass: "bg-learn-surface-2",
+        ringClass: "ring-learn-border",
         label: "Chưa xác định",
       };
   }

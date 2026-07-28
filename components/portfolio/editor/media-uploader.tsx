@@ -261,10 +261,10 @@ export function MediaUploader({
           {attached.map((asset, index) => (
             <li
               key={asset.id}
-              className="flex items-center gap-2 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-2"
+              className="flex items-center gap-2 rounded-xl border border-border bg-background p-2"
             >
               {hideThumbnails ? (
-                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#E5E5E0] font-mono text-[10px] font-semibold text-[#6B6B6B]">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-border font-mono text-[10px] font-semibold text-muted-foreground">
                   {index + 1}
                 </span>
               ) : asset.url ? (
@@ -275,7 +275,7 @@ export function MediaUploader({
                   className="size-12 rounded-lg object-cover"
                 />
               ) : (
-                <div className="size-12 rounded-lg bg-[#E5E5E0]" />
+                <div className="size-12 rounded-lg bg-border" />
               )}
               <Input
                 value={asset.caption ?? ""}
@@ -298,8 +298,8 @@ export function MediaUploader({
       ) : null}
 
       {library && !compact ? (
-        <div className="rounded-xl border border-[#E5E5E0] bg-white p-3">
-          <p className="mb-2 text-xs font-medium text-[#6B6B6B]">Thư viện ảnh</p>
+        <div className="rounded-xl border border-border bg-card p-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">Thư viện ảnh</p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {library.map((asset) => (
               <div key={asset.id} className="group relative">

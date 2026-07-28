@@ -45,7 +45,7 @@ function DialogPopup({
         <DialogPrimitive.Popup
           data-slot="dialog-popup"
           className={cn(
-            "relative z-50 grid w-full max-w-lg gap-4 rounded-2xl border border-[#E5E5E0] bg-white p-6 shadow-lg outline-none",
+            "relative z-50 grid w-full max-w-lg gap-4 rounded-2xl border border-border bg-popover p-6 shadow-lg outline-none",
             "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
             "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
             className,
@@ -86,7 +86,7 @@ function DialogTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("font-heading text-xl font-semibold text-[#2D2D2D]", className)}
+      className={cn("font-heading text-xl font-semibold text-foreground", className)}
       {...props}
     />
   );
@@ -99,7 +99,7 @@ function DialogDescription({
   return (
     <DialogPrimitive.Description
       data-slot="dialog-description"
-      className={cn("text-sm text-[#6B6B6B]", className)}
+      className={cn("text-sm text-muted-foreground", className)}
       {...props}
     />
   );
@@ -113,7 +113,7 @@ function DialogClose({
     <DialogPrimitive.Close
       data-slot="dialog-close"
       className={cn(
-        "absolute top-4 right-4 rounded-lg p-1 text-[#6B6B6B] opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-[#2D2D2D]/20 outline-none",
+        "absolute top-4 right-4 rounded-lg p-1 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-foreground/20 outline-none",
         className,
       )}
       {...props}

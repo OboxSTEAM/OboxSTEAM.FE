@@ -31,10 +31,7 @@ function StepperTabBar({
   onChange: (id: TabId) => void;
 }) {
   return (
-    <div
-      className="sticky top-0 z-30 flex items-center gap-0 border-b bg-[#FAFAF5] px-6 pt-4"
-      style={{ borderColor: "#E5E5E0" }}
-    >
+    <div className="sticky top-0 z-30 flex items-center gap-0 border-b border-border bg-background px-6 pt-4">
       {TABS.map((tab, idx) => {
         const isActive = tab.id === active;
         return (
@@ -46,16 +43,16 @@ function StepperTabBar({
             className={cn(
               "relative flex items-center gap-2 px-4 pb-3 text-sm font-medium transition-colors",
               isActive
-                ? "text-[#E94B3C]"
-                : "text-[#6B6B6B] hover:text-[#3a3833]"
+                ? "text-primary"
+                : "text-muted-foreground hover:text-foreground"
             )}
           >
             <span
               className={cn(
                 "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
                 isActive
-                  ? "bg-[#E94B3C] text-white"
-                  : "bg-[#E5E5E0] text-[#6B6B6B]"
+                  ? "bg-primary text-white"
+                  : "bg-border text-muted-foreground"
               )}
             >
               {idx + 1}
@@ -63,10 +60,7 @@ function StepperTabBar({
             {tab.label}
 
             {isActive && (
-              <span
-                className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full"
-                style={{ background: "#E94B3C" }}
-              />
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary" />
             )}
           </button>
         );

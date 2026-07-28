@@ -49,26 +49,26 @@ export function ManagerFilterBar({
   showClear = false,
 }: ManagerFilterBarProps) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-[#E5E5E0] bg-white px-6 py-4">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border bg-card px-6 py-4">
       {/* Search and Filters group */}
       <div className="flex flex-1 flex-wrap items-center gap-3">
         {/* Search Input wrapper */}
         <div className="relative w-full max-w-xs">
-          <Search className="absolute top-2.5 left-3 size-4 text-[#6B6B6B]" />
+          <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
           <Input
             type="text"
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
             placeholder={searchPlaceholder}
-            className="h-9 pl-9 pr-8 rounded-lg border-[#E5E5E0] text-sm text-[#2D2D2D] bg-[#FAFAF5]/50 focus-visible:ring-[#4FC3F7]"
+            className="h-9 pl-9 pr-8 rounded-lg border-border text-sm text-foreground bg-background/50 focus-visible:ring-ring"
           />
           {searchValue ? (
             <button
               onClick={() => onSearchChange("")}
-              className="absolute top-2.5 right-2.5 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#4FC3F7]"
+              className="absolute top-2.5 right-2.5 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
               aria-label="Xóa tìm kiếm"
             >
-              <X className="size-4 text-[#6B6B6B]" />
+              <X className="size-4 text-muted-foreground" />
             </button>
           ) : null}
         </div>
@@ -130,7 +130,7 @@ export function ManagerFilterBar({
           variant="ghost"
           size="sm"
           onClick={onClearFilters}
-          className="h-9 gap-1.5 px-3 rounded-lg text-xs font-semibold text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+          className="h-9 gap-1.5 px-3 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <X className="size-3.5" />
           Xóa bộ lọc

@@ -5,6 +5,7 @@ import { Eye, Save } from "lucide-react";
 
 import { PortfolioPreviewDialog } from "@/components/portfolio/editor/portfolio-preview-dialog";
 import { PublishPopover } from "@/components/portfolio/editor/publish-popover";
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Button } from "@/components/ui/button";
 import type { Portfolio } from "@/lib/api/entities/portfolio";
 import { cn } from "@/lib/utils";
@@ -60,7 +61,7 @@ const TONE_CHIP: Record<StatusChip["tone"], string> = {
   saved: "bg-[#7CB342]/15 text-[#4c7027]",
   unpublished: "bg-[#E94B3C]/12 text-[#b53428]",
   live: "bg-[#4FC3F7]/15 text-[#0f7cad]",
-  draft: "bg-[#F5F5F0] text-[#6B6B6B]",
+  draft: "bg-muted text-muted-foreground",
 };
 
 const TONE_DOT: Record<StatusChip["tone"], string> = {
@@ -85,13 +86,13 @@ export function PortfolioToolbar({
     <div
       className={cn(
         // Sit just under the fixed SiteHeader (h-[4.5rem] / sm:h-20), above canvas.
-        "sticky top-[4.5rem] z-40 border-b border-[#E5E5E0] bg-white sm:top-20",
+        "sticky top-[4.5rem] z-40 border-b border-border bg-card sm:top-20",
         "shadow-[0_1px_0_rgba(45,45,45,0.04)]",
       )}
     >
       <div className="mx-auto flex h-14 max-w-[110rem] items-center gap-2 px-3 sm:gap-3 sm:px-6">
         <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-2.5">
-          <h1 className="min-w-0 truncate font-heading text-sm font-bold text-[#2D2D2D] sm:text-lg">
+          <h1 className="min-w-0 truncate font-heading text-sm font-bold text-foreground sm:text-lg">
             Portfolio của tôi
           </h1>
           <div className="flex shrink-0 items-center gap-1.5">
@@ -116,6 +117,7 @@ export function PortfolioToolbar({
         </div>
 
         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+          <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
           <Button
             type="button"
             variant="outline"

@@ -170,7 +170,7 @@ function AdvancedSection({
 }) {
   return (
     <Collapsible open={open} onOpenChange={onOpenChange}>
-      <div className="rounded-xl border bg-white" style={{ borderColor: W.border }}>
+      <div className="rounded-xl border bg-card" style={{ borderColor: W.border }}>
         <CollapsibleTrigger className="group flex min-h-12 w-full items-center justify-between gap-4 px-4 py-3 text-left">
           <div>
             <p className="text-xs font-bold uppercase tracking-widest" style={{ color: W.textStrong }}>
@@ -196,7 +196,7 @@ function AdvancedSection({
 function FErr({ msg }: { msg?: string }) {
   return msg ? <p className="text-xs font-semibold mt-1" style={{ color: W.primary }}>{msg}</p> : null;
 }
-const IN = "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+const IN = "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã lưu" }: {
   submitting: boolean; success: boolean; label?: string; ok?: string;
@@ -204,7 +204,7 @@ function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã l
   return (
     <Button type="submit" disabled={submitting || success}
       className={cn("h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
-        success ? "bg-emerald-600 hover:bg-emerald-600" : "bg-[#E94B3C] hover:bg-[#d43f33]")}>
+        success ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90")}>
       {success
         ? <><Check className="size-4 animate-in zoom-in-50 duration-200" />{ok}</>
         : <><Save className="size-4" />{submitting ? "Đang lưu..." : label}</>}
@@ -532,14 +532,14 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
                   id="mand"
                   checked={field.value}
                   onCheckedChange={(v) => field.onChange(v === true)}
-                  className="border-[#8c8678] bg-white data-checked:border-primary"
+                  className="border-input bg-background data-checked:border-primary"
                 />
               )} />
               <Label htmlFor="mand" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Học phần bắt buộc</Label>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
-              <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+              <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
               </div>
             </div>
@@ -616,7 +616,7 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
         </div>
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
-          <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+          <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
         </div>
 
         <AdvancedSection
@@ -794,7 +794,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             </div>
             <div className="flex flex-1 flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
-              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full flex-1 min-h-28 text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full flex-1 min-h-28 text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
           </div>
 
@@ -843,7 +843,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   id="qr"
                   checked={field.value}
                   onCheckedChange={(v) => field.onChange(v === true)}
-                  className="border-[#8c8678] bg-white data-checked:border-primary"
+                  className="border-input bg-background data-checked:border-primary"
                 />
               )} />
               <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
@@ -854,7 +854,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   id="med"
                   checked={field.value}
                   onCheckedChange={(v) => field.onChange(v === true)}
-                  className="border-[#8c8678] bg-white data-checked:border-primary"
+                  className="border-input bg-background data-checked:border-primary"
                 />
               )} />
               <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
@@ -869,7 +869,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 checked={showMaterial}
                 onCheckedChange={(v) => setShowMaterial(v === true)}
                 disabled={materialLoading}
-                className="border-[#8c8678] bg-white data-checked:border-primary"
+                className="border-input bg-background data-checked:border-primary"
               />
               <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
                 Đính kèm tài liệu học tập
@@ -964,7 +964,7 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
           disabled={busy || ok}
           onClick={() => { const b = document.getElementById("__program-form-submit"); if (b) (b as HTMLButtonElement).click(); }}
           className={cn("h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
-            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-[#E94B3C] hover:bg-[#d43f33]")}
+            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90")}
         >
           {ok ? <><Check className="size-4 animate-in zoom-in-50 duration-200" />Đã lưu</> : <><Save className="size-4" />{busy ? "Đang lưu..." : "Lưu thay đổi"}</>}
         </Button>
@@ -1078,7 +1078,7 @@ function StructureTreeRow({
             event.stopPropagation();
             dragControls.start(event);
           }}
-          className="flex size-6 shrink-0 cursor-grab items-center justify-center rounded outline-none hover:bg-[#F0F0EA] active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50"
+          className="flex size-6 shrink-0 cursor-grab items-center justify-center rounded outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-ring/50"
           style={{ color: W.faint }}
         >
           <GripVertical className="size-3.5" strokeWidth={2.25} />

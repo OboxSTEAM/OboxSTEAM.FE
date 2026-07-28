@@ -29,9 +29,9 @@ type MindMapNodeInspectorProps = {
 
 function MetaRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-start justify-between gap-3 border-b border-[#EAEAEA] py-2 last:border-b-0">
-      <dt className="shrink-0 text-xs font-medium text-[#8A8A8A]">{label}</dt>
-      <dd className="min-w-0 text-right text-sm font-semibold tracking-tight text-[#2D2D2D]">
+    <div className="flex items-start justify-between gap-3 border-b border-learn-border py-2 last:border-b-0">
+      <dt className="shrink-0 text-xs font-medium text-learn-muted">{label}</dt>
+      <dd className="min-w-0 text-right text-sm font-semibold tracking-tight text-learn-text-strong">
         {value}
       </dd>
     </div>
@@ -68,22 +68,22 @@ export function MindMapNodeInspector({
     <aside
       className={cn(
         "flex max-h-[min(62vh,30rem)] min-h-0 w-full flex-col overflow-hidden",
-        "rounded-2xl border border-[#E5E5E0] bg-white",
-        "shadow-[0_12px_32px_-22px_rgba(45,43,39,0.4)]",
+        "rounded-2xl border border-learn-border bg-learn-surface",
+        "shadow-[0_12px_32px_-22px_color-mix(in_srgb,var(--learn-text-strong)_40%,transparent)]",
         className,
       )}
       aria-label={`Chi tiết ${kindLabel}`}
     >
-      <div className="flex items-start justify-between gap-3 border-b border-[#EAEAEA] px-4 py-3">
+      <div className="flex items-start justify-between gap-3 border-b border-learn-border px-4 py-3">
         <div className="min-w-0">
-          <p className="text-[10px] font-bold tracking-[0.12em] text-[#9A9A9A] uppercase">
+          <p className="text-[10px] font-bold tracking-[0.12em] text-learn-muted uppercase">
             {kindLabel}
           </p>
-          <h2 className="mt-1 font-heading text-[15px] font-bold leading-snug tracking-tight text-[#2D2D2D]">
+          <h2 className="mt-1 font-heading text-[15px] font-bold leading-snug tracking-tight text-learn-text-strong">
             {node.label}
           </h2>
           {breadcrumb.length > 0 ? (
-            <p className="mt-1 text-xs font-medium leading-relaxed text-[#8A8A8A]">
+            <p className="mt-1 text-xs font-medium leading-relaxed text-learn-muted">
               {breadcrumb.join(" · ")}
             </p>
           ) : null}
@@ -92,15 +92,15 @@ export function MindMapNodeInspector({
           type="button"
           aria-label="Đóng chi tiết"
           onClick={onClose}
-          className="flex size-9 shrink-0 items-center justify-center rounded-xl text-[#2D2D2D] transition-colors hover:bg-[#F5F5F0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
+          className="flex size-9 shrink-0 items-center justify-center rounded-xl text-learn-text-strong transition-colors hover:bg-learn-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent"
         >
           <X className="size-4" strokeWidth={2.25} aria-hidden />
         </button>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3">
-        <div className="rounded-xl bg-[#FAFAF5] px-3 py-2.5">
-          <p className="text-[10px] font-bold tracking-[0.1em] text-[#9A9A9A] uppercase">
+        <div className="rounded-xl bg-learn-bg px-3 py-2.5">
+          <p className="text-[10px] font-bold tracking-[0.1em] text-learn-muted uppercase">
             Bạn đang ở đâu
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -117,32 +117,32 @@ export function MindMapNodeInspector({
               {tone.label}
             </span>
             {node.isOnCurrentPath ? (
-              <span className="rounded-lg bg-[#E94B3C] px-2.5 py-1 text-xs font-bold text-white">
+              <span className="rounded-lg bg-learn-primary px-2.5 py-1 text-xs font-bold text-white">
                 Lộ trình hiện tại
               </span>
             ) : null}
           </div>
           {node.progressPercent != null ? (
-            <p className="mt-2 font-mono text-xs font-semibold tabular-nums text-[#6B6B6B]">
+            <p className="mt-2 font-mono text-xs font-semibold tabular-nums text-learn-muted">
               Tiến độ {Math.round(node.progressPercent)}%
               {node.childProgress
                 ? ` · ${node.childProgress.completedCount}/${node.childProgress.totalCount}`
                 : ""}
             </p>
           ) : node.childProgress ? (
-            <p className="mt-2 font-mono text-xs font-semibold tabular-nums text-[#6B6B6B]">
+            <p className="mt-2 font-mono text-xs font-semibold tabular-nums text-learn-muted">
               {node.childProgress.completedCount}/{node.childProgress.totalCount} hoàn thành
             </p>
           ) : null}
         </div>
 
-        <div className="mt-3 rounded-xl border border-[#EAEAEA] px-3 py-2.5">
-          <p className="text-[10px] font-bold tracking-[0.1em] text-[#9A9A9A] uppercase">
+        <div className="mt-3 rounded-xl border border-learn-border px-3 py-2.5">
+          <p className="text-[10px] font-bold tracking-[0.1em] text-learn-muted uppercase">
             Bước tiếp theo
           </p>
-          <p className="mt-1.5 text-sm font-medium text-[#2D2D2D]">{nextActionHint}</p>
+          <p className="mt-1.5 text-sm font-medium text-learn-text-strong">{nextActionHint}</p>
           {node.lockReason ? (
-            <p className="mt-2 text-sm font-medium text-[#8A8A8A]">{node.lockReason}</p>
+            <p className="mt-2 text-sm font-medium text-learn-muted">{node.lockReason}</p>
           ) : null}
         </div>
 
@@ -217,21 +217,21 @@ export function MindMapNodeInspector({
 
         {node.activity?.activityInfo.description ? (
           <div className="mt-3">
-            <p className="text-[10px] font-bold tracking-[0.1em] text-[#9A9A9A] uppercase">
+            <p className="text-[10px] font-bold tracking-[0.1em] text-learn-muted uppercase">
               Mô tả
             </p>
-            <p className="mt-1.5 text-sm font-medium leading-relaxed text-[#6B6B6B]">
+            <p className="mt-1.5 text-sm font-medium leading-relaxed text-learn-muted">
               {node.activity.activityInfo.description}
             </p>
           </div>
         ) : null}
       </div>
 
-      <div className="border-t border-[#EAEAEA] p-3">
+      <div className="border-t border-learn-border p-3">
         {canOpen && (activityId || assignmentId) ? (
           <Button
             type="button"
-            className="min-h-11 w-full rounded-xl bg-[#E94B3C] font-semibold text-white hover:bg-[#d43e30]"
+            className="min-h-11 w-full rounded-xl bg-learn-primary font-semibold text-white hover:bg-learn-primary/90"
             onClick={() =>
               onOpenLesson({
                 activityId,
@@ -242,7 +242,7 @@ export function MindMapNodeInspector({
             Mở bài học
           </Button>
         ) : (
-          <p className="text-center text-sm font-medium text-[#8A8A8A]">
+          <p className="text-center text-sm font-medium text-learn-muted">
             {node.isLocked
               ? "Nút này đang bị khóa."
               : "Chọn hoạt động hoặc bài tập để mở bài học."}

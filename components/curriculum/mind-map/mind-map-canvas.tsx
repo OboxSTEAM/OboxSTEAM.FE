@@ -112,7 +112,7 @@ export function MindMapCanvas({
 
     for (const node of layout.nodes) {
       if (node.kind === "program") {
-        colors.set(node.id, "#2D2D2D");
+        colors.set(node.id, "var(--learn-text-strong)");
         continue;
       }
       colors.set(node.id, resolveModuleColor(node.id));
@@ -306,7 +306,7 @@ export function MindMapCanvas({
     <div
       ref={containerRef}
       className={cn(
-        "relative min-h-0 flex-1 cursor-grab touch-none overflow-hidden bg-[#FAFAF5] active:cursor-grabbing",
+        "relative min-h-0 flex-1 cursor-grab touch-none overflow-hidden bg-learn-bg active:cursor-grabbing",
         className,
       )}
       role="application"
@@ -315,7 +315,7 @@ export function MindMapCanvas({
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          backgroundImage: `radial-gradient(circle, rgba(45,43,39,0.12) 1px, transparent 1.15px)`,
+          backgroundImage: `radial-gradient(circle, color-mix(in srgb, var(--learn-faint) 35%, transparent) 1px, transparent 1.15px)`,
           backgroundSize: `${dotScale}px ${dotScale}px`,
           backgroundPosition: `${viewport.x % dotScale}px ${viewport.y % dotScale}px`,
         }}

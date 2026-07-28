@@ -18,15 +18,15 @@ export function ManagerPageHeader({
   children,
 }: ManagerPageHeaderProps) {
   return (
-    <div className="flex flex-col gap-4 border-b border-[#E5E5E0] bg-white px-6 py-5">
+    <div className="flex flex-col gap-4 border-b border-border bg-card px-6 py-5">
       {/* Main Title & Action Bar */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="space-y-1">
-          <h2 className="font-heading text-2xl font-bold tracking-tight text-[#2D2D2D]">
+          <h2 className="font-heading text-2xl font-bold tracking-tight text-foreground">
             {title}
           </h2>
           {description ? (
-            <p className="text-sm text-[#6B6B6B]">{description}</p>
+            <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
         </div>
         {children ? (

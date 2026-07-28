@@ -48,7 +48,7 @@ function SheetPopup({
         <DialogPrimitive.Popup
           data-slot="sheet-popup"
           className={cn(
-            "relative z-50 flex h-full w-[min(20rem,88vw)] flex-col border-[#E5E5E0] bg-white shadow-xl outline-none",
+            "relative z-50 flex h-full w-[min(20rem,88vw)] flex-col border-border bg-popover shadow-xl outline-none",
             "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
             side === "left" ? "border-r" : "border-l",
             side === "left"
@@ -70,7 +70,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="sheet-header"
-      className={cn("flex flex-col gap-1 border-b border-[#E5E5E0] px-4 py-3", className)}
+      className={cn("flex flex-col gap-1 border-b border-border px-4 py-3", className)}
       {...props}
     />
   );
@@ -80,7 +80,7 @@ function SheetTitle({ className, ...props }: DialogPrimitive.Title.Props) {
   return (
     <DialogPrimitive.Title
       data-slot="sheet-title"
-      className={cn("font-heading text-base font-semibold text-[#2D2D2D]", className)}
+      className={cn("font-heading text-base font-semibold text-foreground", className)}
       {...props}
     />
   );
@@ -91,7 +91,7 @@ function SheetClose({ className, ...props }: DialogPrimitive.Close.Props) {
     <DialogPrimitive.Close
       data-slot="sheet-close"
       className={cn(
-        "absolute top-3 right-3 rounded-lg p-1.5 text-[#6B6B6B] opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-[#2D2D2D]/20 outline-none",
+        "absolute top-3 right-3 rounded-lg p-1.5 text-muted-foreground opacity-70 transition-opacity hover:opacity-100 focus-visible:ring-2 focus-visible:ring-foreground/20 outline-none",
         className,
       )}
       {...props}

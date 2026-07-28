@@ -32,7 +32,7 @@ export function ManagerStatusBadge({
   const normStatus = status.trim().toLowerCase();
 
   // Mapping configurations
-  let badgeStyle = "bg-[#F5F5F0] text-[#6B6B6B] border-[#E5E5E0]";
+  let badgeStyle = "bg-muted text-muted-foreground border-border";
   let displayLabel = label ?? status;
 
   if (
@@ -74,7 +74,7 @@ export function ManagerStatusBadge({
       "từ chối",
     ].includes(normStatus)
   ) {
-    badgeStyle = "bg-[#E94B3C]/10 text-[#a82a1e] border-[#E94B3C]/15";
+    badgeStyle = "bg-primary/10 text-[#a82a1e] border-primary/15";
     displayLabel = label ?? "Đã khóa";
   } else if (["premium", "vip"].includes(normStatus)) {
     badgeStyle = "bg-[#7E57C2]/12 text-[#51308a] border-[#7E57C2]/20";

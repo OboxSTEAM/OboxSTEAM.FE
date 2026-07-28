@@ -181,7 +181,7 @@ export function ExpertManager() {
       header: "Chuyên gia",
       render: (expert) => (
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="size-10 border border-[#E5E5E0]">
+          <Avatar className="size-10 border border-border">
             <AvatarImage
               src={expert.avatarUrl || undefined}
               alt={expert.fullName || expert.code}
@@ -191,10 +191,10 @@ export function ExpertManager() {
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-[#2D2D2D]">
+            <p className="truncate font-semibold text-foreground">
               {expert.fullName || "Chưa cập nhật tên"}
             </p>
-            <p className="truncate text-xs text-[#6B6B6B]">
+            <p className="truncate text-xs text-muted-foreground">
               {expert.title || "Chưa cập nhật chức danh"}
             </p>
           </div>
@@ -205,7 +205,7 @@ export function ExpertManager() {
       header: "Mã",
       className: "w-28",
       render: (expert) => (
-        <span className="font-mono text-xs font-semibold text-[#2D2D2D]">
+        <span className="font-mono text-xs font-semibold text-foreground">
           {expert.code || "—"}
         </span>
       ),
@@ -228,7 +228,7 @@ export function ExpertManager() {
               <Badge
                 key={program.programId}
                 variant="secondary"
-                className="max-w-36 truncate rounded-md bg-[#F5F5F0] text-[11px] font-medium text-[#4C4C48]"
+                className="max-w-36 truncate rounded-md bg-muted text-[11px] font-medium text-foreground"
                 title={program.roleInBoard || program.name}
               >
                 {program.code || program.name}
@@ -243,14 +243,14 @@ export function ExpertManager() {
                   .map((program) => `${program.name}${program.roleInBoard ? ` — ${program.roleInBoard}` : ""}`)
                   .join("\n")}
                 aria-label={`Xem thêm ${expert.programs.length - 2} chương trình của ${expert.fullName}`}
-                className="inline-flex h-5 items-center rounded-md border border-[#CFCFC8] bg-white px-2 text-[11px] font-semibold text-[#4C4C48] transition-colors hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/40"
+                className="inline-flex h-5 items-center rounded-md border border-border bg-card px-2 text-[11px] font-semibold text-foreground transition-colors hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 +{expert.programs.length - 2} chương trình
               </button>
             ) : null}
           </div>
         ) : (
-          <span className="text-xs text-[#8A8A84]">Chưa gán</span>
+          <span className="text-xs text-muted-foreground">Chưa gán</span>
         ),
     },
     {
@@ -269,7 +269,7 @@ export function ExpertManager() {
             size="icon"
             onClick={() => setProfileExpertId(expert.id)}
             aria-label={`Xem ${expert.fullName}`}
-            className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
           >
             <Eye className="size-4" />
           </Button>
@@ -279,7 +279,7 @@ export function ExpertManager() {
             size="icon"
             onClick={() => openEdit(expert)}
             aria-label={`Sửa ${expert.fullName}`}
-            className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
           >
             <Pencil className="size-4" />
           </Button>
@@ -289,7 +289,7 @@ export function ExpertManager() {
             size="icon"
             onClick={() => setDeleteTarget(expert)}
             aria-label={`Xóa ${expert.fullName}`}
-            className="size-9 rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#C9362B]"
+            className="size-9 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
           >
             <Trash2 className="size-4" />
           </Button>
@@ -308,7 +308,7 @@ export function ExpertManager() {
         <Button
           type="button"
           onClick={openCreate}
-          className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+          className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
         >
           <Plus className="size-4" />
           Thêm chuyên gia
@@ -316,13 +316,13 @@ export function ExpertManager() {
       </ManagerPageHeader>
 
       <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">
-            <p className="text-xs font-medium text-[#6B6B6B]">
-              <span className="font-mono font-bold text-[#2D2D2D]">{totalCount}</span>{" "}
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              <span className="font-mono font-bold text-foreground">{totalCount}</span>{" "}
               chuyên gia
             </p>
-            <p className="flex items-center gap-1.5 text-xs text-[#6B6B6B]">
+            <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Link2 className="size-3.5 text-[#4FC3F7]" />
               Có thể gán nhiều chương trình cho mỗi chuyên gia
             </p>

@@ -180,7 +180,7 @@ export function PortfolioColorPicker({
     <div className={cn("space-y-3", className)}>
       {showPresets ? (
         <>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5C5C5C]">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
             {label}
           </p>
           <div className="flex flex-wrap gap-2.5">
@@ -283,7 +283,7 @@ export function PortfolioColorPicker({
 
         <div className="flex items-center gap-2">
           <span
-            className="size-10 shrink-0 rounded-xl border border-[#E5E5E0]"
+            className="size-10 shrink-0 rounded-xl border border-border"
             style={{ backgroundColor: currentHex }}
             aria-hidden
           />
@@ -314,7 +314,7 @@ export function PortfolioColorPicker({
                 setHexDraft(currentHex.replace(/^#/, "").toUpperCase());
               }
             }}
-            className="h-10 rounded-xl border-[#E5E5E0] bg-[#F5F5F0] font-mono text-sm uppercase tracking-wide"
+            className="h-10 rounded-xl border-border bg-muted font-mono text-sm uppercase tracking-wide"
             aria-label="Mã màu hex"
             spellCheck={false}
           />

@@ -44,7 +44,7 @@ const W = {
 } as const;
 
 const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 /** Session-only tally of the last CSV import for a bank. */
 type BankImportStat = {
@@ -311,7 +311,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
         <Checkbox
           checked={showBank}
           onCheckedChange={(v) => setShowBank(v === true)}
-          className="border-[#8c8678] bg-white data-checked:border-primary"
+          className="border-input bg-background data-checked:border-primary"
         />
         <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
           Đính kèm ngân hàng đề
@@ -349,7 +349,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                 return (
                   <li
                     key={bank.id}
-                    className="rounded-xl border bg-white p-3"
+                    className="rounded-xl border bg-card p-3"
                     style={{ borderColor: W.border }}
                   >
                     <div className="flex items-start gap-3">
@@ -397,7 +397,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           type="button"
                           title="Sao chép ID ngân hàng"
                           onClick={() => void copyBankId(bank.id)}
-                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-[#f4f1ea]"
+                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-muted"
                           style={{ borderColor: W.border, color: W.muted }}
                         >
                           <Copy className="size-3.5" />
@@ -408,7 +408,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           onClick={() => triggerImport(bank.id)}
                           disabled={busy}
                           className={cn(
-                            "flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors hover:bg-[#f4f1ea] disabled:opacity-50",
+                            "flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors hover:bg-muted disabled:opacity-50",
                           )}
                           style={{ borderColor: W.border, color: W.accent }}
                         >
@@ -473,7 +473,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                       onClick={() =>
                         setExpandedId((prev) => (prev === bank.id ? null : bank.id))
                       }
-                      className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-1 py-1.5 text-left text-[11px] font-semibold transition-colors hover:bg-[#f4f1ea]"
+                      className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-1 py-1.5 text-left text-[11px] font-semibold transition-colors hover:bg-muted"
                       style={{ color: W.muted }}
                     >
                       {isExpanded ? (
@@ -498,7 +498,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           bank.questions.map((q, idx) => (
                             <li
                               key={q.id}
-                              className="flex items-start gap-2 rounded-lg border bg-[#fafaf5] px-2.5 py-2"
+                              className="flex items-start gap-2 rounded-lg border bg-background px-2.5 py-2"
                               style={{ borderColor: W.border }}
                             >
                               <span
@@ -554,7 +554,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
           )}
 
           <div
-            className="space-y-3 rounded-xl border border-dashed bg-white/60 p-4"
+            className="space-y-3 rounded-xl border border-dashed bg-muted/60 p-4"
             style={{ borderColor: W.border }}
           >
             <p

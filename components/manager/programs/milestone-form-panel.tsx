@@ -49,7 +49,7 @@ const W = {
 } as const;
 
 const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 function STitle({ children }: { children: React.ReactNode }) {
   return (
@@ -267,14 +267,14 @@ export function MilestoneFormPanel({
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
-              <textarea rows={2} {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+              <textarea rows={2} {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
             <div className="col-span-2 flex items-center gap-2">
               <Controller
                 name="isCapstone"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox id="capstone" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-[#8c8678] bg-white data-checked:border-primary" />
+                  <Checkbox id="capstone" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                 )}
               />
               <Label htmlFor="capstone" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>
@@ -333,7 +333,7 @@ export function MilestoneFormPanel({
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả sản phẩm</Label>
-              <textarea rows={2} {...register("assignmentDescription")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+              <textarea rows={2} {...register("assignmentDescription")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Điểm tối đa</Label>
@@ -380,7 +380,7 @@ export function MilestoneFormPanel({
           disabled={busy || ok}
           className={cn(
             "h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
-            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-[#E94B3C] hover:bg-[#d43f33]",
+            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90",
           )}
         >
           {ok ? (
@@ -456,7 +456,7 @@ function MilestoneActivityLinker({
           {linked.map((la) => (
             <li
               key={la.id}
-              className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2"
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2"
               style={{ borderColor: W.border }}
             >
               <Link2 className="size-3.5 shrink-0" style={{ color: W.accent }} />
@@ -509,7 +509,7 @@ function MilestoneActivityLinker({
             </Select>
           </div>
           <label className="flex items-center gap-1.5 pb-2 text-xs font-medium" style={{ color: W.muted }}>
-            <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} className="border-[#8c8678] bg-white data-checked:border-primary" />
+            <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} className="border-input bg-background data-checked:border-primary" />
             Bắt buộc
           </label>
           <Button

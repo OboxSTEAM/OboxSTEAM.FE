@@ -38,9 +38,9 @@ type ExpertFormDialogProps = {
 };
 
 const INPUT_CLASS =
-  "h-11 rounded-xl border-[#DDDDD8] bg-white text-sm text-[#2D2D2D] focus-visible:ring-[#4FC3F7]/50";
+  "h-11 rounded-xl border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
 const TEXTAREA_CLASS =
-  "w-full resize-none rounded-xl border border-[#DDDDD8] bg-white px-3.5 py-3 text-sm text-[#2D2D2D] outline-none transition-colors placeholder:text-[#9A9A94] focus:border-[#4FC3F7] focus:ring-2 focus:ring-[#4FC3F7]/30";
+  "w-full resize-none rounded-xl border border-input bg-card px-3.5 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30";
 
 function getInitials(name: string): string {
   return name
@@ -128,7 +128,7 @@ export function ExpertFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-4xl overflow-y-auto p-0">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader className="border-b border-[#E8E8E3] px-6 py-5 pr-14">
+          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
             <DialogTitle>
               {expert ? "Cập nhật hồ sơ chuyên gia" : "Thêm chuyên gia"}
             </DialogTitle>
@@ -140,17 +140,17 @@ export function ExpertFormDialog({
 
           <div className="grid gap-6 px-6 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="space-y-4">
-              <div className="rounded-2xl border border-[#E8E8E3] bg-[#FAFAF5] p-5 text-center">
+              <div className="rounded-2xl border border-border bg-background p-5 text-center">
                 <Avatar className="mx-auto size-24 border-4 border-white shadow-sm">
                   <AvatarImage src={avatarUrl || undefined} alt={fullName || "Chuyên gia"} />
                   <AvatarFallback className="bg-[#4FC3F7]/15 font-heading text-xl font-bold text-[#0D6E9C]">
                     {getInitials(fullName) || <UserRound className="size-7" />}
                   </AvatarFallback>
                 </Avatar>
-                <p className="mt-3 truncate font-heading text-sm font-bold text-[#2D2D2D]">
+                <p className="mt-3 truncate font-heading text-sm font-bold text-foreground">
                   {fullName || "Chuyên gia mới"}
                 </p>
-                <p className="mt-1 text-xs text-[#6B6B6B]">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {visibleSelectedCount} chương trình được chọn
                 </p>
               </div>
@@ -169,7 +169,7 @@ export function ExpertFormDialog({
               <div className="space-y-2">
                 <Label htmlFor="linkedInUrl">LinkedIn</Label>
                 <div className="relative">
-                  <Link2 className="pointer-events-none absolute left-3 top-3.5 size-4 text-[#8A8A84]" />
+                  <Link2 className="pointer-events-none absolute left-3 top-3.5 size-4 text-muted-foreground" />
                   <Input
                     id="linkedInUrl"
                     placeholder="https://linkedin.com/in/..."
@@ -269,7 +269,7 @@ export function ExpertFormDialog({
               </FormSection>
 
               <FormSection icon={BriefcaseBusiness} title="Chương trình tham gia">
-                <p className="-mt-2 text-xs leading-5 text-[#6B6B6B]">
+                <p className="-mt-2 text-xs leading-5 text-muted-foreground">
                   Chọn chương trình và ghi rõ vai trò của chuyên gia trong hội đồng.
                 </p>
                 {isProgramsLoading ? (
@@ -277,12 +277,12 @@ export function ExpertFormDialog({
                     {[0, 1, 2].map((item) => (
                       <div
                         key={item}
-                        className="h-14 animate-pulse rounded-xl bg-[#F5F5F0]"
+                        className="h-14 animate-pulse rounded-xl bg-muted"
                       />
                     ))}
                   </div>
                 ) : programs.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-[#D8D8D2] p-5 text-center text-sm text-[#6B6B6B]">
+                  <p className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
                     Chưa có chương trình để gán.
                   </p>
                 ) : (
@@ -299,7 +299,7 @@ export function ExpertFormDialog({
                             "grid gap-3 rounded-xl border p-3 transition-colors sm:grid-cols-[minmax(0,1fr)_220px]",
                             isSelected
                               ? "border-[#4FC3F7]/60 bg-[#4FC3F7]/5"
-                              : "border-[#E8E8E3] bg-white",
+                              : "border-border bg-card",
                           )}
                         >
                           <label className="flex min-w-0 cursor-pointer items-center gap-3">
@@ -308,13 +308,13 @@ export function ExpertFormDialog({
                               onCheckedChange={(checked) =>
                                 toggleProgram(program.id, checked === true)
                               }
-                              className="border-[#A8A8A2] data-checked:border-[#E94B3C] data-checked:bg-[#E94B3C]"
+                              className="border-input data-checked:border-primary data-checked:bg-primary"
                             />
                             <span className="min-w-0">
-                              <span className="block truncate text-sm font-semibold text-[#2D2D2D]">
+                              <span className="block truncate text-sm font-semibold text-foreground">
                                 {program.name}
                               </span>
-                              <span className="font-mono text-[11px] text-[#7A7A74]">
+                              <span className="font-mono text-[11px] text-muted-foreground">
                                 {program.code}
                               </span>
                             </span>
@@ -327,7 +327,7 @@ export function ExpertFormDialog({
                                 <Input
                                   {...field}
                                   placeholder="Vai trò trong hội đồng"
-                                  className="h-9 rounded-lg border-[#D8D8D2] bg-white text-xs"
+                                  className="h-9 rounded-lg border-border bg-card text-xs"
                                 />
                               )}
                             />
@@ -341,20 +341,20 @@ export function ExpertFormDialog({
             </div>
           </div>
 
-          <DialogFooter className="sticky bottom-0 border-t border-[#E8E8E3] bg-white/95 px-6 py-4 backdrop-blur-sm">
+          <DialogFooter className="sticky bottom-0 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="h-11 rounded-xl border-[#D8D8D2] px-5"
+              className="h-11 rounded-xl border-border px-5"
             >
               Hủy
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-xl bg-[#E94B3C] px-6 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+              className="h-11 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
             >
               {isSubmitting
                 ? "Đang lưu..."
@@ -379,9 +379,9 @@ function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="space-y-4 border-t border-[#ECECE7] pt-5 first:border-t-0 first:pt-0">
-      <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-[#2D2D2D]">
-        <Icon className="size-4 text-[#E94B3C]" />
+    <section className="space-y-4 border-t border-border pt-5 first:border-t-0 first:pt-0">
+      <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+        <Icon className="size-4 text-primary" />
         {title}
       </h3>
       {children}
@@ -408,7 +408,7 @@ function FormField({
     <div className={cn("space-y-2", className)}>
       <Label htmlFor={id}>
         {label}
-        {required ? <span className="ml-1 text-[#E94B3C]">*</span> : null}
+        {required ? <span className="ml-1 text-primary">*</span> : null}
       </Label>
       {children}
       <FieldError message={error} />
@@ -418,5 +418,5 @@ function FormField({
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="text-xs font-medium text-[#C9362B]">{message}</p>;
+  return <p className="text-xs font-medium text-primary">{message}</p>;
 }

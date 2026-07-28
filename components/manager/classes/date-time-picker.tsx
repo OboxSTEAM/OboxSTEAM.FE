@@ -167,17 +167,17 @@ export function DateTimePicker({
         aria-label={ariaLabel}
         disabled={disabled}
         className={cn(
-          "flex h-10 w-full items-center gap-2 rounded-lg border bg-white px-3 text-left text-sm outline-none transition-colors",
-          "focus-visible:border-[#4FC3F7] focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/40",
-          invalid ? "border-[#E94B3C]" : "border-[#DDDDD8] hover:border-[#C4C4BE]",
+          "flex h-10 w-full items-center gap-2 rounded-lg border bg-card px-3 text-left text-sm outline-none transition-colors",
+          "focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/40",
+          invalid ? "border-primary" : "border-input hover:border-muted-foreground/40",
           disabled && "cursor-not-allowed opacity-60",
         )}
       >
-        <CalendarClock className="size-4 shrink-0 text-[#9A9A94]" />
+        <CalendarClock className="size-4 shrink-0 text-muted-foreground" />
         <span
           className={cn(
             "truncate",
-            selected ? "text-[#2D2D2D]" : "text-[#9A9A94]",
+            selected ? "text-foreground" : "text-muted-foreground",
           )}
         >
           {triggerLabel}
@@ -191,7 +191,7 @@ export function DateTimePicker({
       >
         <div className="w-[240px]">
           <div className="mb-2 flex items-center justify-between">
-            <p className="text-sm font-bold text-[#2D2D2D]">
+            <p className="text-sm font-bold text-foreground">
               Tháng {displayMonth.getMonth() + 1}, {displayMonth.getFullYear()}
             </p>
             <div className="flex items-center gap-1">
@@ -199,7 +199,7 @@ export function DateTimePicker({
                 type="button"
                 onClick={() => setDisplayMonth((m) => addMonths(m, -1))}
                 aria-label="Tháng trước"
-                className="flex size-7 items-center justify-center rounded-md text-[#6B6B6B] transition hover:bg-[#F5F5F0]"
+                className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
               >
                 <ChevronLeft className="size-4" />
               </button>
@@ -207,7 +207,7 @@ export function DateTimePicker({
                 type="button"
                 onClick={() => setDisplayMonth((m) => addMonths(m, 1))}
                 aria-label="Tháng sau"
-                className="flex size-7 items-center justify-center rounded-md text-[#6B6B6B] transition hover:bg-[#F5F5F0]"
+                className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
               >
                 <ChevronRight className="size-4" />
               </button>
@@ -218,7 +218,7 @@ export function DateTimePicker({
             {WEEKDAY_LABELS.map((label) => (
               <span
                 key={label}
-                className="py-1 text-center text-[10px] font-semibold uppercase text-[#9A9A94]"
+                className="py-1 text-center text-[10px] font-semibold uppercase text-muted-foreground"
               >
                 {label}
               </span>
@@ -235,12 +235,12 @@ export function DateTimePicker({
                   className={cn(
                     "mx-auto flex size-8 items-center justify-center rounded-full text-xs font-medium tabular-nums transition",
                     isSelected
-                      ? "bg-[#E94B3C] font-bold text-white"
+                      ? "bg-primary font-bold text-white"
                       : isToday
-                        ? "font-bold text-[#E94B3C] ring-1 ring-inset ring-[#E94B3C]/40"
+                        ? "font-bold text-primary ring-1 ring-inset ring-primary/40"
                         : inMonth
-                          ? "text-[#2D2D2D] hover:bg-[#F5F5F0]"
-                          : "text-[#B5B5AF] hover:bg-[#F5F5F0]",
+                          ? "text-foreground hover:bg-muted"
+                          : "text-muted-foreground hover:bg-muted",
                   )}
                 >
                   {day.getDate()}
@@ -250,8 +250,8 @@ export function DateTimePicker({
           </div>
         </div>
 
-        <div className="flex w-[92px] flex-col border-l border-[#EDEDE8] pl-2">
-          <p className="mb-1 px-1 text-[10px] font-semibold uppercase text-[#9A9A94]">
+        <div className="flex w-[92px] flex-col border-l border-border pl-2">
+          <p className="mb-1 px-1 text-[10px] font-semibold uppercase text-muted-foreground">
             Giờ
           </p>
           <div className="max-h-[248px] space-y-0.5 overflow-y-auto pr-1">
@@ -269,8 +269,8 @@ export function DateTimePicker({
                   className={cn(
                     "w-full rounded-md px-2 py-1.5 text-center text-xs font-medium tabular-nums transition",
                     isSelected
-                      ? "bg-[#E94B3C] text-white"
-                      : "text-[#2D2D2D] hover:bg-[#F5F5F0]",
+                      ? "bg-primary text-white"
+                      : "text-foreground hover:bg-muted",
                   )}
                 >
                   {slot.label}

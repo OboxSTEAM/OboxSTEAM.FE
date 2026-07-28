@@ -41,7 +41,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const INPUT_CLASS =
-  "h-11 rounded-xl border-[#DDDDD8] bg-white text-sm text-[#2D2D2D] focus-visible:ring-[#4FC3F7]/50";
+  "h-11 rounded-xl border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
 
 export type ClassFormSubmitPayload = {
   code: string;
@@ -137,7 +137,7 @@ export function ClassFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-2xl overflow-y-auto p-0">
         <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <DialogHeader className="border-b border-[#E8E8E3] px-6 py-5 pr-14">
+          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
             <DialogTitle>
               {classItem ? "Cập nhật lớp học" : "Tạo lớp học mới"}
             </DialogTitle>
@@ -151,8 +151,8 @@ export function ClassFormDialog({
 
           <div className="space-y-6 px-6 py-6">
             <section className="space-y-4">
-              <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-[#2D2D2D]">
-                <Users className="size-4 text-[#E94B3C]" />
+              <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+                <Users className="size-4 text-primary" />
                 Thông tin lớp
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -225,7 +225,7 @@ export function ClassFormDialog({
                                 className={LIGHT_SELECT_ITEM}
                               >
                                 {program.name}
-                                <span className="ml-2 font-mono text-[11px] text-[#7A7A74]">
+                                <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                                   {program.code}
                                 </span>
                               </SelectItem>
@@ -267,9 +267,9 @@ export function ClassFormDialog({
               </div>
             </section>
 
-            <section className="space-y-4 border-t border-[#ECECE7] pt-5">
-              <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-[#2D2D2D]">
-                <CalendarRange className="size-4 text-[#E94B3C]" />
+            <section className="space-y-4 border-t border-border pt-5">
+              <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+                <CalendarRange className="size-4 text-primary" />
                 Lịch học
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
@@ -316,20 +316,20 @@ export function ClassFormDialog({
             </section>
           </div>
 
-          <DialogFooter className="sticky bottom-0 border-t border-[#E8E8E3] bg-white/95 px-6 py-4 backdrop-blur-sm">
+          <DialogFooter className="sticky bottom-0 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="h-11 rounded-xl border-[#D8D8D2] px-5"
+              className="h-11 rounded-xl border-border px-5"
             >
               Hủy
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-xl bg-[#E94B3C] px-6 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+              className="h-11 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
             >
               {isSubmitting
                 ? "Đang lưu..."
@@ -363,11 +363,11 @@ function FormField({
     <div className={cn("space-y-2", className)}>
       <Label htmlFor={id}>
         {label}
-        {required ? <span className="ml-1 text-[#E94B3C]">*</span> : null}
+        {required ? <span className="ml-1 text-primary">*</span> : null}
       </Label>
       {children}
       {error ? (
-        <p className="text-xs font-medium text-[#C9362B]">{error}</p>
+        <p className="text-xs font-medium text-primary">{error}</p>
       ) : null}
     </div>
   );

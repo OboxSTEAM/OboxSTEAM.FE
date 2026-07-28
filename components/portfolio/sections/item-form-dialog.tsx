@@ -406,7 +406,7 @@ export function PortfolioItemFormDialog({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-xl bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90"
+              className="h-11 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSubmitting ? "Đang lưu…" : isEdit ? "Lưu thay đổi" : "Thêm mục"}
             </Button>

@@ -241,10 +241,10 @@ export function ClassManager({
       className: "min-w-44 max-w-56",
       render: (classItem) => (
         <div className="min-w-0">
-          <p className="truncate font-semibold text-[#2D2D2D]">
+          <p className="truncate font-semibold text-foreground">
             {classItem.name || "Chưa đặt tên"}
           </p>
-          <p className="font-mono text-xs text-[#6B6B6B]">{classItem.code}</p>
+          <p className="font-mono text-xs text-muted-foreground">{classItem.code}</p>
         </div>
       ),
     },
@@ -252,7 +252,7 @@ export function ClassManager({
       header: "Chương trình",
       className: "max-w-48",
       render: (classItem) => (
-        <span className="block truncate text-sm text-[#2D2D2D]">
+        <span className="block truncate text-sm text-foreground">
           {programNameById.get(classItem.programId) ?? "—"}
         </span>
       ),
@@ -281,7 +281,7 @@ export function ClassManager({
             className={
               pending > 0
                 ? "inline-flex items-center rounded-full border border-[#4FC3F7]/25 bg-[#4FC3F7]/15 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[#0D6E9C] transition-colors hover:bg-[#4FC3F7]/25"
-                : "inline-flex items-center rounded-full border border-[#E5E5E0] bg-[#F5F5F0] px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[#6B6B6B] transition-colors hover:bg-[#EFEFEA]"
+                : "inline-flex items-center rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-semibold tabular-nums text-muted-foreground transition-colors hover:bg-muted"
             }
           >
             {pending} yêu cầu
@@ -297,7 +297,7 @@ export function ClassManager({
     },
     {
       header: "Thời gian",
-      className: "min-w-40 text-xs text-[#6B6B6B]",
+      className: "min-w-40 text-xs text-muted-foreground",
       render: (classItem) => (
         <div className="space-y-0.5">
           <p>{formatApiDateTimeDisplay(classItem.startDate) || "—"}</p>
@@ -320,7 +320,7 @@ export function ClassManager({
               nativeButton={false}
               render={<Link href={`/manager/classes/${classItem.id}`} />}
               aria-label={`Xem ${classItem.name}`}
-              className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
+              className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
             >
               <Eye className="size-4" />
             </Button>
@@ -333,7 +333,7 @@ export function ClassManager({
                 <Link href={`/manager/sessions?classId=${classItem.id}`} />
               }
               aria-label={`Lịch học ${classItem.name}`}
-              className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
+              className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
             >
               <CalendarDays className="size-4" />
             </Button>
@@ -343,7 +343,7 @@ export function ClassManager({
               size="icon"
               onClick={() => openEdit(classItem)}
               aria-label={`Sửa ${classItem.name}`}
-              className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+              className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <Pencil className="size-4" />
             </Button>
@@ -426,7 +426,7 @@ export function ClassManager({
               setEditingClass(null);
               setFormOpen(true);
             }}
-            className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+            className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
           >
             <Plus className="size-4" />
             Tạo lớp
@@ -435,10 +435,10 @@ export function ClassManager({
       ) : null}
 
       <div className={embedded ? "pb-4" : "px-6 pb-12"}>
-        <div className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">
-            <p className="text-xs font-medium text-[#6B6B6B]">
-              <span className="font-mono font-bold text-[#2D2D2D]">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
+            <p className="text-xs font-medium text-muted-foreground">
+              <span className="font-mono font-bold text-foreground">
                 {totalCount}
               </span>{" "}
               lớp học
@@ -450,13 +450,13 @@ export function ClassManager({
                   setEditingClass(null);
                   setFormOpen(true);
                 }}
-                className="h-9 gap-2 rounded-lg bg-[#E94B3C] px-4 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+                className="h-9 gap-2 rounded-lg bg-primary px-4 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
               >
                 <Plus className="size-4" />
                 Tạo lớp
               </Button>
             ) : (
-              <p className="hidden text-xs text-[#6B6B6B] sm:block">
+              <p className="hidden text-xs text-muted-foreground sm:block">
                 Mentor được gán bằng cách duyệt yêu cầu tại chi tiết lớp
               </p>
             )}

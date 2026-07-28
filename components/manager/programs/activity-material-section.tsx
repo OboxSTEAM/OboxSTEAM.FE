@@ -81,7 +81,7 @@ const W = {
 } as const;
 
 const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 /* ─── Material type presentation ───────────────────────────────────────────── */
 type MaterialVisual = { Icon: React.ElementType; color: string; label: string };
@@ -248,7 +248,7 @@ export function ActivityMaterialSection({
 
       {material ? (
         <div
-          className="flex items-start gap-3 rounded-xl border bg-white p-3.5"
+          className="flex items-start gap-3 rounded-xl border bg-card p-3.5"
           style={{ borderColor: W.border }}
         >
           <MaterialPreview materialType={material.materialType} fileUrl={fileUrl} />
@@ -337,7 +337,7 @@ export function ActivityMaterialSection({
                   setEditingTitle(true);
                 }}
                 disabled={busy}
-                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-[#f4f1ea]"
+                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-muted"
                 style={{ borderColor: W.border, color: W.muted }}
               >
                 <Pencil className="size-3.5" />
@@ -356,7 +356,7 @@ export function ActivityMaterialSection({
           )}
         </div>
       ) : (
-        <div className="space-y-3 rounded-xl border border-dashed bg-white/60 p-4" style={{ borderColor: W.border }}>
+        <div className="space-y-3 rounded-xl border border-dashed bg-muted/60 p-4" style={{ borderColor: W.border }}>
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
               Tệp tài liệu <span style={{ color: W.primary }}>*</span>
@@ -367,7 +367,7 @@ export function ActivityMaterialSection({
               accept=".pdf,.doc,.docx,.mp4,.mov,.avi,.mkv,.jpg,.jpeg,.png,.gif,.webp"
               onChange={handleFilePick}
               disabled={busy}
-              className="block w-full text-sm text-[#3a3833] file:mr-3 file:rounded-lg file:border-0 file:bg-[#e7e2d8] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-[#3a3833] hover:file:bg-[#ded8cc]"
+              className="block w-full text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-semibold file:text-foreground hover:file:bg-[#ded8cc]"
             />
             {file ? (
               <p className="text-[11px]" style={{ color: W.faint }}>

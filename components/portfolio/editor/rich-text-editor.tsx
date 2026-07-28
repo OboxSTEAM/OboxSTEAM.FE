@@ -79,8 +79,8 @@ function ToolbarButton({
       onMouseDown={(event) => event.preventDefault()}
       onClick={onClick}
       className={cn(
-        "size-7 shrink-0 rounded-md text-[#2D2D2D]",
-        active && "bg-[#2D2D2D]/12 text-[#2D2D2D]",
+        "size-7 shrink-0 rounded-md text-foreground",
+        active && "bg-foreground/12 text-foreground",
       )}
     >
       {children}
@@ -89,7 +89,7 @@ function ToolbarButton({
 }
 
 function ToolbarDivider() {
-  return <span className="mx-0.5 h-4 w-px shrink-0 bg-[#E5E5E0]" aria-hidden />;
+  return <span className="mx-0.5 h-4 w-px shrink-0 bg-border" aria-hidden />;
 }
 
 /** Floating toolbar anchored above the editor field (escapes overflow:hidden parents). */
@@ -188,7 +188,7 @@ function EditorToolbar({
   };
 
   return (
-    <div className="flex flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-[#C9C9C2] bg-white p-0.5 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
+    <div className="flex flex-nowrap items-center gap-0.5 overflow-x-auto rounded-lg border border-[#C9C9C2] bg-card p-0.5 shadow-[0_10px_28px_rgba(45,45,45,0.14)]">
       <ToolbarButton
         label="Đậm"
         active={editor.isActive("bold")}
@@ -335,7 +335,7 @@ export function RichTextEditor({
                     ? cn(maxHeightClass, "h-full overflow-y-auto")
                     : null,
                 )
-              : "min-h-[4.5rem] rounded-xl border border-[#E5E5E0] bg-white px-3.5 py-3 text-[15px] text-[#2D2D2D]",
+              : "min-h-[4.5rem] rounded-xl border border-border bg-card px-3.5 py-3 text-[15px] text-foreground",
         ),
       },
       handleKeyDown: (_view, event) => {

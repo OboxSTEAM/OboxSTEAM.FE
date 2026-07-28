@@ -44,14 +44,14 @@ function stickyCellClass(sticky: ColumnDef<unknown>["sticky"]): string {
   if (sticky === "left") {
     return cn(
       "sticky left-0 z-20",
-      "border-r border-[#E5E5E0]/80",
+      "border-r border-border/80",
       "shadow-[4px_0_12px_-8px_rgba(45,45,45,0.18)]",
     );
   }
   if (sticky === "right") {
     return cn(
       "sticky right-0 z-20",
-      "border-l border-[#E5E5E0]/80",
+      "border-l border-border/80",
       "shadow-[-4px_0_12px_-8px_rgba(45,45,45,0.18)]",
     );
   }
@@ -72,16 +72,16 @@ export function ManagerDataTable<T>({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="overflow-hidden rounded-xl border border-[#E5E5E0] bg-white shadow-sm">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <Table>
-          <TableHeader className="bg-[#FAFAF5]">
-            <TableRow className="border-[#E5E5E0] hover:bg-[#FAFAF5]">
+          <TableHeader className="bg-background">
+            <TableRow className="border-border hover:bg-background">
               {columns.map((col, idx) => (
                 <TableHead
                   key={idx}
                   className={cn(
-                    "px-4 py-3.5 font-heading text-xs font-bold uppercase tracking-wider text-[#2D2D2D]",
-                    col.sticky && "bg-[#FAFAF5]",
+                    "px-4 py-3.5 font-heading text-xs font-bold uppercase tracking-wider text-foreground",
+                    col.sticky && "bg-background",
                     stickyCellClass(col.sticky),
                     col.className,
                   )}
@@ -94,18 +94,18 @@ export function ManagerDataTable<T>({
           <TableBody>
             {isLoading ? (
               [...Array(skeletonRows)].map((_, rIdx) => (
-                <TableRow key={rIdx} className="group border-[#E5E5E0]">
+                <TableRow key={rIdx} className="group border-border">
                   {columns.map((col, cIdx) => (
                     <TableCell
                       key={cIdx}
                       className={cn(
                         "px-4 py-4",
-                        col.sticky && "bg-white group-hover:bg-[#FAFAF5]",
+                        col.sticky && "bg-card group-hover:bg-background",
                         stickyCellClass(col.sticky),
                         col.className,
                       )}
                     >
-                      <Skeleton className="h-4 w-full rounded-sm bg-[#E5E5E0]/40" />
+                      <Skeleton className="h-4 w-full rounded-sm bg-border/40" />
                     </TableCell>
                   ))}
                 </TableRow>
@@ -114,7 +114,7 @@ export function ManagerDataTable<T>({
               <TableRow className="hover:bg-transparent">
                 <TableCell colSpan={columns.length} className="p-0">
                   {emptyState ?? (
-                    <div className="py-12 text-center text-sm text-[#6B6B6B]">
+                    <div className="py-12 text-center text-sm text-muted-foreground">
                       Không tìm thấy dữ liệu.
                     </div>
                   )}
@@ -124,7 +124,7 @@ export function ManagerDataTable<T>({
               data.map((row, rIdx) => (
                 <TableRow
                   key={rIdx}
-                  className="group border-[#E5E5E0] transition-colors hover:bg-[#FAFAF5]/50"
+                  className="group border-border transition-colors hover:bg-background/50"
                 >
                   {columns.map((col, cIdx) => {
                     const value = col.accessorKey
@@ -134,8 +134,8 @@ export function ManagerDataTable<T>({
                       <TableCell
                         key={cIdx}
                         className={cn(
-                          "px-4 py-3.5 font-sans text-sm font-normal text-[#2D2D2D]",
-                          col.sticky && "bg-white group-hover:bg-[#FAFAF5]",
+                          "px-4 py-3.5 font-sans text-sm font-normal text-foreground",
+                          col.sticky && "bg-card group-hover:bg-background",
                           stickyCellClass(col.sticky),
                           col.className,
                         )}
@@ -157,11 +157,11 @@ export function ManagerDataTable<T>({
 
       {showPagination && onPageChange ? (
         <div className="flex items-center justify-between px-2 py-1">
-          <div className="text-xs text-[#6B6B6B]">
+          <div className="text-xs text-muted-foreground">
             Trang{" "}
-            <span className="font-semibold text-[#2D2D2D]">{currentPage}</span>{" "}
+            <span className="font-semibold text-foreground">{currentPage}</span>{" "}
             trên{" "}
-            <span className="font-semibold text-[#2D2D2D]">{totalPages}</span>
+            <span className="font-semibold text-foreground">{totalPages}</span>
           </div>
 
           <Pagination className="mx-0 w-auto">
@@ -171,7 +171,7 @@ export function ManagerDataTable<T>({
                   text="Trước"
                   onClick={() => onPageChange(Math.max(1, currentPage - 1))}
                   className={cn(
-                    "h-8 cursor-pointer rounded-md border-[#E5E5E0] px-2 text-xs font-semibold",
+                    "h-8 cursor-pointer rounded-md border-border px-2 text-xs font-semibold",
                     currentPage === 1 && "pointer-events-none opacity-50",
                   )}
                 />
@@ -185,10 +185,10 @@ export function ManagerDataTable<T>({
                       isActive={pageNum === currentPage}
                       onClick={() => onPageChange(pageNum)}
                       className={cn(
-                        "h-8 w-8 cursor-pointer rounded-md border-[#E5E5E0] text-xs font-semibold",
+                        "h-8 w-8 cursor-pointer rounded-md border-border text-xs font-semibold",
                         pageNum === currentPage
-                          ? "bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90 hover:text-white"
-                          : "text-[#6B6B6B] hover:bg-[#F5F5F0]",
+                          ? "bg-primary text-white hover:bg-primary/90 hover:text-white"
+                          : "text-muted-foreground hover:bg-muted",
                       )}
                     >
                       {pageNum}
@@ -204,7 +204,7 @@ export function ManagerDataTable<T>({
                     onPageChange(Math.min(totalPages, currentPage + 1))
                   }
                   className={cn(
-                    "h-8 cursor-pointer rounded-md border-[#E5E5E0] px-2 text-xs font-semibold",
+                    "h-8 cursor-pointer rounded-md border-border px-2 text-xs font-semibold",
                     currentPage === totalPages &&
                       "pointer-events-none opacity-50",
                   )}

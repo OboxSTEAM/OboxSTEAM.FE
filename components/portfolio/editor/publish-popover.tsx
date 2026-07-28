@@ -149,7 +149,7 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
         render={
           <Button
             type="button"
-            className="h-10 rounded-xl bg-[#2D2D2D] px-2.5 text-white hover:bg-[#2D2D2D]/90 sm:px-4"
+            className="h-10 rounded-xl bg-foreground px-2.5 text-background hover:bg-foreground/90 sm:px-4"
           />
         }
       >
@@ -166,21 +166,21 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
       <PopoverContent
         align="end"
         sideOffset={10}
-        className="w-[min(26rem,calc(100vw-2rem))] rounded-2xl border-[#E5E5E0] bg-white p-5 text-[#2D2D2D]"
+        className="w-[min(26rem,calc(100vw-2rem))] rounded-2xl border-border bg-popover p-5 text-popover-foreground"
       >
         <div className="space-y-5">
           <div>
-            <p className="font-heading text-base font-semibold text-[#2D2D2D]">
+            <p className="font-heading text-base font-semibold text-foreground">
               Xuất bản portfolio
             </p>
-            <p className="mt-0.5 text-xs text-[#6B6B6B]">
+            <p className="mt-0.5 text-xs text-muted-foreground">
               Chọn subdomain và bật công khai để chia sẻ trang của bạn.
             </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="publish-subdomain">Subdomain</Label>
-            <div className="flex min-w-0 items-center overflow-hidden rounded-xl border border-[#E5E5E0] bg-[#FAFAF5]">
+            <div className="flex min-w-0 items-center overflow-hidden rounded-xl border border-border bg-background">
               <Input
                 id="publish-subdomain"
                 value={subdomain}
@@ -189,20 +189,20 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
                 placeholder="ten-ban"
                 autoComplete="off"
               />
-              <span className="max-w-[40%] shrink-0 truncate border-l border-[#E5E5E0] px-2 font-mono text-[10px] text-[#6B6B6B] sm:max-w-none sm:px-3 sm:text-xs">
+              <span className="max-w-[40%] shrink-0 truncate border-l border-border px-2 font-mono text-[10px] text-muted-foreground sm:max-w-none sm:px-3 sm:text-xs">
                 .{rootDomain}
               </span>
             </div>
             <div className="min-h-4 text-xs">
               {isChecking ? (
-                <p className="flex items-center gap-1.5 text-[#6B6B6B]">
+                <p className="flex items-center gap-1.5 text-muted-foreground">
                   <Loader2 className="size-3.5 animate-spin" />
                   Đang kiểm tra…
                 </p>
               ) : availability ? (
                 <p
                   className={cn(
-                    availability.available ? "text-[#7CB342]" : "text-[#E94B3C]",
+                    availability.available ? "text-[#7CB342]" : "text-primary",
                   )}
                 >
                   {availability.available
@@ -210,7 +210,7 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
                     : availability.reason || "Subdomain không khả dụng."}
                 </p>
               ) : (
-                <p className="text-[#6B6B6B]">
+                <p className="text-muted-foreground">
                   Gửi trống để gỡ subdomain khi chưa công khai.
                 </p>
               )}
@@ -220,19 +220,19 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
                 type="button"
                 disabled={isSavingSubdomain}
                 onClick={() => void handleSaveSubdomain()}
-                className="h-9 w-full rounded-xl bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90"
+                className="h-9 w-full rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {isSavingSubdomain ? "Đang lưu…" : "Lưu subdomain"}
               </Button>
             ) : null}
           </div>
 
-          <div className="flex items-center justify-between gap-4 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] px-3 py-3">
+          <div className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background px-3 py-3">
             <div>
-              <p className="text-sm font-medium text-[#2D2D2D]">
+              <p className="text-sm font-medium text-foreground">
                 Công khai portfolio
               </p>
-              <p className="mt-0.5 text-xs text-[#6B6B6B]">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {canPublish
                   ? portfolio.isPublic
                     ? "Đang hiển thị trên web công khai."

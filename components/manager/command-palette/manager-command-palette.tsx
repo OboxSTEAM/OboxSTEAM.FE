@@ -138,7 +138,7 @@ export function ManagerCommandPalette({
       description="Tìm chương trình, module, khóa học, hoạt động"
     >
       <Command shouldFilter={false} className="rounded-xl">
-        <div className="flex flex-wrap items-center gap-2 border-b border-[#E5E5E0] px-3 py-2">
+        <div className="flex flex-wrap items-center gap-2 border-b border-border px-3 py-2">
           {canScopeToProgram && (
             <button
               type="button"
@@ -146,8 +146,8 @@ export function ManagerCommandPalette({
               className={cn(
                 "inline-flex max-w-[220px] items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
                 scope === "program"
-                  ? "border-[#E94B3C]/30 bg-[#E94B3C]/10 text-[#E94B3C]"
-                  : "border-[#E5E5E0] bg-[#FAFAF5] text-[#6B6B6B] hover:text-[#2D2D2D]",
+                  ? "border-primary/30 bg-primary/10 text-primary"
+                  : "border-border bg-background text-muted-foreground hover:text-foreground",
               )}
             >
               <span className="truncate">
@@ -169,7 +169,7 @@ export function ManagerCommandPalette({
                       setScope("platform");
                     }
                   }}
-                  className="rounded-full p-0.5 hover:bg-[#E94B3C]/15"
+                  className="rounded-full p-0.5 hover:bg-primary/15"
                 >
                   <X className="size-3" />
                 </span>
@@ -182,8 +182,8 @@ export function ManagerCommandPalette({
             className={cn(
               "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-colors",
               scope === "platform"
-                ? "border-[#2D2D2D]/20 bg-[#2D2D2D] text-white"
-                : "border-[#E5E5E0] bg-[#FAFAF5] text-[#6B6B6B] hover:text-[#2D2D2D]",
+                ? "border-foreground/20 bg-foreground text-background"
+                : "border-border bg-background text-muted-foreground hover:text-foreground",
             )}
           >
             Toàn nền tảng
@@ -198,12 +198,12 @@ export function ManagerCommandPalette({
 
         <CommandList>
           {loading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-[#6B6B6B]">
+            <div className="flex items-center justify-center gap-2 py-10 text-sm text-muted-foreground">
               <Loader2 className="size-4 animate-spin" />
               Đang tải…
             </div>
           ) : error ? (
-            <div className="py-10 text-center text-sm text-[#E94B3C]">{error}</div>
+            <div className="py-10 text-center text-sm text-primary">{error}</div>
           ) : (
             <>
               <CommandEmpty>Không có kết quả phù hợp.</CommandEmpty>
@@ -221,16 +221,16 @@ export function ManagerCommandPalette({
                       >
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="truncate font-medium text-[#2D2D2D]">
+                            <span className="truncate font-medium text-foreground">
                               {item.name}
                             </span>
                             {item.code && (
-                              <span className="shrink-0 rounded border border-[#E5E5E0] bg-[#FAFAF5] px-1.5 py-px font-mono text-[10px] text-[#6B6B6B]">
+                              <span className="shrink-0 rounded border border-border bg-background px-1.5 py-px font-mono text-[10px] text-muted-foreground">
                                 {item.code}
                               </span>
                             )}
                           </div>
-                          <p className="mt-0.5 truncate text-[11px] text-[#8c8678]">
+                          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
                             {item.parentPath}
                           </p>
                           {item.issueHint && (
@@ -248,7 +248,7 @@ export function ManagerCommandPalette({
           )}
         </CommandList>
 
-        <div className="flex items-center justify-between border-t border-[#E5E5E0] px-3 py-2 text-[10px] text-[#8c8678]">
+        <div className="flex items-center justify-between border-t border-border px-3 py-2 text-[10px] text-muted-foreground">
           <span>⌘K / Ctrl+K để mở</span>
           <span>Enter để mở · Esc đóng</span>
         </div>

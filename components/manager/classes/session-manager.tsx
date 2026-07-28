@@ -307,10 +307,10 @@ function SessionManagerInner() {
       header: "Buổi học",
       render: (session) => (
         <div className="min-w-0">
-          <p className="truncate font-semibold text-[#2D2D2D]">
+          <p className="truncate font-semibold text-foreground">
             {session.title || "Chưa đặt tiêu đề"}
           </p>
-          <p className="text-xs text-[#6B6B6B]">
+          <p className="text-xs text-muted-foreground">
             {CLASS_SESSION_KIND_LABELS[session.sessionKind]}
           </p>
         </div>
@@ -318,7 +318,7 @@ function SessionManagerInner() {
     },
     {
       header: "Thời gian",
-      className: "min-w-44 text-xs text-[#6B6B6B]",
+      className: "min-w-44 text-xs text-muted-foreground",
       render: (session) => (
         <div className="space-y-0.5">
           <p>{formatApiDateTimeDisplay(session.startTime) || "—"}</p>
@@ -354,7 +354,7 @@ function SessionManagerInner() {
               />
             }
             aria-label={`Điểm danh ${session.title}`}
-            className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#7CB342]/10 hover:text-[#3d5c22]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#7CB342]/10 hover:text-[#3d5c22]"
           >
             <ClipboardCheck className="size-4" />
           </Button>
@@ -367,7 +367,7 @@ function SessionManagerInner() {
               setFormOpen(true);
             }}
             aria-label={`Sửa ${session.title}`}
-            className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <Pencil className="size-4" />
           </Button>
@@ -377,7 +377,7 @@ function SessionManagerInner() {
             size="icon"
             onClick={() => setDeleteTarget(session)}
             aria-label={`Xóa ${session.title}`}
-            className="size-9 rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#C9362B]"
+            className="size-9 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
           >
             <Trash2 className="size-4" />
           </Button>
@@ -392,7 +392,7 @@ function SessionManagerInner() {
         title="Lịch học"
         description="Quản lý buổi học theo từng lớp cohort."
       >
-        <div className="flex items-center rounded-xl border border-[#D8D8D2] bg-white p-1">
+        <div className="flex items-center rounded-xl border border-border bg-card p-1">
           <button
             type="button"
             onClick={() => setViewMode("calendar")}
@@ -400,8 +400,8 @@ function SessionManagerInner() {
             className={cn(
               "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition",
               isCalendar
-                ? "bg-[#E94B3C] text-white"
-                : "text-[#6B6B6B] hover:bg-[#F5F5F0]",
+                ? "bg-primary text-white"
+                : "text-muted-foreground hover:bg-muted",
             )}
           >
             <LayoutGrid className="size-4" />
@@ -414,8 +414,8 @@ function SessionManagerInner() {
             className={cn(
               "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition",
               !isCalendar
-                ? "bg-[#E94B3C] text-white"
-                : "text-[#6B6B6B] hover:bg-[#F5F5F0]",
+                ? "bg-primary text-white"
+                : "text-muted-foreground hover:bg-muted",
             )}
           >
             <List className="size-4" />
@@ -426,7 +426,7 @@ function SessionManagerInner() {
           type="button"
           onClick={openCreate}
           disabled={!classId}
-          className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98] disabled:opacity-50"
+          className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
         >
           <Plus className="size-4" />
           Tạo buổi học
@@ -434,10 +434,10 @@ function SessionManagerInner() {
       </ManagerPageHeader>
 
       <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="flex flex-col gap-3 border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <div className="flex flex-col gap-3 border-b border-border bg-background/70 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="space-y-1">
-              <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Lớp đang xem
               </p>
               <Select
@@ -474,7 +474,7 @@ function SessionManagerInner() {
                     >
                       {classItem.name}
                       {classItem.code ? (
-                        <span className="ml-2 font-mono text-[11px] text-[#7A7A74]">
+                        <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                           {classItem.code}
                         </span>
                       ) : null}
@@ -483,8 +483,8 @@ function SessionManagerInner() {
                 </SelectContent>
               </Select>
             </div>
-            <p className="text-xs text-[#6B6B6B]">
-              <span className="font-mono font-bold text-[#2D2D2D]">
+            <p className="text-xs text-muted-foreground">
+              <span className="font-mono font-bold text-foreground">
                 {classId ? totalCount : 0}
               </span>{" "}
               buổi học

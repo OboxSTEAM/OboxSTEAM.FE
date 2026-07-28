@@ -96,7 +96,7 @@ export function CurriculumShell({
 
   return (
     <div className="learn-shell flex h-dvh flex-col overflow-hidden bg-learn-bg pt-[4.5rem] sm:pt-20">
-      <SiteHeader defaultScrolled />
+      <SiteHeader defaultScrolled showThemeToggle />
 
       <div className="flex min-h-0 flex-1">
         <motion.aside
