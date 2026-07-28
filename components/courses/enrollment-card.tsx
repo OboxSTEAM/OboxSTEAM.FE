@@ -30,7 +30,8 @@ type EnrollmentCardProps = {
   className?: string;
 };
 
-function formatEnrollmentDate(iso: string): string {
+function formatEnrollmentDate(iso: string | null): string {
+  if (!iso) return "—";
   try {
     return new Intl.DateTimeFormat("vi-VN", {
       day: "numeric",
@@ -48,9 +49,13 @@ function getStatusPillClass(status: ProgramEnrollment["status"]): string {
       return "border-[#7CB342]/40 bg-[#7CB342]/18 text-[#2d5016]";
     case "PendingPayment":
       return "border-[#E94B3C]/35 bg-[#FFF0EE] text-[#B71C1C]";
+    case "Deferred":
+      return "border-[#FDD835]/45 bg-[#FFF8E1] text-[#8A7200]";
     case "Completed":
       return "border-[#4FC3F7]/45 bg-[#E8F7FD] text-[#1565c0]";
-    case "Cancelled":
+    case "Failed":
+      return "border-[#E94B3C]/40 bg-[#FFF0EE] text-[#a82a1e]";
+    case "Dropped":
       return "border-[#D4D4CF] bg-[#F5F5F0] text-[#6B6B6B]";
     default:
       return "border-[#E5E5E0] bg-white text-[#2D2D2D]";
@@ -75,7 +80,7 @@ function EnrollmentStatusPill({
 }
 
 export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
-  const priceParts = getProgramPriceParts(enrollment.price);
+  const priceParts = getProgramPriceParts(enrollment.price ?? 0);
   const isPendingPayment = enrollment.status === "PendingPayment";
   const detailHref = `/programs/${enrollment.programId}`;
   const learnHref = getProgramLearnHref(enrollment.programId);
@@ -105,12 +110,12 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
       <CardHeader className="gap-3 pb-2">
         <div className="flex items-start justify-between gap-3">
           <CardDescription className="min-w-0 text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
-            {enrollment.seriesName}
+            {enrollment.seriesName || "Chương trình"}
           </CardDescription>
           <EnrollmentStatusPill status={enrollment.status} />
         </div>
         <CardTitle className="font-heading line-clamp-2 text-lg leading-snug text-[#2D2D2D]">
-          {enrollment.name}
+          {enrollment.name || "Chưa đặt tên"}
         </CardTitle>
       </CardHeader>
 
@@ -119,10 +124,12 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
           <span className="rounded-full border border-[#E5E5E0] bg-[#FAFAF5] px-2.5 py-1 font-medium text-[#2D2D2D]">
             {PROGRAM_LEVEL_LABELS[enrollment.level]}
           </span>
-          <span className="inline-flex items-center gap-1">
-            <Clock className="size-3.5 shrink-0" aria-hidden />
-            {enrollment.estimatedDuration}
-          </span>
+          {enrollment.estimatedDuration ? (
+            <span className="inline-flex items-center gap-1">
+              <Clock className="size-3.5 shrink-0" aria-hidden />
+              {enrollment.estimatedDuration}
+            </span>
+          ) : null}
         </div>
 
         {enrollment.status === "Active" || enrollment.status === "Completed" ? (

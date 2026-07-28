@@ -73,7 +73,7 @@ type NavItem = {
 /**
  * - Parent group label navigates (e.g. Chương trình học → list).
  * - Chevron alone expands/collapses children.
- * - Module / Course / Activity deep-link into the open program via ?node=.
+ * - Chương trình deep-links into the open program via ?node= when focused.
  */
 function resolveNavHref(item: NavItem, programId: string | null): string {
   if (item.focus === "program") {
@@ -295,9 +295,6 @@ export function ManagerSidebar() {
           icon: BookOpen,
           items: [
             { title: "Chương trình", url: "/manager/programs", focus: "program" as const },
-            { title: "Module", url: "/manager/programs", focus: "module" as const },
-            { title: "Khóa học", url: "/manager/programs", focus: "course" as const },
-            { title: "Hoạt động", url: "/manager/programs", focus: "activity" as const },
             { title: "Tài liệu", url: "/manager/materials" },
             { title: "Ngân hàng câu hỏi", url: "/manager/question-bank" },
             { title: "Milestone nghiên cứu", url: "/manager/milestones" },
