@@ -1,23 +1,55 @@
 "use client";
 
 import { useCallback } from "react";
+import { flushSync } from "react-dom";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const THEME_ANIMATION_MS = 320;
+const THEME_FALLBACK_MS = 200;
 
-function runThemeTransition() {
-  if (typeof window === "undefined") return;
-  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (update: () => void) => {
+    finished: Promise<void>;
+  };
+};
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** Instant theme flip wrapped in one page-level crossfade (no per-node lag). */
+function applyThemeWithTransition(apply: () => void) {
+  if (typeof window === "undefined") {
+    apply();
+    return;
+  }
+
+  if (prefersReducedMotion()) {
+    apply();
+    return;
+  }
+
+  const doc = document as ViewTransitionDocument;
+
+  if (typeof doc.startViewTransition === "function") {
+    doc.startViewTransition(() => {
+      flushSync(() => {
+        apply();
+      });
+    });
+    return;
+  }
+
+  // Fallback browsers: only animate root surfaces, never every descendant.
   const root = document.documentElement;
   root.classList.add("theme-animating");
+  apply();
   window.setTimeout(() => {
     root.classList.remove("theme-animating");
-  }, THEME_ANIMATION_MS);
+  }, THEME_FALLBACK_MS);
 }
 
 type ThemeToggleProps = {
@@ -30,8 +62,10 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
   const isDark = resolvedTheme === "dark";
 
   const handleToggle = useCallback(() => {
-    runThemeTransition();
-    setTheme(isDark ? "light" : "dark");
+    const next = isDark ? "light" : "dark";
+    applyThemeWithTransition(() => {
+      setTheme(next);
+    });
   }, [isDark, setTheme]);
 
   if (!isReady) {
@@ -60,7 +94,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
     >
       <Sun
         className={cn(
-          "size-5 transition-all duration-200",
+          "size-5 transition-[transform,opacity] duration-150 ease-out",
           isDark
             ? "scale-0 rotate-90 opacity-0"
             : "scale-100 rotate-0 opacity-100",
@@ -69,7 +103,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       />
       <Moon
         className={cn(
-          "absolute size-5 transition-all duration-200",
+          "absolute size-5 transition-[transform,opacity] duration-150 ease-out",
           isDark
             ? "scale-100 rotate-0 opacity-100"
             : "scale-0 -rotate-90 opacity-0",

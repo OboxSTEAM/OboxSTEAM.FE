@@ -286,16 +286,47 @@
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  html.theme-animating,
-  html.theme-animating *,
-  html.theme-animating *::before,
-  html.theme-animating *::after {
+  /* One page crossfade via View Transitions API — avoids per-component lag. */
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 180ms;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  ::view-transition-old(root) {
+    animation-name: theme-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: theme-fade-in;
+  }
+
+  @keyframes theme-fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+
+  @keyframes theme-fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+
+  /*
+   * Fallback only (no View Transitions): animate root surfaces.
+   * Never use `*` here — cascading transitions on every node feel laggy.
+   */
+  html.theme-animating {
     transition:
-      background-color 300ms ease,
-      border-color 300ms ease,
-      color 150ms ease,
-      fill 300ms ease,
-      stroke 300ms ease !important;
+      background-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 180ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+  }
+
+  html.theme-animating body {
+    transition:
+      background-color 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+      color 180ms cubic-bezier(0.2, 0.8, 0.2, 1) !important;
   }
 }
 
