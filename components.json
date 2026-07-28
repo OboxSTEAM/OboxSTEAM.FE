@@ -24,6 +24,7 @@
   "registries": {
     "@react-bits": "https://reactbits.dev/r/{name}.json",
     "@loading-ui": "https://loading-ui.com/r/{name}.json",
-    "@bklit": "https://ui.bklit.com/r/{name}.json"
+    "@bklit": "https://ui.bklit.com/r/{name}.json",
+    "@evilbuttons": "https://evilbuttons.radiumcoders.com/r/{name}.json"
   }
 }

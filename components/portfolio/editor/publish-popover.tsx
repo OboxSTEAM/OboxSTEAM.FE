@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Copy, ExternalLink, Globe, Loader2 } from "lucide-react";
 
+import { PillButton } from "@/components/evil-buttons/pill-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +12,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
 import type { Portfolio } from "@/lib/api/entities/portfolio";
 import {
   checkPortfolioSubdomainAvailability,
@@ -240,13 +240,19 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
                   : "Cần subdomain trước khi công khai."}
               </p>
             </div>
-            <Switch
-              checked={portfolio.isPublic}
+            <PillButton
+              primaryLabel="Công khai"
+              secondaryLabel="Ẩn"
+              isOpen={portfolio.isPublic}
               disabled={
                 isTogglingPublish || (!portfolio.isPublic && !canPublish)
               }
-              onCheckedChange={(checked) =>
-                void handlePublishToggle(Boolean(checked))
+              onOpenChange={(open) => void handlePublishToggle(open)}
+              className="w-[6.75rem] shrink-0"
+              primaryClassName="bg-foreground text-background"
+              secondaryClassName="bg-primary text-primary-foreground"
+              ariaLabel={(isOpen) =>
+                isOpen ? "Ẩn portfolio" : "Công khai portfolio"
               }
             />
           </div>
