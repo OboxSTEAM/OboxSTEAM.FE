@@ -133,7 +133,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
         <div className="flex min-w-0 items-center gap-3">
           <Avatar className="size-9 border border-border">
             <AvatarImage src={student.avatarUrl || undefined} alt="" />
-            <AvatarFallback className="bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
+            <AvatarFallback className="bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
               {getInitials(student.studentName)}
             </AvatarFallback>
           </Avatar>

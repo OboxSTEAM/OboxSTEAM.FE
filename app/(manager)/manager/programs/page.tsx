@@ -35,9 +35,9 @@ import {
   PROGRAM_LEVEL_ORDER,
 } from "@/lib/programs/constants";
 import {
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
-  LIGHT_SELECT_TRIGGER,
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
 } from "@/components/programs/program-select-styles";
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -60,31 +60,31 @@ const getCategoryStyle = (cat: string, isActive: boolean) => {
     Science: {
       bg: "bg-[#E94B3C]/8 hover:bg-[#E94B3C]/12",
       border: "border-[#E94B3C]/40",
-      text: "text-[#E94B3C]",
+      text: "text-[#E94B3C] dark:text-[#f2665a]",
       circleBg: "bg-[#E94B3C]/15",
     },
     Technology: {
       bg: "bg-[#7CB342]/8 hover:bg-[#7CB342]/12",
       border: "border-[#7CB342]/40",
-      text: "text-[#3d5c22]",
+      text: "text-[#3d5c22] dark:text-[#b8e086]",
       circleBg: "bg-[#7CB342]/15",
     },
     Engineering: {
       bg: "bg-[#4FC3F7]/10 hover:bg-[#4FC3F7]/15",
       border: "border-[#4FC3F7]/40",
-      text: "text-[#0d6e9c]",
+      text: "text-[#0d6e9c] dark:text-[#7dd3fc]",
       circleBg: "bg-[#4FC3F7]/15",
     },
     Art: {
       bg: "bg-[#FDD835]/10 hover:bg-[#FDD835]/15",
       border: "border-[#FDD835]/40",
-      text: "text-[#826e0e]",
+      text: "text-[#826e0e] dark:text-[#fde047]",
       circleBg: "bg-[#FDD835]/15",
     },
     Mathematic: {
       bg: "bg-[#7E57C2]/8 hover:bg-[#7E57C2]/12",
       border: "border-[#7E57C2]/40",
-      text: "text-[#51308a]",
+      text: "text-[#51308a] dark:text-[#c4b5fd]",
       circleBg: "bg-[#7E57C2]/15",
     },
   };
@@ -139,16 +139,16 @@ export default function ManagerProgramsPage() {
     {
       header: "Mã CT",
       accessorKey: "code",
-      className: "w-28 font-mono font-semibold text-[#2D2D2D]",
+      className: "w-28 font-mono font-semibold text-foreground",
     },
     {
       header: "Tên chương trình",
       accessorKey: "name",
-      className: "max-w-xs truncate font-medium text-[#2D2D2D]",
+      className: "max-w-xs truncate font-medium text-foreground",
       render: (row) => (
         <div className="flex flex-col gap-0.5">
           <span className="font-semibold">{row.name}</span>
-          <span className="text-xs text-[#6B6B6B]">{row.seriesName}</span>
+          <span className="text-xs text-muted-foreground">{row.seriesName}</span>
         </div>
       ),
     },
@@ -162,7 +162,7 @@ export default function ManagerProgramsPage() {
     },
     {
       header: "Học phí",
-      className: "text-right font-mono text-[#2D2D2D]",
+      className: "text-right font-mono text-foreground",
       render: (row) =>
         new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(row.price),
     },
@@ -180,7 +180,7 @@ export default function ManagerProgramsPage() {
             size="icon"
             nativeButton={false}
             render={<Link href={`/manager/programs/${row.id}`} />}
-            className="size-8 text-[#6B6B6B] hover:bg-[#F5F5F0] rounded-lg"
+            className="size-8 text-muted-foreground hover:bg-muted rounded-lg"
           >
             <Edit2 className="size-4" />
           </Button>
@@ -216,7 +216,7 @@ export default function ManagerProgramsPage() {
         <Button
           nativeButton={false}
           render={<Link href="/manager/programs/create" />}
-          className="h-10 rounded-lg bg-[#E94B3C] font-semibold text-white hover:bg-[#E94B3C]/90 gap-1.5"
+          className="h-10 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90 gap-1.5"
         >
           <Plus className="size-4" />
           Tạo chương trình
@@ -224,18 +224,18 @@ export default function ManagerProgramsPage() {
       </ManagerPageHeader>
 
       <div className="px-6 pb-12">
-        <div className="rounded-xl border border-[#E5E5E0] bg-white overflow-hidden shadow-sm">
-          {/* Custom Filters Controls (styled like homepage layout but Light Mode) */}
-          <div className="flex flex-col gap-5 border-b border-[#E5E5E0] bg-white px-6 py-5">
+        <div className="rounded-xl border border-border bg-card overflow-hidden shadow-sm">
+          {/* Custom Filters Controls (styled like homepage layout, theme-aware) */}
+          <div className="flex flex-col gap-5 border-b border-border bg-card px-6 py-5">
             {/* 1. Search Input (Full width) */}
             <div className="relative w-full">
-              <Search className="absolute top-2.5 left-3.5 size-4 text-[#6B6B6B]" />
+              <Search className="absolute top-2.5 left-3.5 size-4 text-muted-foreground" />
               <Input
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Tìm chương trình..."
-                className="h-10 pl-10 pr-8 rounded-xl border-[#E5E5E0] text-sm text-[#2D2D2D] bg-[#FAFAF5]/50 focus-visible:ring-[#4FC3F7]"
+                className="h-10 pl-10 pr-8 rounded-xl border-border text-sm text-foreground bg-background/50 focus-visible:ring-[#4FC3F7]"
               />
               {search ? (
                 <button
@@ -243,7 +243,7 @@ export default function ManagerProgramsPage() {
                   className="absolute top-3 right-3 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#4FC3F7]"
                   aria-label="Xóa tìm kiếm"
                 >
-                  <X className="size-4 text-[#6B6B6B]" />
+                  <X className="size-4 text-muted-foreground" />
                 </button>
               ) : null}
             </div>
@@ -251,10 +251,10 @@ export default function ManagerProgramsPage() {
             {/* 2. Category Selector */}
             <div className="flex flex-col gap-2.5">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="font-heading text-xs font-bold uppercase tracking-wider text-[#6B6B6B]">
+                <p className="font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Lọc theo STEAM
                 </p>
-                <p className="text-xs text-[#6B6B6B]/60">Nhấn để chọn lĩnh vực</p>
+                <p className="text-xs text-muted-foreground/60">Nhấn để chọn lĩnh vực</p>
               </div>
 
               <div className="flex flex-wrap gap-2">
@@ -270,8 +270,8 @@ export default function ManagerProgramsPage() {
                     "group inline-flex min-h-9 items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition-all duration-200 text-xs font-semibold",
                     "hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] active:scale-[0.98]",
                     category === "all"
-                      ? "border-[#2D2D2D] bg-[#2D2D2D] text-white"
-                      : "border-[#E5E5E0] bg-[#FAFAF5]/50 text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border bg-background/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   Tất cả
@@ -296,7 +296,7 @@ export default function ManagerProgramsPage() {
                         "hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] active:scale-[0.98]",
                         isActive
                           ? `${custom.bg} ${custom.border} ${custom.text}`
-                          : "border-[#E5E5E0] bg-[#FAFAF5]/50 text-[#6B6B6B] hover:border-[#E5E5E0] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                          : "border-border bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground"
                       )}
                     >
                       <span
@@ -304,7 +304,7 @@ export default function ManagerProgramsPage() {
                           "flex size-5 shrink-0 items-center justify-center rounded-full font-heading text-[10px] font-bold",
                           isActive
                             ? custom.circleBg
-                            : "bg-white border border-[#E5E5E0] shadow-sm"
+                            : "bg-card border border-border shadow-sm"
                         )}
                         style={!isActive ? { color: meta.color } : undefined}
                       >
@@ -318,7 +318,7 @@ export default function ManagerProgramsPage() {
             </div>
 
             {/* 3. Bottom Row: Level Select & Clear Filter Button */}
-            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E5E5E0] pt-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
               <Select
                 value={level}
                 onValueChange={(val) => {
@@ -327,20 +327,20 @@ export default function ManagerProgramsPage() {
                   setPage(1);
                 }}
               >
-                <SelectTrigger className={LIGHT_SELECT_TRIGGER}>
+                <SelectTrigger className={THEME_SELECT_TRIGGER}>
                   <span className="truncate">
                     {level === "all" ? "Tất cả cấp độ" : (LEVEL_LABELS[level] ?? level)}
                   </span>
                 </SelectTrigger>
-                <SelectContent className={LIGHT_SELECT_CONTENT} align="start" sideOffset={8}>
-                  <SelectItem value="all" className={LIGHT_SELECT_ITEM}>
+                <SelectContent className={THEME_SELECT_CONTENT} align="start" sideOffset={8}>
+                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
                     Tất cả cấp độ
                   </SelectItem>
                   {PROGRAM_LEVEL_ORDER.map((lvl) => (
                     <SelectItem
                       key={lvl}
                       value={lvl}
-                      className={LIGHT_SELECT_ITEM}
+                      className={THEME_SELECT_ITEM}
                     >
                       {PROGRAM_LEVEL_LABELS[lvl]}
                     </SelectItem>
@@ -359,7 +359,7 @@ export default function ManagerProgramsPage() {
                     setLevel("all");
                     setPage(1);
                   }}
-                  className="h-9 gap-1.5 px-3 rounded-lg text-xs font-semibold text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                  className="h-9 gap-1.5 px-3 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <X className="size-3.5" />
                   Xóa bộ lọc
@@ -369,7 +369,7 @@ export default function ManagerProgramsPage() {
           </div>
 
           {/* Table content list */}
-          <div className="p-6 bg-white">
+          <div className="p-6 bg-card">
             <ManagerDataTable
               columns={columns}
               data={programs}

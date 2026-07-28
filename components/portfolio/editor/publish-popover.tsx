@@ -158,7 +158,7 @@ export function PublishPopover({ portfolio, onUpdated }: PublishPopoverProps) {
         <span
           className={cn(
             "size-2 rounded-full",
-            portfolio.isPublic ? "bg-[#7CB342]" : "bg-white/30",
+            portfolio.isPublic ? "bg-[#7CB342]" : "bg-background/30",
           )}
           aria-hidden
         />

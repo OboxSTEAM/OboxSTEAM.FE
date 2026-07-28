@@ -186,7 +186,7 @@ export function ExpertManager() {
               src={expert.avatarUrl || undefined}
               alt={expert.fullName || expert.code}
             />
-            <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-xs font-bold text-[#0D6E9C]">
+            <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-xs font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
               {getInitials(expert.fullName) || "CG"}
             </AvatarFallback>
           </Avatar>
@@ -243,7 +243,7 @@ export function ExpertManager() {
                   .map((program) => `${program.name}${program.roleInBoard ? ` — ${program.roleInBoard}` : ""}`)
                   .join("\n")}
                 aria-label={`Xem thêm ${expert.programs.length - 2} chương trình của ${expert.fullName}`}
-                className="inline-flex h-5 items-center rounded-md border border-border bg-card px-2 text-[11px] font-semibold text-foreground transition-colors hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                className="inline-flex h-5 items-center rounded-md border border-border bg-card px-2 text-[11px] font-semibold text-foreground transition-colors hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
               >
                 +{expert.programs.length - 2} chương trình
               </button>
@@ -269,7 +269,7 @@ export function ExpertManager() {
             size="icon"
             onClick={() => setProfileExpertId(expert.id)}
             aria-label={`Xem ${expert.fullName}`}
-            className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
           >
             <Eye className="size-4" />
           </Button>
@@ -279,7 +279,7 @@ export function ExpertManager() {
             size="icon"
             onClick={() => openEdit(expert)}
             aria-label={`Sửa ${expert.fullName}`}
-            className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
           >
             <Pencil className="size-4" />
           </Button>

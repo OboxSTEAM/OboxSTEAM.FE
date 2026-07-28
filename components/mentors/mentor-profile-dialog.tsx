@@ -77,7 +77,7 @@ export function MentorProfileDialog({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogPopup className="flex max-h-[min(90vh,44rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <div className="relative shrink-0 border-b border-[#E5E5E0] px-7 pb-4 pt-5">
+        <div className="relative shrink-0 border-b border-border px-7 pb-4 pt-5">
           <DialogClose className="top-4 right-4" />
           <DialogTitle className="text-lg">Thông tin mentor</DialogTitle>
           <DialogDescription className="sr-only">
@@ -88,7 +88,7 @@ export function MentorProfileDialog({
         <div className="min-h-0 flex-1 overflow-y-auto px-7 py-5">
           {hasError ? (
             <div className="py-6 text-center">
-              <p className="text-sm text-[#6B6B6B]">
+              <p className="text-sm text-muted-foreground">
                 Không tải được thông tin mentor.
               </p>
               <Button

@@ -90,26 +90,26 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
 import {
-  LIGHT_SELECT_TRIGGER,
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const W = {
-  bg:         "#ede9e0",
-  surface:    "#f4f1ea",
-  surface2:   "#e7e2d8",
-  surface3:   "#ded8cc",
-  border:     "#d8d2c6",
-  textStrong: "#2d2b27",
-  text:       "#3a3833",
-  muted:      "#6b6b6b",
-  faint:      "#8c8678",
-  accent:     "#4fc3f7",
-  success:    "#7cb342",
-  primary:    "#e94b3c",
+  bg: "var(--background)",
+  surface: "var(--card)",
+  surface2: "var(--muted)",
+  surface3: "var(--secondary)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  text: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
+  accent: "#4fc3f7",
+  success: "#7cb342",
+  primary: "var(--primary)",
 } as const;
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
@@ -215,7 +215,7 @@ function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã l
 function PHdr({ icon: Icon, color, title, sub }: { icon: React.ElementType; color: string; title: string; sub?: string }) {
   return (
     <div className="flex items-center gap-3 px-5 py-4 border-b shrink-0" style={{ background: W.surface, borderColor: W.border }}>
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border" style={{ background: "white", borderColor: W.border }}>
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border" style={{ background: "var(--card)", borderColor: W.border }}>
         <Icon className="size-4" style={{ color }} />
       </span>
       <div className="min-w-0">
@@ -491,15 +491,15 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 w-full rounded-lg")} style={{ borderColor: W.border }}>
+                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg")}>
                     <span className="truncate">
                       {MODULE_TYPE_LABELS[field.value] ?? field.value}
                     </span>
                   </SelectTrigger>
-                  <SelectContent className={LIGHT_SELECT_CONTENT}>
-                    <SelectItem value="Theory" className={LIGHT_SELECT_ITEM}>Lý thuyết</SelectItem>
-                    <SelectItem value="Experiential" className={LIGHT_SELECT_ITEM}>Trải nghiệm</SelectItem>
-                    <SelectItem value="Research" className={LIGHT_SELECT_ITEM}>Nghiên cứu</SelectItem>
+                  <SelectContent className={THEME_SELECT_CONTENT}>
+                    <SelectItem value="Theory" className={THEME_SELECT_ITEM}>Lý thuyết</SelectItem>
+                    <SelectItem value="Experiential" className={THEME_SELECT_ITEM}>Trải nghiệm</SelectItem>
+                    <SelectItem value="Research" className={THEME_SELECT_ITEM}>Nghiên cứu</SelectItem>
                   </SelectContent>
                 </Select>
               )} />
@@ -508,17 +508,17 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Module tiên quyết</Label>
               <Controller name="prerequisiteModuleId" control={control} render={({ field }) => (
                 <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? null : v)}>
-                  <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 w-full rounded-lg")} style={{ borderColor: W.border }}>
+                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg")}>
                     <span className="truncate">
                       {!field.value || field.value === "none"
                         ? "Không có"
                         : (others.find((m) => m.id === field.value)?.name ?? "Không có")}
                     </span>
                   </SelectTrigger>
-                  <SelectContent className={LIGHT_SELECT_CONTENT}>
-                    <SelectItem value="none" className={LIGHT_SELECT_ITEM}>Không có</SelectItem>
+                  <SelectContent className={THEME_SELECT_CONTENT}>
+                    <SelectItem value="none" className={THEME_SELECT_ITEM}>Không có</SelectItem>
                     {others.map((m) => (
-                      <SelectItem key={m.id} value={m.id} className={LIGHT_SELECT_ITEM}>
+                      <SelectItem key={m.id} value={m.id} className={THEME_SELECT_ITEM}>
                         {m.name}
                       </SelectItem>
                     ))}
@@ -778,15 +778,15 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                       setValue("maxCapacity", null);
                     }
                   }}>
-                    <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 w-44 rounded-lg")} style={{ borderColor: W.border }}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-44 rounded-lg")}>
                       <span className="truncate">
                         {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
                       </span>
                     </SelectTrigger>
-                    <SelectContent className={LIGHT_SELECT_CONTENT}>
-                      <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học</SelectItem>
-                      <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online trực tiếp</SelectItem>
-                      <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline tại lớp</SelectItem>
+                    <SelectContent className={THEME_SELECT_CONTENT}>
+                      <SelectItem value="SelfPaced" className={THEME_SELECT_ITEM}>Tự học</SelectItem>
+                      <SelectItem value="LiveOnline" className={THEME_SELECT_ITEM}>Online trực tiếp</SelectItem>
+                      <SelectItem value="Offline" className={THEME_SELECT_ITEM}>Offline tại lớp</SelectItem>
                     </SelectContent>
                   </Select>
                 )} />
@@ -901,10 +901,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           </div>
         ) : existingMaterial ? (
           <div className="border-t pt-5" style={{ borderColor: W.border }}>
-            <div
-              className="flex items-start gap-2.5 rounded-xl border p-3.5 text-xs"
-              style={{ borderColor: "#f0c36d", background: "#fdf6e3", color: "#8a6d1f" }}
-            >
+            <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
               <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
               <p className="leading-relaxed">
                 Hoạt động này có tài liệu{existingMaterial.title ? ` “${existingMaterial.title}”` : ""}. Hình thức không phải
@@ -988,12 +985,12 @@ const STRUCTURE_NODE_ICON: Record<
   StructureNodeKind,
   { Icon: LucideIcon; color: string; bg: string }
 > = {
-  program: { Icon: LayoutGrid, color: "#E94B3C", bg: "#ffffff" },
-  module: { Icon: FolderOpen, color: "#7CB342", bg: "#ffffff" },
-  course: { Icon: BookOpen, color: "#4FC3F7", bg: "#ffffff" },
-  activity: { Icon: ActivityIcon, color: "#9c27b0", bg: "#ffffff" },
-  assignment: { Icon: ClipboardList, color: "#f59e0b", bg: "#ffffff" },
-  milestone: { Icon: Flag, color: "#8b5cf6", bg: "#ffffff" },
+  program: { Icon: LayoutGrid, color: "#E94B3C", bg: "var(--card)" },
+  module: { Icon: FolderOpen, color: "#7CB342", bg: "var(--card)" },
+  course: { Icon: BookOpen, color: "#4FC3F7", bg: "var(--card)" },
+  activity: { Icon: ActivityIcon, color: "#9c27b0", bg: "var(--card)" },
+  assignment: { Icon: ClipboardList, color: "#f59e0b", bg: "var(--card)" },
+  milestone: { Icon: Flag, color: "#8b5cf6", bg: "var(--card)" },
 };
 
 function StructureTreeRow({
@@ -1144,9 +1141,12 @@ function StructureTreeRow({
         className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
       >
         <span
-          className="truncate text-[12.5px] leading-snug"
+          className={cn(
+            "truncate text-[12.5px] leading-snug",
+            selected ? "text-[#0d6e9c] dark:text-[#7dd3fc]" : "",
+          )}
           style={{
-            color: selected ? "#0d6e9c" : W.text,
+            color: selected ? undefined : W.text,
             fontWeight: selected ? 600 : 500,
           }}
         >
@@ -1247,9 +1247,9 @@ function StructureTreeRow({
         whileDrag={{
           zIndex: 30,
           scale: 1.01,
-          boxShadow: "0 10px 28px rgba(45, 45, 45, 0.12)",
+          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.18)",
           borderRadius: 10,
-          backgroundColor: "rgba(250, 250, 245, 0.96)",
+          backgroundColor: "var(--card)",
         }}
         className="relative list-none"
         style={{ position: "relative" }}

@@ -38,22 +38,22 @@ export default function CreateProgramPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#F7F7F5]">
+    <div className="flex flex-col min-h-screen bg-background">
 
       {/* ── Sticky action bar (mimics reference header) ────────────── */}
-      <div className="sticky top-0 z-30 border-b border-[#E8E8E3] bg-white/95 backdrop-blur-sm">
+      <div className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-sm">
         <div className="flex items-center justify-between px-6 py-3.5">
           {/* Left: back + title */}
           <div className="flex items-center gap-3">
             <Link
               href="/manager/programs"
-              className="flex items-center gap-1.5 text-xs font-medium text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="size-3.5" />
               Danh sách chương trình
             </Link>
-            <span className="text-[#D8D8D3]">/</span>
-            <h1 className="text-base font-bold text-[#1A1A1A]">Tạo chương trình học mới</h1>
+            <span className="text-muted-foreground/50">/</span>
+            <h1 className="text-base font-bold text-foreground">Tạo chương trình học mới</h1>
           </div>
 
           {/* Right: action buttons */}
@@ -63,7 +63,7 @@ export default function CreateProgramPage() {
               variant="outline"
               disabled={isDraftSaving || isSubmitting}
               onClick={handleSaveDraft}
-              className="h-9 gap-1.5 rounded-xl border-[#DDDDD8] px-4 text-sm font-semibold text-[#444] hover:bg-[#F5F5F0]"
+              className="h-9 gap-1.5 rounded-xl border-border px-4 text-sm font-semibold text-foreground hover:bg-muted"
             >
               <Save className="size-3.5" />
               Lưu bản nháp
@@ -75,7 +75,7 @@ export default function CreateProgramPage() {
                 const btn = document.getElementById("__program-form-submit");
                 if (btn) (btn as HTMLButtonElement).click();
               }}
-              className="h-9 gap-1.5 rounded-xl bg-[#E94B3C] px-5 text-sm font-semibold text-white hover:bg-[#d43f33] shadow-sm"
+              className="h-9 gap-1.5 rounded-xl bg-primary px-5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 shadow-sm"
             >
               <FileCheck className="size-3.5" />
               {isSubmitting ? "Đang tạo..." : "Tạo chương trình"}

@@ -10,26 +10,37 @@ import {
 import { cn } from "@/lib/utils";
 
 const CLASS_STATUS_STYLES: Record<ClassStatus, string> = {
-  Draft: "bg-[#4FC3F7]/15 text-[#0d6e9c] border-[#4FC3F7]/25",
-  Open: "bg-[#7CB342]/15 text-[#3d5c22] border-[#7CB342]/20",
-  InProgress: "bg-[#FDD835]/20 text-[#8A7200] border-[#FDD835]/35",
-  Completed: "bg-[#7E57C2]/12 text-[#51308a] border-[#7E57C2]/20",
-  Cancelled: "bg-primary/10 text-[#a82a1e] border-primary/15",
+  Draft:
+    "bg-[#4FC3F7]/15 text-[#0d6e9c] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc] border-[#4FC3F7]/25 dark:border-[#4FC3F7]/40",
+  Open: "bg-[#7CB342]/15 text-[#3d5c22] dark:bg-[#7CB342]/20 dark:text-[#b8e086] border-[#7CB342]/20 dark:border-[#7CB342]/35",
+  InProgress:
+    "bg-[#FDD835]/20 text-[#8A7200] dark:bg-[#FDD835]/20 dark:text-[#fde047] border-[#FDD835]/35 dark:border-[#FDD835]/45",
+  Completed:
+    "bg-[#7E57C2]/12 text-[#51308a] dark:bg-[#7E57C2]/20 dark:text-[#c4b5fd] border-[#7E57C2]/20 dark:border-[#7E57C2]/35",
+  Cancelled:
+    "bg-primary/10 text-[#a82a1e] dark:bg-primary/20 dark:text-[#fca5a5] border-primary/15 dark:border-primary/30",
 };
 
 const SESSION_STATUS_STYLES: Record<ClassSessionStatus, string> = {
-  Scheduled: "bg-[#4FC3F7]/15 text-[#0d6e9c] border-[#4FC3F7]/25",
-  InProgress: "bg-[#FDD835]/20 text-[#8A7200] border-[#FDD835]/35",
-  Completed: "bg-[#7CB342]/15 text-[#3d5c22] border-[#7CB342]/20",
-  Cancelled: "bg-primary/10 text-[#a82a1e] border-primary/15",
+  Scheduled:
+    "bg-[#4FC3F7]/15 text-[#0d6e9c] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc] border-[#4FC3F7]/25 dark:border-[#4FC3F7]/40",
+  InProgress:
+    "bg-[#FDD835]/20 text-[#8A7200] dark:bg-[#FDD835]/20 dark:text-[#fde047] border-[#FDD835]/35 dark:border-[#FDD835]/45",
+  Completed:
+    "bg-[#7CB342]/15 text-[#3d5c22] dark:bg-[#7CB342]/20 dark:text-[#b8e086] border-[#7CB342]/20 dark:border-[#7CB342]/35",
+  Cancelled:
+    "bg-primary/10 text-[#a82a1e] dark:bg-primary/20 dark:text-[#fca5a5] border-primary/15 dark:border-primary/30",
 };
 
 const ATTENDANCE_STATUS_STYLES: Record<SessionAttendanceStatus, string> = {
   Expected: "bg-muted text-muted-foreground border-border",
-  Present: "bg-[#7CB342]/15 text-[#3d5c22] border-[#7CB342]/20",
-  Absent: "bg-primary/10 text-[#a82a1e] border-primary/15",
-  Excused: "bg-[#4FC3F7]/15 text-[#0d6e9c] border-[#4FC3F7]/25",
-  Late: "bg-[#FDD835]/20 text-[#8A7200] border-[#FDD835]/35",
+  Present:
+    "bg-[#7CB342]/15 text-[#3d5c22] dark:bg-[#7CB342]/20 dark:text-[#b8e086] border-[#7CB342]/20 dark:border-[#7CB342]/35",
+  Absent:
+    "bg-primary/10 text-[#a82a1e] dark:bg-primary/20 dark:text-[#fca5a5] border-primary/15 dark:border-primary/30",
+  Excused:
+    "bg-[#4FC3F7]/15 text-[#0d6e9c] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc] border-[#4FC3F7]/25 dark:border-[#4FC3F7]/40",
+  Late: "bg-[#FDD835]/20 text-[#8A7200] dark:bg-[#FDD835]/20 dark:text-[#fde047] border-[#FDD835]/35 dark:border-[#FDD835]/45",
 };
 
 function StatusPill({

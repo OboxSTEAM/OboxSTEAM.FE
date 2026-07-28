@@ -18,6 +18,16 @@ export const LIGHT_SELECT_CONTENT =
 export const LIGHT_SELECT_ITEM =
   "rounded-md py-2 pl-2.5 pr-8 text-sm text-[#2D2D2D] focus:bg-[#EBEBE6]! focus:text-[#2D2D2D]! focus:**:text-[#2D2D2D]! data-[highlighted]:bg-[#EBEBE6]! data-[highlighted]:text-[#2D2D2D]! data-[highlighted]:**:text-[#2D2D2D]! [&_svg]:text-[#2ea8d8] data-[highlighted]:[&_svg]:text-[#E94B3C]";
 
+/** Theme-aware selects — follow semantic tokens in light and dark mode. Prefer for manager chrome. */
+export const THEME_SELECT_TRIGGER =
+  "h-9 min-w-[11rem] border-border bg-card px-3 text-sm text-foreground shadow-sm hover:border-border hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-ring/25 [&_svg]:text-muted-foreground hover:[&_svg]:text-foreground";
+
+export const THEME_SELECT_CONTENT =
+  "border border-border bg-popover p-1 text-foreground shadow-lg ring-0 data-open:animate-none data-closed:animate-none";
+
+export const THEME_SELECT_ITEM =
+  "rounded-md py-2 pl-2.5 pr-8 text-sm text-foreground focus:bg-muted! focus:text-foreground! focus:**:text-foreground! data-[highlighted]:bg-muted! data-[highlighted]:text-foreground! data-[highlighted]:**:text-foreground! [&_svg]:text-accent data-[highlighted]:[&_svg]:text-primary";
+
 /** Full-width light select used in portfolio panels / dialogs. */
 export const LIGHT_SELECT_TRIGGER_FULL =
   "h-10 w-full rounded-xl border-[#E5E5E0] bg-white text-[#2D2D2D]";

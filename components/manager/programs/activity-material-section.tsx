@@ -70,14 +70,14 @@ function validateFile(file: File): string | null {
 
 /* ─── Palette (mirrors curriculum-split-panel) ─────────────────────────────── */
 const W = {
-  surface: "#f4f1ea",
-  surface2: "#e7e2d8",
-  border: "#d8d2c6",
-  textStrong: "#2d2b27",
-  muted: "#6b6b6b",
-  faint: "#8c8678",
+  surface: "var(--card)",
+  surface2: "var(--muted)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
   accent: "#4fc3f7",
-  primary: "#e94b3c",
+  primary: "var(--primary)",
 } as const;
 
 const IN =
@@ -347,7 +347,7 @@ export function ActivityMaterialSection({
                 title="Xóa tài liệu"
                 onClick={() => setConfirmDelete(true)}
                 disabled={busy}
-                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-red-50"
+                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10"
                 style={{ borderColor: W.border, color: W.primary }}
               >
                 <Trash className="size-3.5" />
@@ -367,7 +367,7 @@ export function ActivityMaterialSection({
               accept=".pdf,.doc,.docx,.mp4,.mov,.avi,.mkv,.jpg,.jpeg,.png,.gif,.webp"
               onChange={handleFilePick}
               disabled={busy}
-              className="block w-full text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-semibold file:text-foreground hover:file:bg-[#ded8cc]"
+              className="block w-full text-sm text-foreground file:mr-3 file:rounded-lg file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-semibold file:text-foreground hover:file:bg-secondary"
             />
             {file ? (
               <p className="text-[11px]" style={{ color: W.faint }}>

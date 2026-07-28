@@ -340,9 +340,9 @@ export function ProgramForm({
                           : cat.value === "Technology"
                           ? "border-[#7CB342]/40 bg-[#7CB342]/10 text-[#33691e]"
                           : cat.value === "Engineering"
-                          ? "border-[#4FC3F7]/40 bg-[#4FC3F7]/10 text-[#0d6e9c]"
+                          ? "border-[#4FC3F7]/40 bg-[#4FC3F7]/10 text-[#0d6e9c] dark:text-[#7dd3fc]"
                           : cat.value === "Mathematic"
-                          ? "border-[#7E57C2]/40 bg-[#7E57C2]/10 text-[#51308a]"
+                          ? "border-[#7E57C2]/40 bg-[#7E57C2]/10 text-[#51308a] dark:text-[#c4b5fd]"
                           : "border-[#FDD835]/40 bg-[#FDD835]/10 text-[#f57f17]";
                           
                       const circleBg =

@@ -354,7 +354,7 @@ function SessionManagerInner() {
               />
             }
             aria-label={`Điểm danh ${session.title}`}
-            className="size-9 rounded-lg text-muted-foreground hover:bg-[#7CB342]/10 hover:text-[#3d5c22]"
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#7CB342]/10 hover:text-[#3d5c22] dark:hover:text-[#b8e086]"
           >
             <ClipboardCheck className="size-4" />
           </Button>

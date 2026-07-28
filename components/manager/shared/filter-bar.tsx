@@ -10,10 +10,10 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import {
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
-  LIGHT_SELECT_TRIGGER,
-} from "@/components/programs/program-select-styles";
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+} from "@/lib/ui/select-styles";
 import { cn } from "@/lib/utils";
 
 export type FilterOption = {
@@ -87,7 +87,7 @@ export function ManagerFilterBar({
             >
               <SelectTrigger
                 className={cn(
-                  LIGHT_SELECT_TRIGGER,
+                  THEME_SELECT_TRIGGER,
                   isWide && "max-w-[16rem]",
                 )}
               >
@@ -98,7 +98,7 @@ export function ManagerFilterBar({
                 alignItemWithTrigger={false}
                 sideOffset={8}
                 className={cn(
-                  LIGHT_SELECT_CONTENT,
+                  THEME_SELECT_CONTENT,
                   isWide &&
                     "w-auto! min-w-[min(100vw-2rem,22rem)] max-w-[min(100vw-2rem,28rem)]",
                 )}
@@ -108,7 +108,7 @@ export function ManagerFilterBar({
                     key={opt.value}
                     value={opt.value}
                     className={cn(
-                      LIGHT_SELECT_ITEM,
+                      THEME_SELECT_ITEM,
                       "cursor-pointer",
                       isWide &&
                         "items-start leading-snug [&_span]:shrink [&_span]:break-words [&_span]:whitespace-normal!",

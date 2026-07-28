@@ -117,7 +117,7 @@ export function AssignExistingExpertDialog({
                       {avatarUrl ? (
                         <AvatarImage src={avatarUrl} alt={expert.fullName} />
                       ) : null}
-                      <AvatarFallback className="bg-[#4FC3F7]/12 text-xs font-bold text-[#0D6E9C]">
+                      <AvatarFallback className="bg-[#4FC3F7]/12 text-xs font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                         {getExpertInitials(expert.fullName)}
                       </AvatarFallback>
                     </Avatar>

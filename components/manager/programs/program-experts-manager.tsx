@@ -165,7 +165,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
       <header className="flex flex-col gap-4 border-b border-border bg-background/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-[#4FC3F7]/12 text-[#0D6E9C]">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-[#4FC3F7]/12 text-[#0D6E9C] dark:text-[#7dd3fc]">
               <BriefcaseBusiness className="size-4" />
             </span>
             <div>
@@ -242,7 +242,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                   {avatarUrl ? (
                     <AvatarImage src={avatarUrl} alt={expert.fullName} />
                   ) : null}
-                  <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-sm font-bold text-[#0D6E9C]">
+                  <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-sm font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                     {getExpertInitials(expert.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -265,7 +265,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                         size="icon"
                         onClick={() => setSelectedExpertId(expert.expertId)}
                         aria-label={`Xem hồ sơ ${expert.fullName}`}
-                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
+                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
                       >
                         <Eye className="size-4" />
                       </Button>
@@ -276,7 +276,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                         disabled={loadingExpertId === expert.expertId}
                         onClick={() => void openEdit(expert.expertId)}
                         aria-label={`Sửa ${expert.fullName}`}
-                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
+                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
                       >
                         <Pencil className="size-4" />
                       </Button>

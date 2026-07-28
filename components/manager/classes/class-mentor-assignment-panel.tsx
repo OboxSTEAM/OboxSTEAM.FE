@@ -281,7 +281,7 @@ export function ClassMentorAssignmentPanel({
                     src={assignedMentor?.avatarUrl || undefined}
                     alt=""
                   />
-                  <AvatarFallback className="rounded-lg bg-[#7CB342]/15 text-[10px] font-bold text-[#3d5c22]">
+                  <AvatarFallback className="rounded-lg bg-[#7CB342]/15 text-[10px] font-bold text-[#3d5c22] dark:text-[#b8e086]">
                     {getMentorInitials(mentorDisplayName)}
                   </AvatarFallback>
                 </Avatar>
@@ -359,7 +359,7 @@ export function ClassMentorAssignmentPanel({
                         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                       >
                         <Avatar className="size-8 rounded-lg border border-border">
-                          <AvatarFallback className="rounded-lg bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
+                          <AvatarFallback className="rounded-lg bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                             {getMentorInitials(request.mentorName)}
                           </AvatarFallback>
                         </Avatar>
@@ -395,7 +395,7 @@ export function ClassMentorAssignmentPanel({
                           disabled={isBusy}
                           onClick={() => handleApprove(request)}
                           aria-label={`Duyệt ${request.mentorName || "mentor"}`}
-                          className="size-7 rounded-md text-[#3d5c22] hover:bg-[#7CB342]/15 hover:text-[#3d5c22]"
+                          className="size-7 rounded-md text-[#3d5c22] dark:text-[#b8e086] hover:bg-[#7CB342]/15 hover:text-[#3d5c22] dark:hover:text-[#b8e086]"
                         >
                           <Check className="size-3.5" />
                         </Button>
@@ -417,7 +417,7 @@ export function ClassMentorAssignmentPanel({
                     <span
                       className={cn(
                         "shrink-0 font-medium",
-                        request.status === "Approved" && "text-[#3d5c22]",
+                        request.status === "Approved" && "text-[#3d5c22] dark:text-[#b8e086]",
                         request.status === "Rejected" && "text-primary",
                       )}
                     >

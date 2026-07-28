@@ -31,9 +31,9 @@ const VIEW_LABELS: Record<CalendarView, string> = {
 
 /** Left accent + tint per session kind, matched to the manager palette. */
 const KIND_STYLES: Record<ClassSessionKind, string> = {
-  Lesson: "border-l-[#7CB342] bg-[#7CB342]/12 text-[#3d5c22]",
-  FieldTrip: "border-l-[#7E57C2] bg-[#7E57C2]/12 text-[#51308a]",
-  AssignmentWindow: "border-l-[#FDD835] bg-[#FDD835]/18 text-[#8A7200]",
+  Lesson: "border-l-[#7CB342] bg-[#7CB342]/12 text-[#3d5c22] dark:text-[#b8e086]",
+  FieldTrip: "border-l-[#7E57C2] bg-[#7E57C2]/12 text-[#51308a] dark:text-[#c4b5fd]",
+  AssignmentWindow: "border-l-[#FDD835] bg-[#FDD835]/18 text-[#8A7200] dark:text-[#fde047]",
   MentorCheckIn: "border-l-[#E94B3C] bg-primary/10 text-primary",
 };
 

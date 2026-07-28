@@ -74,14 +74,14 @@ export function ManagerDataTable<T>({
     <div className="flex flex-col gap-4">
       <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
         <Table>
-          <TableHeader className="bg-background">
-            <TableRow className="border-border hover:bg-background">
+          <TableHeader className="bg-muted/40">
+            <TableRow className="border-border hover:bg-muted/40">
               {columns.map((col, idx) => (
                 <TableHead
                   key={idx}
                   className={cn(
-                    "px-4 py-3.5 font-heading text-xs font-bold uppercase tracking-wider text-foreground",
-                    col.sticky && "bg-background",
+                    "px-4 py-3.5 font-heading text-xs font-bold uppercase tracking-wider text-muted-foreground",
+                    col.sticky && "bg-muted/40",
                     stickyCellClass(col.sticky),
                     col.className,
                   )}
@@ -100,7 +100,7 @@ export function ManagerDataTable<T>({
                       key={cIdx}
                       className={cn(
                         "px-4 py-4",
-                        col.sticky && "bg-card group-hover:bg-background",
+                        col.sticky && "bg-card group-hover:bg-muted/50",
                         stickyCellClass(col.sticky),
                         col.className,
                       )}
@@ -124,7 +124,7 @@ export function ManagerDataTable<T>({
               data.map((row, rIdx) => (
                 <TableRow
                   key={rIdx}
-                  className="group border-border transition-colors hover:bg-background/50"
+                  className="group border-border transition-colors hover:bg-muted/50"
                 >
                   {columns.map((col, cIdx) => {
                     const value = col.accessorKey
@@ -135,7 +135,7 @@ export function ManagerDataTable<T>({
                         key={cIdx}
                         className={cn(
                           "px-4 py-3.5 font-sans text-sm font-normal text-foreground",
-                          col.sticky && "bg-card group-hover:bg-background",
+                          col.sticky && "bg-card group-hover:bg-muted/50",
                           stickyCellClass(col.sticky),
                           col.className,
                         )}

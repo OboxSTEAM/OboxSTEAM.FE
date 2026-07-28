@@ -15,9 +15,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import {
-  LIGHT_SELECT_TRIGGER,
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import {
   createResearchMilestone,
@@ -39,13 +39,13 @@ import {
 } from "@/lib/curriculum/datetime";
 
 const W = {
-  surface: "#f4f1ea",
-  border: "#d8d2c6",
-  textStrong: "#2d2b27",
-  muted: "#6b6b6b",
-  faint: "#8c8678",
+  surface: "var(--card)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
   accent: "#4fc3f7",
-  primary: "#e94b3c",
+  primary: "var(--primary)",
 } as const;
 
 const IN =
@@ -317,15 +317,15 @@ export function MilestoneFormPanel({
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange} disabled={isEdit}>
-                    <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg", isEdit && "opacity-60")} style={{ borderColor: W.border }}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg", isEdit && "opacity-60")}>
                       <span className="truncate">
                         {field.value === "Quiz" ? "Trắc nghiệm" : field.value === "Retrospective" ? "Nhật ký phản tư" : "Nộp tệp"}
                       </span>
                     </SelectTrigger>
-                    <SelectContent className={LIGHT_SELECT_CONTENT}>
-                      <SelectItem value="FileUpload" className={LIGHT_SELECT_ITEM}>Nộp tệp</SelectItem>
-                      <SelectItem value="Retrospective" className={LIGHT_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
-                      <SelectItem value="Quiz" className={LIGHT_SELECT_ITEM}>Trắc nghiệm</SelectItem>
+                    <SelectContent className={THEME_SELECT_CONTENT}>
+                      <SelectItem value="FileUpload" className={THEME_SELECT_ITEM}>Nộp tệp</SelectItem>
+                      <SelectItem value="Retrospective" className={THEME_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
+                      <SelectItem value="Quiz" className={THEME_SELECT_ITEM}>Trắc nghiệm</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -464,7 +464,7 @@ function MilestoneActivityLinker({
                 {la.activityTitle || la.activityCode || la.activityId}
               </span>
               {la.isRequiredForSubmission && (
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#fdecea", color: W.primary }}>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(233,75,60,0.12)", color: W.primary }}>
                   Bắt buộc
                 </span>
               )}
@@ -472,7 +472,7 @@ function MilestoneActivityLinker({
                 type="button"
                 onClick={() => handleUnlink(la.activityId)}
                 disabled={busy}
-                className="flex size-7 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-red-50"
+                className="flex size-7 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10"
                 style={{ borderColor: W.border, color: W.primary }}
                 title="Gỡ liên kết"
               >
@@ -491,17 +491,17 @@ function MilestoneActivityLinker({
         <div className="flex items-end gap-2">
           <div className="min-w-0 flex-1">
             <Select value={picked || "none"} onValueChange={(v) => setPicked(!v || v === "none" ? "" : v)}>
-              <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg")} style={{ borderColor: W.border }}>
+              <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
                 <span className="truncate">
                   {picked ? options.find((o) => o.id === picked)?.name ?? "Chọn hoạt động" : "Chọn hoạt động"}
                 </span>
               </SelectTrigger>
-              <SelectContent className={LIGHT_SELECT_CONTENT}>
-                <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
+              <SelectContent className={THEME_SELECT_CONTENT}>
+                <SelectItem value="none" className={THEME_SELECT_ITEM}>
                   Chọn hoạt động
                 </SelectItem>
                 {options.map((o) => (
-                  <SelectItem key={o.id} value={o.id} className={LIGHT_SELECT_ITEM}>
+                  <SelectItem key={o.id} value={o.id} className={THEME_SELECT_ITEM}>
                     {o.name}
                   </SelectItem>
                 ))}

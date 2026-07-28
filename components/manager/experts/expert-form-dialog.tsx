@@ -143,7 +143,7 @@ export function ExpertFormDialog({
               <div className="rounded-2xl border border-border bg-background p-5 text-center">
                 <Avatar className="mx-auto size-24 border-4 border-white shadow-sm">
                   <AvatarImage src={avatarUrl || undefined} alt={fullName || "Chuyên gia"} />
-                  <AvatarFallback className="bg-[#4FC3F7]/15 font-heading text-xl font-bold text-[#0D6E9C]">
+                  <AvatarFallback className="bg-[#4FC3F7]/15 font-heading text-xl font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                     {getInitials(fullName) || <UserRound className="size-7" />}
                   </AvatarFallback>
                 </Avatar>

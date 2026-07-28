@@ -79,19 +79,19 @@ function ProfileSection({
   className?: string;
 }) {
   return (
-    <section className={cn("border-t border-[#E5E5E0] pt-4", className)}>
+    <section className={cn("border-t border-border pt-4", className)}>
       <div className="mb-2 flex items-center gap-2.5">
         <span
           className={cn(
             "inline-flex size-7 shrink-0 items-center justify-center rounded-full",
-            tone === "neutral" && "bg-[#F5F5F0] text-[#6B6B6B]",
-            tone === "accent" && "bg-[#4FC3F7]/12 text-[#2ea8d8]",
-            tone === "highlight" && "bg-[#FDD835]/20 text-[#8a7200]",
+            tone === "neutral" && "bg-muted text-muted-foreground",
+            tone === "accent" && "bg-[#4FC3F7]/12 text-[#2ea8d8] dark:text-[#7dd3fc]",
+            tone === "highlight" && "bg-[#FDD835]/20 text-[#8a7200] dark:text-[#fde047]",
           )}
         >
           <Icon className="size-3.5" aria-hidden />
         </span>
-        <h3 className="font-heading text-sm font-semibold text-[#2D2D2D]">
+        <h3 className="font-heading text-sm font-semibold text-foreground">
           {title}
         </h3>
       </div>
@@ -128,26 +128,26 @@ function MentorIdentityHeader({
 
   return (
     <div className={cn("flex items-start gap-4", className)}>
-      <Avatar className="size-20 shrink-0 ring-2 ring-[#E5E5E0] sm:size-24">
+      <Avatar className="size-20 shrink-0 ring-2 ring-border sm:size-24">
         {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
-        <AvatarFallback className="bg-[#F5F5F0] text-lg font-semibold text-[#6B6B6B]">
+        <AvatarFallback className="bg-muted text-lg font-semibold text-muted-foreground">
           {getMentorInitials(fullName)}
         </AvatarFallback>
       </Avatar>
 
       <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
         <div className="min-w-0 space-y-1">
-          <p className="font-heading text-lg font-bold leading-tight text-[#2D2D2D] sm:text-xl">
+          <p className="font-heading text-lg font-bold leading-tight text-foreground sm:text-xl">
             {fullName}
           </p>
           {title ? (
-            <p className="text-sm font-medium text-[#4A4A4A]">{title}</p>
+            <p className="text-sm font-medium text-muted-foreground">{title}</p>
           ) : null}
           {organization ? (
-            <p className="text-sm text-[#6B6B6B]">{organization}</p>
+            <p className="text-sm text-muted-foreground">{organization}</p>
           ) : null}
           {code ? (
-            <p className="font-mono text-[11px] uppercase tracking-widest text-[#6B6B6B]/75">
+            <p className="font-mono text-[11px] uppercase tracking-widest text-muted-foreground/75">
               {code}
             </p>
           ) : null}
@@ -182,7 +182,7 @@ function SkillList({
 }) {
   if (skills.length === 0) {
     return (
-      <p className="text-sm text-[#6B6B6B]">Mentor chưa cập nhật kỹ năng.</p>
+      <p className="text-sm text-muted-foreground">Mentor chưa cập nhật kỹ năng.</p>
     );
   }
 
@@ -203,13 +203,13 @@ function SkillList({
               "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5",
               isMatch
                 ? "border-[#7CB342]/35 bg-[#7CB342]/10"
-                : "border-[#E5E5E0] bg-[#FAFAF5]",
+                : "border-border bg-muted",
             )}
           >
             <span
               className={cn(
                 "inline-flex items-center gap-1 truncate text-sm font-medium",
-                isMatch ? "text-[#3d5c22]" : "text-[#2D2D2D]",
+                isMatch ? "text-[#3d5c22] dark:text-[#b8e086]" : "text-foreground",
               )}
             >
               {isMatch ? (
@@ -217,7 +217,7 @@ function SkillList({
               ) : null}
               {skillName}
             </span>
-            <span className="truncate text-[11px] text-[#6B6B6B]">
+            <span className="truncate text-[11px] text-muted-foreground">
               {[category, PROFICIENCY_LABELS[item.proficiencyLevel]]
                 .filter(Boolean)
                 .join(" · ")}
@@ -276,7 +276,7 @@ export function MentorProfileContent({
         >
           {hasBio ? (
             <ProfileSection title="Giới thiệu" icon={UserRound}>
-              <p className="text-sm leading-relaxed whitespace-pre-line text-[#6B6B6B]">
+              <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
                 {mentor.bio}
               </p>
             </ProfileSection>
@@ -284,7 +284,7 @@ export function MentorProfileContent({
 
           {hasAchievements ? (
             <ProfileSection title="Thành tựu" icon={Award} tone="highlight">
-              <p className="text-sm leading-relaxed text-[#2D2D2D]">
+              <p className="text-sm leading-relaxed text-foreground">
                 {mentor.achievements}
               </p>
             </ProfileSection>
@@ -294,7 +294,7 @@ export function MentorProfileContent({
 
       {requestMessage ? (
         <ProfileSection title="Lời nhắn xin nhận lớp" icon={MessageSquareText}>
-          <p className="text-sm leading-relaxed whitespace-pre-line text-[#6B6B6B]">
+          <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
             {requestMessage}
           </p>
         </ProfileSection>
@@ -319,8 +319,8 @@ export function MentorProfileContent({
                   className={cn(
                     "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
                     matched
-                      ? "bg-[#7CB342]/12 text-[#3d5c22]"
-                      : "bg-[#F5F5F0] text-[#6B6B6B]",
+                      ? "bg-[#7CB342]/12 text-[#3d5c22] dark:text-[#b8e086]"
+                      : "bg-muted text-muted-foreground",
                   )}
                 >
                   {matched ? (
@@ -336,10 +336,10 @@ export function MentorProfileContent({
       </ProfileSection>
 
       <ProfileSection title="Vai trò" icon={GraduationCap}>
-        <p className="text-sm font-medium text-[#2D2D2D]">
+        <p className="text-sm font-medium text-foreground">
           Mentor phụ trách lớp
           {mentor.assignedClassCount > 0 ? (
-            <span className="font-normal text-[#6B6B6B]">
+            <span className="font-normal text-muted-foreground">
               {" "}
               · {mentor.assignedClassCount} lớp đang dạy
             </span>
@@ -381,21 +381,21 @@ export function MentorProfileSkeleton() {
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-4">
-        <div className="size-20 shrink-0 animate-pulse rounded-full bg-[#F5F5F0] sm:size-24" />
+        <div className="size-20 shrink-0 animate-pulse rounded-full bg-muted sm:size-24" />
         <div className="flex-1 space-y-2 pt-1">
-          <div className="h-5 w-48 animate-pulse rounded bg-[#F5F5F0]" />
-          <div className="h-4 w-36 animate-pulse rounded bg-[#F5F5F0]" />
-          <div className="h-4 w-28 animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="h-5 w-48 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-36 animate-pulse rounded bg-muted" />
+          <div className="h-4 w-28 animate-pulse rounded bg-muted" />
         </div>
       </div>
-      <div className="border-t border-[#E5E5E0] pt-4">
+      <div className="border-t border-border pt-4">
         <div className="mb-2 flex items-center gap-2.5">
-          <div className="size-7 animate-pulse rounded-full bg-[#F5F5F0]" />
-          <div className="h-4 w-24 animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="size-7 animate-pulse rounded-full bg-muted" />
+          <div className="h-4 w-24 animate-pulse rounded bg-muted" />
         </div>
         <div className="space-y-2">
-          <div className="h-3.5 w-full animate-pulse rounded bg-[#F5F5F0]" />
-          <div className="h-3.5 w-[90%] animate-pulse rounded bg-[#F5F5F0]" />
+          <div className="h-3.5 w-full animate-pulse rounded bg-muted" />
+          <div className="h-3.5 w-[90%] animate-pulse rounded bg-muted" />
         </div>
       </div>
     </div>
