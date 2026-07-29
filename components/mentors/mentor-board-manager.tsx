@@ -72,7 +72,7 @@ function formatDateRange(startDate: string, endDate: string): string {
 
 function BoardCardSkeleton() {
   return (
-    <div className="rounded-2xl border border-[#E5E5E0] bg-white p-5 shadow-sm">
+    <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-6 w-24 rounded-full" />
@@ -99,34 +99,34 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
   const displayCode = classItem.code?.trim();
 
   return (
-    <article className="flex h-full flex-col rounded-2xl border border-[#E5E5E0] bg-white p-5 shadow-[0_2px_12px_rgba(45,45,45,0.04)] transition-shadow hover:shadow-[0_8px_24px_rgba(45,45,45,0.08)]">
+    <article className="flex h-full flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {displayCode ? (
-            <p className="font-mono text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
+            <p className="font-mono text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               {displayCode}
             </p>
           ) : null}
-          <h3 className="mt-1 font-heading text-lg font-bold text-[#2D2D2D]">
+          <h3 className="mt-1 font-heading text-lg font-bold text-foreground">
             {displayName}
           </h3>
         </div>
         <ClassStatusBadge status={classItem.status} />
       </div>
 
-      <div className="mt-4 space-y-2 text-sm text-[#6B6B6B]">
+      <div className="mt-4 space-y-2 text-sm text-muted-foreground">
         <p className="flex items-center gap-2">
           <CalendarDays className="size-4 shrink-0 text-[#4FC3F7]" />
           {formatDateRange(classItem.startDate, classItem.endDate)}
         </p>
         {classItem.scheduleSummary ? (
           <p className="flex items-start gap-2">
-            <Clock3 className="mt-0.5 size-4 shrink-0 text-[#7E57C2]" />
+            <Clock3 className="mt-0.5 size-4 shrink-0 text-[#7E57C2] dark:text-[#a78bfa]" />
             <span>{classItem.scheduleSummary}</span>
           </p>
         ) : null}
         <p className="flex items-center gap-2">
-          <UsersRound className="size-4 shrink-0 text-[#7CB342]" />
+          <UsersRound className="size-4 shrink-0 text-[#7CB342] dark:text-[#b8e086]" />
           Sức chứa {classItem.maxCapacity} học viên
           {classItem.pendingRequestCount > 0
             ? ` · ${classItem.pendingRequestCount} yêu cầu đang chờ`
@@ -140,7 +140,7 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
             <Badge
               key={skill.id}
               variant="outline"
-              className="rounded-full border-[#E5E5E0] bg-[#FAFAF5] px-2.5 py-0.5 text-xs font-medium text-[#2D2D2D]"
+              className="rounded-full border-border bg-muted px-2.5 py-0.5 text-xs font-medium text-foreground"
             >
               {skill.name || skill.code || "Kỹ năng"}
             </Badge>
@@ -150,14 +150,14 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
 
       <div className="mt-4 flex flex-wrap gap-2">
         {classItem.matchesMySkills ? (
-          <Badge className="rounded-full bg-[#7CB342]/15 px-2.5 py-0.5 text-xs font-semibold text-[#3d5c22] hover:bg-[#7CB342]/15">
+          <Badge className="rounded-full bg-[#7CB342]/15 px-2.5 py-0.5 text-xs font-semibold text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
             <Sparkles className="mr-1 size-3" />
             Khớp kỹ năng
           </Badge>
         ) : null}
         <Badge
           variant="outline"
-          className="rounded-full border-[#E5E5E0] px-2.5 py-0.5 text-xs font-medium text-[#6B6B6B]"
+          className="rounded-full border-border px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
         >
           {CLASS_STATUS_LABELS[classItem.status]}
         </Badge>
@@ -170,7 +170,7 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
               type="button"
               variant="outline"
               disabled
-              className="h-10 flex-1 rounded-lg border-[#4FC3F7]/30 bg-[#4FC3F7]/10 text-[#0d6e9c]"
+              className="h-10 flex-1 rounded-lg border-[#4FC3F7]/30 bg-[#4FC3F7]/10 text-[#0d6e9c] dark:text-[#7dd3fc]"
             >
               <CheckCircle2 className="size-4" />
               Đã gửi yêu cầu
@@ -180,7 +180,7 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
               variant="ghost"
               nativeButton={false}
               render={<Link href="/mentor/requests" />}
-              className="h-10 rounded-lg text-[#6B6B6B] hover:text-[#2D2D2D]"
+              className="h-10 rounded-lg text-muted-foreground hover:text-foreground"
             >
               Xem yêu cầu
             </Button>
@@ -189,7 +189,7 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
           <Button
             type="button"
             onClick={() => onApply(classItem)}
-            className="h-10 w-full rounded-lg bg-[#E94B3C] font-semibold text-white hover:bg-[#E94B3C]/90"
+            className="h-10 w-full rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             <Send className="size-4" />
             Đăng ký dạy lớp
@@ -412,7 +412,7 @@ export function MentorBoardManager() {
           <div className="space-y-2 py-2">
             <label
               htmlFor="mentor-request-message"
-              className="text-sm font-medium text-[#2D2D2D]"
+              className="text-sm font-medium text-foreground"
             >
               Lời nhắn (tuỳ chọn)
             </label>
@@ -423,9 +423,9 @@ export function MentorBoardManager() {
               placeholder="Chia sẻ kinh nghiệm hoặc lý do bạn phù hợp với lớp này..."
               rows={4}
               maxLength={1000}
-              className="resize-none border-[#E5E5E0] bg-[#FAFAF5]/60"
+              className="resize-none border-border bg-background/60"
             />
-            <p className="text-right text-xs text-[#6B6B6B]">
+            <p className="text-right text-xs text-muted-foreground">
               {message.length}/1000
             </p>
           </div>
@@ -442,7 +442,7 @@ export function MentorBoardManager() {
               type="button"
               disabled={isSubmitting}
               onClick={handleApplyConfirm}
-              className="rounded-lg bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90"
+              className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
             >
               {isSubmitting ? "Đang gửi..." : "Gửi yêu cầu"}
             </Button>

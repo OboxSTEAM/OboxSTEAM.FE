@@ -85,8 +85,10 @@ function ProfileSection({
           className={cn(
             "inline-flex size-7 shrink-0 items-center justify-center rounded-full",
             tone === "neutral" && "bg-muted text-muted-foreground",
-            tone === "accent" && "bg-[#4FC3F7]/12 text-[#2ea8d8] dark:text-[#7dd3fc]",
-            tone === "highlight" && "bg-[#FDD835]/20 text-[#8a7200] dark:text-[#fde047]",
+            tone === "accent" &&
+              "bg-[#4FC3F7]/12 text-[#2ea8d8] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc]",
+            tone === "highlight" &&
+              "bg-[#FDD835]/20 text-[#8a7200] dark:bg-[#FDD835]/20 dark:text-[#fde047]",
           )}
         >
           <Icon className="size-3.5" aria-hidden />
@@ -202,7 +204,7 @@ function SkillList({
             className={cn(
               "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5",
               isMatch
-                ? "border-[#7CB342]/35 bg-[#7CB342]/10"
+                ? "border-[#7CB342]/35 bg-[#7CB342]/10 dark:bg-[#7CB342]/20"
                 : "border-border bg-muted",
             )}
           >
@@ -319,7 +321,7 @@ export function MentorProfileContent({
                   className={cn(
                     "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
                     matched
-                      ? "bg-[#7CB342]/12 text-[#3d5c22] dark:text-[#b8e086]"
+                      ? "bg-[#7CB342]/12 text-[#3d5c22] dark:bg-[#7CB342]/20 dark:text-[#b8e086]"
                       : "bg-muted text-muted-foreground",
                   )}
                 >

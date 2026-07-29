@@ -13,10 +13,10 @@ import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { ProgramPagination } from "@/components/programs/program-pagination";
 import {
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
-  LIGHT_SELECT_TRIGGER,
-} from "@/components/programs/program-select-styles";
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+} from "@/lib/ui/select-styles";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,10 +48,13 @@ const STATUS_FILTER_OPTIONS = [
 ];
 
 const REQUEST_STATUS_STYLES: Record<ClassMentorRequestStatus, string> = {
-  Pending: "bg-[#FDD835]/20 text-[#8A7200] border-[#FDD835]/35",
-  Approved: "bg-[#7CB342]/15 text-[#3d5c22] border-[#7CB342]/20",
-  Rejected: "bg-[#E94B3C]/10 text-[#a82a1e] border-[#E94B3C]/15",
-  Withdrawn: "bg-[#F5F5F0] text-[#6B6B6B] border-[#E5E5E0]",
+  Pending:
+    "border-[#FDD835]/35 bg-[#FDD835]/20 text-[#8A7200] dark:text-[#fde047]",
+  Approved:
+    "border-[#7CB342]/20 bg-[#7CB342]/15 text-[#3d5c22] dark:text-[#b8e086]",
+  Rejected:
+    "border-[#E94B3C]/15 bg-[#E94B3C]/10 text-[#a82a1e] dark:text-[#ff8a80]",
+  Withdrawn: "border-border bg-muted text-muted-foreground",
 };
 
 function RequestStatusBadge({ status }: { status: ClassMentorRequestStatus }) {
@@ -99,11 +102,11 @@ export function MyClassMentorRequests() {
         render: (request) => (
           <div className="min-w-0">
             {request.classCode ? (
-              <p className="font-mono text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
+              <p className="font-mono text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {request.classCode}
               </p>
             ) : null}
-            <p className="font-medium text-[#2D2D2D]">
+            <p className="font-medium text-foreground">
               {request.className?.trim() || "Lớp học"}
             </p>
           </div>
@@ -116,7 +119,7 @@ export function MyClassMentorRequests() {
       {
         header: "Lời nhắn",
         render: (request) => (
-          <p className="max-w-xs truncate text-sm text-[#6B6B6B]">
+          <p className="max-w-xs truncate text-sm text-muted-foreground">
             {request.message?.trim() || "—"}
           </p>
         ),
@@ -124,7 +127,7 @@ export function MyClassMentorRequests() {
       {
         header: "Gửi lúc",
         render: (request) => (
-          <span className="text-sm text-[#6B6B6B]">
+          <span className="text-sm text-muted-foreground">
             {formatApiDateTimeDisplay(request.createdAt) || "—"}
           </span>
         ),
@@ -132,7 +135,7 @@ export function MyClassMentorRequests() {
       {
         header: "Phản hồi",
         render: (request) => (
-          <p className="max-w-xs truncate text-sm text-[#6B6B6B]">
+          <p className="max-w-xs truncate text-sm text-muted-foreground">
             {request.decisionNote?.trim() ||
               (request.decidedAt
                 ? formatApiDateTimeDisplay(request.decidedAt)
@@ -150,7 +153,7 @@ export function MyClassMentorRequests() {
               variant="outline"
               size="sm"
               onClick={() => setWithdrawTarget(request)}
-              className="h-8 rounded-lg border-[#E5E5E0] text-[#6B6B6B] hover:text-[#2D2D2D]"
+              className="h-8 rounded-lg border-border text-muted-foreground hover:text-foreground"
             >
               <Undo2 className="size-3.5" />
               Rút
@@ -187,14 +190,14 @@ export function MyClassMentorRequests() {
           type="button"
           nativeButton={false}
           render={<Link href="/mentor/board" />}
-          className="h-10 rounded-lg bg-[#E94B3C] font-semibold text-white hover:bg-[#E94B3C]/90"
+          className="h-10 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
         >
           <ClipboardList className="size-4" />
           Xem bảng lớp
         </Button>
       </ManagerPageHeader>
 
-      <div className="flex items-center gap-3 border-b border-[#E5E5E0] bg-white px-6 py-4">
+      <div className="flex items-center gap-3 border-b border-border bg-card px-6 py-4">
         <Select
           value={statusFilter || null}
           onValueChange={(value) => {
@@ -203,7 +206,7 @@ export function MyClassMentorRequests() {
             setPage(1);
           }}
         >
-          <SelectTrigger className={LIGHT_SELECT_TRIGGER}>
+          <SelectTrigger className={THEME_SELECT_TRIGGER}>
             <span className="truncate">
               {STATUS_FILTER_OPTIONS.find((option) => option.value === statusFilter)
                 ?.label ?? "Trạng thái"}
@@ -213,13 +216,13 @@ export function MyClassMentorRequests() {
             align="start"
             alignItemWithTrigger={false}
             sideOffset={8}
-            className={LIGHT_SELECT_CONTENT}
+            className={THEME_SELECT_CONTENT}
           >
             {STATUS_FILTER_OPTIONS.map((option) => (
               <SelectItem
                 key={option.value}
                 value={option.value}
-                className={cn(LIGHT_SELECT_ITEM, "cursor-pointer")}
+                className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
               >
                 {option.label}
               </SelectItem>

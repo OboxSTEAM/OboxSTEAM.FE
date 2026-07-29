@@ -18,16 +18,16 @@ function resolvePageTitle(pathname: string): string {
 
 function MentorShellSkeleton() {
   return (
-    <div className="flex h-screen animate-pulse overflow-hidden bg-[#FAFAF5]">
-      <div className="w-64 shrink-0 border-r border-[#E5E5E0] bg-[#F5F5F0]" />
+    <div className="flex h-screen animate-pulse overflow-hidden bg-background">
+      <div className="w-64 shrink-0 border-r border-border bg-muted" />
       <div className="flex flex-1 flex-col">
-        <div className="h-16 shrink-0 border-b border-[#E5E5E0] bg-white" />
+        <div className="h-16 shrink-0 border-b border-border bg-card" />
         <main className="flex-1 overflow-auto p-6">
           <div className="mx-auto max-w-7xl space-y-4">
-            <div className="h-8 w-64 rounded-lg bg-[#E5E5E0]" />
+            <div className="h-8 w-64 rounded-lg bg-muted" />
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {[...Array(6)].map((_, index) => (
-                <div key={index} className="h-48 rounded-xl bg-[#E5E5E0]" />
+                <div key={index} className="h-48 rounded-xl bg-muted" />
               ))}
             </div>
           </div>
@@ -68,9 +68,9 @@ export function MentorShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider className="h-screen overflow-hidden">
       <MentorSidebar />
-      <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-[#FAFAF5]">
+      <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">
         <MentorHeader title={resolvePageTitle(pathname)} />
-        <main className="flex-1 overflow-auto bg-[#FAFAF5]">{children}</main>
+        <main className="flex-1 overflow-auto bg-background">{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

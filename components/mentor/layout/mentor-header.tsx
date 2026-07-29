@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -32,29 +33,29 @@ export function MentorHeader({ title }: { title?: string }) {
   });
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E5E0] bg-white px-4">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4">
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1 text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]" />
+        <SidebarTrigger className="-ml-1 text-muted-foreground hover:bg-muted hover:text-foreground" />
         <Separator
           orientation="vertical"
-          className="mr-2 data-[orientation=vertical]:h-4 bg-[#E5E5E0]"
+          className="mr-2 bg-border data-[orientation=vertical]:h-4"
         />
         <Breadcrumb>
           <BreadcrumbList>
             {breadcrumbItems.map((item, index) => (
               <span key={item.url} className="contents">
                 {index > 0 ? (
-                  <BreadcrumbSeparator className="text-[#6B6B6B]/60" />
+                  <BreadcrumbSeparator className="text-muted-foreground/60" />
                 ) : null}
                 <BreadcrumbItem>
                   {item.isLast ? (
-                    <BreadcrumbPage className="font-heading font-semibold text-[#2D2D2D]">
+                    <BreadcrumbPage className="font-heading font-semibold text-foreground">
                       {title ?? item.label}
                     </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink
                       render={<Link href={item.url} />}
-                      className="font-heading text-[#6B6B6B] transition-colors hover:text-[#E94B3C]"
+                      className="font-heading text-muted-foreground transition-colors hover:text-primary"
                     >
                       {item.label}
                     </BreadcrumbLink>
@@ -64,6 +65,10 @@ export function MentorHeader({ title }: { title?: string }) {
             ))}
           </BreadcrumbList>
         </Breadcrumb>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <ThemeToggle className="text-muted-foreground hover:bg-muted hover:text-foreground" />
       </div>
     </header>
   );
