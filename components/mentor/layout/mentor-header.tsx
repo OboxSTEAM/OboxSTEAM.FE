@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -17,17 +18,47 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const PATH_LABELS: Record<string, string> = {
   mentor: "Mentor",
-  board: "Bảng lớp",
-  requests: "Yêu cầu của tôi",
+  classes: "Lớp của tôi",
+  board: "Đăng ký lớp",
+  requests: "Đăng ký lớp",
 };
 
-export function MentorHeader({ title }: { title?: string }) {
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export function MentorHeader({ title: _title }: { title?: string }) {
   const pathname = usePathname();
   const segments = pathname.split("/").filter(Boolean);
+  const [resolvedLabels, setResolvedLabels] = React.useState<
+    Record<string, string>
+  >({});
+
+  React.useEffect(() => {
+    const uuidSegments = segments.filter(
+      (seg) => UUID_RE.test(seg) && !resolvedLabels[seg],
+    );
+    if (uuidSegments.length === 0) return;
+
+    uuidSegments.forEach(async (id) => {
+      try {
+        const idx = segments.indexOf(id);
+        const prevSegment = idx > 0 ? segments[idx - 1] : "";
+        if (prevSegment === "classes") {
+          const { getClassById } = await import("@/lib/api");
+          const res = await getClassById(id);
+          if (res?.data?.name) {
+            setResolvedLabels((prev) => ({ ...prev, [id]: res.data.name }));
+          }
+        }
+      } catch {
+        // Keep raw id in breadcrumb on failure.
+      }
+    });
+  }, [segments, resolvedLabels]);
 
   const breadcrumbItems = segments.map((segment, index) => {
     const url = `/${segments.slice(0, index + 1).join("/")}`;
-    const label = PATH_LABELS[segment] ?? segment;
+    const label = PATH_LABELS[segment] ?? resolvedLabels[segment] ?? segment;
     const isLast = index === segments.length - 1;
     return { label, url, isLast };
   });
@@ -50,7 +81,7 @@ export function MentorHeader({ title }: { title?: string }) {
                 <BreadcrumbItem>
                   {item.isLast ? (
                     <BreadcrumbPage className="font-heading font-semibold text-foreground">
-                      {title ?? item.label}
+                      {item.label}
                     </BreadcrumbPage>
                   ) : (
                     <BreadcrumbLink

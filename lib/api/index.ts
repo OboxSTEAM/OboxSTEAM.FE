@@ -812,6 +812,46 @@ export {
   type NotificationUnreadCount,
 } from "./notifications";
 
+export {
+  addMediaTag,
+  deleteMedia,
+  deleteMediaTag,
+  getMediaByClassSession,
+  getMediaById,
+  getMediaList,
+  processMediaTags,
+  updateMediaTagVerification,
+  uploadClassMedia,
+  type AddMediaTagInput,
+  type AddMediaTagResponse,
+  type AddMediaTagResult,
+  type DeleteMediaResponse,
+  type DeleteMediaResult,
+  type DeleteMediaTagResponse,
+  type DeleteMediaTagResult,
+  type FaceSegment,
+  type GetMediaByIdResponse,
+  type GetMediaByIdResult,
+  type GetMediaListResponse,
+  type GetMediaListResult,
+  type LabelTimelineEntry,
+  type MediaAsset,
+  type MediaClassSessionParam,
+  type MediaIdParam,
+  type MediaListQuery,
+  type MediaTag,
+  type MediaTagParams,
+  type MediaUploadQuery,
+  type MediaVideoStatus,
+  type ProcessMediaTagsResponse,
+  type ProcessMediaTagsResult,
+  type UpdateMediaTagVerificationInput,
+  type UpdateMediaTagVerificationResponse,
+  type UpdateMediaTagVerificationResult,
+  type UploadMediaResponse,
+  type UploadMediaResult,
+} from "./media";
+
 export { createApiPost } from "./create-endpoint";
 export { ApiRequestError, ApiResponseError } from "./errors";
 export {

@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
@@ -92,9 +91,14 @@ function BoardCardSkeleton() {
 type BoardClassCardProps = {
   classItem: MentorBoardClass;
   onApply: (classItem: MentorBoardClass) => void;
+  onViewRequests?: () => void;
 };
 
-function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
+function BoardClassCard({
+  classItem,
+  onApply,
+  onViewRequests,
+}: BoardClassCardProps) {
   const displayName = classItem.name?.trim() || classItem.code?.trim() || "Lớp học";
   const displayCode = classItem.code?.trim();
 
@@ -175,15 +179,16 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
               <CheckCircle2 className="size-4" />
               Đã gửi yêu cầu
             </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              nativeButton={false}
-              render={<Link href="/mentor/requests" />}
-              className="h-10 rounded-lg text-muted-foreground hover:text-foreground"
-            >
-              Xem yêu cầu
-            </Button>
+            {onViewRequests ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={onViewRequests}
+                className="h-10 rounded-lg text-muted-foreground hover:text-foreground"
+              >
+                Xem yêu cầu
+              </Button>
+            ) : null}
           </div>
         ) : (
           <Button
@@ -200,7 +205,23 @@ function BoardClassCard({ classItem, onApply }: BoardClassCardProps) {
   );
 }
 
-export function MentorBoardManager() {
+export type MentorBoardManagerProps = {
+  /** Hide page header when nested in assignment hub. */
+  embedded?: boolean;
+  /** Tighter card grid when hub shows a side panel. */
+  denserGrid?: boolean;
+  /** Called after a request is submitted successfully. */
+  onApplied?: () => void;
+  /** Open / focus the requests panel (embedded hub). */
+  onViewRequests?: () => void;
+};
+
+export function MentorBoardManager({
+  embedded = false,
+  denserGrid = false,
+  onApplied,
+  onViewRequests,
+}: MentorBoardManagerProps = {}) {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [programFilter, setProgramFilter] = useState("all");
@@ -293,6 +314,7 @@ export function MentorBoardManager() {
       setApplyTarget(null);
       setMessage("");
       retry();
+      onApplied?.();
     } catch (error) {
       showAppErrorFromUnknown(error, "classMentorRequests.create");
     } finally {
@@ -301,11 +323,13 @@ export function MentorBoardManager() {
   }
 
   return (
-    <div className="flex min-h-full flex-col">
-      <ManagerPageHeader
-        title="Bảng lớp"
-        description="Xem các lớp đang tuyển mentor và gửi yêu cầu đăng ký dạy."
-      />
+    <div className={cn("flex min-h-full flex-col", embedded && "min-h-0")}>
+      {embedded ? null : (
+        <ManagerPageHeader
+          title="Bảng lớp"
+          description="Xem các lớp đang tuyển mentor và gửi yêu cầu đăng ký dạy."
+        />
+      )}
 
       <ManagerFilterBar
         searchValue={search}
@@ -341,9 +365,14 @@ export function MentorBoardManager() {
         onClearFilters={handleClearFilters}
       />
 
-      <div className="flex-1 px-6 py-6">
+      <div className={cn("flex-1 py-6", embedded ? "px-4 lg:px-6" : "px-6")}>
         {isLoading && classes.length === 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div
+            className={cn(
+              "grid gap-4 md:grid-cols-2",
+              !denserGrid && "xl:grid-cols-3",
+            )}
+          >
             {[...Array(6)].map((_, index) => (
               <BoardCardSkeleton key={index} />
             ))}
@@ -359,7 +388,8 @@ export function MentorBoardManager() {
           <>
             <div
               className={cn(
-                "grid gap-4 md:grid-cols-2 xl:grid-cols-3",
+                "grid gap-4 md:grid-cols-2",
+                !denserGrid && "xl:grid-cols-3",
                 isLoading && "opacity-60",
               )}
             >
@@ -368,6 +398,7 @@ export function MentorBoardManager() {
                   key={classItem.id}
                   classItem={classItem}
                   onApply={setApplyTarget}
+                  onViewRequests={onViewRequests}
                 />
               ))}
             </div>

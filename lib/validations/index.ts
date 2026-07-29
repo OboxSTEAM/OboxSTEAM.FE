@@ -276,3 +276,19 @@ export {
   type NotificationIdParam,
   type NotificationListQuery,
 } from "./notifications";
+export {
+  addMediaTagSchema,
+  mediaClassSessionParamSchema,
+  mediaIdParamSchema,
+  mediaListQuerySchema,
+  mediaTagParamsSchema,
+  mediaUploadQuerySchema,
+  updateMediaTagVerificationSchema,
+  type AddMediaTagInput,
+  type MediaClassSessionParam,
+  type MediaIdParam,
+  type MediaListQuery,
+  type MediaTagParams,
+  type MediaUploadQuery,
+  type UpdateMediaTagVerificationInput,
+} from "./media";

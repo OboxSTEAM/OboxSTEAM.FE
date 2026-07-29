@@ -16,31 +16,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type {
   Mentor,
   MentorSkill,
-  SkillCategory,
-  SkillProficiencyLevel,
 } from "@/lib/api/entities/mentor";
 import type { SkillSummary } from "@/lib/api/entities/skill";
+import {
+  SKILL_CATEGORY_LABELS,
+  SKILL_PROFICIENCY_LABELS,
+} from "@/lib/mentors/skill-labels";
 import {
   getExpertAvatarUrl,
   getExpertInitials,
 } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
-
-const SKILL_CATEGORY_LABELS: Record<SkillCategory, string> = {
-  Science: "Science",
-  Technology: "Technology",
-  Engineering: "Engineering",
-  Arts: "Arts",
-  Math: "Math",
-  SoftSkill: "Soft skill",
-};
-
-const PROFICIENCY_LABELS: Record<SkillProficiencyLevel, string> = {
-  Beginner: "Cơ bản",
-  Intermediate: "Trung cấp",
-  Advanced: "Nâng cao",
-  Expert: "Chuyên gia",
-};
 
 export function getMentorInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "GV";
@@ -220,7 +206,7 @@ function SkillList({
               {skillName}
             </span>
             <span className="truncate text-[11px] text-muted-foreground">
-              {[category, PROFICIENCY_LABELS[item.proficiencyLevel]]
+              {[category, SKILL_PROFICIENCY_LABELS[item.proficiencyLevel]]
                 .filter(Boolean)
                 .join(" · ")}
             </span>

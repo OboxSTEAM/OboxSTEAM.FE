@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   ClipboardList,
-  Inbox,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -69,22 +68,22 @@ export const PARENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
 
 export const MENTOR_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   {
-    label: "Bảng lớp",
-    href: "/mentor/board",
-    icon: ClipboardList,
-    description: "Lớp đang tuyển mentor",
+    label: "Lớp của tôi",
+    href: "/mentor/classes",
+    icon: Users,
+    description: "Lớp đã đăng ký",
   },
   {
-    label: "Yêu cầu của tôi",
-    href: "/mentor/requests",
-    icon: Inbox,
-    description: "Theo dõi đăng ký lớp",
+    label: "Đăng ký lớp",
+    href: "/mentor/board",
+    icon: ClipboardList,
+    description: "Tuyển lớp & theo dõi yêu cầu",
   },
   {
     label: "Hồ sơ cá nhân",
     href: "/profile",
     icon: User,
-    description: "Thông tin tài khoản",
+    description: "Thông tin tài khoản & kỹ năng",
   },
 ];
 

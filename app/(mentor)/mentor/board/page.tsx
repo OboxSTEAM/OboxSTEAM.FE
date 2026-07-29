@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { MentorBoardManager } from "@/components/mentors/mentor-board-manager";
+import { MentorAssignmentHub } from "@/components/mentors/mentor-assignment-hub";
 
 export const metadata: Metadata = {
-  title: "Bảng lớp",
+  title: "Đăng ký lớp",
 };
 
 export default function MentorBoardPage() {
-  return <MentorBoardManager />;
+  return <MentorAssignmentHub />;
 }

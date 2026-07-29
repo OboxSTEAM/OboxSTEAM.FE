@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   ChevronsUpDown,
   ClipboardList,
-  Inbox,
   LogOut,
   User,
+  Users,
 } from "lucide-react";
 
 import {
@@ -43,14 +43,14 @@ const LOGO_URL =
 
 const NAV_ITEMS = [
   {
-    title: "Bảng lớp",
-    url: "/mentor/board",
-    icon: ClipboardList,
+    title: "Lớp của tôi",
+    url: "/mentor/classes",
+    icon: Users,
   },
   {
-    title: "Yêu cầu của tôi",
-    url: "/mentor/requests",
-    icon: Inbox,
+    title: "Đăng ký lớp",
+    url: "/mentor/board",
+    icon: ClipboardList,
   },
 ] as const;
 
@@ -95,7 +95,7 @@ export function MentorSidebar() {
               <span className="truncate font-heading text-sm font-bold tracking-tight text-foreground">
                 OboxSTEAM
               </span>
-              <span className="ml-2 shrink-0 rounded-full bg-[#4FC3F7]/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#0d6e9c] dark:text-[#7dd3fc]">
+              <span className="ml-2 shrink-0 rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-primary">
                 Mentor
               </span>
             </div>
@@ -124,14 +124,14 @@ export function MentorSidebar() {
                     className={cn(
                       "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200",
                       isActive
-                        ? "bg-[#4FC3F7]/15 font-semibold text-[#0d6e9c] dark:text-[#7dd3fc]"
+                        ? "bg-primary/10 font-semibold text-primary"
                         : "text-muted-foreground hover:bg-muted hover:text-foreground",
                     )}
                   >
                     <item.icon
                       className={cn(
                         "size-4 shrink-0",
-                        isActive ? "text-[#0d6e9c] dark:text-[#7dd3fc]" : "text-muted-foreground",
+                        isActive ? "text-primary" : "text-muted-foreground",
                       )}
                     />
                     <span>{item.title}</span>
@@ -162,7 +162,7 @@ export function MentorSidebar() {
                       alt={profile.fullName ?? "Mentor"}
                     />
                   ) : null}
-                  <AvatarFallback className="rounded-lg bg-[#4FC3F7]/15 text-xs font-semibold text-[#0d6e9c] dark:text-[#7dd3fc]">
+                  <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
                     {getInitials(profile?.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -196,7 +196,7 @@ export function MentorSidebar() {
                             alt={profile.fullName ?? "Mentor"}
                           />
                         ) : null}
-                        <AvatarFallback className="rounded-lg bg-[#4FC3F7]/15 text-xs font-semibold text-[#0d6e9c] dark:text-[#7dd3fc]">
+                        <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
                           {getInitials(profile?.fullName)}
                         </AvatarFallback>
                       </Avatar>

@@ -1,6 +1,8 @@
 import type { ClassStatus } from "@/lib/api/entities/class";
 import type { ClassSessionKind } from "@/lib/api/entities/class-session";
 import type { ClassSessionStatus } from "@/lib/api/entities/class-session";
+import type { ClassStudentEnrollmentStatus } from "@/lib/api/entities/class-student";
+import type { MediaVideoStatus } from "@/lib/api/entities/media";
 import type { SessionAttendanceStatus } from "@/lib/api/entities/session-attendance";
 
 export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
@@ -32,6 +34,27 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
   Excused: "Có phép",
   Late: "Đi muộn",
 };
+
+export const CLASS_STUDENT_ENROLLMENT_STATUS_LABELS: Record<
+  ClassStudentEnrollmentStatus,
+  string
+> = {
+  Active: "Đang học",
+  Transferred: "Đã chuyển lớp",
+  Withdrawn: "Đã rút",
+  Completed: "Hoàn thành",
+};
+
+export const MEDIA_VIDEO_STATUS_LABELS: Record<MediaVideoStatus, string> = {
+  None: "Ảnh / sẵn sàng",
+  Transcoding: "Đang chuyển mã",
+  PendingTagging: "Chờ gắn thẻ mặt",
+  TaggingComplete: "Đã gắn thẻ",
+  Failed: "Lỗi xử lý",
+};
+
+export const MEDIA_ACCEPT =
+  "image/jpeg,image/jpg,image/png,video/mp4,video/quicktime";
 
 export const CLASS_MENTOR_REQUEST_STATUS_LABELS = {
   Pending: "Chờ duyệt",

@@ -11,8 +11,9 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { isMentorRole } from "@/lib/auth/roles";
 
 function resolvePageTitle(pathname: string): string {
-  if (pathname.startsWith("/mentor/requests")) return "Yêu cầu của tôi";
-  if (pathname.startsWith("/mentor/board")) return "Bảng lớp";
+  if (pathname.startsWith("/mentor/classes")) return "Lớp của tôi";
+  if (pathname.startsWith("/mentor/board")) return "Đăng ký lớp";
+  if (pathname.startsWith("/mentor/requests")) return "Đăng ký lớp";
   return "Mentor";
 }
 

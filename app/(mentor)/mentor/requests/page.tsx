@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-
-import { MyClassMentorRequests } from "@/components/mentors/my-class-mentor-requests";
-
-export const metadata: Metadata = {
-  title: "Yêu cầu của tôi",
-};
+import { redirect } from "next/navigation";
 
 export default function MentorRequestsPage() {
-  return <MyClassMentorRequests />;
+  redirect("/mentor/board");
 }

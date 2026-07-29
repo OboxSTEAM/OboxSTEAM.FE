@@ -1,17 +1,10 @@
 "use client";
 
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { ClipboardList, Undo2 } from "lucide-react";
+import { useState } from "react";
+import { Inbox, Undo2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
-import {
-  ManagerDataTable,
-  type ColumnDef,
-} from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
-import { ManagerPageHeader } from "@/components/manager/shared/page-header";
-import { ProgramPagination } from "@/components/programs/program-pagination";
 import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
@@ -25,6 +18,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getMyClassMentorRequests,
@@ -71,7 +65,19 @@ function RequestStatusBadge({ status }: { status: ClassMentorRequestStatus }) {
   );
 }
 
-export function MyClassMentorRequests() {
+export type MyClassMentorRequestsProps = {
+  /** Compact side-panel cards (for split hub layout). */
+  panel?: boolean;
+  /** Bump to force refetch (e.g. after applying from board). */
+  refreshKey?: number;
+  className?: string;
+};
+
+export function MyClassMentorRequests({
+  panel = false,
+  refreshKey = 0,
+  className,
+}: MyClassMentorRequestsProps = {}) {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [withdrawTarget, setWithdrawTarget] = useState<ClassMentorRequest | null>(
@@ -86,83 +92,15 @@ export function MyClassMentorRequests() {
             ? undefined
             : (statusFilter as ClassMentorRequestStatus),
         page,
-        pageSize: 20,
+        pageSize: panel ? 10 : 20,
       }),
-    deps: [statusFilter, page],
+    deps: [statusFilter, page, refreshKey, panel],
     onError: (error) => showAppErrorFromUnknown(error, "classMentorRequests.mine"),
   });
 
   const requests = data?.data?.items ?? [];
   const pagination = data?.data;
-
-  const columns = useMemo<ColumnDef<ClassMentorRequest>[]>(
-    () => [
-      {
-        header: "Lớp học",
-        render: (request) => (
-          <div className="min-w-0">
-            {request.classCode ? (
-              <p className="font-mono text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {request.classCode}
-              </p>
-            ) : null}
-            <p className="font-medium text-foreground">
-              {request.className?.trim() || "Lớp học"}
-            </p>
-          </div>
-        ),
-      },
-      {
-        header: "Trạng thái",
-        render: (request) => <RequestStatusBadge status={request.status} />,
-      },
-      {
-        header: "Lời nhắn",
-        render: (request) => (
-          <p className="max-w-xs truncate text-sm text-muted-foreground">
-            {request.message?.trim() || "—"}
-          </p>
-        ),
-      },
-      {
-        header: "Gửi lúc",
-        render: (request) => (
-          <span className="text-sm text-muted-foreground">
-            {formatApiDateTimeDisplay(request.createdAt) || "—"}
-          </span>
-        ),
-      },
-      {
-        header: "Phản hồi",
-        render: (request) => (
-          <p className="max-w-xs truncate text-sm text-muted-foreground">
-            {request.decisionNote?.trim() ||
-              (request.decidedAt
-                ? formatApiDateTimeDisplay(request.decidedAt)
-                : "—")}
-          </p>
-        ),
-      },
-      {
-        header: "",
-        className: "w-28 text-right",
-        render: (request) =>
-          request.status === "Pending" ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setWithdrawTarget(request)}
-              className="h-8 rounded-lg border-border text-muted-foreground hover:text-foreground"
-            >
-              <Undo2 className="size-3.5" />
-              Rút
-            </Button>
-          ) : null,
-      },
-    ],
-    [],
-  );
+  const pendingCount = requests.filter((item) => item.status === "Pending").length;
 
   async function handleWithdrawConfirm() {
     if (!withdrawTarget) return;
@@ -181,88 +119,177 @@ export function MyClassMentorRequests() {
   }
 
   return (
-    <div className="flex min-h-full flex-col">
-      <ManagerPageHeader
-        title="Yêu cầu của tôi"
-        description="Theo dõi các yêu cầu đăng ký lớp bạn đã gửi."
+    <div
+      className={cn(
+        "flex min-h-0 flex-col",
+        panel
+          ? "h-full overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+          : "min-h-full",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "shrink-0 border-b border-border",
+          panel ? "bg-muted/40 px-4 py-3" : "bg-card px-6 py-4",
+        )}
       >
-        <Button
-          type="button"
-          nativeButton={false}
-          render={<Link href="/mentor/board" />}
-          className="h-10 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-        >
-          <ClipboardList className="size-4" />
-          Xem bảng lớp
-        </Button>
-      </ManagerPageHeader>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <Inbox className="size-4 text-primary" />
+              Yêu cầu của tôi
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {isLoading
+                ? "Đang tải..."
+                : pendingCount > 0
+                  ? `${pendingCount} đang chờ duyệt`
+                  : `${pagination?.totalCount ?? requests.length} yêu cầu`}
+            </p>
+          </div>
+        </div>
 
-      <div className="flex items-center gap-3 border-b border-border bg-card px-6 py-4">
-        <Select
-          value={statusFilter || null}
-          onValueChange={(value) => {
-            markLoading();
-            setStatusFilter(value ?? "all");
-            setPage(1);
-          }}
-        >
-          <SelectTrigger className={THEME_SELECT_TRIGGER}>
-            <span className="truncate">
-              {STATUS_FILTER_OPTIONS.find((option) => option.value === statusFilter)
-                ?.label ?? "Trạng thái"}
-            </span>
-          </SelectTrigger>
-          <SelectContent
-            align="start"
-            alignItemWithTrigger={false}
-            sideOffset={8}
-            className={THEME_SELECT_CONTENT}
+        <div className="mt-3">
+          <Select
+            value={statusFilter || null}
+            onValueChange={(value) => {
+              markLoading();
+              setStatusFilter(value ?? "all");
+              setPage(1);
+            }}
           >
-            {STATUS_FILTER_OPTIONS.map((option) => (
-              <SelectItem
-                key={option.value}
-                value={option.value}
-                className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
-              >
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+            <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
+              <span className="truncate">
+                {STATUS_FILTER_OPTIONS.find((option) => option.value === statusFilter)
+                  ?.label ?? "Trạng thái"}
+              </span>
+            </SelectTrigger>
+            <SelectContent
+              align="start"
+              alignItemWithTrigger={false}
+              sideOffset={8}
+              className={THEME_SELECT_CONTENT}
+            >
+              {STATUS_FILTER_OPTIONS.map((option) => (
+                <SelectItem
+                  key={option.value}
+                  value={option.value}
+                  className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
+                >
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <div className="flex-1 px-6 py-6">
-        {!isLoading && requests.length === 0 ? (
+      <div
+        className={cn(
+          "min-h-0 flex-1",
+          panel ? "overflow-y-auto p-3" : "px-6 py-6",
+        )}
+      >
+        {isLoading && requests.length === 0 ? (
+          <div className="space-y-3">
+            {[...Array(4)].map((_, index) => (
+              <Skeleton key={index} className="h-24 w-full rounded-xl" />
+            ))}
+          </div>
+        ) : requests.length === 0 ? (
           <ManagerEmptyState
-            title="Chưa có yêu cầu nào"
-            description="Hãy xem bảng lớp và gửi yêu cầu đăng ký dạy các lớp phù hợp."
-            actionLabel="Đến bảng lớp"
-            actionHref="/mentor/board"
+            title="Chưa có yêu cầu"
+            description="Đăng ký một lớp bên trái — yêu cầu sẽ hiện ngay tại đây."
+            icon={Inbox}
           />
         ) : (
-          <>
-            <ManagerDataTable
-              columns={columns}
-              data={requests}
-              isLoading={isLoading}
-            />
+          <ul className="space-y-2.5">
+            {requests.map((request) => (
+              <li
+                key={request.id}
+                className="rounded-xl border border-border bg-background p-3 shadow-sm"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    {request.classCode ? (
+                      <p className="font-mono text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                        {request.classCode}
+                      </p>
+                    ) : null}
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {request.className?.trim() || "Lớp học"}
+                    </p>
+                  </div>
+                  <RequestStatusBadge status={request.status} />
+                </div>
 
-            {pagination ? (
-              <ProgramPagination
-                theme="light"
-                className="mt-8"
-                currentPage={pagination.currentPage}
-                totalPages={pagination.totalPages}
-                hasPrevious={pagination.hasPrevious}
-                hasNext={pagination.hasNext}
-                onPageChange={(nextPage) => {
-                  markLoading();
-                  setPage(nextPage);
-                }}
-              />
-            ) : null}
-          </>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Gửi {formatApiDateTimeDisplay(request.createdAt) || "—"}
+                </p>
+
+                {request.message?.trim() ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
+                    {request.message}
+                  </p>
+                ) : null}
+
+                {request.decisionNote?.trim() ? (
+                  <p className="mt-1 line-clamp-2 text-xs text-foreground/80">
+                    Phản hồi: {request.decisionNote}
+                  </p>
+                ) : null}
+
+                {request.status === "Pending" ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setWithdrawTarget(request)}
+                    className="mt-3 h-8 w-full rounded-lg border-border text-muted-foreground hover:text-foreground"
+                  >
+                    <Undo2 className="size-3.5" />
+                    Rút yêu cầu
+                  </Button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         )}
+
+        {pagination && pagination.totalPages > 1 ? (
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-3">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!pagination.hasPrevious || isLoading}
+              onClick={() => {
+                markLoading();
+                setPage((current) => Math.max(1, current - 1));
+              }}
+              className="h-8 rounded-lg"
+            >
+              Trước
+            </Button>
+            <span className="font-mono text-xs text-muted-foreground">
+              {pagination.currentPage}/{pagination.totalPages}
+            </span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={!pagination.hasNext || isLoading}
+              onClick={() => {
+                markLoading();
+                setPage((current) => current + 1);
+              }}
+              className="h-8 rounded-lg"
+            >
+              Sau
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <ConfirmDialog
