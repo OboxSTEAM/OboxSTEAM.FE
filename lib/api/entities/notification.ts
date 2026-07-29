@@ -1,0 +1,85 @@
+import { z } from "zod";
+
+export const notificationTypeSchema = z.enum([
+  "AccountRegistered",
+  "EmailVerified",
+  "PasswordChanged",
+  "ParentLinkRequested",
+  "ParentLinkVerified",
+  "ParentLinkApproved",
+  "ProgramPendingPayment",
+  "ProgramActivated",
+  "ModuleCompleted",
+  "ModuleUnlocked",
+  "ModuleRetakePendingPayment",
+  "ModuleRetakeInitiated",
+  "PendingPaymentExpired",
+  "ActivityCompleted",
+  "PaymentSucceeded",
+  "PaymentFailed",
+  "PaymentCancelled",
+  "ParentPaymentRequested",
+  "ParentModuleRetakeRequested",
+  "ClassCreated",
+  "ClassUpdated",
+  "ClassOpenForEnrollment",
+  "ClassStarted",
+  "ClassAutoStarted",
+  "ClassCompleted",
+  "ClassMentorRequestSubmitted",
+  "ClassMentorRequestApproved",
+  "ClassMentorRequestRejected",
+  "ClassEnrolled",
+  "ClassTransferred",
+  "ClassSessionScheduled",
+  "ClassSessionRescheduled",
+  "ClassSessionStarted",
+  "ClassSessionCompleted",
+  "ClassSessionCancelled",
+  "AttendanceMarkedPresent",
+  "AttendanceMarkedLate",
+  "AttendanceMarkedAbsent",
+  "AttendanceMarkedExcused",
+  "QuizPassed",
+  "QuizFailed",
+  "ResearchGradedPassed",
+  "ResearchGradedFailed",
+  "ResearchReturnedForRevision",
+  "ResearchSubmissionOpened",
+  "ResearchWorkSubmitted",
+  "MediaVideoReady",
+  "MediaProcessingFailed",
+  "MediaAiTaggingFailed",
+  "MediaTagsProcessed",
+  "HighlightVideoGenerationQueued",
+  "HighlightVideoReady",
+  "HighlightVideoGenerationFailed",
+  "AssignmentPublished",
+  "MaterialUpdated",
+  "AssignmentEditedByMentor",
+  "ClassQuizSetEditedByMentor",
+]);
+
+export const notificationSchema = z.object({
+  id: z.string().uuid(),
+  recipientUserId: z.string().uuid(),
+  type: notificationTypeSchema,
+  title: z.string().nullable(),
+  body: z.string().nullable(),
+  payloadJson: z.string().nullable(),
+  readAt: z.string().nullable(),
+  actorUserId: z.string().uuid().nullable(),
+  entityType: z.string().nullable(),
+  entityId: z.string().uuid().nullable(),
+  createdAt: z.string(),
+});
+
+export const notificationUnreadCountSchema = z.object({
+  count: z.number().int().nonnegative(),
+});
+
+export type NotificationType = z.infer<typeof notificationTypeSchema>;
+export type Notification = z.infer<typeof notificationSchema>;
+export type NotificationUnreadCount = z.infer<
+  typeof notificationUnreadCountSchema
+>;
