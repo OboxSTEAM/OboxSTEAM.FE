@@ -31,8 +31,8 @@ export function ManagerStatusBadge({
 }: ManagerStatusBadgeProps) {
   const normStatus = status.trim().toLowerCase();
 
-  // Mapping configurations
-  let badgeStyle = "bg-[#F5F5F0] text-[#6B6B6B] border-[#E5E5E0]";
+  // Mapping configurations — dark: text uses brighter hues for contrast on tinted dark surfaces
+  let badgeStyle = "bg-muted text-muted-foreground border-border";
   let displayLabel = label ?? status;
 
   if (
@@ -47,7 +47,8 @@ export function ManagerStatusBadge({
       "thành công",
     ].includes(normStatus)
   ) {
-    badgeStyle = "bg-[#7CB342]/15 text-[#3d5c22] border-[#7CB342]/20";
+    badgeStyle =
+      "bg-[#7CB342]/15 text-[#3d5c22] dark:bg-[#7CB342]/20 dark:text-[#b8e086] border-[#7CB342]/20 dark:border-[#7CB342]/35";
     displayLabel = label ?? "Hoạt động";
   } else if (
     [
@@ -60,7 +61,8 @@ export function ManagerStatusBadge({
       "chờ",
     ].includes(normStatus)
   ) {
-    badgeStyle = "bg-[#4FC3F7]/15 text-[#0d6e9c] border-[#4FC3F7]/25";
+    badgeStyle =
+      "bg-[#4FC3F7]/15 text-[#0d6e9c] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc] border-[#4FC3F7]/25 dark:border-[#4FC3F7]/40";
     displayLabel = label ?? "Chờ duyệt";
   } else if (
     [
@@ -74,10 +76,12 @@ export function ManagerStatusBadge({
       "từ chối",
     ].includes(normStatus)
   ) {
-    badgeStyle = "bg-[#E94B3C]/10 text-[#a82a1e] border-[#E94B3C]/15";
+    badgeStyle =
+      "bg-primary/10 text-[#a82a1e] dark:bg-primary/20 dark:text-[#fca5a5] border-primary/15 dark:border-primary/30";
     displayLabel = label ?? "Đã khóa";
   } else if (["premium", "vip"].includes(normStatus)) {
-    badgeStyle = "bg-[#7E57C2]/12 text-[#51308a] border-[#7E57C2]/20";
+    badgeStyle =
+      "bg-[#7E57C2]/12 text-[#51308a] dark:bg-[#7E57C2]/20 dark:text-[#c4b5fd] border-[#7E57C2]/20 dark:border-[#7E57C2]/35";
     displayLabel = label ?? "Premium";
   }
 

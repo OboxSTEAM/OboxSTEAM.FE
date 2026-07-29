@@ -15,9 +15,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import {
-  LIGHT_SELECT_TRIGGER,
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import {
   createAssignment,
@@ -39,17 +39,17 @@ import {
 
 /* ─── Palette (mirrors curriculum-split-panel) ─────────────────────────────── */
 const W = {
-  surface: "#f4f1ea",
-  border: "#d8d2c6",
-  textStrong: "#2d2b27",
-  muted: "#6b6b6b",
-  faint: "#8c8678",
+  surface: "var(--card)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
   accent: "#4fc3f7",
-  primary: "#e94b3c",
+  primary: "var(--primary)",
 } as const;
 
 const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
   Retrospective: "Nhật ký phản tư",
@@ -323,15 +323,15 @@ export function AssignmentFormPanel({
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg")}>
                       <span className="truncate">
                         {ASSIGNMENT_TYPE_LABELS[field.value] ?? field.value}
                       </span>
                     </SelectTrigger>
-                    <SelectContent className={LIGHT_SELECT_CONTENT}>
-                      <SelectItem value="Retrospective" className={LIGHT_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
-                      <SelectItem value="FileUpload" className={LIGHT_SELECT_ITEM}>Nộp tệp</SelectItem>
-                      <SelectItem value="Quiz" className={LIGHT_SELECT_ITEM}>Trắc nghiệm</SelectItem>
+                    <SelectContent className={THEME_SELECT_CONTENT}>
+                      <SelectItem value="Retrospective" className={THEME_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
+                      <SelectItem value="FileUpload" className={THEME_SELECT_ITEM}>Nộp tệp</SelectItem>
+                      <SelectItem value="Quiz" className={THEME_SELECT_ITEM}>Trắc nghiệm</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -346,17 +346,17 @@ export function AssignmentFormPanel({
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value || NO_COURSE} onValueChange={field.onChange}>
-                    <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg")} style={{ borderColor: W.border }}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg")}>
                       <span className="truncate">
                         {field.value === NO_COURSE || !field.value
                           ? "Không gắn khóa học"
                           : courseOptions.find((c) => c.id === field.value)?.name ?? "Không gắn khóa học"}
                       </span>
                     </SelectTrigger>
-                    <SelectContent className={LIGHT_SELECT_CONTENT}>
-                      <SelectItem value={NO_COURSE} className={LIGHT_SELECT_ITEM}>Không gắn khóa học</SelectItem>
+                    <SelectContent className={THEME_SELECT_CONTENT}>
+                      <SelectItem value={NO_COURSE} className={THEME_SELECT_ITEM}>Không gắn khóa học</SelectItem>
                       {courseOptions.map((c) => (
-                        <SelectItem key={c.id} value={c.id} className={LIGHT_SELECT_ITEM}>
+                        <SelectItem key={c.id} value={c.id} className={THEME_SELECT_ITEM}>
                           {c.name}
                         </SelectItem>
                       ))}
@@ -371,7 +371,7 @@ export function AssignmentFormPanel({
                 rows={3}
                 placeholder="Hướng dẫn, yêu cầu nộp bài..."
                 {...register("description")}
-                className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50"
+                className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50"
                 style={{ borderColor: W.border }}
               />
             </div>
@@ -411,7 +411,7 @@ export function AssignmentFormPanel({
                     id="req-pass"
                     checked={field.value}
                     onCheckedChange={(v) => field.onChange(v === true)}
-                    className="border-[#8c8678] bg-white data-checked:border-primary"
+                    className="border-input bg-background data-checked:border-primary"
                   />
                 )}
               />
@@ -466,7 +466,7 @@ export function AssignmentFormPanel({
                           field.onChange(!v || v === "none" ? "" : v)
                         }
                       >
-                        <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "w-full")}>
+                        <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
                           <span className="truncate">
                             {banks.find((b) => b.id === field.value)?.name ||
                               (field.value
@@ -474,14 +474,14 @@ export function AssignmentFormPanel({
                                 : "Chọn ngân hàng đề")}
                           </span>
                         </SelectTrigger>
-                        <SelectContent className={LIGHT_SELECT_CONTENT}>
-                          <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
+                        <SelectContent className={THEME_SELECT_CONTENT}>
+                          <SelectItem value="none" className={THEME_SELECT_ITEM}>
                             Chọn ngân hàng đề
                           </SelectItem>
                           {field.value && !known ? (
                             <SelectItem
                               value={field.value}
-                              className={LIGHT_SELECT_ITEM}
+                              className={THEME_SELECT_ITEM}
                             >
                               ID đã lưu: {field.value.slice(0, 8)}…
                             </SelectItem>
@@ -490,7 +490,7 @@ export function AssignmentFormPanel({
                             <SelectItem
                               key={bank.id}
                               value={bank.id}
-                              className={LIGHT_SELECT_ITEM}
+                              className={THEME_SELECT_ITEM}
                             >
                               {bank.name || "Không tên"}
                               {bank.questionCount
@@ -540,7 +540,7 @@ export function AssignmentFormPanel({
                     name="allowShuffle"
                     control={control}
                     render={({ field }) => (
-                      <Checkbox id="shuffle-q" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-[#8c8678] bg-white data-checked:border-primary" />
+                      <Checkbox id="shuffle-q" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                     )}
                   />
                   <Label htmlFor="shuffle-q" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Trộn câu hỏi</Label>
@@ -550,7 +550,7 @@ export function AssignmentFormPanel({
                     name="shuffleOptions"
                     control={control}
                     render={({ field }) => (
-                      <Checkbox id="shuffle-o" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-[#8c8678] bg-white data-checked:border-primary" />
+                      <Checkbox id="shuffle-o" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                     )}
                   />
                   <Label htmlFor="shuffle-o" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Trộn đáp án</Label>
@@ -566,7 +566,7 @@ export function AssignmentFormPanel({
           disabled={busy || ok}
           className={cn(
             "h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
-            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-[#E94B3C] hover:bg-[#d43f33]",
+            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90",
           )}
         >
           {ok ? (

@@ -30,20 +30,20 @@ import { formatProgramPrice, MODULE_TYPE_LABELS } from "@/lib/programs/constants
 import { formatActivityScheduleRange } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
-// ─── Warm palette (mirrors .learn-shell tokens) ───────────────────────────
+// ─── Theme-aware palette (flips under .dark) ───────────────────────────────
 const W = {
-  bg:          "#ede9e0",
-  surface:     "#f4f1ea",
-  surface2:    "#e7e2d8",
-  surface3:    "#ded8cc",
-  border:      "#d8d2c6",
-  textStrong:  "#2d2b27",
-  text:        "#3a3833",
-  muted:       "#6b6b6b",
-  faint:       "#8c8678",
-  accent:      "#4fc3f7",
-  success:     "#7cb342",
-  primary:     "#e94b3c",
+  bg: "var(--background)",
+  surface: "var(--card)",
+  surface2: "var(--muted)",
+  surface3: "var(--secondary)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  text: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
+  accent: "#4fc3f7",
+  success: "#7cb342",
+  primary: "var(--primary)",
 } as const;
 
 // ─── Activity type → display prefix ──────────────────────────────────────

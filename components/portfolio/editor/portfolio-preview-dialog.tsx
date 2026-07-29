@@ -114,18 +114,18 @@ export function PortfolioPreviewDialog({
       <DialogPopup
         className={cn(
           "flex h-[94dvh] max-w-6xl flex-col gap-0 overflow-hidden p-0",
-          "rounded-[1.75rem] border-[#E5E5E0] bg-[#FAFAF5] text-[#2D2D2D]",
+          "rounded-[1.75rem] border-border bg-background text-foreground",
           "shadow-[0_40px_80px_-24px_rgba(45,45,45,0.35)]",
         )}
       >
         {/* Header — matches portfolio page toolbar contrast */}
-        <div className="flex shrink-0 items-center gap-2 border-b border-[#E5E5E0] bg-white px-3 py-2.5 sm:gap-3 sm:px-5">
+        <div className="flex shrink-0 items-center gap-2 border-b border-border bg-card px-3 py-2.5 sm:gap-3 sm:px-5">
           <div className="flex min-w-0 shrink items-center gap-2">
             <span className="hidden size-8 items-center justify-center rounded-xl bg-[#4FC3F7]/15 text-[#0f7cad] sm:inline-flex">
               <Eye className="size-4" strokeWidth={1.75} aria-hidden />
             </span>
             <div className="min-w-0">
-              <DialogTitle className="truncate font-heading text-sm font-bold text-[#2D2D2D] sm:text-base">
+              <DialogTitle className="truncate font-heading text-sm font-bold text-foreground sm:text-base">
                 Xem trước
               </DialogTitle>
               <p className="hidden text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0f7cad] sm:block">
@@ -137,11 +137,11 @@ export function PortfolioPreviewDialog({
           <div className="mx-auto flex min-w-0 flex-1 justify-center px-1 sm:px-3">
             <div
               className={cn(
-                "flex h-9 w-full max-w-md items-center gap-2 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] px-3",
+                "flex h-9 w-full max-w-md items-center gap-2 rounded-xl border border-border bg-background px-3",
               )}
             >
-              <Lock className="size-3.5 shrink-0 text-[#6B6B6B]" aria-hidden />
-              <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-[#2D2D2D] sm:text-xs">
+              <Lock className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+              <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-foreground sm:text-xs">
                 {address.displayUrl}
               </span>
               {address.isLive ? (
@@ -160,7 +160,7 @@ export function PortfolioPreviewDialog({
 
           <div className="flex shrink-0 items-center gap-1.5">
             <div
-              className="flex items-center rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-0.5"
+              className="flex items-center rounded-xl border border-border bg-background p-0.5"
               role="group"
               aria-label="Chế độ thiết bị"
             >
@@ -180,7 +180,7 @@ export function PortfolioPreviewDialog({
                       "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
                       isActive
                         ? "bg-[#4FC3F7]/15 text-[#0f7cad]"
-                        : "text-[#5C5C5C] hover:bg-white hover:text-[#2D2D2D]",
+                        : "text-muted-foreground hover:bg-card hover:text-foreground",
                     )}
                   >
                     <Icon className="size-4" strokeWidth={1.75} />
@@ -196,7 +196,7 @@ export function PortfolioPreviewDialog({
               title="Làm mới xem trước"
               aria-label="Làm mới xem trước"
               onClick={handleRefresh}
-              className="size-9 rounded-xl border-[#E5E5E0] text-[#2D2D2D] hover:bg-[#F5F5F0]"
+              className="size-9 rounded-xl border-border text-foreground hover:bg-muted"
             >
               <RotateCw className="size-4" />
             </Button>
@@ -213,7 +213,7 @@ export function PortfolioPreviewDialog({
               aria-label="Mở trong tab mới"
               disabled={!address.openUrl}
               onClick={handleOpenExternal}
-              className="size-9 rounded-xl border-[#E5E5E0] text-[#2D2D2D] hover:bg-[#F5F5F0]"
+              className="size-9 rounded-xl border-border text-foreground hover:bg-muted"
             >
               <ExternalLink className="size-4" />
             </Button>
@@ -221,8 +221,8 @@ export function PortfolioPreviewDialog({
             <DialogClose
               className={cn(
                 "static inset-auto top-auto right-auto inline-flex size-9 items-center justify-center",
-                "rounded-xl border border-[#E5E5E0] bg-white p-0 text-[#5C5C5C] opacity-100",
-                "hover:bg-[#F5F5F0] hover:text-[#2D2D2D] hover:opacity-100",
+                "rounded-xl border border-border bg-card p-0 text-muted-foreground opacity-100",
+                "hover:bg-muted hover:text-foreground hover:opacity-100",
                 "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
               )}
             />
@@ -250,15 +250,15 @@ export function PortfolioPreviewDialog({
               {/* Dashed page shell */}
               <div
                 className={cn(
-                  "flex h-full min-h-0 flex-col border border-dashed border-[#C9C9C2] bg-[#FAFAF5]/80 p-2 sm:p-2.5",
+                  "flex h-full min-h-0 flex-col border border-dashed border-[#C9C9C2] bg-background/80 p-2 sm:p-2.5",
                   isMobileFrame ? "rounded-[1.75rem]" : "rounded-2xl",
                 )}
               >
                 {/* Paper — radius + overflow-hidden clips scrollbar cleanly */}
                 <div
                   className={cn(
-                    "relative flex min-h-0 flex-1 flex-col overflow-hidden bg-white",
-                    "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1 ring-[#E5E5E0]",
+                    "relative flex min-h-0 flex-1 flex-col overflow-hidden bg-card",
+                    "shadow-[0_24px_60px_rgba(45,45,45,0.10)] ring-1 ring-border",
                     isMobileFrame ? "rounded-[1.35rem]" : "rounded-xl",
                   )}
                 >

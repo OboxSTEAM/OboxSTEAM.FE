@@ -53,7 +53,7 @@ type BackgroundStage = "page" | "effect";
 
 function PanelLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#5C5C5C]">
+    <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
       {children}
     </p>
   );
@@ -80,11 +80,11 @@ function SelectBox({
       aria-label={ariaLabel}
       onClick={onClick}
       className={cn(
-        "rounded-2xl border bg-white p-3 text-left shadow-[0_1px_0_rgba(45,45,45,0.04)] transition-colors outline-none",
+        "rounded-2xl border bg-card p-3 text-left shadow-[0_1px_0_rgba(45,45,45,0.04)] transition-colors outline-none",
         "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
         selected
           ? "border-[#4FC3F7] bg-[rgba(79,195,247,0.08)]"
-          : "border-[#E5E5E0] hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
+          : "border-border hover:border-[#C9C9C2] hover:bg-background",
         className,
       )}
     >
@@ -294,7 +294,7 @@ function ThemeSlider({
           aria-label={label}
         />
       </div>
-      <div className="flex items-center justify-between text-xs font-semibold text-[#6B6B6B]">
+      <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
         <span>{leftHint}</span>
         {centerHint ? <span>{centerHint}</span> : <span />}
         <span>{rightHint}</span>
@@ -544,7 +544,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                 className="p-3"
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-[15px] font-semibold tracking-tight text-[#2D2D2D]">
+                  <p className="text-[15px] font-semibold tracking-tight text-foreground">
                     {presetOption.label}
                   </p>
                   {selected ? (
@@ -553,7 +553,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                     </span>
                   ) : null}
                 </div>
-                <p className="mt-1.5 text-sm leading-relaxed text-[#5C5C5C]">
+                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                   {presetOption.description}
                 </p>
                 <PresetIdentityPreview preset={presetOption} />
@@ -565,12 +565,12 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   ].map((color) => (
                     <span
                       key={`${presetOption.id}-${color}`}
-                      className="size-4 rounded-full border border-[#E5E5E0]"
+                      className="size-4 rounded-full border border-border"
                       style={{ backgroundColor: color }}
                     />
                   ))}
                   {presetOption.isDark ? (
-                    <span className="ml-auto rounded-lg bg-[#2D2D2D]/8 px-2.5 py-1 text-xs font-semibold text-[#2D2D2D]">
+                    <span className="ml-auto rounded-lg bg-foreground/8 px-2.5 py-1 text-xs font-semibold text-foreground">
                       Dark
                     </span>
                   ) : null}
@@ -581,7 +581,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
         </div>
       </div>
 
-      <div className="space-y-5 rounded-2xl border border-[#E5E5E0] bg-white p-4 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
+      <div className="space-y-5 rounded-2xl border border-border bg-card p-4 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
         <ThemeSlider
           label="Cỡ chữ"
           value={resolved.fontScaleStep}
@@ -606,9 +606,9 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
 
       <div className="space-y-3">
         <PanelLabel>Nền</PanelLabel>
-        <div className="space-y-3 rounded-2xl border border-[#E5E5E0] bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
           <div
-            className="grid grid-cols-2 gap-1 rounded-xl bg-[#F5F5F0] p-1"
+            className="grid grid-cols-2 gap-1 rounded-xl bg-muted p-1"
             role="tablist"
             aria-label="Chọn nguồn nền"
           >
@@ -630,8 +630,8 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                     "rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors outline-none",
                     "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
                     active
-                      ? "bg-white text-[#0f7cad] shadow-sm"
-                      : "text-[#6B6B6B] hover:text-[#2D2D2D]",
+                      ? "bg-card text-[#0f7cad] shadow-sm"
+                      : "text-muted-foreground hover:text-foreground",
                   )}
                 >
                   {stage.label}
@@ -647,7 +647,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
             )}
             aria-disabled={backgroundStage !== "page"}
           >
-            <p className="text-sm font-semibold text-[#2D2D2D]">Nền trang</p>
+            <p className="text-sm font-semibold text-foreground">Nền trang</p>
             <div className="grid grid-cols-2 gap-2.5">
               {PORTFOLIO_BACKGROUND_STYLES.map((option) => (
                 <SelectBox
@@ -680,7 +680,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                             : undefined
                     }
                   />
-                  <p className="mt-2 text-center text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-2 text-center text-xs font-semibold text-foreground">
                     {option.label}
                   </p>
                 </SelectBox>
@@ -689,7 +689,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
             {showBackgroundUploader ? (
               <div className="space-y-2 pt-1">
                 {theme.backgroundImageUrl ? (
-                  <div className="flex items-center gap-3 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-2">
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-background p-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={theme.backgroundImageUrl}
@@ -699,7 +699,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                     <Button
                       type="button"
                       variant="ghost"
-                      className="h-9 rounded-xl text-xs text-[#E94B3C]"
+                      className="h-9 rounded-xl text-xs text-primary"
                       onClick={() => patchTheme({ backgroundImageUrl: null })}
                     >
                       Xóa ảnh nền
@@ -718,12 +718,12 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
 
           <div
             className={cn(
-              "space-y-2 border-t border-[#E5E5E0] pt-3 transition-opacity",
+              "space-y-2 border-t border-border pt-3 transition-opacity",
               backgroundStage !== "effect" && "pointer-events-none opacity-40",
             )}
             aria-disabled={backgroundStage !== "effect"}
           >
-            <p className="text-sm font-semibold text-[#2D2D2D]">Nền hiệu ứng</p>
+            <p className="text-sm font-semibold text-foreground">Nền hiệu ứng</p>
             <div className="grid grid-cols-2 gap-2">
               {BACKGROUND_SLOT_OPTIONS.map((option) => (
                 <SelectBox
@@ -734,7 +734,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   onClick={() => setEffectBackground(option.id)}
                 >
                   <SlotPreview kind="background" id={option.id} />
-                  <p className="mt-1.5 text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-1.5 text-xs font-semibold text-foreground">
                     {option.label}
                   </p>
                 </SelectBox>
@@ -746,7 +746,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
 
       <div className="space-y-3">
         <PanelLabel>Mật độ khoảng cách</PanelLabel>
-        <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-[#E5E5E0] bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
+        <div className="grid grid-cols-3 gap-1.5 rounded-2xl border border-border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
           {PORTFOLIO_DENSITIES.map((option) => (
             <SelectBox
               key={option.id}
@@ -766,7 +766,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                 <span className="h-1.5 rounded-sm bg-[#4FC3F7]/35" />
                 <span className="h-1.5 rounded-sm bg-[#4FC3F7]/25" />
               </div>
-              <p className="mt-1.5 text-xs font-semibold text-[#5C5C5C]">
+              <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
                 {option.label}
               </p>
             </SelectBox>
@@ -776,9 +776,9 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
 
       <div className="space-y-3">
         <PanelLabel>Thành phần</PanelLabel>
-        <div className="space-y-4 rounded-2xl border border-[#E5E5E0] bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
+        <div className="space-y-4 rounded-2xl border border-border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Tiêu đề hero</p>
+            <p className="text-sm font-semibold text-foreground">Tiêu đề hero</p>
             <div className="grid grid-cols-2 gap-2">
               {HERO_TEXT_SLOT_OPTIONS.map((option) => (
                 <SelectBox
@@ -792,7 +792,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   }
                 >
                   <SlotPreview kind="hero" id={option.id} />
-                  <p className="mt-1.5 text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-1.5 text-xs font-semibold text-foreground">
                     {option.label}
                   </p>
                 </SelectBox>
@@ -801,7 +801,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Kiểu thẻ hiệu ứng</p>
+            <p className="text-sm font-semibold text-foreground">Kiểu thẻ hiệu ứng</p>
             <div className="grid grid-cols-2 gap-2">
               {CARD_SLOT_OPTIONS.map((option) => (
                 <SelectBox
@@ -815,7 +815,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   }
                 >
                   <SlotPreview kind="card" id={option.id} />
-                  <p className="mt-1.5 text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-1.5 text-xs font-semibold text-foreground">
                     {option.label}
                   </p>
                 </SelectBox>
@@ -824,7 +824,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Xuất hiện</p>
+            <p className="text-sm font-semibold text-foreground">Xuất hiện</p>
             <div className="grid grid-cols-3 gap-2">
               {REVEAL_SLOT_OPTIONS.map((option) => (
                 <SelectBox
@@ -838,7 +838,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   }
                 >
                   <SlotPreview kind="reveal" id={option.id} />
-                  <p className="mt-1.5 text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-1.5 text-xs font-semibold text-foreground">
                     {option.label}
                   </p>
                 </SelectBox>
@@ -850,9 +850,9 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
 
       <div className="space-y-3">
         <PanelLabel>Font chữ</PanelLabel>
-        <div className="space-y-3 rounded-2xl border border-[#E5E5E0] bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Nội dung</p>
+            <p className="text-sm font-semibold text-foreground">Nội dung</p>
             <div className="grid grid-cols-2 gap-2">
               {PORTFOLIO_FONTS.map((font) => (
                 <SelectBox
@@ -861,12 +861,12 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   onClick={() => patchTheme({ fontFamily: font.id })}
                 >
                   <p
-                    className="text-2xl font-semibold leading-none text-[#2D2D2D]"
+                    className="text-2xl font-semibold leading-none text-foreground"
                     style={{ fontFamily: getPortfolioFontCss(font.id) }}
                   >
                     Aa
                   </p>
-                  <p className="mt-1.5 text-xs font-semibold text-[#5C5C5C]">
+                  <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
                     {font.label}
                   </p>
                 </SelectBox>
@@ -874,7 +874,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Tiêu đề</p>
+            <p className="text-sm font-semibold text-foreground">Tiêu đề</p>
             <div className="grid grid-cols-2 gap-2">
               {PORTFOLIO_FONTS.map((font) => (
                 <SelectBox
@@ -883,12 +883,12 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   onClick={() => patchTheme({ headingFontFamily: font.id })}
                 >
                   <p
-                    className="text-2xl font-bold leading-none text-[#2D2D2D]"
+                    className="text-2xl font-bold leading-none text-foreground"
                     style={{ fontFamily: getPortfolioFontCss(font.id) }}
                   >
                     Aa
                   </p>
-                  <p className="mt-1.5 text-xs font-semibold text-[#5C5C5C]">
+                  <p className="mt-1.5 text-xs font-semibold text-muted-foreground">
                     {font.label}
                   </p>
                 </SelectBox>
@@ -900,9 +900,9 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
 
       <div className="space-y-3">
         <PanelLabel>Bố cục</PanelLabel>
-        <div className="space-y-3 rounded-2xl border border-[#E5E5E0] bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
+        <div className="space-y-3 rounded-2xl border border-border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]">
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Bề mặt thẻ</p>
+            <p className="text-sm font-semibold text-foreground">Bề mặt thẻ</p>
             <div className="grid grid-cols-3 gap-1.5">
               {PORTFOLIO_CARD_STYLES.map((option) => (
                 <SelectBox
@@ -919,7 +919,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                         "border border-[#E5E5E0] shadow-[0_6px_14px_rgba(45,45,45,0.14)]",
                     )}
                   />
-                  <p className="mt-1.5 text-center text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-1.5 text-center text-xs font-semibold text-foreground">
                     {option.label}
                   </p>
                 </SelectBox>
@@ -927,7 +927,7 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
             </div>
           </div>
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-[#2D2D2D]">Kiểu bố cục mục</p>
+            <p className="text-sm font-semibold text-foreground">Kiểu bố cục mục</p>
             <div className="grid grid-cols-2 gap-2">
               {PORTFOLIO_LAYOUT_STYLES.map((layout) => (
                 <SelectBox
@@ -936,10 +936,10 @@ export function DesignPanel({ theme, onThemeChange }: DesignPanelProps) {
                   onClick={() => patchTheme({ layoutStyle: layout.id })}
                 >
                   <LayoutPreview id={layout.id} />
-                  <p className="mt-1.5 text-xs font-semibold text-[#2D2D2D]">
+                  <p className="mt-1.5 text-xs font-semibold text-foreground">
                     {layout.label}
                   </p>
-                  <p className="mt-0.5 text-xs leading-snug text-[#5C5C5C]">
+                  <p className="mt-0.5 text-xs leading-snug text-muted-foreground">
                     {layout.description}
                   </p>
                 </SelectBox>

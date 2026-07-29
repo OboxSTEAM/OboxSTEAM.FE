@@ -18,8 +18,10 @@ type MindMapEdgesProps = {
   branchColorByNodeId: Map<string, string>;
 };
 
-const NEUTRAL_STROKE = "#C5BFB4";
-const CURRENT_STROKE = "#E94B3C";
+const NEUTRAL_STROKE = "var(--learn-border-strong)";
+const CURRENT_STROKE = "var(--learn-primary)";
+/** ~0x28 alpha (16%) glow behind the current-path stroke. */
+const CURRENT_STROKE_GLOW = "color-mix(in srgb, var(--learn-primary) 16%, transparent)";
 
 function outwardEdgeX(node: MindMapLaidOutNode, side: MindMapBranchSide): number {
   return side === "right"
@@ -64,7 +66,7 @@ function EdgeStroke({
         <path
           d={d}
           fill="none"
-          stroke={`${CURRENT_STROKE}28`}
+          stroke={CURRENT_STROKE_GLOW}
           strokeWidth={strokeWidth + 4}
           strokeLinecap="round"
         />
@@ -218,7 +220,7 @@ export function MindMapEdges({
               cx={jx}
               cy={jy}
               r={3.5}
-              fill="#FAFAF5"
+              fill="var(--learn-bg)"
               stroke={stemCurrent ? CURRENT_STROKE : accent}
               strokeWidth={1.75}
               opacity={0.95}

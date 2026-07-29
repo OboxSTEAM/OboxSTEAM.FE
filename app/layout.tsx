@@ -49,7 +49,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#FAFAF5",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#FAFAF5" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1A1A" },
+  ],
 };
 
 export default function RootLayout({
@@ -60,6 +63,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${nunito.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">

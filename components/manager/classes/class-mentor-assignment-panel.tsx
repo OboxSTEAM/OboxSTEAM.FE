@@ -224,14 +224,14 @@ export function ClassMentorAssignmentPanel({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-      <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-4 py-2.5">
-        <p className="flex items-center gap-2 text-sm font-semibold text-[#2D2D2D]">
-          <UserRound className="size-4 text-[#E94B3C]" />
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+      <div className="flex items-center justify-between border-b border-border bg-background/70 px-4 py-2.5">
+        <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          <UserRound className="size-4 text-primary" />
           Mentor lớp
         </p>
         {showPendingSection && pendingRequests.length > 0 ? (
-          <p className="font-mono text-[11px] text-[#6B6B6B]">
+          <p className="font-mono text-[11px] text-muted-foreground">
             {pendingRequests.length} chờ duyệt
           </p>
         ) : null}
@@ -246,8 +246,8 @@ export function ClassMentorAssignmentPanel({
             "rounded-xl px-2 py-1.5 transition-colors",
             !mentorId &&
               (isDropActive
-                ? "bg-[#E94B3C]/8 ring-1 ring-[#E94B3C]/40"
-                : "ring-1 ring-dashed ring-[#D8D8D2]"),
+                ? "bg-primary/8 ring-1 ring-primary/40"
+                : "ring-1 ring-dashed ring-border"),
           )}
         >
           {mentorId ? (
@@ -274,44 +274,44 @@ export function ClassMentorAssignmentPanel({
                     requestMessage: null,
                   })
                 }
-                className="flex h-10 w-full items-center gap-2.5 rounded-lg px-1 text-left transition-colors hover:bg-[#FAFAF5]"
+                className="flex h-10 w-full items-center gap-2.5 rounded-lg px-1 text-left transition-colors hover:bg-background"
               >
-                <Avatar className="size-8 rounded-lg border border-[#E5E5E0]">
+                <Avatar className="size-8 rounded-lg border border-border">
                   <AvatarImage
                     src={assignedMentor?.avatarUrl || undefined}
                     alt=""
                   />
-                  <AvatarFallback className="rounded-lg bg-[#7CB342]/15 text-[10px] font-bold text-[#3d5c22]">
+                  <AvatarFallback className="rounded-lg bg-[#7CB342]/15 text-[10px] font-bold text-[#3d5c22] dark:text-[#b8e086]">
                     {getMentorInitials(mentorDisplayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[#2D2D2D]">
+                  <p className="truncate text-sm font-semibold text-foreground">
                     {mentorDisplayName || "Mentor đã gán"}
                   </p>
-                  <p className="truncate font-mono text-[11px] text-[#6B6B6B]">
+                  <p className="truncate font-mono text-[11px] text-muted-foreground">
                     {assignedMentor?.code ||
                       assignedFromRequest?.mentorCode ||
                       "Đã gán"}
                   </p>
                 </div>
                 <Eye
-                  className="size-3.5 shrink-0 text-[#8A8A84]"
+                  className="size-3.5 shrink-0 text-muted-foreground"
                   aria-hidden
                 />
                 <span className="sr-only">Xem hồ sơ mentor</span>
               </button>
             )
           ) : (
-            <div className="flex h-10 items-center gap-2.5 px-1 text-[#6B6B6B]">
-              <div className="flex size-8 items-center justify-center rounded-lg bg-[#FAFAF5] ring-1 ring-[#E5E5E0]">
-                <Inbox className="size-3.5 text-[#B0B0A8]" />
+            <div className="flex h-10 items-center gap-2.5 px-1 text-muted-foreground">
+              <div className="flex size-8 items-center justify-center rounded-lg bg-background ring-1 ring-border">
+                <Inbox className="size-3.5 text-muted-foreground" />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-[#2D2D2D]">
+                <p className="truncate text-sm font-medium text-foreground">
                   Chưa có mentor
                 </p>
-                <p className="truncate text-[11px] text-[#8A8A84]">
+                <p className="truncate text-[11px] text-muted-foreground">
                   {pendingRequests.length > 0
                     ? "Kéo yêu cầu vào đây hoặc bấm Duyệt"
                     : "Chờ mentor xin nhận lớp"}
@@ -337,13 +337,13 @@ export function ClassMentorAssignmentPanel({
                       onDragStart={(event) => handleDragStart(event, request)}
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        "group flex items-center gap-1 rounded-lg px-1 py-1 transition-colors hover:bg-[#FAFAF5]",
+                        "group flex items-center gap-1 rounded-lg px-1 py-1 transition-colors hover:bg-background",
                         !isBusy && "cursor-grab active:cursor-grabbing",
                         draggingId === request.id && "opacity-50",
                       )}
                     >
                       <GripVertical
-                        className="size-3.5 shrink-0 text-[#D0D0C8] opacity-0 transition-opacity group-hover:opacity-100"
+                        className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
                         aria-hidden
                       />
                       <button
@@ -358,16 +358,16 @@ export function ClassMentorAssignmentPanel({
                         }
                         className="flex min-w-0 flex-1 items-center gap-2.5 text-left"
                       >
-                        <Avatar className="size-8 rounded-lg border border-[#E5E5E0]">
-                          <AvatarFallback className="rounded-lg bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
+                        <Avatar className="size-8 rounded-lg border border-border">
+                          <AvatarFallback className="rounded-lg bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                             {getMentorInitials(request.mentorName)}
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium text-[#2D2D2D]">
+                          <p className="truncate text-sm font-medium text-foreground">
                             {request.mentorName || "Mentor chưa đặt tên"}
                           </p>
-                          <p className="truncate font-mono text-[11px] text-[#6B6B6B]">
+                          <p className="truncate font-mono text-[11px] text-muted-foreground">
                             {request.mentorCode || "—"}
                             {request.message ? " · có lời nhắn" : ""}
                           </p>
@@ -384,7 +384,7 @@ export function ClassMentorAssignmentPanel({
                             setRejectTarget(request);
                           }}
                           aria-label={`Từ chối ${request.mentorName || "mentor"}`}
-                          className="size-7 rounded-md text-[#a82a1e] hover:bg-[#E94B3C]/10 hover:text-[#a82a1e]"
+                          className="size-7 rounded-md text-primary hover:bg-primary/10 hover:text-primary"
                         >
                           <X className="size-3.5" />
                         </Button>
@@ -395,7 +395,7 @@ export function ClassMentorAssignmentPanel({
                           disabled={isBusy}
                           onClick={() => handleApprove(request)}
                           aria-label={`Duyệt ${request.mentorName || "mentor"}`}
-                          className="size-7 rounded-md text-[#3d5c22] hover:bg-[#7CB342]/15 hover:text-[#3d5c22]"
+                          className="size-7 rounded-md text-[#3d5c22] dark:text-[#b8e086] hover:bg-[#7CB342]/15 hover:text-[#3d5c22] dark:hover:text-[#b8e086]"
                         >
                           <Check className="size-3.5" />
                         </Button>
@@ -409,7 +409,7 @@ export function ClassMentorAssignmentPanel({
                 {historyRequests.slice(0, 3).map((request) => (
                   <li
                     key={request.id}
-                    className="flex h-8 items-center justify-between gap-2 rounded-lg px-2 text-xs text-[#6B6B6B]"
+                    className="flex h-8 items-center justify-between gap-2 rounded-lg px-2 text-xs text-muted-foreground"
                   >
                     <span className="truncate">
                       {request.mentorName || request.mentorCode || "Mentor"}
@@ -417,8 +417,8 @@ export function ClassMentorAssignmentPanel({
                     <span
                       className={cn(
                         "shrink-0 font-medium",
-                        request.status === "Approved" && "text-[#3d5c22]",
-                        request.status === "Rejected" && "text-[#a82a1e]",
+                        request.status === "Approved" && "text-[#3d5c22] dark:text-[#b8e086]",
+                        request.status === "Rejected" && "text-primary",
                       )}
                     >
                       {CLASS_MENTOR_REQUEST_STATUS_LABELS[request.status]}
@@ -427,7 +427,7 @@ export function ClassMentorAssignmentPanel({
                 ))}
               </ul>
             ) : !isRequestsLoading ? (
-              <p className="px-3 py-2 text-[11px] text-[#8A8A84]">
+              <p className="px-3 py-2 text-[11px] text-muted-foreground">
                 Chưa có yêu cầu xin nhận lớp
               </p>
             ) : null}
@@ -445,7 +445,7 @@ export function ClassMentorAssignmentPanel({
         }}
       >
         <DialogPopup className="max-w-md gap-0 p-0">
-          <DialogHeader className="border-b border-[#E8E8E3] px-6 py-5 pr-14">
+          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
             <DialogTitle>Từ chối yêu cầu mentor?</DialogTitle>
             <DialogDescription>
               Mentor “
@@ -457,7 +457,7 @@ export function ClassMentorAssignmentPanel({
           <div className="space-y-2 px-6 py-5">
             <label
               htmlFor="reject-note"
-              className="block text-xs font-medium text-[#6B6B6B]"
+              className="block text-xs font-medium text-muted-foreground"
             >
               Ghi chú gửi mentor (tuỳ chọn)
             </label>
@@ -467,10 +467,10 @@ export function ClassMentorAssignmentPanel({
               onChange={(event) => setRejectNote(event.target.value)}
               maxLength={1000}
               placeholder="Ví dụ: Cảm ơn bạn, lớp đã chọn mentor phù hợp hơn với kỹ năng yêu cầu."
-              className="min-h-24 rounded-xl border-[#DDDDD8] text-sm"
+              className="min-h-24 rounded-xl border-input text-sm"
             />
           </div>
-          <DialogFooter className="border-t border-[#E8E8E3] px-6 py-4">
+          <DialogFooter className="border-t border-border px-6 py-4">
             <Button
               type="button"
               variant="outline"
@@ -479,7 +479,7 @@ export function ClassMentorAssignmentPanel({
                 setRejectTarget(null);
                 setRejectNote("");
               }}
-              className="h-10 rounded-lg border-[#E5E5E0]"
+              className="h-10 rounded-lg border-border"
             >
               Hủy
             </Button>
@@ -487,7 +487,7 @@ export function ClassMentorAssignmentPanel({
               type="button"
               disabled={isRejecting}
               onClick={handleRejectConfirm}
-              className="h-10 rounded-lg bg-[#E94B3C] font-semibold text-white hover:bg-[#D94134]"
+              className="h-10 rounded-lg bg-primary font-semibold text-white hover:bg-primary/90"
             >
               {isRejecting ? "Đang xử lý…" : "Từ chối"}
             </Button>

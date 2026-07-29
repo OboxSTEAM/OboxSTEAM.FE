@@ -131,17 +131,17 @@ export function ClassDetail({ classId }: ClassDetailProps) {
       header: "Học viên",
       render: (student) => (
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="size-9 border border-[#E5E5E0]">
+          <Avatar className="size-9 border border-border">
             <AvatarImage src={student.avatarUrl || undefined} alt="" />
-            <AvatarFallback className="bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
+            <AvatarFallback className="bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
               {getInitials(student.studentName)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-[#2D2D2D]">
+            <p className="truncate font-semibold text-foreground">
               {student.studentName || "Chưa cập nhật tên"}
             </p>
-            <p className="truncate text-xs text-[#6B6B6B]">
+            <p className="truncate text-xs text-muted-foreground">
               {student.email || "—"}
             </p>
           </div>
@@ -165,7 +165,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
     },
     {
       header: "Ghi danh",
-      className: "w-36 text-xs text-[#6B6B6B]",
+      className: "w-36 text-xs text-muted-foreground",
       render: (student) =>
         formatApiDateTimeDisplay(student.enrolledAt) || "—",
     },
@@ -197,7 +197,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
             variant="outline"
             nativeButton={false}
             render={<Link href="/manager/classes" />}
-            className="h-11 gap-2 rounded-xl border-[#D8D8D2]"
+            className="h-11 gap-2 rounded-xl border-border"
           >
             <ArrowLeft className="size-4" />
             Quay lại
@@ -218,7 +218,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
           variant="outline"
           nativeButton={false}
           render={<Link href="/manager/classes" />}
-          className="h-11 gap-2 rounded-xl border-[#D8D8D2]"
+          className="h-11 gap-2 rounded-xl border-border"
         >
           <ArrowLeft className="size-4" />
           Danh sách
@@ -228,7 +228,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
           variant="outline"
           nativeButton={false}
           render={<Link href={`/manager/sessions?classId=${classItem.id}`} />}
-          className="h-11 gap-2 rounded-xl border-[#D8D8D2]"
+          className="h-11 gap-2 rounded-xl border-border"
         >
           <CalendarDays className="size-4" />
           Lịch học
@@ -237,7 +237,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
           type="button"
           variant="outline"
           onClick={() => setFormOpen(true)}
-          className="h-11 gap-2 rounded-xl border-[#D8D8D2]"
+          className="h-11 gap-2 rounded-xl border-border"
         >
           <Pencil className="size-4" />
           Sửa
@@ -255,31 +255,31 @@ export function ClassDetail({ classId }: ClassDetailProps) {
       </ManagerPageHeader>
 
       <div className="space-y-6 px-6 pb-12">
-        <section className="grid gap-4 rounded-2xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)] md:grid-cols-2 xl:grid-cols-4">
+        <section className="grid gap-4 rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)] md:grid-cols-2 xl:grid-cols-4">
           <MetaCard label="Trạng thái">
             <ClassStatusBadge status={classItem.status} />
           </MetaCard>
           <MetaCard label="Sĩ số">
-            <p className="font-mono text-lg font-bold tabular-nums text-[#2D2D2D]">
+            <p className="font-mono text-lg font-bold tabular-nums text-foreground">
               {classItem.seatsTaken}/{classItem.maxCapacity}
             </p>
           </MetaCard>
           <MetaCard label="Bắt đầu">
-            <p className="text-sm font-medium text-[#2D2D2D]">
+            <p className="text-sm font-medium text-foreground">
               {formatApiDateTimeDisplay(classItem.startDate) || "—"}
             </p>
           </MetaCard>
           <MetaCard label="Kết thúc">
-            <p className="text-sm font-medium text-[#2D2D2D]">
+            <p className="text-sm font-medium text-foreground">
               {formatApiDateTimeDisplay(classItem.endDate) || "—"}
             </p>
           </MetaCard>
           {classItem.scheduleSummary ? (
             <div className="md:col-span-2 xl:col-span-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Tóm tắt lịch
               </p>
-              <p className="mt-1 text-sm text-[#2D2D2D]">
+              <p className="mt-1 text-sm text-foreground">
                 {classItem.scheduleSummary}
               </p>
             </div>
@@ -296,13 +296,13 @@ export function ClassDetail({ classId }: ClassDetailProps) {
             />
           </div>
 
-          <section className="min-w-0 overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-            <div className="flex items-center justify-between border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-3">
-              <p className="flex items-center gap-2 text-sm font-semibold text-[#2D2D2D]">
-                <Users className="size-4 text-[#E94B3C]" />
+          <section className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+            <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
+              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Users className="size-4 text-primary" />
                 Danh sách học viên
               </p>
-              <p className="font-mono text-xs text-[#6B6B6B]">
+              <p className="font-mono text-xs text-muted-foreground">
                 {roster.length} học viên
               </p>
             </div>
@@ -355,7 +355,7 @@ function MetaCard({
 }) {
   return (
     <div className="space-y-1.5">
-      <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
+      <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         {label}
       </p>
       {children}

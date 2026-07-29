@@ -41,7 +41,7 @@ export function ItemsPanel({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-[#6B6B6B]">
+      <p className="text-sm leading-relaxed text-muted-foreground">
         Mục tự động nhập chỉ ẩn/hiện và chỉnh tường thuật; mục thủ công chỉnh
         trực tiếp trên thẻ. Kéo thả trên trang để sắp xếp. Bấm Thêm mục để tạo
         thẻ trống.
@@ -51,7 +51,7 @@ export function ItemsPanel({
         <Button
           type="button"
           variant="outline"
-          className="h-10 flex-1 rounded-xl border-[#E5E5E0] bg-white"
+          className="h-10 flex-1 rounded-xl border-border bg-card"
           disabled={isSyncing}
           onClick={onSync}
         >
@@ -60,7 +60,7 @@ export function ItemsPanel({
         </Button>
         <Button
           type="button"
-          className="h-10 flex-1 rounded-xl bg-[#E94B3C] text-white hover:bg-[#E94B3C]/90"
+          className="h-10 flex-1 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90"
           disabled={isAdding}
           onClick={onAdd}
         >
@@ -70,7 +70,7 @@ export function ItemsPanel({
       </div>
 
       {orderedItems.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-[#C9C9C2] bg-white/70 px-4 py-6 text-center text-sm text-[#6B6B6B]">
+        <p className="rounded-2xl border border-dashed border-[#C9C9C2] bg-card/70 px-4 py-6 text-center text-sm text-muted-foreground">
           Chưa có mục. Bấm Đồng bộ để nhập chứng chỉ/capstone, hoặc thêm thủ
           công.
         </p>
@@ -82,14 +82,14 @@ export function ItemsPanel({
               <li
                 key={item.id}
                 className={cn(
-                  "rounded-2xl border bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]",
+                  "rounded-2xl border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]",
                   item.isVisible
-                    ? "border-[#E5E5E0]"
+                    ? "border-border"
                     : "border-dashed border-[#C9C9C2] opacity-90",
                 )}
               >
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="rounded-lg bg-[#F0F0EA] px-2.5 py-1 text-xs font-semibold tracking-wide text-[#5C5C5C]">
+                  <span className="rounded-lg bg-[#F0F0EA] px-2.5 py-1 text-xs font-semibold tracking-wide text-muted-foreground">
                     {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
                   </span>
                   <span
@@ -103,27 +103,27 @@ export function ItemsPanel({
                     {isAuto ? "Tự động" : "Thủ công"}
                   </span>
                   {!item.isVisible ? (
-                    <span className="rounded-lg bg-[#2D2D2D]/8 px-2.5 py-1 text-xs font-semibold text-[#2D2D2D]">
+                    <span className="rounded-lg bg-foreground/8 px-2.5 py-1 text-xs font-semibold text-foreground">
                       Đang ẩn
                     </span>
                   ) : null}
                 </div>
 
-                <p className="mt-2.5 line-clamp-2 text-[15px] font-semibold leading-snug text-[#2D2D2D]">
+                <p className="mt-2.5 line-clamp-2 text-[15px] font-semibold leading-snug text-foreground">
                   {itemTitlePreview(item.title)}
                 </p>
 
                 <div className="mt-3 flex items-center justify-between gap-2">
-                  <label className="inline-flex cursor-pointer items-center gap-2.5 rounded-full border border-[#E5E5E0] bg-[#FAFAF5] py-1 pr-3 pl-1.5 transition-colors hover:border-[#C9C9C2]">
+                  <label className="inline-flex cursor-pointer items-center gap-2.5 rounded-full border border-border bg-background py-1 pr-3 pl-1.5 transition-colors hover:border-[#C9C9C2]">
                     <Switch
                       checked={item.isVisible}
                       onCheckedChange={(checked) =>
                         onToggleVisibility(item, Boolean(checked))
                       }
                       className={cn(
-                        "h-5 w-9 border border-[#E5E5E0] shadow-none",
-                        "data-checked:border-transparent data-checked:bg-[#E94B3C]",
-                        "data-unchecked:bg-[#E5E5E0]",
+                        "h-5 w-9 border border-border shadow-none",
+                        "data-checked:border-transparent data-checked:bg-primary",
+                        "data-unchecked:bg-border",
                       )}
                       aria-label={
                         item.isVisible
@@ -134,7 +134,7 @@ export function ItemsPanel({
                     <span
                       className={cn(
                         "text-xs font-semibold",
-                        item.isVisible ? "text-[#2D2D2D]" : "text-[#6B6B6B]",
+                        item.isVisible ? "text-foreground" : "text-muted-foreground",
                       )}
                     >
                       {item.isVisible ? "Hiện" : "Ẩn"}
@@ -146,7 +146,7 @@ export function ItemsPanel({
                       type="button"
                       variant="ghost"
                       size="icon-sm"
-                      className="rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]"
+                      className="rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
                       onClick={() => onDelete(item)}
                       aria-label="Xóa"
                     >

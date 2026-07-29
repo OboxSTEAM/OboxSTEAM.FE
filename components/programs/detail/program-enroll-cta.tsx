@@ -173,6 +173,14 @@ export function ProgramEnrollCta({
       );
     }
 
+    if (enrollmentCta.kind === "deferred") {
+      return (
+        <Button type="button" className={buttonClassName} disabled>
+          {enrollmentCta.label}
+        </Button>
+      );
+    }
+
     return (
       <Button
         type="button"

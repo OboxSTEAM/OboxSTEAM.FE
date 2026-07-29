@@ -51,7 +51,7 @@ import { cn } from "@/lib/utils";
 import { DateTimePicker } from "./date-time-picker";
 
 const INPUT_CLASS =
-  "h-10 rounded-lg border-[#DDDDD8] bg-white text-sm text-[#2D2D2D] focus-visible:ring-[#4FC3F7]/50";
+  "h-10 rounded-lg border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
 
 const SELECT_TRIGGER_CLASS = "h-10 w-full rounded-lg";
 
@@ -257,7 +257,7 @@ export function SessionFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-2xl overflow-y-auto p-0">
         <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <DialogHeader className="border-b border-[#E8E8E3] px-6 py-5 pr-14">
+          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
             <DialogTitle>
               {session ? "Cập nhật buổi học" : "Tạo buổi học"}
             </DialogTitle>
@@ -268,8 +268,8 @@ export function SessionFormDialog({
           <DialogClose />
 
           <div className="space-y-4 px-6 py-5">
-            <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-[#2D2D2D]">
-              <CalendarClock className="size-4 text-[#E94B3C]" />
+            <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+              <CalendarClock className="size-4 text-primary" />
               Thông tin buổi học
             </h3>
 
@@ -330,7 +330,7 @@ export function SessionFormDialog({
                             >
                               {module.name}
                               {module.code ? (
-                                <span className="ml-2 font-mono text-[11px] text-[#7A7A74]">
+                                <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                                   {module.code}
                                 </span>
                               ) : null}
@@ -398,7 +398,7 @@ export function SessionFormDialog({
                               className={LIGHT_SELECT_ITEM}
                             >
                               {activity.name}
-                              <span className="ml-2 text-[11px] text-[#7A7A74]">
+                              <span className="ml-2 text-[11px] text-muted-foreground">
                                 {ACTIVITY_TYPE_LABELS[activity.activityType]} ·{" "}
                                 {activity.courseName}
                               </span>
@@ -409,7 +409,7 @@ export function SessionFormDialog({
                     );
                   }}
                 />
-                <p className="text-xs text-[#9A9A94]">
+                <p className="text-xs text-muted-foreground">
                   Gắn hoạt động để buổi học (giờ, link/địa điểm) hiển thị đúng
                   trong bài học của học viên.
                 </p>
@@ -518,7 +518,7 @@ export function SessionFormDialog({
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="startTime">
                   Thời gian
-                  <span className="ml-1 text-[#E94B3C]">*</span>
+                  <span className="ml-1 text-primary">*</span>
                 </Label>
                 <div className="flex items-center gap-2">
                   <Controller
@@ -545,7 +545,7 @@ export function SessionFormDialog({
                       </div>
                     )}
                   />
-                  <span className="shrink-0 text-sm text-[#9A9A94]">→</span>
+                  <span className="shrink-0 text-sm text-muted-foreground">→</span>
                   <Controller
                     control={control}
                     name="endTime"
@@ -564,7 +564,7 @@ export function SessionFormDialog({
                   />
                 </div>
                 {errors.startTime?.message || errors.endTime?.message ? (
-                  <p className="text-xs font-medium text-[#C9362B]">
+                  <p className="text-xs font-medium text-primary">
                     {errors.startTime?.message ?? errors.endTime?.message}
                   </p>
                 ) : null}
@@ -604,13 +604,13 @@ export function SessionFormDialog({
                   control={control}
                   name="requiresAttendance"
                   render={({ field }) => (
-                    <label className="flex cursor-pointer items-center gap-2.5 text-sm text-[#2D2D2D]">
+                    <label className="flex cursor-pointer items-center gap-2.5 text-sm text-foreground">
                       <Checkbox
                         checked={field.value ?? false}
                         onCheckedChange={(checked) =>
                           field.onChange(checked === true)
                         }
-                        className="border-[#A8A8A2] data-checked:border-[#E94B3C] data-checked:bg-[#E94B3C]"
+                        className="border-input data-checked:border-primary data-checked:bg-primary"
                       />
                       Yêu cầu điểm danh
                     </label>
@@ -629,26 +629,26 @@ export function SessionFormDialog({
                   rows={3}
                   placeholder="Ghi chú nội dung buổi học..."
                   {...register("description")}
-                  className="w-full resize-none rounded-xl border border-[#DDDDD8] bg-white px-3.5 py-3 text-sm text-[#2D2D2D] outline-none transition-colors placeholder:text-[#9A9A94] focus:border-[#4FC3F7] focus:ring-2 focus:ring-[#4FC3F7]/30"
+                  className="w-full resize-none rounded-xl border border-input bg-card px-3.5 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
                 />
               </FormField>
             </div>
           </div>
 
-          <DialogFooter className="sticky bottom-0 border-t border-[#E8E8E3] bg-white/95 px-6 py-4 backdrop-blur-sm">
+          <DialogFooter className="sticky bottom-0 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="h-11 rounded-xl border-[#D8D8D2] px-5"
+              className="h-11 rounded-xl border-border px-5"
             >
               Hủy
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-11 rounded-xl bg-[#E94B3C] px-6 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+              className="h-11 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
             >
               {isSubmitting
                 ? "Đang lưu..."
@@ -682,11 +682,11 @@ function FormField({
     <div className={cn("space-y-1.5", className)}>
       <Label htmlFor={id}>
         {label}
-        {required ? <span className="ml-1 text-[#E94B3C]">*</span> : null}
+        {required ? <span className="ml-1 text-primary">*</span> : null}
       </Label>
       {children}
       {error ? (
-        <p className="text-xs font-medium text-[#C9362B]">{error}</p>
+        <p className="text-xs font-medium text-primary">{error}</p>
       ) : null}
     </div>
   );

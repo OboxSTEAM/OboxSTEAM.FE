@@ -2,11 +2,14 @@ import { z } from "zod";
 
 import { programLevelSchema } from "@/lib/api/entities/program";
 
+/** Matches `ProgramEnrollmentResponseDto.status` (OpenAPI). */
 export const programEnrollmentStatusSchema = z.enum([
-  "Active",
   "PendingPayment",
+  "Active",
+  "Deferred",
   "Completed",
-  "Cancelled",
+  "Failed",
+  "Dropped",
 ]);
 
 export const programEnrollmentSchema = z.object({
@@ -15,23 +18,23 @@ export const programEnrollmentSchema = z.object({
   programId: z.string().uuid(),
   status: programEnrollmentStatusSchema,
   progressPercent: z.number(),
-  enrolledAt: z.string(),
+  enrolledAt: z.string().nullable(),
   startedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
   createdAt: z.string(),
-  updatedAt: z.string(),
-  code: z.string(),
-  name: z.string(),
-  seriesName: z.string(),
-  description: z.string(),
+  updatedAt: z.string().nullable(),
+  code: z.string().nullable(),
+  name: z.string().nullable(),
+  seriesName: z.string().nullable(),
+  description: z.string().nullable(),
   level: programLevelSchema,
-  estimatedDuration: z.string(),
-  skillsGained: z.string(),
+  estimatedDuration: z.string().nullable(),
+  skillsGained: z.string().nullable(),
   rating: z.number().nullable(),
   totalReviews: z.number(),
   thumbnailUrl: z.string().nullable(),
-  programStatus: z.string(),
-  price: z.number(),
+  programStatus: z.string().nullable(),
+  price: z.number().nullable(),
 });
 
 export type ProgramEnrollmentStatus = z.infer<typeof programEnrollmentStatusSchema>;

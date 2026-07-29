@@ -77,18 +77,18 @@ export function CreateMilestoneDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="flex h-[min(90vh,820px)] max-w-2xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b border-[#E5E5E0] px-6 py-4">
+        <DialogHeader className="shrink-0 border-b border-border px-6 py-4">
           <DialogTitle>Tạo milestone nghiên cứu</DialogTitle>
           <DialogDescription>
             Chọn module Research, rồi điền thông tin milestone và sản phẩm nộp.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="shrink-0 space-y-3 border-b border-[#E5E5E0] bg-[#FAFAF5] px-6 py-4">
+        <div className="shrink-0 space-y-3 border-b border-border bg-background px-6 py-4">
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-[#2D2D2D]">
-                Chương trình <span className="text-[#E94B3C]">*</span>
+              <Label className="text-sm font-semibold text-foreground">
+                Chương trình <span className="text-primary">*</span>
               </Label>
               <Select
                 value={programId || "none"}
@@ -116,8 +116,8 @@ export function CreateMilestoneDialog({
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label className="text-sm font-semibold text-[#2D2D2D]">
-                Module Research <span className="text-[#E94B3C]">*</span>
+              <Label className="text-sm font-semibold text-foreground">
+                Module Research <span className="text-primary">*</span>
               </Label>
               <Select
                 value={moduleId || "none"}
@@ -185,7 +185,7 @@ export function CreateMilestoneDialog({
             />
           </div>
         ) : (
-          <p className="px-6 py-8 text-center text-sm text-[#6B6B6B]">
+          <p className="px-6 py-8 text-center text-sm text-muted-foreground">
             Chọn chương trình và module Research để mở form tạo milestone.
           </p>
         )}

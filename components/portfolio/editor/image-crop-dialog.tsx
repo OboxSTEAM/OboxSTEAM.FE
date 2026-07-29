@@ -80,15 +80,15 @@ export function ImageCropDialog({
         onClick={onCancel}
       />
 
-      <div className="relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-[#E5E5E0]">
-        <div className="border-b border-[#E5E5E0] px-5 py-4">
+      <div className="relative z-[1] flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-card shadow-2xl ring-1 ring-border">
+        <div className="border-b border-border px-5 py-4">
           <h2
             id="image-crop-title"
-            className="font-heading text-lg font-semibold text-[#2D2D2D]"
+            className="font-heading text-lg font-semibold text-foreground"
           >
             {title}
           </h2>
-          <p className="mt-1 text-sm text-[#6B6B6B]">{description}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
 
         <div className="relative h-[min(52vh,360px)] w-full bg-[#1a1a1a]">
@@ -111,9 +111,9 @@ export function ImageCropDialog({
           />
         </div>
 
-        <div className="space-y-4 border-t border-[#E5E5E0] px-5 py-4">
-          <label className="flex items-center gap-3 text-sm font-medium text-[#2D2D2D]">
-            <ZoomIn className="size-4 shrink-0 text-[#6B6B6B]" aria-hidden />
+        <div className="space-y-4 border-t border-border px-5 py-4">
+          <label className="flex items-center gap-3 text-sm font-medium text-foreground">
+            <ZoomIn className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <span className="w-14 shrink-0">Thu phóng</span>
             <input
               type="range"
@@ -122,7 +122,7 @@ export function ImageCropDialog({
               step={0.05}
               value={zoom}
               onChange={(event) => setZoom(Number(event.target.value))}
-              className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-[#E5E5E0] accent-[#4FC3F7]"
+              className="h-1.5 flex-1 cursor-pointer appearance-none rounded-full bg-border accent-[#4FC3F7]"
               aria-valuemin={1}
               aria-valuemax={3}
               aria-valuenow={zoom}
@@ -141,7 +141,7 @@ export function ImageCropDialog({
             </Button>
             <Button
               type="button"
-              className="min-h-[44px] rounded-xl bg-[#2D2D2D] text-white hover:bg-[#1a1a1a]"
+              className="min-h-[44px] rounded-xl bg-foreground text-background hover:bg-foreground/90"
               disabled={isProcessing || !croppedAreaPixels}
               onClick={() => void handleConfirm()}
             >

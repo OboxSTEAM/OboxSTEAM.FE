@@ -161,18 +161,18 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-      <header className="flex flex-col gap-4 border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+      <header className="flex flex-col gap-4 border-b border-border bg-background/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-[#4FC3F7]/12 text-[#0D6E9C]">
+            <span className="flex size-9 items-center justify-center rounded-xl bg-[#4FC3F7]/12 text-[#0D6E9C] dark:text-[#7dd3fc]">
               <BriefcaseBusiness className="size-4" />
             </span>
             <div>
-              <h2 className="font-heading text-base font-bold text-[#2D2D2D]">
+              <h2 className="font-heading text-base font-bold text-foreground">
                 Hội đồng chuyên gia
               </h2>
-              <p className="mt-0.5 text-xs text-[#6B6B6B]">
+              <p className="mt-0.5 text-xs text-muted-foreground">
                 {experts.length > 0
                   ? `${experts.length} chuyên gia đang tham gia chương trình`
                   : "Chưa có chuyên gia được gán cho chương trình"}
@@ -185,7 +185,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
             type="button"
             onClick={openCreate}
             aria-label="Tạo chuyên gia"
-            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl bg-[#E94B3C] px-0 text-sm font-semibold text-white transition-[width,padding,gap] duration-200 hover:w-48 hover:gap-2 hover:bg-[#D94134] hover:px-4 active:scale-[0.98]"
+            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl bg-primary px-0 text-sm font-semibold text-white transition-[width,padding,gap] duration-200 hover:w-48 hover:gap-2 hover:bg-primary/90 hover:px-4 active:scale-[0.98]"
           >
             <Plus className="size-4 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-32 group-hover:opacity-100">
@@ -197,7 +197,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
             variant="outline"
             onClick={() => setAssignOpen(true)}
             aria-label="Gán chuyên gia có sẵn"
-            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl border-[#D8D8D2] bg-white px-0 text-sm font-semibold text-[#2D2D2D] transition-[width,padding,gap] duration-200 hover:w-64 hover:gap-2 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/8 hover:px-4"
+            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl border-border bg-card px-0 text-sm font-semibold text-foreground transition-[width,padding,gap] duration-200 hover:w-64 hover:gap-2 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/8 hover:px-4"
           >
             <UserRoundPlus className="size-4 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-48 group-hover:opacity-100">
@@ -209,7 +209,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
             render={<Link href="/manager/experts" />}
             variant="outline"
             aria-label="Quay về danh sách chuyên gia"
-            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl border-[#D8D8D2] bg-white px-0 text-sm font-semibold text-[#2D2D2D] transition-[width,padding,gap] duration-200 hover:w-56 hover:gap-2 hover:px-4 hover:bg-[#F5F5F0]"
+            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl border-border bg-card px-0 text-sm font-semibold text-foreground transition-[width,padding,gap] duration-200 hover:w-56 hover:gap-2 hover:px-4 hover:bg-muted"
           >
             <ArrowRight className="size-4 shrink-0" />
             <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-44 group-hover:opacity-100">
@@ -230,19 +230,19 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
           />
         </div>
       ) : (
-        <div className="grid gap-px bg-[#E5E5E0] md:grid-cols-2">
+        <div className="grid gap-px bg-border md:grid-cols-2">
           {experts.map((expert) => {
             const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
             return (
               <article
                 key={expert.expertId}
-                className="group flex min-w-0 items-start gap-4 bg-white p-6 transition-colors hover:bg-[#FAFAF5]/70"
+                className="group flex min-w-0 items-start gap-4 bg-card p-6 transition-colors hover:bg-background/70"
               >
-                <Avatar className="size-14 shrink-0 border border-[#E5E5E0]">
+                <Avatar className="size-14 shrink-0 border border-border">
                   {avatarUrl ? (
                     <AvatarImage src={avatarUrl} alt={expert.fullName} />
                   ) : null}
-                  <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-sm font-bold text-[#0D6E9C]">
+                  <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-sm font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                     {getExpertInitials(expert.fullName)}
                   </AvatarFallback>
                 </Avatar>
@@ -250,10 +250,10 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h3 className="truncate font-heading text-sm font-bold text-[#2D2D2D]">
+                      <h3 className="truncate font-heading text-sm font-bold text-foreground">
                         {expert.fullName || "Chưa cập nhật tên"}
                       </h3>
-                      <p className="mt-1 truncate text-xs text-[#6B6B6B]">
+                      <p className="mt-1 truncate text-xs text-muted-foreground">
                         {[expert.title, expert.organization].filter(Boolean).join(" · ") ||
                           "Chưa cập nhật chức danh"}
                       </p>
@@ -265,7 +265,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                         size="icon"
                         onClick={() => setSelectedExpertId(expert.expertId)}
                         aria-label={`Xem hồ sơ ${expert.fullName}`}
-                        className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
+                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
                       >
                         <Eye className="size-4" />
                       </Button>
@@ -276,7 +276,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                         disabled={loadingExpertId === expert.expertId}
                         onClick={() => void openEdit(expert.expertId)}
                         aria-label={`Sửa ${expert.fullName}`}
-                        className="size-9 rounded-lg text-[#6B6B6B] hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
+                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
                       >
                         <Pencil className="size-4" />
                       </Button>
@@ -286,7 +286,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                         size="icon"
                         onClick={() => setRemoveTarget(expert)}
                         aria-label={`Gỡ ${expert.fullName} khỏi chương trình`}
-                        className="size-9 rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#C9362B]"
+                        className="size-9 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
                       >
                         <Link2Off className="size-4" />
                       </Button>
@@ -296,7 +296,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                   <div className="mt-3 flex flex-wrap items-center gap-2">
                     <Badge
                       variant="outline"
-                      className="rounded-md border-[#D8D8D2] font-mono text-[10px] text-[#6B6B6B]"
+                      className="rounded-md border-border font-mono text-[10px] text-muted-foreground"
                     >
                       {expert.code || "CHƯA CÓ MÃ"}
                     </Badge>
@@ -305,7 +305,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
                         {expert.roleInBoard}
                       </Badge>
                     ) : (
-                      <span className="text-xs italic text-[#8A8A84]">
+                      <span className="text-xs italic text-muted-foreground">
                         Chưa cập nhật vai trò
                       </span>
                     )}

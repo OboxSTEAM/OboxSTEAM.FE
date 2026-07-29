@@ -120,14 +120,14 @@ export function MilestoneManager() {
       className: "max-w-xs",
       render: (row) => (
         <div className="flex items-center gap-2.5">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E5E0] bg-white text-[#8b5cf6]">
+          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-[#8b5cf6]">
             <Flag className="size-4" />
           </span>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-[#2D2D2D]">
+            <p className="truncate font-semibold text-foreground">
               {row.title ?? "—"}
             </p>
-            <p className="truncate text-[11px] text-[#6B6B6B]">
+            <p className="truncate text-[11px] text-muted-foreground">
               {row.code || "Không mã"}
               {row.isCapstone ? " · Capstone" : ""}
             </p>
@@ -138,17 +138,17 @@ export function MilestoneManager() {
     {
       header: "Thứ tự",
       render: (row) => (
-        <span className="tabular-nums text-[#2D2D2D]">{row.milestoneOrder}</span>
+        <span className="tabular-nums text-foreground">{row.milestoneOrder}</span>
       ),
     },
     {
       header: "Module",
-      className: "max-w-[180px] truncate text-[#2D2D2D]",
+      className: "max-w-[180px] truncate text-foreground",
       render: (row) => row.moduleName,
     },
     {
       header: "Chương trình",
-      className: "max-w-[180px] truncate text-[#6B6B6B]",
+      className: "max-w-[180px] truncate text-muted-foreground",
       render: (row) => row.programName,
     },
     {
@@ -165,7 +165,7 @@ export function MilestoneManager() {
                 href={milestoneEditHref(row.programId, row.moduleId, row.id)}
               />
             }
-            className="size-8 rounded-lg text-[#6B6B6B] hover:bg-[#F5F5F0]"
+            className="size-8 rounded-lg text-muted-foreground hover:bg-muted"
             title="Mở trong khung chương trình"
           >
             <Edit2 className="size-4" />
@@ -174,7 +174,7 @@ export function MilestoneManager() {
             variant="ghost"
             size="icon"
             onClick={() => setDeleteTarget(row)}
-            className="size-8 rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10"
+            className="size-8 rounded-lg text-primary hover:bg-primary/10"
             title="Xóa milestone"
           >
             <Trash2 className="size-4" />
@@ -194,7 +194,7 @@ export function MilestoneManager() {
         <Button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+          className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
         >
           <Plus className="size-4" />
           Tạo milestone
@@ -202,21 +202,21 @@ export function MilestoneManager() {
       </ManagerPageHeader>
 
       <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-xl border border-[#E5E5E0] bg-white shadow-sm">
-          <div className="flex flex-wrap items-center gap-3 border-b border-[#E5E5E0] px-4 py-3">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
             <div className="relative min-w-[220px] flex-1">
-              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#6B6B6B]" />
+              <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Tìm theo tiêu đề, mã, module, chương trình…"
-                className="h-9 rounded-lg border-[#DDDDD8] bg-white pl-9 pr-9 text-sm"
+                className="h-9 rounded-lg border-input bg-card pl-9 pr-9 text-sm"
               />
               {search ? (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B6B6B] hover:text-[#2D2D2D]"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 >
                   <X className="size-4" />
                 </button>

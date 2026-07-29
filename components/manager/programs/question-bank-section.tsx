@@ -32,19 +32,19 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 const W = {
-  surface2: "#e7e2d8",
-  border: "#d8d2c6",
-  textStrong: "#2d2b27",
-  muted: "#6b6b6b",
-  faint: "#8c8678",
+  surface2: "var(--muted)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
   accent: "#4fc3f7",
-  primary: "#e94b3c",
+  primary: "var(--primary)",
   green: "#7cb342",
   amber: "#c08a1e",
 } as const;
 
 const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 /** Session-only tally of the last CSV import for a bank. */
 type BankImportStat = {
@@ -311,7 +311,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
         <Checkbox
           checked={showBank}
           onCheckedChange={(v) => setShowBank(v === true)}
-          className="border-[#8c8678] bg-white data-checked:border-primary"
+          className="border-input bg-background data-checked:border-primary"
         />
         <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
           Đính kèm ngân hàng đề
@@ -349,14 +349,14 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                 return (
                   <li
                     key={bank.id}
-                    className="rounded-xl border bg-white p-3"
+                    className="rounded-xl border bg-card p-3"
                     style={{ borderColor: W.border }}
                   >
                     <div className="flex items-start gap-3">
                       <span
                         className="flex size-9 shrink-0 items-center justify-center rounded-lg border"
                         style={{
-                          background: "white",
+                          background: "var(--card)",
                           borderColor: W.border,
                           color: W.green,
                         }}
@@ -383,7 +383,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           {stat && stat.imported > 0 && (
                             <span
                               className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold"
-                              style={{ background: "#eef6e5", color: W.green }}
+                              style={{ background: "rgba(124,179,66,0.14)", color: W.green }}
                             >
                               <CheckCircle2 className="size-3" />
                               +{stat.imported} lần nhập gần nhất
@@ -397,7 +397,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           type="button"
                           title="Sao chép ID ngân hàng"
                           onClick={() => void copyBankId(bank.id)}
-                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-[#f4f1ea]"
+                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-muted"
                           style={{ borderColor: W.border, color: W.muted }}
                         >
                           <Copy className="size-3.5" />
@@ -408,7 +408,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           onClick={() => triggerImport(bank.id)}
                           disabled={busy}
                           className={cn(
-                            "flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors hover:bg-[#f4f1ea] disabled:opacity-50",
+                            "flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors hover:bg-muted disabled:opacity-50",
                           )}
                           style={{ borderColor: W.border, color: W.accent }}
                         >
@@ -424,7 +424,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           title="Xóa ngân hàng"
                           onClick={() => setConfirmDelete(bank)}
                           disabled={busy}
-                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-red-50 disabled:opacity-50"
+                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10 disabled:opacity-50"
                           style={{ borderColor: W.border, color: W.primary }}
                         >
                           <Trash className="size-3.5" />
@@ -433,23 +433,13 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                     </div>
 
                     {stat && stat.failed > 0 && (
-                      <div
-                        className="mt-2 rounded-lg border p-2.5 text-[11px]"
-                        style={{
-                          borderColor: "#e6d3a3",
-                          background: "#fbf6e9",
-                          color: W.amber,
-                        }}
-                      >
+                      <div className="mt-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
                         <p className="flex items-center gap-1.5 font-semibold">
                           <AlertTriangle className="size-3.5" />
                           {stat.failed} dòng không nhập được
                         </p>
                         {stat.errors.length > 0 && (
-                          <ul
-                            className="mt-1.5 space-y-0.5 pl-5"
-                            style={{ color: "#8a6d1c" }}
-                          >
+                          <ul className="mt-1.5 space-y-0.5 pl-5">
                             {stat.errors.slice(0, 5).map((rowErr, i) => (
                               <li key={i} className="list-disc">
                                 {rowErr.rowNumber != null
@@ -473,7 +463,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                       onClick={() =>
                         setExpandedId((prev) => (prev === bank.id ? null : bank.id))
                       }
-                      className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-1 py-1.5 text-left text-[11px] font-semibold transition-colors hover:bg-[#f4f1ea]"
+                      className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-1 py-1.5 text-left text-[11px] font-semibold transition-colors hover:bg-muted"
                       style={{ color: W.muted }}
                     >
                       {isExpanded ? (
@@ -498,7 +488,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                           bank.questions.map((q, idx) => (
                             <li
                               key={q.id}
-                              className="flex items-start gap-2 rounded-lg border bg-[#fafaf5] px-2.5 py-2"
+                              className="flex items-start gap-2 rounded-lg border bg-background px-2.5 py-2"
                               style={{ borderColor: W.border }}
                             >
                               <span
@@ -530,7 +520,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                                 onClick={() =>
                                   setConfirmQuestion({ bank, question: q })
                                 }
-                                className="flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors hover:bg-red-50 disabled:opacity-50"
+                                className="flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors hover:bg-destructive/10 disabled:opacity-50"
                                 style={{ borderColor: W.border, color: W.primary }}
                               >
                                 <Trash className="size-3" />
@@ -554,7 +544,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
           )}
 
           <div
-            className="space-y-3 rounded-xl border border-dashed bg-white/60 p-4"
+            className="space-y-3 rounded-xl border border-dashed bg-muted/60 p-4"
             style={{ borderColor: W.border }}
           >
             <p

@@ -41,7 +41,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
 
   return (
     <div className="space-y-4">
-      <p className="text-sm leading-relaxed text-[#6B6B6B]">
+      <p className="text-sm leading-relaxed text-muted-foreground">
         Chọn nền tảng — icon tự nhận từ URL. Liên kết trống sẽ bị loại khi lưu.
       </p>
 
@@ -54,19 +54,19 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
             type="button"
             onClick={() => addFromPlatform(platform.id)}
             className={cn(
-              "flex flex-col items-center gap-2 rounded-2xl border border-[#E5E5E0] bg-white px-2 py-3",
+              "flex flex-col items-center gap-2 rounded-2xl border border-border bg-card px-2 py-3",
               "shadow-[0_1px_0_rgba(45,45,45,0.04)] transition-colors",
-              "hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
+              "hover:border-[#C9C9C2] hover:bg-background",
               "outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
             )}
           >
             <span
-              className="flex size-10 items-center justify-center rounded-xl bg-[#FAFAF5]"
+              className="flex size-10 items-center justify-center rounded-xl bg-background"
               style={{ color: platform.accent }}
             >
               <PortfolioLinkIcon platformId={platform.id} size={18} />
             </span>
-            <span className="truncate text-xs font-semibold text-[#2D2D2D]">
+            <span className="truncate text-xs font-semibold text-foreground">
               {platform.label}
             </span>
           </button>
@@ -74,7 +74,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
       </div>
 
       {links.length === 0 ? (
-        <p className="rounded-2xl border border-dashed border-[#C9C9C2] bg-white/70 px-4 py-6 text-center text-sm text-[#6B6B6B]">
+        <p className="rounded-2xl border border-dashed border-[#C9C9C2] bg-card/70 px-4 py-6 text-center text-sm text-muted-foreground">
           Chưa có liên kết — chọn một nền tảng ở trên.
         </p>
       ) : (
@@ -84,11 +84,11 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
             return (
               <li
                 key={`link-${index}`}
-                className="rounded-2xl border border-[#E5E5E0] bg-white p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]"
+                className="rounded-2xl border border-border bg-card p-3.5 shadow-[0_1px_0_rgba(45,45,45,0.04)]"
               >
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span
-                    className="flex size-8 items-center justify-center rounded-lg bg-[#FAFAF5]"
+                    className="flex size-8 items-center justify-center rounded-lg bg-background"
                     style={{ color: platform.accent }}
                   >
                     <PortfolioLinkIcon
@@ -97,7 +97,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
                       size={16}
                     />
                   </span>
-                  <span className="rounded-lg bg-[#F0F0EA] px-2.5 py-1 text-xs font-semibold tracking-wide text-[#5C5C5C]">
+                  <span className="rounded-lg bg-[#F0F0EA] px-2.5 py-1 text-xs font-semibold tracking-wide text-muted-foreground">
                     {platform.label}
                   </span>
                 </div>
@@ -108,7 +108,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
                     onChange={(event) =>
                       updateLink(index, { label: event.target.value })
                     }
-                    className="h-10 rounded-xl border-[#E5E5E0] bg-[#FAFAF5] text-[15px] font-semibold"
+                    className="h-10 rounded-xl border-border bg-background text-[15px] font-semibold"
                     placeholder={platform.label}
                     aria-label={`Nhãn liên kết ${index + 1}`}
                   />
@@ -117,7 +117,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
                     onChange={(event) =>
                       updateLink(index, { url: event.target.value })
                     }
-                    className="h-10 rounded-xl border-[#E5E5E0] bg-[#FAFAF5] font-mono text-sm"
+                    className="h-10 rounded-xl border-border bg-background font-mono text-sm"
                     placeholder={platform.urlHint}
                     aria-label={`URL liên kết ${index + 1}`}
                   />
@@ -128,7 +128,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
                     type="button"
                     variant="ghost"
                     size="icon-sm"
-                    className="rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]"
+                    className="rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
                     aria-label={`Xóa liên kết ${index + 1}`}
                     onClick={() => removeLink(index)}
                   >
@@ -144,7 +144,7 @@ export function LinksPanel({ links, onLinksChange }: LinksPanelProps) {
       <Button
         type="button"
         variant="outline"
-        className="h-10 w-full rounded-xl border-[#E5E5E0] bg-white"
+        className="h-10 w-full rounded-xl border-border bg-card"
         onClick={addBlankLink}
       >
         <Plus className="size-4" />

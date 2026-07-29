@@ -171,17 +171,17 @@ function AttendanceManagerInner() {
       header: "Học viên",
       render: (student) => (
         <div className="flex min-w-0 items-center gap-3">
-          <Avatar className="size-9 border border-[#E5E5E0]">
+          <Avatar className="size-9 border border-border">
             <AvatarImage src={student.avatarUrl || undefined} alt="" />
             <AvatarFallback className="bg-[#4FC3F7]/12 text-[10px] font-bold text-[#0D6E9C]">
               {getInitials(student.studentName)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
-            <p className="truncate font-semibold text-[#2D2D2D]">
+            <p className="truncate font-semibold text-foreground">
               {student.studentName || "Chưa cập nhật tên"}
             </p>
-            <p className="truncate text-xs text-[#6B6B6B]">
+            <p className="truncate text-xs text-muted-foreground">
               {student.studentCode || student.email || "—"}
             </p>
           </div>
@@ -197,7 +197,7 @@ function AttendanceManagerInner() {
     },
     {
       header: "Check-in",
-      className: "w-40 text-xs text-[#6B6B6B]",
+      className: "w-40 text-xs text-muted-foreground",
       render: (student) =>
         formatApiDateTimeDisplay(student.checkedInAt) || "—",
     },
@@ -259,7 +259,7 @@ function AttendanceManagerInner() {
             render={
               <Link href={`/manager/sessions?classId=${classId}`} />
             }
-            className="h-11 rounded-xl border-[#D8D8D2]"
+            className="h-11 rounded-xl border-border"
           >
             Quay lại lịch học
           </Button>
@@ -267,10 +267,10 @@ function AttendanceManagerInner() {
       </ManagerPageHeader>
 
       <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="grid gap-4 border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-4 md:grid-cols-2">
+        <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <div className="grid gap-4 border-b border-border bg-background/70 px-6 py-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Lớp học
               </p>
               <Select
@@ -307,7 +307,7 @@ function AttendanceManagerInner() {
                     >
                       {classItem.name}
                       {classItem.code ? (
-                        <span className="ml-2 font-mono text-[11px] text-[#7A7A74]">
+                        <span className="ml-2 font-mono text-[11px] text-muted-foreground">
                           {classItem.code}
                         </span>
                       ) : null}
@@ -318,7 +318,7 @@ function AttendanceManagerInner() {
             </div>
 
             <div className="space-y-1.5">
-              <p className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
+              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 Buổi học
               </p>
               <Select
@@ -366,8 +366,8 @@ function AttendanceManagerInner() {
           {classId && sessionId ? (
             <>
               {sessionDetail ? (
-                <div className="border-b border-[#E5E5E0] px-6 py-3 text-sm text-[#6B6B6B]">
-                  <span className="font-semibold text-[#2D2D2D]">
+                <div className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
+                  <span className="font-semibold text-foreground">
                     {sessionDetail.title}
                   </span>
                   {" · "}

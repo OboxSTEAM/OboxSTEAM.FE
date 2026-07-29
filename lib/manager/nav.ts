@@ -1,14 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  BookOpen,
   CalendarDays,
   CheckSquare,
   ClipboardList,
   FileQuestion,
-  FolderTree,
   LayoutDashboard,
   LayoutGrid,
-  Layers,
   Target,
   Upload,
   UserCheck,
@@ -44,21 +41,6 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         label: "Chương trình",
         href: "/manager/programs",
         icon: LayoutGrid,
-      },
-      {
-        label: "Module",
-        href: "/manager/programs",
-        icon: FolderTree,
-      },
-      {
-        label: "Khóa học",
-        href: "/manager/programs",
-        icon: BookOpen,
-      },
-      {
-        label: "Hoạt động",
-        href: "/manager/activities",
-        icon: Layers,
       },
       {
         label: "Tài liệu",

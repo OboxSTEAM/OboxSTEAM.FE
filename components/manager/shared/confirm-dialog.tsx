@@ -62,7 +62,7 @@ export function ConfirmDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="h-10 rounded-lg border-[#E5E5E0] text-[#2D2D2D] hover:bg-[#FAFAF5]"
+            className="h-10 rounded-lg border-border text-foreground hover:bg-background"
           >
             {cancelLabel}
           </Button>
@@ -71,7 +71,7 @@ export function ConfirmDialog({
             disabled={isSubmitting}
             className={`h-10 rounded-lg font-semibold text-white ${
               variant === "destructive"
-                ? "bg-[#E94B3C] hover:bg-[#E94B3C]/90"
+                ? "bg-primary hover:bg-primary/90"
                 : "bg-[#7CB342] hover:bg-[#7CB342]/90"
             }`}
           >

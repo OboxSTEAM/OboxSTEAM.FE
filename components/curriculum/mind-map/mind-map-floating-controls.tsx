@@ -14,9 +14,9 @@ type MindMapFloatingControlsProps = {
 };
 
 const LEGEND_ITEMS = [
-  { label: "Đang học", dot: "bg-[#E94B3C]" },
-  { label: "Hoàn thành", dot: "bg-[#7CB342]" },
-  { label: "Khóa", dot: "bg-[#C8C8C0]" },
+  { label: "Đang học", dot: "bg-learn-primary" },
+  { label: "Hoàn thành", dot: "bg-learn-success" },
+  { label: "Khóa", dot: "bg-learn-border-strong" },
 ] as const;
 
 export function MindMapFloatingControls({
@@ -35,8 +35,8 @@ export function MindMapFloatingControls({
     >
       <div
         className={cn(
-          "flex items-center gap-0.5 rounded-2xl border border-[#E5E5E0] bg-white/95 p-1.5",
-          "shadow-[0_8px_24px_-18px_rgba(45,43,39,0.45)] backdrop-blur-sm",
+          "flex items-center gap-0.5 rounded-2xl border border-learn-border bg-learn-surface/95 p-1.5",
+          "shadow-[0_8px_24px_-18px_color-mix(in_srgb,var(--learn-text-strong)_45%,transparent)] backdrop-blur-sm",
         )}
       >
         <ControlIconButton onClick={onZoomOut} label="Thu nhỏ">
@@ -53,9 +53,9 @@ export function MindMapFloatingControls({
           onClick={onFocusCurrent}
           className={cn(
             "ml-0.5 flex min-h-10 items-center justify-center gap-1.5 rounded-xl px-3",
-            "text-xs font-bold tracking-tight text-[#2D2D2D]",
-            "transition-colors hover:bg-[#F5F5F0]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+            "text-xs font-bold tracking-tight text-learn-text-strong",
+            "transition-colors hover:bg-learn-surface-2",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent",
           )}
         >
           <Crosshair className="size-3.5" strokeWidth={2.35} aria-hidden />
@@ -65,15 +65,15 @@ export function MindMapFloatingControls({
 
       <ul
         className={cn(
-          "flex items-center gap-3 rounded-xl border border-[#E5E5E0] bg-white/90 px-3 py-2",
-          "shadow-[0_6px_16px_-14px_rgba(45,43,39,0.35)] backdrop-blur-sm",
+          "flex items-center gap-3 rounded-xl border border-learn-border bg-learn-surface/90 px-3 py-2",
+          "shadow-[0_6px_16px_-14px_color-mix(in_srgb,var(--learn-text-strong)_35%,transparent)] backdrop-blur-sm",
         )}
         aria-label="Chú thích trạng thái"
       >
         {LEGEND_ITEMS.map(({ label, dot }) => (
           <li
             key={label}
-            className="flex items-center gap-1.5 text-[11px] font-semibold tracking-tight text-[#6B6B6B]"
+            className="flex items-center gap-1.5 text-[11px] font-semibold tracking-tight text-learn-muted"
           >
             <span className={cn("size-2 shrink-0 rounded-full", dot)} aria-hidden />
             {label}
@@ -99,9 +99,9 @@ function ControlIconButton({
       onClick={onClick}
       aria-label={label}
       className={cn(
-        "flex size-10 shrink-0 items-center justify-center rounded-xl text-[#2D2D2D]",
-        "transition-colors hover:bg-[#F5F5F0]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+        "flex size-10 shrink-0 items-center justify-center rounded-xl text-learn-text-strong",
+        "transition-colors hover:bg-learn-surface-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent",
       )}
     >
       {children}

@@ -31,10 +31,10 @@ const VIEW_LABELS: Record<CalendarView, string> = {
 
 /** Left accent + tint per session kind, matched to the manager palette. */
 const KIND_STYLES: Record<ClassSessionKind, string> = {
-  Lesson: "border-l-[#7CB342] bg-[#7CB342]/12 text-[#3d5c22]",
-  FieldTrip: "border-l-[#7E57C2] bg-[#7E57C2]/12 text-[#51308a]",
-  AssignmentWindow: "border-l-[#FDD835] bg-[#FDD835]/18 text-[#8A7200]",
-  MentorCheckIn: "border-l-[#E94B3C] bg-[#E94B3C]/10 text-[#a82a1e]",
+  Lesson: "border-l-[#7CB342] bg-[#7CB342]/12 text-[#3d5c22] dark:text-[#b8e086]",
+  FieldTrip: "border-l-[#7E57C2] bg-[#7E57C2]/12 text-[#51308a] dark:text-[#c4b5fd]",
+  AssignmentWindow: "border-l-[#FDD835] bg-[#FDD835]/18 text-[#8A7200] dark:text-[#fde047]",
+  MentorCheckIn: "border-l-[#E94B3C] bg-primary/10 text-primary",
 };
 
 /** Solid dot color per kind for the legend and month chips. */
@@ -42,7 +42,7 @@ const KIND_DOT: Record<ClassSessionKind, string> = {
   Lesson: "bg-[#7CB342]",
   FieldTrip: "bg-[#7E57C2]",
   AssignmentWindow: "bg-[#FDD835]",
-  MentorCheckIn: "bg-[#E94B3C]",
+  MentorCheckIn: "bg-primary",
 };
 
 type ParsedSession = { session: ClassSession; start: Date; end: Date };
@@ -308,9 +308,9 @@ function MiniMonth({
   }, [sessions]);
 
   return (
-    <div className="shrink-0 border-b border-[#E5E5E0] p-4 lg:w-[256px] lg:border-b-0 lg:border-r">
+    <div className="shrink-0 border-b border-border p-4 lg:w-[256px] lg:border-b-0 lg:border-r">
       <div className="mb-2 flex items-center justify-between">
-        <p className="text-sm font-bold text-[#2D2D2D]">
+        <p className="text-sm font-bold text-foreground">
           Tháng {displayMonth.getMonth() + 1}, {displayMonth.getFullYear()}
         </p>
         <div className="flex items-center gap-1">
@@ -318,7 +318,7 @@ function MiniMonth({
             type="button"
             onClick={() => setDisplayMonth((m) => addMonths(m, -1))}
             aria-label="Tháng trước"
-            className="flex size-7 items-center justify-center rounded-md text-[#6B6B6B] transition hover:bg-[#F5F5F0]"
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
           >
             <ChevronLeft className="size-4" />
           </button>
@@ -326,7 +326,7 @@ function MiniMonth({
             type="button"
             onClick={() => setDisplayMonth((m) => addMonths(m, 1))}
             aria-label="Tháng sau"
-            className="flex size-7 items-center justify-center rounded-md text-[#6B6B6B] transition hover:bg-[#F5F5F0]"
+            className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted"
           >
             <ChevronRight className="size-4" />
           </button>
@@ -337,7 +337,7 @@ function MiniMonth({
         {WEEKDAY_LABELS.map((label) => (
           <span
             key={label}
-            className="py-1 text-center text-[10px] font-semibold uppercase text-[#9A9A94]"
+            className="py-1 text-center text-[10px] font-semibold uppercase text-muted-foreground"
           >
             {label}
           </span>
@@ -355,12 +355,12 @@ function MiniMonth({
               className={cn(
                 "relative mx-auto flex size-8 items-center justify-center rounded-full text-xs font-medium tabular-nums transition",
                 isSelected
-                  ? "bg-[#E94B3C] font-bold text-white"
+                  ? "bg-primary font-bold text-white"
                   : isToday
-                    ? "font-bold text-[#E94B3C] ring-1 ring-inset ring-[#E94B3C]/40"
+                    ? "font-bold text-primary ring-1 ring-inset ring-primary/40"
                     : inMonth
-                      ? "text-[#2D2D2D] hover:bg-[#F5F5F0]"
-                      : "text-[#B5B5AF] hover:bg-[#F5F5F0]",
+                      ? "text-foreground hover:bg-muted"
+                      : "text-muted-foreground hover:bg-muted",
               )}
             >
               {day.getDate()}
@@ -368,7 +368,7 @@ function MiniMonth({
                 <span
                   className={cn(
                     "absolute bottom-1 size-1 rounded-full",
-                    isSelected ? "bg-white" : "bg-[#E94B3C]",
+                    isSelected ? "bg-primary-foreground" : "bg-primary",
                   )}
                 />
               ) : null}
@@ -427,7 +427,7 @@ function CalendarToolbar({
   }, [sessions, anchor]);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-[#E5E5E0] bg-[#FAFAF5]/70 px-6 py-4">
+    <div className="flex flex-col gap-3 border-b border-border bg-background/70 px-6 py-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-2">
           <Button
@@ -439,8 +439,8 @@ function CalendarToolbar({
             aria-pressed={showMini}
             title={showMini ? "Ẩn mini lịch" : "Hiện mini lịch"}
             className={cn(
-              "size-9 rounded-lg border-[#D8D8D2]",
-              showMini && "bg-[#F5F5F0] text-[#2D2D2D]",
+              "size-9 rounded-lg border-border",
+              showMini && "bg-muted text-foreground",
             )}
           >
             {showMini ? (
@@ -455,7 +455,7 @@ function CalendarToolbar({
             size="icon"
             onClick={onPrev}
             aria-label="Trước"
-            className="size-9 rounded-lg border-[#D8D8D2]"
+            className="size-9 rounded-lg border-border"
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -463,7 +463,7 @@ function CalendarToolbar({
             type="button"
             variant="outline"
             onClick={onToday}
-            className="h-9 rounded-lg border-[#D8D8D2] px-3 text-sm font-semibold"
+            className="h-9 rounded-lg border-border px-3 text-sm font-semibold"
           >
             Hôm nay
           </Button>
@@ -473,17 +473,17 @@ function CalendarToolbar({
             size="icon"
             onClick={onNext}
             aria-label="Sau"
-            className="size-9 rounded-lg border-[#D8D8D2]"
+            className="size-9 rounded-lg border-border"
           >
             <ChevronRight className="size-4" />
           </Button>
-          <p className="ml-1 flex items-center gap-2 text-sm font-semibold text-[#2D2D2D]">
-            <CalendarDays className="size-4 text-[#E94B3C]" />
+          <p className="ml-1 flex items-center gap-2 text-sm font-semibold text-foreground">
+            <CalendarDays className="size-4 text-primary" />
             {rangeLabel}
           </p>
         </div>
 
-        <div className="flex items-center self-start rounded-xl border border-[#D8D8D2] bg-white p-1 lg:self-auto">
+        <div className="flex items-center self-start rounded-xl border border-border bg-card p-1 lg:self-auto">
           {(Object.keys(VIEW_LABELS) as CalendarView[]).map((key) => (
             <button
               key={key}
@@ -493,8 +493,8 @@ function CalendarToolbar({
               className={cn(
                 "h-8 rounded-lg px-3 text-sm font-semibold transition",
                 view === key
-                  ? "bg-[#E94B3C] text-white"
-                  : "text-[#6B6B6B] hover:bg-[#F5F5F0]",
+                  ? "bg-primary text-white"
+                  : "text-muted-foreground hover:bg-muted",
               )}
             >
               {VIEW_LABELS[key]}
@@ -508,7 +508,7 @@ function CalendarToolbar({
           {presentKinds.map((kind) => (
             <span
               key={kind}
-              className="flex items-center gap-1.5 text-xs font-medium text-[#6B6B6B]"
+              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
             >
               <span className={cn("size-2.5 rounded-full", KIND_DOT[kind])} />
               {CLASS_SESSION_KIND_LABELS[kind]}
@@ -637,11 +637,11 @@ function TimeGrid({
         {/* Day header row */}
         <div
           className={cn(
-            "sticky top-0 z-30 grid border-b border-[#E5E5E0] bg-white",
+            "sticky top-0 z-30 grid border-b border-border bg-card",
             gridColsClass,
           )}
         >
-          <div className="sticky left-0 z-10 bg-white" />
+          <div className="sticky left-0 z-10 bg-card" />
           {days.map((day) => {
             const weekdayIndex = (day.getDay() + 6) % 7;
             const isToday = isSameDay(day, today);
@@ -651,26 +651,26 @@ function TimeGrid({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 border-l border-[#E5E5E0] py-2",
+                  "flex flex-col items-center gap-0.5 border-l border-border py-2",
                   isToday
-                    ? "bg-[#E94B3C]/5"
+                    ? "bg-primary/5"
                     : isWeekend
-                      ? "bg-[#FAFAF5]/60"
+                      ? "bg-background/60"
                       : undefined,
                 )}
               >
-                <span className="text-xs font-medium uppercase tracking-wider text-[#6B6B6B]">
+                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                   {WEEKDAY_LABELS[weekdayIndex]}
                 </span>
                 <span
                   className={cn(
                     "flex size-7 items-center justify-center rounded-full text-sm font-bold tabular-nums",
-                    isToday ? "bg-[#E94B3C] text-white" : "text-[#2D2D2D]",
+                    isToday ? "bg-primary text-white" : "text-foreground",
                   )}
                 >
                   {day.getDate()}
                 </span>
-                <span className="h-3.5 text-[10px] font-medium tabular-nums text-[#9A9A94]">
+                <span className="h-3.5 text-[10px] font-medium tabular-nums text-muted-foreground">
                   {count > 0 ? `${count} buổi` : ""}
                 </span>
               </div>
@@ -681,14 +681,14 @@ function TimeGrid({
         {/* Time grid */}
         <div className={cn("grid", gridColsClass)}>
           <div
-            className="sticky left-0 z-10 bg-white"
+            className="sticky left-0 z-10 bg-card"
             style={{ height: gridHeight }}
           >
             {hours.map((hour, i) => (
               <div
                 key={hour}
                 className={cn(
-                  "absolute right-2 text-xs font-medium tabular-nums text-[#9A9A94]",
+                  "absolute right-2 text-xs font-medium tabular-nums text-muted-foreground",
                   i === 0 ? "top-0" : "-translate-y-1/2",
                 )}
                 style={{ top: i * HOUR_PX }}
@@ -707,12 +707,12 @@ function TimeGrid({
                 key={day.toISOString()}
                 onClick={(event) => handleColumnClick(event, day)}
                 className={cn(
-                  "relative border-l border-[#E5E5E0]",
+                  "relative border-l border-border",
                   onCreateAt && "cursor-copy",
                   isToday
-                    ? "bg-[#E94B3C]/[0.03]"
+                    ? "bg-primary/[0.03]"
                     : isWeekend
-                      ? "bg-[#FAFAF5]/50"
+                      ? "bg-background/50"
                       : undefined,
                 )}
                 style={{ height: gridHeight }}
@@ -720,7 +720,7 @@ function TimeGrid({
                 {hours.map((hour, i) => (
                   <div
                     key={hour}
-                    className="pointer-events-none absolute inset-x-0 border-t border-[#EFEFEA]"
+                    className="pointer-events-none absolute inset-x-0 border-t border-border"
                     style={{ top: i * HOUR_PX }}
                   />
                 ))}
@@ -730,8 +730,8 @@ function TimeGrid({
                     className="pointer-events-none absolute inset-x-0 z-20 flex items-center"
                     style={{ top: nowTop }}
                   >
-                    <span className="-ml-1 size-2 shrink-0 rounded-full bg-[#E94B3C]" />
-                    <span className="h-px flex-1 bg-[#E94B3C]" />
+                    <span className="-ml-1 size-2 shrink-0 rounded-full bg-primary" />
+                    <span className="h-px flex-1 bg-primary" />
                   </div>
                 ) : null}
 
@@ -749,11 +749,11 @@ function TimeGrid({
                       }}
                       title={`${item.session.title || "Chưa đặt tiêu đề"} · ${clock(item.start)}–${clock(item.end)}`}
                       className={cn(
-                        "group absolute flex flex-col overflow-hidden rounded-lg border-l-[3px] px-2 py-1 text-left transition hover:z-10 hover:shadow-[0_4px_14px_rgba(45,45,45,0.12)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E94B3C]/40",
+                        "group absolute flex flex-col overflow-hidden rounded-lg border-l-[3px] px-2 py-1 text-left transition hover:z-10 hover:shadow-[0_4px_14px_rgba(45,45,45,0.12)] focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
                         KIND_STYLES[item.session.sessionKind],
                         isCancelled && "opacity-50 line-through",
                         isFocused &&
-                          "z-30 animate-pulse ring-2 ring-[#E94B3C] ring-offset-1 shadow-[0_6px_18px_rgba(233,75,60,0.28)]",
+                          "z-30 animate-pulse ring-2 ring-primary ring-offset-1 shadow-[0_6px_18px_rgba(233,75,60,0.28)]",
                       )}
                       style={{
                         top: Math.max(0, item.top),
@@ -833,11 +833,11 @@ function MonthGrid({
 
   return (
     <div className="p-4">
-      <div className="grid grid-cols-7 border-b border-[#E5E5E0]">
+      <div className="grid grid-cols-7 border-b border-border">
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="py-2 text-center text-xs font-semibold uppercase tracking-wider text-[#6B6B6B]"
+            className="py-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
           >
             {label}
           </div>
@@ -856,10 +856,10 @@ function MonthGrid({
               key={day.toISOString()}
               onClick={() => handleDayCreate(day)}
               className={cn(
-                "min-h-[104px] border-b border-l border-[#E5E5E0] p-1.5 [&:nth-child(7n)]:border-r-0",
+                "min-h-[104px] border-b border-l border-border p-1.5 [&:nth-child(7n)]:border-r-0",
                 onCreateAt && "cursor-copy",
-                !isCurrentMonth && "bg-[#FAFAF5]/50",
-                isWeekend && isCurrentMonth && "bg-[#FAFAF5]/40",
+                !isCurrentMonth && "bg-background/50",
+                isWeekend && isCurrentMonth && "bg-background/40",
               )}
             >
               <div className="mb-1 flex justify-end">
@@ -867,10 +867,10 @@ function MonthGrid({
                   className={cn(
                     "flex size-6 items-center justify-center rounded-full text-xs font-bold tabular-nums",
                     isToday
-                      ? "bg-[#E94B3C] text-white"
+                      ? "bg-primary text-white"
                       : isCurrentMonth
-                        ? "text-[#2D2D2D]"
-                        : "text-[#B5B5AF]",
+                        ? "text-foreground"
+                        : "text-muted-foreground",
                   )}
                 >
                   {day.getDate()}
@@ -890,10 +890,10 @@ function MonthGrid({
                       }}
                       title={`${item.session.title || "Chưa đặt tiêu đề"} · ${clock(item.start)}`}
                       className={cn(
-                        "flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition hover:bg-[#F5F5F0]",
+                        "flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition hover:bg-muted",
                         isCancelled && "opacity-50 line-through",
                         isFocused &&
-                          "animate-pulse bg-[#E94B3C]/10 ring-1 ring-[#E94B3C]",
+                          "animate-pulse bg-primary/10 ring-1 ring-primary",
                       )}
                     >
                       <span
@@ -902,17 +902,17 @@ function MonthGrid({
                           KIND_DOT[item.session.sessionKind],
                         )}
                       />
-                      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-[#6B6B6B]">
+                      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">
                         {clock(item.start)}
                       </span>
-                      <span className="truncate text-[11px] font-medium text-[#2D2D2D]">
+                      <span className="truncate text-[11px] font-medium text-foreground">
                         {item.session.title || "Chưa đặt tiêu đề"}
                       </span>
                     </button>
                   );
                 })}
                 {items.length > MONTH_MAX_CHIPS ? (
-                  <span className="block px-1.5 text-[10px] font-semibold text-[#9A9A94]">
+                  <span className="block px-1.5 text-[10px] font-semibold text-muted-foreground">
                     +{items.length - MONTH_MAX_CHIPS} buổi khác
                   </span>
                 ) : null}

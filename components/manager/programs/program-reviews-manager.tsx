@@ -68,7 +68,7 @@ function getReviewSortLabel(sortId: string): string {
 
 function ReviewCardSkeleton() {
   return (
-    <div className="rounded-xl border border-[#E5E5E0] bg-white p-4">
+    <div className="rounded-xl border border-border bg-card p-4">
       <div className="flex gap-3">
         <Skeleton className="size-9 shrink-0 rounded-full" />
         <div className="flex-1 space-y-2">
@@ -98,13 +98,13 @@ type ManagerReviewCardProps = {
 
 function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
   return (
-    <article className="flex h-full flex-col rounded-xl border border-[#E5E5E0] bg-white p-4 shadow-[0_2px_12px_rgba(45,45,45,0.04)]">
+    <article className="flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-[0_2px_12px_rgba(45,45,45,0.04)]">
       <div className="flex gap-3">
         <Avatar size="sm" className="mt-0.5 size-9 shrink-0">
           {review.studentAvatarUrl ? (
             <AvatarImage src={review.studentAvatarUrl} alt="" />
           ) : null}
-          <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
+          <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
             {getInitials(review.studentName)}
           </AvatarFallback>
         </Avatar>
@@ -112,12 +112,12 @@ function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
         <div className="min-w-0 flex-1">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#2D2D2D]">
+              <p className="truncate text-sm font-semibold text-foreground">
                 {review.studentName}
               </p>
               <time
                 dateTime={review.createdAt}
-                className="text-xs text-[#6B6B6B] tabular-nums"
+                className="text-xs text-muted-foreground tabular-nums"
               >
                 {formatReviewDate(review.createdAt)}
               </time>
@@ -129,7 +129,7 @@ function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
               size="icon"
               onClick={() => onDelete(review)}
               aria-label={`Xóa đánh giá của ${review.studentName}`}
-              className="size-8 shrink-0 rounded-lg text-[#6B6B6B] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]"
+              className="size-8 shrink-0 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
             >
               <Trash2 className="size-4" aria-hidden />
             </Button>
@@ -142,9 +142,9 @@ function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
       </div>
 
       {review.comment ? (
-        <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-[#6B6B6B]">
+        <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
           <span
-            className="font-serif text-lg leading-none text-[#E5E5E0]"
+            className="font-serif text-lg leading-none text-border"
             aria-hidden
           >
             &ldquo;
@@ -221,13 +221,13 @@ export function ProgramReviewsManager({
   const reviews = data?.items ?? [];
 
   return (
-    <div className="space-y-0 rounded-xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+    <div className="space-y-0 rounded-xl border border-border bg-card p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-heading text-lg font-semibold text-[#2D2D2D]">
+          <h2 className="font-heading text-lg font-semibold text-foreground">
             Đánh giá từ học viên
           </h2>
-          <p className="mt-1 text-sm text-[#6B6B6B]">
+          <p className="mt-1 text-sm text-muted-foreground">
             Xem ai đã đánh giá {programName}. Bạn có thể xóa đánh giá vi phạm,
             không thể chỉnh sửa nội dung.
           </p>
@@ -236,19 +236,19 @@ export function ProgramReviewsManager({
         <div className="flex items-center gap-2.5">
           {programRating != null ? (
             <>
-              <span className="font-heading text-xl font-bold text-[#2D2D2D] tabular-nums">
+              <span className="font-heading text-xl font-bold text-foreground tabular-nums">
                 {programRating.toFixed(1)}
               </span>
               <StarRating rating={programRating} size={14} />
             </>
           ) : null}
-          <span className="text-sm text-[#6B6B6B]">
+          <span className="text-sm text-muted-foreground">
             {totalReviews.toLocaleString("vi-VN")} đánh giá
           </span>
         </div>
       </div>
 
-      <div className="mt-4 flex items-center justify-end border-b border-[#E5E5E0] pb-4">
+      <div className="mt-4 flex items-center justify-end border-b border-border pb-4">
         <Select value={sortId} onValueChange={handleSortChange}>
           <SelectTrigger className={LIGHT_SELECT_TRIGGER} size="default">
             <span className="truncate">{getReviewSortLabel(sortId)}</span>
@@ -274,7 +274,7 @@ export function ProgramReviewsManager({
 
       {hasError ? (
         <div className="py-10 text-center">
-          <p className="text-sm text-[#6B6B6B]">
+          <p className="text-sm text-muted-foreground">
             Không tải được đánh giá. Vui lòng thử lại.
           </p>
           <Button
@@ -319,7 +319,7 @@ export function ProgramReviewsManager({
           hasNext={data.hasNext}
           onPageChange={handlePageChange}
           theme="light"
-          className="border-t border-[#E5E5E0] pt-2"
+          className="border-t border-border pt-2"
         />
       ) : null}
 

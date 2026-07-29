@@ -79,11 +79,11 @@ function StatusDot({
   isOnCurrentPath: boolean;
 }) {
   if (isLocked) {
-    return <Lock className="size-3 shrink-0 text-[#9A9A9A]" strokeWidth={2.25} aria-hidden />;
+    return <Lock className="size-3 shrink-0 text-learn-muted" strokeWidth={2.25} aria-hidden />;
   }
   if (status === "completed" || status === "submitted") {
     return (
-      <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-[#7CB342]/20 text-[#5a7a32]">
+      <span className="flex size-3.5 shrink-0 items-center justify-center rounded-full bg-learn-success/20 text-learn-success">
         <Check className="size-2.5" strokeWidth={3} aria-hidden />
       </span>
     );
@@ -91,14 +91,14 @@ function StatusDot({
   if (isOnCurrentPath || status === "current" || status === "in_progress") {
     return (
       <span
-        className="size-2.5 shrink-0 rounded-full bg-[#E94B3C]"
+        className="size-2.5 shrink-0 rounded-full bg-learn-primary"
         aria-hidden
       />
     );
   }
   return (
     <span
-      className="size-2 shrink-0 rounded-full bg-[#D8D2C6]"
+      className="size-2 shrink-0 rounded-full bg-learn-border"
       aria-hidden
     />
   );
@@ -141,12 +141,12 @@ export function MindMapNodeCard({
         aria-label={`${kindLabel}: ${node.label}${progress != null ? `, ${progress}%` : ""}`}
         className={cn(
           "absolute flex -translate-x-1/2 -translate-y-1/2 flex-col items-center justify-center gap-1 rounded-full px-3 text-center",
-          "border-[2.5px] border-dotted border-[#2D2D2D] bg-white text-[#2D2D2D]",
-          "shadow-[0_10px_24px_-12px_rgba(45,45,45,0.28),0_0_0_8px_rgba(45,45,39,0.05)]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7] focus-visible:ring-offset-2",
+          "border-[2.5px] border-dotted border-learn-text-strong bg-learn-surface text-learn-text-strong",
+          "shadow-[0_10px_24px_-12px_color-mix(in_srgb,var(--learn-text-strong)_28%,transparent),0_0_0_8px_color-mix(in_srgb,var(--learn-text-strong)_5%,transparent)]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent focus-visible:ring-offset-2",
           "active:scale-[0.98]",
           isSelected &&
-            "border-[#E94B3C] shadow-[0_10px_24px_-12px_rgba(233,75,60,0.3),0_0_0_8px_rgba(233,75,60,0.1)]",
+            "border-learn-primary shadow-[0_10px_24px_-12px_color-mix(in_srgb,var(--learn-primary)_30%,transparent),0_0_0_8px_color-mix(in_srgb,var(--learn-primary)_10%,transparent)]",
         )}
         style={{
           left: node.x,
@@ -156,7 +156,7 @@ export function MindMapNodeCard({
         }}
       >
         <Compass
-          className="size-5 shrink-0 text-[#E94B3C]"
+          className="size-5 shrink-0 text-learn-primary"
           strokeWidth={2.2}
           aria-hidden
         />
@@ -180,13 +180,13 @@ export function MindMapNodeCard({
           aria-pressed={isSelected}
           aria-label={`${kindLabel}: ${node.label}, ${tone.label}`}
           className={cn(
-            "flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-2xl border bg-white px-3 py-2.5 text-center",
-            "shadow-[0_4px_14px_-10px_rgba(45,45,45,0.28)]",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7] focus-visible:ring-offset-2",
+            "flex min-h-11 w-full flex-col items-center justify-center gap-1 rounded-2xl border bg-learn-surface px-3 py-2.5 text-center",
+            "shadow-[0_4px_14px_-10px_color-mix(in_srgb,var(--learn-text-strong)_28%,transparent)]",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent focus-visible:ring-offset-2",
             "active:scale-[0.98]",
             node.isLocked && "opacity-60",
             isSelected && "ring-2 ring-offset-1",
-            node.isOnCurrentPath && !isSelected && "border-[#E94B3C]/70",
+            node.isOnCurrentPath && !isSelected && "border-learn-primary/70",
           )}
           style={{
             borderColor: node.isOnCurrentPath ? undefined : branchColor,
@@ -197,9 +197,9 @@ export function MindMapNodeCard({
         >
           <ModuleIcon
             moduleType={node.module?.moduleInfo.moduleType}
-            color={node.isOnCurrentPath ? "#E94B3C" : branchColor}
+            color={node.isOnCurrentPath ? "var(--learn-primary)" : branchColor}
           />
-          <span className="line-clamp-2 font-heading text-[13px] font-bold leading-snug tracking-tight text-[#2D2D2D]">
+          <span className="line-clamp-2 font-heading text-[13px] font-bold leading-snug tracking-tight text-learn-text-strong">
             {node.label}
           </span>
           <StatusDot
@@ -237,10 +237,10 @@ export function MindMapNodeCard({
           aria-label={`${kindLabel}: ${node.label}, ${tone.label}`}
           className={cn(
             "flex min-h-9 w-full items-center gap-2 rounded-lg px-1.5 py-1.5 text-left",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7] focus-visible:ring-offset-1",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent focus-visible:ring-offset-1",
             "active:scale-[0.98]",
-            "hover:bg-white/70",
-            isSelected && "bg-white ring-2 ring-[#E94B3C]/25",
+            "hover:bg-learn-surface/70",
+            isSelected && "bg-learn-surface ring-2 ring-learn-primary/25",
             node.isLocked && "opacity-55",
           )}
         >
@@ -251,9 +251,9 @@ export function MindMapNodeCard({
           />
           <span
             className={cn(
-              "line-clamp-2 min-w-0 flex-1 font-heading text-[12px] font-semibold leading-snug tracking-tight text-[#3A3A3A]",
-              node.isOnCurrentPath && "font-bold text-[#C62828]",
-              node.status === "completed" && "text-[#5a7a32]",
+              "line-clamp-2 min-w-0 flex-1 font-heading text-[12px] font-semibold leading-snug tracking-tight text-learn-text",
+              node.isOnCurrentPath && "font-bold text-learn-primary",
+              node.status === "completed" && "text-learn-success",
             )}
           >
             {node.label}
@@ -275,12 +275,12 @@ export function MindMapNodeCard({
         aria-pressed={isSelected}
         aria-label={`${kindLabel}: ${node.label}, ${tone.label}`}
         className={cn(
-          "flex min-h-10 w-full items-center gap-2 rounded-xl border border-[#E8E2D8] bg-white/90 px-2.5 py-2 text-left",
-          "shadow-[0_2px_10px_-8px_rgba(45,45,45,0.25)]",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7] focus-visible:ring-offset-2",
+          "flex min-h-10 w-full items-center gap-2 rounded-xl border border-learn-border bg-learn-surface/90 px-2.5 py-2 text-left",
+          "shadow-[0_2px_10px_-8px_color-mix(in_srgb,var(--learn-text-strong)_25%,transparent)]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent focus-visible:ring-offset-2",
           "active:scale-[0.98]",
-          isSelected && "border-[#E94B3C] ring-2 ring-[#E94B3C]/15",
-          node.isOnCurrentPath && !isSelected && "border-[#E94B3C]/50",
+          isSelected && "border-learn-primary ring-2 ring-learn-primary/15",
+          node.isOnCurrentPath && !isSelected && "border-learn-primary/50",
           node.isLocked && "opacity-60",
         )}
       >
@@ -291,8 +291,8 @@ export function MindMapNodeCard({
         />
         <span
           className={cn(
-            "line-clamp-2 min-w-0 flex-1 font-heading text-[12px] font-bold leading-snug tracking-tight text-[#2D2D2D]",
-            node.isOnCurrentPath && "text-[#C62828]",
+            "line-clamp-2 min-w-0 flex-1 font-heading text-[12px] font-bold leading-snug tracking-tight text-learn-text-strong",
+            node.isOnCurrentPath && "text-learn-primary",
           )}
         >
           {node.label}
@@ -332,10 +332,10 @@ function ExpandButton({
       aria-label={isExpanded ? `Thu gọn ${label}` : `Mở rộng ${label}`}
       className={cn(
         "absolute top-1/2 z-10 flex size-6 -translate-y-1/2 items-center justify-center rounded-full",
-        "border border-[#E5E5E0] bg-white text-[11px] font-bold text-[#2D2D2D]",
-        "shadow-[0_2px_6px_-3px_rgba(45,45,45,0.3)]",
-        "hover:bg-[#F5F5F0]",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+        "border border-learn-border bg-learn-surface text-[11px] font-bold text-learn-text-strong",
+        "shadow-[0_2px_6px_-3px_color-mix(in_srgb,var(--learn-text-strong)_30%,transparent)]",
+        "hover:bg-learn-surface-2",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent",
         side === "right" ? "-right-3" : "-left-3",
       )}
     >

@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Bell, Search } from "lucide-react";
 
+import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -91,13 +92,13 @@ export function ManagerHeader({
   });
 
   return (
-    <header className="flex h-16 shrink-0 items-center justify-between border-b border-[#E5E5E0] bg-white px-4 transition-[width,height] ease-linear">
+    <header className="flex h-16 shrink-0 items-center justify-between border-b border-border bg-card px-4 transition-[width,height] ease-linear">
       {/* Left section: Sidebar trigger & Breadcrumbs */}
       <div className="flex items-center gap-2">
-        <SidebarTrigger className="-ml-1 text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]" />
+        <SidebarTrigger className="-ml-1 text-muted-foreground hover:text-foreground hover:bg-muted" />
         <Separator
           orientation="vertical"
-          className="mr-2 data-[orientation=vertical]:h-4 bg-[#E5E5E0]"
+          className="mr-2 data-[orientation=vertical]:h-4 bg-border"
         />
         <Breadcrumb>
           <BreadcrumbList>
@@ -109,16 +110,16 @@ export function ManagerHeader({
 
                 return (
                   <React.Fragment key={item.url}>
-                    {index > 0 && <BreadcrumbSeparator className="text-[#6B6B6B]/60" />}
+                    {index > 0 && <BreadcrumbSeparator className="text-muted-foreground/60" />}
                     <BreadcrumbItem>
                       {item.isLast ? (
-                        <BreadcrumbPage className="font-heading font-semibold text-[#2D2D2D]">
+                        <BreadcrumbPage className="font-heading font-semibold text-foreground">
                           {displayLabel}
                         </BreadcrumbPage>
                       ) : (
                         <BreadcrumbLink
                           render={<Link href={item.url} />}
-                          className="font-heading text-[#6B6B6B] hover:text-[#E94B3C] transition-colors"
+                          className="font-heading text-muted-foreground hover:text-primary transition-colors"
                         >
                           {displayLabel}
                         </BreadcrumbLink>
@@ -137,23 +138,24 @@ export function ManagerHeader({
           variant="ghost"
           size="icon"
           onClick={onOpenCommand}
-          className="size-9 rounded-full text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+          className="size-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
           aria-label="Tìm kiếm (⌘K)"
           title="Tìm kiếm (⌘K)"
         >
           <Search className="size-5" />
         </Button>
-        <kbd className="pointer-events-none hidden h-7 select-none items-center gap-1 rounded-md border border-[#E5E5E0] bg-[#FAFAF5] px-2 font-mono text-[10px] font-medium text-[#6B6B6B] sm:inline-flex">
+        <kbd className="pointer-events-none hidden h-7 select-none items-center gap-1 rounded-md border border-border bg-background px-2 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
           ⌘K
         </kbd>
+        <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
         <Button
           variant="ghost"
           size="icon"
-          className="relative size-9 rounded-full text-[#6B6B6B] hover:text-[#2D2D2D] hover:bg-[#F5F5F0]"
+          className="relative size-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
           aria-label="Thông báo"
         >
           <Bell className="size-5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-[#E94B3C]" />
+          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
         </Button>
       </div>
     </header>

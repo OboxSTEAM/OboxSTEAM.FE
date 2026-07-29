@@ -60,7 +60,7 @@ export function AssignExistingExpertDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogPopup className="max-w-2xl gap-0 p-0">
-        <DialogHeader className="border-b border-[#E8E8E3] px-6 py-5 pr-14">
+        <DialogHeader className="border-b border-border px-6 py-5 pr-14">
           <DialogTitle>Gán chuyên gia có sẵn</DialogTitle>
           <DialogDescription>
             Chọn một chuyên gia để tham gia chương trình {programName}.
@@ -70,12 +70,12 @@ export function AssignExistingExpertDialog({
 
         <div className="space-y-5 px-6 py-5">
           <div className="relative">
-            <Search className="pointer-events-none absolute left-3.5 top-3.5 size-4 text-[#7A7A74]" />
+            <Search className="pointer-events-none absolute left-3.5 top-3.5 size-4 text-muted-foreground" />
             <Input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Tìm theo tên, mã hoặc tổ chức..."
-              className="h-11 rounded-xl border-[#D8D8D2] pl-10 focus-visible:ring-[#4FC3F7]/40"
+              className="h-11 rounded-xl border-border pl-10 focus-visible:ring-ring/40"
             />
           </div>
 
@@ -84,16 +84,16 @@ export function AssignExistingExpertDialog({
               [0, 1, 2].map((item) => (
                 <div
                   key={item}
-                  className="h-16 animate-pulse rounded-xl bg-[#F5F5F0]"
+                  className="h-16 animate-pulse rounded-xl bg-muted"
                 />
               ))
             ) : availableExperts.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-[#D8D8D2] px-5 py-10 text-center">
-                <UserRoundPlus className="mx-auto size-7 text-[#9A9A94]" />
-                <p className="mt-3 text-sm font-semibold text-[#2D2D2D]">
+              <div className="rounded-xl border border-dashed border-border px-5 py-10 text-center">
+                <UserRoundPlus className="mx-auto size-7 text-muted-foreground" />
+                <p className="mt-3 text-sm font-semibold text-foreground">
                   Không có chuyên gia phù hợp
                 </p>
-                <p className="mt-1 text-xs text-[#6B6B6B]">
+                <p className="mt-1 text-xs text-muted-foreground">
                   Các chuyên gia đã tham gia chương trình sẽ không xuất hiện tại đây.
                 </p>
               </div>
@@ -107,25 +107,25 @@ export function AssignExistingExpertDialog({
                     type="button"
                     onClick={() => setSelectedExpertId(expert.id)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/40",
+                      "flex w-full items-center gap-3 rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                       selected
                         ? "border-[#4FC3F7] bg-[#4FC3F7]/8"
-                        : "border-[#E5E5E0] bg-white hover:bg-[#FAFAF5]",
+                        : "border-border bg-card hover:bg-background",
                     )}
                   >
-                    <Avatar className="size-10 border border-[#E5E5E0]">
+                    <Avatar className="size-10 border border-border">
                       {avatarUrl ? (
                         <AvatarImage src={avatarUrl} alt={expert.fullName} />
                       ) : null}
-                      <AvatarFallback className="bg-[#4FC3F7]/12 text-xs font-bold text-[#0D6E9C]">
+                      <AvatarFallback className="bg-[#4FC3F7]/12 text-xs font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
                         {getExpertInitials(expert.fullName)}
                       </AvatarFallback>
                     </Avatar>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-semibold text-[#2D2D2D]">
+                      <span className="block truncate text-sm font-semibold text-foreground">
                         {expert.fullName || "Chưa cập nhật tên"}
                       </span>
-                      <span className="block truncate text-xs text-[#6B6B6B]">
+                      <span className="block truncate text-xs text-muted-foreground">
                         {[expert.code, expert.title, expert.organization]
                           .filter(Boolean)
                           .join(" · ")}
@@ -135,8 +135,8 @@ export function AssignExistingExpertDialog({
                       className={cn(
                         "size-4 rounded-full border-2",
                         selected
-                          ? "border-[#E94B3C] bg-[#E94B3C] shadow-[inset_0_0_0_3px_white]"
-                          : "border-[#B8B8B2]",
+                          ? "border-primary bg-primary shadow-[inset_0_0_0_3px_white]"
+                          : "border-input",
                       )}
                     />
                   </button>
@@ -153,18 +153,18 @@ export function AssignExistingExpertDialog({
               onChange={(event) => setRoleInBoard(event.target.value)}
               placeholder="Ví dụ: Cố vấn chương trình"
               maxLength={255}
-              className="h-11 rounded-xl border-[#D8D8D2] focus-visible:ring-[#4FC3F7]/40"
+              className="h-11 rounded-xl border-border focus-visible:ring-ring/40"
             />
           </div>
         </div>
 
-        <DialogFooter className="border-t border-[#E8E8E3] px-6 py-4">
+        <DialogFooter className="border-t border-border px-6 py-4">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="h-11 rounded-xl border-[#D8D8D2] px-5"
+            className="h-11 rounded-xl border-border px-5"
           >
             Hủy
           </Button>
@@ -176,7 +176,7 @@ export function AssignExistingExpertDialog({
                 void onSubmit(selectedExpertId, roleInBoard.trim());
               }
             }}
-            className="h-11 rounded-xl bg-[#E94B3C] px-6 font-semibold text-white hover:bg-[#D94134]"
+            className="h-11 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90"
           >
             {isSubmitting ? "Đang gán..." : "Gán vào chương trình"}
           </Button>

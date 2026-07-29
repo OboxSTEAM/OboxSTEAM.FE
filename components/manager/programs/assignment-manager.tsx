@@ -142,14 +142,14 @@ export function AssignmentManager() {
         className: "max-w-xs",
         render: (row) => (
           <div className="flex items-center gap-2.5">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E5E0] bg-white text-[#f59e0b]">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-[#f59e0b]">
               <ClipboardList className="size-4" />
             </span>
             <div className="min-w-0">
-              <p className="truncate font-semibold text-[#2D2D2D]">
+              <p className="truncate font-semibold text-foreground">
                 {row.title ?? "—"}
               </p>
-              <p className="truncate text-[11px] text-[#6B6B6B]">
+              <p className="truncate text-[11px] text-muted-foreground">
                 {row.code || "Không mã"}
               </p>
             </div>
@@ -159,19 +159,19 @@ export function AssignmentManager() {
       {
         header: "Loại",
         render: (row) => (
-          <span className="inline-flex rounded-full bg-[#F5F5F0] px-2.5 py-0.5 text-xs font-semibold text-[#2D2D2D]">
+          <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold text-foreground">
             {TYPE_LABELS[row.assignmentType] ?? row.assignmentType}
           </span>
         ),
       },
       {
         header: "Module",
-        className: "max-w-[180px] truncate text-[#2D2D2D]",
+        className: "max-w-[180px] truncate text-foreground",
         render: (row) => row.moduleName ?? "—",
       },
       {
         header: "Chương trình",
-        className: "max-w-[180px] truncate text-[#6B6B6B]",
+        className: "max-w-[180px] truncate text-muted-foreground",
         render: (row) => row.programName ?? "—",
       },
       {
@@ -188,7 +188,7 @@ export function AssignmentManager() {
                   href={assignmentEditHref(row.programId, row.moduleId, row.id)}
                 />
               }
-              className="size-8 rounded-lg text-[#6B6B6B] hover:bg-[#F5F5F0]"
+              className="size-8 rounded-lg text-muted-foreground hover:bg-muted"
               title="Mở trong khung chương trình"
             >
               <Edit2 className="size-4" />
@@ -197,7 +197,7 @@ export function AssignmentManager() {
               variant="ghost"
               size="icon"
               onClick={() => setDeleteTarget(row)}
-              className="size-8 rounded-lg text-[#E94B3C] hover:bg-[#E94B3C]/10"
+              className="size-8 rounded-lg text-primary hover:bg-primary/10"
               title="Xóa bài tập"
             >
               <Trash2 className="size-4" />
@@ -219,7 +219,7 @@ export function AssignmentManager() {
         <Button
           type="button"
           onClick={() => setCreateOpen(true)}
-          className="h-11 gap-2 rounded-xl bg-[#E94B3C] px-5 font-semibold text-white hover:bg-[#D94134] active:scale-[0.98]"
+          className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
         >
           <Plus className="size-4" />
           Tạo bài tập
@@ -227,25 +227,25 @@ export function AssignmentManager() {
       </ManagerPageHeader>
 
       <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-xl border border-[#E5E5E0] bg-white shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-[#E5E5E0] bg-white px-6 py-5">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-border bg-card px-6 py-5">
             <div className="relative w-full">
-              <Search className="absolute top-2.5 left-3.5 size-4 text-[#6B6B6B]" />
+              <Search className="absolute top-2.5 left-3.5 size-4 text-muted-foreground" />
               <Input
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Tìm theo tiêu đề, mã, module, chương trình…"
-                className="h-10 rounded-xl border-[#E5E5E0] bg-[#FAFAF5]/50 pr-8 pl-10 text-sm text-[#2D2D2D] focus-visible:ring-[#4FC3F7]"
+                className="h-10 rounded-xl border-border bg-background/50 pr-8 pl-10 text-sm text-foreground focus-visible:ring-ring"
               />
               {search ? (
                 <button
                   type="button"
                   onClick={() => handleSearchChange("")}
-                  className="absolute top-3 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#4FC3F7]"
+                  className="absolute top-3 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
                   aria-label="Xóa tìm kiếm"
                 >
-                  <X className="size-4 text-[#6B6B6B]" />
+                  <X className="size-4 text-muted-foreground" />
                 </button>
               ) : null}
             </div>
@@ -322,7 +322,7 @@ export function AssignmentManager() {
                     setIsDescending((v) => !v);
                     setPage(1);
                   }}
-                  className="h-9 gap-1.5 rounded-lg border-[#E5E5E0] px-3 text-xs font-semibold text-[#2D2D2D] hover:bg-[#F5F5F0]"
+                  className="h-9 gap-1.5 rounded-lg border-border px-3 text-xs font-semibold text-foreground hover:bg-muted"
                   title={isDescending ? "Đang giảm dần" : "Đang tăng dần"}
                 >
                   {isDescending ? (
@@ -344,7 +344,7 @@ export function AssignmentManager() {
                     setAssignmentType("all");
                     setPage(1);
                   }}
-                  className="h-9 gap-1.5 rounded-lg px-3 text-xs font-semibold text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                  className="h-9 gap-1.5 rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <X className="size-3.5" />
                   Xóa bộ lọc
@@ -353,7 +353,7 @@ export function AssignmentManager() {
             </div>
           </div>
 
-          <div className="bg-white p-6">
+          <div className="bg-card p-6">
             <ManagerDataTable
               columns={columns}
               data={assignments}

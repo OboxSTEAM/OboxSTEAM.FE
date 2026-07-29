@@ -200,11 +200,11 @@ export function CurriculumNav({
             "mt-3 flex min-h-11 w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-colors",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-learn-accent",
             mainView === "mind-map"
-              ? "border-[#E94B3C]/40 bg-[#E94B3C]/08"
+              ? "border-learn-primary/40 bg-learn-primary/8"
               : "border-learn-border bg-learn-surface hover:bg-learn-surface-2",
           )}
         >
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-[#E94B3C]/10 text-[#E94B3C]">
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-learn-primary/10 text-learn-primary">
             <Map className="size-4" aria-hidden />
           </span>
           <span className="min-w-0 flex-1">

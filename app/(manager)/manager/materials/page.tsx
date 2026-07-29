@@ -30,9 +30,9 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import {
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
-  LIGHT_SELECT_TRIGGER,
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
 } from "@/components/programs/program-select-styles";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -161,12 +161,12 @@ export default function ManagerMaterialsPage() {
         return (
           <div className="flex items-center gap-2.5">
             <span
-              className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#E5E5E0] bg-white"
+              className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-card"
               style={{ color }}
             >
               <Icon className="size-4" />
             </span>
-            <span className="truncate font-semibold text-[#2D2D2D]">
+            <span className="truncate font-semibold text-foreground">
               {row.title ?? "—"}
             </span>
           </div>
@@ -189,17 +189,17 @@ export default function ManagerMaterialsPage() {
     },
     {
       header: "Hoạt động",
-      className: "max-w-[180px] truncate text-[#2D2D2D]",
+      className: "max-w-[180px] truncate text-foreground",
       render: (row) => row.activityName ?? "—",
     },
     {
       header: "Khóa học",
-      className: "max-w-[180px] truncate text-[#6B6B6B]",
+      className: "max-w-[180px] truncate text-muted-foreground",
       render: (row) => row.courseName ?? "—",
     },
     {
       header: "Chương trình",
-      className: "max-w-[180px] truncate text-[#6B6B6B]",
+      className: "max-w-[180px] truncate text-muted-foreground",
       render: (row) => row.programName ?? "—",
     },
     {
@@ -209,8 +209,8 @@ export default function ManagerMaterialsPage() {
         const { date, time } = splitUploadedAt(row.uploadedAt);
         return (
           <div className="flex flex-col leading-tight">
-            <span className="font-medium text-[#2D2D2D]">{date}</span>
-            {time ? <span className="text-xs text-[#6B6B6B]">{time}</span> : null}
+            <span className="font-medium text-foreground">{date}</span>
+            {time ? <span className="text-xs text-muted-foreground">{time}</span> : null}
           </div>
         );
       },
@@ -225,7 +225,7 @@ export default function ManagerMaterialsPage() {
             size="icon"
             nativeButton={false}
             render={<Link href={editHref(row)} />}
-            className="size-8 rounded-lg text-[#6B6B6B] hover:bg-[#F5F5F0]"
+            className="size-8 rounded-lg text-muted-foreground hover:bg-muted"
             title="Sửa tài liệu trong hoạt động"
           >
             <Edit2 className="size-4" />
@@ -256,16 +256,16 @@ export default function ManagerMaterialsPage() {
       />
 
       <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-xl border border-[#E5E5E0] bg-white shadow-sm">
-          <div className="flex flex-col gap-4 border-b border-[#E5E5E0] bg-white px-6 py-5">
+        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+          <div className="flex flex-col gap-4 border-b border-border bg-card px-6 py-5">
             <div className="relative w-full">
-              <Search className="absolute top-2.5 left-3.5 size-4 text-[#6B6B6B]" />
+              <Search className="absolute top-2.5 left-3.5 size-4 text-muted-foreground" />
               <Input
                 type="text"
                 value={search}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 placeholder="Tìm theo tên tài liệu, hoạt động, khóa học, chương trình..."
-                className="h-10 rounded-xl border-[#E5E5E0] bg-[#FAFAF5]/50 pr-8 pl-10 text-sm text-[#2D2D2D] focus-visible:ring-[#4FC3F7]"
+                className="h-10 rounded-xl border-border bg-background/50 pr-8 pl-10 text-sm text-foreground focus-visible:ring-[#4FC3F7]"
               />
               {search ? (
                 <button
@@ -273,7 +273,7 @@ export default function ManagerMaterialsPage() {
                   className="absolute top-3 right-3 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-[#4FC3F7]"
                   aria-label="Xóa tìm kiếm"
                 >
-                  <X className="size-4 text-[#6B6B6B]" />
+                  <X className="size-4 text-muted-foreground" />
                 </button>
               ) : null}
             </div>
@@ -288,19 +288,19 @@ export default function ManagerMaterialsPage() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className={LIGHT_SELECT_TRIGGER}>
+                  <SelectTrigger className={THEME_SELECT_TRIGGER}>
                     <span className="truncate">
                       {materialType === "all"
                         ? "Tất cả loại tài liệu"
                         : visualFor(materialType).label}
                     </span>
                   </SelectTrigger>
-                  <SelectContent className={LIGHT_SELECT_CONTENT} align="start" sideOffset={8}>
-                    <SelectItem value="all" className={LIGHT_SELECT_ITEM}>
+                  <SelectContent className={THEME_SELECT_CONTENT} align="start" sideOffset={8}>
+                    <SelectItem value="all" className={THEME_SELECT_ITEM}>
                       Tất cả loại tài liệu
                     </SelectItem>
                     {MATERIAL_TYPE_ORDER.map((mt) => (
-                      <SelectItem key={mt} value={mt} className={LIGHT_SELECT_ITEM}>
+                      <SelectItem key={mt} value={mt} className={THEME_SELECT_ITEM}>
                         {visualFor(mt).label}
                       </SelectItem>
                     ))}
@@ -315,14 +315,14 @@ export default function ManagerMaterialsPage() {
                     setPage(1);
                   }}
                 >
-                  <SelectTrigger className={LIGHT_SELECT_TRIGGER}>
+                  <SelectTrigger className={THEME_SELECT_TRIGGER}>
                     <span className="truncate">
                       Sắp xếp: {SORT_OPTIONS.find((o) => o.value === sortBy)?.label ?? "Ngày tải"}
                     </span>
                   </SelectTrigger>
-                  <SelectContent className={LIGHT_SELECT_CONTENT} align="start" sideOffset={8}>
+                  <SelectContent className={THEME_SELECT_CONTENT} align="start" sideOffset={8}>
                     {SORT_OPTIONS.map((o) => (
-                      <SelectItem key={o.value} value={o.value} className={LIGHT_SELECT_ITEM}>
+                      <SelectItem key={o.value} value={o.value} className={THEME_SELECT_ITEM}>
                         {o.label}
                       </SelectItem>
                     ))}
@@ -337,7 +337,7 @@ export default function ManagerMaterialsPage() {
                     setIsDescending((v) => !v);
                     setPage(1);
                   }}
-                  className="h-9 gap-1.5 rounded-lg border-[#E5E5E0] px-3 text-xs font-semibold text-[#2D2D2D] hover:bg-[#F5F5F0]"
+                  className="h-9 gap-1.5 rounded-lg border-border px-3 text-xs font-semibold text-foreground hover:bg-muted"
                   title={isDescending ? "Đang giảm dần" : "Đang tăng dần"}
                 >
                   {isDescending ? (
@@ -359,7 +359,7 @@ export default function ManagerMaterialsPage() {
                     setMaterialType("all");
                     setPage(1);
                   }}
-                  className="h-9 gap-1.5 rounded-lg px-3 text-xs font-semibold text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                  className="h-9 gap-1.5 rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"
                 >
                   <X className="size-3.5" />
                   Xóa bộ lọc
@@ -368,7 +368,7 @@ export default function ManagerMaterialsPage() {
             </div>
           </div>
 
-          <div className="bg-white p-6">
+          <div className="bg-card p-6">
             <ManagerDataTable
               columns={columns}
               data={materials}

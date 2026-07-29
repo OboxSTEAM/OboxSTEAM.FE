@@ -339,7 +339,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
           onOpenChange={setIsClassPickerOpen}
           programId={programId}
           programEnrollmentId={enrollment.id}
-          programName={enrollment.name}
+          programName={enrollment.name ?? undefined}
           onEnrolled={(classId) => void handleClassEnrolled(classId)}
         />
       </>
@@ -364,7 +364,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         onOpenChange={setIsClassPickerOpen}
         programId={programId}
         programEnrollmentId={enrollment.id}
-        programName={enrollment.name}
+        programName={enrollment.name ?? undefined}
         onEnrolled={(classId) => void handleClassEnrolled(classId)}
       />
     </>

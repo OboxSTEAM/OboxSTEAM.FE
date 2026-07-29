@@ -1653,7 +1653,7 @@ function CustomSectionEditable({
                     <Button
                       type="button"
                       variant="ghost"
-                      className="rounded-xl text-[#E94B3C] hover:bg-[#E94B3C]/10 hover:text-[#E94B3C]"
+                      className="rounded-xl text-primary hover:bg-primary/10 hover:text-primary"
                       onClick={removeEditingAsset}
                     >
                       <Trash2 className="size-3.5" />

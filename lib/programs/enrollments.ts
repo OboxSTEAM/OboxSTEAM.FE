@@ -16,6 +16,11 @@ export type ProgramDetailEnrollmentCta =
       kind: "complete-payment";
       label: string;
       subtext: string;
+    }
+  | {
+      kind: "deferred";
+      label: string;
+      subtext: string;
     };
 
 export function findEnrollmentForProgram(
@@ -54,7 +59,11 @@ export const PROGRAM_DETAIL_ENROLLMENTS_LOOKUP_QUERY: MyProgramEnrollmentsQuery 
 export function resolveProgramDetailEnrollmentCta(
   enrollment: ProgramEnrollment | null,
 ): ProgramDetailEnrollmentCta {
-  if (!enrollment || enrollment.status === "Cancelled") {
+  if (
+    !enrollment ||
+    enrollment.status === "Dropped" ||
+    enrollment.status === "Failed"
+  ) {
     return { kind: "enroll" };
   }
 
@@ -64,6 +73,12 @@ export function resolveProgramDetailEnrollmentCta(
         kind: "complete-payment",
         label: "Hoàn tất thanh toán",
         subtext: "Đăng ký của bạn đang chờ thanh toán.",
+      };
+    case "Deferred":
+      return {
+        kind: "deferred",
+        label: "Đang tạm hoãn",
+        subtext: "Chương trình của bạn đang tạm dừng. Liên hệ hỗ trợ nếu cần.",
       };
     case "Completed":
       return {
@@ -88,10 +103,12 @@ export const PROGRAM_ENROLLMENT_STATUS_LABELS: Record<
   ProgramEnrollmentStatus,
   string
 > = {
-  Active: "Đang học",
   PendingPayment: "Chờ thanh toán",
+  Active: "Đang học",
+  Deferred: "Tạm hoãn",
   Completed: "Hoàn thành",
-  Cancelled: "Đã hủy",
+  Failed: "Không đạt",
+  Dropped: "Đã hủy",
 };
 
 export const DEFAULT_MY_ENROLLMENTS_QUERY: MyProgramEnrollmentsQuery = {

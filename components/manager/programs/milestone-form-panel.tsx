@@ -15,9 +15,9 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import {
-  LIGHT_SELECT_TRIGGER,
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import {
   createResearchMilestone,
@@ -39,17 +39,17 @@ import {
 } from "@/lib/curriculum/datetime";
 
 const W = {
-  surface: "#f4f1ea",
-  border: "#d8d2c6",
-  textStrong: "#2d2b27",
-  muted: "#6b6b6b",
-  faint: "#8c8678",
+  surface: "var(--card)",
+  border: "var(--border)",
+  textStrong: "var(--foreground)",
+  muted: "var(--muted-foreground)",
+  faint: "var(--muted-foreground)",
   accent: "#4fc3f7",
-  primary: "#e94b3c",
+  primary: "var(--primary)",
 } as const;
 
 const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-[#4FC3F7]/50 bg-white";
+  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 function STitle({ children }: { children: React.ReactNode }) {
   return (
@@ -267,14 +267,14 @@ export function MilestoneFormPanel({
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
-              <textarea rows={2} {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+              <textarea rows={2} {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
             <div className="col-span-2 flex items-center gap-2">
               <Controller
                 name="isCapstone"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox id="capstone" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-[#8c8678] bg-white data-checked:border-primary" />
+                  <Checkbox id="capstone" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                 )}
               />
               <Label htmlFor="capstone" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>
@@ -317,15 +317,15 @@ export function MilestoneFormPanel({
                 control={control}
                 render={({ field }) => (
                   <Select value={field.value} onValueChange={field.onChange} disabled={isEdit}>
-                    <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg", isEdit && "opacity-60")} style={{ borderColor: W.border }}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg", isEdit && "opacity-60")}>
                       <span className="truncate">
                         {field.value === "Quiz" ? "Trắc nghiệm" : field.value === "Retrospective" ? "Nhật ký phản tư" : "Nộp tệp"}
                       </span>
                     </SelectTrigger>
-                    <SelectContent className={LIGHT_SELECT_CONTENT}>
-                      <SelectItem value="FileUpload" className={LIGHT_SELECT_ITEM}>Nộp tệp</SelectItem>
-                      <SelectItem value="Retrospective" className={LIGHT_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
-                      <SelectItem value="Quiz" className={LIGHT_SELECT_ITEM}>Trắc nghiệm</SelectItem>
+                    <SelectContent className={THEME_SELECT_CONTENT}>
+                      <SelectItem value="FileUpload" className={THEME_SELECT_ITEM}>Nộp tệp</SelectItem>
+                      <SelectItem value="Retrospective" className={THEME_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
+                      <SelectItem value="Quiz" className={THEME_SELECT_ITEM}>Trắc nghiệm</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -333,7 +333,7 @@ export function MilestoneFormPanel({
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả sản phẩm</Label>
-              <textarea rows={2} {...register("assignmentDescription")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-white focus:ring-1 focus:ring-[#4FC3F7]/50" style={{ borderColor: W.border }} />
+              <textarea rows={2} {...register("assignmentDescription")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Điểm tối đa</Label>
@@ -380,7 +380,7 @@ export function MilestoneFormPanel({
           disabled={busy || ok}
           className={cn(
             "h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
-            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-[#E94B3C] hover:bg-[#d43f33]",
+            ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90",
           )}
         >
           {ok ? (
@@ -456,7 +456,7 @@ function MilestoneActivityLinker({
           {linked.map((la) => (
             <li
               key={la.id}
-              className="flex items-center gap-2 rounded-lg border bg-white px-3 py-2"
+              className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2"
               style={{ borderColor: W.border }}
             >
               <Link2 className="size-3.5 shrink-0" style={{ color: W.accent }} />
@@ -464,7 +464,7 @@ function MilestoneActivityLinker({
                 {la.activityTitle || la.activityCode || la.activityId}
               </span>
               {la.isRequiredForSubmission && (
-                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "#fdecea", color: W.primary }}>
+                <span className="rounded-full px-2 py-0.5 text-[10px] font-semibold" style={{ background: "rgba(233,75,60,0.12)", color: W.primary }}>
                   Bắt buộc
                 </span>
               )}
@@ -472,7 +472,7 @@ function MilestoneActivityLinker({
                 type="button"
                 onClick={() => handleUnlink(la.activityId)}
                 disabled={busy}
-                className="flex size-7 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-red-50"
+                className="flex size-7 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10"
                 style={{ borderColor: W.border, color: W.primary }}
                 title="Gỡ liên kết"
               >
@@ -491,17 +491,17 @@ function MilestoneActivityLinker({
         <div className="flex items-end gap-2">
           <div className="min-w-0 flex-1">
             <Select value={picked || "none"} onValueChange={(v) => setPicked(!v || v === "none" ? "" : v)}>
-              <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg")} style={{ borderColor: W.border }}>
+              <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
                 <span className="truncate">
                   {picked ? options.find((o) => o.id === picked)?.name ?? "Chọn hoạt động" : "Chọn hoạt động"}
                 </span>
               </SelectTrigger>
-              <SelectContent className={LIGHT_SELECT_CONTENT}>
-                <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
+              <SelectContent className={THEME_SELECT_CONTENT}>
+                <SelectItem value="none" className={THEME_SELECT_ITEM}>
                   Chọn hoạt động
                 </SelectItem>
                 {options.map((o) => (
-                  <SelectItem key={o.id} value={o.id} className={LIGHT_SELECT_ITEM}>
+                  <SelectItem key={o.id} value={o.id} className={THEME_SELECT_ITEM}>
                     {o.name}
                   </SelectItem>
                 ))}
@@ -509,7 +509,7 @@ function MilestoneActivityLinker({
             </Select>
           </div>
           <label className="flex items-center gap-1.5 pb-2 text-xs font-medium" style={{ color: W.muted }}>
-            <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} className="border-[#8c8678] bg-white data-checked:border-primary" />
+            <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} className="border-input bg-background data-checked:border-primary" />
             Bắt buộc
           </label>
           <Button

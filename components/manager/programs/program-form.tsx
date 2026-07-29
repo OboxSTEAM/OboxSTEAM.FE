@@ -68,10 +68,10 @@ const STATUSES = [
 ] as const;
 
 // ── Field styles ──────────────────────────────────────────────────────────
-const LBL = "text-xs font-semibold text-[#6B6B6B] mb-1.5 block uppercase tracking-wider";
-const ERR_CLS = "text-[11px] text-[#E94B3C] mt-1 flex items-center gap-1 font-medium";
-const INPUT_CLS = "h-9 rounded-lg border-[#DDDDD8] bg-white text-sm text-[#2D2D2D] focus-visible:ring-[#4FC3F7]/50 placeholder:text-[#B8B8B2]";
-const TEXTAREA_CLS = "w-full rounded-lg border border-[#DDDDD8] bg-white px-3 py-2 text-sm text-[#2D2D2D] outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/40 focus-visible:border-[#4FC3F7] resize-none placeholder:text-[#B8B8B2]";
+const LBL = "text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wider";
+const ERR_CLS = "text-[11px] text-primary mt-1 flex items-center gap-1 font-medium";
+const INPUT_CLS = "h-9 rounded-lg border-input bg-card text-sm text-foreground focus-visible:ring-ring/50 placeholder:text-muted-foreground";
+const TEXTAREA_CLS = "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring resize-none placeholder:text-muted-foreground";
 
 function FieldError({ message }: { message?: string }) {
   if (!message) return null;
@@ -86,7 +86,7 @@ function FieldError({ message }: { message?: string }) {
 // ── Section Title ─────────────────────────────────────────────────────────
 function FormSectionTitle({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-sm font-bold text-[#1A1A1A] uppercase tracking-wider mb-4">
+    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
       {children}
     </h3>
   );
@@ -147,21 +147,21 @@ export function ProgramForm({
 
       {/* ── Top: Image panel (Hero Banner) ─────────────────────────── */}
       <Collapsible open={isImageOpen} onOpenChange={setIsImageOpen}>
-        <div className="rounded-2xl border border-[#E8E8E3] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
           <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-4 text-left">
             <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">
+              <p className="text-sm font-bold uppercase tracking-wider text-foreground">
                 Ảnh chương trình
               </p>
               {!isImageOpen ? (
-                <p className="mt-1 text-xs text-[#8C8C8A]">
+                <p className="mt-1 text-xs text-muted-foreground">
                   {thumbUrl ? "Đã có ảnh đại diện" : "Chưa có ảnh đại diện"}
                 </p>
               ) : null}
             </div>
             <ChevronDown
               className={cn(
-                "size-4 shrink-0 text-[#6B6B6B] transition-transform duration-200",
+                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
                 isImageOpen && "rotate-180",
               )}
             />
@@ -171,7 +171,7 @@ export function ProgramForm({
             <div className="flex flex-col md:flex-row gap-5 items-start">
           {/* Thumbnail preview - Wide banner aspect ratio */}
           <div
-            className="relative w-full md:w-2/3 overflow-hidden rounded-xl border border-[#E0E0DA] bg-[#FAFAF9]"
+            className="relative w-full md:w-2/3 overflow-hidden rounded-xl border border-border bg-muted"
             style={{ aspectRatio: "21/9" }}
           >
             {thumbUrl ? (
@@ -186,14 +186,14 @@ export function ProgramForm({
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-[#2D2D2D] shadow hover:bg-[#F5F5F0]"
+                    className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow hover:bg-muted"
                   >
                     <Upload className="size-3.5" />
                     Thay thế
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-lg bg-[#E94B3C] px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-[#d43f33]"
+                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary/90"
                   >
                     <Trash2 className="size-3.5" />
                     Xóa
@@ -208,7 +208,7 @@ export function ProgramForm({
                 >
                   <ImageOff className="size-6" style={{ color: catColor }} />
                 </div>
-                <p className="text-center text-[11px] text-[#8C8C8A] leading-relaxed">
+                <p className="text-center text-[11px] text-muted-foreground leading-relaxed">
                   Xem trước ảnh bằng cách nhập URL bên phải hoặc ở dưới
                 </p>
               </div>
@@ -228,15 +228,15 @@ export function ProgramForm({
               <FieldError message={errors.thumbnailUrl?.message} />
             </div>
 
-            <p className="text-xs text-[#8C8C8A] leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed">
               Bạn có thể dán link hình ảnh chất lượng cao vào ô trên để thay đổi ảnh nền đại diện của chương trình học này.
             </p>
 
             {/* STEAM category accent strip */}
             {category && (
-              <div className="flex items-center gap-2 rounded-lg bg-[#FAFAF9] px-3 py-2 border border-[#E8E8E3] w-fit">
+              <div className="flex items-center gap-2 rounded-lg bg-muted px-3 py-2 border border-border w-fit">
                 <span className="size-2 rounded-full shrink-0" style={{ background: catColor }} />
-                <span className="text-xs font-semibold text-[#555]">
+                <span className="text-xs font-semibold text-foreground">
                   {CATEGORIES.find((item) => item.value === category)?.label ?? category}
                 </span>
               </div>
@@ -248,7 +248,7 @@ export function ProgramForm({
       </Collapsible>
 
       {/* ── Bottom: Combined form box with dividers ───────────────── */}
-      <div className="rounded-2xl border border-[#E8E8E3] bg-white p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)] space-y-6">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-[0_1px_4px_rgba(0,0,0,0.04)] space-y-6">
 
         {/* Section 1: General info */}
         <div>
@@ -256,14 +256,14 @@ export function ProgramForm({
           <div className="space-y-4">
             <div>
               <label className={LBL}>
-                Tên chương trình học <span className="text-[#E94B3C]">*</span>
+                Tên chương trình học <span className="text-primary">*</span>
               </label>
               <Input
                 id="name"
                 placeholder="Ví dụ: STEAM Robotics Cơ bản"
                 {...register("name")}
                 aria-invalid={!!errors.name}
-                className={cn(INPUT_CLS, errors.name && "border-[#E94B3C] focus-visible:ring-[#E94B3C]/30")}
+                className={cn(INPUT_CLS, errors.name && "border-primary focus-visible:ring-primary/30")}
               />
               <FieldError message={errors.name?.message} />
             </div>
@@ -271,28 +271,28 @@ export function ProgramForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={LBL}>
-                  Tên Series <span className="text-[#E94B3C]">*</span>
+                  Tên Series <span className="text-primary">*</span>
                 </label>
                 <Input
                   id="seriesName"
                   placeholder="Ví dụ: Obox Kids"
                   {...register("seriesName")}
                   aria-invalid={!!errors.seriesName}
-                  className={cn(INPUT_CLS, errors.seriesName && "border-[#E94B3C]")}
+                  className={cn(INPUT_CLS, errors.seriesName && "border-primary")}
                 />
                 <FieldError message={errors.seriesName?.message} />
               </div>
 
               <div>
                 <label className={LBL}>
-                  Mã chương trình <span className="text-[#E94B3C]">*</span>
+                  Mã chương trình <span className="text-primary">*</span>
                 </label>
                 <Input
                   id="code"
                   placeholder="PROG101"
                   {...register("code")}
                   aria-invalid={!!errors.code}
-                  className={cn(INPUT_CLS, "font-mono", errors.code && "border-[#E94B3C]")}
+                  className={cn(INPUT_CLS, "font-mono", errors.code && "border-primary")}
                 />
                 <FieldError message={errors.code?.message} />
               </div>
@@ -300,7 +300,7 @@ export function ProgramForm({
 
             <div>
               <label className={LBL}>
-                Mô tả chương trình <span className="text-[#E94B3C]">*</span>
+                Mô tả chương trình <span className="text-primary">*</span>
               </label>
               <textarea
                 id="description"
@@ -308,14 +308,14 @@ export function ProgramForm({
                 placeholder="Mô tả mục tiêu, nội dung và đối tượng học viên của chương trình..."
                 {...register("description")}
                 aria-invalid={!!errors.description}
-                className={cn(TEXTAREA_CLS, errors.description && "border-[#E94B3C]")}
+                className={cn(TEXTAREA_CLS, errors.description && "border-primary")}
               />
               <FieldError message={errors.description?.message} />
             </div>
           </div>
         </div>
 
-        <hr className="border-[#F0F0EC]" />
+        <hr className="border-border" />
 
         {/* Section 2: Classification & Config */}
         <div>
@@ -324,7 +324,7 @@ export function ProgramForm({
             {/* Category Chips row */}
             <div>
               <label className={LBL}>
-                Thể loại STEAM <span className="text-[#E94B3C]">*</span>
+                Thể loại STEAM <span className="text-primary">*</span>
               </label>
               <Controller
                 name="category"
@@ -336,18 +336,18 @@ export function ProgramForm({
                       
                       const activeBg =
                         cat.value === "Science"
-                          ? "border-[#E94B3C]/40 bg-[#E94B3C]/10 text-[#c62828]"
+                          ? "border-primary/40 bg-primary/10 text-[#c62828]"
                           : cat.value === "Technology"
                           ? "border-[#7CB342]/40 bg-[#7CB342]/10 text-[#33691e]"
                           : cat.value === "Engineering"
-                          ? "border-[#4FC3F7]/40 bg-[#4FC3F7]/10 text-[#0d6e9c]"
+                          ? "border-[#4FC3F7]/40 bg-[#4FC3F7]/10 text-[#0d6e9c] dark:text-[#7dd3fc]"
                           : cat.value === "Mathematic"
-                          ? "border-[#7E57C2]/40 bg-[#7E57C2]/10 text-[#51308a]"
+                          ? "border-[#7E57C2]/40 bg-[#7E57C2]/10 text-[#51308a] dark:text-[#c4b5fd]"
                           : "border-[#FDD835]/40 bg-[#FDD835]/10 text-[#f57f17]";
                           
                       const circleBg =
                         cat.value === "Science"
-                          ? "bg-[#E94B3C] text-white"
+                          ? "bg-primary text-white"
                           : cat.value === "Technology"
                           ? "bg-[#7CB342] text-white"
                           : cat.value === "Engineering"
@@ -377,13 +377,13 @@ export function ProgramForm({
                             "hover:-translate-y-px hover:shadow-[0_4px_12px_rgba(0,0,0,0.05)] active:scale-[0.98]",
                             isActive
                               ? activeBg
-                              : "border-[#E5E5E0] bg-[#FAFAF5]/50 text-[#6B6B6B] hover:border-[#E5E5E0] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                              : "border-border bg-background/50 text-muted-foreground hover:border-border hover:bg-muted hover:text-foreground"
                           )}
                         >
                           <span
                             className={cn(
                               "flex size-5 shrink-0 items-center justify-center rounded-full font-heading text-[10px] font-bold transition-all",
-                              isActive ? circleBg : "bg-white border border-[#E5E5E0] shadow-sm"
+                              isActive ? circleBg : "bg-card border border-border shadow-sm"
                             )}
                             style={!isActive ? { color: cat.color } : undefined}
                           >
@@ -402,14 +402,14 @@ export function ProgramForm({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={LBL}>
-                  Độ khó <span className="text-[#E94B3C]">*</span>
+                  Độ khó <span className="text-primary">*</span>
                 </label>
                 <Controller
                   name="level"
                   control={control}
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg border-[#DDDDD8] text-sm w-full")}>
+                      <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg border-input text-sm w-full")}>
                         <span className="truncate">
                           {LEVELS.find((l) => l.value === field.value)?.label ?? field.value}
                         </span>
@@ -429,14 +429,14 @@ export function ProgramForm({
 
               <div>
                 <label className={LBL}>
-                  Trạng thái <span className="text-[#E94B3C]">*</span>
+                  Trạng thái <span className="text-primary">*</span>
                 </label>
                 <Controller
                   name="status"
                   control={control}
                   render={({ field }) => (
                     <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg border-[#DDDDD8] text-sm w-full")}>
+                      <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg border-input text-sm w-full")}>
                         <span className="truncate flex items-center gap-2">
                           {(() => {
                             const stat = STATUSES.find((s) => s.value === field.value);
@@ -471,13 +471,13 @@ export function ProgramForm({
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={LBL}>Thời lượng dự kiến <span className="text-[#E94B3C]">*</span></label>
+                <label className={LBL}>Thời lượng dự kiến <span className="text-primary">*</span></label>
                 <Input
                   id="estimatedDuration"
                   placeholder="Ví dụ: 12 tuần (24 giờ)"
                   {...register("estimatedDuration")}
                   aria-invalid={!!errors.estimatedDuration}
-                  className={cn(INPUT_CLS, errors.estimatedDuration && "border-[#E94B3C]")}
+                  className={cn(INPUT_CLS, errors.estimatedDuration && "border-primary")}
                 />
                 <FieldError message={errors.estimatedDuration?.message} />
               </div>
@@ -485,21 +485,21 @@ export function ProgramForm({
           </div>
         </div>
 
-        <hr className="border-[#F0F0EC]" />
+        <hr className="border-border" />
 
         <Collapsible open={isAdvancedOpen} onOpenChange={setIsAdvancedOpen}>
           <CollapsibleTrigger className="group flex min-h-11 w-full items-center justify-between gap-4 text-left">
             <div>
-              <p className="text-sm font-bold uppercase tracking-wider text-[#1A1A1A]">
+              <p className="text-sm font-bold uppercase tracking-wider text-foreground">
                 Thiết lập bổ sung
               </p>
-              <p className="mt-1 text-xs font-normal normal-case tracking-normal text-[#8C8C8A]">
+              <p className="mt-1 text-xs font-normal normal-case tracking-normal text-muted-foreground">
                 Học phí và kỹ năng đạt được
               </p>
             </div>
             <ChevronDown
               className={cn(
-                "size-4 shrink-0 text-[#6B6B6B] transition-transform duration-200",
+                "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
                 isAdvancedOpen && "rotate-180",
               )}
             />
@@ -511,36 +511,36 @@ export function ProgramForm({
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className={LBL}>
-                    Học phí (VND) <span className="text-[#E94B3C]">*</span>
+                    Học phí (VND) <span className="text-primary">*</span>
                   </label>
                   <div className="relative">
-                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-[#8C8C8A]">₫</span>
+                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">₫</span>
                     <Input
                       id="price"
                       type="number"
                       placeholder="0"
                       {...register("price", { valueAsNumber: true })}
                       aria-invalid={!!errors.price}
-                      className={cn(INPUT_CLS, "pl-7 font-mono", errors.price && "border-[#E94B3C]")}
+                      className={cn(INPUT_CLS, "pl-7 font-mono", errors.price && "border-primary")}
                     />
                   </div>
                   <FieldError message={errors.price?.message} />
                 </div>
                 <div className="flex items-end pb-1.5">
-                  <p className="text-xs leading-relaxed text-[#8C8C8A]">
+                  <p className="text-xs leading-relaxed text-muted-foreground">
                     Học phí nhập bằng VND. Không cần thêm ký hiệu đơn vị tiền tệ.
                   </p>
                 </div>
               </div>
             </div>
 
-            <hr className="border-[#F0F0EC]" />
+            <hr className="border-border" />
 
             <div>
               <FormSectionTitle>Kỹ năng đạt được</FormSectionTitle>
               <div>
                 <label className={LBL}>
-                  Kỹ năng đạt được <span className="text-[#E94B3C]">*</span>
+                  Kỹ năng đạt được <span className="text-primary">*</span>
                 </label>
                 <textarea
                   id="skillsGained"
@@ -548,7 +548,7 @@ export function ProgramForm({
                   placeholder="Liệt kê các kỹ năng học viên đạt được sau khoá học (mỗi kỹ năng một dòng hoặc phân cách bằng dấu phẩy)..."
                   {...register("skillsGained")}
                   aria-invalid={!!errors.skillsGained}
-                  className={cn(TEXTAREA_CLS, errors.skillsGained && "border-[#E94B3C]")}
+                  className={cn(TEXTAREA_CLS, errors.skillsGained && "border-primary")}
                 />
                 <FieldError message={errors.skillsGained?.message} />
               </div>

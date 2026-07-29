@@ -73,7 +73,7 @@ type NavItem = {
 /**
  * - Parent group label navigates (e.g. Chương trình học → list).
  * - Chevron alone expands/collapses children.
- * - Module / Course / Activity deep-link into the open program via ?node=.
+ * - Chương trình deep-links into the open program via ?node= when focused.
  */
 function resolveNavHref(item: NavItem, programId: string | null): string {
   if (item.focus === "program") {
@@ -171,14 +171,14 @@ function CollapsibleMenuGroup({
           className={cn(
             "w-full justify-center rounded-lg transition-all duration-200",
             isGroupActive
-              ? "bg-[#E94B3C]/10 text-[#E94B3C] font-semibold"
-              : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
+              ? "bg-primary/10 text-primary font-semibold"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground",
           )}
         >
           <item.icon
             className={cn(
               "size-4 shrink-0",
-              isGroupActive ? "text-[#E94B3C]" : "text-[#6B6B6B]",
+              isGroupActive ? "text-primary" : "text-muted-foreground",
             )}
           />
           <span className="sr-only">{item.title}</span>
@@ -197,7 +197,7 @@ function CollapsibleMenuGroup({
       <div
         className={cn(
           "flex w-full items-center gap-0.5 rounded-lg transition-colors",
-          isGroupActive ? "bg-[#E94B3C]/10" : "hover:bg-[#F5F5F0]",
+          isGroupActive ? "bg-primary/10" : "hover:bg-muted",
         )}
       >
         <Link
@@ -206,14 +206,14 @@ function CollapsibleMenuGroup({
           className={cn(
             "flex min-w-0 flex-1 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
             isGroupActive
-              ? "font-semibold text-[#E94B3C]"
-              : "text-[#6B6B6B] hover:text-[#2D2D2D]",
+              ? "font-semibold text-primary"
+              : "text-muted-foreground hover:text-foreground",
           )}
         >
           <item.icon
             className={cn(
               "size-4 shrink-0",
-              isGroupActive ? "text-[#E94B3C]" : "text-[#6B6B6B]",
+              isGroupActive ? "text-primary" : "text-muted-foreground",
             )}
           />
           <span className="truncate">{item.title}</span>
@@ -223,7 +223,7 @@ function CollapsibleMenuGroup({
           aria-label={open ? `Thu gọn ${item.title}` : `Mở ${item.title}`}
           aria-expanded={open}
           onClick={() => setOpen((v) => !v)}
-          className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-[#6B6B6B] transition-colors hover:bg-[#E5E5E0]/60 hover:text-[#2D2D2D]"
+          className="mr-1 flex size-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-border/60 hover:text-foreground"
         >
           <ChevronRight
             className={cn(
@@ -234,7 +234,7 @@ function CollapsibleMenuGroup({
         </button>
       </div>
       <CollapsibleContent>
-        <SidebarMenuSub className="ml-4 my-1 space-y-0.5 border-l border-[#E5E5E0]/60 pl-2">
+        <SidebarMenuSub className="ml-4 my-1 space-y-0.5 border-l border-border/60 pl-2">
           {item.items?.map((subItem) => {
             const href = resolveNavHref(subItem, programId);
             const isSubActive = isNavItemActive(
@@ -251,8 +251,8 @@ function CollapsibleMenuGroup({
                   className={cn(
                     "flex w-full items-center gap-2 rounded-md px-3 py-1.5 text-[13px] transition-all duration-150",
                     isSubActive
-                      ? "bg-[#E94B3C]/10 font-semibold text-[#E94B3C]"
-                      : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
+                      ? "bg-primary/10 font-semibold text-primary"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground",
                   )}
                 >
                   <span>{subItem.title}</span>
@@ -295,9 +295,6 @@ export function ManagerSidebar() {
           icon: BookOpen,
           items: [
             { title: "Chương trình", url: "/manager/programs", focus: "program" as const },
-            { title: "Module", url: "/manager/programs", focus: "module" as const },
-            { title: "Khóa học", url: "/manager/programs", focus: "course" as const },
-            { title: "Hoạt động", url: "/manager/programs", focus: "activity" as const },
             { title: "Tài liệu", url: "/manager/materials" },
             { title: "Ngân hàng câu hỏi", url: "/manager/question-bank" },
             { title: "Milestone nghiên cứu", url: "/manager/milestones" },
@@ -325,8 +322,8 @@ export function ManagerSidebar() {
   }
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-[#E5E5E0] bg-[#FAFAF5]">
-      <SidebarHeader className="border-b border-[#E5E5E0]/60 p-3 group-data-[state=collapsed]:p-2 h-16 flex flex-row items-center justify-between transition-all duration-200">
+    <Sidebar collapsible="icon" className="border-r border-border bg-background">
+      <SidebarHeader className="border-b border-border/60 p-3 group-data-[state=collapsed]:p-2 h-16 flex flex-row items-center justify-between transition-all duration-200">
         <Link
           href="/"
           className="flex items-center gap-2.5 overflow-hidden w-full px-2 group-data-[state=collapsed]:px-0 group-data-[state=collapsed]:justify-center"
@@ -342,10 +339,10 @@ export function ManagerSidebar() {
           </div>
           {state !== "collapsed" && (
             <div className="flex items-center justify-between flex-1 min-w-0 ml-1 animate-in fade-in-0 duration-200">
-              <span className="font-heading text-sm font-bold tracking-tight text-[#2D2D2D] truncate">
+              <span className="font-heading text-sm font-bold tracking-tight text-foreground truncate">
                 OboxSTEAM
               </span>
-              <span className="ml-2 shrink-0 rounded-full bg-[#E94B3C]/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-[#E94B3C]">
+              <span className="ml-2 shrink-0 rounded-full bg-primary/10 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-primary">
                 Manager
               </span>
             </div>
@@ -357,7 +354,7 @@ export function ManagerSidebar() {
         {navGroups.map((group) => (
           <SidebarGroup key={group.title} className="p-0">
             {state !== "collapsed" && (
-              <SidebarGroupLabel className="px-3 font-heading text-[10px] font-bold uppercase tracking-widest text-[#6B6B6B]/80 mb-2">
+              <SidebarGroupLabel className="px-3 font-heading text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 mb-2">
                 {group.title}
               </SidebarGroupLabel>
             )}
@@ -374,15 +371,15 @@ export function ManagerSidebar() {
                         className={cn(
                           "w-full transition-all duration-200 rounded-lg px-3 py-2 text-sm font-medium flex items-center gap-3",
                           isActive
-                            ? "bg-[#E94B3C]/10 text-[#E94B3C] font-semibold"
-                            : "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
+                            ? "bg-primary/10 text-primary font-semibold"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground",
                         )}
                       >
                         {item.icon && (
                           <item.icon
                             className={cn(
                               "size-4 shrink-0",
-                              isActive ? "text-[#E94B3C]" : "text-[#6B6B6B]",
+                              isActive ? "text-primary" : "text-muted-foreground",
                             )}
                           />
                         )}
@@ -407,7 +404,7 @@ export function ManagerSidebar() {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-[#E5E5E0]/60 p-3">
+      <SidebarFooter className="border-t border-border/60 p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -415,7 +412,7 @@ export function ManagerSidebar() {
                 render={
                   <SidebarMenuButton
                     size="lg"
-                    className="w-full text-left transition-all duration-200 hover:bg-[#F5F5F0] data-[state=open]:bg-[#F5F5F0]"
+                    className="w-full text-left transition-all duration-200 hover:bg-muted data-[state=open]:bg-muted"
                   />
                 }
               >
@@ -423,24 +420,24 @@ export function ManagerSidebar() {
                   {profile?.avatarUrl ? (
                     <AvatarImage src={profile.avatarUrl} alt={profile.fullName ?? "Manager"} />
                   ) : null}
-                  <AvatarFallback className="rounded-lg bg-[#E94B3C]/10 text-xs font-semibold text-[#E94B3C]">
+                  <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
                     {getInitials(profile?.fullName)}
                   </AvatarFallback>
                 </Avatar>
                 {state !== "collapsed" && (
                   <div className="grid flex-1 text-left text-sm leading-tight ml-2">
-                    <span className="truncate font-medium text-[#2D2D2D]">
+                    <span className="truncate font-medium text-foreground">
                       {profile?.fullName ?? "Manager"}
                     </span>
-                    <span className="truncate text-xs text-[#6B6B6B] font-light">
+                    <span className="truncate text-xs text-muted-foreground font-light">
                       {profile?.email ?? "manager@obox.id"}
                     </span>
                   </div>
                 )}
-                {state !== "collapsed" && <ChevronsUpDown className="ml-auto size-4 text-[#6B6B6B]" />}
+                {state !== "collapsed" && <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />}
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className="w-56 rounded-xl border border-[#E5E5E0] bg-white p-1 shadow-lg"
+                className="w-56 rounded-xl border border-border bg-card p-1 shadow-lg"
                 side={isMobile ? "bottom" : "right"}
                 align="end"
                 sideOffset={4}
@@ -452,36 +449,36 @@ export function ManagerSidebar() {
                         {profile?.avatarUrl ? (
                           <AvatarImage src={profile.avatarUrl} alt={profile.fullName ?? "Manager"} />
                         ) : null}
-                        <AvatarFallback className="rounded-lg bg-[#E94B3C]/10 text-xs font-semibold text-[#E94B3C]">
+                        <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
                           {getInitials(profile?.fullName)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold text-[#2D2D2D]">
+                        <span className="truncate font-semibold text-foreground">
                           {profile?.fullName ?? "Manager"}
                         </span>
-                        <span className="truncate text-xs text-[#6B6B6B]">
+                        <span className="truncate text-xs text-muted-foreground">
                           {profile?.email}
                         </span>
                       </div>
                     </div>
                   </DropdownMenuLabel>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
+                <DropdownMenuSeparator className="bg-border/60" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => router.push("/profile")}
-                    className="gap-2 rounded-lg p-2 cursor-pointer text-[#2D2D2D] focus:bg-[#F5F5F0] focus:text-[#2D2D2D] not-data-[variant=destructive]:focus:**:!text-[#2D2D2D]"
+                    className="gap-2 rounded-lg p-2 cursor-pointer text-foreground focus:bg-muted focus:text-foreground not-data-[variant=destructive]:focus:**:!text-foreground"
                   >
-                    <User className="size-4 !text-[#2D2D2D]" />
+                    <User className="size-4 !text-foreground" />
                     Hồ sơ cá nhân
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
-                <DropdownMenuSeparator className="bg-[#E5E5E0]/60" />
+                <DropdownMenuSeparator className="bg-border/60" />
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={handleLogout}
-                  className="gap-2 rounded-lg p-2 cursor-pointer focus:bg-red-50 focus:text-[#E94B3C] focus:**:text-[#E94B3C]"
+                  className="gap-2 rounded-lg p-2 cursor-pointer focus:bg-red-50 focus:text-primary focus:**:text-primary"
                 >
                   <LogOut className="size-4" />
                   Đăng xuất
