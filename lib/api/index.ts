@@ -792,6 +792,26 @@ export {
   type UploadResearchSubmissionFileResult,
 } from "./research-submissions";
 
+export {
+  getNotifications,
+  getUnreadNotificationCount,
+  markAllNotificationsRead,
+  markNotificationRead,
+  type GetNotificationsResponse,
+  type GetNotificationsResult,
+  type GetUnreadNotificationCountResponse,
+  type GetUnreadNotificationCountResult,
+  type MarkAllNotificationsReadResponse,
+  type MarkAllNotificationsReadResult,
+  type MarkNotificationReadResponse,
+  type MarkNotificationReadResult,
+  type Notification,
+  type NotificationIdParam,
+  type NotificationListQuery,
+  type NotificationType,
+  type NotificationUnreadCount,
+} from "./notifications";
+
 export { createApiPost } from "./create-endpoint";
 export { ApiRequestError, ApiResponseError } from "./errors";
 export {
