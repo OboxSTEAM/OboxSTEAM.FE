@@ -7,11 +7,16 @@ import { Upload, X, AlertCircle, BookOpen } from "lucide-react";
 
 import {
   Dialog,
-  DialogPopup,
   DialogClose,
-  DialogTitle,
-  DialogHeader,
   DialogDescription,
+  DialogHeader,
+  DialogPopup,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
+  DialogTitle,
+  dialogScrollFormClassName,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,30 +208,31 @@ export function ModuleFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-w-3xl max-h-[92vh] overflow-y-auto gap-0 p-0">
-        <DialogClose className="absolute right-4 top-4 z-10" />
-
-        {/* Dialog Header with accent */}
-        <div className="px-6 pt-6 pb-4 border-b border-border bg-background rounded-t-xl">
-          <div className="flex items-center gap-3">
-            <span className="flex size-9 items-center justify-center rounded-lg bg-card border border-border shadow-xs">
-              <BookOpen className="size-4 text-[#7CB342]" />
-            </span>
-            <div>
-              <DialogTitle className="text-base font-bold text-foreground">
-                {isEdit ? "Cập nhật Module" : "Tạo Module mới"}
-              </DialogTitle>
-              <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Điền thông tin chi tiết cho học phần (Module) thuộc chương trình học này.
-              </DialogDescription>
+      <DialogScrollPopup className="max-w-3xl">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={dialogScrollFormClassName}
+        >
+          <DialogScrollHeader className="bg-background">
+            <DialogClose />
+            <div className="flex items-center gap-3">
+              <span className="flex size-9 items-center justify-center rounded-lg border border-border bg-card shadow-xs">
+                <BookOpen className="size-4 text-[#7CB342]" />
+              </span>
+              <div>
+                <DialogTitle className="text-base font-bold text-foreground">
+                  {isEdit ? "Cập nhật Module" : "Tạo Module mới"}
+                </DialogTitle>
+                <DialogDescription className="mt-0.5 text-xs text-muted-foreground">
+                  Điền thông tin chi tiết cho học phần (Module) thuộc chương trình học này.
+                </DialogDescription>
+              </div>
             </div>
-          </div>
-        </div>
+          </DialogScrollHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="divide-y divide-border">
-
+          <DialogScrollBody className="divide-y divide-border px-0 py-0">
           {/* Section 1: Thông tin cơ bản */}
-          <div className="px-6 py-5 space-y-4">
+          <div className="space-y-4 px-6 py-5">
             <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               Thông tin cơ bản
             </p>
@@ -412,9 +418,9 @@ export function ModuleFormDialog({
               </div>
             </div>
           </div>
+          </DialogScrollBody>
 
-          {/* Footer actions */}
-          <div className="flex justify-end gap-2 px-6 py-4 bg-background rounded-b-xl">
+          <DialogScrollFooter>
             <Button
               type="button"
               variant="outline"
@@ -427,13 +433,13 @@ export function ModuleFormDialog({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 rounded-lg font-semibold text-white bg-[#7CB342] hover:bg-[#7CB342]/90 gap-1.5"
+              className="h-10 gap-1.5 rounded-lg bg-[#7CB342] font-semibold text-white hover:bg-[#7CB342]/90"
             >
               {isSubmitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo Module"}
             </Button>
-          </div>
+          </DialogScrollFooter>
         </form>
-      </DialogPopup>
+      </DialogScrollPopup>
     </Dialog>
   );
 }
@@ -728,16 +734,20 @@ export function ActivityFormDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-w-2xl max-h-[90vh] overflow-y-auto gap-4">
-        <DialogClose />
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "Cập nhật Hoạt động" : "Tạo Hoạt động mới"}</DialogTitle>
-          <DialogDescription>
-            Thiết lập thông tin hoạt động học tập (tự học, lớp online, lớp offline).
-          </DialogDescription>
-        </DialogHeader>
+      <DialogScrollPopup className="max-w-2xl">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={dialogScrollFormClassName}
+        >
+          <DialogScrollHeader>
+            <DialogTitle>{isEdit ? "Cập nhật Hoạt động" : "Tạo Hoạt động mới"}</DialogTitle>
+            <DialogDescription>
+              Thiết lập thông tin hoạt động học tập (tự học, lớp online, lớp offline).
+            </DialogDescription>
+          </DialogScrollHeader>
+          <DialogClose />
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <DialogScrollBody>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5 col-span-2 md:col-span-1">
               <Label htmlFor="act-name" className="text-sm font-semibold text-foreground">
@@ -883,8 +893,9 @@ export function ActivityFormDialog({
               />
             </div>
           </div>
+          </DialogScrollBody>
 
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
+          <DialogScrollFooter>
             <Button
               type="button"
               variant="outline"
@@ -897,13 +908,13 @@ export function ActivityFormDialog({
             <Button
               type="submit"
               disabled={isSubmitting}
-              className="h-10 rounded-lg font-semibold text-white bg-[#7CB342] hover:bg-[#7CB342]/90"
+              className="h-10 rounded-lg bg-[#7CB342] font-semibold text-white hover:bg-[#7CB342]/90"
             >
               {isSubmitting ? "Đang lưu..." : isEdit ? "Lưu thay đổi" : "Tạo Hoạt động"}
             </Button>
-          </div>
+          </DialogScrollFooter>
         </form>
-      </DialogPopup>
+      </DialogScrollPopup>
     </Dialog>
   );
 }

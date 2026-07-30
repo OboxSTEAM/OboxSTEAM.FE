@@ -13,7 +13,7 @@ export const mentorIdParamSchema = z.object({
   mentorId: z.string().uuid("ID mentor không hợp lệ."),
 });
 
-/** Path param for `DELETE /api/mentors/me/skills/{id}`. */
+/** Path param for `DELETE|PUT /api/mentors/me/skills/{id}` and visibility toggle. */
 export const mentorSkillIdParamSchema = z.object({
   mentorSkillId: z.string().uuid("ID kỹ năng mentor không hợp lệ."),
 });
@@ -67,16 +67,82 @@ export const updateMentorProfileSchema = z.object({
   linkedInUrl: optionalNullableUrlSchema,
 });
 
+const yearsOfExperienceSchema = z
+  .number()
+  .int("Số năm kinh nghiệm phải là số nguyên.")
+  .min(0, "Số năm kinh nghiệm tối thiểu là 0.")
+  .max(60, "Số năm kinh nghiệm tối đa là 60.");
+
+const skillDescriptionSchema = z
+  .string()
+  .trim()
+  .max(4000, "Mô tả không được quá 4000 ký tự.")
+  .nullable()
+  .optional();
+
+const skillNotesSchema = z
+  .string()
+  .trim()
+  .max(500, "Ghi chú không được quá 500 ký tự.")
+  .nullable()
+  .optional();
+
+/** Evidence item for create/update mentor skill (`MentorSkillEvidenceRequestDto`). */
+export const mentorSkillEvidenceInputSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Tên bằng cấp/chứng nhận không được để trống.")
+    .max(255, "Tên không được quá 255 ký tự."),
+  issuer: z
+    .string()
+    .trim()
+    .max(255, "Đơn vị cấp không được quá 255 ký tự.")
+    .nullable()
+    .optional(),
+  url: z
+    .string()
+    .trim()
+    .min(1, "URL bằng cấp không được để trống.")
+    .max(2000, "URL không được quá 2000 ký tự.")
+    .refine(isHttpUrl, "URL phải bắt đầu bằng http:// hoặc https://."),
+  issuedAt: z.string().nullable().optional(),
+  credentialId: z
+    .string()
+    .trim()
+    .max(100, "Mã chứng nhận không được quá 100 ký tự.")
+    .nullable()
+    .optional(),
+});
+
 /** Body for `POST /api/mentors/me/skills`. */
 export const addMentorSkillSchema = z.object({
   skillId: z.string().uuid("ID kỹ năng không hợp lệ."),
   proficiencyLevel: skillProficiencyLevelSchema.optional(),
-  notes: z
-    .string()
-    .trim()
-    .max(500, "Ghi chú không được quá 500 ký tự.")
-    .nullable()
-    .optional(),
+  yearsOfExperience: yearsOfExperienceSchema.optional(),
+  description: skillDescriptionSchema,
+  notes: skillNotesSchema,
+  isPublic: z.boolean().optional(),
+  evidences: z.array(mentorSkillEvidenceInputSchema).max(10).optional(),
+});
+
+/**
+ * Body for `PUT /api/mentors/me/skills/{id}`.
+ * BE non-nullable fields fall back to defaults when omitted, so the payload
+ * always carries the full editable state.
+ */
+export const updateMentorSkillSchema = z.object({
+  proficiencyLevel: skillProficiencyLevelSchema,
+  yearsOfExperience: yearsOfExperienceSchema,
+  description: skillDescriptionSchema,
+  notes: skillNotesSchema,
+  isPublic: z.boolean(),
+  evidences: z.array(mentorSkillEvidenceInputSchema).max(10).nullable().optional(),
+});
+
+/** Body for `PUT /api/mentors/me/skills/{id}/visibility`. */
+export const updateMentorSkillVisibilitySchema = z.object({
+  isPublic: z.boolean(),
 });
 
 /** Body for `PUT /api/mentors/{id}/class-limit`. */
@@ -94,7 +160,14 @@ export type MentorListQuery = z.infer<typeof mentorListQuerySchema>;
 export type MentorIdParam = z.infer<typeof mentorIdParamSchema>;
 export type MentorSkillIdParam = z.infer<typeof mentorSkillIdParamSchema>;
 export type UpdateMentorProfileInput = z.infer<typeof updateMentorProfileSchema>;
+export type MentorSkillEvidenceInput = z.infer<
+  typeof mentorSkillEvidenceInputSchema
+>;
 export type AddMentorSkillInput = z.infer<typeof addMentorSkillSchema>;
+export type UpdateMentorSkillInput = z.infer<typeof updateMentorSkillSchema>;
+export type UpdateMentorSkillVisibilityInput = z.infer<
+  typeof updateMentorSkillVisibilitySchema
+>;
 export type UpdateMentorClassLimitInput = z.infer<
   typeof updateMentorClassLimitSchema
 >;

@@ -4,6 +4,10 @@ import {
   assignmentDetailSchema,
   assignmentListItemSchema,
 } from "@/lib/api/entities/assignment";
+import {
+  assignmentSubmissionDetailSchema,
+  assignmentSubmissionListItemSchema,
+} from "@/lib/api/entities/assignment-submission";
 import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import {
   quizAttemptSchema,
@@ -63,6 +67,29 @@ export const saveQuizDraftAnswersResponseSchema = createApiResponseSchema(
 export const submitQuizResponseSchema = createApiResponseSchema(quizResultValueSchema);
 
 export const getQuizResultResponseSchema = createApiResponseSchema(quizResultValueSchema);
+
+export const assignmentSubmissionListItemValueSchema = createApiValueSchema(
+  z.array(assignmentSubmissionListItemSchema),
+);
+export const getAssignmentSubmissionsResponseSchema = createApiResponseSchema(
+  assignmentSubmissionListItemValueSchema,
+);
+
+export const assignmentSubmissionDetailValueSchema = createApiValueSchema(
+  assignmentSubmissionDetailSchema,
+);
+export const gradeAssignmentSubmissionResponseSchema = createApiResponseSchema(
+  assignmentSubmissionDetailValueSchema,
+);
+
+export type GetAssignmentSubmissionsResponse = z.infer<
+  typeof getAssignmentSubmissionsResponseSchema
+>;
+export type GetAssignmentSubmissionsResult = GetAssignmentSubmissionsResponse["value"];
+export type GradeAssignmentSubmissionResponse = z.infer<
+  typeof gradeAssignmentSubmissionResponseSchema
+>;
+export type GradeAssignmentSubmissionResult = GradeAssignmentSubmissionResponse["value"];
 
 export const retrospectiveAttemptValueSchema = createApiValueSchema(
   retrospectiveAttemptSchema,

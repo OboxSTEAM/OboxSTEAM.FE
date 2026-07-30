@@ -215,10 +215,35 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Kỹ năng có thể đã tồn tại hoặc thông tin chưa hợp lệ.",
     action: "Chọn kỹ năng khác hoặc kiểm tra mức thành thạo rồi thử lại.",
   },
+  "mentors.skills.update": {
+    title: "Không cập nhật được kỹ năng",
+    reason: "Thông tin kỹ năng chưa hợp lệ hoặc kỹ năng không còn tồn tại.",
+    action: "Kiểm tra lại nội dung rồi thử lại.",
+  },
+  "mentors.skills.visibility": {
+    title: "Không đổi được hiển thị kỹ năng",
+    reason: "Máy chủ từ chối yêu cầu hoặc kỹ năng không còn tồn tại.",
+    action: "Tải lại danh sách và thử lại.",
+  },
   "mentors.skills.delete": {
     title: "Không xóa được kỹ năng",
     reason: "Kỹ năng có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
     action: "Tải lại danh sách và thử lại.",
+  },
+  "skills.list": {
+    title: "Không tải được danh mục kỹ năng",
+    reason: "Máy chủ tạm thời không phản hồi.",
+    action: "Thử tải lại sau vài giây.",
+  },
+  "assignments.submissions.list": {
+    title: "Không tải được bài nộp",
+    reason: "Máy chủ tạm thời không phản hồi hoặc lớp/bài tập không hợp lệ.",
+    action: "Chọn lại bài tập hoặc thử tải lại.",
+  },
+  "assignments.submissions.grade": {
+    title: "Không chấm được bài",
+    reason: "Điểm chưa hợp lệ hoặc bài chưa ở trạng thái có thể chấm.",
+    action: "Kiểm tra điểm và trạng thái bài nộp rồi thử lại.",
   },
   "classSessions.list": {
     title: "Không tải được lịch học",
@@ -483,7 +508,10 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classMentorRequests.approve",
   "classMentorRequests.reject",
   "mentors.skills.add",
+  "mentors.skills.update",
+  "mentors.skills.visibility",
   "mentors.skills.delete",
+  "assignments.submissions.grade",
   "classSessions.create",
   "classSessions.update",
   "classSessions.delete",

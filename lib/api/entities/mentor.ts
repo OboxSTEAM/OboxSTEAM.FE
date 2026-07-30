@@ -30,14 +30,43 @@ export const mentorSkillProficiencySchema = skillProficiencyLevelSchema;
 /** @deprecated Prefer `skillSummarySchema` — identical shape. */
 export const mentorSkillInfoSchema = skillSummarySchema;
 
-/** Mentor ↔ skill assignment (`GET/POST /api/mentors/.../skills`). */
+/** Evidence row embedded on a mentor skill (`MentorSkillEvidenceDto`). */
+export const mentorSkillEvidenceSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  issuer: z.string().nullable(),
+  url: z.string(),
+  issuedAt: z.string().nullable(),
+  credentialId: z.string().nullable(),
+});
+
+/** Mentor ↔ skill assignment (`GET/POST/PUT /api/mentors/.../skills`). */
 export const mentorSkillSchema = z.object({
   id: z.string().uuid(),
   mentorId: z.string().uuid(),
   skillId: z.string().uuid(),
   skill: skillSummarySchema.nullable().optional(),
   proficiencyLevel: skillProficiencyLevelSchema,
+  // Newer BE fields — tolerate missing keys so older payloads still parse.
+  yearsOfExperience: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? 0),
+  description: z
+    .string()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
   notes: z.string().nullable(),
+  isPublic: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? true),
+  evidences: z
+    .array(mentorSkillEvidenceSchema)
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.string(),
 });
 
@@ -97,6 +126,7 @@ export type SkillCategory = z.infer<typeof skillCategorySchema>;
 export type SkillProficiencyLevel = z.infer<typeof skillProficiencyLevelSchema>;
 export type MentorSkillProficiency = SkillProficiencyLevel;
 export type MentorSkillInfo = z.infer<typeof mentorSkillInfoSchema>;
+export type MentorSkillEvidence = z.infer<typeof mentorSkillEvidenceSchema>;
 export type MentorSkill = z.infer<typeof mentorSkillSchema>;
 export type Mentor = z.infer<typeof mentorSchema>;
 export type MentorAssignmentProfile = Mentor;

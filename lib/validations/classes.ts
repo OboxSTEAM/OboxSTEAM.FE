@@ -117,6 +117,7 @@ export const classFormSchema = z
       .string()
       .max(255, "Tóm tắt lịch học tối đa 255 ký tự.")
       .optional(),
+    requiredSkillIds: z.array(z.string().uuid()).optional(),
   })
   .superRefine((value, ctx) => {
     if (value.startDate && value.endDate && value.endDate <= value.startDate) {

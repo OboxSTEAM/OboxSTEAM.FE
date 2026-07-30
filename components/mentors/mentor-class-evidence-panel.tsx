@@ -24,9 +24,10 @@ import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
@@ -532,17 +533,17 @@ export function MentorClassEvidencePanel({
           }
         }}
       >
-        <DialogPopup className="flex max-h-[min(92vh,48rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
-          <div className="relative shrink-0 border-b border-border px-6 pb-4 pt-5">
-            <DialogClose className="top-4 right-4" />
+        <DialogScrollPopup className="sm:max-w-3xl max-h-[min(92vh,48rem)]">
+          <DialogScrollHeader>
+            <DialogClose />
             <DialogTitle>Chi tiết evidence</DialogTitle>
             <DialogDescription className="mt-1 text-sm text-muted-foreground">
               Xem preview, xác nhận face tag AI hoặc gắn thủ công học viên trong lớp.
             </DialogDescription>
-          </div>
+          </DialogScrollHeader>
 
           {selectedMedia ? (
-            <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+            <DialogScrollBody>
               <div className="overflow-hidden rounded-xl border border-border bg-muted">
                 {selectedMedia.fileUrl &&
                 isImageFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
@@ -721,10 +722,10 @@ export function MentorClassEvidencePanel({
                   </Button>
                 </div>
               </div>
-            </div>
+            </DialogScrollBody>
           ) : null}
 
-          <DialogFooter className="border-t border-border px-6 py-4">
+          <DialogScrollFooter>
             <DialogClose
               render={
                 <Button type="button" variant="outline" className="rounded-lg" />
@@ -732,8 +733,8 @@ export function MentorClassEvidencePanel({
             >
               Đóng
             </DialogClose>
-          </DialogFooter>
-        </DialogPopup>
+          </DialogScrollFooter>
+        </DialogScrollPopup>
       </Dialog>
 
       <ConfirmDialog

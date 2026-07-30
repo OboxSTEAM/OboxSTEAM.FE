@@ -6,6 +6,7 @@ import {
   ArrowLeft,
   CalendarDays,
   ClipboardCheck,
+  ClipboardPen,
   Images,
   Users,
 } from "lucide-react";
@@ -15,6 +16,7 @@ import {
   ClassStatusBadge,
 } from "@/components/manager/classes/class-status-badge";
 import { MentorClassEvidencePanel } from "@/components/mentors/mentor-class-evidence-panel";
+import { MentorClassGradingPanel } from "@/components/mentors/mentor-class-grading-panel";
 import { MentorClassSessionsPanel } from "@/components/mentors/mentor-class-sessions-panel";
 import {
   ManagerDataTable,
@@ -413,6 +415,13 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
               Điểm danh
             </TabsTrigger>
             <TabsTrigger
+              value="grading"
+              className="rounded-none px-4 py-2.5 data-active:text-primary"
+            >
+              <ClipboardPen className="size-4" />
+              Chấm bài
+            </TabsTrigger>
+            <TabsTrigger
               value="evidence"
               className="rounded-none px-4 py-2.5 data-active:text-primary"
             >
@@ -540,6 +549,21 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
                 )}
               </div>
             </section>
+          </TabsContent>
+
+          <TabsContent value="grading" className="mt-0">
+            {classItem?.programId ? (
+              <MentorClassGradingPanel
+                classId={classId}
+                programId={classItem.programId}
+              />
+            ) : (
+              <ManagerEmptyState
+                title="Chưa tải được lớp"
+                description="Không có programId để lấy danh sách bài tập."
+                icon={ClipboardPen}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="evidence" className="mt-0">

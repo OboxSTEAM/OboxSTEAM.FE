@@ -13,10 +13,12 @@ import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
+  dialogScrollFormClassName,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -126,19 +128,22 @@ export function ExpertFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-4xl overflow-y-auto p-0">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
+      <DialogScrollPopup className="max-w-4xl">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className={dialogScrollFormClassName}
+        >
+          <DialogScrollHeader>
             <DialogTitle>
               {expert ? "Cập nhật hồ sơ chuyên gia" : "Thêm chuyên gia"}
             </DialogTitle>
             <DialogDescription>
               Quản lý thông tin hồ sơ và vai trò của chuyên gia trong từng chương trình.
             </DialogDescription>
-          </DialogHeader>
+          </DialogScrollHeader>
           <DialogClose />
 
-          <div className="grid gap-6 px-6 py-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+          <DialogScrollBody className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)]">
             <aside className="space-y-4">
               <div className="rounded-2xl border border-border bg-background p-5 text-center">
                 <Avatar className="mx-auto size-24 border-4 border-white shadow-sm">
@@ -339,9 +344,9 @@ export function ExpertFormDialog({
                 )}
               </FormSection>
             </div>
-          </div>
+          </DialogScrollBody>
 
-          <DialogFooter className="sticky bottom-0 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm">
+          <DialogScrollFooter>
             <Button
               type="button"
               variant="outline"
@@ -362,9 +367,9 @@ export function ExpertFormDialog({
                   ? "Lưu thay đổi"
                   : "Tạo chuyên gia"}
             </Button>
-          </DialogFooter>
+          </DialogScrollFooter>
         </form>
-      </DialogPopup>
+      </DialogScrollPopup>
     </Dialog>
   );
 }

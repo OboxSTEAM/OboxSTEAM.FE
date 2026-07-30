@@ -16,10 +16,12 @@ import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
+  dialogScrollFormClassName,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -255,19 +257,22 @@ export function SessionFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-2xl overflow-y-auto p-0">
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
+      <DialogScrollPopup className="max-w-2xl">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className={dialogScrollFormClassName}
+        >
+          <DialogScrollHeader>
             <DialogTitle>
               {session ? "Cập nhật buổi học" : "Tạo buổi học"}
             </DialogTitle>
             <DialogDescription>
               Lên lịch buổi học cho lớp cohort theo module chương trình.
             </DialogDescription>
-          </DialogHeader>
+          </DialogScrollHeader>
           <DialogClose />
 
-          <div className="space-y-4 px-6 py-5">
+          <DialogScrollBody className="space-y-4">
             <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
               <CalendarClock className="size-4 text-primary" />
               Thông tin buổi học
@@ -633,9 +638,9 @@ export function SessionFormDialog({
                 />
               </FormField>
             </div>
-          </div>
+          </DialogScrollBody>
 
-          <DialogFooter className="sticky bottom-0 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm">
+          <DialogScrollFooter>
             <Button
               type="button"
               variant="outline"
@@ -656,9 +661,9 @@ export function SessionFormDialog({
                   ? "Lưu thay đổi"
                   : "Tạo buổi học"}
             </Button>
-          </DialogFooter>
+          </DialogScrollFooter>
         </form>
-      </DialogPopup>
+      </DialogScrollPopup>
     </Dialog>
   );
 }
