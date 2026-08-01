@@ -12,7 +12,7 @@ import {
 } from "@/lib/api/entities/notification";
 import { getAuthSession } from "@/lib/auth/session";
 
-export const NOTIFICATION_HUB_PATH = "/hubs/notification";
+export const NOTIFICATION_HUB_PATH = "/hubs/notifications";
 export const NOTIFICATION_RECEIVED_EVENT = "notificationReceived";
 
 export type NotificationReceivedHandler = (
