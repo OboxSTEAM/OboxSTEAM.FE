@@ -1,5 +1,6 @@
 import { ParentProfileGate } from "@/components/parent/parent-profile-gate";
 import { CurrentUserProvider } from "@/components/providers/current-user-provider";
+import { NotificationProvider } from "@/components/providers/notification-provider";
 import { StoreProvider } from "@/components/providers/store-provider";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
@@ -15,11 +16,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
         storageKey="obox-theme"
       >
         <CurrentUserProvider>
-          <TooltipProvider>
-            {children}
-            <ParentProfileGate />
-            <Toaster />
-          </TooltipProvider>
+          <NotificationProvider>
+            <TooltipProvider>
+              {children}
+              <ParentProfileGate />
+              <Toaster />
+            </TooltipProvider>
+          </NotificationProvider>
         </CurrentUserProvider>
       </ThemeProvider>
     </StoreProvider>
