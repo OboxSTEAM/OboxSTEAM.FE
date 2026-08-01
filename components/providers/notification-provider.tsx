@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import { useCurrentUser } from "@/components/providers/current-user-provider";
 import type { Notification } from "@/lib/api/entities/notification";
@@ -18,10 +19,13 @@ import {
   markAllNotificationsRead,
   markNotificationRead,
 } from "@/lib/api/notifications";
+import { normalizeAccountRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { resolveNotificationHrefFromNotification } from "@/lib/notifications/resolve-href";
 import { startNotificationHub } from "@/lib/realtime/notification-hub";
 
 const INBOX_PAGE_SIZE = 10;
+const STALE_MS = 30_000;
 
 export type NotificationContextValue = {
   items: Notification[];
@@ -31,9 +35,13 @@ export type NotificationContextValue = {
   hasMore: boolean;
   isHubConnected: boolean;
   refreshInbox: () => Promise<void>;
+  /** Refetch when inbox is older than STALE_MS (e.g. popover open). */
+  refreshIfStale: () => Promise<void>;
   loadMore: () => Promise<void>;
   markRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
+  /** Mark read, then navigate when a deep-link resolves. */
+  openNotification: (notification: Notification) => Promise<void>;
 };
 
 const NotificationContext = createContext<NotificationContextValue | null>(
@@ -45,8 +53,12 @@ export function NotificationProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const { isAuthenticated, isHydrated } = useCurrentUser();
+  const router = useRouter();
+  const { isAuthenticated, isHydrated, profile, session } = useCurrentUser();
   const isActive = isHydrated && isAuthenticated;
+  const accountRole = normalizeAccountRole(
+    profile?.role ?? session?.user?.role,
+  );
 
   const [items, setItems] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -60,6 +72,7 @@ export function NotificationProvider({
   const fetchGenerationRef = useRef(0);
   const itemsRef = useRef<Notification[]>([]);
   const unreadCountRef = useRef(0);
+  const lastFetchedAtRef = useRef(0);
 
   useEffect(() => {
     itemsRef.current = items;
@@ -95,6 +108,7 @@ export function NotificationProvider({
       setCurrentPage(listResult.data.currentPage);
       setHasMore(listResult.data.hasNext);
       setUnreadCount(countResult.data.count);
+      lastFetchedAtRef.current = Date.now();
     } catch (error) {
       if (isMountedRef.current && generation === fetchGenerationRef.current) {
         showAppErrorFromUnknown(error, "generic");
@@ -105,6 +119,12 @@ export function NotificationProvider({
       }
     }
   }, [isActive]);
+
+  const refreshIfStale = useCallback(async () => {
+    if (!isActive) return;
+    if (Date.now() - lastFetchedAtRef.current < STALE_MS) return;
+    await refreshInbox();
+  }, [isActive, refreshInbox]);
 
   const loadMore = useCallback(async () => {
     if (!isActive || !hasMore || isLoadingMore || isLoading) return;
@@ -188,6 +208,22 @@ export function NotificationProvider({
       showAppErrorFromUnknown(error, "generic");
     }
   }, []);
+
+  const openNotification = useCallback(
+    async (notification: Notification) => {
+      await markRead(notification.id);
+
+      const href = resolveNotificationHrefFromNotification({
+        type: notification.type,
+        payloadJson: notification.payloadJson,
+        accountRole,
+      });
+      if (href) {
+        router.push(href);
+      }
+    },
+    [accountRole, markRead, router],
+  );
 
   const handleNotificationReceived = useCallback(
     (notification: Notification) => {
@@ -274,9 +310,11 @@ export function NotificationProvider({
       hasMore: isActive ? hasMore : false,
       isHubConnected: isActive ? isHubConnected : false,
       refreshInbox,
+      refreshIfStale,
       loadMore,
       markRead,
       markAllRead,
+      openNotification,
     }),
     [
       isActive,
@@ -287,9 +325,11 @@ export function NotificationProvider({
       hasMore,
       isHubConnected,
       refreshInbox,
+      refreshIfStale,
       loadMore,
       markRead,
       markAllRead,
+      openNotification,
     ],
   );
 
