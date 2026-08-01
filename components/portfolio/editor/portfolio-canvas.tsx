@@ -6,6 +6,7 @@ import {
   useContext,
   useMemo,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
@@ -185,6 +186,7 @@ function CompactRichField({
   placeholder,
   isDark,
   className,
+  frameClassName,
   maxLength = 200,
   autoFocus = false,
   onAutoFocusHandled,
@@ -197,6 +199,7 @@ function CompactRichField({
   placeholder?: string;
   isDark?: boolean;
   className?: string;
+  frameClassName?: string;
   maxLength?: number;
   autoFocus?: boolean;
   onAutoFocusHandled?: () => void;
@@ -216,6 +219,7 @@ function CompactRichField({
       autoFocus={autoFocus}
       onAutoFocusHandled={onAutoFocusHandled}
       className={cn("min-w-0 max-w-full", className)}
+      frameClassName={frameClassName}
     />
   );
 }
@@ -1147,7 +1151,6 @@ function ProfileSectionEditable({
   resolved: ResolvedPortfolioTheme;
   onPatchDraft: PortfolioCanvasProps["onPatchDraft"];
 }) {
-  const tone = resolved.isDark ? ("dark" as const) : ("light" as const);
   const name =
     stripHtmlText(draft.displayName) ||
     draft.studentName ||
@@ -1160,24 +1163,35 @@ function ProfileSectionEditable({
   const onAccent = getReadableTextColor(resolved.accentColor);
   const onPrimary = getReadableTextColor(resolved.primaryColor);
 
+  const isGradientName = resolved.heroText === "SplitGradient";
+  const nameGradient = `linear-gradient(90deg, ${resolved.primaryColor}, ${resolved.accentColor}, ${resolved.secondaryColor})`;
+
   const nameClass = cn(
     heroStyle.nameClass,
     resolved.heroText === "Decrypted" && "font-mono",
-    resolved.heroText === "SplitGradient" && "bg-clip-text text-transparent",
+    isGradientName
+      ? [
+          // Clip on the ProseMirror node itself — wrapper clip can't paint TipTap children.
+          "[&_.ProseMirror]:bg-clip-text [&_.ProseMirror]:text-transparent",
+          "[&_.ProseMirror]:[background-image:var(--pf-name-gradient)]",
+        ]
+      : resolved.isDark
+        ? "text-[#FAFAF5]"
+        : "text-[#2D2D2D]",
   );
 
-  const nameStyle =
-    resolved.heroText === "SplitGradient"
+  const nameStyle: CSSProperties = isGradientName
+    ? {
+        fontFamily: resolved.headingFontCss,
+        "--pf-name-gradient": nameGradient,
+        caretColor: resolved.primaryColor,
+      }
+    : resolved.heroText === "TrueFocus"
       ? {
           fontFamily: resolved.headingFontCss,
-          backgroundImage: `linear-gradient(90deg, ${resolved.primaryColor}, ${resolved.accentColor}, ${resolved.secondaryColor})`,
+          textDecorationColor: resolved.primaryColor,
         }
-      : resolved.heroText === "TrueFocus"
-        ? {
-            fontFamily: resolved.headingFontCss,
-            textDecorationColor: resolved.primaryColor,
-          }
-        : { fontFamily: resolved.headingFontCss };
+      : { fontFamily: resolved.headingFontCss };
 
   return (
     <PortfolioHeroShell
@@ -1261,8 +1275,11 @@ function ProfileSectionEditable({
             ariaLabel="Tên hiển thị"
             placeholder={draft.studentName ?? "Tên của bạn…"}
             singleLine={false}
-            isDark={
-              resolved.heroText === "SplitGradient" ? false : tone === "dark"
+            isDark={resolved.isDark}
+            frameClassName={
+              isGradientName
+                ? "!bg-transparent hover:!bg-transparent focus-within:!bg-transparent"
+                : undefined
             }
           />
         </div>

@@ -34,6 +34,8 @@ type RichTextEditorProps = {
   placeholder?: string;
   ariaLabel?: string;
   className?: string;
+  /** Extra classes on the dashed field frame (e.g. transparent bg for gradient text). */
+  frameClassName?: string;
   /** Compact chrome for canvas inline editing. */
   variant?: "panel" | "inline";
   /**
@@ -293,6 +295,7 @@ export function RichTextEditor({
   placeholder = "Viết nội dung…",
   ariaLabel = "Trình soạn thảo văn bản",
   className,
+  frameClassName,
   variant = "panel",
   mode = "full",
   isDark = false,
@@ -441,6 +444,7 @@ export function RichTextEditor({
                 ? "overflow-visible py-0.5"
                 : "overflow-hidden",
             !lockSingleLine && !isCompact && maxHeightClass,
+            frameClassName,
           )}
         >
           <EditorContent editor={editor} className="min-h-0 min-w-0 max-w-full" />
