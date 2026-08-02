@@ -3,8 +3,9 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Breadcrumb,
@@ -148,15 +149,7 @@ export function ManagerHeader({
           ⌘K
         </kbd>
         <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative size-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
-          aria-label="Thông báo"
-        >
-          <Bell className="size-5" />
-          <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary" />
-        </Button>
+        <NotificationBell />
       </div>
     </header>
   );

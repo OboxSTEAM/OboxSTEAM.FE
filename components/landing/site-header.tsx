@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 
 import StaggeredMenu from "@/components/StaggeredMenu";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { buttonVariants } from "@/components/ui/button";
@@ -172,6 +173,16 @@ export function SiteHeader({
                       ? "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D] dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground"
                       : "text-white/85 hover:bg-white/10 hover:text-white",
                   )}
+                />
+              ) : null}
+
+              {isAuthenticated && session ? (
+                <NotificationBell
+                  triggerClassName={
+                    isSolid
+                      ? "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D] dark:text-muted-foreground dark:hover:bg-muted dark:hover:text-foreground"
+                      : "text-white/85 hover:bg-white/10 hover:text-white"
+                  }
                 />
               ) : null}
 
