@@ -1181,11 +1181,11 @@ function ProfileSectionEditable({
   );
 
   const nameStyle: CSSProperties = isGradientName
-    ? {
+    ? ({
         fontFamily: resolved.headingFontCss,
-        "--pf-name-gradient": nameGradient,
         caretColor: resolved.primaryColor,
-      }
+        "--pf-name-gradient": nameGradient,
+      } as CSSProperties)
     : resolved.heroText === "TrueFocus"
       ? {
           fontFamily: resolved.headingFontCss,
