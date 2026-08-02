@@ -6,6 +6,7 @@ import { Inbox, PanelRightClose, PanelRightOpen, X } from "lucide-react";
 import { MentorBoardManager } from "@/components/mentors/mentor-board-manager";
 import { MyClassMentorRequests } from "@/components/mentors/my-class-mentor-requests";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
+import { MentorSkillsSection } from "@/components/profile/mentor-skills-section";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -32,6 +33,7 @@ export function MentorAssignmentHub() {
   const isDesktop = useIsDesktopPanel();
   const [isRequestsOpen, setIsRequestsOpen] = useState(false);
   const [requestsRefreshKey, setRequestsRefreshKey] = useState(0);
+  const [skillsVersion, setSkillsVersion] = useState(0);
 
   function openRequests() {
     setIsRequestsOpen(true);
@@ -42,11 +44,15 @@ export function MentorAssignmentHub() {
     setIsRequestsOpen(true);
   }
 
+  function handleSkillsChanged() {
+    setSkillsVersion((version) => version + 1);
+  }
+
   return (
     <div className="flex min-h-full flex-col">
       <ManagerPageHeader
         title="Đăng ký lớp"
-        description="Tìm lớp đang tuyển mentor — mở panel để theo dõi yêu cầu đã gửi."
+        description="Quản lý kỹ năng, tìm lớp đang tuyển mentor — mở panel để theo dõi yêu cầu đã gửi."
       >
         <Button
           type="button"
@@ -69,16 +75,24 @@ export function MentorAssignmentHub() {
       <div className="relative flex min-h-0 flex-1">
         <section className="min-w-0 flex-1">
           <div className="border-b border-border bg-card px-4 py-3 lg:px-6">
+            <MentorSkillsSection
+              defaultExpanded={false}
+              onChanged={handleSkillsChanged}
+            />
+          </div>
+          <div className="border-b border-border bg-card px-4 py-3 lg:px-6">
             <h3 className="text-sm font-semibold text-foreground">
-              Lớp đang tuyển
+              Lớp mentor
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Đăng ký dạy lớp phù hợp. Bấm “Yêu cầu của tôi” để xem / ẩn danh sách đã gửi.
+              Lớp đang tuyển và lớp đã xin / đã nhận xếp chung — ưu tiên hiện
+              trước. Chip xanh = kỹ năng bạn đã khớp.
             </p>
           </div>
           <MentorBoardManager
             embedded
             denserGrid={isRequestsOpen && isDesktop === true}
+            skillsVersion={skillsVersion}
             onApplied={handleApplied}
             onViewRequests={openRequests}
           />

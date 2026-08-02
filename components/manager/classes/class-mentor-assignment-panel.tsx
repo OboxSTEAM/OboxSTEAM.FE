@@ -369,8 +369,12 @@ export function ClassMentorAssignmentPanel({
                           </p>
                           <p className="truncate font-mono text-[11px] text-muted-foreground">
                             {request.mentorCode || "—"}
-                            {request.message ? " · có lời nhắn" : ""}
                           </p>
+                          {request.message?.trim() ? (
+                            <p className="mt-0.5 truncate rounded-md border border-[#FDD835]/35 bg-[#FDD835]/10 px-1.5 py-0.5 text-[11px] text-foreground/90">
+                              {request.message.trim()}
+                            </p>
+                          ) : null}
                         </div>
                       </button>
                       <div className="flex shrink-0 items-center gap-0.5">

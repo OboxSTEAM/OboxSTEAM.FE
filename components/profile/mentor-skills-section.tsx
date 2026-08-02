@@ -584,9 +584,21 @@ function SkillRow({
   );
 }
 
-/** Mentor-only skills block on `/profile`. */
-export function MentorSkillsSection() {
-  const [isExpanded, setIsExpanded] = useState(true);
+type MentorSkillsSectionProps = {
+  /** Called after add / edit / delete / visibility so board match can refresh. */
+  onChanged?: () => void;
+  /** Start collapsed (useful on crowded registration page). */
+  defaultExpanded?: boolean;
+  className?: string;
+};
+
+/** Mentor skills manager — used on class registration (and optionally profile). */
+export function MentorSkillsSection({
+  onChanged,
+  defaultExpanded = true,
+  className,
+}: MentorSkillsSectionProps = {}) {
+  const [isExpanded, setIsExpanded] = useState(defaultExpanded);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [visibilityBusyId, setVisibilityBusyId] = useState<string | null>(null);
@@ -706,6 +718,7 @@ export function MentorSkillsSection() {
       setIsExpanded(true);
       markLoading();
       retry();
+      onChanged?.();
     } catch (error) {
       showAppErrorFromUnknown(error, "mentors.skills.add");
     } finally {
@@ -734,6 +747,7 @@ export function MentorSkillsSection() {
             : `${item.skill.name} đã được ẩn khỏi học viên.`
           : undefined,
       });
+      onChanged?.();
     } catch (error) {
       showAppErrorFromUnknown(error, "mentors.skills.visibility");
       markLoading();
@@ -787,6 +801,7 @@ export function MentorSkillsSection() {
       setEditTarget(null);
       markLoading();
       retry();
+      onChanged?.();
     } catch (error) {
       showAppErrorFromUnknown(error, "mentors.skills.update");
     } finally {
@@ -808,6 +823,7 @@ export function MentorSkillsSection() {
           ? `${item.skill.name} đã được gỡ khỏi hồ sơ.`
           : "Kỹ năng đã được gỡ khỏi hồ sơ.",
       });
+      onChanged?.();
     } catch (error) {
       showAppErrorFromUnknown(error, "mentors.skills.delete");
       markLoading();
@@ -818,26 +834,29 @@ export function MentorSkillsSection() {
   }
 
   return (
-    <Card id="mentor-skills" className="border-[#E5E5E0] bg-white shadow-sm">
+    <Card
+      id="mentor-skills"
+      className={cn("border-border bg-card shadow-sm", className)}
+    >
       <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 py-3.5 sm:px-5">
         <button
           type="button"
           onClick={() => setIsExpanded((open) => !open)}
           aria-expanded={isExpanded}
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left outline-none transition-colors hover:bg-[#FAFAF5] focus-visible:ring-2 focus-visible:ring-[#E94B3C]/30"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left outline-none transition-colors hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <Sparkles className="size-4 shrink-0 text-[#E94B3C]" aria-hidden />
-          <CardTitle className="font-heading truncate text-base font-semibold text-[#2D2D2D]">
+          <Sparkles className="size-4 shrink-0 text-primary" aria-hidden />
+          <CardTitle className="font-heading truncate text-base font-semibold text-foreground">
             Kỹ năng mentor
             {list.length > 0 ? (
-              <span className="ml-1.5 font-mono text-xs font-medium text-[#6B6B6B]">
+              <span className="ml-1.5 font-mono text-xs font-medium text-muted-foreground">
                 · {list.length}
               </span>
             ) : null}
           </CardTitle>
           <ChevronDown
             className={cn(
-              "ml-0.5 size-4 shrink-0 text-[#6B6B6B] transition-transform duration-200",
+              "ml-0.5 size-4 shrink-0 text-muted-foreground transition-transform duration-200",
               isExpanded && "rotate-180",
             )}
             aria-hidden
@@ -851,7 +870,7 @@ export function MentorSkillsSection() {
             resetAddForm();
             setIsAddOpen(true);
           }}
-          className="h-9 shrink-0 rounded-lg bg-[#E94B3C] px-3.5 text-sm font-semibold text-white hover:bg-[#E94B3C]/90"
+          className="h-9 shrink-0 rounded-lg bg-primary px-3.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
         >
           <Plus className="size-4" />
           Thêm
@@ -860,20 +879,24 @@ export function MentorSkillsSection() {
 
       {isExpanded ? (
         <CardContent className="px-4 pb-3 pt-0 sm:px-5">
+          <p className="mb-2.5 text-xs text-muted-foreground">
+            Cập nhật kỹ năng tại đây để khớp với lớp đang tuyển — không cần vào
+            hồ sơ cá nhân.
+          </p>
           {isLoading && list.length === 0 ? (
             <div className="space-y-1.5">
-              <div className="h-10 animate-pulse rounded-md bg-[#E5E5E0]" />
-              <div className="h-10 animate-pulse rounded-md bg-[#E5E5E0]" />
+              <div className="h-10 animate-pulse rounded-md bg-muted" />
+              <div className="h-10 animate-pulse rounded-md bg-muted" />
             </div>
           ) : list.length === 0 ? (
-            <p className="rounded-md border border-dashed border-[#E5E5E0] bg-[#FAFAF5] px-3 py-2 text-xs text-[#6B6B6B]">
+            <p className="rounded-md border border-dashed border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
               Chưa có kỹ năng — bấm Thêm để chọn từ danh mục STEAM.
             </p>
           ) : (
             <>
               <ul
                 className={cn(
-                  "overflow-hidden rounded-md border border-[#E5E5E0]",
+                  "overflow-hidden rounded-md border border-border",
                   isLoading && "opacity-60",
                 )}
               >

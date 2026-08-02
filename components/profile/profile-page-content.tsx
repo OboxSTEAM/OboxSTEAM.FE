@@ -13,7 +13,6 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { isMentorRole, isParentRole, isStudentRole } from "@/lib/auth/roles";
 
-import { MentorSkillsSection } from "./mentor-skills-section";
 import { ProfileAvatarUpload } from "./profile-avatar-upload";
 import { ProfileDetails } from "./profile-details";
 import { ProfileEditForm } from "./profile-edit-form";
@@ -93,7 +92,7 @@ export function ProfilePageContent() {
           {isParent
             ? "Quản lý thông tin tài khoản phụ huynh và liên hệ với OboxSTEAM."
             : isMentor
-              ? "Quản lý ảnh đại diện, thông tin liên hệ và kỹ năng mentor."
+              ? "Quản lý ảnh đại diện và thông tin liên hệ. Kỹ năng mentor chỉnh tại trang Đăng ký lớp."
               : "Quản lý ảnh đại diện và thông tin liên hệ."}
         </p>
       </header>
@@ -101,12 +100,6 @@ export function ProfilePageContent() {
       {isStudent ? (
         <div className="mb-6">
           <StudentParentLinkSection />
-        </div>
-      ) : null}
-
-      {isMentor ? (
-        <div className="mb-6">
-          <MentorSkillsSection />
         </div>
       ) : null}
 

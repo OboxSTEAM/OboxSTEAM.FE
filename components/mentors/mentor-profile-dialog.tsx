@@ -87,7 +87,7 @@ export function MentorProfileDialog({
           </DialogDescription>
         </DialogScrollHeader>
 
-        <DialogScrollBody className="px-7">
+        <DialogScrollBody className="space-y-4 px-7 pb-6">
           {hasError ? (
             <div className="py-6 text-center">
               <p className="text-sm text-muted-foreground">

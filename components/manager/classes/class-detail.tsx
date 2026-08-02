@@ -15,6 +15,8 @@ import {
   type ClassFormSubmitPayload,
 } from "@/components/manager/classes/class-form-dialog";
 import { ClassMentorAssignmentPanel } from "@/components/manager/classes/class-mentor-assignment-panel";
+import { ClassDateRange } from "@/components/classes/class-date-range";
+import { ClassScheduleSummary } from "@/components/classes/class-schedule-summary";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
@@ -264,25 +266,17 @@ export function ClassDetail({ classId }: ClassDetailProps) {
               {classItem.seatsTaken}/{classItem.maxCapacity}
             </p>
           </MetaCard>
-          <MetaCard label="Bắt đầu">
-            <p className="text-sm font-medium text-foreground">
-              {formatApiDateTimeDisplay(classItem.startDate) || "—"}
-            </p>
-          </MetaCard>
-          <MetaCard label="Kết thúc">
-            <p className="text-sm font-medium text-foreground">
-              {formatApiDateTimeDisplay(classItem.endDate) || "—"}
-            </p>
+          <MetaCard label="Thời gian">
+            <ClassDateRange
+              startDate={classItem.startDate}
+              endDate={classItem.endDate}
+              layout="stack"
+            />
           </MetaCard>
           {classItem.scheduleSummary ? (
-            <div className="md:col-span-2 xl:col-span-4">
-              <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Tóm tắt lịch
-              </p>
-              <p className="mt-1 text-sm text-foreground">
-                {classItem.scheduleSummary}
-              </p>
-            </div>
+            <MetaCard label="Lịch học">
+              <ClassScheduleSummary summary={classItem.scheduleSummary} />
+            </MetaCard>
           ) : null}
         </section>
 
