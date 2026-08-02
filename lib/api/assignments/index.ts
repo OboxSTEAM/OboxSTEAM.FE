@@ -28,6 +28,7 @@ import {
   assignmentMutationValueSchema,
   deleteAssignmentResponseSchema,
   getAssignmentByIdResponseSchema,
+  getAssignmentSubmissionByIdResponseSchema,
   getAssignmentSubmissionsResponseSchema,
   getAssignmentsResponseSchema,
   getInProgressQuizResponseSchema,
@@ -42,6 +43,7 @@ import {
   submitRetrospectiveResponseSchema,
   updateAssignmentResponseSchema,
   type GetAssignmentByIdResult,
+  type GetAssignmentSubmissionByIdResult,
   type GetAssignmentSubmissionsResult,
   type GetAssignmentsResult,
   type GetInProgressQuizResult,
@@ -60,6 +62,8 @@ import {
 export type {
   GetAssignmentByIdResponse,
   GetAssignmentByIdResult,
+  GetAssignmentSubmissionByIdResponse,
+  GetAssignmentSubmissionByIdResult,
   GetAssignmentSubmissionsResponse,
   GetAssignmentSubmissionsResult,
   GetAssignmentsResponse,
@@ -189,6 +193,26 @@ export async function getAssignmentSubmissions(
   const response = await apiFetchParsed(
     `${ASSIGNMENTS_BASE}/${parsedAssignmentId}/submissions?classId=${parsedClassId}`,
     getAssignmentSubmissionsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/assignment-submissions/{submissionId}`
+ * FileUpload (and general) submission detail — includes `fileUrl` / `contentText`.
+ */
+export async function getAssignmentSubmissionById(
+  submissionId: string,
+): Promise<GetAssignmentSubmissionByIdResult> {
+  const { submissionId: parsedSubmissionId } = submissionIdParamSchema.parse({
+    submissionId,
+  });
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENT_SUBMISSIONS_BASE}/${parsedSubmissionId}`,
+    getAssignmentSubmissionByIdResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

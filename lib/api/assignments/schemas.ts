@@ -82,6 +82,10 @@ export const gradeAssignmentSubmissionResponseSchema = createApiResponseSchema(
   assignmentSubmissionDetailValueSchema,
 );
 
+export const getAssignmentSubmissionByIdResponseSchema = createApiResponseSchema(
+  assignmentSubmissionDetailValueSchema,
+);
+
 export type GetAssignmentSubmissionsResponse = z.infer<
   typeof getAssignmentSubmissionsResponseSchema
 >;
@@ -90,6 +94,11 @@ export type GradeAssignmentSubmissionResponse = z.infer<
   typeof gradeAssignmentSubmissionResponseSchema
 >;
 export type GradeAssignmentSubmissionResult = GradeAssignmentSubmissionResponse["value"];
+export type GetAssignmentSubmissionByIdResponse = z.infer<
+  typeof getAssignmentSubmissionByIdResponseSchema
+>;
+export type GetAssignmentSubmissionByIdResult =
+  GetAssignmentSubmissionByIdResponse["value"];
 
 export const retrospectiveAttemptValueSchema = createApiValueSchema(
   retrospectiveAttemptSchema,
