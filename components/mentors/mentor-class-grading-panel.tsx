@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
+  Beaker,
   BookOpenText,
   ClipboardPen,
   Download,
@@ -32,15 +33,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -63,14 +58,9 @@ import {
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { fileNameFromUrl } from "@/lib/curriculum/research-staging-storage";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import {
-  THEME_SELECT_CONTENT,
-  THEME_SELECT_ITEM,
-  THEME_SELECT_TRIGGER,
-} from "@/lib/ui/select-styles";
 import { cn } from "@/lib/utils";
 
-type GradingMode = "manual" | "quiz";
+type GradingMode = "research" | "manual" | "quiz";
 
 const ASSIGNMENT_TYPE_LABELS: Record<AssignmentType, string> = {
   Quiz: "Quiz",
@@ -92,12 +82,40 @@ const STATUS_STYLES: Record<AssignmentSubmissionStatus, string> = {
   ReturnedForRevision: "border-[#E94B3C]/25 bg-[#E94B3C]/10 text-[#E94B3C]",
 };
 
-function isManualAssignmentType(type: AssignmentType): boolean {
+const MODE_COPY: Record<
+  GradingMode,
+  { subtitle: string; emptySelect: string; chooseSelect: string }
+> = {
+  research: {
+    subtitle:
+      "Research milestone / Capstone — xem file & evidence, chấm qua ResearchSubmission.",
+    emptySelect: "Chưa có deliverable research trong chương trình",
+    chooseSelect: "Chọn mốc research để chấm…",
+  },
+  manual: {
+    subtitle:
+      "Nộp file & Retrospective (không gắn milestone) — mentor chấm điểm và nhận xét.",
+    emptySelect: "Chưa có bài nộp file / retrospective thường",
+    chooseSelect: "Chọn bài cần chấm…",
+  },
+  quiz: {
+    subtitle: "Quiz tự chấm — mentor chỉ xem điểm / tỉ lệ đúng và đề bài.",
+    emptySelect: "Chưa có quiz trong chương trình",
+    chooseSelect: "Chọn quiz để xem điểm…",
+  },
+};
+
+function isRegularManualType(type: AssignmentType): boolean {
   return type === "FileUpload" || type === "Retrospective";
 }
 
 function isQuizAssignmentType(type: AssignmentType): boolean {
   return type === "Quiz";
+}
+
+function parseGradingMode(value: string | null): GradingMode {
+  if (value === "research" || value === "quiz") return value;
+  return "manual";
 }
 
 type SubmissionArtifactSource = "assignment" | "research" | "retrospective";
@@ -117,34 +135,49 @@ type ResearchAssignmentMeta = {
   capstoneAssignmentIds: Set<string>;
 };
 
-async function loadSubmissionArtifact(
+async function loadResearchArtifact(
   submissionId: string,
-  options: { isResearchDeliverable: boolean },
 ): Promise<SubmissionArtifact> {
-  // Research milestone deliverables (Capstone, Design Brief, …) must use
-  // /api/research-submissions — assignment-submissions returns 400 for these ids.
-  if (options.isResearchDeliverable) {
-    const result = await getResearchSubmissionById(submissionId);
-    const data = result?.data;
-    return {
-      source: "research",
-      code: data?.code ?? null,
-      fileUrl: data?.fileUrl ?? null,
-      contentText: data?.contentText ?? null,
-      evidenceUrls: (data?.evidenceUrls ?? []).filter(
-        (url): url is string => Boolean(url?.trim()),
-      ),
-      mentorFeedback: data?.mentorFeedback ?? null,
-      assignedGrade: data?.assignedGrade ?? null,
-    };
-  }
+  const result = await getResearchSubmissionById(submissionId);
+  const data = result?.data;
+  return {
+    source: "research",
+    code: data?.code ?? null,
+    fileUrl: data?.fileUrl ?? null,
+    contentText: data?.contentText ?? null,
+    evidenceUrls: (data?.evidenceUrls ?? []).filter(
+      (url): url is string => Boolean(url?.trim()),
+    ),
+    mentorFeedback: data?.mentorFeedback ?? null,
+    assignedGrade: data?.assignedGrade ?? null,
+  };
+}
 
+async function loadFileUploadArtifact(
+  submissionId: string,
+): Promise<SubmissionArtifact> {
   const result = await getAssignmentSubmissionById(submissionId);
   const data = result?.data;
   return {
     source: "assignment",
     code: data?.code ?? null,
     fileUrl: data?.fileUrl ?? null,
+    contentText: data?.contentText ?? null,
+    evidenceUrls: [],
+    mentorFeedback: data?.mentorFeedback ?? null,
+    assignedGrade: data?.assignedGrade ?? null,
+  };
+}
+
+async function loadRetrospectiveArtifact(
+  submissionId: string,
+): Promise<SubmissionArtifact> {
+  const result = await getRetrospectiveSubmission(submissionId);
+  const data = result?.data;
+  return {
+    source: "retrospective",
+    code: null,
+    fileUrl: null,
     contentText: data?.contentText ?? null,
     evidenceUrls: [],
     mentorFeedback: data?.mentorFeedback ?? null,
@@ -492,68 +525,86 @@ export function MentorClassGradingPanel({
 
   const assignments = assignmentsData ?? [];
 
-  const manualAssignments = useMemo(
-    () => assignments.filter((item) => isManualAssignmentType(item.assignmentType)),
-    [assignments],
-  );
+  const allModuleIdsKey = useMemo(() => {
+    const ids = [
+      ...new Set(
+        assignments
+          .map((item) => item.moduleId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ].sort();
+    return ids.join(",");
+  }, [assignments]);
+
+  const { data: researchAssignmentMeta } = useClientFetch({
+    enabled: Boolean(allModuleIdsKey),
+    fetcher: async (): Promise<ResearchAssignmentMeta> => {
+      try {
+        const moduleIds = allModuleIdsKey.split(",").filter(Boolean);
+        const results = await Promise.all(
+          moduleIds.map((moduleId) => getResearchMilestonesByModule(moduleId)),
+        );
+
+        const assignmentIds = new Set<string>();
+        const capstoneAssignmentIds = new Set<string>();
+
+        for (const result of results) {
+          for (const milestone of result?.data ?? []) {
+            const linkedId =
+              milestone.assignmentId ?? milestone.assignment?.id ?? null;
+            if (!linkedId) continue;
+            assignmentIds.add(linkedId);
+            if (milestone.isCapstone) {
+              capstoneAssignmentIds.add(linkedId);
+            }
+          }
+        }
+
+        return { assignmentIds, capstoneAssignmentIds };
+      } catch {
+        return {
+          assignmentIds: new Set(),
+          capstoneAssignmentIds: new Set(),
+        };
+      }
+    },
+    deps: [allModuleIdsKey],
+  });
+
+  const researchIdSet = researchAssignmentMeta?.assignmentIds;
+
+  const researchAssignments = useMemo(() => {
+    if (!researchIdSet) return [];
+    return assignments.filter((item) => researchIdSet.has(item.id));
+  }, [assignments, researchIdSet]);
+
+  const manualAssignments = useMemo(() => {
+    return assignments.filter((item) => {
+      if (!isRegularManualType(item.assignmentType)) return false;
+      // Until milestone map loads, keep FileUpload out of "Bài thường"
+      // so Capstone never opens via assignment-submissions by mistake.
+      if (!researchIdSet) return item.assignmentType === "Retrospective";
+      return !researchIdSet.has(item.id);
+    });
+  }, [assignments, researchIdSet]);
 
   const quizAssignments = useMemo(
     () => assignments.filter((item) => isQuizAssignmentType(item.assignmentType)),
     [assignments],
   );
 
-  const manualModuleIdsKey = useMemo(() => {
-    const ids = [
-      ...new Set(
-        manualAssignments
-          .map((item) => item.moduleId)
-          .filter((id): id is string => Boolean(id)),
-      ),
-    ].sort();
-    return ids.join(",");
-  }, [manualAssignments]);
-
-  const { data: researchAssignmentMeta } = useClientFetch({
-    enabled: Boolean(manualModuleIdsKey),
-    fetcher: async (): Promise<ResearchAssignmentMeta> => {
-      const moduleIds = manualModuleIdsKey.split(",").filter(Boolean);
-      const results = await Promise.all(
-        moduleIds.map((moduleId) => getResearchMilestonesByModule(moduleId)),
-      );
-
-      const assignmentIds = new Set<string>();
-      const capstoneAssignmentIds = new Set<string>();
-
-      for (const result of results) {
-        for (const milestone of result?.data ?? []) {
-          const linkedId =
-            milestone.assignmentId ?? milestone.assignment?.id ?? null;
-          if (!linkedId) continue;
-          assignmentIds.add(linkedId);
-          if (milestone.isCapstone) {
-            capstoneAssignmentIds.add(linkedId);
-          }
-        }
-      }
-
-      return { assignmentIds, capstoneAssignmentIds };
-    },
-    deps: [manualModuleIdsKey],
-    onError: () => {
-      // Non-blocking — research route still attempted only when meta is known.
-    },
-  });
-
-  const isResearchDeliverable = Boolean(
-    assignmentId && researchAssignmentMeta?.assignmentIds.has(assignmentId),
-  );
-
   const visibleAssignments =
-    mode === "manual" ? manualAssignments : quizAssignments;
+    mode === "research"
+      ? researchAssignments
+      : mode === "manual"
+        ? manualAssignments
+        : quizAssignments;
 
   const selectedAssignment = visibleAssignments.find(
     (item) => item.id === assignmentId,
   );
+
+  const canGradeInMode = mode === "research" || mode === "manual";
 
   const {
     data: assignmentDetail,
@@ -600,40 +651,23 @@ export function MentorClassGradingPanel({
     hasError: hasArtifactError,
     retry: retryArtifact,
   } = useClientFetch({
-    // Wait for milestone map so Capstone/Design Brief never hit assignment-submissions.
-    enabled:
-      gradeTarget != null &&
-      mode === "manual" &&
-      (selectedAssignment?.assignmentType === "Retrospective" ||
-        researchAssignmentMeta != null ||
-        !manualModuleIdsKey),
+    enabled: gradeTarget != null && canGradeInMode,
     fetcher: async (): Promise<SubmissionArtifact | null> => {
       if (!gradeTarget || !selectedAssignment) return null;
 
-      if (selectedAssignment.assignmentType === "Retrospective") {
-        const result = await getRetrospectiveSubmission(gradeTarget.submissionId);
-        const data = result?.data;
-        return {
-          source: "retrospective",
-          code: null,
-          fileUrl: null,
-          contentText: data?.contentText ?? null,
-          evidenceUrls: [],
-          mentorFeedback: data?.mentorFeedback ?? null,
-          assignedGrade: data?.assignedGrade ?? null,
-        };
+      if (mode === "research") {
+        return loadResearchArtifact(gradeTarget.submissionId);
       }
 
-      return loadSubmissionArtifact(gradeTarget.submissionId, {
-        isResearchDeliverable,
-      });
+      if (selectedAssignment.assignmentType === "Retrospective") {
+        return loadRetrospectiveArtifact(gradeTarget.submissionId);
+      }
+
+      return loadFileUploadArtifact(gradeTarget.submissionId);
     },
     deps: [
       gradeTarget?.submissionId,
       selectedAssignment?.assignmentType,
-      isResearchDeliverable,
-      researchAssignmentMeta,
-      manualModuleIdsKey,
       mode,
     ],
     onError: (error) =>
@@ -656,7 +690,7 @@ export function MentorClassGradingPanel({
   }, [gradeTarget?.submissionId, submissionArtifact]);
 
   function handleModeChange(nextMode: string | null) {
-    const value = (nextMode === "quiz" ? "quiz" : "manual") as GradingMode;
+    const value = parseGradingMode(nextMode);
     if (value === mode) return;
     setMode(value);
     setAssignmentId("");
@@ -889,10 +923,7 @@ export function MentorClassGradingPanel({
         returnForRevision,
       };
 
-      if (
-        isResearchDeliverable ||
-        submissionArtifact?.source === "research"
-      ) {
+      if (mode === "research") {
         await gradeResearchSubmission(gradeTarget.submissionId, payload);
       } else {
         await gradeAssignmentSubmission(gradeTarget.submissionId, payload);
@@ -924,12 +955,10 @@ export function MentorClassGradingPanel({
                   Chấm bài
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {mode === "manual"
-                    ? "Nộp file, Capstone/Research & Retrospective — mentor chấm điểm và nhận xét."
-                    : "Quiz tự chấm — mentor chỉ xem điểm / tỉ lệ đúng."}
+                  {MODE_COPY[mode].subtitle}
                 </p>
               </div>
-              {selectedAssignment && mode === "manual" && pendingGradeCount > 0 ? (
+              {selectedAssignment && canGradeInMode && pendingGradeCount > 0 ? (
                 <Badge className="rounded-full bg-[#4FC3F7]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#0d6e9c] hover:bg-[#4FC3F7]/15">
                   {pendingGradeCount} chờ chấm
                 </Badge>
@@ -938,21 +967,31 @@ export function MentorClassGradingPanel({
 
             <TabsList
               variant="line"
-              className="h-auto w-full justify-start gap-0 rounded-none border-b-0 bg-transparent p-0"
+              className="h-auto w-full justify-center gap-0 rounded-none border-b-0 bg-transparent p-0"
             >
               <TabsTrigger
+                value="research"
+                className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
+              >
+                <Beaker className="size-4" />
+                Research
+                <span className="font-mono text-[11px] text-muted-foreground">
+                  {researchAssignments.length}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger
                 value="manual"
-                className="rounded-none px-3 py-2.5 text-sm data-active:text-primary"
+                className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
               >
                 <ListChecks className="size-4" />
-                Bài cần chấm
+                Bài thường
                 <span className="font-mono text-[11px] text-muted-foreground">
                   {manualAssignments.length}
                 </span>
               </TabsTrigger>
               <TabsTrigger
                 value="quiz"
-                className="rounded-none px-3 py-2.5 text-sm data-active:text-primary"
+                className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
               >
                 <Sparkles className="size-4" />
                 Quiz · xem điểm
@@ -963,161 +1002,189 @@ export function MentorClassGradingPanel({
             </TabsList>
           </div>
 
-          <div className="space-y-3 border-b border-border px-4 py-3 sm:px-6">
-            <Select
-              value={assignmentId || null}
-              onValueChange={(value) => {
-                markLoading();
-                setAssignmentId(value ?? "");
-                setIsPromptOpen(false);
-              }}
-              disabled={
-                isAssignmentsLoading || visibleAssignments.length === 0
-              }
-            >
-              <SelectTrigger
-                className={cn(THEME_SELECT_TRIGGER, "w-full max-w-xl")}
-              >
-                <span className="truncate">
+          <div className="flex min-h-[480px] flex-row items-stretch">
+            {/* Assignment picker — always open beside the student list (~30%) */}
+            <aside className="flex w-[min(300px,34%)] min-w-[220px] shrink-0 flex-col border-r border-border bg-muted/25">
+              <div className="shrink-0 border-b border-border px-3 py-2.5 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  {mode === "research"
+                    ? "Mốc Research"
+                    : mode === "quiz"
+                      ? "Quiz"
+                      : "Bài tập"}
+                </p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
                   {isAssignmentsLoading
-                    ? "Đang tải bài tập..."
-                    : selectedAssignment
-                      ? selectedAssignment.title ||
-                        selectedAssignment.code ||
-                        "Bài tập"
-                      : visibleAssignments.length === 0
-                        ? mode === "manual"
-                          ? "Chưa có bài nộp file / retrospective"
-                          : "Chưa có quiz trong chương trình"
-                        : mode === "manual"
-                          ? "Chọn bài cần chấm…"
-                          : "Chọn quiz để xem điểm…"}
-                </span>
-              </SelectTrigger>
-              <SelectContent
-                align="start"
-                alignItemWithTrigger={false}
-                sideOffset={8}
-                className={THEME_SELECT_CONTENT}
-              >
-                {visibleAssignments.map((item: AssignmentListItem) => {
-                  const isResearch =
-                    researchAssignmentMeta?.assignmentIds.has(item.id) ?? false;
-                  const isCapstone =
-                    researchAssignmentMeta?.capstoneAssignmentIds.has(item.id) ??
-                    false;
-
-                  return (
-                    <SelectItem
-                      key={item.id}
-                      value={item.id}
-                      className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
-                    >
-                      <span className="flex flex-col gap-0.5 py-0.5 text-left">
-                        <span className="flex flex-wrap items-center gap-1.5">
-                          <span>{item.title || item.code || "Bài tập"}</span>
-                          {isCapstone ? (
-                            <Badge
-                              variant="outline"
-                              className="rounded-full border-[#7CB342]/30 bg-[#7CB342]/12 px-1.5 py-0 text-[10px] font-semibold text-[#3d5c22]"
-                            >
-                              Capstone
-                            </Badge>
-                          ) : isResearch ? (
-                            <Badge
-                              variant="outline"
-                              className="rounded-full px-1.5 py-0 text-[10px]"
-                            >
-                              Research
-                            </Badge>
-                          ) : null}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          {ASSIGNMENT_TYPE_LABELS[item.assignmentType]}
-                          {item.code ? ` · ${item.code}` : ""}
-                        </span>
-                      </span>
-                    </SelectItem>
-                  );
-                })}
-              </SelectContent>
-            </Select>
-
-            {assignmentId ? (
-              <div className="flex flex-col gap-2 rounded-xl border border-border bg-muted/30 px-3 py-2.5 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 flex-1 space-y-1">
-                  <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                    <BookOpenText className="size-3.5 text-primary" />
-                    Đề bài
-                  </p>
-                  {isAssignmentDetailLoading && !assignmentDetail ? (
-                    <Skeleton className="h-4 w-3/4" />
-                  ) : (
-                    <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
-                      {assignmentDetail?.description?.trim() ||
-                        "Chưa có mô tả đề — bấm Xem đề để xem điểm đạt / hạn nộp."}
-                    </p>
-                  )}
-                </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => setIsPromptOpen(true)}
-                  className="h-8 shrink-0 rounded-lg text-xs"
-                >
-                  <BookOpenText className="size-3.5" />
-                  Xem đề đầy đủ
-                </Button>
+                    ? "Đang tải…"
+                    : `${visibleAssignments.length} mục`}
+                </p>
               </div>
-            ) : null}
+              <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+                {isAssignmentsLoading ? (
+                  <div className="space-y-2 p-1">
+                    <Skeleton className="h-14 w-full rounded-lg" />
+                    <Skeleton className="h-14 w-full rounded-lg" />
+                    <Skeleton className="h-14 w-full rounded-lg" />
+                  </div>
+                ) : visibleAssignments.length === 0 ? (
+                  <p className="px-2 py-6 text-center text-xs leading-relaxed text-muted-foreground">
+                    {MODE_COPY[mode].emptySelect}
+                  </p>
+                ) : (
+                  <ul className="space-y-1" role="listbox" aria-label="Chọn bài để chấm">
+                    {visibleAssignments.map((item: AssignmentListItem) => {
+                      const isSelected = item.id === assignmentId;
+                      const isCapstone =
+                        researchAssignmentMeta?.capstoneAssignmentIds.has(
+                          item.id,
+                        ) ?? false;
+                      return (
+                        <li key={item.id}>
+                          <button
+                            type="button"
+                            role="option"
+                            aria-selected={isSelected}
+                            onClick={() => {
+                              if (item.id === assignmentId) return;
+                              markLoading();
+                              setAssignmentId(item.id);
+                              setIsPromptOpen(false);
+                            }}
+                            className={cn(
+                              "flex w-full flex-col gap-0.5 rounded-lg border px-2.5 py-2 text-left transition-colors",
+                              isSelected
+                                ? "border-[#4FC3F7]/40 bg-[#4FC3F7]/12"
+                                : "border-transparent hover:border-border hover:bg-muted/60",
+                            )}
+                          >
+                            <span className="flex flex-wrap items-center gap-1.5">
+                              <span
+                                className={cn(
+                                  "line-clamp-2 text-[12.5px] leading-snug",
+                                  isSelected
+                                    ? "font-semibold text-[#0d6e9c]"
+                                    : "font-medium text-foreground",
+                                )}
+                              >
+                                {item.title || item.code || "Bài tập"}
+                              </span>
+                              {mode === "research" && isCapstone ? (
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full border-[#7CB342]/30 bg-[#7CB342]/12 px-1.5 py-0 text-[10px] font-semibold text-[#3d5c22]"
+                                >
+                                  Capstone
+                                </Badge>
+                              ) : null}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                              {mode === "research"
+                                ? "ResearchSubmission"
+                                : ASSIGNMENT_TYPE_LABELS[item.assignmentType]}
+                              {item.code ? ` · ${item.code}` : ""}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </aside>
+
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              {assignmentId ? (
+                <div className="flex shrink-0 flex-col gap-2 border-b border-border bg-muted/20 px-4 py-3 sm:flex-row sm:items-start sm:justify-between sm:px-5">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                      <BookOpenText className="size-3.5 text-primary" />
+                      Đề bài
+                    </p>
+                    {isAssignmentDetailLoading && !assignmentDetail ? (
+                      <Skeleton className="h-4 w-3/4" />
+                    ) : (
+                      <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                        {assignmentDetail?.description?.trim() ||
+                          "Chưa có mô tả đề — bấm Xem đề để xem điểm đạt / hạn nộp."}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setIsPromptOpen(true)}
+                    className="h-8 shrink-0 rounded-lg text-xs"
+                  >
+                    <BookOpenText className="size-3.5" />
+                    Xem đề đầy đủ
+                  </Button>
+                </div>
+              ) : null}
+
+              <div className="min-h-0 flex-1 overflow-x-auto p-4 sm:p-5">
+                {!assignmentId ? (
+                  <ManagerEmptyState
+                    title={
+                      mode === "research"
+                        ? "Chọn mốc Research"
+                        : mode === "quiz"
+                          ? "Chọn quiz để xem điểm"
+                          : "Chọn bài thường"
+                    }
+                    description={
+                      mode === "research"
+                        ? "Chọn mốc bên trái — xem file, evidence và chấm qua ResearchSubmission."
+                        : mode === "quiz"
+                          ? "Chọn quiz bên trái. Hệ thống tự chấm — bạn chỉ xem điểm và đề bài."
+                          : "Chọn bài bên trái — FileUpload / Retrospective không gắn research milestone."
+                    }
+                    icon={
+                      mode === "research"
+                        ? Beaker
+                        : mode === "quiz"
+                          ? GraduationCap
+                          : ClipboardPen
+                    }
+                  />
+                ) : mode === "quiz" ? (
+                  <ManagerDataTable
+                    columns={quizColumns}
+                    data={submissions}
+                    isLoading={isSubmissionsLoading}
+                    emptyState={
+                      <ManagerEmptyState
+                        title="Chưa có kết quả quiz"
+                        description="Học viên chưa hoàn thành quiz này."
+                        icon={Sparkles}
+                      />
+                    }
+                  />
+                ) : (
+                  <ManagerDataTable
+                    columns={manualColumns}
+                    data={submissions}
+                    isLoading={isSubmissionsLoading}
+                    emptyState={
+                      <ManagerEmptyState
+                        title={
+                          mode === "research"
+                            ? "Chưa có bài nộp research"
+                            : "Chưa có bài nộp"
+                        }
+                        description={
+                          mode === "research"
+                            ? "Học viên active trong lớp chưa có ResearchSubmission cho mốc này."
+                            : "Học viên active trong lớp chưa nộp bài này."
+                        }
+                        icon={mode === "research" ? Beaker : ClipboardPen}
+                      />
+                    }
+                  />
+                )}
+              </div>
+            </div>
           </div>
-
-          <TabsContent value="manual" className="mt-0 overflow-x-auto p-4 sm:p-6">
-            {!assignmentId ? (
-              <ManagerEmptyState
-                title="Chọn bài để chấm"
-                description="Chỉ hiện Nộp file và Retrospective — bạn chấm điểm, nhận xét hoặc trả bài để sửa."
-                icon={ClipboardPen}
-              />
-            ) : (
-              <ManagerDataTable
-                columns={manualColumns}
-                data={submissions}
-                isLoading={isSubmissionsLoading}
-                emptyState={
-                  <ManagerEmptyState
-                    title="Chưa có bài nộp"
-                    description="Học viên active trong lớp chưa nộp bài này."
-                    icon={ClipboardPen}
-                  />
-                }
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="quiz" className="mt-0 overflow-x-auto p-4 sm:p-6">
-            {!assignmentId ? (
-              <ManagerEmptyState
-                title="Chọn quiz để xem điểm"
-                description="Quiz được hệ thống tự chấm. Bạn chỉ xem điểm và số câu đúng — không nhập điểm thủ công."
-                icon={GraduationCap}
-              />
-            ) : (
-              <ManagerDataTable
-                columns={quizColumns}
-                data={submissions}
-                isLoading={isSubmissionsLoading}
-                emptyState={
-                  <ManagerEmptyState
-                    title="Chưa có kết quả quiz"
-                    description="Học viên chưa hoàn thành quiz này."
-                    icon={Sparkles}
-                  />
-                }
-              />
-            )}
-          </TabsContent>
         </Tabs>
       </section>
 
@@ -1130,13 +1197,17 @@ export function MentorClassGradingPanel({
         <DialogPopup className="sm:max-w-lg">
           <DialogClose />
           <DialogHeader>
-            <DialogTitle>Chấm bài</DialogTitle>
+            <DialogTitle>
+              {mode === "research" ? "Chấm Research" : "Chấm bài"}
+            </DialogTitle>
             <DialogDescription>
               {gradeTarget?.studentName?.trim() || "Học viên"} · lần #
               {gradeTarget?.attemptNumber}
-              {selectedAssignment
-                ? ` · ${ASSIGNMENT_TYPE_LABELS[selectedAssignment.assignmentType]}`
-                : ""}
+              {mode === "research"
+                ? " · ResearchSubmission"
+                : selectedAssignment
+                  ? ` · ${ASSIGNMENT_TYPE_LABELS[selectedAssignment.assignmentType]}`
+                  : ""}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3 py-1">

@@ -8,6 +8,7 @@ import { ClipboardList, Check, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectTrigger,
@@ -150,6 +151,7 @@ export function AssignmentFormPanel({
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -521,19 +523,83 @@ export function AssignmentFormPanel({
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thời gian (phút)</Label>
                 <input type="number" {...register("timeLimitMinutes", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>% Dễ</Label>
-                <input type="number" {...register("easyPercent", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: errors.easyPercent ? W.primary : W.border }} />
+              <div className="col-span-2 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                    Tỉ lệ độ khó
+                  </Label>
+                  <span className="text-[11px] tabular-nums" style={{ color: W.faint }}>
+                    Tổng 100%
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { key: "easy" as const, label: "Dễ", color: "#7cb342", value: watch("easyPercent") ?? 0 },
+                      { key: "medium" as const, label: "Trung bình", color: "#f59e0b", value: watch("mediumPercent") ?? 0 },
+                      { key: "hard" as const, label: "Khó", color: "#E94B3C", value: watch("hardPercent") ?? 0 },
+                    ] as const
+                  ).map((item) => (
+                    <div
+                      key={item.key}
+                      className="rounded-lg border px-2.5 py-2 text-center"
+                      style={{ borderColor: W.border, background: W.surface }}
+                    >
+                      <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: W.faint }}>
+                        {item.label}
+                      </p>
+                      <p className="mt-0.5 text-sm font-bold tabular-nums" style={{ color: item.color }}>
+                        {item.value}%
+                      </p>
+                    </div>
+                  ))}
+                </div>
+                {(() => {
+                  const easy = Math.max(0, Math.min(100, Number(watch("easyPercent")) || 0));
+                  const medium = Math.max(0, Math.min(100, Number(watch("mediumPercent")) || 0));
+                  const hard = Math.max(0, Math.min(100, Number(watch("hardPercent")) || 0));
+                  const lo = easy;
+                  const hi = Math.max(lo, Math.min(100, easy + medium));
+                  return (
+                    <div className="space-y-2 px-0.5">
+                      <div
+                        className="flex h-2 overflow-hidden rounded-full"
+                        aria-hidden
+                      >
+                        <span className="h-full bg-[#7cb342]" style={{ width: `${easy}%` }} />
+                        <span className="h-full bg-[#f59e0b]" style={{ width: `${medium}%` }} />
+                        <span className="h-full bg-[#E94B3C]" style={{ width: `${hard}%` }} />
+                      </div>
+                      <Slider
+                        min={0}
+                        max={100}
+                        step={1}
+                        value={[lo, hi]}
+                        onValueChange={(next) => {
+                          const vals = Array.isArray(next) ? next : [lo, hi];
+                          const a = Math.max(0, Math.min(100, Number(vals[0]) || 0));
+                          const b = Math.max(0, Math.min(100, Number(vals[1]) || 0));
+                          const left = Math.min(a, b);
+                          const right = Math.max(a, b);
+                          setValue("easyPercent", left, { shouldValidate: true, shouldDirty: true });
+                          setValue("mediumPercent", right - left, { shouldValidate: true, shouldDirty: true });
+                          setValue("hardPercent", 100 - right, { shouldValidate: true, shouldDirty: true });
+                        }}
+                        className={cn(
+                          "**:data-[slot=slider-track]:h-2 **:data-[slot=slider-track]:bg-muted",
+                          "**:data-[slot=slider-range]:bg-transparent",
+                        )}
+                        aria-label="Tỉ lệ độ khó dễ / trung bình / khó"
+                      />
+                      <div className="flex justify-between text-[10px]" style={{ color: W.faint }}>
+                        <span>Kéo 2 nút để chia Dễ · TB · Khó</span>
+                        <span className="tabular-nums">{easy + medium + hard}%</span>
+                      </div>
+                    </div>
+                  );
+                })()}
+                <FErr msg={errors.easyPercent?.message as string | undefined} />
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>% Trung bình</Label>
-                <input type="number" {...register("mediumPercent", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>% Khó</Label>
-                <input type="number" {...register("hardPercent", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              </div>
-              <FErr msg={errors.easyPercent?.message as string | undefined} />
               <div className="col-span-2 flex flex-wrap gap-5 pt-1">
                 <div className="flex items-center gap-2">
                   <Controller
