@@ -1,7 +1,21 @@
 import type { LucideIcon } from "lucide-react";
-import { BookOpen, LayoutDashboard, LogOut, Settings, Shield, User, Users } from "lucide-react";
+import {
+  BookOpen,
+  ClipboardList,
+  LayoutDashboard,
+  LogOut,
+  Settings,
+  Shield,
+  User,
+  Users,
+} from "lucide-react";
 
-import { isManagerRole, isParentRole, normalizeAccountRole } from "@/lib/auth/roles";
+import {
+  isManagerRole,
+  isMentorRole,
+  isParentRole,
+  normalizeAccountRole,
+} from "@/lib/auth/roles";
 
 export type AccountNavItem = {
   label: string;
@@ -52,6 +66,27 @@ export const PARENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   },
 ];
 
+export const MENTOR_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
+  {
+    label: "Lớp của tôi",
+    href: "/mentor/classes",
+    icon: Users,
+    description: "Lớp đã đăng ký",
+  },
+  {
+    label: "Đăng ký lớp",
+    href: "/mentor/board",
+    icon: ClipboardList,
+    description: "Tuyển lớp & theo dõi yêu cầu",
+  },
+  {
+    label: "Hồ sơ cá nhân",
+    href: "/profile",
+    icon: User,
+    description: "Thông tin tài khoản & kỹ năng",
+  },
+];
+
 export const MANAGER_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   {
     label: "Dashboard",
@@ -73,6 +108,7 @@ export const ACCOUNT_NAV_ITEMS = STUDENT_ACCOUNT_NAV_ITEMS;
 export function getAccountNavItems(role?: string | null): AccountNavItem[] {
   if (isParentRole(role)) return PARENT_ACCOUNT_NAV_ITEMS;
   if (isManagerRole(role)) return MANAGER_ACCOUNT_NAV_ITEMS;
+  if (isMentorRole(role)) return MENTOR_ACCOUNT_NAV_ITEMS;
   return STUDENT_ACCOUNT_NAV_ITEMS;
 }
 

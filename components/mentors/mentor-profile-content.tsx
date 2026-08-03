@@ -6,7 +6,6 @@ import {
   CheckCircle2,
   ExternalLink,
   GraduationCap,
-  MessageSquareText,
   Sparkles,
   UserRound,
 } from "lucide-react";
@@ -16,31 +15,17 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type {
   Mentor,
   MentorSkill,
-  SkillCategory,
-  SkillProficiencyLevel,
 } from "@/lib/api/entities/mentor";
 import type { SkillSummary } from "@/lib/api/entities/skill";
+import {
+  SKILL_CATEGORY_LABELS,
+  SKILL_PROFICIENCY_LABELS,
+} from "@/lib/mentors/skill-labels";
 import {
   getExpertAvatarUrl,
   getExpertInitials,
 } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
-
-const SKILL_CATEGORY_LABELS: Record<SkillCategory, string> = {
-  Science: "Science",
-  Technology: "Technology",
-  Engineering: "Engineering",
-  Arts: "Arts",
-  Math: "Math",
-  SoftSkill: "Soft skill",
-};
-
-const PROFICIENCY_LABELS: Record<SkillProficiencyLevel, string> = {
-  Beginner: "Cơ bản",
-  Intermediate: "Trung cấp",
-  Advanced: "Nâng cao",
-  Expert: "Chuyên gia",
-};
 
 export function getMentorInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "GV";
@@ -85,8 +70,10 @@ function ProfileSection({
           className={cn(
             "inline-flex size-7 shrink-0 items-center justify-center rounded-full",
             tone === "neutral" && "bg-muted text-muted-foreground",
-            tone === "accent" && "bg-[#4FC3F7]/12 text-[#2ea8d8] dark:text-[#7dd3fc]",
-            tone === "highlight" && "bg-[#FDD835]/20 text-[#8a7200] dark:text-[#fde047]",
+            tone === "accent" &&
+              "bg-[#4FC3F7]/12 text-[#2ea8d8] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc]",
+            tone === "highlight" &&
+              "bg-[#FDD835]/20 text-[#8a7200] dark:bg-[#FDD835]/20 dark:text-[#fde047]",
           )}
         >
           <Icon className="size-3.5" aria-hidden />
@@ -173,59 +160,186 @@ function MentorIdentityHeader({
   );
 }
 
-function SkillList({
+function skillDisplayName(item: MentorSkill): string {
+  return item.skill?.name?.trim() || item.skill?.code || "Kỹ năng";
+}
+
+function skillMetaLine(item: MentorSkill): string {
+  const category = item.skill?.category
+    ? SKILL_CATEGORY_LABELS[item.skill.category]
+    : null;
+  return [category, SKILL_PROFICIENCY_LABELS[item.proficiencyLevel]]
+    .filter(Boolean)
+    .join(" · ");
+}
+
+function SkillChip({
+  name,
+  meta,
+  tone,
+}: {
+  name: string;
+  meta?: string;
+  tone: "match" | "missing" | "extra";
+}) {
+  return (
+    <li
+      className={cn(
+        "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5",
+        tone === "match" &&
+          "border-[#7CB342]/40 bg-[#7CB342]/12 dark:bg-[#7CB342]/20",
+        tone === "missing" &&
+          "border-dashed border-border bg-background text-muted-foreground",
+        tone === "extra" && "border-border bg-muted/70",
+      )}
+    >
+      <span
+        className={cn(
+          "inline-flex items-center gap-1.5 truncate text-sm font-medium",
+          tone === "match" && "text-[#3d5c22] dark:text-[#b8e086]",
+          tone === "missing" && "text-muted-foreground",
+          tone === "extra" && "text-foreground",
+        )}
+      >
+        {tone === "match" ? (
+          <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
+        ) : null}
+        {name}
+      </span>
+      {meta ? (
+        <span className="truncate text-[11px] text-muted-foreground">{meta}</span>
+      ) : null}
+    </li>
+  );
+}
+
+function SkillMatchPanel({
   skills,
-  requiredSkillIds,
+  requiredSkills,
 }: {
   skills: MentorSkill[];
-  requiredSkillIds: Set<string>;
+  requiredSkills: SkillSummary[];
 }) {
-  if (skills.length === 0) {
+  const mentorBySkillId = new Map(skills.map((item) => [item.skillId, item]));
+  const requiredIds = new Set(requiredSkills.map((skill) => skill.id));
+
+  const matchedRequired = requiredSkills.filter((skill) =>
+    mentorBySkillId.has(skill.id),
+  );
+  const missingRequired = requiredSkills.filter(
+    (skill) => !mentorBySkillId.has(skill.id),
+  );
+  const extraSkills = skills.filter((item) => !requiredIds.has(item.skillId));
+  const matchedCount = matchedRequired.length;
+  const requiredCount = requiredSkills.length;
+  const hasRequired = requiredCount > 0;
+
+  if (!hasRequired && skills.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">Mentor chưa cập nhật kỹ năng.</p>
+      <p className="text-sm text-muted-foreground">
+        Mentor chưa cập nhật kỹ năng.
+      </p>
     );
   }
 
   return (
-    <ul className="flex flex-wrap gap-2">
-      {skills.map((item) => {
-        const skillName =
-          item.skill?.name?.trim() || item.skill?.code || "Kỹ năng";
-        const category = item.skill?.category
-          ? SKILL_CATEGORY_LABELS[item.skill.category]
-          : null;
-        const isMatch = requiredSkillIds.has(item.skillId);
+    <div className="space-y-3">
+      {hasRequired ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-[#4FC3F7]/25 bg-[#4FC3F7]/8 px-3 py-2 dark:bg-[#4FC3F7]/12">
+          <span className="font-mono text-sm font-semibold tabular-nums text-[#0d6e9c] dark:text-[#7dd3fc]">
+            {matchedCount}/{requiredCount}
+          </span>
+          <span className="text-sm text-foreground">
+            kỹ năng khớp yêu cầu lớp
+          </span>
+          {matchedCount === requiredCount ? (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[#7CB342]/15 px-2 py-0.5 text-xs font-semibold text-[#3d5c22] dark:text-[#b8e086]">
+              <CheckCircle2 className="size-3" aria-hidden />
+              Đủ kỹ năng
+            </span>
+          ) : (
+            <span className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              Thiếu {requiredCount - matchedCount}
+            </span>
+          )}
+        </div>
+      ) : null}
 
-        return (
-          <li
-            key={item.id}
-            className={cn(
-              "inline-flex max-w-full flex-col rounded-lg border px-2.5 py-1.5",
-              isMatch
-                ? "border-[#7CB342]/35 bg-[#7CB342]/10"
-                : "border-border bg-muted",
+      {hasRequired ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-[#3d5c22] dark:text-[#b8e086]">
+              Khớp lớp · {matchedCount}
+            </p>
+            {matchedRequired.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {matchedRequired.map((skill) => {
+                  const mentorSkill = mentorBySkillId.get(skill.id);
+                  return (
+                    <SkillChip
+                      key={skill.id}
+                      name={skill.name || skill.code || "Kỹ năng"}
+                      meta={mentorSkill ? skillMetaLine(mentorSkill) : undefined}
+                      tone="match"
+                    />
+                  );
+                })}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Chưa khớp kỹ năng nào của lớp.
+              </p>
             )}
-          >
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 truncate text-sm font-medium",
-                isMatch ? "text-[#3d5c22] dark:text-[#b8e086]" : "text-foreground",
-              )}
-            >
-              {isMatch ? (
-                <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
-              ) : null}
-              {skillName}
-            </span>
-            <span className="truncate text-[11px] text-muted-foreground">
-              {[category, PROFICIENCY_LABELS[item.proficiencyLevel]]
-                .filter(Boolean)
-                .join(" · ")}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Lớp yêu cầu · chưa có · {missingRequired.length}
+            </p>
+            {missingRequired.length > 0 ? (
+              <ul className="flex flex-wrap gap-2">
+                {missingRequired.map((skill) => (
+                  <SkillChip
+                    key={skill.id}
+                    name={skill.name || skill.code || "Kỹ năng"}
+                    meta={
+                      skill.category
+                        ? SKILL_CATEGORY_LABELS[skill.category]
+                        : undefined
+                    }
+                    tone="missing"
+                  />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Mentor đã có đủ kỹ năng lớp yêu cầu.
+              </p>
+            )}
+          </div>
+        </div>
+      ) : null}
+
+      {extraSkills.length > 0 || (!hasRequired && skills.length > 0) ? (
+        <div className="space-y-2 border-t border-border pt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {hasRequired
+              ? `Kỹ năng khác của mentor · ${extraSkills.length}`
+              : `Kỹ năng mentor · ${skills.length}`}
+          </p>
+          <ul className="flex flex-wrap gap-2">
+            {(hasRequired ? extraSkills : skills).map((item) => (
+              <SkillChip
+                key={item.id}
+                name={skillDisplayName(item)}
+                meta={skillMetaLine(item)}
+                tone="extra"
+              />
+            ))}
+          </ul>
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -242,6 +356,7 @@ export function MentorProfileContent({
   const organization = mentor.organization?.trim() ?? "";
   const hasBio = Boolean(mentor.bio?.trim());
   const hasAchievements = Boolean(mentor.achievements?.trim());
+  const trimmedMessage = requestMessage?.trim() || "";
 
   const requiredSkillIds = new Set(requiredSkills.map((skill) => skill.id));
   const skills = [...(mentor.skills ?? [])].sort((left, right) => {
@@ -292,14 +407,6 @@ export function MentorProfileContent({
         </div>
       ) : null}
 
-      {requestMessage ? (
-        <ProfileSection title="Lời nhắn xin nhận lớp" icon={MessageSquareText}>
-          <p className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-            {requestMessage}
-          </p>
-        </ProfileSection>
-      ) : null}
-
       <ProfileSection
         title={
           requiredSkills.length > 0
@@ -309,30 +416,7 @@ export function MentorProfileContent({
         icon={Sparkles}
         tone="accent"
       >
-        {requiredSkills.length > 0 ? (
-          <div className="mb-3 flex flex-wrap gap-1.5">
-            {requiredSkills.map((skill) => {
-              const matched = skills.some((item) => item.skillId === skill.id);
-              return (
-                <span
-                  key={skill.id}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium",
-                    matched
-                      ? "bg-[#7CB342]/12 text-[#3d5c22] dark:text-[#b8e086]"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {matched ? (
-                    <CheckCircle2 className="size-3" aria-hidden />
-                  ) : null}
-                  {skill.name || skill.code || "Skill"}
-                </span>
-              );
-            })}
-          </div>
-        ) : null}
-        <SkillList skills={skills} requiredSkillIds={requiredSkillIds} />
+        <SkillMatchPanel skills={skills} requiredSkills={requiredSkills} />
       </ProfileSection>
 
       <ProfileSection title="Vai trò" icon={GraduationCap}>
@@ -346,6 +430,17 @@ export function MentorProfileContent({
           ) : null}
         </p>
       </ProfileSection>
+
+      {trimmedMessage ? (
+        <aside className="rounded-lg border border-[#FDD835]/40 bg-[#FDD835]/10 px-3 py-2.5 dark:border-[#FDD835]/35 dark:bg-[#FDD835]/10">
+          <p className="text-xs font-semibold text-foreground">
+            Lời nhắn của mentor
+          </p>
+          <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-foreground/90">
+            {trimmedMessage}
+          </p>
+        </aside>
+      ) : null}
     </div>
   );
 }

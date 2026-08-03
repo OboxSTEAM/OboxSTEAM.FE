@@ -11,6 +11,7 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { ClassDateRange } from "@/components/classes/class-date-range";
 import {
   ClassFormDialog,
   type ClassFormSubmitPayload,
@@ -42,7 +43,6 @@ import {
   CLASS_STATUS_LABELS,
   getNextClassLifecycleAction,
 } from "@/lib/classes/constants";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 
 type SortValue =
@@ -297,12 +297,13 @@ export function ClassManager({
     },
     {
       header: "Thời gian",
-      className: "min-w-40 text-xs text-muted-foreground",
+      className: "min-w-44 text-xs",
       render: (classItem) => (
-        <div className="space-y-0.5">
-          <p>{formatApiDateTimeDisplay(classItem.startDate) || "—"}</p>
-          <p>→ {formatApiDateTimeDisplay(classItem.endDate) || "—"}</p>
-        </div>
+        <ClassDateRange
+          startDate={classItem.startDate}
+          endDate={classItem.endDate}
+          layout="stack"
+        />
       ),
     },
     {

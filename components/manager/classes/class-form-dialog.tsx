@@ -3,17 +3,19 @@
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { CalendarRange, Users } from "lucide-react";
+import { CalendarRange, Sparkles, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
+  dialogScrollFormClassName,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +25,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { SkillMultiSelect } from "@/components/skills/skill-multi-select";
 import type { Class } from "@/lib/api/entities/class";
 import type { Program } from "@/lib/api/entities/program";
 import {
@@ -52,6 +55,7 @@ export type ClassFormSubmitPayload = {
   maxCapacity?: number;
   minHoursBeforeAssignmentJoin?: number;
   scheduleSummary?: string | null;
+  requiredSkillIds?: string[] | null;
 };
 
 type ClassFormDialogProps = {
@@ -82,6 +86,7 @@ function toDefaultValues(
         ? String(classItem.minHoursBeforeAssignmentJoin)
         : "",
     scheduleSummary: classItem?.scheduleSummary ?? "",
+    requiredSkillIds: classItem?.requiredSkills?.map((skill) => skill.id) ?? [],
   };
 }
 
@@ -130,14 +135,18 @@ export function ClassFormDialog({
       scheduleSummary: values.scheduleSummary?.trim()
         ? values.scheduleSummary.trim()
         : null,
+      requiredSkillIds: values.requiredSkillIds ?? [],
     });
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-h-[calc(100dvh-2rem)] max-w-2xl overflow-y-auto p-0">
-        <form onSubmit={handleSubmit(handleFormSubmit)}>
-          <DialogHeader className="border-b border-border px-6 py-5 pr-14">
+      <DialogScrollPopup className="max-w-2xl">
+        <form
+          onSubmit={handleSubmit(handleFormSubmit)}
+          className={dialogScrollFormClassName}
+        >
+          <DialogScrollHeader>
             <DialogTitle>
               {classItem ? "Cập nhật lớp học" : "Tạo lớp học mới"}
             </DialogTitle>
@@ -146,10 +155,10 @@ export function ClassFormDialog({
                 ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết."
                 : "Lớp tạo ở trạng thái Bản nháp, chưa gán mentor. Mentor xin nhận lớp và bạn duyệt tại chi tiết lớp."}
             </DialogDescription>
-          </DialogHeader>
+          </DialogScrollHeader>
           <DialogClose />
 
-          <div className="space-y-6 px-6 py-6">
+          <DialogScrollBody className="space-y-6">
             <section className="space-y-4">
               <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
                 <Users className="size-4 text-primary" />
@@ -267,6 +276,36 @@ export function ClassFormDialog({
               </div>
             </section>
 
+            <section className="space-y-3 border-t border-border pt-5">
+              <div className="space-y-1">
+                <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+                  <Sparkles className="size-4 text-primary" />
+                  Kỹ năng yêu cầu
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Khớp mentor có kỹ năng phù hợp khi tuyển lớp.
+                </p>
+              </div>
+              <Controller
+                control={control}
+                name="requiredSkillIds"
+                render={({ field }) => (
+                  <SkillMultiSelect
+                    value={field.value ?? []}
+                    onChange={field.onChange}
+                    disabled={isSubmitting}
+                    enabled={open}
+                    knownSkills={classItem?.requiredSkills ?? []}
+                  />
+                )}
+              />
+              {errors.requiredSkillIds?.message ? (
+                <p className="text-xs text-destructive">
+                  {errors.requiredSkillIds.message}
+                </p>
+              ) : null}
+            </section>
+
             <section className="space-y-4 border-t border-border pt-5">
               <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
                 <CalendarRange className="size-4 text-primary" />
@@ -314,9 +353,9 @@ export function ClassFormDialog({
                 </FormField>
               </div>
             </section>
-          </div>
+          </DialogScrollBody>
 
-          <DialogFooter className="sticky bottom-0 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm">
+          <DialogScrollFooter>
             <Button
               type="button"
               variant="outline"
@@ -337,9 +376,9 @@ export function ClassFormDialog({
                   ? "Lưu thay đổi"
                   : "Tạo lớp"}
             </Button>
-          </DialogFooter>
+          </DialogScrollFooter>
         </form>
-      </DialogPopup>
+      </DialogScrollPopup>
     </Dialog>
   );
 }

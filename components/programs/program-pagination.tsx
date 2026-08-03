@@ -39,14 +39,14 @@ const PAGE_THEME_CLASS: Record<
   },
   light: {
     wrapper:
-      "rounded-xl border border-[#E5E5E0] bg-white px-2 py-1.5 shadow-[0_2px_12px_rgba(45,45,45,0.06)]",
-    link: "min-w-10 h-9 border border-[#E5E5E0] bg-white text-[#2D2D2D] font-medium shadow-sm hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
+      "rounded-xl border border-border bg-card px-2 py-1.5 shadow-sm",
+    link: "min-w-10 h-9 border border-border bg-card text-foreground font-medium shadow-sm hover:border-foreground/20 hover:bg-muted",
     active:
-      "min-w-10 h-9 border border-[#2D2D2D] bg-[#2D2D2D] text-white font-semibold shadow-sm hover:bg-[#2D2D2D] hover:text-white",
+      "min-w-10 h-9 border border-primary bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
     disabled:
-      "border-[#E5E5E0] bg-[#FAFAF5] text-[#6B6B6B]/45 cursor-not-allowed shadow-none hover:bg-[#FAFAF5] hover:border-[#E5E5E0]",
+      "border-border bg-muted text-muted-foreground/45 cursor-not-allowed shadow-none hover:bg-muted hover:border-border",
     navButton:
-      "h-9 min-w-[4.5rem] border border-[#E5E5E0] bg-white px-3 font-semibold text-[#2D2D2D] shadow-sm hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
+      "h-9 min-w-[4.5rem] border border-border bg-card px-3 font-semibold text-foreground shadow-sm hover:border-foreground/20 hover:bg-muted",
   },
 };
 

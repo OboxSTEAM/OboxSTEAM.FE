@@ -12,7 +12,9 @@ import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useClientFetch } from "@/hooks/use-client-fetch";
@@ -76,16 +78,16 @@ export function MentorProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="flex max-h-[min(90vh,44rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
-        <div className="relative shrink-0 border-b border-border px-7 pb-4 pt-5">
-          <DialogClose className="top-4 right-4" />
+      <DialogScrollPopup className="sm:max-w-2xl">
+        <DialogScrollHeader className="px-7">
+          <DialogClose />
           <DialogTitle className="text-lg">Thông tin mentor</DialogTitle>
           <DialogDescription className="sr-only">
             Chi tiết mentor, tiểu sử, thành tựu và kỹ năng.
           </DialogDescription>
-        </div>
+        </DialogScrollHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-7 py-5">
+        <DialogScrollBody className="space-y-4 px-7 pb-6">
           {hasError ? (
             <div className="py-6 text-center">
               <p className="text-sm text-muted-foreground">
@@ -127,8 +129,8 @@ export function MentorProfileDialog({
               requestMessage={requestMessage}
             />
           ) : null}
-        </div>
-      </DialogPopup>
+        </DialogScrollBody>
+      </DialogScrollPopup>
     </Dialog>
   );
 }

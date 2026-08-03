@@ -30,6 +30,10 @@ export const getMyMentorSkillsResponseSchema = createApiResponseSchema(
 );
 export const addMyMentorSkillResponseSchema =
   createApiResponseSchema(mentorSkillValueSchema);
+export const updateMyMentorSkillResponseSchema =
+  createApiResponseSchema(mentorSkillValueSchema);
+export const setMyMentorSkillVisibilityResponseSchema =
+  createApiResponseSchema(mentorSkillValueSchema);
 export const deleteMyMentorSkillResponseSchema = createApiResponseSchema(
   deleteMentorSkillValueSchema,
 );
@@ -61,6 +65,17 @@ export type AddMyMentorSkillResponse = z.infer<
   typeof addMyMentorSkillResponseSchema
 >;
 export type AddMyMentorSkillResult = AddMyMentorSkillResponse["value"];
+
+export type UpdateMyMentorSkillResponse = z.infer<
+  typeof updateMyMentorSkillResponseSchema
+>;
+export type UpdateMyMentorSkillResult = UpdateMyMentorSkillResponse["value"];
+
+export type SetMyMentorSkillVisibilityResponse = z.infer<
+  typeof setMyMentorSkillVisibilityResponseSchema
+>;
+export type SetMyMentorSkillVisibilityResult =
+  SetMyMentorSkillVisibilityResponse["value"];
 
 export type DeleteMyMentorSkillResponse = z.infer<
   typeof deleteMyMentorSkillResponseSchema

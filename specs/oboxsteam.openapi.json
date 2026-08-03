@@ -2051,6 +2051,137 @@
         }
       }
     },
+    "/api/assignments/{assignmentId}/submissions": {
+      "get": {
+        "tags": [
+          "Assignment"
+        ],
+        "summary": "List assignment submissions for a class",
+        "description": "Returns submissions of the assignment made by students actively enrolled in the given class. Mentors may only view classes they are assigned to.",
+        "parameters": [
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "description": "Class (cohort) whose students' submissions are listed",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentSubmissionListItemDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentSubmissionListItemDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssignmentSubmissionListItemDtoListApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/assignment-submissions/submit": {
       "post": {
         "tags": [
@@ -12622,7 +12753,7 @@
         "tags": [
           "Mentor"
         ],
-        "summary": "List my mentor skills",
+        "summary": "List my mentor skills (including private)",
         "responses": {
           "200": {
             "description": "OK",
@@ -12651,6 +12782,7 @@
           "Mentor"
         ],
         "summary": "Add a skill to my mentor profile",
+        "description": "Mentors manage skills freely (no manager verification). Optional evidence list and IsPublic flag (default true).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -12695,6 +12827,65 @@
       }
     },
     "/api/mentors/me/skills/{id}": {
+      "put": {
+        "tags": [
+          "Mentor"
+        ],
+        "summary": "Update one of my mentor skills",
+        "description": "Updates proficiency, years, description, notes, and visibility. When Evidences is provided, it replaces all evidence rows.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMentorSkillRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMentorSkillRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMentorSkillRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MentorSkillDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MentorSkillDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MentorSkillDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "Mentor"
@@ -12735,12 +12926,72 @@
         }
       }
     },
+    "/api/mentors/me/skills/{id}/visibility": {
+      "put": {
+        "tags": [
+          "Mentor"
+        ],
+        "summary": "Toggle whether a skill is visible to students",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMentorSkillVisibilityRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMentorSkillVisibilityRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMentorSkillVisibilityRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MentorSkillDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MentorSkillDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MentorSkillDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/mentors": {
       "get": {
         "tags": [
           "Mentor"
         ],
-        "summary": "List mentors with skills and concurrent usage",
+        "summary": "List mentors with all skills (including private) and concurrent usage",
         "parameters": [
           {
             "name": "search",
@@ -12798,7 +13049,7 @@
           "Mentor"
         ],
         "summary": "Get mentor profile by ID",
-        "description": "Returns a mentor's public profile (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments.",
+        "description": "Students see only public skills. Managers/SuperAdmins see all skills for staffing.",
         "parameters": [
           {
             "name": "id",
@@ -24437,6 +24688,161 @@
           }
         }
       }
+    },
+    "/api/skills": {
+      "get": {
+        "tags": [
+          "Skill"
+        ],
+        "summary": "List skill catalog",
+        "description": "Paged STEAM skill catalog for class requiredSkillIds and mentor skill pickers. Soft-deleted skills are excluded.",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "description": "Search by code, name, or subcategory (optional)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
+            "in": "query",
+            "description": "Filter by category: Science, Technology, Engineering, Arts, Math, SoftSkill (optional)",
+            "schema": {
+              "enum": [
+                "Science",
+                "Technology",
+                "Engineering",
+                "Arts",
+                "Math",
+                "SoftSkill"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number, starting from 1",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Number of items per page (1-100)",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Sort by field: name, code, category, createdAt. Default: name",
+            "schema": {
+              "type": "string",
+              "default": "name"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "description": "Sort in descending order? Default: false",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillSummaryDtoPaginationApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillSummaryDtoPaginationApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillSummaryDtoPaginationApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -25284,6 +25690,92 @@
           },
           "data": {
             "$ref": "#/components/schemas/AssignmentResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignmentSubmissionListItemDto": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "enum": [
+              "Pending",
+              "TurnedIn",
+              "Graded",
+              "ReturnedForRevision"
+            ],
+            "type": "string"
+          },
+          "assignedGrade": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "passed": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "gradedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignmentSubmissionListItemDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AssignmentSubmissionListItemDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignmentSubmissionListItemDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentSubmissionListItemDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -27796,9 +28288,28 @@
             ],
             "type": "string"
           },
+          "yearsOfExperience": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "maxLength": 4000,
+            "type": "string",
+            "nullable": true
+          },
           "notes": {
             "maxLength": 500,
             "type": "string",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "evidences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MentorSkillEvidenceRequestDto"
+            },
             "nullable": true
           }
         },
@@ -31045,8 +31556,26 @@
             ],
             "type": "string"
           },
+          "yearsOfExperience": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
           "notes": {
             "type": "string",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "evidences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MentorSkillEvidenceDto"
+            },
             "nullable": true
           },
           "createdAt": {
@@ -31120,6 +31649,72 @@
           },
           "data": {
             "$ref": "#/components/schemas/MentorSkillDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MentorSkillEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuer": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "credentialId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MentorSkillEvidenceRequestDto": {
+        "required": [
+          "title",
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "issuer": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "issuedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "credentialId": {
+            "maxLength": 100,
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -35347,6 +35942,75 @@
         },
         "additionalProperties": false
       },
+      "SkillSummaryDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillSummaryDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SkillSummaryDtoPaginationApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/SkillSummaryDtoPaginationResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SkillSummaryDtoPaginationResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/SkillSummaryDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
       "StartResearchSubmissionForClassRequestDto": {
         "required": [
           "classId",
@@ -36561,6 +37225,54 @@
           "linkedInUrl": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateMentorSkillRequestDto": {
+        "type": "object",
+        "properties": {
+          "proficiencyLevel": {
+            "enum": [
+              "Beginner",
+              "Intermediate",
+              "Advanced",
+              "Expert"
+            ],
+            "type": "string"
+          },
+          "yearsOfExperience": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "maxLength": 4000,
+            "type": "string",
+            "nullable": true
+          },
+          "notes": {
+            "maxLength": 500,
+            "type": "string",
+            "nullable": true
+          },
+          "isPublic": {
+            "type": "boolean"
+          },
+          "evidences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MentorSkillEvidenceRequestDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateMentorSkillVisibilityRequestDto": {
+        "type": "object",
+        "properties": {
+          "isPublic": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false

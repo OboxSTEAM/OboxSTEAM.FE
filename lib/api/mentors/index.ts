@@ -9,6 +9,8 @@ import {
   mentorSkillIdParamSchema,
   updateMentorClassLimitSchema,
   updateMentorProfileSchema,
+  updateMentorSkillSchema,
+  updateMentorSkillVisibilitySchema,
 } from "@/lib/validations/mentors";
 
 import {
@@ -18,16 +20,20 @@ import {
   getMentorsResponseSchema,
   getMyMentorProfileResponseSchema,
   getMyMentorSkillsResponseSchema,
+  setMyMentorSkillVisibilityResponseSchema,
   updateMentorClassLimitResponseSchema,
   updateMyMentorProfileResponseSchema,
+  updateMyMentorSkillResponseSchema,
   type AddMyMentorSkillResult,
   type DeleteMyMentorSkillResult,
   type GetMentorByIdResult,
   type GetMentorsResult,
   type GetMyMentorProfileResult,
   type GetMyMentorSkillsResult,
+  type SetMyMentorSkillVisibilityResult,
   type UpdateMentorClassLimitResult,
   type UpdateMyMentorProfileResult,
+  type UpdateMyMentorSkillResult,
 } from "./schemas";
 
 export type {
@@ -36,6 +42,7 @@ export type {
   MentorAssignmentProfile,
   MentorRole,
   MentorSkill,
+  MentorSkillEvidence,
   MentorSkillInfo,
   MentorSkillProficiency,
   MentorStatus,
@@ -56,10 +63,14 @@ export type {
   GetMyMentorProfileResult,
   GetMyMentorSkillsResponse,
   GetMyMentorSkillsResult,
+  SetMyMentorSkillVisibilityResponse,
+  SetMyMentorSkillVisibilityResult,
   UpdateMentorClassLimitResponse,
   UpdateMentorClassLimitResult,
   UpdateMyMentorProfileResponse,
   UpdateMyMentorProfileResult,
+  UpdateMyMentorSkillResponse,
+  UpdateMyMentorSkillResult,
 } from "./schemas";
 
 /** Aliases for manager callers that used the older naming. */
@@ -70,9 +81,12 @@ export type {
   AddMentorSkillInput,
   MentorIdParam,
   MentorListQuery,
+  MentorSkillEvidenceInput,
   MentorSkillIdParam,
   UpdateMentorClassLimitInput,
   UpdateMentorProfileInput,
+  UpdateMentorSkillInput,
+  UpdateMentorSkillVisibilityInput,
 } from "@/lib/validations/mentors";
 
 import type {
@@ -80,6 +94,8 @@ import type {
   MentorListQuery,
   UpdateMentorClassLimitInput,
   UpdateMentorProfileInput,
+  UpdateMentorSkillInput,
+  UpdateMentorSkillVisibilityInput,
 } from "@/lib/validations/mentors";
 
 const MENTORS_BASE = "/api/mentors";
@@ -183,6 +199,44 @@ export async function addMyMentorSkill(
     `${MENTORS_ME}/skills`,
     addMyMentorSkillResponseSchema,
     { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/mentors/me/skills/{id}` — full editable state of a mentor skill. */
+export async function updateMyMentorSkill(
+  mentorSkillId: string,
+  input: UpdateMentorSkillInput,
+): Promise<UpdateMyMentorSkillResult> {
+  const { mentorSkillId: parsedId } = mentorSkillIdParamSchema.parse({
+    mentorSkillId,
+  });
+  const body = updateMentorSkillSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${MENTORS_ME}/skills/${parsedId}`,
+    updateMyMentorSkillResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/mentors/me/skills/{id}/visibility` — toggle student-facing visibility. */
+export async function setMyMentorSkillVisibility(
+  mentorSkillId: string,
+  input: UpdateMentorSkillVisibilityInput,
+): Promise<SetMyMentorSkillVisibilityResult> {
+  const { mentorSkillId: parsedId } = mentorSkillIdParamSchema.parse({
+    mentorSkillId,
+  });
+  const body = updateMentorSkillVisibilitySchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${MENTORS_ME}/skills/${parsedId}/visibility`,
+    setMyMentorSkillVisibilityResponseSchema,
+    { method: "PUT", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

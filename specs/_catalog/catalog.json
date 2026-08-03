@@ -93,6 +93,11 @@
         "description": "Soft-deletes an assignment by its ID. Requires SuperAdmin or Manager role."
       },
       {
+        "path": "/api/assignments/{assignmentId}/submissions",
+        "method": "get",
+        "description": "Returns submissions of the assignment made by students actively enrolled in the given class. Mentors may only view classes they are assigned to."
+      },
+      {
         "path": "/api/assignment-submissions/submit",
         "method": "post",
         "description": "Student turns in a FileUpload assignment. Quizzes and retrospectives use their dedicated endpoints. Provide ContentText and/or FileUrl."
@@ -569,11 +574,21 @@
       },
       {
         "path": "/api/mentors/me/skills",
-        "method": "post"
+        "method": "post",
+        "description": "Mentors manage skills freely (no manager verification). Optional evidence list and IsPublic flag (default true)."
+      },
+      {
+        "path": "/api/mentors/me/skills/{id}",
+        "method": "put",
+        "description": "Updates proficiency, years, description, notes, and visibility. When Evidences is provided, it replaces all evidence rows."
       },
       {
         "path": "/api/mentors/me/skills/{id}",
         "method": "delete"
+      },
+      {
+        "path": "/api/mentors/me/skills/{id}/visibility",
+        "method": "put"
       },
       {
         "path": "/api/mentors",
@@ -582,7 +597,7 @@
       {
         "path": "/api/mentors/{id}",
         "method": "get",
-        "description": "Returns a mentor's public profile (Title, Organization, Bio, Achievements, LinkedInUrl), skills, and concurrent usage. Students use this for curriculum navigation; Managers/SuperAdmins use it when deciding class assignments."
+        "description": "Students see only public skills. Managers/SuperAdmins see all skills for staffing."
       },
       {
         "path": "/api/mentors/{id}/class-limit",
@@ -1077,6 +1092,11 @@
         "path": "/api/classes/{classId}/sessions/{sessionId}/attendance/students/{studentId}",
         "method": "put",
         "description": "Upserts one student's attendance for a class session. Requires Mentor, Manager, or SuperAdmin role."
+      },
+      {
+        "path": "/api/skills",
+        "method": "get",
+        "description": "Paged STEAM skill catalog for class requiredSkillIds and mentor skill pickers. Soft-deleted skills are excluded."
       }
     ],
     "schemas": [
@@ -1160,6 +1180,15 @@
       },
       {
         "name": "AssignmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "AssignmentSubmissionListItemDto"
+      },
+      {
+        "name": "AssignmentSubmissionListItemDtoListApiResult"
+      },
+      {
+        "name": "AssignmentSubmissionListItemDtoListResponseDataContent"
       },
       {
         "name": "AssignmentSubmissionResponseDto"
@@ -1786,6 +1815,12 @@
         "name": "MentorSkillDtoResponseDataContent"
       },
       {
+        "name": "MentorSkillEvidenceDto"
+      },
+      {
+        "name": "MentorSkillEvidenceRequestDto"
+      },
+      {
         "name": "MentorSummaryDto"
       },
       {
@@ -2242,6 +2277,15 @@
         "name": "SkillSummaryDto"
       },
       {
+        "name": "SkillSummaryDtoPagination"
+      },
+      {
+        "name": "SkillSummaryDtoPaginationApiResult"
+      },
+      {
+        "name": "SkillSummaryDtoPaginationResponseDataContent"
+      },
+      {
         "name": "StartResearchSubmissionForClassRequestDto"
       },
       {
@@ -2369,6 +2413,12 @@
       },
       {
         "name": "UpdateMentorProfileRequestDto"
+      },
+      {
+        "name": "UpdateMentorSkillRequestDto"
+      },
+      {
+        "name": "UpdateMentorSkillVisibilityRequestDto"
       },
       {
         "name": "UpdateMilestoneActivityLinkRequestDto"

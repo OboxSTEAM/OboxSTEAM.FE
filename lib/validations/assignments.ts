@@ -77,6 +77,25 @@ export const submissionIdParamSchema = z.object({
   submissionId: z.string().uuid("ID bài nộp không hợp lệ."),
 });
 
+/** Query for `GET /api/assignments/{assignmentId}/submissions`. */
+export const assignmentSubmissionsQuerySchema = z.object({
+  classId: z.string().uuid("ID lớp không hợp lệ."),
+});
+
+/** Body for `POST /api/assignment-submissions/{submissionId}/grade`. */
+export const gradeAssignmentSubmissionSchema = z.object({
+  assignedGrade: z.number().min(0, "Điểm không được âm."),
+  mentorFeedback: z.string().max(4000).nullable().optional(),
+  returnForRevision: z.boolean().optional(),
+});
+
+export type AssignmentSubmissionsQuery = z.infer<
+  typeof assignmentSubmissionsQuerySchema
+>;
+export type GradeAssignmentSubmissionInput = z.infer<
+  typeof gradeAssignmentSubmissionSchema
+>;
+
 export const quizAnswerInputSchema = z.object({
   questionId: z.string().uuid("ID câu hỏi không hợp lệ."),
   selectedOptionIds: z

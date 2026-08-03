@@ -124,6 +124,80 @@ function DialogClose({
   );
 }
 
+/**
+ * Rounded dialog shell that keeps the scrollbar off the curved corners:
+ * fixed header/footer + scrollable body (see mentor skill dialogs).
+ */
+function DialogScrollPopup({
+  className,
+  children,
+  ...props
+}: DialogPrimitive.Popup.Props) {
+  return (
+    <DialogPopup
+      className={cn(
+        "flex max-h-[min(90dvh,44rem)] flex-col gap-0 overflow-hidden p-0",
+        className,
+      )}
+      {...props}
+    >
+      {children}
+    </DialogPopup>
+  );
+}
+
+function DialogScrollHeader({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-scroll-header"
+      className={cn(
+        "relative shrink-0 border-b border-border px-6 pt-5 pb-4 pr-14 text-left",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function DialogScrollBody({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-scroll-body"
+      className={cn(
+        "min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-5 [scrollbar-gutter:stable]",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+function DialogScrollFooter({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
+  return (
+    <div
+      data-slot="dialog-scroll-footer"
+      className={cn(
+        "flex shrink-0 flex-col-reverse gap-2 border-t border-border bg-popover/95 px-6 py-4 backdrop-blur-sm sm:flex-row sm:justify-end",
+        className,
+      )}
+      {...props}
+    />
+  );
+}
+
+/** Put on `<form>` inside DialogScrollPopup so header/body/footer flex correctly. */
+const dialogScrollFormClassName =
+  "flex min-h-0 flex-1 flex-col overflow-hidden";
+
 export {
   Dialog,
   DialogBackdrop,
@@ -133,5 +207,10 @@ export {
   DialogHeader,
   DialogPopup,
   DialogPortal,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
+  dialogScrollFormClassName,
 };

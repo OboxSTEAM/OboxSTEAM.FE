@@ -4,7 +4,9 @@ import { ApiResponseError } from "@/lib/api/errors";
 import {
   assignmentIdParamSchema,
   assignmentListQuerySchema,
+  assignmentSubmissionsQuerySchema,
   createAssignmentSchema,
+  gradeAssignmentSubmissionSchema,
   saveQuizAnswersSchema,
   saveRetrospectiveDraftSchema,
   submissionIdParamSchema,
@@ -14,6 +16,7 @@ import {
   type AssignmentListQuery,
 } from "@/lib/validations/assignments";
 import type {
+  GradeAssignmentSubmissionInput,
   SaveQuizAnswersInput,
   SaveRetrospectiveDraftInput,
   SubmitQuizInput,
@@ -25,10 +28,13 @@ import {
   assignmentMutationValueSchema,
   deleteAssignmentResponseSchema,
   getAssignmentByIdResponseSchema,
+  getAssignmentSubmissionByIdResponseSchema,
+  getAssignmentSubmissionsResponseSchema,
   getAssignmentsResponseSchema,
   getInProgressQuizResponseSchema,
   getQuizResultResponseSchema,
   getRetrospectiveSubmissionResponseSchema,
+  gradeAssignmentSubmissionResponseSchema,
   saveQuizDraftAnswersResponseSchema,
   saveRetrospectiveDraftResponseSchema,
   startQuizAttemptResponseSchema,
@@ -37,10 +43,13 @@ import {
   submitRetrospectiveResponseSchema,
   updateAssignmentResponseSchema,
   type GetAssignmentByIdResult,
+  type GetAssignmentSubmissionByIdResult,
+  type GetAssignmentSubmissionsResult,
   type GetAssignmentsResult,
   type GetInProgressQuizResult,
   type GetQuizResultResult,
   type GetRetrospectiveSubmissionResult,
+  type GradeAssignmentSubmissionResult,
   type SaveQuizDraftAnswersResult,
   type SaveRetrospectiveDraftResult,
   type StartQuizAttemptResult,
@@ -53,8 +62,14 @@ import {
 export type {
   GetAssignmentByIdResponse,
   GetAssignmentByIdResult,
+  GetAssignmentSubmissionByIdResponse,
+  GetAssignmentSubmissionByIdResult,
+  GetAssignmentSubmissionsResponse,
+  GetAssignmentSubmissionsResult,
   GetAssignmentsResponse,
   GetAssignmentsResult,
+  GradeAssignmentSubmissionResponse,
+  GradeAssignmentSubmissionResult,
   GetInProgressQuizResponse,
   GetInProgressQuizResult,
   GetQuizResultResponse,
@@ -83,6 +98,12 @@ export type {
   EnrollmentCurriculumAssignment,
 } from "@/lib/api/entities/assignment";
 
+export type {
+  AssignmentSubmissionDetail,
+  AssignmentSubmissionListItem,
+  AssignmentSubmissionStatus,
+} from "@/lib/api/entities/assignment-submission";
+
 export type { AssignmentListQuery } from "@/lib/validations/assignments";
 
 export type {
@@ -108,6 +129,7 @@ export type {
   SubmitRetrospectiveInput,
   AssignmentTypeInput,
   CreateAssignmentInput,
+  GradeAssignmentSubmissionInput,
   UpdateAssignmentInput,
 } from "@/lib/validations/assignments";
 
@@ -119,6 +141,7 @@ export type {
 } from "./schemas";
 
 const ASSIGNMENTS_BASE = "/api/assignments";
+const ASSIGNMENT_SUBMISSIONS_BASE = "/api/assignment-submissions";
 const SUBMISSIONS_BASE = "/api/submissions";
 
 function requireApiValue<T>(value: T | null): T {
@@ -147,6 +170,72 @@ export async function getAssignments(
     `${ASSIGNMENTS_BASE}${buildAssignmentListQuery(params)}`,
     getAssignmentsResponseSchema,
     { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/assignments/{assignmentId}/submissions?classId=`
+ * Mentor/Manager grading board rows for one class cohort.
+ */
+export async function getAssignmentSubmissions(
+  assignmentId: string,
+  classId: string,
+): Promise<GetAssignmentSubmissionsResult> {
+  const { assignmentId: parsedAssignmentId } = assignmentIdParamSchema.parse({
+    assignmentId,
+  });
+  const { classId: parsedClassId } = assignmentSubmissionsQuerySchema.parse({
+    classId,
+  });
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENTS_BASE}/${parsedAssignmentId}/submissions?classId=${parsedClassId}`,
+    getAssignmentSubmissionsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/assignment-submissions/{submissionId}`
+ * FileUpload (and general) submission detail — includes `fileUrl` / `contentText`.
+ */
+export async function getAssignmentSubmissionById(
+  submissionId: string,
+): Promise<GetAssignmentSubmissionByIdResult> {
+  const { submissionId: parsedSubmissionId } = submissionIdParamSchema.parse({
+    submissionId,
+  });
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENT_SUBMISSIONS_BASE}/${parsedSubmissionId}`,
+    getAssignmentSubmissionByIdResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/assignment-submissions/{submissionId}/grade`
+ * Grades FileUpload / Retrospective (and non-auto quiz override flows).
+ */
+export async function gradeAssignmentSubmission(
+  submissionId: string,
+  input: GradeAssignmentSubmissionInput,
+): Promise<GradeAssignmentSubmissionResult> {
+  const { submissionId: parsedSubmissionId } = submissionIdParamSchema.parse({
+    submissionId,
+  });
+  const body = gradeAssignmentSubmissionSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${ASSIGNMENT_SUBMISSIONS_BASE}/${parsedSubmissionId}/grade`,
+    gradeAssignmentSubmissionResponseSchema,
+    { method: "POST", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
