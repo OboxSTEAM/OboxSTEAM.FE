@@ -49,8 +49,11 @@ import {
   getAssignmentSubmissions,
   getAssignments,
   getQuizResult,
+  getResearchMilestonesByModule,
+  getResearchSubmissionById,
   getRetrospectiveSubmission,
   gradeAssignmentSubmission,
+  gradeResearchSubmission,
   type AssignmentDetail,
   type AssignmentListItem,
   type AssignmentSubmissionListItem,
@@ -97,12 +100,104 @@ function isQuizAssignmentType(type: AssignmentType): boolean {
   return type === "Quiz";
 }
 
+type SubmissionArtifactSource = "assignment" | "research" | "retrospective";
+
 type SubmissionArtifact = {
+  source: SubmissionArtifactSource;
+  code: string | null;
   fileUrl: string | null;
   contentText: string | null;
+  evidenceUrls: string[];
   mentorFeedback: string | null;
   assignedGrade: number | null;
 };
+
+type ResearchAssignmentMeta = {
+  assignmentIds: Set<string>;
+  capstoneAssignmentIds: Set<string>;
+};
+
+async function loadSubmissionArtifact(
+  submissionId: string,
+  options: { isResearchDeliverable: boolean },
+): Promise<SubmissionArtifact> {
+  // Research milestone deliverables (Capstone, Design Brief, …) must use
+  // /api/research-submissions — assignment-submissions returns 400 for these ids.
+  if (options.isResearchDeliverable) {
+    const result = await getResearchSubmissionById(submissionId);
+    const data = result?.data;
+    return {
+      source: "research",
+      code: data?.code ?? null,
+      fileUrl: data?.fileUrl ?? null,
+      contentText: data?.contentText ?? null,
+      evidenceUrls: (data?.evidenceUrls ?? []).filter(
+        (url): url is string => Boolean(url?.trim()),
+      ),
+      mentorFeedback: data?.mentorFeedback ?? null,
+      assignedGrade: data?.assignedGrade ?? null,
+    };
+  }
+
+  const result = await getAssignmentSubmissionById(submissionId);
+  const data = result?.data;
+  return {
+    source: "assignment",
+    code: data?.code ?? null,
+    fileUrl: data?.fileUrl ?? null,
+    contentText: data?.contentText ?? null,
+    evidenceUrls: [],
+    mentorFeedback: data?.mentorFeedback ?? null,
+    assignedGrade: data?.assignedGrade ?? null,
+  };
+}
+
+function SubmissionFileRow({
+  url,
+  label,
+}: {
+  url: string;
+  label?: string;
+}) {
+  const fileName = fileNameFromUrl(url) || label || "Tệp đính kèm";
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-2">
+      <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+        {fileName}
+      </p>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        nativeButton={false}
+        render={<a href={url} target="_blank" rel="noopener noreferrer" />}
+        className="h-7 shrink-0 rounded-md px-2 text-xs"
+      >
+        <ExternalLink className="size-3.5" />
+        Xem
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant="outline"
+        nativeButton={false}
+        render={
+          <a
+            href={url}
+            download={fileName}
+            target="_blank"
+            rel="noopener noreferrer"
+          />
+        }
+        className="h-7 shrink-0 rounded-md px-2 text-xs"
+      >
+        <Download className="size-3.5" />
+        Tải về
+      </Button>
+    </div>
+  );
+}
 
 function SubmissionWorkPanel({
   assignmentType,
@@ -148,9 +243,9 @@ function SubmissionWorkPanel({
 
   const fileUrl = artifact?.fileUrl?.trim() || null;
   const contentText = artifact?.contentText?.trim() || null;
-  const fileName = fileUrl ? fileNameFromUrl(fileUrl) : null;
+  const evidenceUrls = artifact?.evidenceUrls ?? [];
 
-  if (!fileUrl && !contentText) {
+  if (!fileUrl && !contentText && evidenceUrls.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-muted/20 px-3 py-3">
         <p className="text-xs text-muted-foreground">
@@ -164,42 +259,34 @@ function SubmissionWorkPanel({
 
   return (
     <div className="space-y-2.5 rounded-xl border border-[#4FC3F7]/25 bg-[#4FC3F7]/8 p-3">
-      <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+      <p className="flex flex-wrap items-center gap-1.5 text-xs font-semibold text-foreground">
         <FileText className="size-3.5 text-[#0d6e9c]" />
         Bài nộp của học viên
+        {artifact?.code ? (
+          <span className="font-mono font-normal text-muted-foreground">
+            · {artifact.code}
+          </span>
+        ) : null}
+        {artifact?.source === "research" ? (
+          <Badge
+            variant="outline"
+            className="rounded-full border-[#7CB342]/30 bg-[#7CB342]/12 px-1.5 py-0 text-[10px] font-semibold text-[#3d5c22]"
+          >
+            Research
+          </Badge>
+        ) : null}
       </p>
 
-      {fileUrl ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-background px-2.5 py-2">
-          <p className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
-            {fileName}
+      {fileUrl ? <SubmissionFileRow url={fileUrl} /> : null}
+
+      {evidenceUrls.length > 0 ? (
+        <div className="space-y-1.5">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+            Evidence
           </p>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            nativeButton={false}
-            render={
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer" />
-            }
-            className="h-7 shrink-0 rounded-md px-2 text-xs"
-          >
-            <ExternalLink className="size-3.5" />
-            Xem
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            nativeButton={false}
-            render={
-              <a href={fileUrl} download={fileName ?? true} target="_blank" rel="noopener noreferrer" />
-            }
-            className="h-7 shrink-0 rounded-md px-2 text-xs"
-          >
-            <Download className="size-3.5" />
-            Tải về
-          </Button>
+          {evidenceUrls.map((url) => (
+            <SubmissionFileRow key={url} url={url} label="Evidence" />
+          ))}
         </div>
       ) : null}
 
@@ -415,6 +502,52 @@ export function MentorClassGradingPanel({
     [assignments],
   );
 
+  const manualModuleIdsKey = useMemo(() => {
+    const ids = [
+      ...new Set(
+        manualAssignments
+          .map((item) => item.moduleId)
+          .filter((id): id is string => Boolean(id)),
+      ),
+    ].sort();
+    return ids.join(",");
+  }, [manualAssignments]);
+
+  const { data: researchAssignmentMeta } = useClientFetch({
+    enabled: Boolean(manualModuleIdsKey),
+    fetcher: async (): Promise<ResearchAssignmentMeta> => {
+      const moduleIds = manualModuleIdsKey.split(",").filter(Boolean);
+      const results = await Promise.all(
+        moduleIds.map((moduleId) => getResearchMilestonesByModule(moduleId)),
+      );
+
+      const assignmentIds = new Set<string>();
+      const capstoneAssignmentIds = new Set<string>();
+
+      for (const result of results) {
+        for (const milestone of result?.data ?? []) {
+          const linkedId =
+            milestone.assignmentId ?? milestone.assignment?.id ?? null;
+          if (!linkedId) continue;
+          assignmentIds.add(linkedId);
+          if (milestone.isCapstone) {
+            capstoneAssignmentIds.add(linkedId);
+          }
+        }
+      }
+
+      return { assignmentIds, capstoneAssignmentIds };
+    },
+    deps: [manualModuleIdsKey],
+    onError: () => {
+      // Non-blocking — research route still attempted only when meta is known.
+    },
+  });
+
+  const isResearchDeliverable = Boolean(
+    assignmentId && researchAssignmentMeta?.assignmentIds.has(assignmentId),
+  );
+
   const visibleAssignments =
     mode === "manual" ? manualAssignments : quizAssignments;
 
@@ -467,7 +600,13 @@ export function MentorClassGradingPanel({
     hasError: hasArtifactError,
     retry: retryArtifact,
   } = useClientFetch({
-    enabled: gradeTarget != null && mode === "manual",
+    // Wait for milestone map so Capstone/Design Brief never hit assignment-submissions.
+    enabled:
+      gradeTarget != null &&
+      mode === "manual" &&
+      (selectedAssignment?.assignmentType === "Retrospective" ||
+        researchAssignmentMeta != null ||
+        !manualModuleIdsKey),
     fetcher: async (): Promise<SubmissionArtifact | null> => {
       if (!gradeTarget || !selectedAssignment) return null;
 
@@ -475,25 +614,26 @@ export function MentorClassGradingPanel({
         const result = await getRetrospectiveSubmission(gradeTarget.submissionId);
         const data = result?.data;
         return {
+          source: "retrospective",
+          code: null,
           fileUrl: null,
           contentText: data?.contentText ?? null,
+          evidenceUrls: [],
           mentorFeedback: data?.mentorFeedback ?? null,
           assignedGrade: data?.assignedGrade ?? null,
         };
       }
 
-      const result = await getAssignmentSubmissionById(gradeTarget.submissionId);
-      const data = result?.data;
-      return {
-        fileUrl: data?.fileUrl ?? null,
-        contentText: data?.contentText ?? null,
-        mentorFeedback: data?.mentorFeedback ?? null,
-        assignedGrade: data?.assignedGrade ?? null,
-      };
+      return loadSubmissionArtifact(gradeTarget.submissionId, {
+        isResearchDeliverable,
+      });
     },
     deps: [
       gradeTarget?.submissionId,
       selectedAssignment?.assignmentType,
+      isResearchDeliverable,
+      researchAssignmentMeta,
+      manualModuleIdsKey,
       mode,
     ],
     onError: (error) =>
@@ -743,11 +883,21 @@ export function MentorClassGradingPanel({
 
     try {
       setIsGrading(true);
-      await gradeAssignmentSubmission(gradeTarget.submissionId, {
+      const payload = {
         assignedGrade,
         mentorFeedback: feedback.trim() ? feedback.trim() : null,
         returnForRevision,
-      });
+      };
+
+      if (
+        isResearchDeliverable ||
+        submissionArtifact?.source === "research"
+      ) {
+        await gradeResearchSubmission(gradeTarget.submissionId, payload);
+      } else {
+        await gradeAssignmentSubmission(gradeTarget.submissionId, payload);
+      }
+
       showAppSuccess({
         title: returnForRevision ? "Đã trả bài để sửa" : "Đã chấm bài",
         description: gradeTarget.studentName?.trim() || "Học viên",
@@ -775,7 +925,7 @@ export function MentorClassGradingPanel({
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
                   {mode === "manual"
-                    ? "Nộp file & Retrospective — mentor chấm điểm và nhận xét."
+                    ? "Nộp file, Capstone/Research & Retrospective — mentor chấm điểm và nhận xét."
                     : "Quiz tự chấm — mentor chỉ xem điểm / tỉ lệ đúng."}
                 </p>
               </div>
@@ -850,21 +1000,46 @@ export function MentorClassGradingPanel({
                 sideOffset={8}
                 className={THEME_SELECT_CONTENT}
               >
-                {visibleAssignments.map((item: AssignmentListItem) => (
-                  <SelectItem
-                    key={item.id}
-                    value={item.id}
-                    className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
-                  >
-                    <span className="flex flex-col gap-0.5 py-0.5 text-left">
-                      <span>{item.title || item.code || "Bài tập"}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {ASSIGNMENT_TYPE_LABELS[item.assignmentType]}
-                        {item.code ? ` · ${item.code}` : ""}
+                {visibleAssignments.map((item: AssignmentListItem) => {
+                  const isResearch =
+                    researchAssignmentMeta?.assignmentIds.has(item.id) ?? false;
+                  const isCapstone =
+                    researchAssignmentMeta?.capstoneAssignmentIds.has(item.id) ??
+                    false;
+
+                  return (
+                    <SelectItem
+                      key={item.id}
+                      value={item.id}
+                      className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
+                    >
+                      <span className="flex flex-col gap-0.5 py-0.5 text-left">
+                        <span className="flex flex-wrap items-center gap-1.5">
+                          <span>{item.title || item.code || "Bài tập"}</span>
+                          {isCapstone ? (
+                            <Badge
+                              variant="outline"
+                              className="rounded-full border-[#7CB342]/30 bg-[#7CB342]/12 px-1.5 py-0 text-[10px] font-semibold text-[#3d5c22]"
+                            >
+                              Capstone
+                            </Badge>
+                          ) : isResearch ? (
+                            <Badge
+                              variant="outline"
+                              className="rounded-full px-1.5 py-0 text-[10px]"
+                            >
+                              Research
+                            </Badge>
+                          ) : null}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {ASSIGNMENT_TYPE_LABELS[item.assignmentType]}
+                          {item.code ? ` · ${item.code}` : ""}
+                        </span>
                       </span>
-                    </span>
-                  </SelectItem>
-                ))}
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
 

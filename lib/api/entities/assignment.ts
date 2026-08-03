@@ -35,11 +35,11 @@ export type EnrollmentCurriculumAssignment = z.infer<
 /** Full assignment detail from `GET /api/assignments/{assignmentId}`. */
 export const assignmentDetailSchema = z.object({
   id: z.string(),
-  code: z.string(),
+  code: z.string().nullable(),
   moduleId: z.string(),
   courseId: z.string().nullable(),
-  title: z.string(),
-  description: z.string(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
   assignmentType: assignmentTypeSchema,
   maxPoints: z.number(),
   passScore: z.number(),
@@ -57,7 +57,7 @@ export const assignmentDetailSchema = z.object({
   timeLimitMinutes: z.number().nullable(),
   maxAttempts: z.number(),
   createdAt: z.string(),
-  updatedAt: z.string(),
+  updatedAt: z.string().nullable(),
 });
 
 /** Row in `GET /api/assignments` — carries deep-link context (`AssignmentListItemDto`). */

@@ -158,7 +158,7 @@ export function AssignmentFormPanel({
       ? {
           code: assignmentToEdit.code || "",
           courseId: assignmentToEdit.courseId || NO_COURSE,
-          title: assignmentToEdit.title,
+          title: assignmentToEdit.title || "",
           description: assignmentToEdit.description || "",
           assignmentType: assignmentToEdit.assignmentType,
           maxPoints: assignmentToEdit.maxPoints,
@@ -280,12 +280,12 @@ export function AssignmentFormPanel({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr
         title={isEdit ? `Chỉnh sửa: ${assignmentToEdit!.title}` : "Tạo Bài tập mới"}
         sub="Bài tập thuộc học phần (module)"
       />
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      <div className="space-y-6 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
           <div className="grid grid-cols-2 gap-4">

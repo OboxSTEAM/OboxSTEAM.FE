@@ -213,7 +213,7 @@ export function MilestoneFormPanel({
   );
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <div
         className="flex items-center gap-3 px-5 py-4 border-b shrink-0"
         style={{ background: W.surface, borderColor: W.border }}
@@ -234,7 +234,7 @@ export function MilestoneFormPanel({
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      <div className="space-y-6 p-5">
         <div>
           <STitle>Thông tin milestone</STitle>
           <div className="grid grid-cols-2 gap-4">
