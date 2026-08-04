@@ -1,0 +1,1284 @@
+"use client";
+
+import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
+import {
+  ManagerDataTable,
+  type ColumnDef,
+} from "@/components/manager/shared/data-table";
+import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
+import { MediaPipelineStatus } from "@/components/mentors/media-pipeline-status";
+import {
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+} from "@/lib/ui/select-styles";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useClientFetch } from "@/hooks/use-client-fetch";
+import { useMediaProgressPolling } from "@/hooks/use-media-progress-polling";
+import {
+  addMediaTag,
+  deleteMedia,
+  deleteMediaTag,
+  getMediaById,
+  getMediaList,
+  processMediaTags,
+  updateMediaTagVerification,
+  uploadClassMedia,
+  type ClassSession,
+  type ClassStudentRoster,
+  type MediaAsset,
+  type MediaProgress,
+  type MediaTag,
+  type MediaVideoStatus,
+} from "@/lib/api";
+import {
+  MEDIA_ACCEPT,
+  MEDIA_VIDEO_STATUS_LABELS,
+} from "@/lib/classes/constants";
+import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
+import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { cn } from "@/lib/utils";
+import {
+  CheckCircle2,
+  Eye,
+  ImagePlus,
+  Loader2,
+  ScanFace,
+  Trash2,
+  UserPlus,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+function isVideoFile(fileType: string | null | undefined, url?: string | null) {
+  const type = (fileType ?? "").toLowerCase();
+  if (type.includes("video") || type === "mp4" || type === "mov") return true;
+  const href = (url ?? "").toLowerCase();
+  return href.endsWith(".mp4") || href.endsWith(".mov");
+}
+
+function isImageFile(fileType: string | null | undefined, url?: string | null) {
+  const type = (fileType ?? "").toLowerCase();
+  if (
+    type.includes("image") ||
+    type === "jpg" ||
+    type === "jpeg" ||
+    type === "png"
+  ) {
+    return true;
+  }
+  const href = (url ?? "").toLowerCase();
+  return (
+    href.endsWith(".jpg") ||
+    href.endsWith(".jpeg") ||
+    href.endsWith(".png") ||
+    href.endsWith(".webp")
+  );
+}
+
+function confidenceLabel(score: number): string {
+  if (score >= 0.9) return "Rất cao";
+  if (score >= 0.7) return "Cao";
+  if (score >= 0.5) return "Trung bình";
+  return "Thấp";
+}
+
+/** AI still running — mentor should wait, not tag manually yet. */
+function isAiProcessing(media: MediaAsset): boolean {
+  return (
+    !media.isReady &&
+    media.videoStatus !== "Failed" &&
+    media.videoStatus !== "None"
+  );
+}
+
+/** Manual tag is fallback after AI finished (or failed). */
+function canManuallyTag(media: MediaAsset): boolean {
+  return media.isReady || media.videoStatus === "Failed";
+}
+
+function needsAiRetry(media: MediaAsset): boolean {
+  return (
+    media.videoStatus === "Failed" || media.videoStatus === "PendingTagging"
+  );
+}
+
+function applyProgressToMedia(
+  media: MediaAsset,
+  progress: MediaProgress | undefined,
+): MediaAsset {
+  if (!progress) return media;
+  return {
+    ...media,
+    videoStatus: progress.videoStatus,
+    // Prefer progress flags — do not keep stale list isReady while still Transcoding.
+    isReady: progress.isReady,
+    statusLabel: progress.statusLabel ?? media.statusLabel,
+    fileUrl: progress.fileUrl ?? media.fileUrl,
+  };
+}
+
+type MediaListPage = {
+  items: MediaAsset[];
+  currentPage: number;
+  totalPages: number;
+  totalCount: number;
+};
+
+const MEDIA_PAGE_SIZE = 20;
+
+type FileTypeFilter = "all" | "image" | "video";
+type VideoStatusFilter = "all" | MediaVideoStatus;
+
+type MentorClassMediaPanelProps = {
+  classId: string;
+  sessions: ClassSession[];
+  roster: ClassStudentRoster[];
+  isSessionsLoading?: boolean;
+};
+
+export function MentorClassMediaPanel({
+  classId,
+  sessions,
+  roster,
+  isSessionsLoading = false,
+}: MentorClassMediaPanelProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [sessionFilter, setSessionFilter] = useState("all");
+  const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<VideoStatusFilter>("all");
+  const [page, setPage] = useState(1);
+  const [uploadSessionId, setUploadSessionId] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<{
+    done: number;
+    total: number;
+  } | null>(null);
+  const [selectedMediaId, setSelectedMediaId] = useState<string | null>(null);
+  const [detailMedia, setDetailMedia] = useState<MediaAsset | null>(null);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
+  /** Optimistic rows until paginated GET includes them. */
+  const [pendingItems, setPendingItems] = useState<MediaAsset[]>([]);
+  const [deleteTarget, setDeleteTarget] = useState<MediaAsset | null>(null);
+  const [busyTagStudentId, setBusyTagStudentId] = useState<string | null>(null);
+  const [isProcessingTags, setIsProcessingTags] = useState(false);
+  const [addTagStudentId, setAddTagStudentId] = useState("");
+
+  const activeStudents = useMemo(
+    () => roster.filter((student) => student.enrollmentStatus === "Active"),
+    [roster],
+  );
+
+  const { data, isLoading, markLoading, retry } = useClientFetch({
+    fetcher: async (): Promise<MediaListPage> => {
+      const result = await getMediaList({
+        classId,
+        classSessionId:
+          sessionFilter === "all" ? undefined : sessionFilter,
+        fileType: fileTypeFilter === "all" ? undefined : fileTypeFilter,
+        videoStatus: statusFilter === "all" ? undefined : statusFilter,
+        page,
+        pageSize: MEDIA_PAGE_SIZE,
+        sortBy: "uploadedAt",
+        isDescending: true,
+      });
+      const pageData = result?.data;
+      return {
+        items: pageData?.items ?? [],
+        currentPage: pageData?.currentPage ?? page,
+        totalPages: Math.max(pageData?.totalPages ?? 1, 1),
+        totalCount: pageData?.totalCount ?? 0,
+      };
+    },
+    deps: [classId, sessionFilter, fileTypeFilter, statusFilter, page],
+    onError: (error) => showAppErrorFromUnknown(error, "media.list"),
+  });
+
+  const listItems = data?.items ?? [];
+  const currentPage = data?.currentPage ?? page;
+  const totalPages = data?.totalPages ?? 1;
+  const totalCount = data?.totalCount ?? 0;
+
+  const mediaItems = useMemo(() => {
+    const listIds = new Set(listItems.map((item) => item.id));
+    const extras = pendingItems.filter((item) => !listIds.has(item.id));
+    return [...extras, ...listItems];
+  }, [pendingItems, listItems]);
+
+  useEffect(() => {
+    if (pendingItems.length === 0 || listItems.length === 0) return;
+    const listIds = new Set(listItems.map((item) => item.id));
+    if (!pendingItems.some((item) => listIds.has(item.id))) return;
+    setPendingItems((prev) => prev.filter((item) => !listIds.has(item.id)));
+  }, [listItems, pendingItems]);
+
+  useEffect(() => {
+    setPendingItems([]);
+    setPage(1);
+  }, [classId]);
+
+  function applyListFilter(update: () => void) {
+    markLoading();
+    setPage(1);
+    update();
+  }
+
+  const selectedMediaIdRef = useRef(selectedMediaId);
+  selectedMediaIdRef.current = selectedMediaId;
+  const retryRef = useRef(retry);
+  retryRef.current = retry;
+
+  const trackPending = useCallback((media: MediaAsset) => {
+    if (media.isReady) return;
+    setPendingItems((prev) => {
+      const without = prev.filter((item) => item.id !== media.id);
+      return [media, ...without];
+    });
+  }, []);
+
+  /** Show upload result immediately; list refresh will own the row shortly. */
+  const surfaceUploaded = useCallback((media: MediaAsset) => {
+    setPendingItems((prev) => {
+      const without = prev.filter((item) => item.id !== media.id);
+      return [media, ...without];
+    });
+  }, []);
+
+  const progressTargets = useMemo(
+    () =>
+      mediaItems
+        .filter(
+          (item) =>
+            !item.isReady &&
+            (item.videoStatus === "Transcoding" ||
+              item.videoStatus === "PendingTagging"),
+        )
+        .map((item) => ({
+          id: item.id,
+          videoStatus: item.videoStatus,
+          isReady: item.isReady,
+        })),
+    [mediaItems],
+  );
+
+  const handleProgressTerminal = useCallback(
+    async (mediaId: string, progress: MediaProgress) => {
+      setPendingItems((prev) =>
+        prev.map((item) =>
+          item.id === mediaId ? applyProgressToMedia(item, progress) : item,
+        ),
+      );
+
+      try {
+        const result = await getMediaById(mediaId);
+        const next = result?.data;
+        if (next) {
+          setPendingItems((prev) => {
+            const without = prev.filter((item) => item.id !== mediaId);
+            return next.isReady ? without : [next, ...without];
+          });
+          if (selectedMediaIdRef.current === mediaId) {
+            setDetailMedia(next);
+          }
+        }
+      } catch {
+        // List retry still helps when detail fetch fails.
+      }
+
+      retryRef.current();
+    },
+    [],
+  );
+
+  const { progressById, timedOutIds } = useMediaProgressPolling({
+    targets: progressTargets,
+    onTerminal: (mediaId, progress) => {
+      void handleProgressTerminal(mediaId, progress);
+    },
+  });
+
+  const displayMediaItems = useMemo(
+    () =>
+      mediaItems.map((item) =>
+        applyProgressToMedia(item, progressById[item.id]),
+      ),
+    [mediaItems, progressById],
+  );
+
+  const sessionTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const session of sessions) {
+      map.set(session.id, session.title || "Buổi học");
+    }
+    return map;
+  }, [sessions]);
+
+  const selectedMediaBase =
+    detailMedia?.id === selectedMediaId
+      ? detailMedia
+      : (displayMediaItems.find((item) => item.id === selectedMediaId) ?? null);
+
+  const selectedMedia = selectedMediaBase
+    ? applyProgressToMedia(
+        selectedMediaBase,
+        progressById[selectedMediaBase.id],
+      )
+    : null;
+
+  const untaggedStudents = useMemo(() => {
+    if (!selectedMedia) return activeStudents;
+    const tagged = new Set(selectedMedia.tags.map((tag) => tag.studentId));
+    return activeStudents.filter((student) => !tagged.has(student.studentId));
+  }, [activeStudents, selectedMedia]);
+
+  async function openMediaDetail(mediaId: string) {
+    setSelectedMediaId(mediaId);
+    setAddTagStudentId("");
+    const fromList = displayMediaItems.find((item) => item.id === mediaId);
+    if (fromList) setDetailMedia(fromList);
+
+    setIsDetailLoading(true);
+    try {
+      const result = await getMediaById(mediaId);
+      if (result?.data) {
+        setDetailMedia(result.data);
+        if (!result.data.isReady) {
+          trackPending(result.data);
+        }
+      }
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.detail");
+    } finally {
+      setIsDetailLoading(false);
+    }
+  }
+
+  async function refreshSelectedDetail(mediaId: string) {
+    try {
+      const result = await getMediaById(mediaId);
+      if (result?.data) {
+        setDetailMedia(result.data);
+        if (!result.data.isReady) {
+          trackPending(result.data);
+        } else {
+          setPendingItems((prev) => prev.filter((item) => item.id !== mediaId));
+        }
+      }
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.detail");
+    }
+  }
+
+  async function handleUpload(files: FileList | null) {
+    if (!files?.length) return;
+    const fileList = Array.from(files);
+
+    setSelectedMediaId(null);
+    setDetailMedia(null);
+    setAddTagStudentId("");
+    setIsUploading(true);
+    setUploadProgress({ done: 0, total: fileList.length });
+
+    let successCount = 0;
+    let hasProcessing = false;
+
+    try {
+      for (let index = 0; index < fileList.length; index++) {
+        const file = fileList[index];
+        if (!file) continue;
+
+        try {
+          const result = await uploadClassMedia(file, {
+            classId,
+            classSessionId: uploadSessionId || undefined,
+          });
+          const uploaded = result?.data;
+          if (uploaded) {
+            successCount += 1;
+            surfaceUploaded(uploaded);
+            if (!uploaded.isReady) {
+              hasProcessing = true;
+            }
+          }
+        } catch (error) {
+          showAppErrorFromUnknown(error, "media.upload");
+        }
+
+        setUploadProgress({ done: index + 1, total: fileList.length });
+      }
+
+      if (successCount > 0) {
+        showAppSuccess({
+          title:
+            successCount === 1
+              ? "Đã tải lên media"
+              : `Đã tải lên ${successCount} media`,
+          description: hasProcessing
+            ? "Xem cột Tiến trình trên danh sách (transcode % → AI tagging)."
+            : "Media đã lên danh sách — mở chi tiết để xác nhận thẻ AI.",
+        });
+
+        if (uploadSessionId && sessionFilter === "all") {
+          applyListFilter(() => setSessionFilter(uploadSessionId));
+        } else {
+          retry();
+        }
+      }
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    try {
+      await deleteMedia(deleteTarget.id);
+      showAppSuccess({
+        title: "Đã xóa media",
+        description: "File đã được gỡ khỏi lớp.",
+      });
+      if (selectedMediaId === deleteTarget.id) {
+        setSelectedMediaId(null);
+        setDetailMedia(null);
+      }
+      setPendingItems((prev) =>
+        prev.filter((item) => item.id !== deleteTarget.id),
+      );
+      setDeleteTarget(null);
+      retry();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.delete");
+      throw error;
+    }
+  }
+
+  async function handleProcessTags(media: MediaAsset) {
+    setIsProcessingTags(true);
+    try {
+      const result = await processMediaTags(media.id);
+      const next = result?.data ?? media;
+      showAppSuccess({
+        title: "Đã gửi yêu cầu gắn thẻ",
+        description: next.isReady
+          ? "Gắn thẻ đã hoàn tất."
+          : "Hệ thống đang quét khuôn mặt — sẽ tự cập nhật khi xong.",
+      });
+      trackPending(next);
+      if (selectedMediaId === media.id) {
+        setDetailMedia(next);
+      }
+      if (next.isReady) {
+        retry();
+      }
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.processTags");
+    } finally {
+      setIsProcessingTags(false);
+    }
+  }
+
+  async function handleVerifyTag(tag: MediaTag, isVerified: boolean) {
+    if (!selectedMedia) return;
+    setBusyTagStudentId(tag.studentId);
+    try {
+      const result = await updateMediaTagVerification(
+        selectedMedia.id,
+        tag.studentId,
+        { isVerified },
+      );
+      const updatedTag = result?.data;
+      if (updatedTag) {
+        setDetailMedia((prev) =>
+          prev && prev.id === selectedMedia.id
+            ? {
+                ...prev,
+                tags: prev.tags.map((item) =>
+                  item.studentId === updatedTag.studentId ? updatedTag : item,
+                ),
+              }
+            : prev,
+        );
+      } else {
+        await refreshSelectedDetail(selectedMedia.id);
+      }
+      showAppSuccess({
+        title: isVerified ? "Đã xác nhận thẻ" : "Đã bỏ xác nhận",
+        description: tag.studentName || "Học viên",
+      });
+      retry();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.tag.verify");
+    } finally {
+      setBusyTagStudentId(null);
+    }
+  }
+
+  async function handleRemoveTag(tag: MediaTag) {
+    if (!selectedMedia) return;
+    setBusyTagStudentId(tag.studentId);
+    try {
+      await deleteMediaTag(selectedMedia.id, tag.studentId);
+      setDetailMedia((prev) =>
+        prev && prev.id === selectedMedia.id
+          ? {
+              ...prev,
+              tags: prev.tags.filter((item) => item.studentId !== tag.studentId),
+            }
+          : prev,
+      );
+      showAppSuccess({
+        title: "Đã gỡ thẻ",
+        description: tag.studentName || "Học viên",
+      });
+      retry();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.tag.delete");
+    } finally {
+      setBusyTagStudentId(null);
+    }
+  }
+
+  async function handleAddTag() {
+    if (!selectedMedia || !addTagStudentId) return;
+    setBusyTagStudentId(addTagStudentId);
+    try {
+      const result = await addMediaTag(selectedMedia.id, {
+        studentId: addTagStudentId,
+      });
+      const newTag = result?.data;
+      const student = activeStudents.find(
+        (s) => s.studentId === addTagStudentId,
+      );
+      if (newTag) {
+        setDetailMedia((prev) =>
+          prev && prev.id === selectedMedia.id
+            ? { ...prev, tags: [...prev.tags, newTag] }
+            : prev,
+        );
+      } else {
+        await refreshSelectedDetail(selectedMedia.id);
+      }
+      showAppSuccess({
+        title: "Đã gắn thẻ học viên",
+        description: student?.studentName || "Học viên",
+      });
+      setAddTagStudentId("");
+      retry();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "media.tag.add");
+    } finally {
+      setBusyTagStudentId(null);
+    }
+  }
+
+  const columns = useMemo<ColumnDef<MediaAsset>[]>(
+    () => [
+      {
+        header: "Preview",
+        className: "w-[4.5rem]",
+        sticky: "left",
+        render: (media) => {
+          const video = isVideoFile(media.fileType, media.fileUrl);
+          return (
+            <button
+              type="button"
+              onClick={() => void openMediaDetail(media.id)}
+              className="block size-12 overflow-hidden rounded-md border border-border bg-muted transition-opacity hover:opacity-90"
+              aria-label="Xem chi tiết media"
+            >
+              {media.fileUrl && isImageFile(media.fileType, media.fileUrl) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={media.fileUrl}
+                  alt=""
+                  className="size-full object-cover"
+                />
+              ) : media.fileUrl && video ? (
+                <video
+                  src={media.fileUrl}
+                  className="size-full object-cover"
+                  muted
+                  preload="metadata"
+                />
+              ) : (
+                <span className="flex size-full items-center justify-center text-[10px] text-muted-foreground">
+                  —
+                </span>
+              )}
+            </button>
+          );
+        },
+      },
+      {
+        header: "Loại",
+        render: (media) => (
+          <Badge
+            variant="outline"
+            className="rounded-full text-[10px] font-semibold"
+          >
+            {isVideoFile(media.fileType, media.fileUrl) ? "Video" : "Ảnh"}
+          </Badge>
+        ),
+      },
+      {
+        header: "Buổi học",
+        render: (media) => (
+          <span className="text-sm text-foreground">
+            {media.classSessionId
+              ? sessionTitleById.get(media.classSessionId) || "Buổi học"
+              : "Không gắn buổi"}
+          </span>
+        ),
+      },
+      {
+        header: "Thời gian",
+        render: (media) => (
+          <span className="whitespace-nowrap text-sm text-muted-foreground">
+            {formatApiDateTimeDisplay(media.uploadedAt) || "—"}
+          </span>
+        ),
+      },
+      {
+        header: "Tiến trình",
+        className: "min-w-[10.5rem] whitespace-normal",
+        render: (media) => (
+          <MediaPipelineStatus
+            compact
+            videoStatus={media.videoStatus}
+            isReady={media.isReady}
+            progress={progressById[media.id]}
+            timedOut={Boolean(timedOutIds[media.id])}
+          />
+        ),
+      },
+      {
+        header: "Thẻ",
+        render: (media) => {
+          const verifiedCount = media.tags.filter((tag) => tag.isVerified)
+            .length;
+          return (
+            <span className="text-sm font-medium text-foreground">
+              {media.tags.length}
+              {verifiedCount > 0 ? (
+                <span className="font-normal text-muted-foreground">
+                  {" "}
+                  · {verifiedCount} xác nhận
+                </span>
+              ) : null}
+            </span>
+          );
+        },
+      },
+      {
+        header: "Thao tác",
+        sticky: "right",
+        className: "text-right",
+        render: (media) => {
+          const video = isVideoFile(media.fileType, media.fileUrl);
+          const canRetryAi =
+            video &&
+            (media.videoStatus === "PendingTagging" ||
+              media.videoStatus === "Failed");
+          return (
+            <div className="flex items-center justify-end gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => void openMediaDetail(media.id)}
+                className="size-8 text-muted-foreground hover:text-foreground"
+                aria-label="Xem chi tiết"
+              >
+                <Eye className="size-4" />
+              </Button>
+              {canRetryAi ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  disabled={isProcessingTags}
+                  onClick={() => void handleProcessTags(media)}
+                  className="size-8 text-muted-foreground hover:text-foreground"
+                  aria-label="Quét face tagging"
+                >
+                  <ScanFace className="size-4" />
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeleteTarget(media)}
+                className="size-8 text-muted-foreground hover:text-destructive"
+                aria-label="Xóa media"
+              >
+                <Trash2 className="size-4" />
+              </Button>
+            </div>
+          );
+        },
+      },
+    ],
+    [sessionTitleById, isProcessingTags, progressById, timedOutIds],
+  );
+
+  return (
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="flex flex-col gap-4 border-b border-border bg-muted/40 px-6 py-4 lg:flex-row lg:items-end lg:justify-between">
+        <div className="space-y-3">
+          <div>
+            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+              <ScanFace className="size-4 text-primary" />
+              Media của lớp
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              1) Upload ảnh/video → 2) AI nhận diện khuôn mặt → 3) Mentor xác
+              nhận. Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Lọc theo buổi
+              </p>
+              <Select
+                value={sessionFilter}
+                onValueChange={(value) => {
+                  applyListFilter(() => setSessionFilter(value ?? "all"));
+                }}
+                disabled={isSessionsLoading}
+              >
+                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[14rem]")}>
+                  <span className="truncate">
+                    {sessionFilter === "all"
+                      ? "Tất cả media của lớp"
+                      : sessionTitleById.get(sessionFilter) || "Buổi học"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent
+                  align="start"
+                  alignItemWithTrigger={false}
+                  sideOffset={8}
+                  className={THEME_SELECT_CONTENT}
+                >
+                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
+                    Tất cả media của lớp
+                  </SelectItem>
+                  {sessions.map((session) => (
+                    <SelectItem
+                      key={session.id}
+                      value={session.id}
+                      className={THEME_SELECT_ITEM}
+                    >
+                      {session.title || "Buổi học"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Loại file
+              </p>
+              <Select
+                value={fileTypeFilter}
+                onValueChange={(value) => {
+                  applyListFilter(() =>
+                    setFileTypeFilter((value as FileTypeFilter) ?? "all"),
+                  );
+                }}
+              >
+                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[10rem]")}>
+                  <span className="truncate">
+                    {fileTypeFilter === "all"
+                      ? "Tất cả"
+                      : fileTypeFilter === "image"
+                        ? "Ảnh"
+                        : "Video"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent
+                  align="start"
+                  alignItemWithTrigger={false}
+                  sideOffset={8}
+                  className={THEME_SELECT_CONTENT}
+                >
+                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
+                    Tất cả
+                  </SelectItem>
+                  <SelectItem value="image" className={THEME_SELECT_ITEM}>
+                    Ảnh
+                  </SelectItem>
+                  <SelectItem value="video" className={THEME_SELECT_ITEM}>
+                    Video
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Trạng thái
+              </p>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) => {
+                  applyListFilter(() =>
+                    setStatusFilter((value as VideoStatusFilter) ?? "all"),
+                  );
+                }}
+              >
+                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[12rem]")}>
+                  <span className="truncate">
+                    {statusFilter === "all"
+                      ? "Tất cả trạng thái"
+                      : MEDIA_VIDEO_STATUS_LABELS[statusFilter]}
+                  </span>
+                </SelectTrigger>
+                <SelectContent
+                  align="start"
+                  alignItemWithTrigger={false}
+                  sideOffset={8}
+                  className={THEME_SELECT_CONTENT}
+                >
+                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
+                    Tất cả trạng thái
+                  </SelectItem>
+                  {(
+                    Object.keys(
+                      MEDIA_VIDEO_STATUS_LABELS,
+                    ) as MediaVideoStatus[]
+                  ).map((status) => (
+                    <SelectItem
+                      key={status}
+                      value={status}
+                      className={THEME_SELECT_ITEM}
+                    >
+                      {MEDIA_VIDEO_STATUS_LABELS[status]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                Gắn buổi khi upload
+              </p>
+              <Select
+                value={uploadSessionId || "none"}
+                onValueChange={(value) =>
+                  setUploadSessionId(!value || value === "none" ? "" : value)
+                }
+                disabled={isSessionsLoading}
+              >
+                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[14rem]")}>
+                  <span className="truncate">
+                    {uploadSessionId
+                      ? sessionTitleById.get(uploadSessionId) || "Buổi học"
+                      : "Không gắn buổi"}
+                  </span>
+                </SelectTrigger>
+                <SelectContent
+                  align="start"
+                  alignItemWithTrigger={false}
+                  sideOffset={8}
+                  className={THEME_SELECT_CONTENT}
+                >
+                  <SelectItem value="none" className={THEME_SELECT_ITEM}>
+                    Không gắn buổi
+                  </SelectItem>
+                  {sessions.map((session) => (
+                    <SelectItem
+                      key={session.id}
+                      value={session.id}
+                      className={THEME_SELECT_ITEM}
+                    >
+                      {session.title || "Buổi học"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          {!isLoading && totalCount > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              {totalCount} media
+              {totalPages > 1
+                ? ` · trang ${currentPage}/${totalPages}`
+                : null}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 items-center gap-2">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept={MEDIA_ACCEPT}
+            multiple
+            className="sr-only"
+            onChange={(event) => void handleUpload(event.target.files)}
+          />
+          <Button
+            type="button"
+            disabled={isUploading}
+            onClick={() => fileInputRef.current?.click()}
+            className="h-10 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
+          >
+            {isUploading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <ImagePlus className="size-4" />
+            )}
+            {isUploading
+              ? uploadProgress
+                ? `Đang tải ${uploadProgress.done}/${uploadProgress.total}...`
+                : "Đang tải..."
+              : "Tải lên media"}
+          </Button>
+        </div>
+      </div>
+
+      <div className={cn("overflow-x-auto p-6", isLoading && "opacity-60")}>
+        <ManagerDataTable
+          columns={columns}
+          data={displayMediaItems}
+          isLoading={isLoading && mediaItems.length === 0}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(nextPage) => {
+            markLoading();
+            setPage(nextPage);
+          }}
+          emptyState={
+            <ManagerEmptyState
+              title="Chưa có media"
+              description="Tải ảnh/video lên trước để AI quét nhận diện. Chỉ gắn thẻ thủ công nếu AI không nhận ra hoặc bị lỗi."
+              icon={ScanFace}
+              actionLabel="Tải lên media"
+              onAction={() => fileInputRef.current?.click()}
+            />
+          }
+        />
+      </div>
+
+      <Dialog
+        open={selectedMediaId != null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedMediaId(null);
+            setDetailMedia(null);
+            setAddTagStudentId("");
+          }
+        }}
+      >
+        <DialogScrollPopup className="sm:max-w-3xl max-h-[min(92vh,48rem)]">
+          <DialogScrollHeader>
+            <DialogClose />
+            <DialogTitle>Chi tiết media</DialogTitle>
+            <DialogDescription className="mt-1 text-sm text-muted-foreground">
+              Ưu tiên kết quả AI: xác nhận thẻ nhận diện. Gắn thủ công chỉ khi AI
+              lỗi hoặc bỏ sót học viên.
+            </DialogDescription>
+          </DialogScrollHeader>
+
+          {isDetailLoading && !selectedMedia ? (
+            <DialogScrollBody>
+              <Skeleton className="h-72 w-full rounded-xl" />
+              <Skeleton className="mt-4 h-8 w-48 rounded-lg" />
+              <Skeleton className="mt-6 h-24 w-full rounded-xl" />
+            </DialogScrollBody>
+          ) : selectedMedia ? (
+            <DialogScrollBody>
+              <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
+                {selectedMedia.fileUrl &&
+                isImageFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={selectedMedia.fileUrl}
+                    alt="Media preview"
+                    className="mx-auto max-h-72 object-contain"
+                  />
+                ) : selectedMedia.fileUrl &&
+                  isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
+                  <video
+                    src={selectedMedia.fileUrl}
+                    controls
+                    className="mx-auto max-h-72 w-full bg-black"
+                  />
+                ) : (
+                  <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                    Không có file xem trước
+                  </div>
+                )}
+                {isDetailLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/40">
+                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : null}
+              </div>
+
+              <div className="mt-4">
+                <MediaPipelineStatus
+                  videoStatus={selectedMedia.videoStatus}
+                  isReady={selectedMedia.isReady}
+                  progress={progressById[selectedMedia.id]}
+                  timedOut={Boolean(timedOutIds[selectedMedia.id])}
+                />
+              </div>
+
+              {isAiProcessing(selectedMedia) ? (
+                <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4">
+                  <p className="text-sm font-medium text-foreground">
+                    Đang xử lý pipeline
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Chờ chuyển mã / AI xong rồi xác nhận thẻ. Không gắn thủ công ở
+                    bước này.
+                  </p>
+                  {isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) &&
+                  needsAiRetry(selectedMedia) ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isProcessingTags}
+                      onClick={() => void handleProcessTags(selectedMedia)}
+                      className="rounded-lg"
+                    >
+                      {isProcessingTags ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <ScanFace className="size-4" />
+                      )}
+                      Quét lại face tagging
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {selectedMedia.videoStatus === "Failed" ? (
+                <div className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
+                  <p className="text-sm font-medium text-foreground">
+                    AI nhận diện thất bại
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Thử quét lại. Nếu vẫn lỗi, gắn thẻ thủ công tên học viên bên
+                    dưới.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={isProcessingTags}
+                    onClick={() => void handleProcessTags(selectedMedia)}
+                    className="rounded-lg"
+                  >
+                    {isProcessingTags ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <ScanFace className="size-4" />
+                    )}
+                    Quét lại AI
+                  </Button>
+                </div>
+              ) : null}
+
+              <div className="mt-6 space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Thẻ AI nhận diện ({selectedMedia.tags.length})
+                  </h3>
+                </div>
+
+                {selectedMedia.tags.length === 0 ? (
+                  <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                    {isAiProcessing(selectedMedia)
+                      ? "Chưa có thẻ — đang chờ AI quét."
+                      : selectedMedia.videoStatus === "Failed"
+                        ? "AI chưa tạo được thẻ. Quét lại hoặc gắn thủ công bên dưới."
+                        : "AI không nhận diện được học viên nào. Gắn thẻ thủ công nếu cần."}
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {selectedMedia.tags.map((tag) => (
+                      <li
+                        key={tag.id}
+                        className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-foreground">
+                            {tag.studentName || "Học viên"}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Độ tin cậy {Math.round(tag.confidenceScore * 100)}% (
+                            {confidenceLabel(tag.confidenceScore)})
+                            {tag.hasOtherFaces ? " · Có nhiều khuôn mặt" : ""}
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {tag.isVerified ? (
+                            <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
+                              <CheckCircle2 className="mr-1 size-3" />
+                              Đã xác nhận
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="outline"
+                              className="rounded-full text-muted-foreground"
+                            >
+                              Chưa xác nhận
+                            </Badge>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={busyTagStudentId === tag.studentId}
+                            onClick={() =>
+                              void handleVerifyTag(tag, !tag.isVerified)
+                            }
+                            className="h-8 rounded-lg"
+                          >
+                            {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            disabled={busyTagStudentId === tag.studentId}
+                            onClick={() => void handleRemoveTag(tag)}
+                            className="size-8 text-muted-foreground hover:text-destructive"
+                            aria-label="Gỡ thẻ"
+                          >
+                            <X className="size-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {canManuallyTag(selectedMedia) ? (
+                  <div className="space-y-2 rounded-xl border border-dashed border-border bg-muted/20 p-3">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        Gắn thẻ thủ công (dự phòng)
+                      </p>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {selectedMedia.videoStatus === "Failed" ||
+                        selectedMedia.tags.length === 0
+                          ? "Dùng khi AI lỗi hoặc không nhận ra học viên."
+                          : "Chỉ thêm học viên mà AI bỏ sót."}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                      <Select
+                        value={addTagStudentId || null}
+                        onValueChange={(value) =>
+                          setAddTagStudentId(value ?? "")
+                        }
+                        disabled={untaggedStudents.length === 0}
+                      >
+                        <SelectTrigger
+                          className={cn(THEME_SELECT_TRIGGER, "w-full flex-1")}
+                        >
+                          <span className="truncate">
+                            {untaggedStudents.length === 0
+                              ? "Tất cả học viên đã được gắn thẻ"
+                              : addTagStudentId
+                                ? untaggedStudents.find(
+                                    (s) => s.studentId === addTagStudentId,
+                                  )?.studentName || "Chọn học viên"
+                                : "Chọn học viên để gắn thẻ"}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent
+                          align="start"
+                          alignItemWithTrigger={false}
+                          sideOffset={8}
+                          className={cn(
+                            THEME_SELECT_CONTENT,
+                            "w-auto! min-w-[min(100vw-2rem,20rem)]",
+                          )}
+                        >
+                          {untaggedStudents.map((student) => (
+                            <SelectItem
+                              key={student.studentId}
+                              value={student.studentId}
+                              className={THEME_SELECT_ITEM}
+                            >
+                              {student.studentName ||
+                                student.studentCode ||
+                                "Học viên"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={
+                          !addTagStudentId ||
+                          busyTagStudentId === addTagStudentId
+                        }
+                        onClick={() => void handleAddTag()}
+                        className="h-9 rounded-lg"
+                      >
+                        <UserPlus className="size-4" />
+                        Gắn thẻ
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </DialogScrollBody>
+          ) : null}
+
+          <DialogScrollFooter>
+            <DialogClose
+              render={
+                <Button type="button" variant="outline" className="rounded-lg" />
+              }
+            >
+              Đóng
+            </DialogClose>
+          </DialogScrollFooter>
+        </DialogScrollPopup>
+      </Dialog>
+
+      <ConfirmDialog
+        isOpen={deleteTarget != null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
+        title="Xóa media?"
+        description="Media và các thẻ liên quan sẽ bị gỡ. Thao tác không hoàn tác."
+        confirmLabel="Xóa"
+        variant="destructive"
+        onConfirm={handleDeleteConfirm}
+      />
+    </section>
+  );
+}

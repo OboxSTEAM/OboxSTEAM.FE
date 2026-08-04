@@ -11901,7 +11901,7 @@
           "Media"
         ],
         "summary": "Get media by class and/or student",
-        "description": "Returns ready media (images, or videos with TaggingComplete), scoped by role. Manager/SuperAdmin may omit filters to list all ready media. Mentor is limited to mentored classes. Student always sees own tags; Parent requires linked studentId.",
+        "description": "Returns paginated media scoped by role. Manager/SuperAdmin/Mentor see all video statuses by default (including Transcoding / PendingTagging). Filter with videoStatus=TaggingComplete for ready-only. Student always sees own tagged ready media; Parent requires linked studentId.",
         "parameters": [
           {
             "name": "classId",
@@ -11918,6 +11918,71 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "classSessionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileType",
+            "in": "query",
+            "description": "Filter by file type: image or video",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "videoStatus",
+            "in": "query",
+            "description": "Filter by video status (e.g. TaggingComplete)",
+            "schema": {
+              "enum": [
+                "None",
+                "Transcoding",
+                "PendingTagging",
+                "TaggingComplete",
+                "Failed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Sort by: uploadedAt, createdAt, fileType, videoStatus",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
           }
         ],
         "responses": {
@@ -11926,17 +11991,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/MediaAssetDtoListApiResult"
+                  "$ref": "#/components/schemas/MediaAssetDtoPaginationApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MediaAssetDtoListApiResult"
+                  "$ref": "#/components/schemas/MediaAssetDtoPaginationApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/MediaAssetDtoListApiResult"
+                  "$ref": "#/components/schemas/MediaAssetDtoPaginationApiResult"
                 }
               }
             }
@@ -12119,6 +12184,88 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/media/{mediaId}/progress": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "summary": "Get media processing progress",
+        "description": "While VideoStatus is Transcoding, percentComplete is MediaConvert JobPercentComplete (0–100). While PendingTagging, percentComplete is null — poll until TaggingComplete or Failed. Also usable via GET /api/media/{mediaId} for status-only checks.",
+        "parameters": [
+          {
+            "name": "mediaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaProcessingProgressDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaProcessingProgressDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MediaProcessingProgressDtoApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -31249,6 +31396,75 @@
         },
         "additionalProperties": false
       },
+      "MediaAssetDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MediaAssetDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaAssetDtoPaginationApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/MediaAssetDtoPaginationResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaAssetDtoPaginationResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/MediaAssetDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
       "MediaAssetDtoResponseDataContent": {
         "type": "object",
         "properties": {
@@ -31262,6 +31478,77 @@
           },
           "data": {
             "$ref": "#/components/schemas/MediaAssetDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaProcessingProgressDto": {
+        "type": "object",
+        "properties": {
+          "mediaId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "videoStatus": {
+            "enum": [
+              "None",
+              "Transcoding",
+              "PendingTagging",
+              "TaggingComplete",
+              "Failed"
+            ],
+            "type": "string"
+          },
+          "statusLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "percentComplete": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "isReady": {
+            "type": "boolean"
+          },
+          "isFailed": {
+            "type": "boolean"
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaProcessingProgressDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/MediaProcessingProgressDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MediaProcessingProgressDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/MediaProcessingProgressDto"
           }
         },
         "additionalProperties": false

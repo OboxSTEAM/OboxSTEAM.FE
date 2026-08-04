@@ -1,9 +1,24 @@
 import { z } from "zod";
 
-/** Query params for `GET /api/media`. */
+/** Query params for `GET /api/media` (paginated). */
 export const mediaListQuerySchema = z.object({
   classId: z.string().uuid().optional(),
   studentId: z.string().uuid().optional(),
+  classSessionId: z.string().uuid().optional(),
+  fileType: z.string().optional(),
+  videoStatus: z
+    .enum([
+      "None",
+      "Transcoding",
+      "PendingTagging",
+      "TaggingComplete",
+      "Failed",
+    ])
+    .optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().max(100).optional(),
 });
 
 /** Query params for `POST /api/media/upload`. */

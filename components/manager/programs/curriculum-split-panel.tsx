@@ -460,11 +460,11 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   const others = modulesInProgram.filter((m) => !isEdit || m.id !== moduleToEdit?.id);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col">
       <PHdr icon={FolderOpen} color={W.success}
         title={isEdit ? `Chỉnh sửa: ${moduleToEdit!.name}` : "Tạo Module mới"}
         sub="Học phần trong chương trình học" />
-      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+      <div className="space-y-6 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
           <div className="space-y-1.5">
@@ -605,9 +605,9 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr icon={BookOpen} color={W.accent} title={isEdit ? `Chỉnh sửa: ${courseToEdit!.name}` : "Tạo Khóa học mới"} sub="Khóa học trong học phần" />
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div className="space-y-4 p-5">
         <STitle>Thông tin khóa học</STitle>
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Khóa học <span style={{ color: W.primary }}>*</span></Label>
@@ -756,9 +756,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col h-full overflow-hidden">
+    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col">
       <PHdr icon={ActivityIcon} color="#9c27b0" title={isEdit ? `Chỉnh sửa: ${activityToEdit!.name}` : "Tạo Hoạt động mới"} sub="Hoạt động học tập trong khóa học" />
-      <div className="flex-1 overflow-y-auto p-5 space-y-4">
+      <div className="space-y-4 p-5">
         <STitle>Thông tin hoạt động</STitle>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-1.5">
@@ -940,9 +940,9 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col">
       <PHdr icon={LayoutGrid} color={W.primary} title={program.name} sub={`Mã: ${program.code} · Thông tin chung`} />
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="p-5">
         <ProgramForm
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
@@ -992,6 +992,40 @@ const STRUCTURE_NODE_ICON: Record<
   assignment: { Icon: ClipboardList, color: "#f59e0b", bg: "var(--card)" },
   milestone: { Icon: Flag, color: "#8b5cf6", bg: "var(--card)" },
 };
+
+/** Inline “Thêm …” leaf — dashed border, one shared hover/selected accent. */
+function StructureAddLeafButton({
+  label,
+  selected,
+  onClick,
+  icon: Icon,
+  className,
+}: {
+  label: string;
+  selected: boolean;
+  onClick: () => void;
+  icon?: LucideIcon;
+  className?: string;
+}) {
+  const accent = W.accent;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "flex items-center gap-1.5 rounded-md border border-dashed px-2 py-1.5 text-left text-[11px] font-medium transition-colors",
+        selected
+          ? "border-[color:var(--add-c)] text-[color:var(--add-c)] bg-[color:color-mix(in_srgb,var(--add-c)_12%,transparent)]"
+          : "border-border text-muted-foreground hover:border-[color:var(--add-c)] hover:text-[color:var(--add-c)] hover:bg-[color:color-mix(in_srgb,var(--add-c)_10%,transparent)]",
+        className,
+      )}
+      style={{ ["--add-c" as string]: accent }}
+    >
+      {Icon ? <Icon className="size-3 shrink-0" /> : null}
+      {label}
+    </button>
+  );
+}
 
 function StructureTreeRow({
   depth,
@@ -1165,14 +1199,7 @@ function StructureTreeRow({
             type="button"
             title={addLabel || "Thêm"}
             onClick={handleAdd}
-            className="flex size-6 items-center justify-center rounded"
-            style={{ color: W.faint }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = W.success;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = W.faint;
-            }}
+            className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[color:color-mix(in_srgb,#7cb342_14%,transparent)] hover:text-[#7cb342]"
           >
             <Plus className="size-3" />
           </button>
@@ -1182,14 +1209,7 @@ function StructureTreeRow({
             type="button"
             title="Xóa"
             onClick={onDelete}
-            className="flex size-6 items-center justify-center rounded"
-            style={{ color: W.faint }}
-            onMouseEnter={(e) => {
-              (e.currentTarget as HTMLElement).style.color = W.primary;
-            }}
-            onMouseLeave={(e) => {
-              (e.currentTarget as HTMLElement).style.color = W.faint;
-            }}
+            className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash className="size-3" />
           </button>
@@ -2071,40 +2091,176 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
               onAdd={() => select({ kind: "course-new", moduleId: mod.id })}
               addLabel="Thêm khóa học"
             >
-              {courses.map((course, cIdx) => {
-                const isLastCourse =
-                  cIdx === courses.length - 1 &&
-                  !(sel?.kind === "course-new" && sel.moduleId === mod.id);
-                const courseForceOpen =
-                  (sel?.kind === "course" && sel.id === course.id) ||
-                  (sel?.kind === "activity" && sel.courseId === course.id) ||
-                  (sel?.kind === "activity-new" && sel.courseId === course.id);
-                return (
+              {(() => {
+                const allAsg = sessionAssignments[mod.id] ?? [];
+                const courseIdSet = new Set(courses.map((c) => c.id));
+                const moduleAsgs = allAsg.filter(
+                  (a) => !a.courseId || !courseIdSet.has(a.courseId),
+                );
+                const asgsForCourse = (courseId: string) =>
+                  allAsg.filter((a) => a.courseId === courseId);
+                const showCourseNew =
+                  (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
+                  courses.length === 0;
+                const showMilestones = mod.moduleType === "Research";
+                const milestoneList = milestonesByModule[mod.id] ?? [];
+
+                const assignmentRow = (
+                  asg: (typeof allAsg)[number],
+                  depth: number,
+                  isLast: boolean,
+                ) => (
                   <StructureTreeRow
-                    key={course.id}
-                    depth={2}
-                    isLast={isLastCourse}
-                    kind="course"
-                    forceOpen={courseForceOpen}
-                    selected={sel?.kind === "course" && sel.id === course.id}
-                    label={course.name}
-                    meta={course.code ?? undefined}
+                    key={asg.id}
+                    depth={depth}
+                    isLast={isLast}
+                    kind="assignment"
+                    selected={sel?.kind === "assignment" && sel.id === asg.id}
+                    label={asg.title ?? "Không tiêu đề"}
+                    meta={
+                      ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ??
+                      asg.assignmentType
+                    }
                     onSelect={() =>
-                      select({ kind: "course", id: course.id, moduleId: mod.id })
+                      select({
+                        kind: "assignment",
+                        id: asg.id,
+                        moduleId: mod.id,
+                      })
                     }
                     onDelete={() =>
-                      setDelTarget({ type: "course", id: course.id, name: course.name })
+                      setDelTarget({
+                        type: "assignment",
+                        id: asg.id,
+                        name: asg.title ?? "Bài tập",
+                        moduleId: mod.id,
+                      })
                     }
-                    onAdd={() => select({ kind: "activity-new", courseId: course.id })}
-                    addLabel="Thêm hoạt động"
-                  >
-                    <CourseActivityRows
-                      course={course}
-                      sel={sel}
-                      select={select}
-                      setDelTarget={setDelTarget}
-                      onReorder={handleActivityReorder}
-                    />
+                  />
+                );
+
+                return (
+                  <>
+                    {courses.map((course, cIdx) => {
+                      const courseAsgs = asgsForCourse(course.id);
+                      const isLastCourse =
+                        cIdx === courses.length - 1 &&
+                        !showCourseNew &&
+                        moduleAsgs.length === 0 &&
+                        !(
+                          sel?.kind === "assignment-new" &&
+                          sel.moduleId === mod.id
+                        ) &&
+                        !showMilestones;
+                      const courseForceOpen =
+                        (sel?.kind === "course" && sel.id === course.id) ||
+                        (sel?.kind === "activity" &&
+                          sel.courseId === course.id) ||
+                        (sel?.kind === "activity-new" &&
+                          sel.courseId === course.id) ||
+                        (sel?.kind === "assignment" &&
+                          courseAsgs.some((a) => a.id === sel.id));
+                      return (
+                        <StructureTreeRow
+                          key={course.id}
+                          depth={2}
+                          isLast={isLastCourse}
+                          kind="course"
+                          forceOpen={courseForceOpen}
+                          selected={
+                            sel?.kind === "course" && sel.id === course.id
+                          }
+                          label={course.name}
+                          meta={course.code ?? undefined}
+                          onSelect={() =>
+                            select({
+                              kind: "course",
+                              id: course.id,
+                              moduleId: mod.id,
+                            })
+                          }
+                          onDelete={() =>
+                            setDelTarget({
+                              type: "course",
+                              id: course.id,
+                              name: course.name,
+                            })
+                          }
+                          onAdd={() =>
+                            select({
+                              kind: "activity-new",
+                              courseId: course.id,
+                            })
+                          }
+                          addLabel="Thêm hoạt động"
+                        >
+                          <CourseActivityRows
+                            course={course}
+                            sel={sel}
+                            select={select}
+                            setDelTarget={setDelTarget}
+                            onReorder={handleActivityReorder}
+                          />
+                          {courseAsgs.map((asg) => assignmentRow(asg, 3, false))}
+                          <li className="relative">
+                            <span
+                              className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                              style={{ background: W.border }}
+                              aria-hidden
+                            />
+                            <span
+                              className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                              style={{ background: W.border }}
+                              aria-hidden
+                            />
+                            <StructureAddLeafButton
+                              className="ml-4"
+                              label="Thêm hoạt động"
+                              icon={ActivityIcon}
+                              selected={
+                                sel?.kind === "activity-new" &&
+                                sel.courseId === course.id
+                              }
+                              onClick={() =>
+                                select({
+                                  kind: "activity-new",
+                                  courseId: course.id,
+                                })
+                              }
+                            />
+                          </li>
+                        </StructureTreeRow>
+                      );
+                    })}
+
+                    {showCourseNew ? (
+                      <li className="relative">
+                        <span
+                          className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                          style={{ background: W.border }}
+                          aria-hidden
+                        />
+                        <span
+                          className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                          style={{ background: W.border }}
+                          aria-hidden
+                        />
+                        <StructureAddLeafButton
+                          className="ml-4"
+                          label="+ Thêm khóa học"
+                          selected={
+                            sel?.kind === "course-new" &&
+                            sel.moduleId === mod.id
+                          }
+                          onClick={() =>
+                            select({ kind: "course-new", moduleId: mod.id })
+                          }
+                        />
+                      </li>
+                    ) : null}
+
+                    {/* Module-level assignments after courses/activities */}
+                    {moduleAsgs.map((asg) => assignmentRow(asg, 2, false))}
                     <li className="relative">
                       <span
                         className="pointer-events-none absolute top-0 left-0 h-4 w-px"
@@ -2116,155 +2272,92 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
                         style={{ background: W.border }}
                         aria-hidden
                       />
-                      <button
-                        type="button"
-                        onClick={() => select({ kind: "activity-new", courseId: course.id })}
-                        className="ml-4 flex items-center gap-1.5 py-1.5 text-left text-[11px] font-medium"
-                        style={{
-                          color:
-                            sel?.kind === "activity-new" && sel.courseId === course.id
-                              ? "#9c27b0"
-                              : W.faint,
-                        }}
-                      >
-                        <ActivityIcon className="size-3" />
-                        Thêm hoạt động
-                      </button>
+                      <StructureAddLeafButton
+                        className="ml-4"
+                        label="Thêm bài tập"
+                        icon={ClipboardList}
+                        selected={
+                          sel?.kind === "assignment-new" &&
+                          sel.moduleId === mod.id
+                        }
+                        onClick={() =>
+                          select({ kind: "assignment-new", moduleId: mod.id })
+                        }
+                      />
                     </li>
-                  </StructureTreeRow>
+
+                    {showMilestones ? (
+                      <>
+                        {milestoneList.map((ms, msIdx) => (
+                          <StructureTreeRow
+                            key={ms.id}
+                            depth={2}
+                            isLast={
+                              msIdx === milestoneList.length - 1 &&
+                              !(
+                                sel?.kind === "milestone-new" &&
+                                sel.moduleId === mod.id
+                              )
+                            }
+                            kind="milestone"
+                            selected={
+                              sel?.kind === "milestone" && sel.id === ms.id
+                            }
+                            label={ms.title || ms.code || "Milestone"}
+                            meta={
+                              ms.isCapstone
+                                ? "Capstone"
+                                : `Mốc ${ms.milestoneOrder}`
+                            }
+                            onSelect={() =>
+                              select({
+                                kind: "milestone",
+                                id: ms.id,
+                                moduleId: mod.id,
+                              })
+                            }
+                            onDelete={() =>
+                              setDelTarget({
+                                type: "milestone",
+                                id: ms.id,
+                                name: ms.title || "Milestone",
+                                moduleId: mod.id,
+                              })
+                            }
+                          />
+                        ))}
+                        <li className="relative">
+                          <span
+                            className="pointer-events-none absolute top-0 left-0 h-4 w-px"
+                            style={{ background: W.border }}
+                            aria-hidden
+                          />
+                          <span
+                            className="pointer-events-none absolute top-4 left-0 h-px w-3"
+                            style={{ background: W.border }}
+                            aria-hidden
+                          />
+                          <StructureAddLeafButton
+                            className="ml-4"
+                            label="Thêm milestone"
+                            icon={Flag}
+                            selected={
+                              sel?.kind === "milestone-new" &&
+                              sel.moduleId === mod.id
+                            }
+                            onClick={() =>
+                              select({
+                                kind: "milestone-new",
+                                moduleId: mod.id,
+                              })
+                            }
+                          />
+                        </li>
+                      </>
+                    ) : null}
+                  </>
                 );
-              })}
-              {(sel?.kind === "course-new" && sel.moduleId === mod.id) || courses.length === 0 ? (
-                <li className="relative">
-                  <span
-                    className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                    style={{ background: W.border }}
-                    aria-hidden
-                  />
-                  <span
-                    className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                    style={{ background: W.border }}
-                    aria-hidden
-                  />
-                  <button
-                    type="button"
-                    onClick={() => select({ kind: "course-new", moduleId: mod.id })}
-                    className="ml-4 py-1.5 text-left text-[11px] font-medium"
-                    style={{
-                      color:
-                        sel?.kind === "course-new" && sel.moduleId === mod.id
-                          ? W.accent
-                          : W.faint,
-                    }}
-                  >
-                    + Thêm khóa học
-                  </button>
-                </li>
-              ) : null}
-
-              {(sessionAssignments[mod.id] ?? []).map((asg, aIdx, arr) => (
-                <StructureTreeRow
-                  key={asg.id}
-                  depth={2}
-                  isLast={
-                    aIdx === arr.length - 1 &&
-                    !(sel?.kind === "assignment-new" && sel.moduleId === mod.id)
-                  }
-                  kind="assignment"
-                  selected={sel?.kind === "assignment" && sel.id === asg.id}
-                  label={asg.title ?? "Không tiêu đề"}
-                  meta={ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ?? asg.assignmentType}
-                  onSelect={() => select({ kind: "assignment", id: asg.id, moduleId: mod.id })}
-                  onDelete={() =>
-                    setDelTarget({
-                      type: "assignment",
-                      id: asg.id,
-                      name: asg.title ?? "Bài tập",
-                      moduleId: mod.id,
-                    })
-                  }
-                />
-              ))}
-              <li className="relative">
-                <span
-                  className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                  style={{ background: W.border }}
-                  aria-hidden
-                />
-                <span
-                  className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                  style={{ background: W.border }}
-                  aria-hidden
-                />
-                <button
-                  type="button"
-                  onClick={() => select({ kind: "assignment-new", moduleId: mod.id })}
-                  className="ml-4 flex items-center gap-1.5 py-1.5 text-left text-[11px] font-medium"
-                  style={{
-                    color:
-                      sel?.kind === "assignment-new" && sel.moduleId === mod.id
-                        ? "#f59e0b"
-                        : W.faint,
-                  }}
-                >
-                  <ClipboardList className="size-3" />
-                  Thêm bài tập
-                </button>
-              </li>
-
-              {mod.moduleType === "Research" && (
-                <>
-                  {(milestonesByModule[mod.id] ?? []).map((ms, msIdx, arr) => (
-                    <StructureTreeRow
-                      key={ms.id}
-                      depth={2}
-                      isLast={
-                        msIdx === arr.length - 1 &&
-                        !(sel?.kind === "milestone-new" && sel.moduleId === mod.id)
-                      }
-                      kind="milestone"
-                      selected={sel?.kind === "milestone" && sel.id === ms.id}
-                      label={ms.title || ms.code || "Milestone"}
-                      meta={ms.isCapstone ? "Capstone" : `Mốc ${ms.milestoneOrder}`}
-                      onSelect={() => select({ kind: "milestone", id: ms.id, moduleId: mod.id })}
-                      onDelete={() =>
-                        setDelTarget({
-                          type: "milestone",
-                          id: ms.id,
-                          name: ms.title || "Milestone",
-                          moduleId: mod.id,
-                        })
-                      }
-                    />
-                  ))}
-                  <li className="relative">
-                    <span
-                      className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                      style={{ background: W.border }}
-                      aria-hidden
-                    />
-                    <span
-                      className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                      style={{ background: W.border }}
-                      aria-hidden
-                    />
-                    <button
-                      type="button"
-                      onClick={() => select({ kind: "milestone-new", moduleId: mod.id })}
-                      className="ml-4 flex items-center gap-1.5 py-1.5 text-left text-[11px] font-medium"
-                      style={{
-                        color:
-                          sel?.kind === "milestone-new" && sel.moduleId === mod.id
-                            ? "#8b5cf6"
-                            : W.faint,
-                      }}
-                    >
-                      <Flag className="size-3" />
-                      Thêm milestone
-                    </button>
-                  </li>
-                </>
-              )}
+              })()}
             </StructureTreeRow>
           );
         })}
@@ -2284,15 +2377,13 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
               />
             </>
           )}
-          <button
-            type="button"
+          <StructureAddLeafButton
+            className={cn(modules.length > 0 && "ml-4")}
+            label="Thêm module"
+            icon={FolderPlus}
+            selected={sel?.kind === "module-new"}
             onClick={() => select({ kind: "module-new" })}
-            className={cn("flex items-center gap-1.5 py-1.5 text-[11px] font-medium", modules.length > 0 && "ml-4")}
-            style={{ color: sel?.kind === "module-new" ? W.success : W.faint }}
-          >
-            <FolderPlus className="size-3" />
-            Thêm module
-          </button>
+          />
         </li>
       </StructureTreeRow>
     </ul>
@@ -2300,16 +2391,16 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
 
   return (
     <div
-      className="flex overflow-hidden rounded-xl border"
-      style={{ background: W.bg, borderColor: W.border, minHeight: "620px" }}
+      className="flex min-h-[520px] items-start rounded-xl border"
+      style={{ background: W.bg, borderColor: W.border }}
     >
-      {/* ── Structure tree ─────────────────────────────────────────── */}
+      {/* ── Structure tree (scrollable, sticky while editing) ─────── */}
       <div
-        className="flex w-[300px] shrink-0 flex-col border-r overflow-hidden"
+        className="sticky top-14 flex h-[min(720px,calc(100dvh-14rem))] min-h-[520px] w-[300px] shrink-0 flex-col self-start overflow-hidden rounded-l-xl border-r"
         style={{ borderColor: W.border, background: W.surface }}
       >
         <div
-          className="flex items-center justify-between border-b px-3 py-2.5 shrink-0"
+          className="flex shrink-0 items-center justify-between border-b px-3 py-2.5"
           style={{ borderColor: W.border }}
         >
           <div>
@@ -2325,15 +2416,17 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-2">{structureTree}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+          {structureTree}
+        </div>
       </div>
 
-      {/* ── Detail ─────────────────────────────────────────────────── */}
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden" style={{ background: W.bg }}>
+      {/* ── Detail (no inner scroll — page scrolls with form) ─────── */}
+      <div className="flex min-w-0 flex-1 flex-col rounded-r-xl" style={{ background: W.bg }}>
         <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
           <ParentPathBreadcrumb parts={pathParts} />
         </div>
-        <div className="min-h-0 flex-1 overflow-hidden">{detail()}</div>
+        <div className="min-w-0">{detail()}</div>
       </div>
 
       <ConfirmDialog

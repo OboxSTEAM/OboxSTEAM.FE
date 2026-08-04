@@ -70,6 +70,7 @@ export type AppErrorContext =
   | "attendance.update"
   | "media.list"
   | "media.detail"
+  | "media.progress"
   | "media.upload"
   | "media.delete"
   | "media.processTags"

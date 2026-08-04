@@ -4,8 +4,6 @@ import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import {
   AlertTriangle,
   CheckCircle2,
-  ChevronDown,
-  ChevronRight,
   Copy,
   Database,
   Loader2,
@@ -17,6 +15,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogDescription,
+  DialogScrollBody,
+  DialogScrollFooter,
+  DialogScrollHeader,
+  DialogScrollPopup,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   createQuestionBank,
@@ -29,6 +36,11 @@ import {
   type QuestionBankListItem,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  clearCachedBankQuestions,
+  loadCachedBankQuestions,
+  saveCachedBankQuestions,
+} from "@/lib/curriculum/bank-questions-storage";
 import { cn } from "@/lib/utils";
 
 const W = {
@@ -74,7 +86,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
   const [banks, setBanks] = useState<SectionBank[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(true);
   const [stats, setStats] = useState<Record<string, BankImportStat>>({});
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [viewBankId, setViewBankId] = useState<string | null>(null);
   const [showBank, setShowBank] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -101,7 +113,8 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
     setBanks(
       items.map((item) => ({
         ...item,
-        questions: preserveQuestions?.[item.id] ?? [],
+        questions:
+          preserveQuestions?.[item.id] ?? loadCachedBankQuestions(item.id),
       })),
     );
     setShowBank((prev) => prev || items.length > 0);
@@ -115,12 +128,17 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
     setError(null);
     setConfirmDelete(null);
     setConfirmQuestion(null);
-    setExpandedId(null);
+    setViewBankId(null);
     getQuestionBanks({ courseId, page: 1, pageSize: 100 })
       .then((result) => {
         if (!active) return;
         const items = result?.data?.items ?? [];
-        setBanks(items.map((item) => ({ ...item, questions: [] })));
+        setBanks(
+          items.map((item) => ({
+            ...item,
+            questions: loadCachedBankQuestions(item.id),
+          })),
+        );
         setShowBank(items.length > 0);
       })
       .catch((err) => {
@@ -176,6 +194,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
     setDeleting(true);
     try {
       await deleteQuestionBank(target.id);
+      clearCachedBankQuestions(target.id);
       setBanks((prev) => prev.filter((b) => b.id !== target.id));
       setStats((prev) => {
         const next = { ...prev };
@@ -204,6 +223,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
         prev.map((b) => {
           if (b.id !== bank.id) return b;
           const questions = b.questions.filter((q) => q.id !== question.id);
+          saveCachedBankQuestions(bank.id, questions);
           return {
             ...b,
             questions,
@@ -252,10 +272,21 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
             const nextQuestions = [...byId.values()].sort(
               (a, c) => (a.orderIndex ?? 0) - (c.orderIndex ?? 0),
             );
+            const saved = saveCachedBankQuestions(bankId, nextQuestions);
+            if (!saved) {
+              showAppErrorFromUnknown(
+                new Error(
+                  "Không lưu được danh sách câu hỏi trên trình duyệt (bộ nhớ đầy). Reload có thể không còn xem được.",
+                ),
+                "curriculum.questionBank.import",
+              );
+            }
             return {
               ...b,
               questions: nextQuestions,
-              questionCount: nextQuestions.length,
+              questionCount:
+                Math.max(b.questionCount ?? 0, nextQuestions.length) ||
+                nextQuestions.length,
             };
           }),
         );
@@ -273,7 +304,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
           errors: data?.errors ?? [],
         },
       }));
-      setExpandedId(bankId);
+      setViewBankId(bankId);
       if (failed > 0) {
         showAppSuccess({
           title: "Import hoàn tất (có lỗi)",
@@ -343,7 +374,6 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
               {banks.map((bank) => {
                 const stat = stats[bank.id];
                 const isImporting = importingId === bank.id;
-                const isExpanded = expandedId === bank.id;
                 const questionCount =
                   bank.questions.length || bank.questionCount || 0;
                 return (
@@ -460,76 +490,30 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
 
                     <button
                       type="button"
-                      onClick={() =>
-                        setExpandedId((prev) => (prev === bank.id ? null : bank.id))
-                      }
-                      className="mt-2 flex w-full items-center gap-1.5 rounded-lg px-1 py-1.5 text-left text-[11px] font-semibold transition-colors hover:bg-muted"
-                      style={{ color: W.muted }}
+                      onClick={() => {
+                        const cached = loadCachedBankQuestions(bank.id);
+                        if (cached.length > 0) {
+                          setBanks((prev) =>
+                            prev.map((b) =>
+                              b.id === bank.id
+                                ? {
+                                    ...b,
+                                    questions:
+                                      b.questions.length >= cached.length
+                                        ? b.questions
+                                        : cached,
+                                  }
+                                : b,
+                            ),
+                          );
+                        }
+                        setViewBankId(bank.id);
+                      }}
+                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed px-2 py-2 text-[11px] font-semibold transition-colors hover:border-[#4fc3f7] hover:bg-[color:color-mix(in_srgb,#4fc3f7_10%,transparent)] hover:text-[#4fc3f7]"
+                      style={{ borderColor: W.border, color: W.muted }}
                     >
-                      {isExpanded ? (
-                        <ChevronDown className="size-3.5" />
-                      ) : (
-                        <ChevronRight className="size-3.5" />
-                      )}
-                      {isExpanded ? "Ẩn câu hỏi" : `Xem câu hỏi (${questionCount})`}
+                      Xem câu hỏi ({questionCount})
                     </button>
-
-                    {isExpanded && (
-                      <ul className="mt-1 space-y-1.5 border-t pt-2" style={{ borderColor: W.border }}>
-                        {bank.questions.length === 0 ? (
-                          <li
-                            className="rounded-lg border border-dashed px-3 py-3 text-center text-[11px]"
-                            style={{ borderColor: W.border, color: W.faint }}
-                          >
-                            Chưa có câu hỏi trong bộ nhớ cục bộ. Import CSV để
-                            xem và xóa từng câu (BE chưa có API liệt kê đầy đủ).
-                          </li>
-                        ) : (
-                          bank.questions.map((q, idx) => (
-                            <li
-                              key={q.id}
-                              className="flex items-start gap-2 rounded-lg border bg-background px-2.5 py-2"
-                              style={{ borderColor: W.border }}
-                            >
-                              <span
-                                className="mt-0.5 font-mono text-[10px] font-bold"
-                                style={{ color: W.faint }}
-                              >
-                                {idx + 1}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <p
-                                  className="text-xs font-medium leading-snug"
-                                  style={{ color: W.textStrong }}
-                                >
-                                  {q.questionText || "(Không có nội dung)"}
-                                </p>
-                                <p className="mt-0.5 text-[10px]" style={{ color: W.faint }}>
-                                  {q.questionType ?? "—"} ·{" "}
-                                  {difficultyLabel(q.difficultyLevel)} ·{" "}
-                                  {q.points ?? 0} điểm
-                                  {q.options?.length
-                                    ? ` · ${q.options.length} đáp án`
-                                    : ""}
-                                </p>
-                              </div>
-                              <button
-                                type="button"
-                                title="Xóa câu hỏi"
-                                disabled={busy}
-                                onClick={() =>
-                                  setConfirmQuestion({ bank, question: q })
-                                }
-                                className="flex size-7 shrink-0 items-center justify-center rounded-md border transition-colors hover:bg-destructive/10 disabled:opacity-50"
-                                style={{ borderColor: W.border, color: W.primary }}
-                              >
-                                <Trash className="size-3" />
-                              </button>
-                            </li>
-                          ))
-                        )}
-                      </ul>
-                    )}
                   </li>
                 );
               })}
@@ -605,8 +589,9 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
               </Button>
             </div>
             <p className="text-[11px] leading-relaxed" style={{ color: W.faint }}>
-              Danh sách ngân hàng được lưu trên trình duyệt (BE chưa có API list
-              theo khóa học). Câu hỏi hiện sau khi Import CSV; có thể xóa từng câu.
+              Sau khi Import CSV, danh sách câu hỏi được cache trên trình duyệt
+              này để xem lại khi reload. Backend chưa có API liệt kê câu hỏi theo
+              ngân hàng.
             </p>
           </div>
         </div>
@@ -619,6 +604,105 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
         onChange={handleImportFile}
         className="hidden"
       />
+
+      {(() => {
+        const viewBank = banks.find((b) => b.id === viewBankId) ?? null;
+        return (
+          <Dialog
+            open={!!viewBank}
+            onOpenChange={(open) => {
+              if (!open) setViewBankId(null);
+            }}
+          >
+            <DialogScrollPopup className="sm:max-w-xl">
+              <DialogScrollHeader>
+                <DialogTitle>Câu hỏi — {viewBank?.name ?? "Ngân hàng đề"}</DialogTitle>
+                <DialogDescription>
+                  {viewBank
+                    ? `${viewBank.questions.length || viewBank.questionCount || 0} câu hỏi trong ngân hàng này.`
+                    : "Danh sách câu hỏi"}
+                </DialogDescription>
+              </DialogScrollHeader>
+              <DialogScrollBody className="space-y-2">
+                {!viewBank || viewBank.questions.length === 0 ? (
+                  <div
+                    className="rounded-xl border border-dashed px-4 py-8 text-center text-xs leading-relaxed"
+                    style={{ borderColor: W.border, color: W.faint }}
+                  >
+                    {(viewBank?.questionCount ?? 0) > 0 ? (
+                      <>
+                        Ngân hàng có {viewBank?.questionCount} câu trên máy chủ,
+                        nhưng chưa có bản xem trên trình duyệt này.
+                        <br />
+                        Backend chưa có API liệt kê câu hỏi — Import lại CSV một
+                        lần để lưu cache và xem/xóa từng câu.
+                      </>
+                    ) : (
+                      <>
+                        Chưa có câu hỏi. Import CSV để thêm câu hỏi vào ngân hàng
+                        và xem danh sách trên trình duyệt này.
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <ul className="space-y-2">
+                    {viewBank.questions.map((q, idx) => (
+                      <li
+                        key={q.id}
+                        className="flex items-start gap-2 rounded-xl border bg-card px-3 py-2.5"
+                        style={{ borderColor: W.border }}
+                      >
+                        <span
+                          className="mt-0.5 font-mono text-[10px] font-bold"
+                          style={{ color: W.faint }}
+                        >
+                          {idx + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className="text-sm font-medium leading-snug"
+                            style={{ color: W.textStrong }}
+                          >
+                            {q.questionText || "(Không có nội dung)"}
+                          </p>
+                          <p className="mt-1 text-[11px]" style={{ color: W.faint }}>
+                            {q.questionType ?? "—"} ·{" "}
+                            {difficultyLabel(q.difficultyLevel)} · {q.points ?? 0}{" "}
+                            điểm
+                            {q.options?.length ? ` · ${q.options.length} đáp án` : ""}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          title="Xóa câu hỏi"
+                          disabled={busy}
+                          onClick={() =>
+                            setConfirmQuestion({ bank: viewBank, question: q })
+                          }
+                          className="flex size-8 shrink-0 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                          style={{ borderColor: W.border, color: W.primary }}
+                        >
+                          <Trash className="size-3.5" />
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </DialogScrollBody>
+              <DialogScrollFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setViewBankId(null)}
+                  className="rounded-lg"
+                >
+                  Đóng
+                </Button>
+              </DialogScrollFooter>
+            </DialogScrollPopup>
+          </Dialog>
+        );
+      })()}
 
       <ConfirmDialog
         isOpen={!!confirmDelete}

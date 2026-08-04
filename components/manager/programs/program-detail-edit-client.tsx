@@ -72,7 +72,7 @@ function StepperTabBar({
 function CurriculumPanelFallback() {
   return (
     <div
-      className="h-[620px] animate-pulse rounded-xl border"
+      className="min-h-[520px] animate-pulse rounded-xl border"
       style={{ background: "#ede9e0", borderColor: "#d8d2c6" }}
     />
   );

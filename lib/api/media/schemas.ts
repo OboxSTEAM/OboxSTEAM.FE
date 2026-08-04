@@ -1,26 +1,69 @@
 import { z } from "zod";
 
-import { mediaAssetSchema, mediaTagSchema } from "@/lib/api/entities/media";
+import {
+  mediaAssetSchema,
+  mediaProgressSchema,
+  mediaTagSchema,
+} from "@/lib/api/entities/media";
+import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import {
   apiValueMessageOnlySchema,
   createApiResponseSchema,
-  createApiValueSchema,
 } from "@/lib/api/schemas";
 
-export const mediaAssetValueSchema = createApiValueSchema(mediaAssetSchema);
-export const mediaTagValueSchema = createApiValueSchema(mediaTagSchema);
-export const mediaAssetListValueSchema = createApiValueSchema(
-  z
+export const mediaAssetValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: mediaAssetSchema,
+});
+export const mediaTagValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: mediaTagSchema,
+});
+export const mediaProgressValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: mediaProgressSchema,
+});
+
+/** Legacy flat list (`GET /api/media/class-session/{id}`). */
+export const mediaAssetListValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: z
     .array(mediaAssetSchema)
     .nullish()
     .transform((value) => value ?? []),
-);
+});
+
+/** Paginated list (`GET /api/media`). */
+export const paginatedMediaAssetsSchema = createPaginatedSchema(
+  mediaAssetSchema,
+).extend({
+  items: z
+    .array(mediaAssetSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const mediaAssetPaginationValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: paginatedMediaAssetsSchema,
+});
 
 export const getMediaListResponseSchema = createApiResponseSchema(
+  mediaAssetPaginationValueSchema,
+);
+export const getMediaByClassSessionResponseSchema = createApiResponseSchema(
   mediaAssetListValueSchema,
 );
 export const getMediaByIdResponseSchema =
   createApiResponseSchema(mediaAssetValueSchema);
+export const getMediaProgressResponseSchema = createApiResponseSchema(
+  mediaProgressValueSchema,
+);
 export const uploadMediaResponseSchema =
   createApiResponseSchema(mediaAssetValueSchema);
 export const processMediaTagsResponseSchema =
@@ -39,8 +82,18 @@ export const deleteMediaTagResponseSchema = createApiResponseSchema(
 export type GetMediaListResponse = z.infer<typeof getMediaListResponseSchema>;
 export type GetMediaListResult = GetMediaListResponse["value"];
 
+export type GetMediaByClassSessionResponse = z.infer<
+  typeof getMediaByClassSessionResponseSchema
+>;
+export type GetMediaByClassSessionResult = GetMediaByClassSessionResponse["value"];
+
 export type GetMediaByIdResponse = z.infer<typeof getMediaByIdResponseSchema>;
 export type GetMediaByIdResult = GetMediaByIdResponse["value"];
+
+export type GetMediaProgressResponse = z.infer<
+  typeof getMediaProgressResponseSchema
+>;
+export type GetMediaProgressResult = GetMediaProgressResponse["value"];
 
 export type UploadMediaResponse = z.infer<typeof uploadMediaResponseSchema>;
 export type UploadMediaResult = UploadMediaResponse["value"];
