@@ -276,7 +276,7 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action: "Tải lại roster và thử cập nhật lại.",
   },
   "media.list": {
-    title: "Không tải được evidence",
+    title: "Không tải được media",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
     action: "Thử tải lại sau vài giây.",
   },
@@ -285,8 +285,13 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Media không tồn tại hoặc bạn không có quyền xem.",
     action: "Quay lại danh sách và thử lại.",
   },
+  "media.progress": {
+    title: "Không cập nhật được tiến trình media",
+    reason: "Máy chủ tạm thời không trả được trạng thái xử lý.",
+    action: "Đợi vài giây hoặc tải lại danh sách.",
+  },
   "media.upload": {
-    title: "Không tải lên được evidence",
+    title: "Không tải lên được media",
     reason: "File không hợp lệ, quá lớn, hoặc bạn không có quyền upload cho lớp này.",
     action: "Dùng ảnh JPG/PNG hoặc video MP4/MOV rồi thử lại.",
   },

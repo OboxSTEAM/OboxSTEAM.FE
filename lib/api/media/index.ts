@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
-import { ApiResponseError } from "@/lib/api/errors";
+import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 import {
   addMediaTagSchema,
   mediaClassSessionParamSchema,
@@ -21,15 +21,19 @@ import {
   deleteMediaResponseSchema,
   deleteMediaTagResponseSchema,
   getMediaByIdResponseSchema,
+  getMediaByClassSessionResponseSchema,
   getMediaListResponseSchema,
+  getMediaProgressResponseSchema,
   processMediaTagsResponseSchema,
   updateMediaTagVerificationResponseSchema,
   uploadMediaResponseSchema,
   type AddMediaTagResult,
   type DeleteMediaResult,
   type DeleteMediaTagResult,
+  type GetMediaByClassSessionResult,
   type GetMediaByIdResult,
   type GetMediaListResult,
+  type GetMediaProgressResult,
   type ProcessMediaTagsResult,
   type UpdateMediaTagVerificationResult,
   type UploadMediaResult,
@@ -39,6 +43,7 @@ export type {
   FaceSegment,
   LabelTimelineEntry,
   MediaAsset,
+  MediaProgress,
   MediaTag,
   MediaVideoStatus,
 } from "@/lib/api/entities/media";
@@ -50,10 +55,14 @@ export type {
   DeleteMediaResult,
   DeleteMediaTagResponse,
   DeleteMediaTagResult,
+  GetMediaByClassSessionResponse,
+  GetMediaByClassSessionResult,
   GetMediaByIdResponse,
   GetMediaByIdResult,
   GetMediaListResponse,
   GetMediaListResult,
+  GetMediaProgressResponse,
+  GetMediaProgressResult,
   ProcessMediaTagsResponse,
   ProcessMediaTagsResult,
   UpdateMediaTagVerificationResponse,
@@ -81,6 +90,55 @@ function requireApiValue<T>(value: T | null): T {
   return value;
 }
 
+/**
+ * BE currently throws when the class has no S3 media prefix yet (before first
+ * upload). Treat that as an empty list so mentors see upload CTA, not an error.
+ */
+function isUninitializedMediaStorageError(error: unknown): boolean {
+  if (error instanceof ApiResponseError) {
+    return (
+      error.code === "500" ||
+      /unexpected error occurred/i.test(error.message)
+    );
+  }
+
+  if (error instanceof ApiRequestError && error.status === 500) {
+    const body = error.body as
+      | { error?: { code?: string; message?: string } }
+      | null
+      | undefined;
+    const code = body?.error?.code;
+    const message = body?.error?.message ?? error.message;
+    return code === "500" || /unexpected error occurred/i.test(message);
+  }
+
+  return false;
+}
+
+function emptyMediaListResult(): GetMediaListResult {
+  return {
+    code: "OK",
+    message: "Chưa có media.",
+    data: {
+      items: [],
+      currentPage: 1,
+      totalPages: 0,
+      pageSize: 50,
+      totalCount: 0,
+      hasPrevious: false,
+      hasNext: false,
+    },
+  };
+}
+
+function emptyMediaSessionListResult(): GetMediaByClassSessionResult {
+  return {
+    code: "OK",
+    message: "Chưa có media.",
+    data: [],
+  };
+}
+
 function buildQueryString<T extends Record<string, unknown>>(
   params: T | undefined,
   schema: z.ZodType<T>,
@@ -99,17 +157,32 @@ function buildQueryString<T extends Record<string, unknown>>(
   return query ? `?${query}` : "";
 }
 
-/** `GET /api/media` — ready media scoped by class and/or student. */
+/** `GET /api/media` — paginated ready/processing media by class and filters. */
 export async function getMediaList(
   params?: MediaListQuery,
 ): Promise<GetMediaListResult> {
-  const response = await apiFetchParsed(
-    `${MEDIA_BASE}${buildQueryString(params, mediaListQuerySchema)}`,
-    getMediaListResponseSchema,
-    { method: "GET" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
+  try {
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}${buildQueryString(
+        {
+          page: 1,
+          pageSize: 50,
+          isDescending: true,
+          ...params,
+        },
+        mediaListQuerySchema,
+      )}`,
+      getMediaListResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return emptyMediaListResult();
+    }
+    throw error;
+  }
 }
 
 /** `GET /api/media/{mediaId}` — one asset including face tags. */
@@ -125,21 +198,43 @@ export async function getMediaById(mediaId: string): Promise<GetMediaByIdResult>
   return requireApiValue(response.value);
 }
 
-/** `GET /api/media/class-session/{classSessionId}`. */
-export async function getMediaByClassSession(
-  classSessionId: string,
-): Promise<GetMediaListResult> {
-  const { classSessionId: parsedId } = mediaClassSessionParamSchema.parse({
-    classSessionId,
-  });
+/** `GET /api/media/{mediaId}/progress` — transcode % and pipeline status. */
+export async function getMediaProgress(
+  mediaId: string,
+): Promise<GetMediaProgressResult> {
+  const { mediaId: parsedId } = mediaIdParamSchema.parse({ mediaId });
 
   const response = await apiFetchParsed(
-    `${MEDIA_BASE}/class-session/${parsedId}`,
-    getMediaListResponseSchema,
+    `${MEDIA_BASE}/${parsedId}/progress`,
+    getMediaProgressResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
+}
+
+/** `GET /api/media/class-session/{classSessionId}` — flat list for one session. */
+export async function getMediaByClassSession(
+  classSessionId: string,
+): Promise<GetMediaByClassSessionResult> {
+  try {
+    const { classSessionId: parsedId } = mediaClassSessionParamSchema.parse({
+      classSessionId,
+    });
+
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}/class-session/${parsedId}`,
+      getMediaByClassSessionResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return emptyMediaSessionListResult();
+    }
+    throw error;
+  }
 }
 
 /** `POST /api/media/upload` — multipart image/video for a class. */

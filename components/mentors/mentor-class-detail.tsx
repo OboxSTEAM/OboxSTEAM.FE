@@ -15,7 +15,7 @@ import {
   AttendanceStatusBadge,
   ClassStatusBadge,
 } from "@/components/manager/classes/class-status-badge";
-import { MentorClassEvidencePanel } from "@/components/mentors/mentor-class-evidence-panel";
+import { MentorClassMediaPanel } from "@/components/mentors/mentor-class-media-panel";
 import { MentorClassGradingPanel } from "@/components/mentors/mentor-class-grading-panel";
 import { MentorClassSessionsPanel } from "@/components/mentors/mentor-class-sessions-panel";
 import {
@@ -102,7 +102,7 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
     isLoading: isSessionsLoading,
   } = useClientFetch({
     enabled:
-      tab === "sessions" || tab === "attendance" || tab === "evidence",
+      tab === "sessions" || tab === "attendance" || tab === "media",
     fetcher: () =>
       getClassSessions(classId, {
         ...CLASS_SESSIONS_QUERY,
@@ -422,11 +422,11 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
               Chấm bài
             </TabsTrigger>
             <TabsTrigger
-              value="evidence"
+              value="media"
               className="rounded-none px-4 py-2.5 data-active:text-primary"
             >
               <Images className="size-4" />
-              Evidence
+              Media
             </TabsTrigger>
           </TabsList>
 
@@ -566,8 +566,8 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
             )}
           </TabsContent>
 
-          <TabsContent value="evidence" className="mt-0">
-            <MentorClassEvidencePanel
+          <TabsContent value="media" className="mt-0">
+            <MentorClassMediaPanel
               classId={classId}
               sessions={sessions}
               roster={roster}
