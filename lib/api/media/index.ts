@@ -4,12 +4,15 @@ import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 import {
   addMediaTagSchema,
+  classGalleryClassIdParamSchema,
+  classGalleryQuerySchema,
   mediaIdParamSchema,
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
   updateMediaTagVerificationSchema,
   type AddMediaTagInput,
+  type ClassGalleryQuery,
   type MediaListQuery,
   type MediaUploadQuery,
   type UpdateMediaTagVerificationInput,
@@ -19,6 +22,7 @@ import {
   addMediaTagResponseSchema,
   deleteMediaResponseSchema,
   deleteMediaTagResponseSchema,
+  getClassGalleryResponseSchema,
   getMediaByIdResponseSchema,
   getMediaListResponseSchema,
   getMediaProgressResponseSchema,
@@ -28,6 +32,7 @@ import {
   type AddMediaTagResult,
   type DeleteMediaResult,
   type DeleteMediaTagResult,
+  type GetClassGalleryResult,
   type GetMediaByIdResult,
   type GetMediaListResult,
   type GetMediaProgressResult,
@@ -37,6 +42,7 @@ import {
 } from "./schemas";
 
 export type {
+  ClassGalleryMedia,
   FaceSegment,
   LabelTimelineEntry,
   MediaAsset,
@@ -52,6 +58,8 @@ export type {
   DeleteMediaResult,
   DeleteMediaTagResponse,
   DeleteMediaTagResult,
+  GetClassGalleryResponse,
+  GetClassGalleryResult,
   GetMediaByIdResponse,
   GetMediaByIdResult,
   GetMediaListResponse,
@@ -68,6 +76,8 @@ export type {
 
 export type {
   AddMediaTagInput,
+  ClassGalleryClassIdParam,
+  ClassGalleryQuery,
   MediaIdParam,
   MediaListQuery,
   MediaTagParams,
@@ -109,7 +119,9 @@ function isUninitializedMediaStorageError(error: unknown): boolean {
   return false;
 }
 
-function emptyMediaListResult(): GetMediaListResult {
+function emptyMediaListResult(
+  pageSize = 50,
+): GetMediaListResult {
   return {
     code: "OK",
     message: "Chưa có media.",
@@ -117,7 +129,23 @@ function emptyMediaListResult(): GetMediaListResult {
       items: [],
       currentPage: 1,
       totalPages: 0,
-      pageSize: 50,
+      pageSize,
+      totalCount: 0,
+      hasPrevious: false,
+      hasNext: false,
+    },
+  };
+}
+
+function emptyClassGalleryResult(pageSize = 20): GetClassGalleryResult {
+  return {
+    code: "OK",
+    message: "Chưa có media.",
+    data: {
+      items: [],
+      currentPage: 1,
+      totalPages: 0,
+      pageSize,
       totalCount: 0,
       hasPrevious: false,
       hasNext: false,
@@ -166,6 +194,43 @@ export async function getMediaList(
   } catch (error) {
     if (isUninitializedMediaStorageError(error)) {
       return emptyMediaListResult();
+    }
+    throw error;
+  }
+}
+
+/**
+ * `GET /api/media/class/{classId}/gallery` — student class gallery (no face tags).
+ * Requires Active enrollment in the class. Includes all video statuses.
+ */
+export async function getClassGallery(
+  classId: string,
+  params?: ClassGalleryQuery,
+): Promise<GetClassGalleryResult> {
+  const { classId: parsedClassId } = classGalleryClassIdParamSchema.parse({
+    classId,
+  });
+  const pageSize = params?.pageSize ?? 20;
+
+  try {
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}/class/${parsedClassId}/gallery${buildQueryString(
+        {
+          page: 1,
+          pageSize,
+          isDescending: true,
+          ...params,
+        },
+        classGalleryQuerySchema,
+      )}`,
+      getClassGalleryResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return emptyClassGalleryResult(pageSize);
     }
     throw error;
   }

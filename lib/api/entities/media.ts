@@ -61,6 +61,23 @@ export const mediaAssetSchema = z.object({
 });
 
 /**
+ * Student gallery row (`GET /api/media/class/{classId}/gallery`).
+ * Same core fields as `MediaAsset` but without face tags / label timeline.
+ */
+export const classGalleryMediaSchema = z.object({
+  id: z.string().uuid(),
+  uploaderId: z.string().uuid(),
+  classId: z.string().uuid(),
+  classSessionId: z.string().uuid().nullable(),
+  fileUrl: z.string().nullable(),
+  fileType: z.string().nullable(),
+  videoStatus: mediaVideoStatusSchema,
+  statusLabel: z.string().nullable(),
+  isReady: z.boolean(),
+  uploadedAt: z.string().nullable(),
+});
+
+/**
  * `GET /api/media/{mediaId}/progress` — transcode % + pipeline status.
  * BE may omit isFailed; derive from videoStatus when missing.
  */
@@ -92,4 +109,5 @@ export type FaceSegment = z.infer<typeof faceSegmentSchema>;
 export type LabelTimelineEntry = z.infer<typeof labelTimelineEntrySchema>;
 export type MediaTag = z.infer<typeof mediaTagSchema>;
 export type MediaAsset = z.infer<typeof mediaAssetSchema>;
+export type ClassGalleryMedia = z.infer<typeof classGalleryMediaSchema>;
 export type MediaProgress = z.infer<typeof mediaProgressSchema>;
