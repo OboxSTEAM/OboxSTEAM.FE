@@ -669,10 +669,12 @@ export function MentorClassMediaPanel({
       },
       {
         header: "Tiến trình",
-        className: "min-w-[13.5rem] whitespace-normal",
+        className: "min-w-[10.5rem] whitespace-normal",
         render: (media) => (
           <MediaPipelineStatus
             compact
+            mediaId={media.id}
+            uploadedAt={media.uploadedAt}
             videoStatus={media.videoStatus}
             isReady={media.isReady}
             progress={progressById[media.id]}
@@ -1014,208 +1016,224 @@ export function MentorClassMediaPanel({
 
           {isDetailLoading && !selectedMedia ? (
             <DialogScrollBody>
-              <Skeleton className="h-72 w-full rounded-xl" />
-              <Skeleton className="mt-4 h-8 w-48 rounded-lg" />
-              <Skeleton className="mt-6 h-24 w-full rounded-xl" />
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Skeleton className="h-64 w-full flex-1 rounded-xl" />
+                <Skeleton className="h-44 w-full rounded-xl sm:w-[15.5rem]" />
+              </div>
+              <Skeleton className="mt-5 h-36 w-full rounded-xl" />
             </DialogScrollBody>
           ) : selectedMedia ? (
             <DialogScrollBody>
-              <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
-                {selectedMedia.fileUrl &&
-                isImageFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedMedia.fileUrl}
-                    alt="Media preview"
-                    className="mx-auto max-h-72 object-contain"
-                  />
-                ) : selectedMedia.fileUrl &&
-                  isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
-                  <video
-                    src={selectedMedia.fileUrl}
-                    controls
-                    className="mx-auto max-h-72 w-full bg-black"
-                  />
-                ) : (
-                  <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                    Không có file xem trước
-                  </div>
-                )}
-                {isDetailLoading ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/40">
-                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : null}
-              </div>
-
-              <div className="mt-4">
-                <MediaPipelineStatus
-                  videoStatus={selectedMedia.videoStatus}
-                  isReady={selectedMedia.isReady}
-                  progress={progressById[selectedMedia.id]}
-                  timedOut={Boolean(timedOutIds[selectedMedia.id])}
-                />
-              </div>
-
-              {isAiProcessing(selectedMedia) ? (
-                <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    Đang xử lý pipeline
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Chờ chuyển mã / AI xong rồi xác nhận thẻ. Không gắn thủ công ở
-                    bước này.
-                  </p>
-                  {isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) &&
-                  needsAiRetry(selectedMedia) ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isProcessingTags}
-                      onClick={() => void handleProcessTags(selectedMedia)}
-                      className="rounded-lg"
-                    >
-                      {isProcessingTags ? (
-                        <Loader2 className="size-4 animate-spin" />
-                      ) : (
-                        <ScanFace className="size-4" />
-                      )}
-                      Quét lại face tagging
-                    </Button>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+                <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-border bg-muted">
+                  {selectedMedia.fileUrl &&
+                  isImageFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedMedia.fileUrl}
+                      alt="Media preview"
+                      className="mx-auto max-h-64 object-contain sm:max-h-72"
+                    />
+                  ) : selectedMedia.fileUrl &&
+                    isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
+                    <video
+                      src={selectedMedia.fileUrl}
+                      controls
+                      className="mx-auto max-h-64 w-full bg-black sm:max-h-72"
+                    />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                      Không có file xem trước
+                    </div>
+                  )}
+                  {isDetailLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/40">
+                      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                    </div>
                   ) : null}
                 </div>
-              ) : null}
 
-              {selectedMedia.videoStatus === "Failed" ? (
-                <div className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    AI nhận diện thất bại
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Thử quét lại. Nếu vẫn lỗi, gắn thẻ thủ công tên học viên bên
-                    dưới.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isProcessingTags}
-                    onClick={() => void handleProcessTags(selectedMedia)}
-                    className="rounded-lg"
-                  >
-                    {isProcessingTags ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <ScanFace className="size-4" />
-                    )}
-                    Quét lại AI
-                  </Button>
-                </div>
-              ) : null}
+                <div className="flex w-full shrink-0 flex-col gap-2 sm:w-[15.5rem]">
+                  <MediaPipelineStatus
+                    mediaId={selectedMedia.id}
+                    uploadedAt={selectedMedia.uploadedAt}
+                    videoStatus={selectedMedia.videoStatus}
+                    isReady={selectedMedia.isReady}
+                    progress={progressById[selectedMedia.id]}
+                    timedOut={Boolean(timedOutIds[selectedMedia.id])}
+                    className="max-w-none"
+                  />
 
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <h3 className="text-sm font-semibold text-foreground">
-                    Thẻ AI nhận diện ({selectedMedia.tags.length})
-                  </h3>
-                </div>
-
-                {selectedMedia.tags.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                    {isAiProcessing(selectedMedia)
-                      ? "Chưa có thẻ — đang chờ AI quét."
-                      : selectedMedia.videoStatus === "Failed"
-                        ? "AI chưa tạo được thẻ. Quét lại hoặc gắn thủ công bên dưới."
-                        : "AI không nhận diện được học viên nào. Gắn thẻ thủ công nếu cần."}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {selectedMedia.tags.map((tag) => {
-                      const student = rosterByStudentId.get(tag.studentId);
-                      const name =
-                        tag.studentName?.trim() ||
-                        student?.studentName?.trim() ||
-                        "Học viên";
-
-                      return (
-                        <li
-                          key={tag.id}
-                          className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                  {isAiProcessing(selectedMedia) ? (
+                    <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-3">
+                      <p className="text-xs font-medium text-foreground">
+                        Đang xử lý pipeline
+                      </p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">
+                        Chờ AI xong rồi xác nhận thẻ. Không gắn thủ công lúc này.
+                      </p>
+                      {isVideoFile(
+                        selectedMedia.fileType,
+                        selectedMedia.fileUrl,
+                      ) && needsAiRetry(selectedMedia) ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={isProcessingTags}
+                          onClick={() => void handleProcessTags(selectedMedia)}
+                          className="h-8 w-full rounded-lg"
                         >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <MediaStudentAvatar
-                              name={name}
-                              avatarUrl={student?.avatarUrl}
-                              isVerified={tag.isVerified}
-                            />
-                            <div className="min-w-0">
-                              <p className="truncate font-medium text-foreground">
-                                {name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Độ tin cậy{" "}
-                                {Math.round(tag.confidenceScore * 100)}% (
-                                {confidenceLabel(tag.confidenceScore)})
-                                {tag.hasOtherFaces
-                                  ? " · Có nhiều khuôn mặt"
-                                  : ""}
-                              </p>
+                          {isProcessingTags ? (
+                            <Loader2 className="size-3.5 animate-spin" />
+                          ) : (
+                            <ScanFace className="size-3.5" />
+                          )}
+                          Quét lại
+                        </Button>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {selectedMedia.videoStatus === "Failed" ? (
+                    <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+                      <p className="text-xs font-medium text-foreground">
+                        AI thất bại
+                      </p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">
+                        Quét lại hoặc gắn thẻ thủ công bên dưới.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isProcessingTags}
+                        onClick={() => void handleProcessTags(selectedMedia)}
+                        className="h-8 w-full rounded-lg"
+                      >
+                        {isProcessingTags ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <ScanFace className="size-3.5" />
+                        )}
+                        Quét lại AI
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="mt-5 overflow-hidden rounded-xl border border-border">
+                <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2.5">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Thẻ học viên
+                  </h3>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {selectedMedia.tags.length} thẻ
+                    {selectedMedia.tags.filter((t) => t.isVerified).length > 0
+                      ? ` · ${selectedMedia.tags.filter((t) => t.isVerified).length} đã xác nhận`
+                      : null}
+                  </span>
+                </div>
+
+                <div className="p-3">
+                  {selectedMedia.tags.length === 0 ? (
+                    <p className="px-1 py-4 text-center text-sm text-muted-foreground">
+                      {isAiProcessing(selectedMedia)
+                        ? "Chưa có thẻ — đang chờ AI quét."
+                        : selectedMedia.videoStatus === "Failed"
+                          ? "AI chưa tạo được thẻ. Quét lại hoặc gắn thủ công."
+                          : "AI không nhận diện được học viên nào. Gắn thủ công nếu cần."}
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {selectedMedia.tags.map((tag) => {
+                        const student = rosterByStudentId.get(tag.studentId);
+                        const name =
+                          tag.studentName?.trim() ||
+                          student?.studentName?.trim() ||
+                          "Học viên";
+
+                        return (
+                          <li
+                            key={tag.id}
+                            className="flex flex-col gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="flex min-w-0 items-center gap-2.5">
+                              <MediaStudentAvatar
+                                name={name}
+                                avatarUrl={student?.avatarUrl}
+                                isVerified={tag.isVerified}
+                              />
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium text-foreground">
+                                  {name}
+                                </p>
+                                <p className="text-[11px] text-muted-foreground">
+                                  {Math.round(tag.confidenceScore * 100)}% ·{" "}
+                                  {confidenceLabel(tag.confidenceScore)}
+                                  {tag.hasOtherFaces
+                                    ? " · Nhiều khuôn mặt"
+                                    : ""}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {tag.isVerified ? (
-                              <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
-                                <CheckCircle2 className="mr-1 size-3" />
-                                Đã xác nhận
-                              </Badge>
-                            ) : (
-                              <Badge
+                            <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                              {tag.isVerified ? (
+                                <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
+                                  <CheckCircle2 className="mr-1 size-3" />
+                                  Đã xác nhận
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full text-muted-foreground"
+                                >
+                                  Chưa xác nhận
+                                </Badge>
+                              )}
+                              <Button
+                                type="button"
                                 variant="outline"
-                                className="rounded-full text-muted-foreground"
+                                size="sm"
+                                disabled={busyTagStudentId === tag.studentId}
+                                onClick={() =>
+                                  void handleVerifyTag(tag, !tag.isVerified)
+                                }
+                                className="h-7 rounded-lg px-2.5 text-xs"
                               >
-                                Chưa xác nhận
-                              </Badge>
-                            )}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={busyTagStudentId === tag.studentId}
-                              onClick={() =>
-                                void handleVerifyTag(tag, !tag.isVerified)
-                              }
-                              className="h-8 rounded-lg"
-                            >
-                              {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              disabled={busyTagStudentId === tag.studentId}
-                              onClick={() => void handleRemoveTag(tag)}
-                              className="size-8 text-muted-foreground hover:text-destructive"
-                              aria-label="Gỡ thẻ"
-                            >
-                              <X className="size-4" />
-                            </Button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                                {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                disabled={busyTagStudentId === tag.studentId}
+                                onClick={() => void handleRemoveTag(tag)}
+                                className="size-7 text-muted-foreground hover:text-destructive"
+                                aria-label="Gỡ thẻ"
+                              >
+                                <X className="size-3.5" />
+                              </Button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
 
                 {canManuallyTag(selectedMedia) ? (
-                  <div className="space-y-2 rounded-xl border border-dashed border-border bg-muted/20 p-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Gắn thẻ thủ công (dự phòng)
+                  <div className="border-t border-border bg-muted/20 px-3 py-2.5">
+                    <div className="mb-2 flex items-baseline justify-between gap-2">
+                      <p className="text-xs font-medium text-foreground">
+                        Thêm thủ công
                       </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {selectedMedia.videoStatus === "Failed" ||
                         selectedMedia.tags.length === 0
-                          ? "Dùng khi AI lỗi hoặc không nhận ra học viên."
-                          : "Chỉ thêm học viên mà AI bỏ sót."}
+                          ? "Khi AI lỗi hoặc bỏ sót"
+                          : "Chỉ học viên AI bỏ sót"}
                       </p>
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -1227,9 +1245,9 @@ export function MentorClassMediaPanel({
                         disabled={untaggedStudents.length === 0}
                       >
                         <SelectTrigger
-                          className={cn(THEME_SELECT_TRIGGER, "w-full flex-1")}
+                          className={cn(THEME_SELECT_TRIGGER, "h-8 w-full flex-1")}
                         >
-                          <span className="truncate">
+                          <span className="truncate text-xs">
                             {untaggedStudents.length === 0
                               ? "Tất cả học viên đã được gắn thẻ"
                               : addTagStudentId
@@ -1264,14 +1282,15 @@ export function MentorClassMediaPanel({
                       <Button
                         type="button"
                         variant="outline"
+                        size="sm"
                         disabled={
                           !addTagStudentId ||
                           busyTagStudentId === addTagStudentId
                         }
                         onClick={() => void handleAddTag()}
-                        className="h-9 rounded-lg"
+                        className="h-8 shrink-0 rounded-lg"
                       >
-                        <UserPlus className="size-4" />
+                        <UserPlus className="size-3.5" />
                         Gắn thẻ
                       </Button>
                     </div>

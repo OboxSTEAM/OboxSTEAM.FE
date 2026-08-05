@@ -966,7 +966,7 @@
       {
         "path": "/api/submissions/{submissionId}/quiz",
         "method": "get",
-        "description": "Returns quiz questions and saved answers for a Pending submission. Requires Student role."
+        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and SuperAdmin may access any submission."
       },
       {
         "path": "/api/submissions/{submissionId}/quiz/answers",
@@ -981,7 +981,7 @@
       {
         "path": "/api/submissions/{submissionId}/quiz/result",
         "method": "get",
-        "description": "Returns the graded result for a submission. Requires Student role."
+        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and SuperAdmin may access any submission."
       },
       {
         "path": "/api/modules/{moduleId}/research-milestones",
