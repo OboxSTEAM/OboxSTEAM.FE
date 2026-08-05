@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 
 import { ActivityPanel } from "./activity-panel";
 import { AssignmentPanel } from "./assignment-panel";
+import { CurriculumClassGallery } from "./curriculum-class-gallery";
 import { CurriculumNav } from "./curriculum-nav";
 import { CurriculumMindMapPanel } from "./mind-map/curriculum-mind-map-panel";
 
@@ -189,7 +190,7 @@ export function CurriculumShell({
       </Button>
 
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
-        <SheetPopup side="left" className="bg-learn-surface p-0">
+        <SheetPopup side="left" className="learn-shell bg-learn-surface p-0">
           <SheetHeader className="bg-learn-surface">
             <SheetTitle className="text-learn-text-strong">
               Nội dung khóa học
@@ -212,6 +213,10 @@ export function CurriculumShell({
           </SheetBody>
         </SheetPopup>
       </Sheet>
+
+      {classContext ? (
+        <CurriculumClassGallery classId={classContext.classId} />
+      ) : null}
     </div>
   );
 }

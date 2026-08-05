@@ -33,11 +33,15 @@ function SheetPopup({
   className,
   children,
   side = "left",
+  backdropClassName,
   ...props
-}: DialogPrimitive.Popup.Props & { side?: "left" | "right" }) {
+}: DialogPrimitive.Popup.Props & {
+  side?: "left" | "right";
+  backdropClassName?: string;
+}) {
   return (
     <SheetPortal>
-      <SheetBackdrop />
+      <SheetBackdrop className={backdropClassName} />
       <DialogPrimitive.Viewport
         data-slot="sheet-viewport"
         className={cn(
