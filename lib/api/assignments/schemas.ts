@@ -50,7 +50,12 @@ export const quizAttemptValueSchema = createApiValueSchema(quizAttemptSchema);
 
 export const saveQuizDraftResultValueSchema = createApiValueSchema(saveQuizDraftResultSchema);
 
-export const quizResultValueSchema = createApiValueSchema(quizResultSchema);
+/** Nullable code/message/data — BE failure envelopes often set `data: null`. */
+export const quizResultValueSchema = z.object({
+  code: z.string().nullish(),
+  message: z.string().nullish(),
+  data: quizResultSchema.nullish(),
+});
 
 export const getAssignmentByIdResponseSchema = createApiResponseSchema(
   assignmentDetailValueSchema,

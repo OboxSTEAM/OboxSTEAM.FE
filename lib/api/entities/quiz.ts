@@ -1,8 +1,11 @@
 import { z } from "zod";
 
+import { assignmentSubmissionStatusSchema } from "@/lib/api/entities/assignment-submission";
+
 export const questionTypeSchema = z.enum(["SingleChoice", "MultipleChoice"]);
 
-export const submissionStatusSchema = z.enum(["Pending", "Graded"]);
+/** Alias of assignment submission status (quiz graded results use the same enum). */
+export const submissionStatusSchema = assignmentSubmissionStatusSchema;
 
 export const quizQuestionOptionSchema = z.object({
   id: z.string(),
@@ -20,18 +23,26 @@ export const quizQuestionSchema = z.object({
 
 export const quizSavedAnswerSchema = z.object({
   questionId: z.string(),
-  selectedOptionIds: z.array(z.string()),
+  selectedOptionIds: z.array(z.string()).nullish().transform((v) => v ?? []),
 });
 
 export const quizAttemptSchema = z.object({
   submissionId: z.string(),
   assignmentId: z.string(),
+  studentId: z.string().nullish().transform((v) => v ?? ""),
+  studentName: z.string().nullish().transform((v) => v ?? null),
   attemptNumber: z.number(),
-  timeLimitMinutes: z.number(),
-  startedAt: z.string(),
-  expiresAt: z.string(),
-  questions: z.array(quizQuestionSchema),
-  savedAnswers: z.array(quizSavedAnswerSchema),
+  timeLimitMinutes: z.number().nullish().transform((v) => v ?? 0),
+  startedAt: z.string().nullish().transform((v) => v ?? ""),
+  expiresAt: z.string().nullish().transform((v) => v ?? ""),
+  questions: z
+    .array(quizQuestionSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  savedAnswers: z
+    .array(quizSavedAnswerSchema)
+    .nullish()
+    .transform((v) => v ?? []),
 });
 
 export const saveQuizDraftResultSchema = z.object({
@@ -42,16 +53,18 @@ export const saveQuizDraftResultSchema = z.object({
 export const quizResultSchema = z.object({
   submissionId: z.string(),
   assignmentId: z.string(),
+  studentId: z.string().nullish().transform((v) => v ?? ""),
+  studentName: z.string().nullish().transform((v) => v ?? null),
   attemptNumber: z.number(),
-  startedAt: z.string(),
+  startedAt: z.string().nullish().transform((v) => v ?? null),
   assignedGrade: z.number(),
   maxPoints: z.number(),
   passScore: z.number(),
   passed: z.boolean(),
   correctCount: z.number(),
   totalQuestions: z.number(),
-  status: submissionStatusSchema,
-  submittedAt: z.string(),
+  status: assignmentSubmissionStatusSchema,
+  submittedAt: z.string().nullish().transform((v) => v ?? null),
 });
 
 export type QuestionType = z.infer<typeof questionTypeSchema>;

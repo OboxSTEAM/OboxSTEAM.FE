@@ -148,8 +148,8 @@ export function ManagerHeader({
         <kbd className="pointer-events-none hidden h-7 select-none items-center gap-1 rounded-md border border-border bg-background px-2 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
           ⌘K
         </kbd>
-        <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
         <NotificationBell />
+        <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
       </div>
     </header>
   );
