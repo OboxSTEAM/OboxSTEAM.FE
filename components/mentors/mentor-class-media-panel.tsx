@@ -1147,7 +1147,7 @@ export function MentorClassMediaPanel({
                     </p>
                   ) : (
                     <ul className="divide-y divide-border">
-                      {selectedMedia.tags.map((tag) => {
+                      {selectedMedia.tags.map((tag, tagIndex) => {
                         const student = rosterByStudentId.get(tag.studentId);
                         const name =
                           tag.studentName?.trim() ||
@@ -1156,7 +1156,7 @@ export function MentorClassMediaPanel({
 
                         return (
                           <li
-                            key={tag.id}
+                            key={`${tag.id}:${tag.studentId}:${tagIndex}`}
                             className="flex flex-col gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                           >
                             <div className="flex min-w-0 items-center gap-2.5">

@@ -103,7 +103,7 @@ export function MediaTagAvatarStack({
 
           return (
             <MediaStudentAvatar
-              key={tag.id}
+              key={`${tag.id}:${tag.studentId}:${index}`}
               size="sm"
               name={name}
               avatarUrl={student?.avatarUrl}
