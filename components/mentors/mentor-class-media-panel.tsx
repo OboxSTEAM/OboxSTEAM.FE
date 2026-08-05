@@ -7,6 +7,7 @@ import {
 } from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { MediaPipelineStatus } from "@/components/mentors/media-pipeline-status";
+import { MediaTagAvatarStack, MediaStudentAvatar } from "@/components/mentors/media-tag-avatar-stack";
 import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
@@ -186,6 +187,14 @@ export function MentorClassMediaPanel({
     () => roster.filter((student) => student.enrollmentStatus === "Active"),
     [roster],
   );
+
+  const rosterByStudentId = useMemo(() => {
+    const map = new Map<string, ClassStudentRoster>();
+    for (const student of roster) {
+      map.set(student.studentId, student);
+    }
+    return map;
+  }, [roster]);
 
   const { data, isLoading, markLoading, retry } = useClientFetch({
     fetcher: async (): Promise<MediaListPage> => {
@@ -660,7 +669,7 @@ export function MentorClassMediaPanel({
       },
       {
         header: "Tiến trình",
-        className: "min-w-[10.5rem] whitespace-normal",
+        className: "min-w-[13.5rem] whitespace-normal",
         render: (media) => (
           <MediaPipelineStatus
             compact
@@ -673,21 +682,13 @@ export function MentorClassMediaPanel({
       },
       {
         header: "Thẻ",
-        render: (media) => {
-          const verifiedCount = media.tags.filter((tag) => tag.isVerified)
-            .length;
-          return (
-            <span className="text-sm font-medium text-foreground">
-              {media.tags.length}
-              {verifiedCount > 0 ? (
-                <span className="font-normal text-muted-foreground">
-                  {" "}
-                  · {verifiedCount} xác nhận
-                </span>
-              ) : null}
-            </span>
-          );
-        },
+        className: "min-w-[7.5rem]",
+        render: (media) => (
+          <MediaTagAvatarStack
+            tags={media.tags}
+            rosterByStudentId={rosterByStudentId}
+          />
+        ),
       },
       {
         header: "Thao tác",
@@ -739,7 +740,13 @@ export function MentorClassMediaPanel({
         },
       },
     ],
-    [sessionTitleById, isProcessingTags, progressById, timedOutIds],
+    [
+      sessionTitleById,
+      isProcessingTags,
+      progressById,
+      timedOutIds,
+      rosterByStudentId,
+    ],
   );
 
   return (
@@ -1122,61 +1129,79 @@ export function MentorClassMediaPanel({
                   </p>
                 ) : (
                   <ul className="space-y-2">
-                    {selectedMedia.tags.map((tag) => (
-                      <li
-                        key={tag.id}
-                        className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground">
-                            {tag.studentName || "Học viên"}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Độ tin cậy {Math.round(tag.confidenceScore * 100)}% (
-                            {confidenceLabel(tag.confidenceScore)})
-                            {tag.hasOtherFaces ? " · Có nhiều khuôn mặt" : ""}
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          {tag.isVerified ? (
-                            <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
-                              <CheckCircle2 className="mr-1 size-3" />
-                              Đã xác nhận
-                            </Badge>
-                          ) : (
-                            <Badge
+                    {selectedMedia.tags.map((tag) => {
+                      const student = rosterByStudentId.get(tag.studentId);
+                      const name =
+                        tag.studentName?.trim() ||
+                        student?.studentName?.trim() ||
+                        "Học viên";
+
+                      return (
+                        <li
+                          key={tag.id}
+                          className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                          <div className="flex min-w-0 items-center gap-3">
+                            <MediaStudentAvatar
+                              name={name}
+                              avatarUrl={student?.avatarUrl}
+                              isVerified={tag.isVerified}
+                            />
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-foreground">
+                                {name}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Độ tin cậy{" "}
+                                {Math.round(tag.confidenceScore * 100)}% (
+                                {confidenceLabel(tag.confidenceScore)})
+                                {tag.hasOtherFaces
+                                  ? " · Có nhiều khuôn mặt"
+                                  : ""}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {tag.isVerified ? (
+                              <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
+                                <CheckCircle2 className="mr-1 size-3" />
+                                Đã xác nhận
+                              </Badge>
+                            ) : (
+                              <Badge
+                                variant="outline"
+                                className="rounded-full text-muted-foreground"
+                              >
+                                Chưa xác nhận
+                              </Badge>
+                            )}
+                            <Button
+                              type="button"
                               variant="outline"
-                              className="rounded-full text-muted-foreground"
+                              size="sm"
+                              disabled={busyTagStudentId === tag.studentId}
+                              onClick={() =>
+                                void handleVerifyTag(tag, !tag.isVerified)
+                              }
+                              className="h-8 rounded-lg"
                             >
-                              Chưa xác nhận
-                            </Badge>
-                          )}
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            disabled={busyTagStudentId === tag.studentId}
-                            onClick={() =>
-                              void handleVerifyTag(tag, !tag.isVerified)
-                            }
-                            className="h-8 rounded-lg"
-                          >
-                            {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            disabled={busyTagStudentId === tag.studentId}
-                            onClick={() => void handleRemoveTag(tag)}
-                            className="size-8 text-muted-foreground hover:text-destructive"
-                            aria-label="Gỡ thẻ"
-                          >
-                            <X className="size-4" />
-                          </Button>
-                        </div>
-                      </li>
-                    ))}
+                              {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              disabled={busyTagStudentId === tag.studentId}
+                              onClick={() => void handleRemoveTag(tag)}
+                              className="size-8 text-muted-foreground hover:text-destructive"
+                              aria-label="Gỡ thẻ"
+                            >
+                              <X className="size-4" />
+                            </Button>
+                          </div>
+                        </li>
+                      );
+                    })}
                   </ul>
                 )}
 

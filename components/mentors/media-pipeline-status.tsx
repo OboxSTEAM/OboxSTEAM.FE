@@ -1,11 +1,16 @@
 "use client";
 
-import { Check, Loader2, X } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 import type { MediaProgress, MediaVideoStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-const STEP_COUNT = 4;
+const STAGES = [
+  { key: "upload", label: "Tải lên" },
+  { key: "transcode", label: "Chuyển mã" },
+  { key: "tagging", label: "AI" },
+  { key: "ready", label: "Xong" },
+] as const;
 
 function resolvePipelineStatus(
   videoStatus: MediaVideoStatus,
@@ -31,8 +36,11 @@ function resolvePipelineStatus(
       ? null
       : Math.min(100, Math.max(0, Number(rawPercent)));
 
+  // 0 upload · 1 transcode · 2 AI · 3 ready
   const stepIndex = failed
-    ? 2
+    ? status === "Failed" && !isTranscoding
+      ? 2
+      : 1
     : ready
       ? 3
       : isTagging
@@ -53,38 +61,29 @@ function resolvePipelineStatus(
   };
 }
 
-function StepDots({
+function segmentFillPercent({
+  index,
   stepIndex,
-  failed,
   ready,
+  failed,
+  isTranscoding,
+  isTagging,
+  percent,
 }: {
+  index: number;
   stepIndex: number;
-  failed: boolean;
   ready: boolean;
-}) {
-  return (
-    <div className="flex items-center gap-1" aria-hidden>
-      {Array.from({ length: STEP_COUNT }, (_, index) => {
-        const isDone = ready || index < stepIndex;
-        const isCurrent = !ready && !failed && index === stepIndex;
-        return (
-          <span
-            key={index}
-            className={cn(
-              "size-1.5 rounded-full transition-colors",
-              failed && index === stepIndex
-                ? "bg-destructive"
-                : isDone
-                  ? "bg-[#7CB342]"
-                  : isCurrent
-                    ? "bg-primary"
-                    : "bg-border",
-            )}
-          />
-        );
-      })}
-    </div>
-  );
+  failed: boolean;
+  isTranscoding: boolean;
+  isTagging: boolean;
+  percent: number | null;
+}): number {
+  if (ready || index < stepIndex) return 100;
+  if (index > stepIndex) return 0;
+  if (failed) return 100;
+  if (isTranscoding) return percent == null ? 18 : Math.max(percent, 6);
+  if (isTagging) return 70;
+  return 100;
 }
 
 type MediaPipelineStatusProps = {
@@ -97,8 +96,8 @@ type MediaPipelineStatusProps = {
 };
 
 /**
- * Compact media pipeline for table / detail:
- * dots for stage · clear status line · % bar only while Transcoding.
+ * Staged pipeline bar for table / detail:
+ * Upload → Transcode (% fill) → AI → Ready.
  */
 export function MediaPipelineStatus({
   videoStatus,
@@ -118,67 +117,159 @@ export function MediaPipelineStatus({
     statusLabel,
   } = resolvePipelineStatus(videoStatus, isReady, progress);
 
+  const activeLabel = failed
+    ? statusLabel?.trim() || "Thất bại"
+    : ready
+      ? "Sẵn sàng"
+      : isTranscoding
+        ? percent == null
+          ? "Đang chuyển mã"
+          : `Chuyển mã ${Math.round(percent)}%`
+        : isTagging
+          ? "Nhận diện AI"
+          : "Đã tải lên";
+
   return (
     <div
       className={cn(
         "flex flex-col gap-1.5 whitespace-normal",
-        compact ? "min-w-[9.5rem]" : "min-w-[12rem]",
+        compact ? "min-w-[12.5rem]" : "min-w-[16rem]",
         className,
       )}
     >
-      <StepDots stepIndex={stepIndex} failed={failed} ready={ready} />
-
-      {failed ? (
-        <div className="flex items-start gap-1.5 text-destructive">
-          <X className="mt-0.5 size-3.5 shrink-0" strokeWidth={2.25} />
-          <p className="text-xs leading-snug">
-            {statusLabel?.trim() || "Xử lý thất bại"}
-          </p>
-        </div>
-      ) : null}
-
-      {isTranscoding ? (
-        <div className="space-y-1">
-          <div className="flex items-baseline justify-between gap-3">
-            <span className="text-xs text-muted-foreground">Chuyển mã</span>
-            <span className="font-mono text-sm font-semibold tabular-nums text-foreground">
-              {percent == null ? "—" : `${Math.round(percent)}%`}
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1">
+        <span aria-hidden className="min-w-0" />
+        <p
+          className={cn(
+            "max-w-full truncate text-center text-xs font-medium",
+            failed
+              ? "text-destructive"
+              : ready
+                ? "text-[#3d5c22] dark:text-[#b8e086]"
+                : "text-foreground",
+          )}
+        >
+          {activeLabel}
+        </p>
+        <div className="flex min-w-0 items-center justify-end">
+          {isTagging ? (
+            <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
+          ) : isTranscoding && percent != null ? (
+            <span className="font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
+              {Math.round(percent)}%
             </span>
-          </div>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+          ) : null}
+        </div>
+      </div>
+
+      <div
+        className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={
+          ready
+            ? 100
+            : failed
+              ? undefined
+              : isTranscoding && percent != null
+                ? Math.round((1 + percent / 100) * 25)
+                : Math.round(((stepIndex + 0.5) / STAGES.length) * 100)
+        }
+        aria-label={activeLabel}
+      >
+        {STAGES.map((stage, index) => {
+          const fill = segmentFillPercent({
+            index,
+            stepIndex,
+            ready,
+            failed,
+            isTranscoding,
+            isTagging,
+            percent,
+          });
+          const isActive = !ready && index === stepIndex;
+          const isDone = ready || index < stepIndex;
+
+          return (
             <div
-              className={cn(
-                "h-full rounded-full bg-primary transition-[width] duration-500 ease-out",
-                percent == null && "animate-pulse",
-              )}
-              style={{
-                width: `${percent == null ? 15 : Math.max(percent, 4)}%`,
-              }}
-            />
-          </div>
-        </div>
-      ) : null}
+              key={stage.key}
+              className="relative h-full min-w-0 flex-1 overflow-hidden rounded-sm bg-muted"
+            >
+              <div
+                className={cn(
+                  "absolute inset-y-0 left-0 rounded-sm transition-[width] duration-500 ease-out",
+                  failed && isActive
+                    ? "bg-destructive"
+                    : isDone || ready
+                      ? "bg-[#7CB342]"
+                      : isActive && isTagging
+                        ? "animate-pulse bg-primary"
+                        : isActive
+                          ? "bg-primary"
+                          : "bg-transparent",
+                )}
+                style={{ width: `${fill}%` }}
+              />
+            </div>
+          );
+        })}
+      </div>
 
-      {isTagging ? (
-        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-          <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
-          <span>Nhận diện AI</span>
+      {!compact ? (
+        <div className="flex gap-0.5">
+          {STAGES.map((stage, index) => {
+            const isDone = ready || index < stepIndex;
+            const isActive = !ready && !failed && index === stepIndex;
+            return (
+              <span
+                key={stage.key}
+                className={cn(
+                  "min-w-0 flex-1 truncate text-center text-[10px] leading-tight",
+                  failed && index === stepIndex
+                    ? "font-medium text-destructive"
+                    : isDone || ready
+                      ? "font-medium text-[#3d5c22] dark:text-[#b8e086]"
+                      : isActive
+                        ? "font-medium text-foreground"
+                        : "text-muted-foreground",
+                )}
+              >
+                {stage.label}
+              </span>
+            );
+          })}
         </div>
-      ) : null}
-
-      {ready ? (
-        <div className="flex items-center gap-1.5 text-xs text-[#3d5c22] dark:text-[#b8e086]">
-          <Check className="size-3.5 shrink-0" strokeWidth={2.5} />
-          <span>Sẵn sàng</span>
+      ) : (
+        <div className="flex gap-0.5">
+          {STAGES.map((stage, index) => {
+            const isDone = ready || index < stepIndex;
+            const isActive = !ready && !failed && index === stepIndex;
+            return (
+              <span
+                key={stage.key}
+                className={cn(
+                  "min-w-0 flex-1 truncate text-center text-[9px] leading-tight",
+                  failed && index === stepIndex
+                    ? "text-destructive"
+                    : isDone || ready
+                      ? "text-[#3d5c22]/80 dark:text-[#b8e086]/80"
+                      : isActive
+                        ? "text-foreground"
+                        : "text-muted-foreground/80",
+                )}
+              >
+                {stage.label}
+              </span>
+            );
+          })}
         </div>
-      ) : null}
+      )}
 
       {timedOut && !ready && !failed ? (
-        <p className="text-[11px] text-muted-foreground">Đang chậm — thử tải lại</p>
-      ) : null}
-
-      {!compact && !ready && !failed && !isTranscoding && !isTagging ? (
-        <p className="text-xs text-muted-foreground">Đã tải lên</p>
+        <p className="text-[11px] text-muted-foreground">
+          Đang chậm — thử tải lại
+        </p>
       ) : null}
     </div>
   );
