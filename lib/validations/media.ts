@@ -32,11 +32,6 @@ export const mediaIdParamSchema = z.object({
   mediaId: z.string().uuid("ID media không hợp lệ."),
 });
 
-/** Path param for `GET /api/media/class-session/{classSessionId}`. */
-export const mediaClassSessionParamSchema = z.object({
-  classSessionId: z.string().uuid("ID buổi học không hợp lệ."),
-});
-
 /** Path params for tag routes. */
 export const mediaTagParamsSchema = z.object({
   mediaId: z.string().uuid("ID media không hợp lệ."),
@@ -56,7 +51,6 @@ export const updateMediaTagVerificationSchema = z.object({
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
 export type MediaUploadQuery = z.infer<typeof mediaUploadQuerySchema>;
 export type MediaIdParam = z.infer<typeof mediaIdParamSchema>;
-export type MediaClassSessionParam = z.infer<typeof mediaClassSessionParamSchema>;
 export type MediaTagParams = z.infer<typeof mediaTagParamsSchema>;
 export type AddMediaTagInput = z.infer<typeof addMediaTagSchema>;
 export type UpdateMediaTagVerificationInput = z.infer<

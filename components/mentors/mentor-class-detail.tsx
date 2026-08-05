@@ -101,8 +101,7 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
     data: sessionsData,
     isLoading: isSessionsLoading,
   } = useClientFetch({
-    enabled:
-      tab === "sessions" || tab === "attendance" || tab === "media",
+    enabled: tab === "sessions" || tab === "attendance",
     fetcher: () =>
       getClassSessions(classId, {
         ...CLASS_SESSIONS_QUERY,
@@ -569,9 +568,7 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
           <TabsContent value="media" className="mt-0">
             <MentorClassMediaPanel
               classId={classId}
-              sessions={sessions}
               roster={roster}
-              isSessionsLoading={isSessionsLoading}
             />
           </TabsContent>
         </Tabs>

@@ -43,7 +43,6 @@ import {
   processMediaTags,
   updateMediaTagVerification,
   uploadClassMedia,
-  type ClassSession,
   type ClassStudentRoster,
   type MediaAsset,
   type MediaProgress,
@@ -144,23 +143,17 @@ type VideoStatusFilter = "all" | MediaVideoStatus;
 
 type MentorClassMediaPanelProps = {
   classId: string;
-  sessions: ClassSession[];
   roster: ClassStudentRoster[];
-  isSessionsLoading?: boolean;
 };
 
 export function MentorClassMediaPanel({
   classId,
-  sessions,
   roster,
-  isSessionsLoading = false,
 }: MentorClassMediaPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [sessionFilter, setSessionFilter] = useState("all");
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<VideoStatusFilter>("all");
   const [page, setPage] = useState(1);
-  const [uploadSessionId, setUploadSessionId] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     done: number;
@@ -193,8 +186,6 @@ export function MentorClassMediaPanel({
     fetcher: async (): Promise<MediaListPage> => {
       const result = await getMediaList({
         classId,
-        classSessionId:
-          sessionFilter === "all" ? undefined : sessionFilter,
         fileType: fileTypeFilter === "all" ? undefined : fileTypeFilter,
         videoStatus: statusFilter === "all" ? undefined : statusFilter,
         page,
@@ -210,7 +201,7 @@ export function MentorClassMediaPanel({
         totalCount: pageData?.totalCount ?? 0,
       };
     },
-    deps: [classId, sessionFilter, fileTypeFilter, statusFilter, page],
+    deps: [classId, fileTypeFilter, statusFilter, page],
     onError: (error) => showAppErrorFromUnknown(error, "media.list"),
   });
 
@@ -325,14 +316,6 @@ export function MentorClassMediaPanel({
     [mediaItems, progressById],
   );
 
-  const sessionTitleById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const session of sessions) {
-      map.set(session.id, session.title || "Buổi học");
-    }
-    return map;
-  }, [sessions]);
-
   const selectedMediaBase =
     detailMedia?.id === selectedMediaId
       ? detailMedia
@@ -410,7 +393,6 @@ export function MentorClassMediaPanel({
         try {
           const result = await uploadClassMedia(file, {
             classId,
-            classSessionId: uploadSessionId || undefined,
           });
           const uploaded = result?.data;
           if (uploaded) {
@@ -438,11 +420,7 @@ export function MentorClassMediaPanel({
             : "Media đã lên danh sách — mở chi tiết để xác nhận thẻ AI.",
         });
 
-        if (uploadSessionId && sessionFilter === "all") {
-          applyListFilter(() => setSessionFilter(uploadSessionId));
-        } else {
-          retry();
-        }
+        retry();
       }
     } finally {
       setIsUploading(false);
@@ -643,16 +621,6 @@ export function MentorClassMediaPanel({
         ),
       },
       {
-        header: "Buổi học",
-        render: (media) => (
-          <span className="text-sm text-foreground">
-            {media.classSessionId
-              ? sessionTitleById.get(media.classSessionId) || "Buổi học"
-              : "Không gắn buổi"}
-          </span>
-        ),
-      },
-      {
         header: "Thời gian",
         render: (media) => (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
@@ -736,7 +704,6 @@ export function MentorClassMediaPanel({
       },
     ],
     [
-      sessionTitleById,
       isProcessingTags,
       progressById,
       timedOutIds,
@@ -754,52 +721,12 @@ export function MentorClassMediaPanel({
               Media của lớp
             </p>
             <p className="mt-1 text-xs text-muted-foreground">
-              1) Upload ảnh/video → 2) AI nhận diện khuôn mặt → 3) Mentor xác
-              nhận. Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.
+              Thư viện media của cả lớp. 1) Upload ảnh/video → 2) AI nhận diện →
+              3) Mentor xác nhận. Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.
             </p>
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Lọc theo buổi
-              </p>
-              <Select
-                value={sessionFilter}
-                onValueChange={(value) => {
-                  applyListFilter(() => setSessionFilter(value ?? "all"));
-                }}
-                disabled={isSessionsLoading}
-              >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[14rem]")}>
-                  <span className="truncate">
-                    {sessionFilter === "all"
-                      ? "Tất cả media của lớp"
-                      : sessionTitleById.get(sessionFilter) || "Buổi học"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent
-                  align="start"
-                  alignItemWithTrigger={false}
-                  sideOffset={8}
-                  className={THEME_SELECT_CONTENT}
-                >
-                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
-                    Tất cả media của lớp
-                  </SelectItem>
-                  {sessions.map((session) => (
-                    <SelectItem
-                      key={session.id}
-                      value={session.id}
-                      className={THEME_SELECT_ITEM}
-                    >
-                      {session.title || "Buổi học"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
             <div className="space-y-1.5">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
                 Loại file
@@ -879,46 +806,6 @@ export function MentorClassMediaPanel({
                       className={THEME_SELECT_ITEM}
                     >
                       {MEDIA_VIDEO_STATUS_LABELS[status]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Gắn buổi khi upload
-              </p>
-              <Select
-                value={uploadSessionId || "none"}
-                onValueChange={(value) =>
-                  setUploadSessionId(!value || value === "none" ? "" : value)
-                }
-                disabled={isSessionsLoading}
-              >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[14rem]")}>
-                  <span className="truncate">
-                    {uploadSessionId
-                      ? sessionTitleById.get(uploadSessionId) || "Buổi học"
-                      : "Không gắn buổi"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent
-                  align="start"
-                  alignItemWithTrigger={false}
-                  sideOffset={8}
-                  className={THEME_SELECT_CONTENT}
-                >
-                  <SelectItem value="none" className={THEME_SELECT_ITEM}>
-                    Không gắn buổi
-                  </SelectItem>
-                  {sessions.map((session) => (
-                    <SelectItem
-                      key={session.id}
-                      value={session.id}
-                      className={THEME_SELECT_ITEM}
-                    >
-                      {session.title || "Buổi học"}
                     </SelectItem>
                   ))}
                 </SelectContent>

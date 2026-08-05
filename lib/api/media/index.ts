@@ -4,7 +4,6 @@ import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 import {
   addMediaTagSchema,
-  mediaClassSessionParamSchema,
   mediaIdParamSchema,
   mediaListQuerySchema,
   mediaTagParamsSchema,
@@ -21,7 +20,6 @@ import {
   deleteMediaResponseSchema,
   deleteMediaTagResponseSchema,
   getMediaByIdResponseSchema,
-  getMediaByClassSessionResponseSchema,
   getMediaListResponseSchema,
   getMediaProgressResponseSchema,
   processMediaTagsResponseSchema,
@@ -30,7 +28,6 @@ import {
   type AddMediaTagResult,
   type DeleteMediaResult,
   type DeleteMediaTagResult,
-  type GetMediaByClassSessionResult,
   type GetMediaByIdResult,
   type GetMediaListResult,
   type GetMediaProgressResult,
@@ -55,8 +52,6 @@ export type {
   DeleteMediaResult,
   DeleteMediaTagResponse,
   DeleteMediaTagResult,
-  GetMediaByClassSessionResponse,
-  GetMediaByClassSessionResult,
   GetMediaByIdResponse,
   GetMediaByIdResult,
   GetMediaListResponse,
@@ -73,7 +68,6 @@ export type {
 
 export type {
   AddMediaTagInput,
-  MediaClassSessionParam,
   MediaIdParam,
   MediaListQuery,
   MediaTagParams,
@@ -128,14 +122,6 @@ function emptyMediaListResult(): GetMediaListResult {
       hasPrevious: false,
       hasNext: false,
     },
-  };
-}
-
-function emptyMediaSessionListResult(): GetMediaByClassSessionResult {
-  return {
-    code: "OK",
-    message: "Chưa có media.",
-    data: [],
   };
 }
 
@@ -211,30 +197,6 @@ export async function getMediaProgress(
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
-}
-
-/** `GET /api/media/class-session/{classSessionId}` — flat list for one session. */
-export async function getMediaByClassSession(
-  classSessionId: string,
-): Promise<GetMediaByClassSessionResult> {
-  try {
-    const { classSessionId: parsedId } = mediaClassSessionParamSchema.parse({
-      classSessionId,
-    });
-
-    const response = await apiFetchParsed(
-      `${MEDIA_BASE}/class-session/${parsedId}`,
-      getMediaByClassSessionResponseSchema,
-      { method: "GET" },
-    );
-    assertApiSuccess(response);
-    return requireApiValue(response.value);
-  } catch (error) {
-    if (isUninitializedMediaStorageError(error)) {
-      return emptyMediaSessionListResult();
-    }
-    throw error;
-  }
 }
 
 /** `POST /api/media/upload` — multipart image/video for a class. */

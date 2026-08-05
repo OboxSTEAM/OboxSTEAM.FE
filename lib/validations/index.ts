@@ -293,14 +293,12 @@ export {
 } from "./notifications";
 export {
   addMediaTagSchema,
-  mediaClassSessionParamSchema,
   mediaIdParamSchema,
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
   updateMediaTagVerificationSchema,
   type AddMediaTagInput,
-  type MediaClassSessionParam,
   type MediaIdParam,
   type MediaListQuery,
   type MediaTagParams,
