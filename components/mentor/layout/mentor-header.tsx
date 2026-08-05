@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import {
   Breadcrumb,
@@ -99,6 +100,7 @@ export function MentorHeader({ title: _title }: { title?: string }) {
       </div>
 
       <div className="flex items-center gap-2">
+        <NotificationBell />
         <ThemeToggle className="text-muted-foreground hover:bg-muted hover:text-foreground" />
       </div>
     </header>

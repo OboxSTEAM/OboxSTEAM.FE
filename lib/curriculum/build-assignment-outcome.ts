@@ -8,23 +8,46 @@ import {
   type AssignmentRevisionCardModel,
 } from "./assignment-outcome";
 
-export function buildQuizResultOutcome(result: QuizResult): AssignmentResultCardModel {
+type BuildQuizResultOutcomeOptions = {
+  /** Mentor/manager view — neutral footer instead of student copy. */
+  viewer?: "student" | "mentor";
+  /** When true, omit đúng/sai counts (list fallback without quiz/result detail). */
+  hideQuestionStats?: boolean;
+};
+
+export function buildQuizResultOutcome(
+  result: QuizResult,
+  options: BuildQuizResultOutcomeOptions = {},
+): AssignmentResultCardModel {
+  const viewer = options.viewer ?? "student";
+  const hideQuestionStats = options.hideQuestionStats ?? false;
   const wrongCount = Math.max(0, result.totalQuestions - result.correctCount);
   const submittedLabel = formatAssignmentTimestamp(result.submittedAt);
+  const studentLabel = result.studentName?.trim() || null;
+
+  const summary = hideQuestionStats
+    ? `Lần ${result.attemptNumber}`
+    : `Lần ${result.attemptNumber} · ${result.correctCount}/${result.totalQuestions} câu đúng · ${wrongCount} câu sai`;
 
   return {
     passed: result.passed,
-    summary: `Lần ${result.attemptNumber} · ${result.correctCount}/${result.totalQuestions} câu đúng · ${wrongCount} câu sai`,
+    summary,
     assignedGrade: result.assignedGrade,
     maxPoints: result.maxPoints,
     passScore: result.passScore,
     details: [
+      ...(viewer === "mentor" && studentLabel
+        ? [{ label: "Học viên", value: studentLabel }]
+        : []),
       { label: "Điểm đạt yêu cầu", value: String(result.passScore) },
       ...(submittedLabel ? [{ label: "Nộp lúc", value: submittedLabel }] : []),
     ],
-    footer: result.passed
-      ? "Bạn đã hoàn thành bài kiểm tra này."
-      : "Hãy ôn lại và thử lại nếu còn lượt làm.",
+    footer:
+      viewer === "mentor"
+        ? "Điểm do hệ thống tự chấm — chỉ xem, không chỉnh."
+        : result.passed
+          ? "Bạn đã hoàn thành bài kiểm tra này."
+          : "Hãy ôn lại và thử lại nếu còn lượt làm.",
   };
 }
 

@@ -522,7 +522,7 @@
       {
         "path": "/api/media",
         "method": "get",
-        "description": "Returns ready media (images, or videos with TaggingComplete), scoped by role. Manager/SuperAdmin may omit filters to list all ready media. Mentor is limited to mentored classes. Student always sees own tags; Parent requires linked studentId."
+        "description": "Returns paginated media scoped by role. Manager/SuperAdmin/Mentor see all video statuses by default (including Transcoding / PendingTagging). Filter with videoStatus=TaggingComplete for ready-only. Student always sees own tagged ready media; Parent requires linked studentId."
       },
       {
         "path": "/api/media/{mediaId}",
@@ -533,6 +533,11 @@
         "path": "/api/media/{mediaId}",
         "method": "delete",
         "description": "Soft-deletes a media asset and removes the file from S3 storage."
+      },
+      {
+        "path": "/api/media/{mediaId}/progress",
+        "method": "get",
+        "description": "While VideoStatus is Transcoding, percentComplete is MediaConvert JobPercentComplete (0–100). While PendingTagging, percentComplete is null — poll until TaggingComplete or Failed. Also usable via GET /api/media/{mediaId} for status-only checks."
       },
       {
         "path": "/api/media/class-session/{classSessionId}",
@@ -1770,7 +1775,25 @@
         "name": "MediaAssetDtoListResponseDataContent"
       },
       {
+        "name": "MediaAssetDtoPagination"
+      },
+      {
+        "name": "MediaAssetDtoPaginationApiResult"
+      },
+      {
+        "name": "MediaAssetDtoPaginationResponseDataContent"
+      },
+      {
         "name": "MediaAssetDtoResponseDataContent"
+      },
+      {
+        "name": "MediaProcessingProgressDto"
+      },
+      {
+        "name": "MediaProcessingProgressDtoApiResult"
+      },
+      {
+        "name": "MediaProcessingProgressDtoResponseDataContent"
       },
       {
         "name": "MediaTagDto"

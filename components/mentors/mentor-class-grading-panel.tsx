@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
+import { AssignmentResultCard } from "@/components/curriculum/assignment-outcome";
 import {
   ManagerDataTable,
   type ColumnDef,
@@ -54,7 +55,9 @@ import {
   type AssignmentSubmissionListItem,
   type AssignmentSubmissionStatus,
   type AssignmentType,
+  type QuizResult,
 } from "@/lib/api";
+import { buildQuizResultOutcome } from "@/lib/curriculum/build-assignment-outcome";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { fileNameFromUrl } from "@/lib/curriculum/research-staging-storage";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -499,11 +502,10 @@ export function MentorClassGradingPanel({
   const [returnForRevision, setReturnForRevision] = useState(false);
   const [isGrading, setIsGrading] = useState(false);
   const [quizPreview, setQuizPreview] = useState<{
-    studentName: string;
-    scorePercent: number | null;
-    correct: number | null;
-    total: number | null;
+    result: QuizResult;
+    hideQuestionStats: boolean;
   } | null>(null);
+  const [isQuizPreviewLoading, setIsQuizPreviewLoading] = useState(false);
   const [isPromptOpen, setIsPromptOpen] = useState(false);
 
   const { data: assignmentsData, isLoading: isAssignmentsLoading } =
@@ -700,21 +702,53 @@ export function MentorClassGradingPanel({
   }
 
   async function handleViewQuiz(row: AssignmentSubmissionListItem) {
+    const fallbackFromList = (): QuizResult | null => {
+      if (!assignmentDetail || row.assignedGrade == null) return null;
+      return {
+        submissionId: row.submissionId,
+        assignmentId: assignmentDetail.id,
+        studentId: row.studentId,
+        studentName: row.studentName,
+        attemptNumber: row.attemptNumber,
+        startedAt: null,
+        assignedGrade: row.assignedGrade,
+        maxPoints: assignmentDetail.maxPoints,
+        passScore: assignmentDetail.passScore,
+        passed: row.passed ?? false,
+        correctCount: 0,
+        totalQuestions: assignmentDetail.questionCount ?? 0,
+        status: row.status,
+        submittedAt: row.submittedAt,
+      };
+    };
+
     try {
+      setIsQuizPreviewLoading(true);
+      setQuizPreview(null);
       const result = await getQuizResult(row.submissionId);
       const data = result?.data;
-      const scorePercent =
-        data && data.maxPoints > 0
-          ? Math.round((data.assignedGrade / data.maxPoints) * 1000) / 10
-          : data?.assignedGrade ?? null;
-      setQuizPreview({
-        studentName: row.studentName?.trim() || "Học viên",
-        scorePercent,
-        correct: data?.correctCount ?? null,
-        total: data?.totalQuestions ?? null,
-      });
+      if (data) {
+        setQuizPreview({ result: data, hideQuestionStats: false });
+        return;
+      }
+
+      const fallback = fallbackFromList();
+      if (fallback) {
+        setQuizPreview({ result: fallback, hideQuestionStats: true });
+        return;
+      }
+
+      throw new Error("Không có dữ liệu kết quả quiz");
     } catch (error) {
-      showAppErrorFromUnknown(error, "assignments.submissions.list");
+      const fallback = fallbackFromList();
+      if (fallback) {
+        setQuizPreview({ result: fallback, hideQuestionStats: true });
+        return;
+      }
+      setQuizPreview(null);
+      showAppErrorFromUnknown(error, "assignments.quiz.result");
+    } finally {
+      setIsQuizPreviewLoading(false);
     }
   }
 
@@ -1302,41 +1336,48 @@ export function MentorClassGradingPanel({
       </Dialog>
 
       <Dialog
-        open={quizPreview != null}
+        open={quizPreview != null || isQuizPreviewLoading}
         onOpenChange={(open) => {
-          if (!open) setQuizPreview(null);
+          if (!open) {
+            setQuizPreview(null);
+            setIsQuizPreviewLoading(false);
+          }
         }}
       >
-        <DialogPopup className="sm:max-w-sm">
+        <DialogPopup className="sm:max-w-md">
           <DialogClose />
           <DialogHeader>
             <DialogTitle>Kết quả quiz</DialogTitle>
             <DialogDescription>
-              Điểm do hệ thống tự chấm — chỉ xem, không chỉnh.
+              {quizPreview?.result.studentName?.trim() ||
+                "Điểm do hệ thống tự chấm — mentor chỉ xem."}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-3 py-2">
-            <p className="text-sm font-medium text-foreground">
-              {quizPreview?.studentName}
-            </p>
-            <div className="rounded-xl border border-[#4FC3F7]/25 bg-[#4FC3F7]/8 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                Điểm
-              </p>
-              <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-foreground">
-                {quizPreview?.scorePercent != null
-                  ? `${quizPreview.scorePercent}%`
-                  : "—"}
-              </p>
-              {quizPreview?.correct != null && quizPreview.total != null ? (
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Đúng {quizPreview.correct}/{quizPreview.total} câu
-                </p>
-              ) : null}
-            </div>
+          <div className="py-2">
+            {isQuizPreviewLoading && !quizPreview ? (
+              <div className="space-y-3">
+                <Skeleton className="h-8 w-40" />
+                <Skeleton className="h-28 w-full rounded-xl" />
+                <Skeleton className="h-4 w-3/4" />
+              </div>
+            ) : quizPreview ? (
+              <AssignmentResultCard
+                {...buildQuizResultOutcome(quizPreview.result, {
+                  viewer: "mentor",
+                  hideQuestionStats: quizPreview.hideQuestionStats,
+                })}
+                className="max-w-none"
+              />
+            ) : null}
           </div>
           <DialogFooter>
-            <Button type="button" onClick={() => setQuizPreview(null)}>
+            <Button
+              type="button"
+              onClick={() => {
+                setQuizPreview(null);
+                setIsQuizPreviewLoading(false);
+              }}
+            >
               Đóng
             </Button>
           </DialogFooter>

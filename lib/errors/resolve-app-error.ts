@@ -245,6 +245,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Điểm chưa hợp lệ hoặc bài chưa ở trạng thái có thể chấm.",
     action: "Kiểm tra điểm và trạng thái bài nộp rồi thử lại.",
   },
+  "assignments.quiz.result": {
+    title: "Không tải được kết quả quiz",
+    reason: "Không lấy được điểm tự chấm của học viên.",
+    action: "Thử lại hoặc xem điểm trên bảng danh sách.",
+  },
   "classSessions.list": {
     title: "Không tải được lịch học",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
@@ -494,6 +499,7 @@ const API_MESSAGE_ALLOWED: ReadonlySet<AppErrorContext> = new Set([
   "auth.verify-otp",
   "auth.forgot-password",
   "auth.reset-password",
+  "assignments.quiz.result",
 ]);
 
 /** Manager mutate flows — never surface raw BE messages. */

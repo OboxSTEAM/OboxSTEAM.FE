@@ -62,6 +62,7 @@ export type AppErrorContext =
   | "skills.list"
   | "assignments.submissions.list"
   | "assignments.submissions.grade"
+  | "assignments.quiz.result"
   | "classSessions.list"
   | "classSessions.create"
   | "classSessions.update"

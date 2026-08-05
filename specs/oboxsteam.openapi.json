@@ -21234,7 +21234,7 @@
           "Quiz"
         ],
         "summary": "Get in-progress quiz",
-        "description": "Returns quiz questions and saved answers for a Pending submission. Requires Student role.",
+        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and SuperAdmin may access any submission.",
         "parameters": [
           {
             "name": "submissionId",
@@ -21678,7 +21678,7 @@
           "Quiz"
         ],
         "summary": "Get quiz result",
-        "description": "Returns the graded result for a submission. Requires Student role.",
+        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and SuperAdmin may access any submission.",
         "parameters": [
           {
             "name": "submissionId",
@@ -34955,6 +34955,14 @@
             "type": "string",
             "format": "uuid"
           },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
           "attemptNumber": {
             "type": "integer",
             "format": "int32"
@@ -35080,6 +35088,14 @@
           "assignmentId": {
             "type": "string",
             "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
           },
           "attemptNumber": {
             "type": "integer",
