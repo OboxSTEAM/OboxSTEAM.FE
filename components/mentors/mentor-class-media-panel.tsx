@@ -7,7 +7,7 @@ import {
 } from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { MediaPipelineStatus } from "@/components/mentors/media-pipeline-status";
-import { MediaTagAvatarStack, MediaStudentAvatar } from "@/components/mentors/media-tag-avatar-stack";
+import { MediaTagAvatarStack, MediaStudentAvatar, MediaTagConfidence } from "@/components/mentors/media-tag-avatar-stack";
 import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
@@ -93,13 +93,6 @@ function isImageFile(fileType: string | null | undefined, url?: string | null) {
     href.endsWith(".png") ||
     href.endsWith(".webp")
   );
-}
-
-function confidenceLabel(score: number): string {
-  if (score >= 0.9) return "Rất cao";
-  if (score >= 0.7) return "Cao";
-  if (score >= 0.5) return "Trung bình";
-  return "Thấp";
 }
 
 /** AI still running — mentor should wait, not tag manually yet. */
@@ -1159,24 +1152,26 @@ export function MentorClassMediaPanel({
                             key={`${tag.id}:${tag.studentId}:${tagIndex}`}
                             className="flex flex-col gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
                           >
-                            <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
                               <MediaStudentAvatar
                                 name={name}
                                 avatarUrl={student?.avatarUrl}
                                 isVerified={tag.isVerified}
                               />
-                              <div className="min-w-0">
+                              <div className="min-w-0 flex-1">
                                 <p className="truncate text-sm font-medium text-foreground">
                                   {name}
                                 </p>
-                                <p className="text-[11px] text-muted-foreground">
-                                  {Math.round(tag.confidenceScore * 100)}% ·{" "}
-                                  {confidenceLabel(tag.confidenceScore)}
-                                  {tag.hasOtherFaces
-                                    ? " · Nhiều khuôn mặt"
-                                    : ""}
-                                </p>
+                                {tag.hasOtherFaces ? (
+                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    Nhiều khuôn mặt trong khung
+                                  </p>
+                                ) : null}
                               </div>
+                              <MediaTagConfidence
+                                score={tag.confidenceScore}
+                                className="shrink-0"
+                              />
                             </div>
                             <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
                               {tag.isVerified ? (

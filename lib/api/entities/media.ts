@@ -23,7 +23,14 @@ export const mediaTagSchema = z.object({
   id: z.string().uuid(),
   studentId: z.string().uuid(),
   studentName: z.string().nullable(),
-  confidenceScore: z.number(),
+  /** BE sends 0–100 (%). Clamp; only (0, 1) treated as legacy ratio. */
+  confidenceScore: z.coerce.number().transform((value) => {
+    if (!Number.isFinite(value)) return 0;
+    if (value > 0 && value < 1) {
+      return Math.min(100, Math.max(0, value * 100));
+    }
+    return Math.min(100, Math.max(0, value));
+  }),
   isVerified: z.boolean(),
   hasOtherFaces: z.boolean(),
   faceSegments: z
