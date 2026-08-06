@@ -46,7 +46,7 @@ export const portfolioDensitySchema = z.enum(PORTFOLIO_DENSITY_VALUES);
 export const portfolioBackgroundStyleSchema = z.enum(PORTFOLIO_BACKGROUND_STYLE_VALUES);
 export const portfolioCardStyleSchema = z.enum(PORTFOLIO_CARD_STYLE_VALUES);
 export const portfolioItemSpanSchema = z.enum(PORTFOLIO_ITEM_SPAN_VALUES);
-export const portfolioMediaTypeSchema = z.enum(["Image"]);
+export const portfolioMediaTypeSchema = z.enum(["Image", "Video"]);
 export const portfolioSectionKindSchema = z.enum([
   "ProjectsGroup",
   "ActivitiesGroup",

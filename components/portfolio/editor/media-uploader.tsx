@@ -111,7 +111,7 @@ export function MediaUploader({
           {
             id: uploaded.id,
             url: uploaded.url,
-            type: "Image",
+            type: uploaded.type,
             caption: null,
             displayOrder: attached.length,
           },
@@ -196,7 +196,7 @@ export function MediaUploader({
       {
         id: asset.id,
         url: asset.url,
-        type: "Image",
+        type: asset.type,
         caption: null,
         displayOrder: attached.length,
       },

@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type CSSProperties,
+  type DragEvent,
   type ReactNode,
 } from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
@@ -63,6 +64,7 @@ import type {
   PortfolioItem,
   PortfolioItemType,
   PortfolioMediaAsset,
+  PortfolioMediaUpload,
   PortfolioSection,
   PortfolioSectionKind,
   PortfolioTheme,
@@ -73,6 +75,11 @@ import {
 } from "@/lib/api/entities/portfolio";
 import { getReadableTextColor, relativeLuminance } from "@/lib/portfolio/color-utils";
 import { editorChrome } from "@/lib/portfolio/editor-chrome";
+import {
+  hasGalleryDragTypes,
+  readClassMediaDragData,
+  readPortfolioMediaDragData,
+} from "@/lib/portfolio/gallery-dnd";
 import {
   fromDateInputValue,
   formatPortfolioItemDateRange,
@@ -162,6 +169,16 @@ export type PortfolioCanvasProps = {
   /** Persist section order after a drop. */
   onCommitReorderSections?: () => void;
   onToggleSectionVisibility?: (section: PortfolioSection, visible: boolean) => void;
+  /** Drop class-gallery media onto a Gallery section (import + attach). */
+  onImportClassGalleryToSection?: (
+    sectionId: string,
+    mediaAssetIds: string[],
+  ) => Promise<void>;
+  /** Drop existing portfolio media onto a Gallery section. */
+  onAttachPortfolioMediaToSection?: (
+    sectionId: string,
+    assets: PortfolioMediaUpload[],
+  ) => Promise<void>;
 };
 
 function hasHtmlTags(value: string): boolean {
@@ -1439,14 +1456,20 @@ function CustomSectionEditable({
   section,
   resolved,
   onUpdateSection,
+  onImportClassGalleryToSection,
+  onAttachPortfolioMediaToSection,
 }: {
   section: PortfolioSection;
   resolved: ResolvedPortfolioTheme;
   onUpdateSection?: PortfolioCanvasProps["onUpdateSection"];
+  onImportClassGalleryToSection?: PortfolioCanvasProps["onImportClassGalleryToSection"];
+  onAttachPortfolioMediaToSection?: PortfolioCanvasProps["onAttachPortfolioMediaToSection"];
 }) {
   const dimmed = !section.isVisible;
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [draftCaption, setDraftCaption] = useState("");
+  const [isDropActive, setIsDropActive] = useState(false);
+  const [isDropping, setIsDropping] = useState(false);
 
   const patch = (next: Partial<PortfolioSection>) => {
     onUpdateSection?.(section.id, next);
@@ -1499,6 +1522,49 @@ function CustomSectionEditable({
     closeCaptionEditor();
   };
 
+  const handleGalleryDrop = async (
+    event: DragEvent<HTMLDivElement>,
+  ) => {
+    event.preventDefault();
+    setIsDropActive(false);
+    if (section.kind !== "Gallery" || isDropping) return;
+
+    const classPayload = readClassMediaDragData(event.dataTransfer);
+    if (classPayload && onImportClassGalleryToSection) {
+      setIsDropping(true);
+      try {
+        await onImportClassGalleryToSection(
+          section.id,
+          classPayload.mediaAssetIds,
+        );
+      } finally {
+        setIsDropping(false);
+      }
+      return;
+    }
+
+    const portfolioPayload = readPortfolioMediaDragData(event.dataTransfer);
+    if (portfolioPayload && onAttachPortfolioMediaToSection) {
+      setIsDropping(true);
+      try {
+        await onAttachPortfolioMediaToSection(
+          section.id,
+          portfolioPayload.assets.map((asset) => ({
+            id: asset.id,
+            url: asset.url,
+            type: asset.type,
+            fileName: null,
+            contentType: null,
+            sizeBytes: 0,
+            createdAt: "",
+          })),
+        );
+      } finally {
+        setIsDropping(false);
+      }
+    }
+  };
+
   return (
     <div className="relative space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -1531,7 +1597,43 @@ function CustomSectionEditable({
           ) : null}
 
           {section.kind === "Gallery" ? (
-            <div className="space-y-4">
+            <div
+              className={cn(
+                "space-y-4 rounded-2xl transition-[box-shadow,background-color]",
+                isDropActive &&
+                  "bg-[#4FC3F7]/10 ring-2 ring-[#4FC3F7]/60 ring-offset-2",
+                isDropping && "opacity-70",
+              )}
+              onDragEnter={(event) => {
+                if (!hasGalleryDragTypes([...event.dataTransfer.types])) return;
+                event.preventDefault();
+                setIsDropActive(true);
+              }}
+              onDragOver={(event) => {
+                if (!hasGalleryDragTypes([...event.dataTransfer.types])) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setIsDropActive(true);
+              }}
+              onDragLeave={(event) => {
+                if (event.currentTarget.contains(event.relatedTarget as Node)) {
+                  return;
+                }
+                setIsDropActive(false);
+              }}
+              onDrop={(event) => {
+                void handleGalleryDrop(event);
+              }}
+            >
+              {isDropActive ? (
+                <p
+                  className={cn(
+                    "rounded-xl border border-dashed border-[#4FC3F7] px-3 py-2 text-center text-xs font-semibold text-[#0f7cad]",
+                  )}
+                >
+                  Thả để gắn vào thư viện ảnh này
+                </p>
+              ) : null}
               <div className="space-y-2">
                 <p
                   className={cn(
@@ -1972,6 +2074,8 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     onCommitReorderSections,
     onToggleSectionVisibility,
     onAddSection,
+    onImportClassGalleryToSection,
+    onAttachPortfolioMediaToSection,
   } = props;
 
   const reduceMotion = useReducedMotion() ?? false;
@@ -2068,6 +2172,8 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
             section={section}
             resolved={resolved}
             onUpdateSection={onUpdateSection}
+            onImportClassGalleryToSection={onImportClassGalleryToSection}
+            onAttachPortfolioMediaToSection={onAttachPortfolioMediaToSection}
           />
         );
       default:

@@ -41,11 +41,6 @@ import {
 } from "@/lib/portfolio/constants";
 import { nullIfEmptyHtml } from "@/lib/portfolio/sanitize-html";
 import {
-  LIGHT_SELECT_CONTENT_PANEL,
-  LIGHT_SELECT_ITEM_PANEL,
-  LIGHT_SELECT_TRIGGER_FULL,
-} from "@/lib/ui/select-styles";
-import {
   createPortfolioItemSchema,
   updatePortfolioItemSchema,
 } from "@/lib/validations/portfolios";
@@ -235,18 +230,14 @@ export function PortfolioItemFormDialog({
                   if (value) setItemType(value as PortfolioItemType);
                 }}
               >
-                <SelectTrigger className={LIGHT_SELECT_TRIGGER_FULL}>
+                <SelectTrigger className="h-10 w-full min-w-0">
                   <span>
                     {PORTFOLIO_ITEM_TYPE_LABELS[itemType] ?? itemType}
                   </span>
                 </SelectTrigger>
-                <SelectContent className={LIGHT_SELECT_CONTENT_PANEL}>
+                <SelectContent>
                   {MANUAL_PORTFOLIO_ITEM_TYPES.map((type) => (
-                    <SelectItem
-                      key={type}
-                      value={type}
-                      className={LIGHT_SELECT_ITEM_PANEL}
-                    >
+                    <SelectItem key={type} value={type}>
                       {PORTFOLIO_ITEM_TYPE_LABELS[type]}
                     </SelectItem>
                   ))}

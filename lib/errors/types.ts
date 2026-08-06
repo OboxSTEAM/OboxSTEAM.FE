@@ -110,4 +110,11 @@ export type AppErrorContext =
   | "portfolio.sync"
   | "portfolio.public"
   | "portfolio.media"
-  | "portfolio.section";
+  | "portfolio.section"
+  | "portfolio.gallery.import"
+  | "highlight.load"
+  | "highlight.create"
+  | "highlight.trim"
+  | "highlight.segment"
+  | "highlight.delete"
+  | "highlight.attach";

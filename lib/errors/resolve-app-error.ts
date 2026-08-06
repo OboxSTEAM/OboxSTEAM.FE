@@ -490,8 +490,42 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Thông tin section chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
     action: "Kiểm tra tiêu đề và nội dung rồi thử lại.",
   },
+  "portfolio.gallery.import": {
+    title: "Không nhập được media từ lớp",
+    reason: "Media chưa sẵn sàng, không thuộc lớp đã ghi danh, hoặc máy chủ từ chối.",
+    action: "Chọn media đã sẵn sàng và thử kéo thả lại.",
+  },
+  "highlight.load": {
+    title: "Không tải được highlight video",
+    reason: "Máy chủ tạm thời không phản hồi hoặc yêu cầu bị từ chối.",
+    action: "Thử tải lại sau vài giây.",
+  },
+  "highlight.create": {
+    title: "Không tạo được highlight",
+    reason: "Lớp không hợp lệ, đang có job xử lý, hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra lớp và mô tả điểm mạnh rồi thử lại.",
+  },
+  "highlight.trim": {
+    title: "Không cắt được video highlight",
+    reason: "Khoảng thời gian không hợp lệ hoặc video chưa hoàn tất xử lý.",
+    action: "Chọn đoạn cần loại bỏ trên video đã hoàn tất và thử lại.",
+  },
+  "highlight.segment": {
+    title: "Không thêm được đoạn media",
+    reason: "Media nguồn hoặc khoảng thời gian không hợp lệ.",
+    action: "Chọn media lớp hợp lệ và khoảng thời gian rồi thử lại.",
+  },
+  "highlight.delete": {
+    title: "Không xóa được highlight",
+    reason: "Stack/item đang xử lý hoặc máy chủ từ chối yêu cầu.",
+    action: "Đợi job hoàn tất hoặc thử lại sau.",
+  },
+  "highlight.attach": {
+    title: "Không gắn được highlight vào portfolio",
+    reason: "Video chưa sẵn sàng hoặc máy chủ từ chối tạo mục.",
+    action: "Đợi video hoàn tất rồi thử gắn lại.",
+  },
 };
-
 /** Contexts where a curated backend string may be shown (auth only). */
 const API_MESSAGE_ALLOWED: ReadonlySet<AppErrorContext> = new Set([
   "auth.login",
@@ -533,6 +567,12 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "media.tag.add",
   "media.tag.verify",
   "media.tag.delete",
+  "portfolio.gallery.import",
+  "highlight.create",
+  "highlight.trim",
+  "highlight.segment",
+  "highlight.delete",
+  "highlight.attach",
   "curriculum.module.save",
   "curriculum.course.save",
   "curriculum.activity.save",
