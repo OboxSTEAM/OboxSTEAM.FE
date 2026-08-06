@@ -48,6 +48,30 @@ export const classGalleryQuerySchema = z.object({
   pageSize: z.number().int().positive().max(100).optional(),
 });
 
+/**
+ * Query params for `GET /api/media/my-gallery`.
+ * Cross-enrollment gallery; optional programId / classId filters.
+ */
+export const myGalleryQuerySchema = z.object({
+  programId: z.string().uuid().optional(),
+  classId: z.string().uuid().optional(),
+  classSessionId: z.string().uuid().optional(),
+  fileType: z.string().optional(),
+  videoStatus: z
+    .enum([
+      "None",
+      "Transcoding",
+      "PendingTagging",
+      "TaggingComplete",
+      "Failed",
+    ])
+    .optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().max(100).optional(),
+});
+
 /** Query params for `POST /api/media/upload`. */
 export const mediaUploadQuerySchema = z.object({
   classId: z.string().uuid("ID lớp học không hợp lệ."),
@@ -80,6 +104,7 @@ export type ClassGalleryClassIdParam = z.infer<
   typeof classGalleryClassIdParamSchema
 >;
 export type ClassGalleryQuery = z.infer<typeof classGalleryQuerySchema>;
+export type MyGalleryQuery = z.infer<typeof myGalleryQuerySchema>;
 export type MediaUploadQuery = z.infer<typeof mediaUploadQuerySchema>;
 export type MediaIdParam = z.infer<typeof mediaIdParamSchema>;
 export type MediaTagParams = z.infer<typeof mediaTagParamsSchema>;

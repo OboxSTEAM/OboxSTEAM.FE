@@ -61,13 +61,26 @@ export const mediaAssetSchema = z.object({
 });
 
 /**
- * Student gallery row (`GET /api/media/class/{classId}/gallery`).
- * Same core fields as `MediaAsset` but without face tags / label timeline.
+ * Student gallery row (`GET /api/media/class/{classId}/gallery`,
+ * `GET /api/media/my-gallery`). Same core fields as `MediaAsset` but without
+ * face tags / label timeline; includes class/program labels for multi-class views.
  */
 export const classGalleryMediaSchema = z.object({
   id: z.string().uuid(),
   uploaderId: z.string().uuid(),
   classId: z.string().uuid(),
+  className: z.string().nullable().nullish().transform((value) => value ?? null),
+  programId: z
+    .string()
+    .uuid()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
+  programName: z
+    .string()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
   classSessionId: z.string().uuid().nullable(),
   fileUrl: z.string().nullable(),
   fileType: z.string().nullable(),

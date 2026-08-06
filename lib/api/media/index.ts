@@ -10,11 +10,13 @@ import {
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
+  myGalleryQuerySchema,
   updateMediaTagVerificationSchema,
   type AddMediaTagInput,
   type ClassGalleryQuery,
   type MediaListQuery,
   type MediaUploadQuery,
+  type MyGalleryQuery,
   type UpdateMediaTagVerificationInput,
 } from "@/lib/validations/media";
 
@@ -26,6 +28,7 @@ import {
   getMediaByIdResponseSchema,
   getMediaListResponseSchema,
   getMediaProgressResponseSchema,
+  getMyGalleryResponseSchema,
   processMediaTagsResponseSchema,
   updateMediaTagVerificationResponseSchema,
   uploadMediaResponseSchema,
@@ -36,6 +39,7 @@ import {
   type GetMediaByIdResult,
   type GetMediaListResult,
   type GetMediaProgressResult,
+  type GetMyGalleryResult,
   type ProcessMediaTagsResult,
   type UpdateMediaTagVerificationResult,
   type UploadMediaResult,
@@ -66,6 +70,8 @@ export type {
   GetMediaListResult,
   GetMediaProgressResponse,
   GetMediaProgressResult,
+  GetMyGalleryResponse,
+  GetMyGalleryResult,
   ProcessMediaTagsResponse,
   ProcessMediaTagsResult,
   UpdateMediaTagVerificationResponse,
@@ -82,6 +88,7 @@ export type {
   MediaListQuery,
   MediaTagParams,
   MediaUploadQuery,
+  MyGalleryQuery,
   UpdateMediaTagVerificationInput,
 } from "@/lib/validations/media";
 
@@ -224,6 +231,39 @@ export async function getClassGallery(
         classGalleryQuerySchema,
       )}`,
       getClassGalleryResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return emptyClassGalleryResult(pageSize);
+    }
+    throw error;
+  }
+}
+
+/**
+ * `GET /api/media/my-gallery` — paginated media from every Active-enrolled class.
+ * Filter with programId and/or classId. Same sort/pagination as class gallery.
+ */
+export async function getMyGallery(
+  params?: MyGalleryQuery,
+): Promise<GetMyGalleryResult> {
+  const pageSize = params?.pageSize ?? 20;
+
+  try {
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}/my-gallery${buildQueryString(
+        {
+          page: 1,
+          pageSize,
+          isDescending: true,
+          ...params,
+        },
+        myGalleryQuerySchema,
+      )}`,
+      getMyGalleryResponseSchema,
       { method: "GET" },
     );
     assertApiSuccess(response);

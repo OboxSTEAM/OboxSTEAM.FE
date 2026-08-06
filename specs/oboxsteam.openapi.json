@@ -12236,6 +12236,182 @@
         }
       }
     },
+    "/api/media/my-gallery": {
+      "get": {
+        "tags": [
+          "Media"
+        ],
+        "summary": "Get my enrollment gallery (student)",
+        "description": "Returns paginated class media from every class the student is Active-enrolled in. Filter with programId and/or classId. Same filters/sort/pagination as class gallery. Use POST /api/portfolios/me/media/from-class-gallery to copy selected items into the portfolio.",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "query",
+            "description": "Filter by program",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classId",
+            "in": "query",
+            "description": "Filter by enrolled class",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "classSessionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "fileType",
+            "in": "query",
+            "description": "Filter by file type: image or video",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "videoStatus",
+            "in": "query",
+            "description": "Filter by video status (e.g. TaggingComplete)",
+            "schema": {
+              "enum": [
+                "None",
+                "Transcoding",
+                "PendingTagging",
+                "TaggingComplete",
+                "Failed"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "description": "Sort by: uploadedAt, createdAt, fileType, videoStatus",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "isDescending",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassGalleryMediaDtoPaginationApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassGalleryMediaDtoPaginationApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassGalleryMediaDtoPaginationApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/media/{mediaId}": {
       "get": {
         "tags": [
@@ -16491,6 +16667,136 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/portfolios/me/media/from-class-gallery": {
+      "post": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Import class gallery media into portfolio",
+        "description": "Copies ready class-gallery images/videos into independent portfolio media assets. Optionally appends them to an item or section gallery. Does not modify the original class gallery MediaAsset.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportClassGalleryMediaRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportClassGalleryMediaRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportClassGalleryMediaRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportClassGalleryMediaResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportClassGalleryMediaResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportClassGalleryMediaResponseDtoApiResult"
                 }
               }
             }
@@ -26802,6 +27108,19 @@
             "type": "string",
             "format": "uuid"
           },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
           "classSessionId": {
             "type": "string",
             "format": "uuid",
@@ -31085,6 +31404,84 @@
         },
         "additionalProperties": false
       },
+      "ImportClassGalleryMediaRequestDto": {
+        "required": [
+          "mediaAssetIds"
+        ],
+        "type": "object",
+        "properties": {
+          "mediaAssetIds": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "portfolioCustomItemId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "portfolioSectionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportClassGalleryMediaResponseDto": {
+        "type": "object",
+        "properties": {
+          "assets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioMediaUploadResponseDto"
+            },
+            "nullable": true
+          },
+          "item": {
+            "$ref": "#/components/schemas/PortfolioCustomItemResponseDto"
+          },
+          "section": {
+            "$ref": "#/components/schemas/PortfolioSectionResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportClassGalleryMediaResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ImportClassGalleryMediaResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ImportClassGalleryMediaResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ImportClassGalleryMediaResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "ImportRowErrorDto": {
         "type": "object",
         "properties": {
@@ -33559,7 +33956,8 @@
           },
           "type": {
             "enum": [
-              "Image"
+              "Image",
+              "Video"
             ],
             "type": "string"
           },
@@ -33587,7 +33985,8 @@
           },
           "type": {
             "enum": [
-              "Image"
+              "Image",
+              "Video"
             ],
             "type": "string"
           },

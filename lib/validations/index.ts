@@ -299,6 +299,7 @@ export {
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
+  myGalleryQuerySchema,
   updateMediaTagVerificationSchema,
   type AddMediaTagInput,
   type ClassGalleryClassIdParam,
@@ -307,5 +308,20 @@ export {
   type MediaListQuery,
   type MediaTagParams,
   type MediaUploadQuery,
+  type MyGalleryQuery,
   type UpdateMediaTagVerificationInput,
 } from "./media";
+export {
+  addHighlightSegmentSchema,
+  createHighlightStackSchema,
+  highlightStackIdParamSchema,
+  highlightStackItemParamsSchema,
+  highlightStacksQuerySchema,
+  trimHighlightVideoSchema,
+  type AddHighlightSegmentInput,
+  type CreateHighlightStackInput,
+  type HighlightStackIdParam,
+  type HighlightStackItemParams,
+  type HighlightStacksQuery,
+  type TrimHighlightVideoInput,
+} from "./highlight-video";

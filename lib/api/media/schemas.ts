@@ -44,7 +44,7 @@ export const mediaAssetPaginationValueSchema = z.object({
   data: paginatedMediaAssetsSchema,
 });
 
-/** Paginated student gallery (`GET /api/media/class/{classId}/gallery`). */
+/** Paginated student gallery (`GET /api/media/class/{classId}/gallery`, `GET /api/media/my-gallery`). */
 export const paginatedClassGalleryMediaSchema = createPaginatedSchema(
   classGalleryMediaSchema,
 ).extend({
@@ -66,6 +66,8 @@ export const getMediaListResponseSchema = createApiResponseSchema(
 export const getClassGalleryResponseSchema = createApiResponseSchema(
   classGalleryPaginationValueSchema,
 );
+/** Same envelope as class gallery. */
+export const getMyGalleryResponseSchema = getClassGalleryResponseSchema;
 export const getMediaByIdResponseSchema =
   createApiResponseSchema(mediaAssetValueSchema);
 export const getMediaProgressResponseSchema = createApiResponseSchema(
@@ -93,6 +95,9 @@ export type GetClassGalleryResponse = z.infer<
   typeof getClassGalleryResponseSchema
 >;
 export type GetClassGalleryResult = GetClassGalleryResponse["value"];
+
+export type GetMyGalleryResponse = z.infer<typeof getMyGalleryResponseSchema>;
+export type GetMyGalleryResult = GetMyGalleryResponse["value"];
 
 export type GetMediaByIdResponse = z.infer<typeof getMediaByIdResponseSchema>;
 export type GetMediaByIdResult = GetMediaByIdResponse["value"];
