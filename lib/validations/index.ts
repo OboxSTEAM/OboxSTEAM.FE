@@ -238,6 +238,7 @@ export {
 export {
   createPortfolioItemSchema,
   createPortfolioSectionSchema,
+  importClassGalleryMediaSchema,
   portfolioItemIdParamSchema,
   portfolioMediaAssetRefSchema,
   portfolioMediaIdParamSchema,
@@ -253,6 +254,7 @@ export {
   updatePortfolioSubdomainSchema,
   type CreatePortfolioItemInput,
   type CreatePortfolioSectionInput,
+  type ImportClassGalleryMediaInput,
   type PortfolioItemIdParam,
   type PortfolioMediaAssetRef,
   type PortfolioMediaIdParam,

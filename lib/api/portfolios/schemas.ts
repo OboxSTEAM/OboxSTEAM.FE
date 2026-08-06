@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  importClassGalleryMediaResultSchema,
   portfolioItemSchema,
   portfolioMediaUploadSchema,
   portfolioSchema,
@@ -20,6 +21,9 @@ export const portfolioSectionValueSchema = createApiValueSchema(portfolioSection
 export const portfolioMediaUploadValueSchema = createApiValueSchema(portfolioMediaUploadSchema);
 export const portfolioMediaUploadListValueSchema = createApiValueSchema(
   z.array(portfolioMediaUploadSchema).nullable(),
+);
+export const importClassGalleryMediaValueSchema = createApiValueSchema(
+  importClassGalleryMediaResultSchema,
 );
 export const publicPortfolioValueSchema = createApiValueSchema(publicPortfolioSchema);
 export const subdomainAvailabilityValueSchema = createApiValueSchema(
@@ -67,6 +71,9 @@ export const listPortfolioMediaResponseSchema = createApiResponseSchema(
 export const deletePortfolioMediaResponseSchema = createApiResponseSchema(
   apiValueMessageOnlySchema,
 );
+export const importClassGalleryMediaResponseSchema = createApiResponseSchema(
+  importClassGalleryMediaValueSchema,
+);
 
 export const checkPortfolioSubdomainAvailabilityResponseSchema = createApiResponseSchema(
   subdomainAvailabilityValueSchema,
@@ -98,6 +105,9 @@ export type DeletePortfolioSectionResponse = z.infer<typeof deletePortfolioSecti
 export type UploadPortfolioMediaResponse = z.infer<typeof uploadPortfolioMediaResponseSchema>;
 export type ListPortfolioMediaResponse = z.infer<typeof listPortfolioMediaResponseSchema>;
 export type DeletePortfolioMediaResponse = z.infer<typeof deletePortfolioMediaResponseSchema>;
+export type ImportClassGalleryMediaResponse = z.infer<
+  typeof importClassGalleryMediaResponseSchema
+>;
 export type CheckPortfolioSubdomainAvailabilityResponse = z.infer<
   typeof checkPortfolioSubdomainAvailabilityResponseSchema
 >;
@@ -142,6 +152,9 @@ export type DeletePortfolioSectionResult = NonNullable<
 export type UploadPortfolioMediaResult = NonNullable<UploadPortfolioMediaResponse["value"]>;
 export type ListPortfolioMediaResult = NonNullable<ListPortfolioMediaResponse["value"]>;
 export type DeletePortfolioMediaResult = NonNullable<DeletePortfolioMediaResponse["value"]>;
+export type ImportClassGalleryMediaResult = NonNullable<
+  ImportClassGalleryMediaResponse["value"]
+>;
 export type CheckPortfolioSubdomainAvailabilityResult = NonNullable<
   CheckPortfolioSubdomainAvailabilityResponse["value"]
 >;

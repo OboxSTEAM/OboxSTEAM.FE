@@ -6,6 +6,7 @@ import { ApiResponseError } from "@/lib/api/errors";
 import {
   createPortfolioItemSchema,
   createPortfolioSectionSchema,
+  importClassGalleryMediaSchema,
   portfolioItemIdParamSchema,
   portfolioMediaIdParamSchema,
   portfolioSectionIdParamSchema,
@@ -22,6 +23,7 @@ import {
 import type {
   CreatePortfolioItemInput,
   CreatePortfolioSectionInput,
+  ImportClassGalleryMediaInput,
   PortfolioSubdomainAvailabilityQuery,
   ReorderPortfolioItemsInput,
   ReorderPortfolioSectionsInput,
@@ -45,6 +47,7 @@ import {
   deletePortfolioSectionResponseSchema,
   getMyPortfolioResponseSchema,
   getPublicPortfolioBySubdomainResponseSchema,
+  importClassGalleryMediaResponseSchema,
   listPortfolioMediaResponseSchema,
   portfolioSectionValueSchema,
   reorderPortfolioItemsResponseSchema,
@@ -65,6 +68,7 @@ import {
   type DeletePortfolioSectionResult,
   type GetMyPortfolioResult,
   type GetPublicPortfolioBySubdomainResult,
+  type ImportClassGalleryMediaResult,
   type ListPortfolioMediaResult,
   type ReorderPortfolioItemsResult,
   type ReorderPortfolioSectionsResult,
@@ -96,6 +100,8 @@ export type {
   GetMyPortfolioResult,
   GetPublicPortfolioBySubdomainResponse,
   GetPublicPortfolioBySubdomainResult,
+  ImportClassGalleryMediaResponse,
+  ImportClassGalleryMediaResult,
   ListPortfolioMediaResponse,
   ListPortfolioMediaResult,
   ReorderPortfolioItemsResponse,
@@ -142,6 +148,7 @@ export type {
   PortfolioThemeSlotOverrides,
   PublicPortfolio,
   SubdomainAvailability,
+  ImportClassGalleryMediaResultData,
 } from "@/lib/api/entities/portfolio";
 
 export {
@@ -154,6 +161,7 @@ export {
 export type {
   CreatePortfolioItemInput,
   CreatePortfolioSectionInput,
+  ImportClassGalleryMediaInput,
   PortfolioItemIdParam,
   PortfolioMediaAssetRef,
   PortfolioMediaIdParam,
@@ -406,6 +414,24 @@ export async function deletePortfolioMedia(
     `${PORTFOLIOS_BASE}/me/media/${parsedMediaId}`,
     deletePortfolioMediaResponseSchema,
     { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/portfolios/me/media/from-class-gallery` — copy ready class-gallery
+ * media into independent portfolio assets. Optionally append to an item or section.
+ */
+export async function importClassGalleryMedia(
+  input: ImportClassGalleryMediaInput,
+): Promise<ImportClassGalleryMediaResult> {
+  const body = importClassGalleryMediaSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media/from-class-gallery`,
+    importClassGalleryMediaResponseSchema,
+    { method: "POST", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

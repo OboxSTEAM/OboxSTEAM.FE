@@ -219,6 +219,19 @@ export const portfolioSectionSchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
+/**
+ * `POST /api/portfolios/me/media/from-class-gallery` — copied assets plus
+ * optional updated item/section when appended to a gallery.
+ */
+export const importClassGalleryMediaResultSchema = z.object({
+  assets: z
+    .array(portfolioMediaUploadSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  item: portfolioItemSchema.nullish().transform((value) => value ?? null),
+  section: portfolioSectionSchema.nullish().transform((value) => value ?? null),
+});
+
 export const portfolioSchema = z.object({
   id: z.string().uuid(),
   code: z.string().nullable(),
@@ -282,6 +295,9 @@ export type PortfolioLink = z.infer<typeof portfolioLinkSchema>;
 export type PortfolioAppendixItem = z.infer<typeof portfolioAppendixItemSchema>;
 export type PortfolioMediaAsset = z.infer<typeof portfolioMediaAssetSchema>;
 export type PortfolioMediaUpload = z.infer<typeof portfolioMediaUploadSchema>;
+export type ImportClassGalleryMediaResultData = z.infer<
+  typeof importClassGalleryMediaResultSchema
+>;
 export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 export type PortfolioSection = z.infer<typeof portfolioSectionSchema>;
 export type Portfolio = z.infer<typeof portfolioSchema>;
