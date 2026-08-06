@@ -74,7 +74,10 @@ export const portfolioThemeSlotOverridesSchema = z
 /** Gallery (and future) settings stored in `section.settingsJson`. */
 export const portfolioSectionSettingsSchema = z
   .object({
+    /** Image gallery layout (`GALLERY_SLOT_OPTIONS`). */
     variant: z.string().optional(),
+    /** Video showcase layout (`VIDEO_SLOT_OPTIONS`). */
+    videoVariant: z.string().optional(),
   })
   .passthrough();
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ImagePlus, Loader2, Trash2, X } from "lucide-react";
+import { ImagePlus, Loader2, Play, Trash2, X } from "lucide-react";
 
 import { ImageCropDialog } from "@/components/portfolio/editor/image-crop-dialog";
 import { Button } from "@/components/ui/button";
@@ -14,10 +14,12 @@ import {
 } from "@/lib/api/portfolios";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { editorChrome } from "@/lib/portfolio/editor-chrome";
+import {
+  PORTFOLIO_IMAGE_ACCEPT,
+  PORTFOLIO_MEDIA_ACCEPT,
+  validatePortfolioMediaFile,
+} from "@/lib/portfolio/media-upload";
 import { cn } from "@/lib/utils";
-
-const ACCEPT = "image/jpeg,image/jpg,image/png";
-const MAX_BYTES = 5 * 1024 * 1024;
 
 export type MediaUploadCropOptions = {
   aspect: number;
@@ -55,6 +57,11 @@ type MediaUploaderProps = {
    * Thumbnails are rendered by the parent.
    */
   compact?: boolean;
+  /**
+   * Allow MP4/MOV up to 2 GB. Forced off when `crop` is set (avatar/cover).
+   * @default true when crop is unset
+   */
+  allowVideo?: boolean;
 };
 
 type CropSource = {
@@ -68,11 +75,12 @@ export function MediaUploader({
   onUploadedUrl,
   crop,
   className,
-  label = "Ảnh",
+  label,
   isDark = false,
   hideThumbnails = false,
   hideAttachedList = false,
   compact = false,
+  allowVideo: allowVideoProp,
 }: MediaUploaderProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -80,6 +88,10 @@ export function MediaUploader({
   const [isLoadingLibrary, setIsLoadingLibrary] = useState(false);
   const [cropSource, setCropSource] = useState<CropSource | null>(null);
   const isLibraryOpen = library != null;
+
+  const allowVideo = Boolean(allowVideoProp ?? !crop);
+  const accept = allowVideo ? PORTFOLIO_MEDIA_ACCEPT : PORTFOLIO_IMAGE_ACCEPT;
+  const resolvedLabel = label ?? (allowVideo ? "media" : "Ảnh");
 
   const attached = assets ?? [];
   const chrome = editorChrome(isDark);
@@ -97,7 +109,7 @@ export function MediaUploader({
     };
   }, [cropSource?.url]);
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, kind: "image" | "video") => {
     setIsUploading(true);
     try {
       const result = await uploadPortfolioMedia(file);
@@ -117,7 +129,9 @@ export function MediaUploader({
           },
         ]);
       }
-      showAppSuccess({ title: "Đã tải ảnh lên" });
+      showAppSuccess({
+        title: kind === "video" ? "Đã tải video lên" : "Đã tải ảnh lên",
+      });
       setLibrary((current) => (current ? [uploaded, ...current] : current));
     } catch (error) {
       showAppErrorFromUnknown(error, "portfolio.media");
@@ -131,26 +145,28 @@ export function MediaUploader({
     if (!files?.length) return;
     const file = files[0];
     if (!file) return;
-    if (!ACCEPT.split(",").includes(file.type) && !/\.(jpe?g|png)$/i.test(file.name)) {
-      showAppErrorFromUnknown(
-        new Error("Chỉ hỗ trợ ảnh JPG/PNG."),
-        "portfolio.media",
-      );
-      return;
-    }
-    if (file.size > MAX_BYTES) {
-      showAppErrorFromUnknown(new Error("Ảnh tối đa 5 MB."), "portfolio.media");
+
+    const validated = validatePortfolioMediaFile(file, { allowVideo });
+    if (!validated.ok) {
+      showAppErrorFromUnknown(new Error(validated.message), "portfolio.media");
       return;
     }
 
     if (crop) {
+      if (validated.kind !== "image") {
+        showAppErrorFromUnknown(
+          new Error("Chỉ hỗ trợ ảnh JPG/PNG khi cắt ảnh."),
+          "portfolio.media",
+        );
+        return;
+      }
       const url = URL.createObjectURL(file);
       setCropSource({ url, fileName: file.name });
       if (inputRef.current) inputRef.current.value = "";
       return;
     }
 
-    await uploadFile(file);
+    await uploadFile(file, validated.kind);
   };
 
   const closeCrop = () => {
@@ -208,7 +224,7 @@ export function MediaUploader({
       await deletePortfolioMedia(mediaId);
       setLibrary((current) => current?.filter((item) => item.id !== mediaId) ?? null);
       onChange?.(attached.filter((asset) => asset.id !== mediaId));
-      showAppSuccess({ title: "Đã xóa ảnh" });
+      showAppSuccess({ title: "Đã xóa media" });
     } catch (error) {
       showAppErrorFromUnknown(error, "portfolio.media");
     }
@@ -229,7 +245,13 @@ export function MediaUploader({
           ) : (
             <ImagePlus className={compact ? "size-3.5" : "size-4"} />
           )}
-          {isUploading ? "Đang tải…" : compact ? "Tải ảnh" : `Tải ${label}`}
+          {isUploading
+            ? "Đang tải…"
+            : compact
+              ? allowVideo
+                ? "Tải lên"
+                : "Tải ảnh"
+              : `Tải ${resolvedLabel}`}
         </Button>
         {showLibrary ? (
           <Button
@@ -250,11 +272,17 @@ export function MediaUploader({
         <input
           ref={inputRef}
           type="file"
-          accept={ACCEPT}
+          accept={accept}
           className="hidden"
           onChange={(event) => void handleFiles(event.target.files)}
         />
       </div>
+
+      {allowVideo && !compact && !crop ? (
+        <p className={cn("text-[11px]", chrome.muted)}>
+          Ảnh JPG/PNG ≤ 5 MB · Video MP4/MOV ≤ 2 GB
+        </p>
+      ) : null}
 
       {showAttached && attached.length > 0 ? (
         <ul className="space-y-2">
@@ -268,26 +296,44 @@ export function MediaUploader({
                   {index + 1}
                 </span>
               ) : asset.url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={asset.url}
-                  alt=""
-                  className="size-12 rounded-lg object-cover"
-                />
+                asset.type === "Video" ? (
+                  <span className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-black">
+                    <video
+                      src={asset.url}
+                      muted
+                      defaultMuted
+                      autoPlay
+                      loop
+                      playsInline
+                      preload="auto"
+                      className="size-full object-cover"
+                    />
+                    <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/25">
+                      <Play className="size-3 fill-white text-white" />
+                    </span>
+                  </span>
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={asset.url}
+                    alt=""
+                    className="size-12 rounded-lg object-cover"
+                  />
+                )
               ) : (
                 <div className="size-12 rounded-lg bg-border" />
               )}
               <Input
                 value={asset.caption ?? ""}
                 onChange={(event) => updateCaption(asset.id, event.target.value)}
-                placeholder="Chú thích — hiện trên ảnh"
+                placeholder="Chú thích"
                 className="h-9 flex-1 rounded-lg"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="icon-sm"
-                aria-label="Gỡ ảnh"
+                aria-label="Gỡ media"
                 onClick={() => detach(asset.id)}
               >
                 <X className="size-4" />
@@ -299,7 +345,9 @@ export function MediaUploader({
 
       {library && !compact ? (
         <div className="rounded-xl border border-border bg-card p-3">
-          <p className="mb-2 text-xs font-medium text-muted-foreground">Thư viện ảnh</p>
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            Thư viện media
+          </p>
           <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
             {library.map((asset) => (
               <div key={asset.id} className="group relative">
@@ -309,12 +357,30 @@ export function MediaUploader({
                   onClick={() => attachFromLibrary(asset)}
                 >
                   {asset.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={asset.url}
-                      alt={asset.fileName ?? ""}
-                      className="aspect-square w-full object-cover"
-                    />
+                    asset.type === "Video" ? (
+                      <span className="relative block aspect-square w-full bg-black">
+                        <video
+                          src={asset.url}
+                          muted
+                          defaultMuted
+                          autoPlay
+                          loop
+                          playsInline
+                          preload="auto"
+                          className="size-full object-cover"
+                        />
+                        <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/25">
+                          <Play className="size-3.5 fill-white text-white" />
+                        </span>
+                      </span>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={asset.url}
+                        alt={asset.fileName ?? ""}
+                        className="aspect-square w-full object-cover"
+                      />
+                    )
                   ) : null}
                 </button>
                 <button
@@ -344,7 +410,7 @@ export function MediaUploader({
           onCancel={closeCrop}
           onConfirm={(file) => {
             closeCrop();
-            void uploadFile(file);
+            void uploadFile(file, "image");
           }}
         />
       ) : null}

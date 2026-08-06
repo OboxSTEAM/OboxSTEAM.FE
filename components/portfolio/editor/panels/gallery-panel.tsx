@@ -1,8 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Check, Images, Loader2, Play, Upload } from "lucide-react";
+import { Check, Images, Loader2, Upload } from "lucide-react";
 
+import {
+  MediaLightbox,
+  type MediaLightboxItem,
+} from "@/components/media/media-lightbox";
+import { VideoThumb } from "@/components/media/video-thumb";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -19,6 +24,7 @@ import {
   type PortfolioSection,
 } from "@/lib/api";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { isImageFile, isVideoFile } from "@/lib/media/file-kind";
 import {
   setClassMediaDragData,
   setPortfolioMediaDragData,
@@ -44,52 +50,68 @@ type GalleryPanelProps = {
   isImporting?: boolean;
 };
 
-function isImageFile(fileType: string | null | undefined, url?: string | null) {
-  const type = (fileType ?? "").toLowerCase();
-  if (
-    type.includes("image") ||
-    type === "jpg" ||
-    type === "jpeg" ||
-    type === "png" ||
-    type === "webp"
-  ) {
-    return true;
-  }
-  const href = (url ?? "").toLowerCase();
-  return (
-    href.endsWith(".jpg") ||
-    href.endsWith(".jpeg") ||
-    href.endsWith(".png") ||
-    href.endsWith(".webp")
-  );
-}
-
-function isVideoFile(fileType: string | null | undefined, url?: string | null) {
-  const type = (fileType ?? "").toLowerCase();
-  if (
-    type.includes("video") ||
-    type === "mp4" ||
-    type === "mov" ||
-    type === "quicktime"
-  ) {
-    return true;
-  }
-  const href = (url ?? "").toLowerCase();
-  return href.endsWith(".mp4") || href.endsWith(".mov");
-}
-
 function ProgramThumb({
   media,
   selected,
   onToggle,
+  onPreview,
 }: {
   media: ClassGalleryMedia;
   selected: boolean;
   onToggle: () => void;
+  onPreview: () => void;
 }) {
   const video = isVideoFile(media.fileType, media.fileUrl);
   const image = isImageFile(media.fileType, media.fileUrl);
   const canDrag = media.isReady && Boolean(media.fileUrl);
+  const footer =
+    media.className || media.programName
+      ? (media.className ?? media.programName)
+      : null;
+
+  if (video && media.fileUrl) {
+    return (
+      <div className="relative">
+        <VideoThumb
+          src={media.fileUrl}
+          selected={selected}
+          disabled={!canDrag}
+          footer={footer}
+          aspectClassName="aspect-square"
+          className="w-full"
+          draggable={canDrag}
+          onDragStart={(event) => {
+            if (!canDrag) {
+              event.preventDefault();
+              return;
+            }
+            setClassMediaDragData(event.dataTransfer, {
+              mediaAssetIds: [media.id],
+            });
+          }}
+          onClick={onPreview}
+        />
+        <button
+          type="button"
+          aria-label={selected ? "Bỏ chọn" : "Chọn"}
+          aria-pressed={selected}
+          disabled={!canDrag}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle();
+          }}
+          className={cn(
+            "absolute top-1.5 left-1.5 z-[1] flex size-5 items-center justify-center rounded-full border transition",
+            selected
+              ? "border-[#4FC3F7] bg-[#4FC3F7] text-white"
+              : "border-white/70 bg-black/40 text-transparent hover:bg-black/55",
+          )}
+        >
+          <Check className="size-3" strokeWidth={3} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <button
@@ -123,20 +145,6 @@ function ProgramThumb({
           className="size-full object-cover"
           draggable={false}
         />
-      ) : media.fileUrl && video ? (
-        <>
-          <video
-            src={media.fileUrl}
-            muted
-            playsInline
-            preload="metadata"
-            className="size-full object-cover"
-            draggable={false}
-          />
-          <span className="absolute inset-0 flex items-center justify-center bg-black/25">
-            <Play className="size-4 fill-white text-white" />
-          </span>
-        </>
       ) : (
         <div className="flex size-full items-center justify-center text-muted-foreground">
           <Images className="size-5 opacity-50" />
@@ -149,11 +157,11 @@ function ProgramThumb({
         </span>
       ) : null}
 
-      {(media.className || media.programName) && (
+      {footer ? (
         <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-1.5 py-0.5 text-[9px] text-white">
-          {media.className ?? media.programName}
+          {footer}
         </span>
-      )}
+      ) : null}
     </button>
   );
 }
@@ -162,12 +170,56 @@ function UploadThumb({
   asset,
   selected,
   onToggle,
+  onPreview,
 }: {
   asset: PortfolioMediaUpload;
   selected: boolean;
   onToggle: () => void;
+  onPreview: () => void;
 }) {
   const canDrag = Boolean(asset.url);
+  const isVideo = asset.type === "Video";
+
+  if (isVideo && asset.url) {
+    return (
+      <div className="relative">
+        <VideoThumb
+          src={asset.url}
+          selected={selected}
+          aspectClassName="aspect-square"
+          className="w-full"
+          draggable={canDrag}
+          onDragStart={(event) => {
+            if (!canDrag) {
+              event.preventDefault();
+              return;
+            }
+            setPortfolioMediaDragData(event.dataTransfer, {
+              assets: [{ id: asset.id, url: asset.url, type: asset.type }],
+            });
+          }}
+          onClick={onPreview}
+        />
+        <button
+          type="button"
+          aria-label={selected ? "Bỏ chọn" : "Chọn"}
+          aria-pressed={selected}
+          onClick={(event) => {
+            event.stopPropagation();
+            onToggle();
+          }}
+          className={cn(
+            "absolute top-1.5 left-1.5 z-[1] flex size-5 items-center justify-center rounded-full border transition",
+            selected
+              ? "border-[#4FC3F7] bg-[#4FC3F7] text-white"
+              : "border-white/70 bg-black/40 text-transparent hover:bg-black/55",
+          )}
+        >
+          <Check className="size-3" strokeWidth={3} />
+        </button>
+      </div>
+    );
+  }
 
   return (
     <button
@@ -191,24 +243,13 @@ function UploadThumb({
       )}
     >
       {asset.url ? (
-        asset.type === "Video" ? (
-          <video
-            src={asset.url}
-            muted
-            playsInline
-            preload="metadata"
-            className="size-full object-cover"
-            draggable={false}
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={asset.url}
-            alt={asset.fileName ?? ""}
-            className="size-full object-cover"
-            draggable={false}
-          />
-        )
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={asset.url}
+          alt={asset.fileName ?? ""}
+          className="size-full object-cover"
+          draggable={false}
+        />
       ) : (
         <div className="flex size-full items-center justify-center text-muted-foreground">
           <Upload className="size-5 opacity-50" />
@@ -239,6 +280,8 @@ export function GalleryPanel({
     gallerySections[0]?.id ?? "",
   );
   const [isAttaching, setIsAttaching] = useState(false);
+  const [previewItems, setPreviewItems] = useState<MediaLightboxItem[]>([]);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   const effectiveTarget =
     targetSectionId || gallerySections[0]?.id || "";
@@ -325,6 +368,40 @@ export function GalleryPanel({
 
   const selectTriggerClass = "h-9 w-full min-w-0";
   const selectContentClass = "z-[60]";
+
+  const openProgramPreview = (media: ClassGalleryMedia) => {
+    if (!media.fileUrl) return;
+    const items: MediaLightboxItem[] = programItems
+      .filter((item) => Boolean(item.fileUrl))
+      .map((item) => ({
+        id: item.id,
+        url: item.fileUrl!,
+        kind: isVideoFile(item.fileType, item.fileUrl) ? "video" : "image",
+        caption: item.className ?? item.programName,
+      }));
+    const index = items.findIndex((item) => item.id === media.id);
+    if (index < 0) return;
+    setPreviewItems(items);
+    setPreviewIndex(index);
+  };
+
+  const openUploadPreview = (asset: PortfolioMediaUpload) => {
+    if (!asset.url) return;
+    const items: MediaLightboxItem[] = uploadItems
+      .filter((item) => Boolean(item.url))
+      .map((item) => ({
+        id: item.id,
+        url: item.url!,
+        kind: item.type === "Video" ? "video" : "image",
+        alt: item.fileName,
+      }));
+    const index = items.findIndex((item) => item.id === asset.id);
+    if (index < 0) return;
+    setPreviewItems(items);
+    setPreviewIndex(index);
+  };
+
+  const gridClass = "grid grid-cols-3 gap-2";
 
   return (
     <div className="space-y-4">
@@ -436,7 +513,7 @@ export function GalleryPanel({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-3 gap-2">
+            <div className={gridClass}>
               {programItems.map((media) => (
                 <ProgramThumb
                   key={media.id}
@@ -446,6 +523,7 @@ export function GalleryPanel({
                     if (!media.isReady) return;
                     toggleProgram(media.id);
                   }}
+                  onPreview={() => openProgramPreview(media)}
                 />
               ))}
             </div>
@@ -496,13 +574,14 @@ export function GalleryPanel({
           Chưa có media trong thư viện tải lên.
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-2">
+        <div className={gridClass}>
           {uploadItems.map((asset) => (
             <UploadThumb
               key={asset.id}
               asset={asset}
               selected={selectedUploadIds.includes(asset.id)}
               onToggle={() => toggleUpload(asset.id)}
+              onPreview={() => openUploadPreview(asset)}
             />
           ))}
         </div>
@@ -519,6 +598,14 @@ export function GalleryPanel({
           ? `Gắn ${selectedCount} mục vào Gallery`
           : "Chọn media để gắn"}
       </Button>
+
+      <MediaLightbox
+        items={previewItems}
+        index={previewIndex}
+        open={previewIndex != null}
+        onClose={() => setPreviewIndex(null)}
+        onIndexChange={setPreviewIndex}
+      />
     </div>
   );
 }

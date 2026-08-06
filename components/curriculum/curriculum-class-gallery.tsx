@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createPortal } from "react-dom";
 import Image from "next/image";
 import {
   ChevronLeft,
@@ -9,10 +8,12 @@ import {
   Images,
   Loader2,
   Play,
-  X,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
+import {
+  MediaLightbox,
+  type MediaLightboxItem,
+} from "@/components/media/media-lightbox";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -37,11 +38,7 @@ import {
 } from "@/lib/api";
 import { MEDIA_VIDEO_STATUS_LABELS } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown } from "@/lib/errors";
-import {
-  THEME_SELECT_CONTENT,
-  THEME_SELECT_ITEM,
-  THEME_SELECT_TRIGGER,
-} from "@/lib/ui/select-styles";
+import { isImageFile, isVideoFile } from "@/lib/media/file-kind";
 import { cn } from "@/lib/utils";
 
 const GALLERY_PAGE_SIZE = 12;
@@ -59,40 +56,6 @@ type GalleryPage = {
 type CurriculumClassGalleryProps = {
   classId: string;
 };
-
-function isImageFile(fileType: string | null | undefined, url?: string | null) {
-  const type = (fileType ?? "").toLowerCase();
-  if (
-    type.includes("image") ||
-    type === "jpg" ||
-    type === "jpeg" ||
-    type === "png" ||
-    type === "webp"
-  ) {
-    return true;
-  }
-  const href = (url ?? "").toLowerCase();
-  return (
-    href.endsWith(".jpg") ||
-    href.endsWith(".jpeg") ||
-    href.endsWith(".png") ||
-    href.endsWith(".webp")
-  );
-}
-
-function isVideoFile(fileType: string | null | undefined, url?: string | null) {
-  const type = (fileType ?? "").toLowerCase();
-  if (
-    type.includes("video") ||
-    type === "mp4" ||
-    type === "mov" ||
-    type === "quicktime"
-  ) {
-    return true;
-  }
-  const href = (url ?? "").toLowerCase();
-  return href.endsWith(".mp4") || href.endsWith(".mov");
-}
 
 function GalleryThumbSkeleton() {
   return (
@@ -143,8 +106,11 @@ function GalleryThumb({
           <video
             src={href}
             muted
+            defaultMuted
+            autoPlay
+            loop
             playsInline
-            preload="metadata"
+            preload="auto"
             className="size-full object-cover"
           />
           <span
@@ -171,176 +137,6 @@ function GalleryThumb({
         </span>
       ) : null}
     </button>
-  );
-}
-
-function GalleryLightbox({
-  media,
-  open,
-  onClose,
-  onPrev,
-  onNext,
-  hasPrev,
-  hasNext,
-}: {
-  media: ClassGalleryMedia | null;
-  open: boolean;
-  onClose: () => void;
-  onPrev: () => void;
-  onNext: () => void;
-  hasPrev: boolean;
-  hasNext: boolean;
-}) {
-  const reduceMotion = useReducedMotion();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-      if (event.key === "ArrowLeft" && hasPrev) onPrev();
-      if (event.key === "ArrowRight" && hasNext) onNext();
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose, onPrev, onNext, hasPrev, hasNext]);
-
-  if (!mounted) return null;
-
-  const href = media?.fileUrl ?? null;
-  const video = media
-    ? isVideoFile(media.fileType, media.fileUrl)
-    : false;
-  const image = media
-    ? isImageFile(media.fileType, media.fileUrl)
-    : false;
-
-  const transition = reduceMotion
-    ? { duration: 0 }
-    : { duration: 0.28, ease: [0.16, 1, 0.3, 1] as const };
-
-  return createPortal(
-    <AnimatePresence>
-      {open && media && href ? (
-        <motion.div
-          className="fixed inset-0 z-[70] flex items-center justify-center p-3 sm:p-6"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Xem media"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={transition}
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-black/75 backdrop-blur-[2px]"
-            aria-label="Đóng"
-            onClick={onClose}
-          />
-
-          <motion.div
-            className={cn(
-              "relative z-[1] flex max-h-[min(90dvh,56rem)] w-full max-w-5xl",
-              "flex-col overflow-hidden rounded-2xl bg-black shadow-2xl",
-            )}
-            initial={reduceMotion ? false : { opacity: 0, scale: 0.94, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={reduceMotion ? undefined : { opacity: 0, scale: 0.96, y: 8 }}
-            transition={transition}
-          >
-            <div className="absolute top-3 right-3 z-10 flex items-center gap-1">
-              <Button
-                type="button"
-                size="icon-sm"
-                variant="ghost"
-                className="rounded-full bg-black/45 text-white hover:bg-black/65 hover:text-white"
-                onClick={onClose}
-                aria-label="Đóng"
-              >
-                <X className="size-4" />
-              </Button>
-            </div>
-
-            <div className="relative flex min-h-[min(70dvh,40rem)] items-center justify-center bg-black">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={media.id}
-                  className="flex size-full items-center justify-center"
-                  initial={reduceMotion ? false : { opacity: 0, scale: 0.97 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={reduceMotion ? undefined : { opacity: 0, scale: 0.98 }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0 }
-                      : { duration: 0.2, ease: [0.16, 1, 0.3, 1] as const }
-                  }
-                >
-                  {image ? (
-                    <Image
-                      src={href}
-                      alt=""
-                      width={1600}
-                      height={1200}
-                      className="max-h-[min(80dvh,48rem)] w-auto max-w-full object-contain"
-                      unoptimized
-                      priority
-                    />
-                  ) : video ? (
-                    <video
-                      src={href}
-                      controls
-                      autoPlay
-                      playsInline
-                      className="max-h-[min(80dvh,48rem)] w-full bg-black"
-                    />
-                  ) : null}
-                </motion.div>
-              </AnimatePresence>
-
-              {hasPrev ? (
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className={cn(
-                    "absolute top-1/2 left-2 z-10 -translate-y-1/2",
-                    "rounded-full bg-black/45 text-white hover:bg-black/65 hover:text-white",
-                  )}
-                  onClick={onPrev}
-                  aria-label="Media trước"
-                >
-                  <ChevronLeft className="size-5" />
-                </Button>
-              ) : null}
-
-              {hasNext ? (
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className={cn(
-                    "absolute top-1/2 right-2 z-10 -translate-y-1/2",
-                    "rounded-full bg-black/45 text-white hover:bg-black/65 hover:text-white",
-                  )}
-                  onClick={onNext}
-                  aria-label="Media sau"
-                >
-                  <ChevronRight className="size-5" />
-                </Button>
-              ) : null}
-            </div>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body,
   );
 }
 
@@ -388,8 +184,11 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
   const totalCount = data?.totalCount ?? 0;
 
   const previewableItems = items.filter((item) => Boolean(item.fileUrl));
-  const previewMedia =
-    previewIndex != null ? (previewableItems[previewIndex] ?? null) : null;
+  const lightboxItems: MediaLightboxItem[] = previewableItems.map((item) => ({
+    id: item.id,
+    url: item.fileUrl!,
+    kind: isVideoFile(item.fileType, item.fileUrl) ? "video" : "image",
+  }));
 
   function applyFilter(update: () => void) {
     markLoading();
@@ -404,9 +203,8 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
     setPreviewIndex(index);
   }
 
-  const selectTriggerClass = cn(THEME_SELECT_TRIGGER, "w-full min-w-0");
-  const selectContentClass = cn(THEME_SELECT_CONTENT, "z-[60]");
-  const selectItemClass = cn(THEME_SELECT_ITEM, "cursor-pointer");
+  const selectTriggerClass = "h-9 w-full min-w-0";
+  const selectContentClass = "z-[60]";
 
   return (
     <>
@@ -497,13 +295,13 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
                 sideOffset={8}
                 className={selectContentClass}
               >
-                <SelectItem value="all" className={selectItemClass}>
+                <SelectItem value="all">
                   Tất cả loại
                 </SelectItem>
-                <SelectItem value="image" className={selectItemClass}>
+                <SelectItem value="image">
                   Ảnh
                 </SelectItem>
-                <SelectItem value="video" className={selectItemClass}>
+                <SelectItem value="video">
                   Video
                 </SelectItem>
               </SelectContent>
@@ -531,7 +329,7 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
                 sideOffset={8}
                 className={selectContentClass}
               >
-                <SelectItem value="all" className={selectItemClass}>
+                <SelectItem value="all">
                   Tất cả trạng thái
                 </SelectItem>
                 {(
@@ -540,7 +338,6 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
                   <SelectItem
                     key={status}
                     value={status}
-                    className={selectItemClass}
                   >
                     {MEDIA_VIDEO_STATUS_LABELS[status]}
                   </SelectItem>
@@ -645,26 +442,12 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
         </SheetPopup>
       </Sheet>
 
-      <GalleryLightbox
-        media={previewMedia}
-        open={previewIndex != null && previewMedia != null}
+      <MediaLightbox
+        items={lightboxItems}
+        index={previewIndex}
+        open={previewIndex != null}
         onClose={() => setPreviewIndex(null)}
-        onPrev={() =>
-          setPreviewIndex((prev) =>
-            prev == null ? prev : Math.max(0, prev - 1),
-          )
-        }
-        onNext={() =>
-          setPreviewIndex((prev) =>
-            prev == null
-              ? prev
-              : Math.min(previewableItems.length - 1, prev + 1),
-          )
-        }
-        hasPrev={previewIndex != null && previewIndex > 0}
-        hasNext={
-          previewIndex != null && previewIndex < previewableItems.length - 1
-        }
+        onIndexChange={setPreviewIndex}
       />
     </>
   );

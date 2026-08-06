@@ -44,10 +44,13 @@ import {
   GALLERY_SLOT_OPTIONS,
   getPresetPersonality,
   resolvePortfolioTheme,
+  resolveVideoSlotId,
   type GallerySlotId,
   type ResolvedPortfolioTheme,
 } from "@/lib/portfolio/theme-presets";
 import { cn } from "@/lib/utils";
+import { PortfolioVideoGallery } from "@/components/portfolio/reactbits/video-gallery";
+import type { GalleryVideo } from "@/components/portfolio/reactbits/video-gallery";
 
 export type PortfolioMicrositeData = {
   displayName: string | null;
@@ -137,13 +140,32 @@ function resolveGalleryVariant(
   return resolved.gallery;
 }
 
+function resolveVideoVariant(section: PortfolioSection) {
+  const settings = parseSectionSettingsJson(section.settingsJson);
+  return resolveVideoSlotId(settings?.videoVariant);
+}
+
 function sectionMediaToGalleryImages(
   mediaAssets: PortfolioMediaAsset[] | null | undefined,
 ): GalleryImage[] {
   return (mediaAssets ?? [])
-    .filter((asset) => Boolean(asset.url))
+    .filter((asset) => Boolean(asset.url) && asset.type !== "Video")
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .map((asset) => ({
+      src: asset.url!,
+      alt: asset.caption ?? undefined,
+      caption: asset.caption,
+    }));
+}
+
+function sectionMediaToGalleryVideos(
+  mediaAssets: PortfolioMediaAsset[] | null | undefined,
+): GalleryVideo[] {
+  return (mediaAssets ?? [])
+    .filter((asset) => Boolean(asset.url) && asset.type === "Video")
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map((asset) => ({
+      id: asset.id,
       src: asset.url!,
       alt: asset.caption ?? undefined,
       caption: asset.caption,
@@ -584,20 +606,30 @@ function GallerySection({
   resolved: ResolvedPortfolioTheme;
 }) {
   const images = sectionMediaToGalleryImages(section.mediaAssets);
-  if (images.length === 0 && !section.title) return null;
+  const videos = sectionMediaToGalleryVideos(section.mediaAssets);
+  if (images.length === 0 && videos.length === 0 && !section.title) return null;
 
   return (
-    <section className="space-y-3">
+    <section className="space-y-5">
       {section.title ? (
         <SectionHeading title={section.title} resolved={resolved} />
       ) : null}
-      <PortfolioGallery
-        slot={resolveGalleryVariant(section, resolved)}
-        images={images}
-        isDark={resolved.isDark}
-        primaryColor={resolved.primaryColor}
-        backgroundStyle={resolved.backgroundStyle}
-      />
+      {images.length > 0 ? (
+        <PortfolioGallery
+          slot={resolveGalleryVariant(section, resolved)}
+          images={images}
+          isDark={resolved.isDark}
+          primaryColor={resolved.primaryColor}
+          backgroundStyle={resolved.backgroundStyle}
+        />
+      ) : null}
+      {videos.length > 0 ? (
+        <PortfolioVideoGallery
+          slot={resolveVideoVariant(section)}
+          videos={videos}
+          isDark={resolved.isDark}
+        />
+      ) : null}
     </section>
   );
 }

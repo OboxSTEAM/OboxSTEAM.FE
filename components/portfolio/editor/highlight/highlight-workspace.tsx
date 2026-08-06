@@ -21,6 +21,8 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaLightbox } from "@/components/media/media-lightbox";
+import { VideoThumb } from "@/components/media/video-thumb";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useHighlightStackPolling } from "@/hooks/use-highlight-stack-polling";
 import {
@@ -131,6 +133,7 @@ export function HighlightWorkspace({
   const [segmentEnd, setSegmentEnd] = useState("0:05");
   const [segmentDescription, setSegmentDescription] = useState("");
   const [pollNonce, setPollNonce] = useState(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const { data: classSeed, isLoading: isLoadingClasses } = useClientFetch({
     enabled: open,
@@ -560,12 +563,30 @@ export function HighlightWorkspace({
 
               {completedItem?.videoUrl ? (
                 <div className="space-y-3">
-                  <video
-                    key={completedItem.id}
+                  <VideoThumb
                     src={completedItem.videoUrl}
-                    controls
-                    playsInline
-                    className="aspect-video w-full rounded-2xl bg-black"
+                    durationLabel={
+                      durationSeconds > 0
+                        ? formatHighlightTime(durationSeconds)
+                        : null
+                    }
+                    className="w-full rounded-2xl"
+                    onClick={() => setIsPreviewOpen(true)}
+                    aria-label="Xem highlight lớn hơn"
+                  />
+                  <MediaLightbox
+                    items={[
+                      {
+                        id: completedItem.id,
+                        url: completedItem.videoUrl,
+                        kind: "video",
+                        caption: completedItem.statusLabel,
+                      },
+                    ]}
+                    index={isPreviewOpen ? 0 : null}
+                    open={isPreviewOpen}
+                    onClose={() => setIsPreviewOpen(false)}
+                    enableNav={false}
                   />
                   <p className="text-[11px] text-muted-foreground">
                     {completedItem.generationKind}

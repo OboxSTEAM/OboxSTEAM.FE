@@ -379,7 +379,7 @@ export async function syncPortfolioItems(): Promise<SyncPortfolioItemsResult> {
   return requireApiValue(response.value);
 }
 
-/** `POST /api/portfolios/me/media` — multipart image upload (jpg/jpeg/png, max 5 MB). */
+/** `POST /api/portfolios/me/media` — multipart upload (jpg/png ≤ 5 MB, mp4/mov ≤ 2 GB). */
 export async function uploadPortfolioMedia(file: File): Promise<UploadPortfolioMediaResult> {
   const formData = new FormData();
   formData.append("file", file);
