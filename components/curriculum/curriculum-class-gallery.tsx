@@ -106,7 +106,6 @@ function GalleryThumb({
           <video
             src={href}
             muted
-            defaultMuted
             autoPlay
             loop
             playsInline

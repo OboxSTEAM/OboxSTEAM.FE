@@ -93,7 +93,6 @@ export function VideoThumb({
         ref={videoRef}
         src={src}
         muted
-        defaultMuted
         autoPlay={shouldAutoplay}
         loop={shouldAutoplay}
         playsInline

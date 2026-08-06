@@ -301,7 +301,6 @@ export function MediaUploader({
                     <video
                       src={asset.url}
                       muted
-                      defaultMuted
                       autoPlay
                       loop
                       playsInline
@@ -362,7 +361,6 @@ export function MediaUploader({
                         <video
                           src={asset.url}
                           muted
-                          defaultMuted
                           autoPlay
                           loop
                           playsInline
