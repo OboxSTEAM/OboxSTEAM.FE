@@ -512,8 +512,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "highlight.segment": {
     title: "Không thêm được đoạn media",
-    reason: "Media nguồn hoặc khoảng thời gian không hợp lệ.",
-    action: "Chọn media lớp hợp lệ và khoảng thời gian rồi thử lại.",
+    reason: "Media nguồn không hợp lệ, khoảng thời gian sai, hoặc overlap với đoạn đã có (409).",
+    action: "Chọn media từ source-media và khoảng không chồng rồi thử lại.",
   },
   "highlight.delete": {
     title: "Không xóa được highlight",
@@ -521,9 +521,29 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action: "Đợi job hoàn tất hoặc thử lại sau.",
   },
   "highlight.attach": {
-    title: "Không gắn được highlight vào portfolio",
-    reason: "Video chưa sẵn sàng hoặc máy chủ từ chối tạo mục.",
-    action: "Đợi video hoàn tất rồi thử gắn lại.",
+    title: "Không đồng bộ highlight vào portfolio",
+    reason: "Video chưa sẵn sàng hoặc máy chủ từ chối đồng bộ.",
+    action: "Đợi video hoàn tất rồi thử đồng bộ lại.",
+  },
+  "highlight.cancel": {
+    title: "Không hủy được job highlight",
+    reason: "Item không còn Processing hoặc máy chủ từ chối hủy.",
+    action: "Tải lại trạng thái stack rồi thử lại.",
+  },
+  "highlight.retry": {
+    title: "Không thử lại được highlight",
+    reason: "Chỉ retry được item Initial đã Failed/Cancelled.",
+    action: "Xóa phiên bản Trim/SegmentAdd lỗi rồi tạo lại, hoặc chọn item Initial.",
+  },
+  "highlight.regenerate": {
+    title: "Không tạo lại được highlight",
+    reason: "Stack đã đủ slot, đang Processing, hoặc máy chủ từ chối.",
+    action: "Xóa một phiên bản cũ rồi thử regenerate.",
+  },
+  "highlight.progress": {
+    title: "Không theo dõi được tiến trình highlight",
+    reason: "Máy chủ tạm thời không phản hồi tiến trình job.",
+    action: "Đợi vài giây — hệ thống sẽ tiếp tục thử.",
   },
 };
 /** Contexts where a curated backend string may be shown (auth only). */
@@ -573,6 +593,9 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "highlight.segment",
   "highlight.delete",
   "highlight.attach",
+  "highlight.cancel",
+  "highlight.retry",
+  "highlight.regenerate",
   "curriculum.module.save",
   "curriculum.course.save",
   "curriculum.activity.save",
@@ -613,6 +636,17 @@ function reasonForHttpStatus(
     }
     if (context.startsWith("curriculum.")) {
       return "Mã hoặc tên đã tồn tại trong chương trình.";
+    }
+    if (context === "highlight.segment") {
+      return "Đoạn mới chồng lên khoảng đã có trong highlight (overlap).";
+    }
+    if (
+      context === "highlight.create" ||
+      context === "highlight.regenerate" ||
+      context === "highlight.trim" ||
+      context === "highlight.retry"
+    ) {
+      return "Stack đang Processing hoặc đã hết slot phiên bản.";
     }
     return "Dữ liệu bị trùng với mục đã có.";
   }

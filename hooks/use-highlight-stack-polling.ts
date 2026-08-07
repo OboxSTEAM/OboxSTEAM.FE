@@ -4,42 +4,56 @@ import { useEffect, useRef, useState } from "react";
 
 import {
   getHighlightStackById,
+  getHighlightVideoProgress,
+  type HighlightVideoProgress,
   type HighlightVideoStack,
 } from "@/lib/api";
 
 export const HIGHLIGHT_POLL_MS = 2500;
 export const HIGHLIGHT_POLL_MAX_MS = 15 * 60 * 1000;
 
-type UseHighlightStackPollingOptions = {
+type UseHighlightItemProgressPollingOptions = {
   stackId: string | null;
-  /** Bump to restart polling for the same stack (after trim/add-segment). */
+  /** Processing item to poll via GET .../progress. */
+  itemId: string | null;
+  /** Bump to restart polling (after trim / add-segment / retry / regenerate). */
   pollNonce?: number;
   enabled?: boolean;
-  onCompleted?: (stack: HighlightVideoStack) => void;
-  onFailed?: (stack: HighlightVideoStack) => void;
-  onTimedOut?: (stackId: string) => void;
+  onProgress?: (progress: HighlightVideoProgress) => void;
+  onTerminal?: (args: {
+    progress: HighlightVideoProgress;
+    stack: HighlightVideoStack;
+  }) => void;
+  onTimedOut?: (stackId: string, itemId: string) => void;
 };
 
-export function useHighlightStackPolling({
+/**
+ * Polls `GET .../items/{itemId}/progress` every ~2.5s.
+ * On terminal status → refreshes `GET .../stacks/{stackId}` once, then stops.
+ */
+export function useHighlightItemProgressPolling({
   stackId,
+  itemId,
   pollNonce = 0,
   enabled = true,
-  onCompleted,
-  onFailed,
+  onProgress,
+  onTerminal,
   onTimedOut,
-}: UseHighlightStackPollingOptions) {
+}: UseHighlightItemProgressPollingOptions) {
+  const [progress, setProgress] = useState<HighlightVideoProgress | null>(null);
   const [stack, setStack] = useState<HighlightVideoStack | null>(null);
   const [isPolling, setIsPolling] = useState(false);
+
   const startedAtRef = useRef<number | null>(null);
-  const onCompletedRef = useRef(onCompleted);
-  const onFailedRef = useRef(onFailed);
+  const onProgressRef = useRef(onProgress);
+  const onTerminalRef = useRef(onTerminal);
   const onTimedOutRef = useRef(onTimedOut);
-  onCompletedRef.current = onCompleted;
-  onFailedRef.current = onFailed;
+  onProgressRef.current = onProgress;
+  onTerminalRef.current = onTerminal;
   onTimedOutRef.current = onTimedOut;
 
   useEffect(() => {
-    if (!enabled || !stackId) {
+    if (!enabled || !stackId || !itemId) {
       setIsPolling(false);
       return;
     }
@@ -48,45 +62,50 @@ export function useHighlightStackPolling({
     let timer: ReturnType<typeof setTimeout> | null = null;
     startedAtRef.current = Date.now();
     setIsPolling(true);
+    setProgress(null);
 
     const tick = async () => {
-      if (cancelled || !stackId) return;
+      if (cancelled || !stackId || !itemId) return;
 
       const elapsed = Date.now() - (startedAtRef.current ?? Date.now());
       if (elapsed > HIGHLIGHT_POLL_MAX_MS) {
         setIsPolling(false);
-        onTimedOutRef.current?.(stackId);
+        onTimedOutRef.current?.(stackId, itemId);
         return;
       }
 
       try {
-        const result = await getHighlightStackById(stackId);
+        const result = await getHighlightVideoProgress(stackId, itemId);
         if (cancelled) return;
         const next = result?.data;
-        if (!next) return;
-        setStack(next);
-
-        const processing =
-          next.hasProcessingItem ||
-          (next.items ?? []).some((item) => item.status === "Processing");
-        const failed = (next.items ?? []).some((item) => item.status === "Failed");
-        const completed = (next.items ?? []).some(
-          (item) => item.status === "Completed" && Boolean(item.videoUrl),
-        );
-
-        if (failed && !processing) {
-          setIsPolling(false);
-          onFailedRef.current?.(next);
+        if (!next) {
+          timer = setTimeout(() => {
+            void tick();
+          }, HIGHLIGHT_POLL_MS);
           return;
         }
 
-        if (!processing && completed) {
-          setIsPolling(false);
-          onCompletedRef.current?.(next);
-          return;
-        }
+        setProgress(next);
+        onProgressRef.current?.(next);
 
-        if (!processing) {
+        const isDone =
+          next.isTerminal ||
+          next.status === "Completed" ||
+          next.status === "Failed" ||
+          next.status === "Cancelled";
+
+        if (isDone) {
+          try {
+            const stackResult = await getHighlightStackById(stackId);
+            if (cancelled) return;
+            const refreshed = stackResult?.data;
+            if (refreshed) {
+              setStack(refreshed);
+              onTerminalRef.current?.({ progress: next, stack: refreshed });
+            }
+          } catch {
+            // Progress is terminal; stack refresh can retry on next open.
+          }
           setIsPolling(false);
           return;
         }
@@ -107,7 +126,7 @@ export function useHighlightStackPolling({
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [stackId, pollNonce, enabled]);
+  }, [stackId, itemId, pollNonce, enabled]);
 
-  return { stack, isPolling, setStack };
+  return { progress, stack, isPolling, setStack, setProgress };
 }

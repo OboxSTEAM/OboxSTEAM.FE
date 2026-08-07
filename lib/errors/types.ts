@@ -117,4 +117,8 @@ export type AppErrorContext =
   | "highlight.trim"
   | "highlight.segment"
   | "highlight.delete"
-  | "highlight.attach";
+  | "highlight.attach"
+  | "highlight.cancel"
+  | "highlight.retry"
+  | "highlight.regenerate"
+  | "highlight.progress";

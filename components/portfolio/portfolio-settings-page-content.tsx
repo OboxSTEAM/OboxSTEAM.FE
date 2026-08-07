@@ -1198,7 +1198,7 @@ export function PortfolioSettingsPageContent() {
           }}
         />
 
-        {activePanel && activePanel !== "highlight" ? (
+        {activePanel ? (
           <PortfolioPanelHost
             title={PANEL_TITLES[activePanel]}
             onClose={() => setActivePanel(null)}
@@ -1229,6 +1229,19 @@ export function PortfolioSettingsPageContent() {
                 onCreateGallerySection={() => handleAddSection("Gallery")}
                 onImportToSection={handleImportClassGalleryToSection}
                 onAttachPortfolioMedia={handleAttachPortfolioMediaToSection}
+              />
+            ) : null}
+            {activePanel === "highlight" ? (
+              <HighlightWorkspace
+                onClose={() => setActivePanel(null)}
+                onSyncedPortfolio={(portfolio) => {
+                  applyServerPortfolio(portfolio);
+                }}
+                onAttachedItem={(item) => {
+                  applyServerItem(item, { commitText: true });
+                  setFocusItemId(item.id);
+                  setActivePanel("items");
+                }}
               />
             ) : null}
           </PortfolioPanelHost>
@@ -1266,16 +1279,6 @@ export function PortfolioSettingsPageContent() {
           />
         </main>
       </div>
-
-      <HighlightWorkspace
-        open={activePanel === "highlight"}
-        onClose={() => setActivePanel(null)}
-        onAttachedItem={(item) => {
-          applyServerItem(item, { commitText: true });
-          setFocusItemId(item.id);
-          setActivePanel("items");
-        }}
-      />
 
       <Dialog
         open={pendingDelete != null}
