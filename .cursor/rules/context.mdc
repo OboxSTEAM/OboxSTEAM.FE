@@ -19,14 +19,14 @@ Student enrolls in program → learns through online/offline sessions → eviden
 
 ## Actors & Roles
 
-| Actor | Key Permissions |
-|-------|----------------|
-| **Guest** | Browse programs, view public student portfolios |
-| **Student** | Enroll, learn, track progress, manage own portfolio |
-| **Parent** | Register on behalf of child, pay, monitor child's progress (linked sub-profile) |
+| Actor                   | Key Permissions                                                                                |
+| -------------------------| ------------------------------------------------------------------------------------------------|
+| **Guest**               | Browse programs, view public student portfolios                                                |
+| **Student**             | Enroll, learn, track progress, manage own portfolio                                            |
+| **Parent**              | Register on behalf of child, pay, monitor child's progress (linked sub-profile)                |
 | **Mentor / Instructor** | Teach sessions, grade students per stage, upload recommendation letters, upload evidence media |
-| **Manager** | OboxSTEAM platform representative; oversees program quality and Mentor accounts |
-| **Admin** | System-level observer; manages users, content, AI pipelines |
+| **Manager**             | OboxSTEAM platform representative; oversees program quality and Mentor accounts                |
+| **Admin**               | System-level observer; manages users, content, AI pipelines                                    |
 
 **Parent–Child linking:** A parent account can create multiple child (Student) sub-profiles. All child activity triggers real-time notifications to the parent.
 

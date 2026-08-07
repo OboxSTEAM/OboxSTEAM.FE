@@ -11,6 +11,7 @@ export const highlightVideoItemStatusSchema = z.enum([
   "Processing",
   "Completed",
   "Failed",
+  "Cancelled",
 ]);
 
 export const highlightTimeRangeSchema = z.object({
@@ -80,6 +81,39 @@ export const highlightVideoStackSchema = z.object({
     .transform((value) => value ?? []),
 });
 
+/** Face-tagged ranges on a class video for add-segment. */
+export const highlightFaceSegmentSchema = z.object({
+  startMs: z.number().int(),
+  endMs: z.number().int(),
+});
+
+/** Tagged source media for a stack student (`GET .../source-media`). */
+export const highlightSourceMediaSchema = z.object({
+  mediaId: z.string().uuid(),
+  fileUrl: z.string().nullable(),
+  classId: z.string().uuid(),
+  classSessionId: z.string().uuid().nullable(),
+  durationMs: z.number().int().nullable(),
+  uploadedAt: z.string().nullable(),
+  faceSegments: z
+    .array(highlightFaceSegmentSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+/** Item job progress (`GET .../items/{itemId}/progress`). */
+export const highlightVideoProgressSchema = z.object({
+  stackId: z.string().uuid(),
+  itemId: z.string().uuid(),
+  status: highlightVideoItemStatusSchema,
+  statusLabel: z.string().nullable(),
+  phase: z.string().nullable(),
+  percentComplete: z.number().int().nullable(),
+  failureReason: z.string().nullable(),
+  videoUrl: z.string().nullable(),
+  isTerminal: z.boolean(),
+});
+
 export type HighlightGenerationKind = z.infer<
   typeof highlightGenerationKindSchema
 >;
@@ -93,3 +127,8 @@ export type HighlightSourceSegment = z.infer<
 export type HighlightSourceClip = z.infer<typeof highlightSourceClipSchema>;
 export type HighlightVideoItem = z.infer<typeof highlightVideoItemSchema>;
 export type HighlightVideoStack = z.infer<typeof highlightVideoStackSchema>;
+export type HighlightFaceSegment = z.infer<typeof highlightFaceSegmentSchema>;
+export type HighlightSourceMedia = z.infer<typeof highlightSourceMediaSchema>;
+export type HighlightVideoProgress = z.infer<
+  typeof highlightVideoProgressSchema
+>;

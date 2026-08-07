@@ -442,7 +442,7 @@
       {
         "path": "/api/highlight-video/stacks",
         "method": "post",
-        "description": "Creates a highlight stack for a student in a class and starts the first video job. If StudentId is omitted, the authenticated user from the JWT is used."
+        "description": "Creates a highlight stack for a student in a class and starts the first video job. If StudentId is omitted, the authenticated user from the JWT is used. Students may only create for themselves; staff may pass studentId."
       },
       {
         "path": "/api/highlight-video/stacks",
@@ -460,6 +460,31 @@
         "description": "Soft-deletes a highlight stack and all of its video items."
       },
       {
+        "path": "/api/highlight-video/stacks/{stackId}/regenerate",
+        "method": "post",
+        "description": "Creates a new Initial item on the stack using the stack strength description. Requires an available slot (max 4) and no concurrent Processing item."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/source-media",
+        "method": "get",
+        "description": "Returns TaggingComplete class videos verified-tagged for the stack student, including face segments when available. Use before POST .../add-segment."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}/progress",
+        "method": "get",
+        "description": "Returns phase (BuildingClips / Encoding / terminal) and optional MediaConvert percent."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}/cancel",
+        "method": "post",
+        "description": "Marks a Processing item as Cancelled and best-effort cancels the MediaConvert job. Late completion webhooks are ignored."
+      },
+      {
+        "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}/retry",
+        "method": "post",
+        "description": "Resets the same Initial item to Processing and re-enqueues generation. Trim/SegmentAdd failures should be deleted and re-run instead."
+      },
+      {
         "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}/trim",
         "method": "post",
         "description": "Starts a trim job that excludes the given time ranges from a completed highlight video."
@@ -472,7 +497,7 @@
       {
         "path": "/api/highlight-video/stacks/{stackId}/items/{itemId}",
         "method": "delete",
-        "description": "Soft-deletes one highlight video item so another can be generated in the stack."
+        "description": "Soft-deletes one highlight video item so another can be generated in the stack. Cannot delete while Processing; Cancelled and Failed items may be deleted."
       },
       {
         "path": "/api/invoices/my",
@@ -771,7 +796,7 @@
       {
         "path": "/api/portfolios/me/media",
         "method": "post",
-        "description": "Uploads a portfolio-scoped image (jpg/jpeg/png, max 5 MB) to blob storage."
+        "description": "Uploads a portfolio-scoped image (jpg/jpeg/png, max 5 MB) or video (mp4/mov, max 2 GB) to blob storage. Videos are stored as-is (no transcoding)."
       },
       {
         "path": "/api/portfolios/me/media",
@@ -1685,7 +1710,19 @@
         "name": "GradeResearchSubmissionRequestDto"
       },
       {
+        "name": "HighlightFaceSegmentDto"
+      },
+      {
         "name": "HighlightSourceClipDto"
+      },
+      {
+        "name": "HighlightSourceMediaDto"
+      },
+      {
+        "name": "HighlightSourceMediaDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "HighlightSourceMediaDtoIReadOnlyListResponseDataContent"
       },
       {
         "name": "HighlightSourceSegmentDto"
@@ -1698,6 +1735,15 @@
       },
       {
         "name": "HighlightVideoItemDtoResponseDataContent"
+      },
+      {
+        "name": "HighlightVideoProgressDto"
+      },
+      {
+        "name": "HighlightVideoProgressDtoApiResult"
+      },
+      {
+        "name": "HighlightVideoProgressDtoResponseDataContent"
       },
       {
         "name": "HighlightVideoStackDto"

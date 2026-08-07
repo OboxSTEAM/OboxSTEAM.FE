@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  highlightSourceMediaSchema,
   highlightVideoItemSchema,
+  highlightVideoProgressSchema,
   highlightVideoStackSchema,
 } from "@/lib/api/entities/highlight-video";
 import {
@@ -28,6 +30,15 @@ export const highlightVideoStackListValueSchema = valueEnvelope(
     .nullish()
     .transform((value) => value ?? []),
 );
+export const highlightSourceMediaListValueSchema = valueEnvelope(
+  z
+    .array(highlightSourceMediaSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+);
+export const highlightVideoProgressValueSchema = valueEnvelope(
+  highlightVideoProgressSchema,
+);
 
 export const createHighlightStackResponseSchema = createApiResponseSchema(
   highlightVideoStackValueSchema,
@@ -40,6 +51,21 @@ export const getHighlightStackByIdResponseSchema = createApiResponseSchema(
 );
 export const deleteHighlightStackResponseSchema = createApiResponseSchema(
   apiValueMessageOnlySchema,
+);
+export const regenerateHighlightStackResponseSchema = createApiResponseSchema(
+  highlightVideoStackValueSchema,
+);
+export const getHighlightSourceMediaResponseSchema = createApiResponseSchema(
+  highlightSourceMediaListValueSchema,
+);
+export const getHighlightVideoProgressResponseSchema = createApiResponseSchema(
+  highlightVideoProgressValueSchema,
+);
+export const cancelHighlightVideoItemResponseSchema = createApiResponseSchema(
+  highlightVideoItemValueSchema,
+);
+export const retryHighlightVideoItemResponseSchema = createApiResponseSchema(
+  highlightVideoItemValueSchema,
 );
 export const trimHighlightVideoResponseSchema = createApiResponseSchema(
   highlightVideoItemValueSchema,
@@ -71,6 +97,36 @@ export type DeleteHighlightStackResponse = z.infer<
   typeof deleteHighlightStackResponseSchema
 >;
 export type DeleteHighlightStackResult = DeleteHighlightStackResponse["value"];
+
+export type RegenerateHighlightStackResponse = z.infer<
+  typeof regenerateHighlightStackResponseSchema
+>;
+export type RegenerateHighlightStackResult =
+  RegenerateHighlightStackResponse["value"];
+
+export type GetHighlightSourceMediaResponse = z.infer<
+  typeof getHighlightSourceMediaResponseSchema
+>;
+export type GetHighlightSourceMediaResult =
+  GetHighlightSourceMediaResponse["value"];
+
+export type GetHighlightVideoProgressResponse = z.infer<
+  typeof getHighlightVideoProgressResponseSchema
+>;
+export type GetHighlightVideoProgressResult =
+  GetHighlightVideoProgressResponse["value"];
+
+export type CancelHighlightVideoItemResponse = z.infer<
+  typeof cancelHighlightVideoItemResponseSchema
+>;
+export type CancelHighlightVideoItemResult =
+  CancelHighlightVideoItemResponse["value"];
+
+export type RetryHighlightVideoItemResponse = z.infer<
+  typeof retryHighlightVideoItemResponseSchema
+>;
+export type RetryHighlightVideoItemResult =
+  RetryHighlightVideoItemResponse["value"];
 
 export type TrimHighlightVideoResponse = z.infer<
   typeof trimHighlightVideoResponseSchema

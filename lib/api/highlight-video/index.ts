@@ -15,44 +15,67 @@ import {
 
 import {
   addHighlightSegmentResponseSchema,
+  cancelHighlightVideoItemResponseSchema,
   createHighlightStackResponseSchema,
   deleteHighlightStackResponseSchema,
   deleteHighlightVideoItemResponseSchema,
+  getHighlightSourceMediaResponseSchema,
   getHighlightStackByIdResponseSchema,
   getHighlightStacksResponseSchema,
+  getHighlightVideoProgressResponseSchema,
+  regenerateHighlightStackResponseSchema,
+  retryHighlightVideoItemResponseSchema,
   trimHighlightVideoResponseSchema,
   type AddHighlightSegmentResult,
+  type CancelHighlightVideoItemResult,
   type CreateHighlightStackResult,
   type DeleteHighlightStackResult,
   type DeleteHighlightVideoItemResult,
+  type GetHighlightSourceMediaResult,
   type GetHighlightStackByIdResult,
   type GetHighlightStacksResult,
+  type GetHighlightVideoProgressResult,
+  type RegenerateHighlightStackResult,
+  type RetryHighlightVideoItemResult,
   type TrimHighlightVideoResult,
 } from "./schemas";
 
 export type {
+  HighlightFaceSegment,
   HighlightGenerationKind,
   HighlightSourceClip,
+  HighlightSourceMedia,
   HighlightSourceSegment,
   HighlightTimeRange,
   HighlightVideoItem,
   HighlightVideoItemStatus,
+  HighlightVideoProgress,
   HighlightVideoStack,
 } from "@/lib/api/entities/highlight-video";
 
 export type {
   AddHighlightSegmentResponse,
   AddHighlightSegmentResult,
+  CancelHighlightVideoItemResponse,
+  CancelHighlightVideoItemResult,
   CreateHighlightStackResponse,
   CreateHighlightStackResult,
   DeleteHighlightStackResponse,
   DeleteHighlightStackResult,
   DeleteHighlightVideoItemResponse,
   DeleteHighlightVideoItemResult,
+  GetHighlightSourceMediaResponse,
+  GetHighlightSourceMediaResult,
   GetHighlightStackByIdResponse,
   GetHighlightStackByIdResult,
   GetHighlightStacksResponse,
   GetHighlightStacksResult,
+  GetHighlightVideoProgressResponse,
+  GetHighlightVideoProgressResult,
+  RegenerateHighlightStackResponse,
+  RegenerateHighlightStackResult,
+  RetryHighlightVideoItemResponse,
+  RetryHighlightVideoItemResult,
   TrimHighlightVideoResponse,
   TrimHighlightVideoResult,
 } from "./schemas";
@@ -146,6 +169,99 @@ export async function deleteHighlightStack(
     `${HIGHLIGHT_VIDEO_BASE}/stacks/${parsedId}`,
     deleteHighlightStackResponseSchema,
     { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/highlight-video/stacks/{stackId}/regenerate` —
+ * create a new Initial item using the stack strength description.
+ */
+export async function regenerateHighlightStack(
+  stackId: string,
+): Promise<RegenerateHighlightStackResult> {
+  const { stackId: parsedId } = highlightStackIdParamSchema.parse({ stackId });
+
+  const response = await apiFetchParsed(
+    `${HIGHLIGHT_VIDEO_BASE}/stacks/${parsedId}/regenerate`,
+    regenerateHighlightStackResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/highlight-video/stacks/{stackId}/source-media` —
+ * tagged class videos for the stack student (use before add-segment).
+ */
+export async function getHighlightSourceMedia(
+  stackId: string,
+): Promise<GetHighlightSourceMediaResult> {
+  const { stackId: parsedId } = highlightStackIdParamSchema.parse({ stackId });
+
+  const response = await apiFetchParsed(
+    `${HIGHLIGHT_VIDEO_BASE}/stacks/${parsedId}/source-media`,
+    getHighlightSourceMediaResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/highlight-video/stacks/{stackId}/items/{itemId}/progress` —
+ * phase (BuildingClips / Encoding / terminal) and optional MediaConvert percent.
+ */
+export async function getHighlightVideoProgress(
+  stackId: string,
+  itemId: string,
+): Promise<GetHighlightVideoProgressResult> {
+  const parsed = highlightStackItemParamsSchema.parse({ stackId, itemId });
+
+  const response = await apiFetchParsed(
+    `${HIGHLIGHT_VIDEO_BASE}/stacks/${parsed.stackId}/items/${parsed.itemId}/progress`,
+    getHighlightVideoProgressResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/highlight-video/stacks/{stackId}/items/{itemId}/cancel` —
+ * mark a Processing item Cancelled and best-effort cancel MediaConvert.
+ */
+export async function cancelHighlightVideoItem(
+  stackId: string,
+  itemId: string,
+): Promise<CancelHighlightVideoItemResult> {
+  const parsed = highlightStackItemParamsSchema.parse({ stackId, itemId });
+
+  const response = await apiFetchParsed(
+    `${HIGHLIGHT_VIDEO_BASE}/stacks/${parsed.stackId}/items/${parsed.itemId}/cancel`,
+    cancelHighlightVideoItemResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/highlight-video/stacks/{stackId}/items/{itemId}/retry` —
+ * retry a Failed/Cancelled Initial item. Trim/SegmentAdd should be deleted and re-run.
+ */
+export async function retryHighlightVideoItem(
+  stackId: string,
+  itemId: string,
+): Promise<RetryHighlightVideoItemResult> {
+  const parsed = highlightStackItemParamsSchema.parse({ stackId, itemId });
+
+  const response = await apiFetchParsed(
+    `${HIGHLIGHT_VIDEO_BASE}/stacks/${parsed.stackId}/items/${parsed.itemId}/retry`,
+    retryHighlightVideoItemResponseSchema,
+    { method: "POST" },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
