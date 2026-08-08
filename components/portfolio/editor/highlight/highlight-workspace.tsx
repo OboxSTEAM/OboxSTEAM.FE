@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   Check,
   Clapperboard,
@@ -132,6 +132,27 @@ function statusTone(status: HighlightVideoItem["status"]): string {
     default:
       return "bg-muted text-muted-foreground";
   }
+}
+
+function ZoneLabel({
+  children,
+  meta,
+}: {
+  children: ReactNode;
+  meta?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <p className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
+        {children}
+      </p>
+      {meta ? (
+        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+          {meta}
+        </span>
+      ) : null}
+    </div>
+  );
 }
 
 function ProgressPanel({
@@ -705,6 +726,10 @@ export function HighlightWorkspace({
     }
   };
 
+  const stackCount = (stacks ?? []).length;
+  const activeTitle =
+    activeStack?.strengthDescription?.trim() || "Highlight đang chọn";
+
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-muted-foreground">
@@ -712,7 +737,7 @@ export function HighlightWorkspace({
         portfolio.
       </p>
 
-      {/* Class picker — list, not Select */}
+      {/* Class picker — original */}
       <div className="space-y-1.5">
         <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           Lớp học
@@ -749,7 +774,9 @@ export function HighlightWorkspace({
                       )}
                       aria-hidden
                     >
-                      {selected ? <Check className="size-2.5" strokeWidth={3} /> : null}
+                      {selected ? (
+                        <Check className="size-2.5" strokeWidth={3} />
+                      ) : null}
                     </span>
                     <span className="min-w-0 flex-1">
                       <span
@@ -771,7 +798,7 @@ export function HighlightWorkspace({
         )}
       </div>
 
-      {/* B — Create */}
+      {/* Create — original */}
       <div className="space-y-2 rounded-xl border border-border bg-card p-3">
         <div className="space-y-1">
           <Label htmlFor="strength-desc" className="text-[11px]">
@@ -806,77 +833,117 @@ export function HighlightWorkspace({
         ) : null}
       </div>
 
-      {/* A — Stacks */}
-      <div className="space-y-1.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-          Stack ({(stacks ?? []).length}/{MAX_VISIBLE_STACKS})
-        </p>
+      {/* Stack picker — redesigned */}
+      <section className="space-y-2" aria-labelledby="highlight-zone-stacks">
+        <ZoneLabel meta={`${stackCount}/${MAX_VISIBLE_STACKS}`}>
+          <span id="highlight-zone-stacks">Stack</span>
+        </ZoneLabel>
         {!classId ? (
           <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
             Chọn lớp ở trên để xem stack.
           </p>
         ) : isLoadingStacks ? (
           <p className="text-xs text-muted-foreground">Đang tải…</p>
-        ) : (stacks ?? []).length === 0 ? (
+        ) : stackCount === 0 ? (
           <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
             Chưa có highlight cho lớp này.
           </p>
         ) : (
-          <ul className="space-y-1.5">
-            {(stacks ?? []).map((stack) => {
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
+            {(stacks ?? []).map((stack, index) => {
               const selected = stack.id === activeStackId;
+              const title =
+                stack.strengthDescription?.trim() || `Stack ${index + 1}`;
               return (
-                <li key={stack.id}>
-                  <div
+                <li
+                  key={stack.id}
+                  className="flex items-stretch border-b border-border last:border-b-0"
+                >
+                  <button
+                    type="button"
                     className={cn(
-                      "flex items-start gap-1 rounded-xl border px-2.5 py-2 transition",
-                      selected
-                        ? "border-[#4FC3F7] bg-[#4FC3F7]/10 ring-1 ring-[#4FC3F7]/40"
-                        : "border-border bg-card hover:border-[#4FC3F7]/40",
+                      "flex min-w-0 flex-1 items-center gap-2.5 px-2.5 py-2.5 text-left transition",
+                      "outline-none focus-visible:bg-[#4FC3F7]/10",
+                      selected ? "bg-[#FAFAF5]" : "hover:bg-muted/50",
                     )}
+                    onClick={() => {
+                      setActiveStackId(stack.id);
+                      setPolledStack(stack);
+                      setEditorPanel("none");
+                      const processing = findProcessingItem(stack);
+                      setPollItemId(processing?.id ?? null);
+                      if (processing) setPollNonce((v) => v + 1);
+                    }}
                   >
-                    <button
-                      type="button"
-                      className="min-w-0 flex-1 text-left"
-                      onClick={() => {
-                        setActiveStackId(stack.id);
-                        setPolledStack(stack);
-                        setEditorPanel("none");
-                        const processing = findProcessingItem(stack);
-                        setPollItemId(processing?.id ?? null);
-                        if (processing) setPollNonce((v) => v + 1);
-                      }}
+                    <span
+                      className={cn(
+                        "flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold tabular-nums",
+                        selected
+                          ? "bg-[#0f7cad] text-white"
+                          : "bg-muted text-muted-foreground",
+                      )}
                     >
-                      <p className="line-clamp-2 text-xs font-semibold leading-snug">
-                        {stack.strengthDescription?.trim() || "Không tiêu đề"}
-                      </p>
-                      <p className="mt-1 text-[10px] text-muted-foreground">
-                        {stack.itemCount}/{stack.maxItems}
-                        {stack.hasProcessingItem ? " · xử lý" : ""}
-                        {stack.canCreateItem ? "" : " · đầy"}
-                      </p>
-                    </button>
-                    <Button
-                      type="button"
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label="Xóa stack"
-                      disabled={isMutating || stack.hasProcessingItem}
-                      onClick={() => void handleDeleteStack(stack.id, stack)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </Button>
-                  </div>
+                      {index + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold text-foreground">
+                        {title}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <span className="tabular-nums">
+                          {stack.itemCount}/{stack.maxItems} bản
+                        </span>
+                        {stack.hasProcessingItem ? (
+                          <span className="inline-flex items-center gap-1 text-[#0f7cad]">
+                            <span className="size-1.5 rounded-full bg-[#4FC3F7]" />
+                            xử lý
+                          </span>
+                        ) : null}
+                        {!stack.canCreateItem && !stack.hasProcessingItem ? (
+                          <span>đầy</span>
+                        ) : null}
+                      </span>
+                    </span>
+                    {selected ? (
+                      <Check
+                        className="size-3.5 shrink-0 text-[#0f7cad]"
+                        strokeWidth={2.5}
+                      />
+                    ) : null}
+                  </button>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    className="my-auto mr-1 shrink-0"
+                    aria-label="Xóa stack"
+                    disabled={isMutating || stack.hasProcessingItem}
+                    onClick={() => void handleDeleteStack(stack.id, stack)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </li>
               );
             })}
           </ul>
         )}
-      </div>
+      </section>
 
-      {/* Active stack detail */}
+      {/* 4 — Stage: only when a stack is selected */}
       {activeStack ? (
-        <div className="space-y-3 border-t border-border pt-3">
+        <section
+          className="space-y-3 rounded-2xl border border-[#E5E5E0] bg-[#F5F5F0] p-3"
+          aria-labelledby="highlight-zone-stage"
+        >
+          <div className="space-y-1">
+            <ZoneLabel meta={`${activeStack.itemCount}/${activeStack.maxItems}`}>
+              <span id="highlight-zone-stage">Chỉnh & đồng bộ</span>
+            </ZoneLabel>
+            <p className="line-clamp-2 text-xs font-medium text-foreground">
+              {activeTitle}
+            </p>
+          </div>
+
           {showProcessing ? (
             <ProgressPanel
               progress={progress}
@@ -904,8 +971,8 @@ export function HighlightWorkspace({
           ) : null}
 
           {completedItem?.videoUrl ? (
-            <div className="space-y-2.5">
-              <div className="overflow-hidden rounded-xl border border-border">
+            <div className="space-y-3">
+              <div className="overflow-hidden rounded-xl bg-[#2D2D2D] ring-1 ring-black/5">
                 <VideoThumb
                   src={completedItem.videoUrl}
                   durationLabel={
@@ -933,7 +1000,7 @@ export function HighlightWorkspace({
                 enableNav={false}
               />
 
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex items-center justify-between gap-2">
                 <span
                   className={cn(
                     "rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
@@ -943,106 +1010,93 @@ export function HighlightWorkspace({
                   {completedItem.generationKind}
                 </span>
                 {durationSeconds > 0 ? (
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-[10px] tabular-nums text-muted-foreground">
                     {formatHighlightTime(durationSeconds)}
                   </span>
                 ) : null}
               </div>
 
-              <div className="flex flex-wrap gap-1.5">
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-8 rounded-lg"
-                  disabled={!canCreateItem || isMutating}
-                  onClick={() => void handleRegenerate()}
-                >
-                  <RefreshCw className="size-3.5" />
-                  Regenerate
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={editorPanel === "trim" ? "secondary" : "outline"}
-                  className="h-8 rounded-lg"
-                  disabled={!canCreateItem || isMutating}
-                  onClick={() =>
-                    setEditorPanel((panel) =>
-                      panel === "trim" ? "none" : "trim",
-                    )
-                  }
-                >
-                  <Scissors className="size-3.5" />
-                  Trim
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant={
-                    editorPanel === "segment" ? "secondary" : "outline"
-                  }
-                  className="h-8 rounded-lg"
-                  disabled={!canCreateItem || isMutating}
-                  onClick={() =>
-                    setEditorPanel((panel) =>
-                      panel === "segment" ? "none" : "segment",
-                    )
-                  }
-                >
-                  <Plus className="size-3.5" />
-                  Segment
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="h-8 rounded-lg"
-                  disabled={isSyncing}
-                  onClick={() => void handleSyncPortfolio()}
-                >
-                  {isSyncing ? (
-                    <Loader2 className="size-3.5 animate-spin" />
-                  ) : null}
-                  Sync portfolio
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 rounded-lg"
-                  disabled={isMutating}
-                  onClick={() => void handleDeleteItem(completedItem)}
-                >
-                  <Trash2 className="size-3.5" />
-                  Xóa bản này
-                </Button>
+              {/* Edit tools — secondary, grouped */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                  Chỉnh sửa
+                </p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-9 rounded-lg bg-white"
+                    disabled={!canCreateItem || isMutating}
+                    onClick={() => void handleRegenerate()}
+                  >
+                    <RefreshCw className="size-3.5" />
+                    Làm lại
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={editorPanel === "trim" ? "secondary" : "outline"}
+                    className="h-9 rounded-lg bg-white"
+                    disabled={!canCreateItem || isMutating}
+                    onClick={() =>
+                      setEditorPanel((panel) =>
+                        panel === "trim" ? "none" : "trim",
+                      )
+                    }
+                  >
+                    <Scissors className="size-3.5" />
+                    Cắt
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={
+                      editorPanel === "segment" ? "secondary" : "outline"
+                    }
+                    className="h-9 rounded-lg bg-white"
+                    disabled={!canCreateItem || isMutating}
+                    onClick={() =>
+                      setEditorPanel((panel) =>
+                        panel === "segment" ? "none" : "segment",
+                      )
+                    }
+                  >
+                    <Plus className="size-3.5" />
+                    Đoạn
+                  </Button>
+                </div>
               </div>
 
               {editorPanel === "trim" ? (
-                <div className="grid gap-2 rounded-xl border border-border bg-muted/30 p-2.5 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <Label htmlFor="trim-start" className="text-[11px]">
-                      Loại bỏ từ (mm:ss)
-                    </Label>
-                    <Input
-                      id="trim-start"
-                      value={trimStart}
-                      onChange={(event) => setTrimStart(event.target.value)}
-                      className="h-8 rounded-lg"
-                    />
+                <div className="grid gap-2 rounded-xl bg-white p-2.5 ring-1 ring-border">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="trim-start" className="text-[11px]">
+                        Loại bỏ từ
+                      </Label>
+                      <Input
+                        id="trim-start"
+                        value={trimStart}
+                        onChange={(event) => setTrimStart(event.target.value)}
+                        className="h-8 rounded-lg"
+                        placeholder="0:00"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="trim-end" className="text-[11px]">
+                        đến
+                      </Label>
+                      <Input
+                        id="trim-end"
+                        value={trimEnd}
+                        onChange={(event) => setTrimEnd(event.target.value)}
+                        className="h-8 rounded-lg"
+                        placeholder="0:05"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="trim-end" className="text-[11px]">
-                      đến
-                    </Label>
-                    <Input
-                      id="trim-end"
-                      value={trimEnd}
-                      onChange={(event) => setTrimEnd(event.target.value)}
-                      className="h-8 rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
                     <Label htmlFor="trim-desc" className="text-[11px]">
                       Ghi chú
                     </Label>
@@ -1058,24 +1112,22 @@ export function HighlightWorkspace({
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 rounded-lg sm:col-span-2"
+                    className="h-8 w-full rounded-lg"
                     disabled={isMutating || isPolling}
                     onClick={() => void handleTrim()}
                   >
                     {isMutating ? (
                       <Loader2 className="size-3.5 animate-spin" />
                     ) : null}
-                    Áp dụng trim
+                    Áp dụng cắt
                   </Button>
                 </div>
               ) : null}
 
               {editorPanel === "segment" ? (
-                <div className="grid gap-2 rounded-xl border border-border bg-muted/30 p-2.5 sm:grid-cols-2">
-                  <div className="space-y-1 sm:col-span-2">
-                    <Label className="text-[11px]">
-                      Source media (đã tag khuôn mặt)
-                    </Label>
+                <div className="grid gap-2 rounded-xl bg-white p-2.5 ring-1 ring-border">
+                  <div className="space-y-1">
+                    <Label className="text-[11px]">Video nguồn</Label>
                     <Select
                       value={segmentMediaId}
                       onValueChange={(value) => {
@@ -1089,13 +1141,13 @@ export function HighlightWorkspace({
                               (item) => item.mediaId === segmentMediaId,
                             );
                             if (isLoadingSourceMedia) return "Đang tải…";
-                            if (!selected) return "Chọn video nguồn";
+                            if (!selected) return "Chọn video";
                             const dur = msToSeconds(selected.durationMs);
-                            return `${selected.mediaId.slice(0, 8)} · ${dur > 0 ? formatHighlightTime(dur) : "—"} · ${selected.faceSegments.length} face seg`;
+                            return `${selected.mediaId.slice(0, 8)} · ${dur > 0 ? formatHighlightTime(dur) : "—"} · ${selected.faceSegments.length} seg`;
                           })()}
                         </span>
                       </SelectTrigger>
-                      <SelectContent className="z-[70]">
+                      <SelectContent className="z-70">
                         {(sourceMedia ?? []).map((item) => {
                           const dur = msToSeconds(item.durationMs);
                           return (
@@ -1112,37 +1164,37 @@ export function HighlightWorkspace({
                     {(sourceMedia ?? []).length === 0 &&
                     !isLoadingSourceMedia ? (
                       <p className="text-[10px] text-muted-foreground">
-                        Chưa có video TaggingComplete đã verify cho học viên này.
+                        Chưa có video đã tag khuôn mặt.
                       </p>
                     ) : null}
                   </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="seg-start" className="text-[11px]">
-                      Bắt đầu
-                    </Label>
-                    <Input
-                      id="seg-start"
-                      value={segmentStart}
-                      onChange={(event) =>
-                        setSegmentStart(event.target.value)
-                      }
-                      className="h-8 rounded-lg"
-                    />
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <Label htmlFor="seg-start" className="text-[11px]">
+                        Bắt đầu
+                      </Label>
+                      <Input
+                        id="seg-start"
+                        value={segmentStart}
+                        onChange={(event) =>
+                          setSegmentStart(event.target.value)
+                        }
+                        className="h-8 rounded-lg"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label htmlFor="seg-end" className="text-[11px]">
+                        Kết thúc
+                      </Label>
+                      <Input
+                        id="seg-end"
+                        value={segmentEnd}
+                        onChange={(event) => setSegmentEnd(event.target.value)}
+                        className="h-8 rounded-lg"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
-                    <Label htmlFor="seg-end" className="text-[11px]">
-                      Kết thúc
-                    </Label>
-                    <Input
-                      id="seg-end"
-                      value={segmentEnd}
-                      onChange={(event) =>
-                        setSegmentEnd(event.target.value)
-                      }
-                      className="h-8 rounded-lg"
-                    />
-                  </div>
-                  <div className="space-y-1 sm:col-span-2">
                     <Label htmlFor="seg-desc" className="text-[11px]">
                       Mô tả
                     </Label>
@@ -1158,7 +1210,7 @@ export function HighlightWorkspace({
                   <Button
                     type="button"
                     size="sm"
-                    className="h-8 rounded-lg sm:col-span-2"
+                    className="h-8 w-full rounded-lg"
                     disabled={isMutating || isPolling || !segmentMediaId}
                     onClick={() => void handleAddSegment()}
                   >
@@ -1166,23 +1218,46 @@ export function HighlightWorkspace({
                   </Button>
                 </div>
               ) : null}
+
+              {/* Goal CTA */}
+              <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
+                <Button
+                  type="button"
+                  className="h-9 w-full rounded-xl"
+                  disabled={isSyncing}
+                  onClick={() => void handleSyncPortfolio()}
+                >
+                  {isSyncing ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : null}
+                  Đồng bộ vào portfolio
+                </Button>
+                <button
+                  type="button"
+                  className="mx-auto block text-[11px] text-muted-foreground underline-offset-2 hover:text-destructive hover:underline disabled:opacity-50"
+                  disabled={isMutating}
+                  onClick={() => void handleDeleteItem(completedItem)}
+                >
+                  Xóa bản video này
+                </button>
+              </div>
             </div>
           ) : !showProcessing && !terminalIssueItem ? (
-            <p className="rounded-lg border border-dashed border-border px-3 py-5 text-center text-xs text-muted-foreground">
-              Chọn stack hoặc tạo highlight mới.
+            <p className="rounded-lg bg-white/70 px-3 py-5 text-center text-xs text-muted-foreground">
+              Video chưa sẵn sàng.
             </p>
           ) : null}
 
           {(activeStack.items ?? []).length > 0 ? (
-            <div className="space-y-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Phiên bản · {activeStack.itemCount}/{activeStack.maxItems}
+            <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                Lịch sử bản
               </p>
-              <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+              <ul className="overflow-hidden rounded-lg bg-white ring-1 ring-border">
                 {sortByRequestedAtDesc(activeStack.items ?? []).map((item) => (
                   <li
                     key={item.id}
-                    className="flex items-center gap-2 px-2.5 py-1.5 text-[11px]"
+                    className="flex items-center gap-2 border-b border-border px-2.5 py-1.5 text-[11px] last:border-b-0"
                   >
                     <span
                       className={cn(
@@ -1192,9 +1267,8 @@ export function HighlightWorkspace({
                     >
                       {item.status}
                     </span>
-                    <span className="min-w-0 flex-1 truncate">
+                    <span className="min-w-0 flex-1 truncate text-muted-foreground">
                       {item.generationKind}
-                      {item.statusLabel ? ` · ${item.statusLabel}` : ""}
                     </span>
                     {item.status !== "Processing" ? (
                       <button
@@ -1212,7 +1286,7 @@ export function HighlightWorkspace({
               </ul>
             </div>
           ) : null}
-        </div>
+        </section>
       ) : null}
     </div>
   );
