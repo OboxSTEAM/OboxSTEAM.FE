@@ -175,6 +175,17 @@ export const importClassGalleryMediaSchema = z.object({
     .optional(),
 });
 
+/** Body for `POST /api/portfolios/me/media/from-highlight-reel`. */
+export const importHighlightReelMediaSchema = z.object({
+  highlightVideoItemId: z.string().uuid("ID highlight video không hợp lệ."),
+  portfolioSectionId: z.string().uuid("ID section portfolio không hợp lệ."),
+  caption: z
+    .string()
+    .max(255, "Chú thích tối đa 255 ký tự.")
+    .nullable()
+    .optional(),
+});
+
 export type PortfolioItemIdParam = z.infer<typeof portfolioItemIdParamSchema>;
 export type PortfolioSectionIdParam = z.infer<typeof portfolioSectionIdParamSchema>;
 export type PortfolioMediaIdParam = z.infer<typeof portfolioMediaIdParamSchema>;
@@ -194,4 +205,7 @@ export type UpdatePortfolioSectionInput = z.infer<typeof updatePortfolioSectionS
 export type ReorderPortfolioSectionsInput = z.infer<typeof reorderPortfolioSectionsSchema>;
 export type ImportClassGalleryMediaInput = z.infer<
   typeof importClassGalleryMediaSchema
+>;
+export type ImportHighlightReelMediaInput = z.infer<
+  typeof importHighlightReelMediaSchema
 >;

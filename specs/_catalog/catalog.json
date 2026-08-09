@@ -35,7 +35,7 @@
       {
         "path": "/api/activities",
         "method": "post",
-        "description": "Creates a new activity with the provided information. Requires SuperAdmin or Manager role."
+        "description": "Creates a new activity with the provided information. Requires Admin or Manager role."
       },
       {
         "path": "/api/activities/{id}",
@@ -45,12 +45,12 @@
       {
         "path": "/api/activities/{id}",
         "method": "put",
-        "description": "Updates the details of a specific activity by its ID. Requires SuperAdmin or Manager role."
+        "description": "Updates the details of a specific activity by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/activities/{id}",
         "method": "delete",
-        "description": "Soft-deletes an activity by its ID. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes an activity by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/activity-progresses",
@@ -75,7 +75,7 @@
       {
         "path": "/api/assignments",
         "method": "post",
-        "description": "Creates a new assignment for a module. Requires SuperAdmin or Manager role."
+        "description": "Creates a new assignment for a module. Requires Admin or Manager role."
       },
       {
         "path": "/api/assignments/{assignmentId}",
@@ -85,12 +85,12 @@
       {
         "path": "/api/assignments/{assignmentId}",
         "method": "put",
-        "description": "Updates an assignment by its ID. Managers/SuperAdmins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach."
+        "description": "Updates an assignment by its ID. Managers/Admins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach."
       },
       {
         "path": "/api/assignments/{assignmentId}",
         "method": "delete",
-        "description": "Soft-deletes an assignment by its ID. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes an assignment by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/assignments/{assignmentId}/submissions",
@@ -115,7 +115,7 @@
       {
         "path": "/api/assignment-submissions/{submissionId}/grade",
         "method": "post",
-        "description": "Mentor, Manager, or SuperAdmin grades a turned-in submission against the assignment's pass score, or returns it for revision. Grading recalculates module and program progress."
+        "description": "Mentor, Manager, or Admin grades a turned-in submission against the assignment's pass score, or returns it for revision. Grading recalculates module and program progress."
       },
       {
         "path": "/api/auth/register",
@@ -199,12 +199,12 @@
       {
         "path": "/api/classes",
         "method": "post",
-        "description": "Creates a new class cohort in Draft status. Requires SuperAdmin or Manager role."
+        "description": "Creates a new class cohort in Draft status. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/with-students/{classId}",
         "method": "get",
-        "description": "Retrieve class details including active enrolled students. Students may view the roster only for a class they are actively enrolled in. SuperAdmin and Manager may view any class roster. Mentors may only view classes they own."
+        "description": "Retrieve class details including active enrolled students. Students may view the roster only for a class they are actively enrolled in. Admin and Manager may view any class roster. Mentors may only view classes they own."
       },
       {
         "path": "/api/classes/with-sessions/{classId}",
@@ -219,7 +219,7 @@
       {
         "path": "/api/classes/{id}",
         "method": "put",
-        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires SuperAdmin or Manager role."
+        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}",
@@ -229,17 +229,17 @@
       {
         "path": "/api/classes/{id}/open",
         "method": "post",
-        "description": "Transitions a class from Draft to Open. Requires SuperAdmin or Manager role."
+        "description": "Transitions a class from Draft to Open. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}/start",
         "method": "post",
-        "description": "Transitions a class from Open to InProgress. Requires SuperAdmin or Manager role."
+        "description": "Transitions a class from Open to InProgress. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}/complete",
         "method": "post",
-        "description": "Transitions a class from InProgress to Completed. Requires SuperAdmin or Manager role."
+        "description": "Transitions a class from InProgress to Completed. Requires Admin or Manager role."
       },
       {
         "path": "/api/class-enrollments",
@@ -317,7 +317,7 @@
       {
         "path": "/api/classes/{classId}/sessions",
         "method": "post",
-        "description": "Schedules a new session for a class cohort. Requires SuperAdmin or Manager role."
+        "description": "Schedules a new session for a class cohort. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{classId}/sessions/with-students/{sessionId}",
@@ -332,12 +332,12 @@
       {
         "path": "/api/classes/{classId}/sessions/{id}",
         "method": "put",
-        "description": "Updates a scheduled class session. Requires SuperAdmin or Manager role."
+        "description": "Updates a scheduled class session. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{classId}/sessions/{id}",
         "method": "delete",
-        "description": "Soft-deletes a class session. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes a class session. Requires Admin or Manager role."
       },
       {
         "path": "/api/courses",
@@ -347,7 +347,7 @@
       {
         "path": "/api/courses",
         "method": "post",
-        "description": "Creates a new course with the provided information. Requires SuperAdmin or Manager role."
+        "description": "Creates a new course with the provided information. Requires Admin or Manager role."
       },
       {
         "path": "/api/courses/{id}",
@@ -357,12 +357,12 @@
       {
         "path": "/api/courses/{id}",
         "method": "put",
-        "description": "Updates the details of a specific course by its ID. Requires SuperAdmin or Manager role."
+        "description": "Updates the details of a specific course by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/courses/{id}",
         "method": "delete",
-        "description": "Soft-deletes a course by its ID. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes a course by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/courses/name/{name}",
@@ -407,7 +407,7 @@
       {
         "path": "/api/experts",
         "method": "post",
-        "description": "Creates a new expert with the provided information. Requires SuperAdmin or Manager role."
+        "description": "Creates a new expert with the provided information. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{id}",
@@ -417,27 +417,27 @@
       {
         "path": "/api/experts/{id}",
         "method": "put",
-        "description": "Updates the details of a specific expert by its ID. Requires SuperAdmin or Manager role."
+        "description": "Updates the details of a specific expert by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{id}",
         "method": "delete",
-        "description": "Soft-deletes an expert by its ID. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes an expert by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{expertId}/programs/{programId}",
         "method": "post",
-        "description": "Assigns a program to an expert. Optional request body may include RoleInBoard. Requires SuperAdmin or Manager role."
+        "description": "Assigns a program to an expert. Optional request body may include RoleInBoard. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{expertId}/programs/{programId}",
         "method": "put",
-        "description": "Updates the program assignment for an expert. Requires SuperAdmin or Manager role."
+        "description": "Updates the program assignment for an expert. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{expertId}/programs/{programId}",
         "method": "delete",
-        "description": "Removes a program assignment from an expert. Requires SuperAdmin or Manager role."
+        "description": "Removes a program assignment from an expert. Requires Admin or Manager role."
       },
       {
         "path": "/api/highlight-video/stacks",
@@ -547,7 +547,7 @@
       {
         "path": "/api/media",
         "method": "get",
-        "description": "Returns paginated media scoped by role. Manager/SuperAdmin/Mentor see all video statuses by default (including Transcoding / PendingTagging). Filter with videoStatus=TaggingComplete for ready-only. Student always sees own tagged ready media; Parent requires linked studentId."
+        "description": "Returns paginated media scoped by role. Manager/Admin/Mentor see all video statuses by default (including Transcoding / PendingTagging). Filter with videoStatus=TaggingComplete for ready-only. Student always sees own tagged ready media; Parent requires linked studentId."
       },
       {
         "path": "/api/media/class/{classId}/gallery",
@@ -562,7 +562,7 @@
       {
         "path": "/api/media/{mediaId}",
         "method": "get",
-        "description": "Returns one media asset including face tags. Access is role-scoped: Manager/SuperAdmin any media; Mentor only mentored classes; Student only ready media they are tagged in; Parent only ready media tagged for linked students."
+        "description": "Returns one media asset including face tags. Access is role-scoped: Manager/Admin any media; Mentor only mentored classes; Student only ready media they are tagged in; Parent only ready media tagged for linked students."
       },
       {
         "path": "/api/media/{mediaId}",
@@ -637,7 +637,7 @@
       {
         "path": "/api/mentors/{id}",
         "method": "get",
-        "description": "Students see only public skills. Managers/SuperAdmins see all skills for staffing."
+        "description": "Students see only public skills. Managers/Admins see all skills for staffing."
       },
       {
         "path": "/api/mentors/{id}/class-limit",
@@ -651,7 +651,7 @@
       {
         "path": "/api/modules",
         "method": "post",
-        "description": "Creates a new module with the provided information. Requires SuperAdmin or Manager role."
+        "description": "Creates a new module with the provided information. Requires Admin or Manager role."
       },
       {
         "path": "/api/modules/{id}",
@@ -661,12 +661,12 @@
       {
         "path": "/api/modules/{id}",
         "method": "put",
-        "description": "Updates the details of a specific module by its ID. Requires SuperAdmin or Manager role."
+        "description": "Updates the details of a specific module by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/modules/{id}",
         "method": "delete",
-        "description": "Soft-deletes a module by its ID. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes a module by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/modules/name/{name}",
@@ -814,6 +814,11 @@
         "description": "Copies ready class-gallery images/videos into independent portfolio media assets. Optionally appends them to an item or section gallery. Does not modify the original class gallery MediaAsset."
       },
       {
+        "path": "/api/portfolios/me/media/from-highlight-reel",
+        "method": "post",
+        "description": "Copies a completed highlight reel into an independent portfolio Video asset and appends it to a Gallery section. Idempotent by highlight video item id. Does not create HighlightReel portfolio items or mutate the highlight job."
+      },
+      {
         "path": "/api/portfolios/me/items",
         "method": "post",
         "description": "Creates ExternalCert, Hobby, Extracurricular, or Project items."
@@ -871,7 +876,7 @@
       {
         "path": "/api/programs",
         "method": "post",
-        "description": "Creates a new program with the provided information. Requires SuperAdmin or Manager role."
+        "description": "Creates a new program with the provided information. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/with-modules",
@@ -891,12 +896,12 @@
       {
         "path": "/api/programs/{id}",
         "method": "put",
-        "description": "Updates the details of a specific program by its ID. Requires SuperAdmin or Manager role."
+        "description": "Updates the details of a specific program by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/{id}",
         "method": "delete",
-        "description": "Soft-deletes a program by its ID. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes a program by its ID. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/name/{name}",
@@ -966,7 +971,7 @@
       {
         "path": "/api/programs/{programId}/reviews/{reviewId}",
         "method": "delete",
-        "description": "Soft-deletes a review. The review owner, SuperAdmin, or Manager may call this endpoint."
+        "description": "Soft-deletes a review. The review owner, Admin, or Manager may call this endpoint."
       },
       {
         "path": "/api/question-banks",
@@ -976,7 +981,7 @@
       {
         "path": "/api/question-banks",
         "method": "post",
-        "description": "Creates a new question bank for a course. Requires SuperAdmin or Manager role."
+        "description": "Creates a new question bank for a course. Requires Admin or Manager role."
       },
       {
         "path": "/api/question-banks/{questionBankId}",
@@ -986,17 +991,17 @@
       {
         "path": "/api/question-banks/{questionBankId}",
         "method": "delete",
-        "description": "Soft-deletes a question bank and its questions. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes a question bank and its questions. Requires Admin or Manager role."
       },
       {
         "path": "/api/question-banks/{questionBankId}/questions/{questionId}",
         "method": "delete",
-        "description": "Soft-deletes a question and its options from a question bank. Requires SuperAdmin or Manager role."
+        "description": "Soft-deletes a question and its options from a question bank. Requires Admin or Manager role."
       },
       {
         "path": "/api/question-banks/{questionBankId}/import",
         "method": "post",
-        "description": "Parses a CSV file and imports valid question rows into the specified question bank. Invalid rows are skipped and returned in the error list. Requires SuperAdmin or Manager role."
+        "description": "Parses a CSV file and imports valid question rows into the specified question bank. Invalid rows are skipped and returned in the error list. Requires Admin or Manager role."
       },
       {
         "path": "/api/assignments/{assignmentId}/quiz/start",
@@ -1006,7 +1011,7 @@
       {
         "path": "/api/submissions/{submissionId}/quiz",
         "method": "get",
-        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and SuperAdmin may access any submission."
+        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and Admin may access any submission."
       },
       {
         "path": "/api/submissions/{submissionId}/quiz/answers",
@@ -1021,12 +1026,12 @@
       {
         "path": "/api/submissions/{submissionId}/quiz/result",
         "method": "get",
-        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and SuperAdmin may access any submission."
+        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and Admin may access any submission."
       },
       {
         "path": "/api/modules/{moduleId}/research-milestones",
         "method": "post",
-        "description": "Creates a research milestone and its linked deliverable assignment. Requires SuperAdmin or Manager."
+        "description": "Creates a research milestone and its linked deliverable assignment. Requires Admin or Manager."
       },
       {
         "path": "/api/modules/{moduleId}/research-milestones",
@@ -1041,27 +1046,27 @@
       {
         "path": "/api/research-milestones/{milestoneId}",
         "method": "put",
-        "description": "Updates milestone fields and the linked deliverable assignment. Requires SuperAdmin or Manager."
+        "description": "Updates milestone fields and the linked deliverable assignment. Requires Admin or Manager."
       },
       {
         "path": "/api/research-milestones/{milestoneId}",
         "method": "delete",
-        "description": "Soft-deletes a milestone (and its linked assignment) when no submissions exist. Requires SuperAdmin or Manager."
+        "description": "Soft-deletes a milestone (and its linked assignment) when no submissions exist. Requires Admin or Manager."
       },
       {
         "path": "/api/research-milestones/{milestoneId}/activities",
         "method": "post",
-        "description": "Links an existing activity to a milestone with required flag and display order. Requires SuperAdmin, Manager, or Mentor."
+        "description": "Links an existing activity to a milestone with required flag and display order. Requires Admin, Manager, or Mentor."
       },
       {
         "path": "/api/research-milestones/{milestoneId}/activities/{activityId}",
         "method": "put",
-        "description": "Updates required flag and/or display order for the activity link. Requires SuperAdmin, Manager, or Mentor."
+        "description": "Updates required flag and/or display order for the activity link. Requires Admin, Manager, or Mentor."
       },
       {
         "path": "/api/research-milestones/{milestoneId}/activities/{activityId}",
         "method": "delete",
-        "description": "Removes (soft-deletes) the activity link from the milestone. Requires SuperAdmin, Manager, or Mentor."
+        "description": "Removes (soft-deletes) the activity link from the milestone. Requires Admin, Manager, or Mentor."
       },
       {
         "path": "/api/module-enrollments/{moduleEnrollmentId}/research-milestones/progress",
@@ -1071,12 +1076,12 @@
       {
         "path": "/api/research-submissions/start",
         "method": "post",
-        "description": "Mentor, Manager, or SuperAdmin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window."
+        "description": "Mentor, Manager, or Admin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window."
       },
       {
         "path": "/api/research-submissions/start-for-class",
         "method": "post",
-        "description": "Mentor, Manager, or SuperAdmin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped."
+        "description": "Mentor, Manager, or Admin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped."
       },
       {
         "path": "/api/research-submissions/{submissionId}",
@@ -1096,7 +1101,7 @@
       {
         "path": "/api/research-submissions/{submissionId}/grade",
         "method": "post",
-        "description": "Mentor, Manager, or SuperAdmin grades a turned-in submission or returns it for revision."
+        "description": "Mentor, Manager, or Admin grades a turned-in submission or returns it for revision."
       },
       {
         "path": "/api/assignments/{assignmentId}/retrospective/start",
@@ -1136,7 +1141,7 @@
       {
         "path": "/api/classes/{classId}/sessions/{sessionId}/attendance/students/{studentId}",
         "method": "put",
-        "description": "Upserts one student's attendance for a class session. Requires Mentor, Manager, or SuperAdmin role."
+        "description": "Upserts one student's attendance for a class session. Requires Mentor, Manager, or Admin role."
       },
       {
         "path": "/api/skills",
@@ -1783,6 +1788,9 @@
       },
       {
         "name": "ImportClassGalleryMediaResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ImportHighlightReelMediaRequestDto"
       },
       {
         "name": "ImportRowErrorDto"

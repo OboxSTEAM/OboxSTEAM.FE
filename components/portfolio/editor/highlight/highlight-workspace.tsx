@@ -33,22 +33,23 @@ import {
   addHighlightSegment,
   cancelHighlightVideoItem,
   createHighlightStack,
+  createPortfolioSection,
   deleteHighlightStack,
   deleteHighlightVideoItem,
   getHighlightSourceMedia,
   getHighlightStackById,
   getHighlightStacks,
   getMyGallery,
+  getMyPortfolio,
+  importHighlightReelMedia,
   regenerateHighlightStack,
   retryHighlightVideoItem,
-  syncPortfolioItems,
   trimHighlightVideo,
   type HighlightSourceMedia,
   type HighlightVideoItem,
   type HighlightVideoProgress,
   type HighlightVideoStack,
-  type Portfolio,
-  type PortfolioItem,
+  type PortfolioSection,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
@@ -63,9 +64,8 @@ const MAX_VISIBLE_STACKS = 3;
 
 type HighlightWorkspaceProps = {
   onClose?: () => void;
-  /** Prefer sync → HighlightReel; kept for backward compat if sync finds a reel. */
-  onAttachedItem?: (item: PortfolioItem) => void;
-  onSyncedPortfolio?: (portfolio: Portfolio) => void;
+  /** After attach: updated Gallery section (mediaAssets include the reel). */
+  onAttachedToGallery?: (section: PortfolioSection) => void;
 };
 
 type ClassOption = {
@@ -294,8 +294,7 @@ function TerminalIssuePanel({
 
 export function HighlightWorkspace({
   onClose,
-  onAttachedItem,
-  onSyncedPortfolio,
+  onAttachedToGallery,
 }: HighlightWorkspaceProps) {
   const reduceMotion = useReducedMotion() ?? false;
   const [classId, setClassId] = useState("");
@@ -697,20 +696,36 @@ export function HighlightWorkspace({
     if (!completedItem?.videoUrl) return;
     setIsSyncing(true);
     try {
-      const result = await syncPortfolioItems();
-      const portfolio = result?.data;
-      if (!portfolio) throw new Error("Không nhận được portfolio sau sync.");
-      onSyncedPortfolio?.(portfolio);
-      const reels = (portfolio.items ?? []).filter(
-        (item) => item.itemType === "HighlightReel",
-      );
-      const focus =
-        reels.find((item) => item.mediaUrl === completedItem.videoUrl) ??
-        [...reels].sort((a, b) => b.displayOrder - a.displayOrder)[0];
-      if (focus) onAttachedItem?.(focus);
+      const portfolioResult = await getMyPortfolio();
+      const portfolio = portfolioResult.data;
+      if (!portfolio) throw new Error("Không tải được portfolio.");
+
+      let gallerySection =
+        (portfolio.sections ?? []).find((section) => section.kind === "Gallery") ??
+        null;
+
+      if (!gallerySection) {
+        const created = await createPortfolioSection({
+          kind: "Gallery",
+          title: null,
+          isVisible: true,
+        });
+        gallerySection = created.data;
+      }
+
+      const caption = activeStack?.strengthDescription?.trim() || null;
+
+      const result = await importHighlightReelMedia({
+        highlightVideoItemId: completedItem.id,
+        portfolioSectionId: gallerySection.id,
+        caption,
+      });
+
+      const section = result.data.section ?? gallerySection;
+      onAttachedToGallery?.(section);
       showAppSuccess({
-        title: "Đã đồng bộ HighlightReel",
-        description: result.message || "Mở tab Mục để chỉnh tiếp.",
+        title: "Đã thêm vào Gallery",
+        description: result.message || "Mở tab Gallery để xem video highlight.",
       });
       onClose?.();
     } catch (error) {
@@ -1065,7 +1080,7 @@ export function HighlightWorkspace({
                   {isSyncing ? (
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : null}
-                  Đồng bộ vào portfolio
+                  Đồng bộ vào Gallery
                 </Button>
                 <button
                   type="button"

@@ -223,8 +223,8 @@ export const portfolioSectionSchema = z.object({
 });
 
 /**
- * `POST /api/portfolios/me/media/from-class-gallery` — copied assets plus
- * optional updated item/section when appended to a gallery.
+ * Shared result for class-gallery and highlight-reel media imports —
+ * copied assets plus optional updated item/section when appended to a gallery.
  */
 export const importClassGalleryMediaResultSchema = z.object({
   assets: z

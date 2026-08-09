@@ -7,6 +7,7 @@ import {
   createPortfolioItemSchema,
   createPortfolioSectionSchema,
   importClassGalleryMediaSchema,
+  importHighlightReelMediaSchema,
   portfolioItemIdParamSchema,
   portfolioMediaIdParamSchema,
   portfolioSectionIdParamSchema,
@@ -24,6 +25,7 @@ import type {
   CreatePortfolioItemInput,
   CreatePortfolioSectionInput,
   ImportClassGalleryMediaInput,
+  ImportHighlightReelMediaInput,
   PortfolioSubdomainAvailabilityQuery,
   ReorderPortfolioItemsInput,
   ReorderPortfolioSectionsInput,
@@ -48,6 +50,7 @@ import {
   getMyPortfolioResponseSchema,
   getPublicPortfolioBySubdomainResponseSchema,
   importClassGalleryMediaResponseSchema,
+  importHighlightReelMediaResponseSchema,
   listPortfolioMediaResponseSchema,
   portfolioSectionValueSchema,
   reorderPortfolioItemsResponseSchema,
@@ -69,6 +72,7 @@ import {
   type GetMyPortfolioResult,
   type GetPublicPortfolioBySubdomainResult,
   type ImportClassGalleryMediaResult,
+  type ImportHighlightReelMediaResult,
   type ListPortfolioMediaResult,
   type ReorderPortfolioItemsResult,
   type ReorderPortfolioSectionsResult,
@@ -102,6 +106,8 @@ export type {
   GetPublicPortfolioBySubdomainResult,
   ImportClassGalleryMediaResponse,
   ImportClassGalleryMediaResult,
+  ImportHighlightReelMediaResponse,
+  ImportHighlightReelMediaResult,
   ListPortfolioMediaResponse,
   ListPortfolioMediaResult,
   ReorderPortfolioItemsResponse,
@@ -162,6 +168,7 @@ export type {
   CreatePortfolioItemInput,
   CreatePortfolioSectionInput,
   ImportClassGalleryMediaInput,
+  ImportHighlightReelMediaInput,
   PortfolioItemIdParam,
   PortfolioMediaAssetRef,
   PortfolioMediaIdParam,
@@ -368,7 +375,7 @@ export async function reorderPortfolioItems(
   return requireApiValue(response.value);
 }
 
-/** `POST /api/portfolios/me/sync` — idempotently imports certificates and graded capstone projects. */
+/** `POST /api/portfolios/me/sync` — idempotently imports certificates and graded capstone projects (not highlight reels). */
 export async function syncPortfolioItems(): Promise<SyncPortfolioItemsResult> {
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me/sync`,
@@ -431,6 +438,25 @@ export async function importClassGalleryMedia(
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me/media/from-class-gallery`,
     importClassGalleryMediaResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/portfolios/me/media/from-highlight-reel` — copy a completed highlight
+ * video into a portfolio Video asset and append it to a Gallery section.
+ * Idempotent by highlight video item id; does not create HighlightReel items.
+ */
+export async function importHighlightReelMedia(
+  input: ImportHighlightReelMediaInput,
+): Promise<ImportHighlightReelMediaResult> {
+  const body = importHighlightReelMediaSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media/from-highlight-reel`,
+    importHighlightReelMediaResponseSchema,
     { method: "POST", body },
   );
   assertApiSuccess(response);

@@ -68,7 +68,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -161,7 +161,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -254,7 +254,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -352,7 +352,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -445,7 +445,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -538,7 +538,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -636,7 +636,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -729,7 +729,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -822,7 +822,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -981,7 +981,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1074,7 +1074,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1167,7 +1167,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1265,7 +1265,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1358,7 +1358,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1451,7 +1451,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1549,7 +1549,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1642,7 +1642,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1735,7 +1735,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1833,7 +1833,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -1926,7 +1926,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2019,7 +2019,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2139,7 +2139,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2232,7 +2232,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2325,7 +2325,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2423,7 +2423,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2516,7 +2516,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2609,7 +2609,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2733,7 +2733,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2826,7 +2826,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -2919,7 +2919,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3017,7 +3017,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3110,7 +3110,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3203,7 +3203,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3301,7 +3301,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3394,7 +3394,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3487,7 +3487,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3585,7 +3585,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3678,7 +3678,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -3771,7 +3771,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -4782,7 +4782,7 @@
           "Activity"
         ],
         "summary": "Create a new activity",
-        "description": "Creates a new activity with the provided information. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new activity with the provided information. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7214,7 +7214,7 @@
           "Activity"
         ],
         "summary": "Update activity information",
-        "description": "Updates the details of a specific activity by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Updates the details of a specific activity by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -8735,7 +8735,7 @@
           "Activity"
         ],
         "summary": "Delete an activity",
-        "description": "Soft-deletes an activity by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes an activity by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -13429,7 +13429,7 @@
           "Assignment"
         ],
         "summary": "Create an assignment",
-        "description": "Creates a new assignment for a module. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new assignment for a module. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -15591,7 +15591,7 @@
           "Assignment"
         ],
         "summary": "Update an assignment",
-        "description": "Updates an assignment by its ID. Managers/SuperAdmins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach.",
+        "description": "Updates an assignment by its ID. Managers/Admins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach.",
         "parameters": [
           {
             "name": "assignmentId",
@@ -17058,7 +17058,7 @@
           "Assignment"
         ],
         "summary": "Delete an assignment",
-        "description": "Soft-deletes an assignment by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes an assignment by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "assignmentId",
@@ -21404,7 +21404,7 @@
           "AssignmentSubmission"
         ],
         "summary": "Grade a non-research assignment submission",
-        "description": "Mentor, Manager, or SuperAdmin grades a turned-in submission against the assignment's pass score, or returns it for revision. Grading recalculates module and program progress.",
+        "description": "Mentor, Manager, or Admin grades a turned-in submission against the assignment's pass score, or returns it for revision. Grading recalculates module and program progress.",
         "parameters": [
           {
             "name": "submissionId",
@@ -22609,7 +22609,7 @@
                   },
                   "role": {
                     "enum": [
-                      "SuperAdmin",
+                      "Admin",
                       "Manager",
                       "Mentor",
                       "Parent",
@@ -22651,7 +22651,7 @@
                   },
                   "role": {
                     "enum": [
-                      "SuperAdmin",
+                      "Admin",
                       "Manager",
                       "Mentor",
                       "Parent",
@@ -22693,7 +22693,7 @@
                   },
                   "role": {
                     "enum": [
-                      "SuperAdmin",
+                      "Admin",
                       "Manager",
                       "Mentor",
                       "Parent",
@@ -22758,7 +22758,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -22851,7 +22851,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -22944,7 +22944,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -23042,7 +23042,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -23135,7 +23135,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -23228,7 +23228,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -23300,7 +23300,7 @@
                     "minLength": 1,
                     "type": "string",
                     "format": "email",
-                    "default": "superadmin@oboxsteam.com"
+                    "default": "admin@oboxsteam.com"
                   },
                   "password": {
                     "minLength": 1,
@@ -23323,7 +23323,7 @@
                     "minLength": 1,
                     "type": "string",
                     "format": "email",
-                    "default": "superadmin@oboxsteam.com"
+                    "default": "admin@oboxsteam.com"
                   },
                   "password": {
                     "minLength": 1,
@@ -23346,7 +23346,7 @@
                     "minLength": 1,
                     "type": "string",
                     "format": "email",
-                    "default": "superadmin@oboxsteam.com"
+                    "default": "admin@oboxsteam.com"
                   },
                   "password": {
                     "minLength": 1,
@@ -32216,7 +32216,7 @@
           "Class"
         ],
         "summary": "Create a new class",
-        "description": "Creates a new class cohort in Draft status. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new class cohort in Draft status. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -33806,7 +33806,7 @@
           "Class"
         ],
         "summary": "Get class with active student roster",
-        "description": "Retrieve class details including active enrolled students. Students may view the roster only for a class they are actively enrolled in. SuperAdmin and Manager may view any class roster. Mentors may only view classes they own.",
+        "description": "Retrieve class details including active enrolled students. Students may view the roster only for a class they are actively enrolled in. Admin and Manager may view any class roster. Mentors may only view classes they own.",
         "parameters": [
           {
             "name": "classId",
@@ -36550,7 +36550,7 @@
           "Class"
         ],
         "summary": "Update class information",
-        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires SuperAdmin or Manager role.",
+        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -38969,7 +38969,7 @@
           "Class"
         ],
         "summary": "Open a class for enrollment",
-        "description": "Transitions a class from Draft to Open. Requires SuperAdmin or Manager role.",
+        "description": "Transitions a class from Draft to Open. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -40240,7 +40240,7 @@
           "Class"
         ],
         "summary": "Start a class",
-        "description": "Transitions a class from Open to InProgress. Requires SuperAdmin or Manager role.",
+        "description": "Transitions a class from Open to InProgress. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -41511,7 +41511,7 @@
           "Class"
         ],
         "summary": "Complete a class",
-        "description": "Transitions a class from InProgress to Completed. Requires SuperAdmin or Manager role.",
+        "description": "Transitions a class from InProgress to Completed. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -56732,7 +56732,7 @@
           "ClassSession"
         ],
         "summary": "Create a class session",
-        "description": "Schedules a new session for a class cohort. Requires SuperAdmin or Manager role.",
+        "description": "Schedules a new session for a class cohort. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "classId",
@@ -59405,7 +59405,7 @@
           "ClassSession"
         ],
         "summary": "Update a class session",
-        "description": "Updates a scheduled class session. Requires SuperAdmin or Manager role.",
+        "description": "Updates a scheduled class session. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "classId",
@@ -60570,7 +60570,7 @@
           "ClassSession"
         ],
         "summary": "Delete a class session",
-        "description": "Soft-deletes a class session. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes a class session. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "classId",
@@ -62191,7 +62191,7 @@
           "Course"
         ],
         "summary": "Create a new course",
-        "description": "Creates a new course with the provided information. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new course with the provided information. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -64475,7 +64475,7 @@
           "Course"
         ],
         "summary": "Update course information",
-        "description": "Updates the details of a specific course by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Updates the details of a specific course by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -65990,7 +65990,7 @@
           "Course"
         ],
         "summary": "Delete a course",
-        "description": "Soft-deletes a course by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes a course by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -74943,7 +74943,7 @@
           "Expert"
         ],
         "summary": "Create a new expert",
-        "description": "Creates a new expert with the provided information. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new expert with the provided information. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -76558,7 +76558,7 @@
           "Expert"
         ],
         "summary": "Update expert information",
-        "description": "Updates the details of a specific expert by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Updates the details of a specific expert by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -77794,7 +77794,7 @@
           "Expert"
         ],
         "summary": "Delete an expert",
-        "description": "Soft-deletes an expert by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes an expert by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -78340,7 +78340,7 @@
           "Expert"
         ],
         "summary": "Add program to expert",
-        "description": "Assigns a program to an expert. Optional request body may include RoleInBoard. Requires SuperAdmin or Manager role.",
+        "description": "Assigns a program to an expert. Optional request body may include RoleInBoard. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "expertId",
@@ -79252,7 +79252,7 @@
           "Expert"
         ],
         "summary": "Update expert program assignment",
-        "description": "Updates the program assignment for an expert. Requires SuperAdmin or Manager role.",
+        "description": "Updates the program assignment for an expert. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "expertId",
@@ -79993,7 +79993,7 @@
           "Expert"
         ],
         "summary": "Remove program from expert",
-        "description": "Removes a program assignment from an expert. Requires SuperAdmin or Manager role.",
+        "description": "Removes a program assignment from an expert. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "expertId",
@@ -97667,7 +97667,7 @@
           "Media"
         ],
         "summary": "Get media by class and/or student",
-        "description": "Returns paginated media scoped by role. Manager/SuperAdmin/Mentor see all video statuses by default (including Transcoding / PendingTagging). Filter with videoStatus=TaggingComplete for ready-only. Student always sees own tagged ready media; Parent requires linked studentId.",
+        "description": "Returns paginated media scoped by role. Manager/Admin/Mentor see all video statuses by default (including Transcoding / PendingTagging). Filter with videoStatus=TaggingComplete for ready-only. Student always sees own tagged ready media; Parent requires linked studentId.",
         "parameters": [
           {
             "name": "classId",
@@ -100566,7 +100566,7 @@
           "Media"
         ],
         "summary": "Get media by id",
-        "description": "Returns one media asset including face tags. Access is role-scoped: Manager/SuperAdmin any media; Mentor only mentored classes; Student only ready media they are tagged in; Parent only ready media tagged for linked students.",
+        "description": "Returns one media asset including face tags. Access is role-scoped: Manager/Admin any media; Mentor only mentored classes; Student only ready media they are tagged in; Parent only ready media tagged for linked students.",
         "parameters": [
           {
             "name": "mediaId",
@@ -106114,7 +106114,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -106359,7 +106359,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -106604,7 +106604,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -106951,7 +106951,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -107196,7 +107196,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -107441,7 +107441,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -110317,7 +110317,7 @@
                                   },
                                   "role": {
                                     "enum": [
-                                      "SuperAdmin",
+                                      "Admin",
                                       "Manager",
                                       "Mentor",
                                       "Parent",
@@ -110596,7 +110596,7 @@
                                   },
                                   "role": {
                                     "enum": [
-                                      "SuperAdmin",
+                                      "Admin",
                                       "Manager",
                                       "Mentor",
                                       "Parent",
@@ -110875,7 +110875,7 @@
                                   },
                                   "role": {
                                     "enum": [
-                                      "SuperAdmin",
+                                      "Admin",
                                       "Manager",
                                       "Mentor",
                                       "Parent",
@@ -111113,7 +111113,7 @@
           "Mentor"
         ],
         "summary": "Get mentor profile by ID",
-        "description": "Students see only public skills. Managers/SuperAdmins see all skills for staffing.",
+        "description": "Students see only public skills. Managers/Admins see all skills for staffing.",
         "parameters": [
           {
             "name": "id",
@@ -111176,7 +111176,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -111421,7 +111421,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -111666,7 +111666,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -111986,7 +111986,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -112231,7 +112231,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -112476,7 +112476,7 @@
                             },
                             "role": {
                               "enum": [
-                                "SuperAdmin",
+                                "Admin",
                                 "Manager",
                                 "Mentor",
                                 "Parent",
@@ -113966,7 +113966,7 @@
           "Module"
         ],
         "summary": "Create a new module",
-        "description": "Creates a new module with the provided information. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new module with the provided information. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -116763,7 +116763,7 @@
           "Module"
         ],
         "summary": "Update module information",
-        "description": "Updates the details of a specific module by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Updates the details of a specific module by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -118596,7 +118596,7 @@
           "Module"
         ],
         "summary": "Delete a module",
-        "description": "Soft-deletes a module by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes a module by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -144797,6 +144797,1759 @@
         }
       }
     },
+    "/api/portfolios/me/media/from-highlight-reel": {
+      "post": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Attach highlight reel video to portfolio Gallery",
+        "description": "Copies a completed highlight reel into an independent portfolio Video asset and appends it to a Gallery section. Idempotent by highlight video item id. Does not create HighlightReel portfolio items or mutate the highlight job.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "required": [
+                  "highlightVideoItemId",
+                  "portfolioSectionId"
+                ],
+                "type": "object",
+                "properties": {
+                  "highlightVideoItemId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "portfolioSectionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "caption": {
+                    "maxLength": 255,
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "text/json": {
+              "schema": {
+                "required": [
+                  "highlightVideoItemId",
+                  "portfolioSectionId"
+                ],
+                "type": "object",
+                "properties": {
+                  "highlightVideoItemId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "portfolioSectionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "caption": {
+                    "maxLength": 255,
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "required": [
+                  "highlightVideoItemId",
+                  "portfolioSectionId"
+                ],
+                "type": "object",
+                "properties": {
+                  "highlightVideoItemId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "portfolioSectionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "caption": {
+                    "maxLength": 255,
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "assets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "type": {
+                                    "enum": [
+                                      "Image",
+                                      "Video"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "fileName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "contentType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "sizeBytes": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
+                            "item": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "itemType": {
+                                  "enum": [
+                                    "CapstoneProject",
+                                    "InternalCertificate",
+                                    "ExternalCert",
+                                    "Hobby",
+                                    "Extracurricular",
+                                    "Project",
+                                    "HighlightReel"
+                                  ],
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "subtitle": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "organization": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "startDate": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "endDate": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mentorEndorsement": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "studentEditedBody": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "externalUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "displayOrder": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "isVisible": {
+                                  "type": "boolean"
+                                },
+                                "source": {
+                                  "enum": [
+                                    "AutoImported",
+                                    "StudentEdited"
+                                  ],
+                                  "type": "string"
+                                },
+                                "accentColor": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isFeatured": {
+                                  "type": "boolean",
+                                  "nullable": true
+                                },
+                                "span": {
+                                  "enum": [
+                                    "Single",
+                                    "Wide",
+                                    "Tall",
+                                    "Large"
+                                  ],
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaAssets": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "Image",
+                                          "Video"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "programId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "programName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "moduleName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "moduleEnrollmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "submissionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "appendixSections": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "submissionId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "sectionTitle": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      },
+                                      "contentText": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "fileUrl": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "assignedGrade": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "nullable": true
+                                      },
+                                      "milestoneTitle": {
+                                        "type": "string",
+                                        "nullable": true
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "section": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "ProjectsGroup",
+                                    "ActivitiesGroup",
+                                    "LinksGroup",
+                                    "RichText",
+                                    "Gallery",
+                                    "Embed"
+                                  ],
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "displayOrder": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "isVisible": {
+                                  "type": "boolean"
+                                },
+                                "contentHtml": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "settingsJson": {
+                                  "maxLength": 2000,
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaAssets": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "Image",
+                                          "Video"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "assets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "type": {
+                                    "enum": [
+                                      "Image",
+                                      "Video"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "fileName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "contentType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "sizeBytes": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
+                            "item": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "itemType": {
+                                  "enum": [
+                                    "CapstoneProject",
+                                    "InternalCertificate",
+                                    "ExternalCert",
+                                    "Hobby",
+                                    "Extracurricular",
+                                    "Project",
+                                    "HighlightReel"
+                                  ],
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "subtitle": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "organization": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "startDate": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "endDate": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mentorEndorsement": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "studentEditedBody": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "externalUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "displayOrder": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "isVisible": {
+                                  "type": "boolean"
+                                },
+                                "source": {
+                                  "enum": [
+                                    "AutoImported",
+                                    "StudentEdited"
+                                  ],
+                                  "type": "string"
+                                },
+                                "accentColor": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isFeatured": {
+                                  "type": "boolean",
+                                  "nullable": true
+                                },
+                                "span": {
+                                  "enum": [
+                                    "Single",
+                                    "Wide",
+                                    "Tall",
+                                    "Large"
+                                  ],
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaAssets": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "Image",
+                                          "Video"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "programId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "programName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "moduleName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "moduleEnrollmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "submissionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "appendixSections": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "submissionId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "sectionTitle": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      },
+                                      "contentText": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "fileUrl": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "assignedGrade": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "nullable": true
+                                      },
+                                      "milestoneTitle": {
+                                        "type": "string",
+                                        "nullable": true
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "section": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "ProjectsGroup",
+                                    "ActivitiesGroup",
+                                    "LinksGroup",
+                                    "RichText",
+                                    "Gallery",
+                                    "Embed"
+                                  ],
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "displayOrder": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "isVisible": {
+                                  "type": "boolean"
+                                },
+                                "contentHtml": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "settingsJson": {
+                                  "maxLength": 2000,
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaAssets": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "Image",
+                                          "Video"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "assets": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "type": {
+                                    "enum": [
+                                      "Image",
+                                      "Video"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "fileName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "contentType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "sizeBytes": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
+                            "item": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "itemType": {
+                                  "enum": [
+                                    "CapstoneProject",
+                                    "InternalCertificate",
+                                    "ExternalCert",
+                                    "Hobby",
+                                    "Extracurricular",
+                                    "Project",
+                                    "HighlightReel"
+                                  ],
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "subtitle": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "organization": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "startDate": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "endDate": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mentorEndorsement": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "studentEditedBody": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "externalUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "displayOrder": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "isVisible": {
+                                  "type": "boolean"
+                                },
+                                "source": {
+                                  "enum": [
+                                    "AutoImported",
+                                    "StudentEdited"
+                                  ],
+                                  "type": "string"
+                                },
+                                "accentColor": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "isFeatured": {
+                                  "type": "boolean",
+                                  "nullable": true
+                                },
+                                "span": {
+                                  "enum": [
+                                    "Single",
+                                    "Wide",
+                                    "Tall",
+                                    "Large"
+                                  ],
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaAssets": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "Image",
+                                          "Video"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "programId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "programName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "moduleName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "moduleEnrollmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "submissionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "appendixSections": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "submissionId": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "sectionTitle": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      },
+                                      "contentText": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "fileUrl": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "assignedGrade": {
+                                        "type": "number",
+                                        "format": "double",
+                                        "nullable": true
+                                      },
+                                      "milestoneTitle": {
+                                        "type": "string",
+                                        "nullable": true
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "section": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "kind": {
+                                  "enum": [
+                                    "ProjectsGroup",
+                                    "ActivitiesGroup",
+                                    "LinksGroup",
+                                    "RichText",
+                                    "Gallery",
+                                    "Embed"
+                                  ],
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "displayOrder": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "isVisible": {
+                                  "type": "boolean"
+                                },
+                                "contentHtml": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "settingsJson": {
+                                  "maxLength": 2000,
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "mediaAssets": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "format": "uuid"
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "type": {
+                                        "enum": [
+                                          "Image",
+                                          "Video"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "caption": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "displayOrder": {
+                                        "type": "integer",
+                                        "format": "int32"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  },
+                                  "nullable": true
+                                },
+                                "createdAt": {
+                                  "type": "string",
+                                  "example": "15/06/2026 14:30:00"
+                                },
+                                "updatedAt": {
+                                  "type": "string",
+                                  "nullable": true,
+                                  "example": "15/06/2026 14:30:00"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/portfolios/me/items": {
       "post": {
         "tags": [
@@ -160848,7 +162601,7 @@
           "Program"
         ],
         "summary": "Create a new program",
-        "description": "Creates a new program with the provided information. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new program with the provided information. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -167568,7 +169321,7 @@
           "Program"
         ],
         "summary": "Update program information",
-        "description": "Updates the details of a specific program by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Updates the details of a specific program by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -169937,7 +171690,7 @@
           "Program"
         ],
         "summary": "Delete a program",
-        "description": "Soft-deletes a program by its ID. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes a program by its ID. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -186595,7 +188348,7 @@
           "ProgramReview"
         ],
         "summary": "Delete a program review",
-        "description": "Soft-deletes a review. The review owner, SuperAdmin, or Manager may call this endpoint.",
+        "description": "Soft-deletes a review. The review owner, Admin, or Manager may call this endpoint.",
         "parameters": [
           {
             "name": "programId",
@@ -188015,7 +189768,7 @@
           "QuestionBank"
         ],
         "summary": "Create a question bank",
-        "description": "Creates a new question bank for a course. Requires SuperAdmin or Manager role.",
+        "description": "Creates a new question bank for a course. Requires Admin or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -189326,7 +191079,7 @@
           "QuestionBank"
         ],
         "summary": "Delete a question bank",
-        "description": "Soft-deletes a question bank and its questions. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes a question bank and its questions. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "questionBankId",
@@ -190003,7 +191756,7 @@
           "QuestionBank"
         ],
         "summary": "Delete a bank question",
-        "description": "Soft-deletes a question and its options from a question bank. Requires SuperAdmin or Manager role.",
+        "description": "Soft-deletes a question and its options from a question bank. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "questionBankId",
@@ -190558,7 +192311,7 @@
           "QuestionBank"
         ],
         "summary": "Import questions from CSV",
-        "description": "Parses a CSV file and imports valid question rows into the specified question bank. Invalid rows are skipped and returned in the error list. Requires SuperAdmin or Manager role.",
+        "description": "Parses a CSV file and imports valid question rows into the specified question bank. Invalid rows are skipped and returned in the error list. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "questionBankId",
@@ -192736,7 +194489,7 @@
           "Quiz"
         ],
         "summary": "Get in-progress quiz",
-        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and SuperAdmin may access any submission.",
+        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and Admin may access any submission.",
         "parameters": [
           {
             "name": "submissionId",
@@ -195769,7 +197522,7 @@
           "Quiz"
         ],
         "summary": "Get quiz result",
-        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and SuperAdmin may access any submission.",
+        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and Admin may access any submission.",
         "parameters": [
           {
             "name": "submissionId",
@@ -196641,7 +198394,7 @@
           "ResearchMilestone"
         ],
         "summary": "Create a research milestone",
-        "description": "Creates a research milestone and its linked deliverable assignment. Requires SuperAdmin or Manager.",
+        "description": "Creates a research milestone and its linked deliverable assignment. Requires Admin or Manager.",
         "parameters": [
           {
             "name": "moduleId",
@@ -200042,7 +201795,7 @@
           "ResearchMilestone"
         ],
         "summary": "Update a research milestone",
-        "description": "Updates milestone fields and the linked deliverable assignment. Requires SuperAdmin or Manager.",
+        "description": "Updates milestone fields and the linked deliverable assignment. Requires Admin or Manager.",
         "parameters": [
           {
             "name": "milestoneId",
@@ -201623,7 +203376,7 @@
           "ResearchMilestone"
         ],
         "summary": "Delete a research milestone",
-        "description": "Soft-deletes a milestone (and its linked assignment) when no submissions exist. Requires SuperAdmin or Manager.",
+        "description": "Soft-deletes a milestone (and its linked assignment) when no submissions exist. Requires Admin or Manager.",
         "parameters": [
           {
             "name": "milestoneId",
@@ -202300,7 +204053,7 @@
           "ResearchMilestone"
         ],
         "summary": "Link an activity to a research milestone",
-        "description": "Links an existing activity to a milestone with required flag and display order. Requires SuperAdmin, Manager, or Mentor.",
+        "description": "Links an existing activity to a milestone with required flag and display order. Requires Admin, Manager, or Mentor.",
         "parameters": [
           {
             "name": "milestoneId",
@@ -203301,7 +205054,7 @@
           "ResearchMilestone"
         ],
         "summary": "Update milestone activity link",
-        "description": "Updates required flag and/or display order for the activity link. Requires SuperAdmin, Manager, or Mentor.",
+        "description": "Updates required flag and/or display order for the activity link. Requires Admin, Manager, or Mentor.",
         "parameters": [
           {
             "name": "milestoneId",
@@ -204163,7 +205916,7 @@
           "ResearchMilestone"
         ],
         "summary": "Unlink activity from a research milestone",
-        "description": "Removes (soft-deletes) the activity link from the milestone. Requires SuperAdmin, Manager, or Mentor.",
+        "description": "Removes (soft-deletes) the activity link from the milestone. Requires Admin, Manager, or Mentor.",
         "parameters": [
           {
             "name": "milestoneId",
@@ -205624,7 +207377,7 @@
           "ResearchSubmission"
         ],
         "summary": "Open a research submission for a student",
-        "description": "Mentor, Manager, or SuperAdmin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window.",
+        "description": "Mentor, Manager, or Admin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -206788,7 +208541,7 @@
           "ResearchSubmission"
         ],
         "summary": "Open research submissions for a class",
-        "description": "Mentor, Manager, or SuperAdmin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped.",
+        "description": "Mentor, Manager, or Admin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -211462,7 +213215,7 @@
           "ResearchSubmission"
         ],
         "summary": "Grade a research submission",
-        "description": "Mentor, Manager, or SuperAdmin grades a turned-in submission or returns it for revision.",
+        "description": "Mentor, Manager, or Admin grades a turned-in submission or returns it for revision.",
         "parameters": [
           {
             "name": "submissionId",
@@ -218109,7 +219862,7 @@
           "SessionAttendance"
         ],
         "summary": "Update session attendance (by student)",
-        "description": "Upserts one student's attendance for a class session. Requires Mentor, Manager, or SuperAdmin role.",
+        "description": "Upserts one student's attendance for a class session. Requires Mentor, Manager, or Admin role.",
         "parameters": [
           {
             "name": "classId",
@@ -249244,6 +250997,29 @@
         },
         "additionalProperties": false
       },
+      "ImportHighlightReelMediaRequestDto": {
+        "required": [
+          "highlightVideoItemId",
+          "portfolioSectionId"
+        ],
+        "type": "object",
+        "properties": {
+          "highlightVideoItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "portfolioSectionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "caption": {
+            "maxLength": 255,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ImportRowErrorDto": {
         "type": "object",
         "properties": {
@@ -249698,7 +251474,7 @@
             "minLength": 1,
             "type": "string",
             "format": "email",
-            "default": "superadmin@oboxsteam.com"
+            "default": "admin@oboxsteam.com"
           },
           "password": {
             "minLength": 1,
@@ -252029,7 +253805,7 @@
           },
           "role": {
             "enum": [
-              "SuperAdmin",
+              "Admin",
               "Manager",
               "Mentor",
               "Parent",
@@ -252252,7 +254028,7 @@
                   },
                   "role": {
                     "enum": [
-                      "SuperAdmin",
+                      "Admin",
                       "Manager",
                       "Mentor",
                       "Parent",
@@ -252483,7 +254259,7 @@
                 },
                 "role": {
                   "enum": [
-                    "SuperAdmin",
+                    "Admin",
                     "Manager",
                     "Mentor",
                     "Parent",
@@ -252740,7 +254516,7 @@
                         },
                         "role": {
                           "enum": [
-                            "SuperAdmin",
+                            "Admin",
                             "Manager",
                             "Mentor",
                             "Parent",
@@ -253011,7 +254787,7 @@
                     },
                     "role": {
                       "enum": [
-                        "SuperAdmin",
+                        "Admin",
                         "Manager",
                         "Mentor",
                         "Parent",
@@ -253260,7 +255036,7 @@
               },
               "role": {
                 "enum": [
-                  "SuperAdmin",
+                  "Admin",
                   "Manager",
                   "Mentor",
                   "Parent",
@@ -276901,7 +278677,7 @@
           },
           "role": {
             "enum": [
-              "SuperAdmin",
+              "Admin",
               "Manager",
               "Mentor",
               "Parent",
@@ -276972,7 +278748,7 @@
                   },
                   "role": {
                     "enum": [
-                      "SuperAdmin",
+                      "Admin",
                       "Manager",
                       "Mentor",
                       "Parent",
@@ -277057,7 +278833,7 @@
               },
               "role": {
                 "enum": [
-                  "SuperAdmin",
+                  "Admin",
                   "Manager",
                   "Mentor",
                   "Parent",
@@ -277114,7 +278890,7 @@
           },
           "role": {
             "enum": [
-              "SuperAdmin",
+              "Admin",
               "Manager",
               "Mentor",
               "Parent",

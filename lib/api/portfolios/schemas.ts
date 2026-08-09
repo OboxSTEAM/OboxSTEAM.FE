@@ -74,6 +74,9 @@ export const deletePortfolioMediaResponseSchema = createApiResponseSchema(
 export const importClassGalleryMediaResponseSchema = createApiResponseSchema(
   importClassGalleryMediaValueSchema,
 );
+/** Same envelope/data shape as class-gallery import. */
+export const importHighlightReelMediaResponseSchema =
+  importClassGalleryMediaResponseSchema;
 
 export const checkPortfolioSubdomainAvailabilityResponseSchema = createApiResponseSchema(
   subdomainAvailabilityValueSchema,
@@ -107,6 +110,9 @@ export type ListPortfolioMediaResponse = z.infer<typeof listPortfolioMediaRespon
 export type DeletePortfolioMediaResponse = z.infer<typeof deletePortfolioMediaResponseSchema>;
 export type ImportClassGalleryMediaResponse = z.infer<
   typeof importClassGalleryMediaResponseSchema
+>;
+export type ImportHighlightReelMediaResponse = z.infer<
+  typeof importHighlightReelMediaResponseSchema
 >;
 export type CheckPortfolioSubdomainAvailabilityResponse = z.infer<
   typeof checkPortfolioSubdomainAvailabilityResponseSchema
@@ -154,6 +160,9 @@ export type ListPortfolioMediaResult = NonNullable<ListPortfolioMediaResponse["v
 export type DeletePortfolioMediaResult = NonNullable<DeletePortfolioMediaResponse["value"]>;
 export type ImportClassGalleryMediaResult = NonNullable<
   ImportClassGalleryMediaResponse["value"]
+>;
+export type ImportHighlightReelMediaResult = NonNullable<
+  ImportHighlightReelMediaResponse["value"]
 >;
 export type CheckPortfolioSubdomainAvailabilityResult = NonNullable<
   CheckPortfolioSubdomainAvailabilityResponse["value"]

@@ -1234,13 +1234,9 @@ export function PortfolioSettingsPageContent() {
             {activePanel === "highlight" ? (
               <HighlightWorkspace
                 onClose={() => setActivePanel(null)}
-                onSyncedPortfolio={(portfolio) => {
-                  applyServerPortfolio(portfolio);
-                }}
-                onAttachedItem={(item) => {
-                  applyServerItem(item, { commitText: true });
-                  setFocusItemId(item.id);
-                  setActivePanel("items");
+                onAttachedToGallery={(section) => {
+                  applyServerSection(section);
+                  setActivePanel("gallery");
                 }}
               />
             ) : null}
