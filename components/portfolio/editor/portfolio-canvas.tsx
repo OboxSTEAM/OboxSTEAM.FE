@@ -1606,6 +1606,25 @@ function CustomSectionEditable({
     closeCaptionEditor();
   };
 
+  const removeAssetById = (assetId: string) => {
+    patch({
+      mediaAssets: (section.mediaAssets ?? []).filter(
+        (asset) => asset.id !== assetId,
+      ),
+    });
+    if (editingAssetId === assetId) closeCaptionEditor();
+  };
+
+  const removeImageAt = (index: number) => {
+    const asset = imageAssets[index];
+    if (asset) removeAssetById(asset.id);
+  };
+
+  const removeVideoAt = (index: number) => {
+    const asset = videoAssets[index];
+    if (asset) removeAssetById(asset.id);
+  };
+
   const handleGalleryDrop = async (
     event: DragEvent<HTMLDivElement>,
   ) => {
@@ -1859,7 +1878,7 @@ function CustomSectionEditable({
                     resolved.isDark ? "text-[#FAFAF5]/45" : "text-[#8A8A84]",
                   )}
                 >
-                  Nhấp vào ảnh để sửa chú thích hoặc gỡ ảnh
+                  Nhấp ảnh để sửa chú thích · dùng ✕ để gỡ
                 </p>
               ) : null}
 
@@ -1868,6 +1887,7 @@ function CustomSectionEditable({
                   slot={resolveGalleryVariant(section, resolved)}
                   images={sectionMediaToGalleryImages(section.mediaAssets)}
                   onImageActivate={openImageCaptionEditor}
+                  onRemove={removeImageAt}
                   isDark={resolved.isDark}
                   primaryColor={resolved.primaryColor}
                   backgroundStyle={resolved.backgroundStyle}
@@ -1882,13 +1902,15 @@ function CustomSectionEditable({
                       resolved.isDark ? "text-[#FAFAF5]/45" : "text-[#8A8A84]",
                     )}
                   >
-                    Nhấp video để xem lớn · dùng &quot;Sửa chú thích&quot; để chỉnh
+                    Nhấp video để xem lớn · &quot;Sửa chú thích&quot; để chỉnh ·
+                    ✕ để gỡ
                   </p>
                   <PortfolioVideoGallery
                     slot={resolveVideoVariant(section)}
                     videos={sectionMediaToGalleryVideos(section.mediaAssets)}
                     isDark={resolved.isDark}
                     onVideoEdit={openVideoCaptionEditor}
+                    onRemove={removeVideoAt}
                   />
                 </div>
               ) : null}

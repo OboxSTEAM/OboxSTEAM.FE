@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { useReducedMotion } from "motion/react";
 import type { CSSProperties, ReactNode } from "react";
 
+import { GalleryMediaRemoveButton } from "@/components/portfolio/editor/gallery-media-remove-button";
 import type {
   BackgroundSlotId,
   CardSlotId,
@@ -417,6 +418,7 @@ export function PortfolioGallery({
   images,
   className,
   onImageActivate,
+  onRemove,
   isDark = false,
   primaryColor,
   backgroundStyle,
@@ -426,13 +428,15 @@ export function PortfolioGallery({
   className?: string;
   /** When set (editor), clicking an image opens caption edit. */
   onImageActivate?: (index: number) => void;
+  /** When set (editor), shows an always-visible remove chip per image. */
+  onRemove?: (index: number) => void;
   isDark?: boolean;
   primaryColor?: string;
   backgroundStyle?: ResolvedPortfolioTheme["backgroundStyle"];
 }) {
   const animate = useShouldAnimate();
   const items = images.filter((image) => Boolean(image.src));
-  const isEditable = Boolean(onImageActivate);
+  const isEditable = Boolean(onImageActivate || onRemove);
   const domeSurface = resolveGalleryDomeSurface({
     isDark,
     primaryColor,
@@ -455,36 +459,66 @@ export function PortfolioGallery({
 
   if (slot === "DomeGallery" && animate) {
     return (
-      <div
-        className={cn(
-          "h-[220px] w-full overflow-hidden rounded-xl @min-[640px]/pf:h-[320px] @min-[640px]/pf:rounded-2xl @min-[768px]/pf:h-[380px]",
-          isEditable && "cursor-pointer",
-          className,
-        )}
-        style={{ backgroundColor: domeSurface.fill }}
-        onClick={
-          onImageActivate
-            ? (event) => {
-                const img = (event.target as HTMLElement).closest("img");
-                if (!img) return;
-                const src = img.getAttribute("src");
-                const index = items.findIndex((item) => item.src === src);
-                if (index >= 0) onImageActivate(index);
-              }
-            : undefined
-        }
-      >
-        <DomeGallery
-          images={items.map((image) => ({
-            src: image.src,
-            alt: image.caption?.trim() || image.alt || "",
-          }))}
-          fit={0.72}
-          minRadius={320}
-          maxRadius={620}
-          grayscale={false}
-          overlayBlurColor={domeSurface.overlay}
-        />
+      <div className={cn("space-y-2", className)}>
+        <div
+          className={cn(
+            "h-[220px] w-full overflow-hidden rounded-xl @min-[640px]/pf:h-[320px] @min-[640px]/pf:rounded-2xl @min-[768px]/pf:h-[380px]",
+            isEditable && "cursor-pointer",
+          )}
+          style={{ backgroundColor: domeSurface.fill }}
+          onClick={
+            onImageActivate
+              ? (event) => {
+                  if (
+                    (event.target as HTMLElement).closest(
+                      "[data-gallery-remove]",
+                    )
+                  ) {
+                    return;
+                  }
+                  const img = (event.target as HTMLElement).closest("img");
+                  if (!img) return;
+                  const src = img.getAttribute("src");
+                  const index = items.findIndex((item) => item.src === src);
+                  if (index >= 0) onImageActivate(index);
+                }
+              : undefined
+          }
+        >
+          <DomeGallery
+            images={items.map((image) => ({
+              src: image.src,
+              alt: image.caption?.trim() || image.alt || "",
+            }))}
+            fit={0.72}
+            minRadius={320}
+            maxRadius={620}
+            grayscale={false}
+            overlayBlurColor={domeSurface.overlay}
+          />
+        </div>
+        {onRemove ? (
+          <div className="flex gap-2 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {items.map((image, index) => (
+              <div
+                key={`dome-remove-${image.src}-${index}`}
+                data-gallery-remove
+                className="relative size-14 shrink-0"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={image.src}
+                  alt=""
+                  className="size-14 rounded-lg object-cover ring-1 ring-[#E5E5E0]"
+                />
+                <GalleryMediaRemoveButton
+                  label={`Gỡ ảnh ${index + 1}`}
+                  onClick={() => onRemove(index)}
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
       </div>
     );
   }
@@ -496,6 +530,7 @@ export function PortfolioGallery({
         reduceMotion={!animate}
         className={className}
         onImageActivate={onImageActivate}
+        onRemove={onRemove}
       />
     );
   }
@@ -505,8 +540,8 @@ export function PortfolioGallery({
     <div
       className={cn(
         slot === "Carousel"
-          ? "flex gap-2.5 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x @min-[640px]/pf:gap-3 [&::-webkit-scrollbar]:hidden"
-          : "grid grid-cols-2 gap-2.5 @min-[640px]/pf:grid-cols-3 @min-[640px]/pf:gap-3",
+          ? "flex gap-2.5 overflow-x-auto overscroll-x-contain pt-2 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x @min-[640px]/pf:gap-3 [&::-webkit-scrollbar]:hidden"
+          : "grid grid-cols-2 gap-2.5 pt-1 @min-[640px]/pf:grid-cols-3 @min-[640px]/pf:gap-3",
         className,
       )}
     >
@@ -517,7 +552,7 @@ export function PortfolioGallery({
           <figure
             key={`${image.src}-${index}`}
             className={cn(
-              "min-w-0",
+              "relative min-w-0",
               slot === "Carousel" &&
                 "w-[min(16rem,78%)] shrink-0 snap-center @min-[640px]/pf:w-72",
             )}
@@ -543,6 +578,12 @@ export function PortfolioGallery({
                 )}
               />
             </button>
+            {onRemove ? (
+              <GalleryMediaRemoveButton
+                label={`Gỡ ảnh ${index + 1}`}
+                onClick={() => onRemove(index)}
+              />
+            ) : null}
             <GalleryCaption caption={caption} isDark={isDark} />
           </figure>
         );

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { GalleryMediaRemoveButton } from "@/components/portfolio/editor/gallery-media-remove-button";
 import { cn } from "@/lib/utils";
 
 export type AccordionGalleryItem = {
@@ -16,6 +17,7 @@ type AccordionGalleryProps = {
   /** When true, use a quieter hover (no auto-expand motion). */
   reduceMotion?: boolean;
   onImageActivate?: (index: number) => void;
+  onRemove?: (index: number) => void;
 };
 
 /**
@@ -27,6 +29,7 @@ export default function AccordionGallery({
   className,
   reduceMotion = false,
   onImageActivate,
+  onRemove,
 }: AccordionGalleryProps) {
   const [active, setActive] = useState(0);
   const safeItems = items.filter((item) => Boolean(item.src));
@@ -48,54 +51,66 @@ export default function AccordionGallery({
         const caption = item.caption?.trim() || item.alt?.trim() || "";
 
         return (
-          <button
+          <div
             key={`${item.src}-${index}`}
-            type="button"
-            aria-label={caption || `Ảnh ${index + 1}`}
-            aria-pressed={isActive}
-            onMouseEnter={() => setActive(index)}
-            onFocus={() => setActive(index)}
-            onClick={() => {
-              setActive(index);
-              onImageActivate?.(index);
-            }}
             className={cn(
-              "relative min-w-0 overflow-hidden rounded-xl outline-none sm:rounded-2xl",
-              "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/60",
+              "relative min-w-0 overflow-hidden",
               "transition-[flex-grow] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]",
               isActive ? "flex-[3.2]" : "flex-[0.7] sm:flex-[0.85]",
             )}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={item.src}
-              alt={caption || ""}
+            <button
+              type="button"
+              aria-label={caption || `Ảnh ${index + 1}`}
+              aria-pressed={isActive}
+              onMouseEnter={() => setActive(index)}
+              onFocus={() => setActive(index)}
+              onClick={() => {
+                setActive(index);
+                onImageActivate?.(index);
+              }}
               className={cn(
-                "absolute inset-0 size-full object-cover",
-                !reduceMotion &&
-                  "transition-transform duration-700 ease-out",
-                isActive && !reduceMotion && "scale-105",
+                "relative size-full overflow-hidden rounded-xl outline-none sm:rounded-2xl",
+                "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/60",
               )}
-            />
-            <div
-              className={cn(
-                "absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent",
-                "transition-opacity duration-300",
-                isActive ? "opacity-100" : "opacity-40",
-              )}
-            />
-            {caption ? (
-              <span
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={item.src}
+                alt={caption || ""}
                 className={cn(
-                  "absolute inset-x-0 bottom-0 p-3 text-left text-sm font-medium text-white",
-                  "transition-opacity duration-300",
-                  isActive ? "opacity-100" : "opacity-0",
+                  "absolute inset-0 size-full object-cover",
+                  !reduceMotion &&
+                    "transition-transform duration-700 ease-out",
+                  isActive && !reduceMotion && "scale-105",
                 )}
-              >
-                <span className="line-clamp-2 drop-shadow-sm">{caption}</span>
-              </span>
+              />
+              <div
+                className={cn(
+                  "absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent",
+                  "transition-opacity duration-300",
+                  isActive ? "opacity-100" : "opacity-40",
+                )}
+              />
+              {caption ? (
+                <span
+                  className={cn(
+                    "absolute inset-x-0 bottom-0 p-3 text-left text-sm font-medium text-white",
+                    "transition-opacity duration-300",
+                    isActive ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  <span className="line-clamp-2 drop-shadow-sm">{caption}</span>
+                </span>
+              ) : null}
+            </button>
+            {onRemove ? (
+              <GalleryMediaRemoveButton
+                label={`Gỡ ảnh ${index + 1}`}
+                onClick={() => onRemove(index)}
+              />
             ) : null}
-          </button>
+          </div>
         );
       })}
     </div>

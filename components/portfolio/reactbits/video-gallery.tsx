@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import {
   MediaLightbox,
   type MediaLightboxItem,
 } from "@/components/media/media-lightbox";
 import { VideoThumb } from "@/components/media/video-thumb";
+import { GalleryMediaRemoveButton } from "@/components/portfolio/editor/gallery-media-remove-button";
 import type { VideoSlotId } from "@/lib/portfolio/theme-presets";
 import { cn } from "@/lib/utils";
 
@@ -29,6 +30,8 @@ type PortfolioVideoGalleryProps = {
    * opens the lightbox.
    */
   onVideoEdit?: (index: number) => void;
+  /** Editor: always-visible remove chip on each video tile. */
+  onRemove?: (index: number) => void;
 };
 
 function toLightboxItems(videos: GalleryVideo[]): MediaLightboxItem[] {
@@ -62,6 +65,28 @@ function VideoCaption({
   );
 }
 
+function VideoTileShell({
+  index,
+  onRemove,
+  children,
+}: {
+  index: number;
+  onRemove?: (index: number) => void;
+  children: ReactNode;
+}) {
+  return (
+    <div className="relative min-w-0">
+      {children}
+      {onRemove ? (
+        <GalleryMediaRemoveButton
+          label={`Gỡ video ${index + 1}`}
+          onClick={() => onRemove(index)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Multi-style video showcase for Gallery sections.
  * Styles: VideoGrid · Filmstrip · FeaturedReel (Playlist later).
@@ -72,6 +97,7 @@ export function PortfolioVideoGallery({
   className,
   isDark = false,
   onVideoEdit,
+  onRemove,
 }: PortfolioVideoGalleryProps) {
   const items = videos.filter((video) => Boolean(video.src));
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
@@ -110,16 +136,18 @@ export function PortfolioVideoGallery({
     return (
       <div className={cn("space-y-3", className)}>
         <figure>
-          <VideoThumb
-            src={featured.src}
-            durationLabel={featured.durationLabel}
-            aspectClassName="aspect-video"
-            className="w-full rounded-2xl"
-            onClick={() => openPreview(0)}
-            aria-label={
-              featured.caption?.trim() || featured.alt || "Xem video nổi bật"
-            }
-          />
+          <VideoTileShell index={0} onRemove={onRemove}>
+            <VideoThumb
+              src={featured.src}
+              durationLabel={featured.durationLabel}
+              aspectClassName="aspect-video"
+              className="w-full rounded-2xl"
+              onClick={() => openPreview(0)}
+              aria-label={
+                featured.caption?.trim() || featured.alt || "Xem video nổi bật"
+              }
+            />
+          </VideoTileShell>
           <VideoCaption caption={featured.caption ?? featured.alt} isDark={isDark} />
           {onVideoEdit ? (
             <button
@@ -136,7 +164,7 @@ export function PortfolioVideoGallery({
         </figure>
 
         {strip.length > 0 ? (
-          <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x [&::-webkit-scrollbar]:hidden">
+          <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain pt-2 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] snap-x [&::-webkit-scrollbar]:hidden">
             {strip.map((video, offset) => {
               const index = offset + 1;
               return (
@@ -144,12 +172,14 @@ export function PortfolioVideoGallery({
                   key={video.id ?? `${video.src}-${index}`}
                   className="w-[min(11rem,72%)] shrink-0 snap-start"
                 >
-                  <VideoThumb
-                    src={video.src}
-                    durationLabel={video.durationLabel}
-                    className="w-full"
-                    onClick={() => openPreview(index)}
-                  />
+                  <VideoTileShell index={index} onRemove={onRemove}>
+                    <VideoThumb
+                      src={video.src}
+                      durationLabel={video.durationLabel}
+                      className="w-full"
+                      onClick={() => openPreview(index)}
+                    />
+                  </VideoTileShell>
                   <VideoCaption
                     caption={video.caption ?? video.alt}
                     isDark={isDark}
@@ -179,18 +209,20 @@ export function PortfolioVideoGallery({
   if (slot === "Filmstrip") {
     return (
       <div className={cn(className)}>
-        <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x @min-[640px]/pf:gap-3 [&::-webkit-scrollbar]:hidden">
+        <div className="flex gap-2.5 overflow-x-auto overscroll-x-contain pt-2 pb-2 [-ms-overflow-style:none] [scrollbar-width:none] snap-x @min-[640px]/pf:gap-3 [&::-webkit-scrollbar]:hidden">
           {items.map((video, index) => (
             <figure
               key={video.id ?? `${video.src}-${index}`}
               className="w-[min(18rem,82%)] shrink-0 snap-center @min-[640px]/pf:w-80"
             >
-              <VideoThumb
-                src={video.src}
-                durationLabel={video.durationLabel}
-                className="w-full rounded-2xl"
-                onClick={() => openPreview(index)}
-              />
+              <VideoTileShell index={index} onRemove={onRemove}>
+                <VideoThumb
+                  src={video.src}
+                  durationLabel={video.durationLabel}
+                  className="w-full rounded-2xl"
+                  onClick={() => openPreview(index)}
+                />
+              </VideoTileShell>
               <VideoCaption
                 caption={video.caption ?? video.alt}
                 isDark={isDark}
@@ -218,15 +250,17 @@ export function PortfolioVideoGallery({
   // VideoGrid (default)
   return (
     <div className={cn(className)}>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 pt-1 sm:grid-cols-2">
         {items.map((video, index) => (
           <figure key={video.id ?? `${video.src}-${index}`} className="min-w-0">
-            <VideoThumb
-              src={video.src}
-              durationLabel={video.durationLabel}
-              className="w-full rounded-2xl"
-              onClick={() => openPreview(index)}
-            />
+            <VideoTileShell index={index} onRemove={onRemove}>
+              <VideoThumb
+                src={video.src}
+                durationLabel={video.durationLabel}
+                className="w-full rounded-2xl"
+                onClick={() => openPreview(index)}
+              />
+            </VideoTileShell>
             <VideoCaption
               caption={video.caption ?? video.alt}
               isDark={isDark}
