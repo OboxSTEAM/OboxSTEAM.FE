@@ -14,20 +14,16 @@ import {
 } from "lucide-react";
 import { useReducedMotion } from "motion/react";
 
+import { HighlightSegmentDialog } from "@/components/portfolio/editor/highlight/highlight-segment-dialog";
+import { HighlightSourceClipsStrip } from "@/components/portfolio/editor/highlight/highlight-source-clips-strip";
+import { HighlightTrimDialog } from "@/components/portfolio/editor/highlight/highlight-trim-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Progress,
   ProgressLabel,
   ProgressValue,
 } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaLightbox } from "@/components/media/media-lightbox";
 import { VideoThumb } from "@/components/media/video-thumb";
@@ -58,7 +54,6 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   formatHighlightTime,
   msToSeconds,
-  parseHighlightTime,
   toHighlightApiTime,
 } from "@/lib/portfolio/highlight-time";
 import { cn } from "@/lib/utils";
@@ -78,7 +73,7 @@ type ClassOption = {
   label: string;
 };
 
-type EditorPanel = "none" | "trim" | "segment";
+type EditorDialog = "none" | "trim" | "segment";
 
 function sortByRequestedAtDesc(items: HighlightVideoItem[]): HighlightVideoItem[] {
   return [...items].sort((a, b) => {
@@ -312,17 +307,8 @@ export function HighlightWorkspace({
   const [isMutating, setIsMutating] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const [editorPanel, setEditorPanel] = useState<EditorPanel>("none");
+  const [editorDialog, setEditorDialog] = useState<EditorDialog>("none");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-
-  const [trimStart, setTrimStart] = useState("0:00");
-  const [trimEnd, setTrimEnd] = useState("0:05");
-  const [trimDescription, setTrimDescription] = useState("");
-
-  const [segmentMediaId, setSegmentMediaId] = useState("");
-  const [segmentStart, setSegmentStart] = useState("0:00");
-  const [segmentEnd, setSegmentEnd] = useState("0:05");
-  const [segmentDescription, setSegmentDescription] = useState("");
 
   const { data: classSeed, isLoading: isLoadingClasses } = useClientFetch({
     enabled: true,
@@ -440,26 +426,31 @@ export function HighlightWorkspace({
   const { data: sourceMedia, isLoading: isLoadingSourceMedia } = useClientFetch({
     enabled:
       Boolean(activeStackId) &&
-      editorPanel === "segment" &&
+      editorDialog === "segment" &&
       Boolean(completedItem),
     fetcher: async () => {
       if (!activeStackId) return [] as HighlightSourceMedia[];
       const result = await getHighlightSourceMedia(activeStackId);
       return result?.data ?? [];
     },
-    deps: [activeStackId, editorPanel, completedItem?.id],
+    deps: [activeStackId, editorDialog, completedItem?.id],
     onError: (error) => showAppErrorFromUnknown(error, "highlight.load"),
   });
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape" && !isPolling && !isCreating) {
+      if (
+        event.key === "Escape" &&
+        editorDialog === "none" &&
+        !isPolling &&
+        !isCreating
+      ) {
         onClose?.();
       }
     }
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose, isPolling, isCreating]);
+  }, [onClose, isPolling, isCreating, editorDialog]);
 
   /** Resume progress poll when selecting a stack that is already Processing. */
   useEffect(() => {
@@ -476,7 +467,7 @@ export function HighlightWorkspace({
     setActiveStackId(null);
     setPolledStack(null);
     setPollItemId(null);
-    setEditorPanel("none");
+    setEditorDialog("none");
   };
 
   const beginPollForStack = (stack: HighlightVideoStack) => {
@@ -517,7 +508,7 @@ export function HighlightWorkspace({
         [stack, ...(current ?? [])].slice(0, MAX_VISIBLE_STACKS),
       );
       beginPollForStack(stack);
-      setEditorPanel("none");
+      setEditorDialog("none");
       showAppSuccess({ title: "Đã bắt đầu tạo highlight" });
     } catch (error) {
       showAppErrorFromUnknown(error, "highlight.create");
@@ -593,11 +584,13 @@ export function HighlightWorkspace({
     }
   };
 
-  const handleTrim = async () => {
+  const handleTrim = async (payload: {
+    startSeconds: number;
+    endSeconds: number;
+    description: string;
+  }) => {
     if (!activeStackId || !completedItem || !canCreateItem) return;
-    const start = parseHighlightTime(trimStart);
-    const end = parseHighlightTime(trimEnd);
-    if (start == null || end == null || end <= start) {
+    if (payload.endSeconds <= payload.startSeconds) {
       showAppErrorFromUnknown(
         new Error("Khoảng cắt không hợp lệ."),
         "highlight.trim",
@@ -607,18 +600,18 @@ export function HighlightWorkspace({
     setIsMutating(true);
     try {
       const result = await trimHighlightVideo(activeStackId, completedItem.id, {
-        trimDescription: trimDescription.trim() || null,
+        trimDescription: payload.description || null,
         excludeRanges: [
           {
-            start: toHighlightApiTime(start),
-            end: toHighlightApiTime(end),
+            start: toHighlightApiTime(payload.startSeconds),
+            end: toHighlightApiTime(payload.endSeconds),
           },
         ],
       });
       const item = result?.data;
       if (!item) throw new Error("Không nhận được item sau trim.");
       beginPollForItem(activeStackId, item, activeStack);
-      setEditorPanel("none");
+      setEditorDialog("none");
       showAppSuccess({ title: "Đã gửi yêu cầu cắt video" });
     } catch (error) {
       showAppErrorFromUnknown(error, "highlight.trim");
@@ -627,13 +620,14 @@ export function HighlightWorkspace({
     }
   };
 
-  const handleAddSegment = async () => {
-    if (!activeStackId || !completedItem || !segmentMediaId || !canCreateItem) {
-      return;
-    }
-    const start = parseHighlightTime(segmentStart);
-    const end = parseHighlightTime(segmentEnd);
-    if (start == null || end == null || end <= start) {
+  const handleAddSegment = async (payload: {
+    mediaId: string;
+    startSeconds: number;
+    endSeconds: number;
+    description: string;
+  }) => {
+    if (!activeStackId || !completedItem || !canCreateItem) return;
+    if (payload.endSeconds <= payload.startSeconds) {
       showAppErrorFromUnknown(
         new Error("Khoảng đoạn không hợp lệ."),
         "highlight.segment",
@@ -646,16 +640,16 @@ export function HighlightWorkspace({
         activeStackId,
         completedItem.id,
         {
-          mediaId: segmentMediaId,
-          start: toHighlightApiTime(start),
-          end: toHighlightApiTime(end),
-          description: segmentDescription.trim() || null,
+          mediaId: payload.mediaId,
+          start: toHighlightApiTime(payload.startSeconds),
+          end: toHighlightApiTime(payload.endSeconds),
+          description: payload.description || null,
         },
       );
       const item = result?.data;
       if (!item) throw new Error("Không nhận được item sau add-segment.");
       beginPollForItem(activeStackId, item, activeStack);
-      setEditorPanel("none");
+      setEditorDialog("none");
       showAppSuccess({ title: "Đã gửi yêu cầu thêm đoạn" });
     } catch (error) {
       showAppErrorFromUnknown(error, "highlight.segment");
@@ -869,7 +863,7 @@ export function HighlightWorkspace({
                     onClick={() => {
                       setActiveStackId(stack.id);
                       setPolledStack(stack);
-                      setEditorPanel("none");
+                      setEditorDialog("none");
                       const processing = findProcessingItem(stack);
                       setPollItemId(processing?.id ?? null);
                       if (processing) setPollNonce((v) => v + 1);
@@ -1010,13 +1004,15 @@ export function HighlightWorkspace({
                   {completedItem.generationKind}
                 </span>
                 {durationSeconds > 0 ? (
-                  <span className="text-[10px] tabular-nums text-muted-foreground">
+                  <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-semibold tabular-nums text-foreground ring-1 ring-border">
                     {formatHighlightTime(durationSeconds)}
                   </span>
                 ) : null}
               </div>
 
-              {/* Edit tools — secondary, grouped */}
+              <HighlightSourceClipsStrip clips={completedItem.sourceClips} />
+
+              {/* Edit tools — open dialogs */}
               <div className="space-y-1.5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
                   Chỉnh sửa
@@ -1036,14 +1032,10 @@ export function HighlightWorkspace({
                   <Button
                     type="button"
                     size="sm"
-                    variant={editorPanel === "trim" ? "secondary" : "outline"}
+                    variant="outline"
                     className="h-9 rounded-lg bg-white"
                     disabled={!canCreateItem || isMutating}
-                    onClick={() =>
-                      setEditorPanel((panel) =>
-                        panel === "trim" ? "none" : "trim",
-                      )
-                    }
+                    onClick={() => setEditorDialog("trim")}
                   >
                     <Scissors className="size-3.5" />
                     Cắt
@@ -1051,173 +1043,16 @@ export function HighlightWorkspace({
                   <Button
                     type="button"
                     size="sm"
-                    variant={
-                      editorPanel === "segment" ? "secondary" : "outline"
-                    }
+                    variant="outline"
                     className="h-9 rounded-lg bg-white"
                     disabled={!canCreateItem || isMutating}
-                    onClick={() =>
-                      setEditorPanel((panel) =>
-                        panel === "segment" ? "none" : "segment",
-                      )
-                    }
+                    onClick={() => setEditorDialog("segment")}
                   >
                     <Plus className="size-3.5" />
                     Đoạn
                   </Button>
                 </div>
               </div>
-
-              {editorPanel === "trim" ? (
-                <div className="grid gap-2 rounded-xl bg-white p-2.5 ring-1 ring-border">
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="trim-start" className="text-[11px]">
-                        Loại bỏ từ
-                      </Label>
-                      <Input
-                        id="trim-start"
-                        value={trimStart}
-                        onChange={(event) => setTrimStart(event.target.value)}
-                        className="h-8 rounded-lg"
-                        placeholder="0:00"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="trim-end" className="text-[11px]">
-                        đến
-                      </Label>
-                      <Input
-                        id="trim-end"
-                        value={trimEnd}
-                        onChange={(event) => setTrimEnd(event.target.value)}
-                        className="h-8 rounded-lg"
-                        placeholder="0:05"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="trim-desc" className="text-[11px]">
-                      Ghi chú
-                    </Label>
-                    <Input
-                      id="trim-desc"
-                      value={trimDescription}
-                      onChange={(event) =>
-                        setTrimDescription(event.target.value)
-                      }
-                      className="h-8 rounded-lg"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-8 w-full rounded-lg"
-                    disabled={isMutating || isPolling}
-                    onClick={() => void handleTrim()}
-                  >
-                    {isMutating ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : null}
-                    Áp dụng cắt
-                  </Button>
-                </div>
-              ) : null}
-
-              {editorPanel === "segment" ? (
-                <div className="grid gap-2 rounded-xl bg-white p-2.5 ring-1 ring-border">
-                  <div className="space-y-1">
-                    <Label className="text-[11px]">Video nguồn</Label>
-                    <Select
-                      value={segmentMediaId}
-                      onValueChange={(value) => {
-                        if (value) setSegmentMediaId(value);
-                      }}
-                    >
-                      <SelectTrigger className="h-8 w-full min-w-0">
-                        <span className="truncate text-sm">
-                          {(() => {
-                            const selected = (sourceMedia ?? []).find(
-                              (item) => item.mediaId === segmentMediaId,
-                            );
-                            if (isLoadingSourceMedia) return "Đang tải…";
-                            if (!selected) return "Chọn video";
-                            const dur = msToSeconds(selected.durationMs);
-                            return `${selected.mediaId.slice(0, 8)} · ${dur > 0 ? formatHighlightTime(dur) : "—"} · ${selected.faceSegments.length} seg`;
-                          })()}
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent className="z-70">
-                        {(sourceMedia ?? []).map((item) => {
-                          const dur = msToSeconds(item.durationMs);
-                          return (
-                            <SelectItem
-                              key={item.mediaId}
-                              value={item.mediaId}
-                            >
-                              {`${item.mediaId.slice(0, 8)} · ${dur > 0 ? formatHighlightTime(dur) : "—"} · ${item.faceSegments.length} seg`}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    {(sourceMedia ?? []).length === 0 &&
-                    !isLoadingSourceMedia ? (
-                      <p className="text-[10px] text-muted-foreground">
-                        Chưa có video đã tag khuôn mặt.
-                      </p>
-                    ) : null}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-1">
-                      <Label htmlFor="seg-start" className="text-[11px]">
-                        Bắt đầu
-                      </Label>
-                      <Input
-                        id="seg-start"
-                        value={segmentStart}
-                        onChange={(event) =>
-                          setSegmentStart(event.target.value)
-                        }
-                        className="h-8 rounded-lg"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label htmlFor="seg-end" className="text-[11px]">
-                        Kết thúc
-                      </Label>
-                      <Input
-                        id="seg-end"
-                        value={segmentEnd}
-                        onChange={(event) => setSegmentEnd(event.target.value)}
-                        className="h-8 rounded-lg"
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <Label htmlFor="seg-desc" className="text-[11px]">
-                      Mô tả
-                    </Label>
-                    <Input
-                      id="seg-desc"
-                      value={segmentDescription}
-                      onChange={(event) =>
-                        setSegmentDescription(event.target.value)
-                      }
-                      className="h-8 rounded-lg"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    size="sm"
-                    className="h-8 w-full rounded-lg"
-                    disabled={isMutating || isPolling || !segmentMediaId}
-                    onClick={() => void handleAddSegment()}
-                  >
-                    Thêm đoạn
-                  </Button>
-                </div>
-              ) : null}
 
               {/* Goal CTA */}
               <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
@@ -1288,6 +1123,26 @@ export function HighlightWorkspace({
           ) : null}
         </section>
       ) : null}
+
+      {completedItem?.videoUrl ? (
+        <HighlightTrimDialog
+          open={editorDialog === "trim"}
+          onOpenChange={(open) => setEditorDialog(open ? "trim" : "none")}
+          videoUrl={completedItem.videoUrl}
+          durationSeconds={durationSeconds}
+          isSubmitting={isMutating}
+          onSubmit={(payload) => void handleTrim(payload)}
+        />
+      ) : null}
+
+      <HighlightSegmentDialog
+        open={editorDialog === "segment"}
+        onOpenChange={(open) => setEditorDialog(open ? "segment" : "none")}
+        sourceMedia={sourceMedia ?? []}
+        isLoadingSourceMedia={isLoadingSourceMedia}
+        isSubmitting={isMutating}
+        onSubmit={(payload) => void handleAddSegment(payload)}
+      />
     </div>
   );
 }
