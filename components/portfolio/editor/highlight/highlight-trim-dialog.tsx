@@ -72,9 +72,9 @@ export function HighlightTrimDialog({
       <DialogPopup className="max-w-lg gap-3">
         <DialogClose />
         <DialogHeader>
-          <DialogTitle>Cắt highlight</DialogTitle>
+          <DialogTitle>Cắt bỏ đoạn</DialogTitle>
           <DialogDescription>
-            Kéo hai đầu thanh thời gian để chọn khoảng cần loại bỏ (
+            Kéo hai đầu thanh thời gian để chọn khoảng muốn bỏ khỏi video (
             {formatHighlightTime(durationSeconds)} tổng).
           </DialogDescription>
         </DialogHeader>

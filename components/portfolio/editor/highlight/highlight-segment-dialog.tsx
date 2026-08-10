@@ -119,9 +119,9 @@ export function HighlightSegmentDialog({
       <DialogPopup className="max-w-xl gap-3">
         <DialogClose />
         <DialogHeader>
-          <DialogTitle>Thêm đoạn từ video nguồn</DialogTitle>
+          <DialogTitle>Thêm đoạn từ video lớp</DialogTitle>
           <DialogDescription>
-            Chọn video đã gắn thẻ khuôn mặt, rồi kéo khoảng thời gian để chèn vào
+            Chọn video lớp có khuôn mặt của bạn, rồi kéo khoảng muốn chèn vào
             highlight.
           </DialogDescription>
         </DialogHeader>
@@ -134,7 +134,7 @@ export function HighlightSegmentDialog({
             <p className="text-xs text-muted-foreground">Đang tải…</p>
           ) : sourceMedia.length === 0 ? (
             <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
-              Chưa có video đã tag khuôn mặt cho stack này.
+              Chưa có video đã gắn khuôn mặt cho chủ đề này.
             </p>
           ) : (
             <div className="grid max-h-44 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">

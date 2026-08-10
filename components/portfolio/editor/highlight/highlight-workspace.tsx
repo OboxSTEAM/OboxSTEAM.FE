@@ -5,6 +5,7 @@ import {
   Check,
   Clapperboard,
   Loader2,
+  Play,
   Plus,
   RefreshCw,
   RotateCcw,
@@ -59,8 +60,25 @@ import {
 } from "@/lib/portfolio/highlight-time";
 import { cn } from "@/lib/utils";
 
-/** Flow A — show / create at most 3 stacks per class. */
+/** Flow A — show / create at most 3 topics (stacks) per class. */
 const MAX_VISIBLE_STACKS = 3;
+
+const GENERATION_KIND_LABELS: Record<
+  HighlightVideoItem["generationKind"],
+  string
+> = {
+  Initial: "Bản gốc",
+  Trim: "Đã cắt",
+  SegmentAdd: "Đã thêm đoạn",
+};
+
+const STATUS_LABELS: Record<HighlightVideoItem["status"], string> = {
+  None: "Chưa bắt đầu",
+  Processing: "Đang tạo",
+  Completed: "Xong",
+  Failed: "Lỗi",
+  Cancelled: "Đã hủy",
+};
 
 type HighlightWorkspaceProps = {
   onClose?: () => void;
@@ -138,7 +156,7 @@ function ZoneLabel({
 }) {
   return (
     <div className="flex items-center gap-2">
-      <p className="min-w-0 flex-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-foreground">
+      <p className="min-w-0 flex-1 text-[11px] font-semibold tracking-wide text-foreground">
         {children}
       </p>
       {meta ? (
@@ -183,18 +201,18 @@ function ProgressPanel({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-foreground">
-            {isEncoding ? "Đang encode…" : "Đang dựng clip…"}
+            {isEncoding ? "Đang xuất video…" : "Đang dựng highlight…"}
           </p>
           <p className="mt-0.5 text-[11px] text-muted-foreground">
             {progress?.statusLabel ??
               statusLabel ??
               (isEncoding
-                ? "MediaConvert đang xuất video."
-                : "BuildingClips — AI ghép đoạn theo điểm mạnh.")}
+                ? "Sắp xong — đang ghép thành file video."
+                : "AI đang chọn đoạn theo điểm mạnh của bạn.")}
           </p>
           {isEncoding && percent != null ? (
             <Progress value={percent} className="mt-2 gap-1">
-              <ProgressLabel className="text-[11px]">Encoding</ProgressLabel>
+              <ProgressLabel className="text-[11px]">Tiến độ</ProgressLabel>
               <ProgressValue className="text-[11px]" />
             </Progress>
           ) : (
@@ -252,15 +270,15 @@ function TerminalIssuePanel({
       )}
     >
       <p className="text-sm font-semibold text-foreground">
-        {isFailed ? "Highlight thất bại" : "Job đã hủy"}
+        {isFailed ? "Không tạo được video" : "Đã hủy lần tạo này"}
       </p>
       {item.failureReason ? (
         <p className="mt-1 text-[11px] text-muted-foreground">{item.failureReason}</p>
       ) : (
         <p className="mt-1 text-[11px] text-muted-foreground">
           {isFailed
-            ? "Có thể thử lại item Initial, hoặc xóa để giải phóng slot."
-            : "Cancelled vẫn chiếm slot — Retry hoặc Delete để tiếp tục."}
+            ? "Thử lại bản gốc, hoặc xóa lần chỉnh này để tạo tiếp."
+            : "Lần chỉnh đã hủy vẫn chiếm chỗ — thử lại hoặc xóa để tiếp tục."}
         </p>
       )}
       <div className="mt-2 flex flex-wrap gap-2">
@@ -273,7 +291,7 @@ function TerminalIssuePanel({
             onClick={onRetry}
           >
             <RotateCcw className="size-3.5" />
-            Retry
+            Thử lại
           </Button>
         ) : null}
         <Button
@@ -285,7 +303,7 @@ function TerminalIssuePanel({
           onClick={onDelete}
         >
           <Trash2 className="size-3.5" />
-          Xóa item
+          Xóa lần chỉnh
         </Button>
       </div>
     </div>
@@ -308,6 +326,8 @@ export function HighlightWorkspace({
   const [isSyncing, setIsSyncing] = useState(false);
   const [editorDialog, setEditorDialog] = useState<EditorDialog>("none");
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  /** When set, trim/segment/sync use this completed item instead of the latest. */
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const { data: classSeed, isLoading: isLoadingClasses } = useClientFetch({
     enabled: true,
@@ -400,7 +420,17 @@ export function HighlightWorkspace({
     (stacks ?? []).find((stack) => stack.id === activeStackId) ??
     null;
 
-  const completedItem = latestCompleted(activeStack);
+  const latestCompletedItem = latestCompleted(activeStack);
+  const selectedCompletedItem = selectedItemId
+    ? (activeStack?.items ?? []).find(
+        (item) =>
+          item.id === selectedItemId &&
+          item.status === "Completed" &&
+          Boolean(item.videoUrl),
+      ) ?? null
+    : null;
+  /** Working video for preview / cắt / thêm đoạn / đồng bộ. */
+  const completedItem = selectedCompletedItem ?? latestCompletedItem;
   const currentItem = latestItem(activeStack);
   const processingItem = findProcessingItem(activeStack);
   const retryableItem = findRetryableItem(activeStack);
@@ -466,12 +496,14 @@ export function HighlightWorkspace({
     setActiveStackId(null);
     setPolledStack(null);
     setPollItemId(null);
+    setSelectedItemId(null);
     setEditorDialog("none");
   };
 
   const beginPollForStack = (stack: HighlightVideoStack) => {
     setActiveStackId(stack.id);
     setPolledStack(stack);
+    setSelectedItemId(null);
     const processing = findProcessingItem(stack) ?? latestItem(stack);
     if (processing && processing.status === "Processing") {
       setPollItemId(processing.id);
@@ -488,6 +520,7 @@ export function HighlightWorkspace({
   ) => {
     setActiveStackId(stackId);
     if (stackHint) setPolledStack(stackHint);
+    setSelectedItemId(null);
     setPollItemId(item.id);
     setPollNonce((value) => value + 1);
     setProgress(null);
@@ -502,7 +535,7 @@ export function HighlightWorkspace({
         strengthDescription: strengthDescription.trim() || null,
       });
       const stack = result?.data;
-      if (!stack) throw new Error("Không nhận được highlight stack.");
+      if (!stack) throw new Error("Không nhận được chủ đề highlight.");
       mutateStacks((current) =>
         [stack, ...(current ?? [])].slice(0, MAX_VISIBLE_STACKS),
       );
@@ -522,7 +555,7 @@ export function HighlightWorkspace({
     try {
       const result = await regenerateHighlightStack(activeStackId);
       const stack = result?.data;
-      if (!stack) throw new Error("Không nhận được stack sau regenerate.");
+      if (!stack) throw new Error("Không nhận được chủ đề sau khi làm lại.");
       mutateStacks((current) =>
         (current ?? []).map((item) => (item.id === stack.id ? stack : item)),
       );
@@ -572,9 +605,8 @@ export function HighlightWorkspace({
         refreshStacks();
       }
       showAppSuccess({
-        title: "Đã hủy job",
-        description:
-          "Item Cancelled vẫn chiếm slot — Retry hoặc Delete để giải phóng.",
+        title: "Đã hủy",
+        description: "Lần chỉnh đã hủy vẫn chiếm chỗ — thử lại hoặc xóa để tiếp tục.",
       });
     } catch (error) {
       showAppErrorFromUnknown(error, "highlight.cancel");
@@ -664,8 +696,9 @@ export function HighlightWorkspace({
       await deleteHighlightVideoItem(activeStackId, item.id);
       setPollItemId(null);
       setPolledStack(null);
+      if (selectedItemId === item.id) setSelectedItemId(null);
       refreshStacks();
-      showAppSuccess({ title: "Đã xóa phiên bản highlight" });
+      showAppSuccess({ title: "Đã xóa lần chỉnh" });
     } catch (error) {
       showAppErrorFromUnknown(error, "highlight.delete");
     } finally {
@@ -682,9 +715,10 @@ export function HighlightWorkspace({
         setActiveStackId(null);
         setPolledStack(null);
         setPollItemId(null);
+        setSelectedItemId(null);
       }
       refreshStacks();
-      showAppSuccess({ title: "Đã xóa highlight stack" });
+      showAppSuccess({ title: "Đã xóa chủ đề" });
     } catch (error) {
       showAppErrorFromUnknown(error, "highlight.delete");
     } finally {
@@ -737,18 +771,22 @@ export function HighlightWorkspace({
 
   const stackCount = (stacks ?? []).length;
   const activeTitle =
-    activeStack?.strengthDescription?.trim() || "Highlight đang chọn";
+    activeStack?.strengthDescription?.trim() || "Chủ đề đang chọn";
+  const workingKindLabel = completedItem
+    ? GENERATION_KIND_LABELS[completedItem.generationKind]
+    : null;
+  const historyItems = sortByRequestedAtDesc(activeStack?.items ?? []);
 
   return (
     <div className="space-y-4">
       <p className="text-sm leading-relaxed text-muted-foreground">
-        Chọn lớp, tạo stack điểm mạnh, rồi chỉnh / đồng bộ HighlightReel vào
-        portfolio.
+        Chọn lớp, tạo chủ đề theo điểm mạnh, xem video rồi cắt hoặc thêm đoạn
+        trước khi đưa vào Gallery.
       </p>
 
-      {/* Class picker — original */}
+      {/* Class picker */}
       <div className="space-y-1.5">
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
           Lớp học
         </p>
         {isLoadingClasses ? (
@@ -807,20 +845,23 @@ export function HighlightWorkspace({
         )}
       </div>
 
-      {/* Create — original */}
+      {/* Create topic */}
       <div className="space-y-2 rounded-xl border border-border bg-card p-3">
         <div className="space-y-1">
           <Label htmlFor="strength-desc" className="text-[11px]">
-            Điểm mạnh (tuỳ chọn)
+            Điểm mạnh của bạn (tuỳ chọn)
           </Label>
           <Textarea
             id="strength-desc"
             value={strengthDescription}
             onChange={(event) => setStrengthDescription(event.target.value)}
-            placeholder="VD: tự tin thuyết trình, khéo lắp robot…"
+            placeholder="VD: cười tự tin, khéo lắp robot…"
             className="min-h-16 resize-none rounded-lg text-sm"
             disabled={!classId}
           />
+          <p className="text-[11px] text-muted-foreground">
+            Mỗi chủ đề = một hướng highlight. Bạn có thể cắt và thêm đoạn sau.
+          </p>
         </div>
         <Button
           type="button"
@@ -833,36 +874,36 @@ export function HighlightWorkspace({
           ) : (
             <Clapperboard className="size-4" />
           )}
-          Tạo stack
+          Tạo chủ đề highlight
         </Button>
         {!canCreateStack && classId ? (
           <p className="text-[11px] text-muted-foreground">
-            Tối đa {MAX_VISIBLE_STACKS} stack / lớp. Xóa stack cũ để tạo mới.
+            Tối đa {MAX_VISIBLE_STACKS} chủ đề / lớp. Xóa chủ đề cũ để tạo mới.
           </p>
         ) : null}
       </div>
 
-      {/* Stack picker — redesigned */}
+      {/* Topic picker */}
       <section className="space-y-2" aria-labelledby="highlight-zone-stacks">
         <ZoneLabel meta={`${stackCount}/${MAX_VISIBLE_STACKS}`}>
-          <span id="highlight-zone-stacks">Stack</span>
+          <span id="highlight-zone-stacks">Chủ đề</span>
         </ZoneLabel>
         {!classId ? (
           <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
-            Chọn lớp ở trên để xem stack.
+            Chọn lớp ở trên để xem chủ đề.
           </p>
         ) : isLoadingStacks ? (
           <p className="text-xs text-muted-foreground">Đang tải…</p>
         ) : stackCount === 0 ? (
           <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
-            Chưa có highlight cho lớp này.
+            Chưa có chủ đề highlight cho lớp này.
           </p>
         ) : (
           <ul className="overflow-hidden rounded-xl border border-border bg-card">
             {(stacks ?? []).map((stack, index) => {
               const selected = stack.id === activeStackId;
               const title =
-                stack.strengthDescription?.trim() || `Stack ${index + 1}`;
+                stack.strengthDescription?.trim() || `Chủ đề ${index + 1}`;
               return (
                 <li
                   key={stack.id}
@@ -878,6 +919,7 @@ export function HighlightWorkspace({
                     onClick={() => {
                       setActiveStackId(stack.id);
                       setPolledStack(stack);
+                      setSelectedItemId(null);
                       setEditorDialog("none");
                       const processing = findProcessingItem(stack);
                       setPollItemId(processing?.id ?? null);
@@ -900,16 +942,16 @@ export function HighlightWorkspace({
                       </span>
                       <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
                         <span className="tabular-nums">
-                          {stack.itemCount}/{stack.maxItems} bản
+                          {stack.itemCount}/{stack.maxItems} lần chỉnh
                         </span>
                         {stack.hasProcessingItem ? (
                           <span className="inline-flex items-center gap-1 text-[#0f7cad]">
                             <span className="size-1.5 rounded-full bg-[#4FC3F7]" />
-                            xử lý
+                            đang tạo
                           </span>
                         ) : null}
                         {!stack.canCreateItem && !stack.hasProcessingItem ? (
-                          <span>đầy</span>
+                          <span>đã đầy</span>
                         ) : null}
                       </span>
                     </span>
@@ -925,7 +967,7 @@ export function HighlightWorkspace({
                     size="icon-sm"
                     variant="ghost"
                     className="my-auto mr-1 shrink-0"
-                    aria-label="Xóa stack"
+                    aria-label="Xóa chủ đề"
                     disabled={isMutating || stack.hasProcessingItem}
                     onClick={() => void handleDeleteStack(stack.id, stack)}
                   >
@@ -938,7 +980,7 @@ export function HighlightWorkspace({
         )}
       </section>
 
-      {/* 4 — Stage: only when a stack is selected */}
+      {/* Stage: only when a topic is selected */}
       {activeStack ? (
         <section
           className="space-y-3 rounded-2xl border border-[#E5E5E0] bg-[#F5F5F0] p-3"
@@ -946,7 +988,7 @@ export function HighlightWorkspace({
         >
           <div className="space-y-1">
             <ZoneLabel meta={`${activeStack.itemCount}/${activeStack.maxItems}`}>
-              <span id="highlight-zone-stage">Chỉnh & đồng bộ</span>
+              <span id="highlight-zone-stage">Video & chỉnh sửa</span>
             </ZoneLabel>
             <p className="line-clamp-2 text-xs font-medium text-foreground">
               {activeTitle}
@@ -991,7 +1033,7 @@ export function HighlightWorkspace({
                   }
                   className="w-full"
                   onClick={() => setIsPreviewOpen(true)}
-                  aria-label="Xem highlight"
+                  aria-label="Xem video highlight"
                 />
               </div>
               <MediaLightbox
@@ -1000,7 +1042,7 @@ export function HighlightWorkspace({
                     id: completedItem.id,
                     url: completedItem.videoUrl,
                     kind: "video",
-                    caption: completedItem.statusLabel,
+                    caption: workingKindLabel,
                   },
                 ]}
                 index={isPreviewOpen ? 0 : null}
@@ -1016,7 +1058,12 @@ export function HighlightWorkspace({
                     statusTone(completedItem.status),
                   )}
                 >
-                  {completedItem.generationKind}
+                  {workingKindLabel}
+                  {selectedCompletedItem &&
+                  latestCompletedItem &&
+                  selectedCompletedItem.id !== latestCompletedItem.id
+                    ? " · đang xem"
+                    : null}
                 </span>
                 {durationSeconds > 0 ? (
                   <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-semibold tabular-nums text-foreground ring-1 ring-border">
@@ -1027,23 +1074,21 @@ export function HighlightWorkspace({
 
               <HighlightSourceClipsStrip clips={completedItem.sourceClips} />
 
-              {/* Edit tools — open dialogs */}
               <div className="space-y-1.5">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                  Chỉnh sửa
+                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                  Bạn có thể làm gì?
                 </p>
-                <div className="grid grid-cols-3 gap-1.5">
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-9 rounded-lg bg-white"
-                    disabled={!canCreateItem || isMutating}
-                    onClick={() => void handleRegenerate()}
-                  >
-                    <RefreshCw className="size-3.5" />
-                    Làm lại
-                  </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 w-full rounded-lg bg-white"
+                  onClick={() => setIsPreviewOpen(true)}
+                >
+                  <Play className="size-3.5 fill-current" />
+                  Xem video
+                </Button>
+                <div className="grid grid-cols-2 gap-1.5">
                   <Button
                     type="button"
                     size="sm"
@@ -1053,7 +1098,7 @@ export function HighlightWorkspace({
                     onClick={() => setEditorDialog("trim")}
                   >
                     <Scissors className="size-3.5" />
-                    Cắt
+                    Cắt bỏ đoạn
                   </Button>
                   <Button
                     type="button"
@@ -1064,12 +1109,22 @@ export function HighlightWorkspace({
                     onClick={() => setEditorDialog("segment")}
                   >
                     <Plus className="size-3.5" />
-                    Đoạn
+                    Thêm đoạn
                   </Button>
                 </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-full rounded-lg text-muted-foreground"
+                  disabled={!canCreateItem || isMutating}
+                  onClick={() => void handleRegenerate()}
+                >
+                  <RefreshCw className="size-3.5" />
+                  Làm lại từ đầu
+                </Button>
               </div>
 
-              {/* Goal CTA */}
               <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
                 <Button
                   type="button"
@@ -1080,7 +1135,7 @@ export function HighlightWorkspace({
                   {isSyncing ? (
                     <Loader2 className="size-3.5 animate-spin" />
                   ) : null}
-                  Đồng bộ vào Gallery
+                  Thêm vào Gallery
                 </Button>
                 <button
                   type="button"
@@ -1088,7 +1143,7 @@ export function HighlightWorkspace({
                   disabled={isMutating}
                   onClick={() => void handleDeleteItem(completedItem)}
                 >
-                  Xóa bản video này
+                  Xóa lần chỉnh đang xem
                 </button>
               </div>
             </div>
@@ -1098,41 +1153,72 @@ export function HighlightWorkspace({
             </p>
           ) : null}
 
-          {(activeStack.items ?? []).length > 0 ? (
+          {historyItems.length > 0 ? (
             <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
-                Lịch sử bản
-              </p>
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                  Các lần chỉnh
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Chạm một bản đã xong để xem / cắt / thêm đoạn từ bản đó.
+                </p>
+              </div>
               <ul className="overflow-hidden rounded-lg bg-white ring-1 ring-border">
-                {sortByRequestedAtDesc(activeStack.items ?? []).map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center gap-2 border-b border-border px-2.5 py-1.5 text-[11px] last:border-b-0"
-                  >
-                    <span
-                      className={cn(
-                        "rounded px-1 py-0.5 text-[10px] font-semibold",
-                        statusTone(item.status),
-                      )}
+                {historyItems.map((item) => {
+                  const canSelect =
+                    item.status === "Completed" && Boolean(item.videoUrl);
+                  const isWorking = completedItem?.id === item.id;
+                  return (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-1 border-b border-border last:border-b-0"
                     >
-                      {item.status}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-muted-foreground">
-                      {item.generationKind}
-                    </span>
-                    {item.status !== "Processing" ? (
                       <button
                         type="button"
-                        className="text-muted-foreground hover:text-destructive"
-                        aria-label="Xóa item"
-                        disabled={isMutating}
-                        onClick={() => void handleDeleteItem(item)}
+                        disabled={!canSelect}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 px-2.5 py-2 text-left text-[11px] transition",
+                          canSelect
+                            ? "hover:bg-muted/50"
+                            : "cursor-default opacity-80",
+                          isWorking && "bg-[#4FC3F7]/10",
+                        )}
+                        onClick={() => {
+                          if (!canSelect) return;
+                          setSelectedItemId(item.id);
+                          setIsPreviewOpen(false);
+                          setEditorDialog("none");
+                        }}
                       >
-                        <Trash2 className="size-3" />
+                        <span
+                          className={cn(
+                            "shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold",
+                            statusTone(item.status),
+                          )}
+                        >
+                          {STATUS_LABELS[item.status]}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                          {GENERATION_KIND_LABELS[item.generationKind]}
+                          {isWorking ? (
+                            <span className="text-[#0f7cad]"> · đang xem</span>
+                          ) : null}
+                        </span>
                       </button>
-                    ) : null}
-                  </li>
-                ))}
+                      {item.status !== "Processing" ? (
+                        <button
+                          type="button"
+                          className="mr-2 shrink-0 text-muted-foreground hover:text-destructive"
+                          aria-label="Xóa lần chỉnh"
+                          disabled={isMutating}
+                          onClick={() => void handleDeleteItem(item)}
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ) : null}
