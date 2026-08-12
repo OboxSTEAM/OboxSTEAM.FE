@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  CalendarDays,
   ChevronsUpDown,
   ClipboardList,
   LogOut,
@@ -47,6 +48,11 @@ const NAV_ITEMS = [
     title: "Lớp của tôi",
     url: "/mentor/classes",
     icon: Users,
+  },
+  {
+    title: "Lịch học",
+    url: "/mentor/schedule",
+    icon: CalendarDays,
   },
   {
     title: "Đăng ký lớp",
