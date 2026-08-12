@@ -1384,6 +1384,276 @@
         }
       }
     },
+    "/api/assessment-recovery-requests": {
+      "post": {
+        "tags": [
+          "AssessmentRecoveryRequest"
+        ],
+        "summary": "Request extra attempts / personal deadline",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentRecoveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentRecoveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssessmentRecoveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assessment-recovery-requests/me": {
+      "get": {
+        "tags": [
+          "AssessmentRecoveryRequest"
+        ],
+        "summary": "List my assessment recovery requests",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assessment-recovery-requests/pending": {
+      "get": {
+        "tags": [
+          "AssessmentRecoveryRequest"
+        ],
+        "summary": "List pending recovery requests for mentor/staff",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assessment-recovery-requests/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "AssessmentRecoveryRequest"
+        ],
+        "summary": "Withdraw a pending recovery request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assessment-recovery-requests/{id}/approve": {
+      "post": {
+        "tags": [
+          "AssessmentRecoveryRequest"
+        ],
+        "summary": "Approve recovery request (same class grant)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAssessmentRecoveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAssessmentRecoveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAssessmentRecoveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/assessment-recovery-requests/{id}/reject": {
+      "post": {
+        "tags": [
+          "AssessmentRecoveryRequest"
+        ],
+        "summary": "Reject recovery request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAssessmentRecoveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAssessmentRecoveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideAssessmentRecoveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/assignments": {
       "get": {
         "tags": [
@@ -6709,6 +6979,276 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Request class re-delivery (auto-match or manager queue)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassRedeliveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassRedeliveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClassRedeliveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/me": {
+      "get": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "List my class re-delivery requests",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/pending-manager": {
+      "get": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Manager queue when no eligible class was auto-matched",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Withdraw an open re-delivery request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/assign-target": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Manager assigns a target class (then student pays RetakeFee)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideClassRedeliveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideClassRedeliveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideClassRedeliveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/reject": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Reject a re-delivery request",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideClassRedeliveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideClassRedeliveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/DecideClassRedeliveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
                 }
               }
             }
@@ -26830,6 +27370,146 @@
         },
         "additionalProperties": false
       },
+      "AssessmentRecoveryRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Pending",
+              "Approved",
+              "Rejected",
+              "Withdrawn"
+            ],
+            "type": "string"
+          },
+          "studentMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "mentorNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "extraAttemptsGranted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "personalDueDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "personalAvailableUntil": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "decidedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "decidedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentRecoveryRequestResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentRecoveryRequestResponseDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentRecoveryRequestResponseDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssessmentRecoveryRequestResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "AssignmentListItemDto": {
         "type": "object",
         "properties": {
@@ -28499,6 +29179,153 @@
         },
         "additionalProperties": false
       },
+      "ClassRedeliveryRequestResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceClassId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedByUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "PendingAutoMatch",
+              "MatchedPendingPayment",
+              "PendingManager",
+              "Approved",
+              "Rejected",
+              "Completed",
+              "Withdrawn"
+            ],
+            "type": "string"
+          },
+          "targetClassId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "retakeModuleEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "requestMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "decisionNote": {
+            "type": "string",
+            "nullable": true
+          },
+          "decidedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "decidedBy": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryRequestResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryRequestResponseDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryRequestResponseDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryRequestResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "ClassResponseDto": {
         "type": "object",
         "properties": {
@@ -29521,6 +30348,24 @@
         },
         "additionalProperties": false
       },
+      "CreateAssessmentRecoveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentMessage": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateAssignmentRequestDto": {
         "type": "object",
         "properties": {
@@ -29649,6 +30494,20 @@
           },
           "message": {
             "maxLength": 1000,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateClassRedeliveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestMessage": {
             "type": "string",
             "nullable": true
           }
@@ -30416,11 +31275,50 @@
         },
         "additionalProperties": false
       },
+      "DecideAssessmentRecoveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "extraAttemptsGranted": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "personalDueDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "personalAvailableUntil": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "mentorNote": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "DecideClassMentorRequestDto": {
         "type": "object",
         "properties": {
           "decisionNote": {
             "maxLength": 1000,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "DecideClassRedeliveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "targetClassId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "decisionNote": {
             "type": "string",
             "nullable": true
           }
@@ -32520,6 +33418,15 @@
             "type": "string",
             "nullable": true
           },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "issuedToId": {
             "type": "string",
             "format": "uuid"
@@ -34209,6 +35116,13 @@
               "ClassMentorRequestSubmitted",
               "ClassMentorRequestApproved",
               "ClassMentorRequestRejected",
+              "AssessmentRecoveryRequested",
+              "AssessmentRecoveryApproved",
+              "AssessmentRecoveryRejected",
+              "ClassRedeliveryPendingManager",
+              "ClassRedeliveryMatchedPendingPayment",
+              "ClassRedeliveryRejected",
+              "ClassRedeliveryCompleted",
               "ClassEnrolled",
               "ClassTransferred",
               "ClassSessionScheduled",

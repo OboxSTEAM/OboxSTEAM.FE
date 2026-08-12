@@ -14,6 +14,21 @@ export const requestParentPaymentSchema = z.object({
   parentId: z.string().uuid("ID phụ huynh không hợp lệ."),
 });
 
+/**
+ * Body for `POST /api/payments/checkout/retake`.
+ * Pass `retakeModuleEnrollmentId` from the class-redelivery request — not the failed enrollment.
+ */
+export const checkoutRetakePaymentSchema = z.object({
+  moduleEnrollmentId: z.string().uuid("ID ghi danh module không hợp lệ."),
+  gateway: paymentGatewaySchema,
+});
+
+/** Body for `POST /api/payments/request-parent/retake`. */
+export const requestParentRetakePaymentSchema = z.object({
+  moduleEnrollmentId: z.string().uuid("ID ghi danh module không hợp lệ."),
+  parentId: z.string().uuid("ID phụ huynh không hợp lệ."),
+});
+
 /** Body for `POST /api/payments/parent-checkout`. */
 export const parentCheckoutSchema = z.object({
   token: z.string().min(1, "Token không hợp lệ."),

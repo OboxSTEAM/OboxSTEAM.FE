@@ -415,6 +415,56 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Liên kết thanh toán không hợp lệ hoặc đã hết hạn (24 giờ).",
     action: "Nhờ học viên gửi lại yêu cầu thanh toán từ trang chương trình.",
   },
+  "payments.checkout-retake": {
+    title: "Không thể thanh toán học lại",
+    reason: "Yêu cầu học lại chưa sẵn sàng thanh toán hoặc máy chủ từ chối.",
+    action: "Kiểm tra trạng thái yêu cầu học lại rồi thử lại.",
+  },
+  "payments.request-parent-retake": {
+    title: "Không gửi được yêu cầu thanh toán học lại",
+    reason: "Phụ huynh chưa liên kết, chưa xác nhận, hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra liên kết phụ huynh trong hồ sơ và thử lại.",
+  },
+  "invoices.list": {
+    title: "Không tải được danh sách hóa đơn",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ tạm thời không phản hồi.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
+  "invoices.detail": {
+    title: "Không tải được hóa đơn",
+    reason: "Hóa đơn không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Kiểm tra lại liên kết hoặc vào Khóa học của tôi.",
+  },
+  "assessment-recovery.create": {
+    title: "Không gửi được yêu cầu làm lại",
+    reason: "Bạn có thể đã hết lượt yêu cầu, hoặc bài tập chưa đủ điều kiện phục hồi.",
+    action: "Kiểm tra số lần yêu cầu còn lại hoặc cân nhắc học lại lớp.",
+  },
+  "assessment-recovery.list": {
+    title: "Không tải được yêu cầu làm lại",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử tải lại trang sau vài giây.",
+  },
+  "assessment-recovery.decide": {
+    title: "Không xử lý được yêu cầu làm lại",
+    reason: "Yêu cầu có thể đã được xử lý hoặc bạn không có quyền quyết định.",
+    action: "Tải lại danh sách chờ duyệt và thử lại.",
+  },
+  "class-redelivery.create": {
+    title: "Không gửi được yêu cầu học lại lớp",
+    reason: "Module chưa đủ điều kiện học lại hoặc yêu cầu đang chờ xử lý.",
+    action: "Kiểm tra trạng thái ghi danh module rồi thử lại.",
+  },
+  "class-redelivery.list": {
+    title: "Không tải được yêu cầu học lại lớp",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử tải lại trang sau vài giây.",
+  },
+  "class-redelivery.decide": {
+    title: "Không xử lý được yêu cầu học lại lớp",
+    reason: "Yêu cầu có thể đã được xử lý hoặc lớp đích không hợp lệ.",
+    action: "Tải lại hàng đợi quản lý và chọn lớp khác nếu cần.",
+  },
   "enrollments.list": {
     title: "Không tải được khóa học",
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",

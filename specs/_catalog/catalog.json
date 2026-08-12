@@ -68,6 +68,30 @@
         "description": "Test-only endpoint that forces any activity to Done for a given student, bypassing all business rules (enrollment status, ownership, activity type, sequential lock, schedule windows). The module enrollment is resolved automatically. Requires Mentor or Manager role."
       },
       {
+        "path": "/api/assessment-recovery-requests",
+        "method": "post"
+      },
+      {
+        "path": "/api/assessment-recovery-requests/me",
+        "method": "get"
+      },
+      {
+        "path": "/api/assessment-recovery-requests/pending",
+        "method": "get"
+      },
+      {
+        "path": "/api/assessment-recovery-requests/{id}/withdraw",
+        "method": "post"
+      },
+      {
+        "path": "/api/assessment-recovery-requests/{id}/approve",
+        "method": "post"
+      },
+      {
+        "path": "/api/assessment-recovery-requests/{id}/reject",
+        "method": "post"
+      },
+      {
         "path": "/api/assignments",
         "method": "get",
         "description": "Retrieve a paginated list of assignments, each carrying module/program context for the Edit deep-link. Supports search, filter, and sort options."
@@ -308,6 +332,30 @@
         "path": "/api/assignments/{assignmentId}/classes/{classId}/quiz-set/questions/{questionId}",
         "method": "put",
         "description": "Edits the class-scoped copy only. Locked after any student submission exists for this assignment in the class."
+      },
+      {
+        "path": "/api/class-redelivery-requests",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-redelivery-requests/me",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-redelivery-requests/pending-manager",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-redelivery-requests/{id}/withdraw",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-redelivery-requests/{id}/assign-target",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-redelivery-requests/{id}/reject",
+        "method": "post"
       },
       {
         "path": "/api/classes/{classId}/sessions",
@@ -1211,6 +1259,21 @@
         "name": "AssessmentOverviewDtoResponseDataContent"
       },
       {
+        "name": "AssessmentRecoveryRequestResponseDto"
+      },
+      {
+        "name": "AssessmentRecoveryRequestResponseDtoApiResult"
+      },
+      {
+        "name": "AssessmentRecoveryRequestResponseDtoListApiResult"
+      },
+      {
+        "name": "AssessmentRecoveryRequestResponseDtoListResponseDataContent"
+      },
+      {
+        "name": "AssessmentRecoveryRequestResponseDtoResponseDataContent"
+      },
+      {
         "name": "AssignmentListItemDto"
       },
       {
@@ -1382,6 +1445,21 @@
         "name": "ClassQuizQuestionSetResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassRedeliveryRequestResponseDto"
+      },
+      {
+        "name": "ClassRedeliveryRequestResponseDtoApiResult"
+      },
+      {
+        "name": "ClassRedeliveryRequestResponseDtoListApiResult"
+      },
+      {
+        "name": "ClassRedeliveryRequestResponseDtoListResponseDataContent"
+      },
+      {
+        "name": "ClassRedeliveryRequestResponseDtoResponseDataContent"
+      },
+      {
         "name": "ClassResponseDto"
       },
       {
@@ -1481,6 +1559,9 @@
         "name": "CreateActivityProgressRequestDto"
       },
       {
+        "name": "CreateAssessmentRecoveryRequestDto"
+      },
+      {
         "name": "CreateAssignmentRequestDto"
       },
       {
@@ -1488,6 +1569,9 @@
       },
       {
         "name": "CreateClassMentorRequestDto"
+      },
+      {
+        "name": "CreateClassRedeliveryRequestDto"
       },
       {
         "name": "CreateClassRequestDto"
@@ -1553,7 +1637,13 @@
         "name": "DashboardOverviewDtoResponseDataContent"
       },
       {
+        "name": "DecideAssessmentRecoveryRequestDto"
+      },
+      {
         "name": "DecideClassMentorRequestDto"
+      },
+      {
+        "name": "DecideClassRedeliveryRequestDto"
       },
       {
         "name": "EnrollmentCurriculumActivityDto"

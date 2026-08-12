@@ -66,6 +66,7 @@ export const getMediaListResponseSchema = createApiResponseSchema(
 export const getClassGalleryResponseSchema = createApiResponseSchema(
   classGalleryPaginationValueSchema,
 );
+
 /** Same envelope as class gallery. */
 export const getMyGalleryResponseSchema = getClassGalleryResponseSchema;
 export const getMediaByIdResponseSchema =

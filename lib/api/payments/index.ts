@@ -7,9 +7,11 @@ import { ApiResponseError } from "@/lib/api/errors";
 import { createApiValueSchema } from "@/lib/api/schemas";
 import {
   checkoutPaymentSchema,
+  checkoutRetakePaymentSchema,
   parentCheckoutSchema,
   paymentIdParamSchema,
   requestParentPaymentSchema,
+  requestParentRetakePaymentSchema,
 } from "@/lib/validations/payments";
 
 import {
@@ -47,6 +49,10 @@ export type {
 
 export type CheckoutPaymentInput = z.infer<typeof checkoutPaymentSchema>;
 export type RequestParentPaymentInput = z.infer<typeof requestParentPaymentSchema>;
+export type CheckoutRetakePaymentInput = z.infer<typeof checkoutRetakePaymentSchema>;
+export type RequestParentRetakePaymentInput = z.infer<
+  typeof requestParentRetakePaymentSchema
+>;
 export type ParentCheckoutInput = z.infer<typeof parentCheckoutSchema>;
 
 const PAYMENTS_BASE = "/api/payments";
@@ -67,6 +73,20 @@ export const checkoutPayment = createApiPost({
 export const requestParentPayment = createApiPost({
   path: `${PAYMENTS_BASE}/request-parent`,
   input: requestParentPaymentSchema,
+  value: requestParentPaymentValueSchema,
+});
+
+/** `POST /api/payments/checkout/retake` — student pays module retake fee. */
+export const checkoutRetakePayment = createApiPost({
+  path: `${PAYMENTS_BASE}/checkout/retake`,
+  input: checkoutRetakePaymentSchema,
+  value: checkoutPaymentValueSchema,
+});
+
+/** `POST /api/payments/request-parent/retake` — email parent a retake payment link. */
+export const requestParentRetakePayment = createApiPost({
+  path: `${PAYMENTS_BASE}/request-parent/retake`,
+  input: requestParentRetakePaymentSchema,
   value: requestParentPaymentValueSchema,
 });
 
