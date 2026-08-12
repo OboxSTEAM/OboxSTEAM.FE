@@ -64,6 +64,8 @@ import {
   type ResearchStagingEvidence,
   type ResearchStagingState,
 } from "@/lib/curriculum/research-staging-storage";
+import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -408,6 +410,12 @@ export function ResearchSubmissionPanel({
     () => getAssignmentBreadcrumb(curriculum, assignmentId),
     [assignmentId, curriculum],
   );
+
+  const {
+    recoveryRequests,
+    redeliveryRequests,
+    refresh: refreshRecoveryRequests,
+  } = useMyRecoveryRequests(true);
 
   const moduleEnrollmentId = useMemo(() => {
     return (
@@ -1055,6 +1063,31 @@ export function ResearchSubmissionPanel({
             {isSubmitting ? "Đang nộp..." : "Nộp bài"}
           </Button>
         </div>
+      ) : null}
+
+      {assignment &&
+      submission?.status === "Graded" &&
+      submission.passed === false ? (
+        <AssignmentRecoveryActions
+          moduleType={flatAssignment.moduleType}
+          moduleEnrollmentId={
+            flatAssignment.moduleEnrollmentId ||
+            submission.moduleEnrollmentId ||
+            ""
+          }
+          assignmentId={assignmentId}
+          attemptNumber={submission.attemptNumber}
+          maxAttempts={assignment.maxAttempts}
+          showRecoveryUi={
+            submission.attemptNumber >= assignment.maxAttempts
+          }
+          recoveryRequests={recoveryRequests}
+          redeliveryRequests={redeliveryRequests}
+          onRequestsChanged={() => {
+            void refreshRecoveryRequests();
+            void onCurriculumRefresh();
+          }}
+        />
       ) : null}
 
       <Dialog

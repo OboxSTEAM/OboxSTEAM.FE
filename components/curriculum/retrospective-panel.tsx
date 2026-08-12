@@ -41,6 +41,8 @@ import {
   getStoredRetrospectiveSubmissionId,
   setStoredRetrospectiveSubmissionId,
 } from "@/lib/curriculum/retrospective-storage";
+import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { formatAssignmentTimestamp } from "@/lib/curriculum/assignment-outcome";
 import {
@@ -129,6 +131,12 @@ export function RetrospectivePanel({
     () => getAssignmentBreadcrumb(curriculum, assignmentId),
     [assignmentId, curriculum],
   );
+
+  const {
+    recoveryRequests,
+    redeliveryRequests,
+    refresh: refreshRecoveryRequests,
+  } = useMyRecoveryRequests(true);
 
   const resetState = useCallback(() => {
     setAttempt(null);
@@ -435,6 +443,23 @@ export function RetrospectivePanel({
             {isSubmitting ? "Đang nộp..." : "Nộp bài đánh giá"}
           </Button>
         </div>
+      ) : null}
+
+      {assignment && attempt.status === "Graded" && attempt.passed === false ? (
+        <AssignmentRecoveryActions
+          moduleType={flatAssignment.moduleType}
+          moduleEnrollmentId={flatAssignment.moduleEnrollmentId}
+          assignmentId={assignmentId}
+          attemptNumber={attempt.attemptNumber}
+          maxAttempts={assignment.maxAttempts}
+          showRecoveryUi={attempt.attemptNumber >= assignment.maxAttempts}
+          recoveryRequests={recoveryRequests}
+          redeliveryRequests={redeliveryRequests}
+          onRequestsChanged={() => {
+            void refreshRecoveryRequests();
+            void onCurriculumRefresh();
+          }}
+        />
       ) : null}
 
       <Dialog

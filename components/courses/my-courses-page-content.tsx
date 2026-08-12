@@ -25,10 +25,13 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { CertificateCongratsBox } from "@/components/certificates/certificate-congrats-box";
+import { EnrollmentInvoicesSection } from "@/components/courses/enrollment-invoices-section";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { getMyCertificates } from "@/lib/api/certificates";
 import type { CertificateListItem } from "@/lib/api/entities/certificate";
+import type { Invoice } from "@/lib/api/entities/invoice";
+import { getMyInvoices } from "@/lib/api/invoices";
 import {
   getMyProgramEnrollments,
   type MyProgramEnrollmentsQuery,
@@ -111,11 +114,31 @@ export function MyCoursesPageContent() {
     deps: [canFetch],
   });
 
+  const { data: invoices } = useClientFetch({
+    enabled: canFetch,
+    fetcher: async () => {
+      try {
+        const result = await getMyInvoices();
+        return result?.data ?? [];
+      } catch {
+        return [];
+      }
+    },
+    deps: [canFetch],
+  });
+
   const certificatesByProgramId = new Map<string, CertificateListItem>();
   for (const certificate of certificates ?? []) {
     if (!certificatesByProgramId.has(certificate.programId)) {
       certificatesByProgramId.set(certificate.programId, certificate);
     }
+  }
+
+  const invoicesByProgramId = new Map<string, Invoice[]>();
+  for (const invoice of invoices ?? []) {
+    const list = invoicesByProgramId.get(invoice.programId) ?? [];
+    list.push(invoice);
+    invoicesByProgramId.set(invoice.programId, list);
   }
 
   const handleSortChange = useCallback(
@@ -278,8 +301,12 @@ export function MyCoursesPageContent() {
               const certificate = certificatesByProgramId.get(
                 enrollment.programId,
               );
+              const programInvoices =
+                invoicesByProgramId.get(enrollment.programId) ?? [];
+              const hasExtras =
+                certificate != null || programInvoices.length > 0;
 
-              if (!certificate) {
+              if (!hasExtras) {
                 return (
                   <EnrollmentCard
                     key={enrollment.id}
@@ -297,7 +324,10 @@ export function MyCoursesPageContent() {
                     enrollment={enrollment}
                     className="h-auto rounded-none border-0 shadow-none"
                   />
-                  <CertificateCongratsBox certificate={certificate} />
+                  <EnrollmentInvoicesSection invoices={programInvoices} />
+                  {certificate ? (
+                    <CertificateCongratsBox certificate={certificate} />
+                  ) : null}
                 </div>
               );
             })}

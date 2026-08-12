@@ -40,6 +40,8 @@ import {
   getStoredQuizSubmissionId,
   setStoredQuizSubmissionId,
 } from "@/lib/curriculum/quiz-storage";
+import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -161,6 +163,12 @@ export function QuizPanel({
     () => getAssignmentBreadcrumb(curriculum, assignmentId),
     [assignmentId, curriculum],
   );
+
+  const {
+    recoveryRequests,
+    redeliveryRequests,
+    refresh: refreshRecoveryRequests,
+  } = useMyRecoveryRequests(true);
 
   const resetAttemptState = useCallback(() => {
     setPhase("intro");
@@ -468,7 +476,8 @@ export function QuizPanel({
   const isRetake = hasCompletedAttempt;
   const startLabel = isRetake ? "Làm lại bài kiểm tra" : "Bắt đầu làm bài";
   const showIntroStart = phase === "intro";
-  const showResultRetry = phase === "result" && canRetry;
+  const showResultRecovery =
+    phase === "result" && result != null && result.passed === false;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
@@ -536,21 +545,30 @@ export function QuizPanel({
         </div>
       ) : null}
 
-      {showResultRetry ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="ml-auto border-learn-border"
-            disabled={isStarting}
-            onClick={() => {
-              resetAttemptState();
-              void handleStart();
-            }}
-          >
-            {isStarting ? "Đang mở bài..." : "Làm lại"}
-          </Button>
-        </div>
+      {showResultRecovery && result ? (
+        <AssignmentRecoveryActions
+          moduleType={flatAssignment.moduleType}
+          moduleEnrollmentId={flatAssignment.moduleEnrollmentId}
+          assignmentId={assignmentId}
+          attemptNumber={result.attemptNumber}
+          maxAttempts={assignment.maxAttempts}
+          showRecoveryUi={!canRetry}
+          recoveryRequests={recoveryRequests}
+          redeliveryRequests={redeliveryRequests}
+          isRetrying={isStarting}
+          onRetry={
+            canRetry
+              ? () => {
+                  resetAttemptState();
+                  void handleStart();
+                }
+              : undefined
+          }
+          onRequestsChanged={() => {
+            void refreshRecoveryRequests();
+            void onCurriculumRefresh();
+          }}
+        />
       ) : null}
 
       <Dialog

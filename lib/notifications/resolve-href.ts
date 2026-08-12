@@ -159,6 +159,24 @@ export function resolveNotificationHref(
       }
       return programId ? getProgramLearnHref(programId) : null;
 
+    case "AssessmentRecoveryRequested":
+      return "/mentor/recovery";
+
+    case "AssessmentRecoveryApproved":
+    case "AssessmentRecoveryRejected":
+      if (!programId) return null;
+      return assignmentId
+        ? learnWithAssignment(programId, assignmentId)
+        : getProgramLearnHref(programId);
+
+    case "ClassRedeliveryPendingManager":
+      return "/manager/redelivery";
+
+    case "ClassRedeliveryMatchedPendingPayment":
+    case "ClassRedeliveryRejected":
+    case "ClassRedeliveryCompleted":
+      return programId ? getProgramLearnHref(programId) : "/courses";
+
     case "ParentLinkRequested":
     case "ParentLinkVerified":
     case "ParentLinkApproved":

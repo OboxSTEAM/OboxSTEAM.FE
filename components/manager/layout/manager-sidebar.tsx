@@ -307,6 +307,7 @@ export function ManagerSidebar() {
           icon: Users,
           items: [
             { title: "Lớp học", url: "/manager/classes" },
+            { title: "Học lại lớp", url: "/manager/redelivery" },
             { title: "Lịch học", url: "/manager/sessions" },
             { title: "Điểm danh", url: "/manager/attendance" },
             { title: "Chuyên gia", url: "/manager/experts" },

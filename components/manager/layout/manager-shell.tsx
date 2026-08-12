@@ -22,6 +22,7 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/manager/question-bank")) return "Ngân hàng câu hỏi";
   if (pathname.startsWith("/manager/milestones")) return "Milestone";
   if (pathname.startsWith("/manager/classes")) return "Lớp học";
+  if (pathname.startsWith("/manager/redelivery")) return "Học lại lớp";
   if (pathname.startsWith("/manager/sessions")) return "Lịch học";
   if (pathname.startsWith("/manager/attendance")) return "Điểm danh";
   if (pathname.startsWith("/manager/assignments")) return "Bài tập";

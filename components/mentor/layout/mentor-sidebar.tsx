@@ -7,6 +7,7 @@ import {
   ChevronsUpDown,
   ClipboardList,
   LogOut,
+  RotateCcw,
   User,
   Users,
 } from "lucide-react";
@@ -51,6 +52,11 @@ const NAV_ITEMS = [
     title: "Đăng ký lớp",
     url: "/mentor/board",
     icon: ClipboardList,
+  },
+  {
+    title: "Yêu cầu làm lại",
+    url: "/mentor/recovery",
+    icon: RotateCcw,
   },
 ] as const;
 

@@ -14,6 +14,7 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/mentor/classes")) return "Lớp của tôi";
   if (pathname.startsWith("/mentor/board")) return "Đăng ký lớp";
   if (pathname.startsWith("/mentor/requests")) return "Đăng ký lớp";
+  if (pathname.startsWith("/mentor/recovery")) return "Yêu cầu làm lại";
   return "Mentor";
 }
 

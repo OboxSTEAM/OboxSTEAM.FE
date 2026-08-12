@@ -13,6 +13,8 @@ export type FlatCurriculumAssignment = {
   status: EnrollmentAssignmentStatus;
   moduleId: string;
   moduleName: string;
+  moduleType: EnrollmentCurriculum["modules"][number]["moduleType"];
+  moduleEnrollmentId: string;
   courseId: string | null;
   courseName: string | null;
   milestoneId: string | null;
@@ -46,6 +48,8 @@ function mapFlatAssignment(
     status: assignment.status,
     moduleId: module.moduleId,
     moduleName: module.moduleName,
+    moduleType: module.moduleType,
+    moduleEnrollmentId: module.moduleEnrollmentId,
     courseId,
     courseName,
     milestoneId,
