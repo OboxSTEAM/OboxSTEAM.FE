@@ -333,6 +333,31 @@ export {
 } from "./assignments";
 
 export {
+  forceCompleteActivity,
+  type ActivityProgressRecord,
+  type ActivityProgressStatus,
+  type ForceCompleteActivityInput,
+  type ForceCompleteActivityResponse,
+  type ForceCompleteActivityResult,
+} from "./activity-progresses";
+
+export {
+  getClassQuizSet,
+  pullClassQuizSet,
+  updateClassQuizQuestion,
+  type ClassQuizQuestion,
+  type ClassQuizQuestionOption,
+  type ClassQuizQuestionSet,
+  type GetClassQuizSetResponse,
+  type GetClassQuizSetResult,
+  type PullClassQuizSetResponse,
+  type PullClassQuizSetResult,
+  type UpdateClassQuizQuestionInput,
+  type UpdateClassQuizQuestionResponse,
+  type UpdateClassQuizQuestionResult,
+} from "./class-quiz-set";
+
+export {
   getMaterials,
   getMaterialByActivityId,
   uploadMaterial,

@@ -3,10 +3,8 @@
 import { useMemo, useState } from "react";
 import { ChevronRight, Receipt } from "lucide-react";
 
-import { InvoiceReceiptDialog } from "@/components/payment/invoice-receipt-dialog";
+import { InvoiceBrowserDialog } from "@/components/payment/invoice-browser-dialog";
 import type { Invoice } from "@/lib/api/entities/invoice";
-import { formatProgramPrice } from "@/lib/programs/constants";
-import { formatPaymentDateTime } from "@/lib/payment/format";
 import { cn } from "@/lib/utils";
 
 type EnrollmentInvoicesSectionProps = {
@@ -14,134 +12,66 @@ type EnrollmentInvoicesSectionProps = {
   className?: string;
 };
 
-function formatInvoiceAmount(invoice: Invoice): string {
-  if (invoice.currency === "VND" || !invoice.currency) {
-    return formatProgramPrice(invoice.totalAmount);
-  }
-  return new Intl.NumberFormat("vi-VN", {
-    style: "currency",
-    currency: invoice.currency,
-  }).format(invoice.totalAmount);
-}
-
-function invoiceTitle(invoice: Invoice): string {
-  if (invoice.itemDescription?.trim()) return invoice.itemDescription.trim();
-  if (invoice.moduleId) return "Học lại module";
-  return "Đăng ký chương trình";
-}
-
+/**
+ * Certificate-style foot strip under an enrollment card.
+ * Opens a split dialog: invoice list (left) + detail (right).
+ */
 export function EnrollmentInvoicesSection({
   invoices,
   className,
 }: EnrollmentInvoicesSectionProps) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
 
-  const { programInvoices, retakeInvoices } = useMemo(() => {
-    const sorted = [...invoices].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
-    return {
-      programInvoices: sorted.filter((invoice) => invoice.moduleId == null),
-      retakeInvoices: sorted.filter((invoice) => invoice.moduleId != null),
-    };
-  }, [invoices]);
+  const sortedInvoices = useMemo(
+    () =>
+      [...invoices].sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      ),
+    [invoices],
+  );
 
-  if (invoices.length === 0) return null;
+  if (sortedInvoices.length === 0) return null;
+
+  const count = sortedInvoices.length;
+  const label =
+    count === 1 ? "Xem hóa đơn thanh toán" : `Xem ${count} hóa đơn thanh toán`;
 
   return (
     <>
-      <div
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
         className={cn(
-          "border-t border-[#E5E5E0] bg-[#FAFAF5] px-4 py-3 sm:px-5",
+          "group relative flex w-full items-center gap-2.5 overflow-hidden border-t border-[#D8E8F0] px-4 py-2.5 text-left",
+          "bg-gradient-to-r from-[#F3FAFD] via-[#EAF6FB] to-[#E0F2FA]",
+          "motion-safe:transition-colors motion-safe:duration-200",
+          "hover:from-[#EAF6FB] hover:via-[#E0F2FA] hover:to-[#D4ECF7]",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4FC3F7]",
           className,
         )}
       >
-        <div className="mb-2 flex items-center gap-2">
-          <Receipt className="size-3.5 text-[#6B6B6B]" aria-hidden />
-          <p className="text-xs font-semibold uppercase tracking-wide text-[#6B6B6B]">
-            Hóa đơn ({invoices.length})
-          </p>
-        </div>
+        <span className="relative flex size-8 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-[#4FC3F7] to-[#29B6F6] text-white shadow-sm ring-1 ring-[#29B6F6]/35">
+          <Receipt className="size-4" strokeWidth={2.25} aria-hidden />
+        </span>
 
-        <div className="space-y-3">
-          {programInvoices.length > 0 ? (
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-[#8a8a8a]">
-                Đăng ký chương trình
-              </p>
-              <ul className="space-y-1">
-                {programInvoices.map((invoice) => (
-                  <InvoiceRowButton
-                    key={invoice.id}
-                    invoice={invoice}
-                    onOpen={() => setSelectedId(invoice.id)}
-                  />
-                ))}
-              </ul>
-            </div>
-          ) : null}
+        <span className="relative min-w-0 flex-1">
+          <span className="font-heading block truncate text-xs font-bold text-[#2D2D2D] sm:text-[13px]">
+            {label}
+          </span>
+        </span>
 
-          {retakeInvoices.length > 0 ? (
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium text-[#8a8a8a]">
-                Học lại module
-              </p>
-              <ul className="space-y-1">
-                {retakeInvoices.map((invoice) => (
-                  <InvoiceRowButton
-                    key={invoice.id}
-                    invoice={invoice}
-                    onOpen={() => setSelectedId(invoice.id)}
-                  />
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
-      </div>
+        <span className="relative inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#1565c0] group-hover:text-[#2D2D2D]">
+          Xem
+          <ChevronRight className="size-3.5" aria-hidden />
+        </span>
+      </button>
 
-      <InvoiceReceiptDialog
-        invoiceId={selectedId}
-        open={selectedId != null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedId(null);
-        }}
+      <InvoiceBrowserDialog
+        invoices={sortedInvoices}
+        open={open}
+        onOpenChange={setOpen}
       />
     </>
-  );
-}
-
-function InvoiceRowButton({
-  invoice,
-  onOpen,
-}: {
-  invoice: Invoice;
-  onOpen: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group flex w-full items-center gap-2 rounded-lg border border-[#E5E5E0] bg-white px-2.5 py-2 text-left transition hover:border-[#C9C9C2] hover:bg-white"
-    >
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-xs font-semibold text-[#2D2D2D]">
-          {invoiceTitle(invoice)}
-        </span>
-        <span className="mt-0.5 block truncate text-[11px] text-[#6B6B6B]">
-          {invoice.invoiceNumber ?? invoice.id.slice(0, 8)}
-          {" · "}
-          {formatPaymentDateTime(invoice.createdAt)}
-        </span>
-      </span>
-      <span className="shrink-0 text-xs font-semibold tabular-nums text-[#E94B3C]">
-        {formatInvoiceAmount(invoice)}
-      </span>
-      <ChevronRight
-        className="size-3.5 shrink-0 text-[#6B6B6B] group-hover:text-[#2D2D2D]"
-        aria-hidden
-      />
-    </button>
   );
 }

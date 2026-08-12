@@ -129,8 +129,19 @@ export function ActivityPanel({
     flatActivity?.status === "completed" ||
     activity?.learningProgress?.activityStatus === "Done";
 
+  /** Student-driven complete API is SelfPaced-only; sessions are mentor-marked. */
+  const canStudentComplete = activity?.activityType === "SelfPaced";
+
   const handleComplete = useCallback(async () => {
-    if (!selectedActivityId || !activity || !canComplete || isAlreadyComplete) return;
+    if (
+      !selectedActivityId ||
+      !activity ||
+      !canStudentComplete ||
+      !canComplete ||
+      isAlreadyComplete
+    ) {
+      return;
+    }
 
     setIsCompleting(true);
     try {
@@ -160,6 +171,7 @@ export function ActivityPanel({
   }, [
     activity,
     canComplete,
+    canStudentComplete,
     curriculum.enrollmentId,
     isAlreadyComplete,
     onCurriculumRefresh,
@@ -264,7 +276,7 @@ export function ActivityPanel({
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {isAlreadyComplete ? (
             <span className="text-sm font-medium text-learn-success">Đã hoàn thành</span>
-          ) : (
+          ) : canStudentComplete ? (
             <Button
               type="button"
               className="bg-learn-primary text-white hover:bg-learn-primary/90"
@@ -273,6 +285,10 @@ export function ActivityPanel({
             >
               {isCompleting ? "Đang lưu..." : "Hoàn thành & Tiếp tục"}
             </Button>
+          ) : (
+            <span className="text-sm text-learn-muted">
+              Mentor sẽ xác nhận hoàn thành
+            </span>
           )}
 
           <Button

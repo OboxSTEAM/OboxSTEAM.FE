@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 import type { Activity, ResumeState } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import { cn } from "@/lib/utils";
@@ -28,15 +26,8 @@ export function ActivityContent({
   onCanCompleteChange,
   compact = false,
 }: ActivityContentProps) {
-  const isSession =
-    activity.activityType === "LiveOnline" || activity.activityType === "Offline";
-
-  useEffect(() => {
-    if (isSession) {
-      onCanCompleteChange?.(!isAlreadyComplete);
-    }
-  }, [isAlreadyComplete, isSession, onCanCompleteChange]);
-
+  // Only SelfPaced activities can be marked done by the student.
+  // LiveOnline / Offline completion is mentor-owned.
   if (activity.activityType === "SelfPaced") {
     return (
       <MaterialActivity

@@ -280,6 +280,26 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Trạng thái không hợp lệ hoặc bạn không có quyền thao tác.",
     action: "Tải lại roster và thử cập nhật lại.",
   },
+  "activityProgress.forceComplete": {
+    title: "Không force-complete được hoạt động",
+    reason: "Học viên hoặc hoạt động không hợp lệ, hoặc bạn không có quyền.",
+    action: "Kiểm tra học viên/hoạt động rồi thử lại.",
+  },
+  "classQuizSet.get": {
+    title: "Không tải được bộ đề lớp",
+    reason: "Máy chủ tạm thời không phản hồi hoặc bài tập không tồn tại.",
+    action: "Chọn lại bài quiz hoặc thử tải lại sau vài giây.",
+  },
+  "classQuizSet.pull": {
+    title: "Không kéo được bộ đề lớp",
+    reason: "Bộ đề có thể đã khóa, ngân hàng câu hỏi trống, hoặc bạn không có quyền.",
+    action: "Nếu đã có học viên nộp bài, bộ đề bị khóa và không thể kéo lại.",
+  },
+  "classQuizSet.update": {
+    title: "Không cập nhật được câu hỏi",
+    reason: "Bộ đề đã khóa hoặc nội dung câu hỏi chưa hợp lệ.",
+    action: "Kiểm tra nội dung rồi thử lại. Bộ đề khóa sau khi có bài nộp.",
+  },
   "media.list": {
     title: "Không tải được media",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
@@ -631,6 +651,9 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classSessions.update",
   "classSessions.delete",
   "attendance.update",
+  "activityProgress.forceComplete",
+  "classQuizSet.pull",
+  "classQuizSet.update",
   "media.upload",
   "media.delete",
   "media.processTags",

@@ -344,6 +344,18 @@ export {
   type UpdateMediaTagVerificationInput,
 } from "./media";
 export {
+  forceCompleteActivitySchema,
+  type ForceCompleteActivityInput,
+} from "./activity-progresses";
+export {
+  classQuizQuestionParamsSchema,
+  classQuizSetParamsSchema,
+  updateClassQuizQuestionSchema,
+  type ClassQuizQuestionParams,
+  type ClassQuizSetParams,
+  type UpdateClassQuizQuestionInput,
+} from "./class-quiz-set";
+export {
   addHighlightSegmentSchema,
   createHighlightStackSchema,
   highlightStackIdParamSchema,

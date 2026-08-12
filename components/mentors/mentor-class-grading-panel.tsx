@@ -487,11 +487,13 @@ function AssignmentPromptDialog({
 type MentorClassGradingPanelProps = {
   classId: string;
   programId: string;
+  initialAssignmentId?: string | null;
 };
 
 export function MentorClassGradingPanel({
   classId,
   programId,
+  initialAssignmentId = null,
 }: MentorClassGradingPanelProps) {
   const [mode, setMode] = useState<GradingMode>("manual");
   const [assignmentId, setAssignmentId] = useState("");
@@ -594,6 +596,30 @@ export function MentorClassGradingPanel({
     () => assignments.filter((item) => isQuizAssignmentType(item.assignmentType)),
     [assignments],
   );
+
+  useEffect(() => {
+    if (!initialAssignmentId || assignments.length === 0) return;
+    const item = assignments.find((a) => a.id === initialAssignmentId);
+    if (!item) return;
+
+    if (isQuizAssignmentType(item.assignmentType)) {
+      setMode("quiz");
+      setAssignmentId(initialAssignmentId);
+      setGradeTarget(null);
+      setQuizPreview(null);
+      return;
+    }
+
+    if (!isRegularManualType(item.assignmentType)) return;
+
+    // FileUpload may be a research milestone — wait for the map before choosing mode.
+    if (item.assignmentType === "FileUpload" && !researchIdSet) return;
+
+    setMode(researchIdSet?.has(item.id) ? "research" : "manual");
+    setAssignmentId(initialAssignmentId);
+    setGradeTarget(null);
+    setQuizPreview(null);
+  }, [initialAssignmentId, assignments, researchIdSet]);
 
   const visibleAssignments =
     mode === "research"
