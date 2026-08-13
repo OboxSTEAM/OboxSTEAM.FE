@@ -12,16 +12,24 @@ export type ResearchStagingState = {
 
 const STORAGE_PREFIX = "obox-research-staging:";
 
-function storageKey(submissionId: string): string {
-  return `${STORAGE_PREFIX}${submissionId}`;
+/** Stable draft key before upload returns a submissionId. */
+export function researchDraftStorageKey(
+  moduleEnrollmentId: string,
+  researchMilestoneId: string,
+): string {
+  return `draft:${moduleEnrollmentId}:${researchMilestoneId}`;
+}
+
+function storageKey(key: string): string {
+  return `${STORAGE_PREFIX}${key}`;
 }
 
 export function getStoredResearchStaging(
-  submissionId: string,
+  key: string,
 ): ResearchStagingState | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = sessionStorage.getItem(storageKey(submissionId));
+    const raw = sessionStorage.getItem(storageKey(key));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as ResearchStagingState;
     if (
@@ -43,24 +51,37 @@ export function getStoredResearchStaging(
 }
 
 export function setStoredResearchStaging(
-  submissionId: string,
+  key: string,
   state: ResearchStagingState,
 ): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.setItem(storageKey(submissionId), JSON.stringify(state));
+    sessionStorage.setItem(storageKey(key), JSON.stringify(state));
   } catch {
     // Ignore quota / private-mode errors.
   }
 }
 
-export function clearStoredResearchStaging(submissionId: string): void {
+export function clearStoredResearchStaging(key: string): void {
   if (typeof window === "undefined") return;
   try {
-    sessionStorage.removeItem(storageKey(submissionId));
+    sessionStorage.removeItem(storageKey(key));
   } catch {
     // Ignore.
   }
+}
+
+/** Move draft staging under submissionId after lazy-create upload. */
+export function migrateResearchStagingKey(
+  fromKey: string,
+  toKey: string,
+): void {
+  if (fromKey === toKey) return;
+  const stored = getStoredResearchStaging(fromKey);
+  if (stored) {
+    setStoredResearchStaging(toKey, stored);
+  }
+  clearStoredResearchStaging(fromKey);
 }
 
 export function fileNameFromUrl(url: string): string {

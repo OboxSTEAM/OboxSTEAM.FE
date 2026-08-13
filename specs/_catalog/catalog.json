@@ -1122,29 +1122,19 @@
         "description": "Returns per-milestone unlock and submission readiness for a module enrollment. Access is enforced per role."
       },
       {
-        "path": "/api/research-submissions/start",
-        "method": "post",
-        "description": "Mentor, Manager, or Admin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window."
-      },
-      {
-        "path": "/api/research-submissions/start-for-class",
-        "method": "post",
-        "description": "Mentor, Manager, or Admin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped."
-      },
-      {
         "path": "/api/research-submissions/{submissionId}",
         "method": "get",
         "description": "Returns a research milestone submission. Access is enforced per role."
       },
       {
-        "path": "/api/research-submissions/{submissionId}/upload",
+        "path": "/api/research-submissions/upload",
         "method": "post",
-        "description": "Uploads a deliverable or evidence file to S3 only (no DB write). Returns CreateResearchSubmissionRequestDto with FileUrl or EvidenceUrls for use in submit. Set isEvidence=true for supporting evidence files."
+        "description": "Uploads a deliverable or evidence file to S3. Lazy-creates a Pending draft when the milestone is unlocked. Returns FileUrl or EvidenceUrls (and SubmissionId) for use in submit. Set isEvidence=true for supporting evidence files."
       },
       {
-        "path": "/api/research-submissions/{submissionId}/submit",
+        "path": "/api/research-submissions/submit",
         "method": "post",
-        "description": "Student submits research deliverable content in a single action. No draft saving. Resubmission after ReturnedForRevision does not require mentor to reopen."
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. Personal AvailableUntil from approved assessment recovery is honored."
       },
       {
         "path": "/api/research-submissions/{submissionId}/grade",
@@ -1608,15 +1598,6 @@
       },
       {
         "name": "CreateResearchMilestoneRequestDto"
-      },
-      {
-        "name": "CreateResearchSubmissionRequestDto"
-      },
-      {
-        "name": "CreateResearchSubmissionRequestDtoApiResult"
-      },
-      {
-        "name": "CreateResearchSubmissionRequestDtoResponseDataContent"
       },
       {
         "name": "DashboardLandingDto"
@@ -2492,24 +2473,6 @@
         "name": "SkillSummaryDtoPaginationResponseDataContent"
       },
       {
-        "name": "StartResearchSubmissionForClassRequestDto"
-      },
-      {
-        "name": "StartResearchSubmissionForClassResponseDto"
-      },
-      {
-        "name": "StartResearchSubmissionForClassResponseDtoApiResult"
-      },
-      {
-        "name": "StartResearchSubmissionForClassResponseDtoResponseDataContent"
-      },
-      {
-        "name": "StartResearchSubmissionForClassSkippedDto"
-      },
-      {
-        "name": "StartResearchSubmissionRequestDto"
-      },
-      {
         "name": "StatusCountDto"
       },
       {
@@ -2547,6 +2510,9 @@
       },
       {
         "name": "SubmitQuizAnswersRequestDto"
+      },
+      {
+        "name": "SubmitResearchWorkRequestDto"
       },
       {
         "name": "SubmitRetrospectiveRequestDto"
@@ -2664,6 +2630,15 @@
       },
       {
         "name": "UpdateUserDto"
+      },
+      {
+        "name": "UploadResearchSubmissionResponseDto"
+      },
+      {
+        "name": "UploadResearchSubmissionResponseDtoApiResult"
+      },
+      {
+        "name": "UploadResearchSubmissionResponseDtoResponseDataContent"
       },
       {
         "name": "UserDto"

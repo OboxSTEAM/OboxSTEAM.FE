@@ -5,18 +5,27 @@ export const researchSubmissionIdParamSchema = z.object({
   submissionId: z.string().uuid("ID bài nộp không hợp lệ."),
 });
 
-/** Body for `POST /api/research-submissions/start`. */
-export const startResearchSubmissionSchema = z.object({
-  moduleEnrollmentId: z.string().uuid("ID đăng ký module không hợp lệ."),
-  researchMilestoneId: z.string().uuid("ID mốc nghiên cứu không hợp lệ."),
-});
-
-/** Body for `POST /api/research-submissions/{submissionId}/submit`. */
-export const submitResearchSubmissionSchema = z.object({
-  contentText: z.string().nullable().optional(),
-  fileUrl: z.string().nullable().optional(),
-  evidenceUrls: z.array(z.string()).nullable().optional(),
-});
+/** Body for `POST /api/research-submissions/submit`. */
+export const submitResearchSubmissionSchema = z
+  .object({
+    moduleEnrollmentId: z.string().uuid("ID đăng ký module không hợp lệ."),
+    researchMilestoneId: z.string().uuid("ID mốc nghiên cứu không hợp lệ."),
+    contentText: z.string().nullable().optional(),
+    fileUrl: z.string().nullable().optional(),
+    evidenceUrls: z.array(z.string()).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasText = Boolean(value.contentText?.trim());
+    const hasFile = Boolean(value.fileUrl?.trim());
+    const hasEvidence =
+      (value.evidenceUrls?.filter((url) => Boolean(url?.trim())).length ?? 0) > 0;
+    if (!hasText && !hasFile && !hasEvidence) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Cần ít nhất một trong: nội dung, tệp chính, hoặc minh chứng.",
+      });
+    }
+  });
 
 /** Body for `POST /api/research-submissions/{submissionId}/grade`. */
 export const gradeResearchSubmissionSchema = z.object({
@@ -25,13 +34,14 @@ export const gradeResearchSubmissionSchema = z.object({
   returnForRevision: z.boolean().optional(),
 });
 
-/** Query for `POST /api/research-submissions/{submissionId}/upload`. */
+/** Query for `POST /api/research-submissions/upload`. */
 export const uploadResearchSubmissionQuerySchema = z.object({
+  moduleEnrollmentId: z.string().uuid("ID đăng ký module không hợp lệ."),
+  researchMilestoneId: z.string().uuid("ID mốc nghiên cứu không hợp lệ."),
   isEvidence: z.boolean().optional(),
 });
 
 export type ResearchSubmissionIdParam = z.infer<typeof researchSubmissionIdParamSchema>;
-export type StartResearchSubmissionInput = z.infer<typeof startResearchSubmissionSchema>;
 export type SubmitResearchSubmissionInput = z.infer<typeof submitResearchSubmissionSchema>;
 export type GradeResearchSubmissionInput = z.infer<typeof gradeResearchSubmissionSchema>;
 export type UploadResearchSubmissionQuery = z.infer<typeof uploadResearchSubmissionQuerySchema>;

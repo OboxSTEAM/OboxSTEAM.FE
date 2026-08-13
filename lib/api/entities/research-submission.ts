@@ -32,9 +32,12 @@ export const researchSubmissionSchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
-/** Payload returned after upload; merge into submit body. */
+/**
+ * Payload from `POST /api/research-submissions/upload`.
+ * Merge `fileUrl` / `evidenceUrls` into submit body; keep `submissionId` for staging.
+ */
 export const researchSubmissionUploadPayloadSchema = z.object({
-  contentText: z.string().nullable(),
+  submissionId: z.string().uuid(),
   fileUrl: z.string().nullable(),
   evidenceUrls: z.array(z.string()).nullable(),
 });

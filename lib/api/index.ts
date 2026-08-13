@@ -906,7 +906,6 @@ export {
 export {
   getResearchSubmissionById,
   gradeResearchSubmission,
-  startResearchSubmission,
   submitResearchSubmission,
   uploadResearchSubmissionFile,
   type GetResearchSubmissionByIdResponse,
@@ -918,9 +917,6 @@ export {
   type ResearchSubmissionIdParam,
   type ResearchSubmissionStatus,
   type ResearchSubmissionUploadPayload,
-  type StartResearchSubmissionInput,
-  type StartResearchSubmissionResponse,
-  type StartResearchSubmissionResult,
   type SubmitResearchSubmissionInput,
   type SubmitResearchSubmissionResponse,
   type SubmitResearchSubmissionResult,

@@ -12,10 +12,6 @@ export const researchSubmissionUploadPayloadValueSchema = createApiValueSchema(
   researchSubmissionUploadPayloadSchema,
 );
 
-export const startResearchSubmissionResponseSchema = createApiResponseSchema(
-  researchSubmissionValueSchema,
-);
-
 export const getResearchSubmissionByIdResponseSchema = createApiResponseSchema(
   researchSubmissionValueSchema,
 );
@@ -31,11 +27,6 @@ export const submitResearchSubmissionResponseSchema = createApiResponseSchema(
 export const gradeResearchSubmissionResponseSchema = createApiResponseSchema(
   researchSubmissionValueSchema,
 );
-
-export type StartResearchSubmissionResponse = z.infer<
-  typeof startResearchSubmissionResponseSchema
->;
-export type StartResearchSubmissionResult = StartResearchSubmissionResponse["value"];
 
 export type GetResearchSubmissionByIdResponse = z.infer<
   typeof getResearchSubmissionByIdResponseSchema

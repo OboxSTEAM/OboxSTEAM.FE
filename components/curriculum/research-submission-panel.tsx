@@ -60,6 +60,8 @@ import {
   clearStoredResearchStaging,
   fileNameFromUrl,
   getStoredResearchStaging,
+  migrateResearchStagingKey,
+  researchDraftStorageKey,
   setStoredResearchStaging,
   type ResearchStagingEvidence,
   type ResearchStagingState,
@@ -84,8 +86,24 @@ type ResearchSubmissionPanelProps = {
 
 type UploadTarget = "primary" | "evidence";
 
+/** Legacy progress reason — mentor open step was removed. */
+const MENTOR_OPEN_BLOCK_REASON = "Mentor has not opened submission yet.";
+
 function isEditableStatus(status: ResearchSubmissionStatus): boolean {
   return status === "Pending" || status === "ReturnedForRevision";
+}
+
+function resolveDraftStaging(
+  moduleEnrollmentId: string,
+  researchMilestoneId: string,
+): ResearchStagingState {
+  const stored = getStoredResearchStaging(
+    researchDraftStorageKey(moduleEnrollmentId, researchMilestoneId),
+  );
+  if (stored && (stored.fileUrl || stored.evidence.length > 0 || stored.contentText.trim())) {
+    return stored;
+  }
+  return emptyStaging();
 }
 
 function formatFileSize(bytes: number): string {
@@ -116,8 +134,13 @@ function stagingFromSubmission(submission: ResearchSubmission): ResearchStagingS
   };
 }
 
-function resolveInitialStaging(submission: ResearchSubmission): ResearchStagingState {
-  const stored = getStoredResearchStaging(submission.id);
+function resolveInitialStaging(
+  submission: ResearchSubmission,
+  draftKey?: string,
+): ResearchStagingState {
+  const stored =
+    getStoredResearchStaging(submission.id) ??
+    (draftKey ? getStoredResearchStaging(draftKey) : null);
   if (stored && (stored.fileUrl || stored.evidence.length > 0 || stored.contentText.trim())) {
     return stored;
   }
@@ -397,6 +420,7 @@ export function ResearchSubmissionPanel({
   const evidenceDragDepthRef = useRef(0);
 
   const [submission, setSubmission] = useState<ResearchSubmission | null>(null);
+  const [localSubmissionId, setLocalSubmissionId] = useState<string | null>(null);
   const [staging, setStaging] = useState<ResearchStagingState>(emptyStaging);
   const [isPrimaryDragging, setIsPrimaryDragging] = useState(false);
   const [isEvidenceDragging, setIsEvidenceDragging] = useState(false);
@@ -426,8 +450,14 @@ export function ResearchSubmissionPanel({
 
   const milestoneId = flatAssignment.milestoneId;
 
+  const draftStorageKey =
+    moduleEnrollmentId && milestoneId
+      ? researchDraftStorageKey(moduleEnrollmentId, milestoneId)
+      : null;
+
   const resetLocal = useCallback(() => {
     setSubmission(null);
+    setLocalSubmissionId(null);
     setStaging(emptyStaging());
     setIsPrimaryDragging(false);
     setIsEvidenceDragging(false);
@@ -442,13 +472,16 @@ export function ResearchSubmissionPanel({
     resetLocal();
   }, [assignmentId, resetLocal]);
 
-  const persistStaging = useCallback((submissionId: string, updater: (prev: ResearchStagingState) => ResearchStagingState) => {
-    setStaging((prev) => {
-      const next = updater(prev);
-      setStoredResearchStaging(submissionId, next);
-      return next;
-    });
-  }, []);
+  const persistStaging = useCallback(
+    (storageKey: string, updater: (prev: ResearchStagingState) => ResearchStagingState) => {
+      setStaging((prev) => {
+        const next = updater(prev);
+        setStoredResearchStaging(storageKey, next);
+        return next;
+      });
+    },
+    [],
+  );
 
   const {
     data: assignmentResult,
@@ -494,7 +527,7 @@ export function ResearchSubmissionPanel({
     return milestones.find((item) => item.milestoneId === milestoneId) ?? null;
   }, [milestoneId, progressResult?.data?.milestones]);
 
-  const progressSubmissionId = milestoneProgress?.submissionId ?? null;
+  const progressSubmissionId = milestoneProgress?.submissionId ?? localSubmissionId;
 
   const {
     data: submissionResult,
@@ -519,16 +552,42 @@ export function ResearchSubmissionPanel({
     const next = submissionResult?.data ?? null;
     if (!next) return;
     setSubmission(next);
+    setLocalSubmissionId(next.id);
     if (isEditableStatus(next.status)) {
-      setStaging(resolveInitialStaging(next));
+      setStaging(resolveInitialStaging(next, draftStorageKey ?? undefined));
+      if (draftStorageKey) {
+        migrateResearchStagingKey(draftStorageKey, next.id);
+      }
     } else {
       setStaging(stagingFromSubmission(next));
     }
-  }, [submissionResult?.data]);
+  }, [draftStorageKey, submissionResult?.data]);
 
-  const isEditable = submission ? isEditableStatus(submission.status) : false;
+  // Draft mode: canSubmit / unlocked with no submission yet.
+  useEffect(() => {
+    if (submission || progressSubmissionId) return;
+    if (!moduleEnrollmentId || !milestoneId) return;
+    if (!(milestoneProgress?.isUnlocked || milestoneProgress?.canSubmit)) return;
+    setStaging(resolveDraftStaging(moduleEnrollmentId, milestoneId));
+  }, [
+    milestoneId,
+    milestoneProgress?.canSubmit,
+    milestoneProgress?.isUnlocked,
+    moduleEnrollmentId,
+    progressSubmissionId,
+    submission,
+  ]);
+
+  const isUnlocked = milestoneProgress?.isUnlocked ?? false;
   const canSubmitProgress = milestoneProgress?.canSubmit ?? false;
-  const blockReasons = milestoneProgress?.submitBlockReasons?.filter(Boolean) ?? [];
+  const isEditable = submission
+    ? isEditableStatus(submission.status)
+    : isUnlocked || canSubmitProgress;
+  const stagingKey = submission?.id ?? draftStorageKey;
+  const blockReasons =
+    milestoneProgress?.submitBlockReasons
+      ?.filter(Boolean)
+      .filter((reason) => reason !== MENTOR_OPEN_BLOCK_REASON) ?? [];
   const requiredActivities = milestoneProgress?.requiredActivities ?? [];
 
   const validateFile = useCallback((file: File): boolean => {
@@ -544,7 +603,15 @@ export function ResearchSubmissionPanel({
 
   const uploadFiles = useCallback(
     async (files: FileList | File[], target: UploadTarget) => {
-      if (!submission || !isEditable || uploadingTarget) return;
+      if (
+        !isEditable ||
+        uploadingTarget ||
+        !moduleEnrollmentId ||
+        !milestoneId ||
+        !stagingKey
+      ) {
+        return;
+      }
 
       const list = Array.from(files);
       if (list.length === 0) return;
@@ -555,15 +622,23 @@ export function ResearchSubmissionPanel({
 
         setUploadingTarget("primary");
         try {
-          const result = await uploadResearchSubmissionFile(submission.id, file, {
+          const result = await uploadResearchSubmissionFile(file, {
+            moduleEnrollmentId,
+            researchMilestoneId: milestoneId,
             isEvidence: false,
           });
           const payload = result?.data;
           const fileUrl = payload?.fileUrl;
-          if (!fileUrl) {
+          const createdSubmissionId = payload?.submissionId;
+          if (!fileUrl || !createdSubmissionId) {
             throw new Error("Phản hồi tải lên thiếu đường dẫn tệp.");
           }
-          persistStaging(submission.id, (prev) => ({
+
+          if (draftStorageKey && createdSubmissionId !== stagingKey) {
+            migrateResearchStagingKey(draftStorageKey, createdSubmissionId);
+          }
+          setLocalSubmissionId(createdSubmissionId);
+          persistStaging(createdSubmissionId, (prev) => ({
             ...prev,
             fileUrl,
             fileName: file.name,
@@ -596,19 +671,32 @@ export function ResearchSubmissionPanel({
       setUploadingTarget("evidence");
       try {
         const added: ResearchStagingEvidence[] = [];
+        let createdSubmissionId = submission?.id ?? localSubmissionId;
         for (const file of queued) {
-          const result = await uploadResearchSubmissionFile(submission.id, file, {
+          const result = await uploadResearchSubmissionFile(file, {
+            moduleEnrollmentId,
+            researchMilestoneId: milestoneId,
             isEvidence: true,
           });
-          const urls = result?.data?.evidenceUrls?.filter(Boolean) ?? [];
+          const payload = result?.data;
+          const urls = payload?.evidenceUrls?.filter(Boolean) ?? [];
           const url = urls[urls.length - 1];
-          if (!url) {
+          if (!url || !payload?.submissionId) {
             throw new Error(`Không nhận được URL minh chứng cho ${file.name}.`);
           }
+          createdSubmissionId = payload.submissionId;
           added.push({ url, name: file.name });
         }
 
-        persistStaging(submission.id, (prev) => {
+        if (!createdSubmissionId) {
+          throw new Error("Phản hồi tải lên thiếu submission id.");
+        }
+
+        if (draftStorageKey && createdSubmissionId !== stagingKey) {
+          migrateResearchStagingKey(draftStorageKey, createdSubmissionId);
+        }
+        setLocalSubmissionId(createdSubmissionId);
+        persistStaging(createdSubmissionId, (prev) => {
           const nextEvidence = [...prev.evidence];
           for (const item of added) {
             if (!nextEvidence.some((existing) => existing.url === item.url)) {
@@ -630,47 +718,64 @@ export function ResearchSubmissionPanel({
         setUploadingTarget(null);
       }
     },
-    [isEditable, persistStaging, submission, uploadingTarget, validateFile],
+    [
+      draftStorageKey,
+      isEditable,
+      localSubmissionId,
+      milestoneId,
+      moduleEnrollmentId,
+      persistStaging,
+      stagingKey,
+      submission?.id,
+      uploadingTarget,
+      validateFile,
+    ],
   );
 
   const clearPrimary = useCallback(() => {
-    if (!submission || !isEditable) return;
-    persistStaging(submission.id, (prev) => ({
+    if (!isEditable || !stagingKey) return;
+    persistStaging(stagingKey, (prev) => ({
       ...prev,
       fileUrl: null,
       fileName: null,
     }));
-  }, [isEditable, persistStaging, submission]);
+  }, [isEditable, persistStaging, stagingKey]);
 
   const removeEvidence = useCallback(
     (url: string) => {
-      if (!submission || !isEditable) return;
-      persistStaging(submission.id, (prev) => ({
+      if (!isEditable || !stagingKey) return;
+      persistStaging(stagingKey, (prev) => ({
         ...prev,
         evidence: prev.evidence.filter((item) => item.url !== url),
       }));
     },
-    [isEditable, persistStaging, submission],
+    [isEditable, persistStaging, stagingKey],
   );
 
   const handleContentChange = useCallback(
     (value: string) => {
-      if (!submission || !isEditable) return;
-      persistStaging(submission.id, (prev) => ({
+      if (!isEditable || !stagingKey) return;
+      persistStaging(stagingKey, (prev) => ({
         ...prev,
         contentText: value,
       }));
     },
-    [isEditable, persistStaging, submission],
+    [isEditable, persistStaging, stagingKey],
   );
 
   const performSubmit = useCallback(async () => {
-    if (!submission || !isEditable) return;
+    if (!isEditable || !moduleEnrollmentId || !milestoneId) return;
 
     const draft = stagingRef.current;
+    const hasText = Boolean(draft.contentText.trim());
+    const hasFile = Boolean(draft.fileUrl);
+    const hasEvidence = draft.evidence.length > 0;
 
-    if (!draft.fileUrl) {
-      showAppErrorFromUnknown(new Error("Cần tải lên tệp bài nộp chính trước."), "research.submit");
+    if (!hasText && !hasFile && !hasEvidence) {
+      showAppErrorFromUnknown(
+        new Error("Cần ít nhất một trong: ghi chú, tệp chính, hoặc minh chứng."),
+        "research.submit",
+      );
       return;
     }
 
@@ -685,7 +790,9 @@ export function ResearchSubmissionPanel({
     setIsConfirmOpen(false);
     setIsSubmitting(true);
     try {
-      const result = await submitResearchSubmission(submission.id, {
+      const result = await submitResearchSubmission({
+        moduleEnrollmentId,
+        researchMilestoneId: milestoneId,
         contentText: draft.contentText.trim() || null,
         fileUrl: draft.fileUrl,
         evidenceUrls: draft.evidence.length > 0 ? draft.evidence.map((item) => item.url) : null,
@@ -695,7 +802,10 @@ export function ResearchSubmissionPanel({
         throw new Error("Phản hồi nộp bài thiếu dữ liệu.");
       }
 
-      clearStoredResearchStaging(submission.id);
+      if (stagingKey) clearStoredResearchStaging(stagingKey);
+      if (draftStorageKey) clearStoredResearchStaging(draftStorageKey);
+      clearStoredResearchStaging(submitted.id);
+      setLocalSubmissionId(submitted.id);
       setSubmission(submitted);
       setStaging(stagingFromSubmission(submitted));
       showAppSuccess({
@@ -708,7 +818,16 @@ export function ResearchSubmissionPanel({
     } finally {
       setIsSubmitting(false);
     }
-  }, [blockReasons, canSubmitProgress, isEditable, onCurriculumRefresh, submission]);
+  }, [
+    blockReasons,
+    canSubmitProgress,
+    draftStorageKey,
+    isEditable,
+    milestoneId,
+    moduleEnrollmentId,
+    onCurriculumRefresh,
+    stagingKey,
+  ]);
 
   const makeDragHandlers = (
     target: UploadTarget,
@@ -804,12 +923,18 @@ export function ResearchSubmissionPanel({
   const submittedLabel = formatAssignmentTimestamp(submission?.submittedAt);
   const passScore = submission?.passScore ?? assignment.passScore;
   const maxPoints = submission?.maxPoints ?? assignment.maxPoints;
+  const hasStagedContent =
+    Boolean(staging.fileUrl) ||
+    Boolean(staging.contentText.trim()) ||
+    staging.evidence.length > 0;
   const canCommit =
     isEditable &&
-    Boolean(staging.fileUrl) &&
+    hasStagedContent &&
     canSubmitProgress &&
     !uploadingTarget &&
-    !isSubmitting;
+    !isSubmitting &&
+    Boolean(moduleEnrollmentId) &&
+    Boolean(milestoneId);
 
   const satisfiedCount = requiredActivities.filter((item) => item.isSatisfied).length;
   const requiredTotal = requiredActivities.length;
@@ -860,12 +985,15 @@ export function ResearchSubmissionPanel({
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3 sm:px-5">
-        {!progressSubmissionId ? (
+        {!submission && milestoneProgress && !isUnlocked ? (
           <div className="rounded-lg border border-dashed border-learn-border bg-learn-surface-2/40 px-3 py-4 text-center">
             <FileUp className="mx-auto size-4 text-learn-faint" aria-hidden />
-            <p className="mt-1.5 text-sm font-medium text-learn-text-strong">Chưa mở ô nộp bài</p>
+            <p className="mt-1.5 text-sm font-medium text-learn-text-strong">
+              Mốc chưa mở khóa
+            </p>
             <p className="mt-0.5 text-xs text-learn-muted">
-              Mentor sẽ mở bài nộp khi bạn sẵn sàng.
+              {milestoneProgress.unlockReason?.trim() ||
+                "Hoàn thành điều kiện trước để nộp bài nghiên cứu."}
             </p>
           </div>
         ) : null}
@@ -882,7 +1010,7 @@ export function ResearchSubmissionPanel({
           <AssignmentResultCard {...buildResearchGradedOutcome(submission)} />
         ) : null}
 
-        {submission && isEditable ? (
+        {isEditable ? (
           <div className="space-y-3 rounded-xl border border-learn-border bg-learn-bg/60 p-3">
             <section className="space-y-1.5">
               <div className="flex items-baseline justify-between gap-2">
@@ -1046,7 +1174,7 @@ export function ResearchSubmissionPanel({
         ) : null}
       </div>
 
-      {isEditable && progressSubmissionId ? (
+      {isEditable ? (
         <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
           <p className="text-sm font-medium text-learn-muted">
             Điểm đạt{" "}

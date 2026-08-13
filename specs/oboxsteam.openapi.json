@@ -24707,306 +24707,6 @@
         }
       }
     },
-    "/api/research-submissions/start": {
-      "post": {
-        "tags": [
-          "ResearchSubmission"
-        ],
-        "summary": "Open a research submission for a student",
-        "description": "Mentor, Manager, or Admin opens a submission slot for a student on a research milestone. The student can then submit work within the assignment availability window.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartResearchSubmissionRequestDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartResearchSubmissionRequestDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartResearchSubmissionRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResearchSubmissionResponseDtoApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResearchSubmissionResponseDtoApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ResearchSubmissionResponseDtoApiResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/research-submissions/start-for-class": {
-      "post": {
-        "tags": [
-          "ResearchSubmission"
-        ],
-        "summary": "Open research submissions for a class",
-        "description": "Mentor, Manager, or Admin opens submission slots for all active students in a class on a research milestone. Students without an active module enrollment or an existing submission are skipped.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartResearchSubmissionForClassRequestDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartResearchSubmissionForClassRequestDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/StartResearchSubmissionForClassRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoApiResult"
-                }
-              }
-            }
-          },
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoApiResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/research-submissions/{submissionId}": {
       "get": {
         "tags": [
@@ -25109,18 +24809,27 @@
         }
       }
     },
-    "/api/research-submissions/{submissionId}/upload": {
+    "/api/research-submissions/upload": {
       "post": {
         "tags": [
           "ResearchSubmission"
         ],
         "summary": "Upload research submission file to S3",
-        "description": "Uploads a deliverable or evidence file to S3 only (no DB write). Returns CreateResearchSubmissionRequestDto with FileUrl or EvidenceUrls for use in submit. Set isEvidence=true for supporting evidence files.",
+        "description": "Uploads a deliverable or evidence file to S3. Lazy-creates a Pending draft when the milestone is unlocked. Returns FileUrl or EvidenceUrls (and SubmissionId) for use in submit. Set isEvidence=true for supporting evidence files.",
         "parameters": [
           {
-            "name": "submissionId",
-            "in": "path",
-            "required": true,
+            "name": "moduleEnrollmentId",
+            "in": "query",
+            "description": "Module enrollment id",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "researchMilestoneId",
+            "in": "query",
+            "description": "Research milestone id",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -25157,17 +24866,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateResearchSubmissionRequestDtoApiResult"
+                  "$ref": "#/components/schemas/UploadResearchSubmissionResponseDtoApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateResearchSubmissionRequestDtoApiResult"
+                  "$ref": "#/components/schemas/UploadResearchSubmissionResponseDtoApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateResearchSubmissionRequestDtoApiResult"
+                  "$ref": "#/components/schemas/UploadResearchSubmissionResponseDtoApiResult"
                 }
               }
             }
@@ -25275,39 +24984,28 @@
         }
       }
     },
-    "/api/research-submissions/{submissionId}/submit": {
+    "/api/research-submissions/submit": {
       "post": {
         "tags": [
           "ResearchSubmission"
         ],
         "summary": "Submit research work",
-        "description": "Student submits research deliverable content in a single action. No draft saving. Resubmission after ReturnedForRevision does not require mentor to reopen.",
-        "parameters": [
-          {
-            "name": "submissionId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. Personal AvailableUntil from approved assessment recovery is honored.",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateResearchSubmissionRequestDto"
+                "$ref": "#/components/schemas/SubmitResearchWorkRequestDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateResearchSubmissionRequestDto"
+                "$ref": "#/components/schemas/SubmitResearchWorkRequestDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateResearchSubmissionRequestDto"
+                "$ref": "#/components/schemas/SubmitResearchWorkRequestDto"
               }
             }
           }
@@ -31118,59 +30816,6 @@
           "maxAttempts": {
             "type": "integer",
             "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "CreateResearchSubmissionRequestDto": {
-        "type": "object",
-        "properties": {
-          "contentText": {
-            "type": "string",
-            "nullable": true
-          },
-          "fileUrl": {
-            "type": "string",
-            "nullable": true
-          },
-          "evidenceUrls": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "CreateResearchSubmissionRequestDtoApiResult": {
-        "type": "object",
-        "properties": {
-          "isSuccess": {
-            "type": "boolean"
-          },
-          "value": {
-            "$ref": "#/components/schemas/CreateResearchSubmissionRequestDtoResponseDataContent"
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorContent"
-          }
-        },
-        "additionalProperties": false
-      },
-      "CreateResearchSubmissionRequestDtoResponseDataContent": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "$ref": "#/components/schemas/CreateResearchSubmissionRequestDto"
           }
         },
         "additionalProperties": false
@@ -38917,128 +38562,6 @@
         },
         "additionalProperties": false
       },
-      "StartResearchSubmissionForClassRequestDto": {
-        "required": [
-          "classId",
-          "researchMilestoneId"
-        ],
-        "type": "object",
-        "properties": {
-          "classId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "researchMilestoneId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
-      "StartResearchSubmissionForClassResponseDto": {
-        "type": "object",
-        "properties": {
-          "classId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "researchMilestoneId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "totalClassStudents": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "openedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "skippedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "opened": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ResearchSubmissionResponseDto"
-            },
-            "nullable": true
-          },
-          "skipped": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/StartResearchSubmissionForClassSkippedDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "StartResearchSubmissionForClassResponseDtoApiResult": {
-        "type": "object",
-        "properties": {
-          "isSuccess": {
-            "type": "boolean"
-          },
-          "value": {
-            "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDtoResponseDataContent"
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorContent"
-          }
-        },
-        "additionalProperties": false
-      },
-      "StartResearchSubmissionForClassResponseDtoResponseDataContent": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "$ref": "#/components/schemas/StartResearchSubmissionForClassResponseDto"
-          }
-        },
-        "additionalProperties": false
-      },
-      "StartResearchSubmissionForClassSkippedDto": {
-        "type": "object",
-        "properties": {
-          "studentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "reason": {
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "StartResearchSubmissionRequestDto": {
-        "required": [
-          "moduleEnrollmentId",
-          "researchMilestoneId"
-        ],
-        "type": "object",
-        "properties": {
-          "moduleEnrollmentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "researchMilestoneId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
       "StatusCountDto": {
         "type": "object",
         "properties": {
@@ -39321,6 +38844,39 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/QuizAnswerItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubmitResearchWorkRequestDto": {
+        "required": [
+          "moduleEnrollmentId",
+          "researchMilestoneId"
+        ],
+        "type": "object",
+        "properties": {
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "researchMilestoneId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "contentText": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
             },
             "nullable": true
           }
@@ -40645,6 +40201,59 @@
           "phone": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadResearchSubmissionResponseDto": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadResearchSubmissionResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/UploadResearchSubmissionResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UploadResearchSubmissionResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/UploadResearchSubmissionResponseDto"
           }
         },
         "additionalProperties": false
