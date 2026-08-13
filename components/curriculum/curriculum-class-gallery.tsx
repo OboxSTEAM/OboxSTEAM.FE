@@ -34,7 +34,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import {
   getClassGallery,
   type ClassGalleryMedia,
-  type MediaVideoStatus,
 } from "@/lib/api";
 import { MEDIA_VIDEO_STATUS_LABELS } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown } from "@/lib/errors";
@@ -44,7 +43,6 @@ import { cn } from "@/lib/utils";
 const GALLERY_PAGE_SIZE = 12;
 
 type FileTypeFilter = "all" | "image" | "video";
-type VideoStatusFilter = "all" | MediaVideoStatus;
 
 type GalleryPage = {
   items: ClassGalleryMedia[];
@@ -143,14 +141,12 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
   const isMobile = useIsMobile();
   const [open, setOpen] = useState(false);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
-  const [statusFilter, setStatusFilter] = useState<VideoStatusFilter>("all");
   const [page, setPage] = useState(1);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   useEffect(() => {
     setOpen(false);
     setFileTypeFilter("all");
-    setStatusFilter("all");
     setPage(1);
     setPreviewIndex(null);
   }, [classId]);
@@ -159,7 +155,6 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
     fetcher: async (): Promise<GalleryPage> => {
       const result = await getClassGallery(classId, {
         fileType: fileTypeFilter === "all" ? undefined : fileTypeFilter,
-        videoStatus: statusFilter === "all" ? undefined : statusFilter,
         page,
         pageSize: GALLERY_PAGE_SIZE,
         sortBy: "uploadedAt",
@@ -173,7 +168,7 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
         totalCount: pageData?.totalCount ?? 0,
       };
     },
-    deps: [classId, fileTypeFilter, statusFilter, page],
+    deps: [classId, fileTypeFilter, page],
     onError: (error) => showAppErrorFromUnknown(error, "media.list"),
   });
 
@@ -271,7 +266,7 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
             <SheetClose className="text-learn-muted hover:text-learn-text-strong" />
           </SheetHeader>
 
-          <div className="shrink-0 space-y-2 border-b border-learn-border bg-learn-surface px-3 py-2.5">
+          <div className="shrink-0 border-b border-learn-border bg-learn-surface px-3 py-2.5">
             <Select
               value={fileTypeFilter}
               onValueChange={(value) => {
@@ -294,53 +289,9 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
                 sideOffset={8}
                 className={selectContentClass}
               >
-                <SelectItem value="all">
-                  Tất cả loại
-                </SelectItem>
-                <SelectItem value="image">
-                  Ảnh
-                </SelectItem>
-                <SelectItem value="video">
-                  Video
-                </SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={statusFilter}
-              onValueChange={(value) => {
-                if (!value) return;
-                applyFilter(() =>
-                  setStatusFilter(value as VideoStatusFilter),
-                );
-              }}
-            >
-              <SelectTrigger className={selectTriggerClass}>
-                <span className="truncate">
-                  {statusFilter === "all"
-                    ? "Tất cả trạng thái"
-                    : MEDIA_VIDEO_STATUS_LABELS[statusFilter]}
-                </span>
-              </SelectTrigger>
-              <SelectContent
-                align="start"
-                alignItemWithTrigger={false}
-                sideOffset={8}
-                className={selectContentClass}
-              >
-                <SelectItem value="all">
-                  Tất cả trạng thái
-                </SelectItem>
-                {(
-                  Object.keys(MEDIA_VIDEO_STATUS_LABELS) as MediaVideoStatus[]
-                ).map((status) => (
-                  <SelectItem
-                    key={status}
-                    value={status}
-                  >
-                    {MEDIA_VIDEO_STATUS_LABELS[status]}
-                  </SelectItem>
-                ))}
+                <SelectItem value="all">Tất cả loại</SelectItem>
+                <SelectItem value="image">Ảnh</SelectItem>
+                <SelectItem value="video">Video</SelectItem>
               </SelectContent>
             </Select>
           </div>

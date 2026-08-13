@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +32,29 @@ export function NotificationPopoverPanel({
     openNotification,
   } = useNotifications();
 
+  const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel || !hasMore) return;
+
+    const root =
+      listRef.current?.closest("[data-slot='scroll-area-viewport']") ?? null;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadMore();
+        }
+      },
+      { root, rootMargin: "48px" },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMore, items.length]);
+
   return (
     <PopoverContent
       align="end"
@@ -57,7 +82,7 @@ export function NotificationPopoverPanel({
       </PopoverHeader>
 
       <ScrollArea className="h-[min(22rem,50vh)]">
-        <div className="flex flex-col gap-0.5 p-1.5">
+        <div ref={listRef} className="flex flex-col gap-0.5 p-1.5">
           {isLoading && items.length === 0 ? (
             <p className="px-2.5 py-8 text-center text-sm text-muted-foreground">
               Đang tải thông báo…
@@ -67,34 +92,32 @@ export function NotificationPopoverPanel({
               Chưa có thông báo nào
             </p>
           ) : (
-            items.map((notification) => (
-              <NotificationItem
-                key={notification.id}
-                notification={notification}
-                onSelect={(item) => {
-                  onNavigate?.();
-                  void openNotification(item);
-                }}
-              />
-            ))
+            <>
+              {items.map((notification) => (
+                <NotificationItem
+                  key={notification.id}
+                  notification={notification}
+                  onSelect={(item) => {
+                    onNavigate?.();
+                    void openNotification(item);
+                  }}
+                />
+              ))}
+              {hasMore ? (
+                <div
+                  ref={sentinelRef}
+                  className="flex h-8 items-center justify-center"
+                  aria-hidden={!isLoadingMore}
+                >
+                  {isLoadingMore ? (
+                    <p className="text-xs text-muted-foreground">Đang tải…</p>
+                  ) : null}
+                </div>
+              ) : null}
+            </>
           )}
         </div>
       </ScrollArea>
-
-      {hasMore ? (
-        <div className="border-t border-border p-1.5">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="w-full text-xs"
-            disabled={isLoadingMore}
-            onClick={() => void loadMore()}
-          >
-            {isLoadingMore ? "Đang tải…" : "Xem thêm"}
-          </Button>
-        </div>
-      ) : null}
     </PopoverContent>
   );
 }
