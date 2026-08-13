@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarClock,
+  ChevronDown,
   ClipboardList,
   ListTree,
   MapPin,
@@ -10,6 +11,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { MentorActivityAttendancePanel } from "@/components/mentors/mentor-activity-attendance-panel";
 import { MentorClassQuizSetPanel } from "@/components/mentors/mentor-class-quiz-set-panel";
@@ -135,6 +137,8 @@ export function MentorClassCurriculumPanel({
   );
   const [forceCompletingId, setForceCompletingId] = useState<string | null>(null);
   const [bulkForceBusy, setBulkForceBusy] = useState(false);
+  const [isForceCompleteOpen, setIsForceCompleteOpen] = useState(false);
+  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (initialAssignmentId) {
@@ -149,6 +153,13 @@ export function MentorClassCurriculumPanel({
   useEffect(() => {
     if (initialSessionId) setSessionId(initialSessionId);
   }, [initialSessionId]);
+
+  const selectedActivityId =
+    selection?.kind === "activity" ? selection.activityId : null;
+
+  useEffect(() => {
+    setIsForceCompleteOpen(false);
+  }, [selectedActivityId]);
 
   const { data: programResult, isLoading: isProgramLoading } = useClientFetch({
     fetcher: async () => {
@@ -521,21 +532,6 @@ export function MentorClassCurriculumPanel({
                       </p>
                     ) : null}
                   </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={bulkForceBusy || roster.length === 0}
-                    className="h-8 gap-1.5 rounded-lg text-xs"
-                    onClick={() =>
-                      void handleBulkForceComplete(selectedActivity.id)
-                    }
-                  >
-                    <Sparkles className="size-3.5" />
-                    {bulkForceBusy
-                      ? "Đang force…"
-                      : "Force complete cả lớp (test)"}
-                  </Button>
                 </div>
 
                 {selectedActivity.activityType === "LiveOnline" ||
@@ -619,28 +615,85 @@ export function MentorClassCurriculumPanel({
               ) : null}
 
               <div className="border-t border-border">
-                <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/20 px-4 py-2.5 sm:px-6">
-                  <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Zap className="size-4 text-primary" />
-                    Force complete học viên (test)
-                  </p>
-                  <p className="text-[11px] text-muted-foreground">
-                    Bỏ qua khóa tuần tự — chỉ dùng khi kiểm thử
-                  </p>
-                </div>
-                <div className="overflow-x-auto p-4 sm:p-6">
-                  <ManagerDataTable
-                    columns={forceCompleteColumns}
-                    data={roster}
-                    emptyState={
-                      <ManagerEmptyState
-                        title="Chưa có học viên"
-                        description="Roster lớp trống."
-                        icon={Users}
-                      />
-                    }
+                <button
+                  type="button"
+                  onClick={() => setIsForceCompleteOpen((open) => !open)}
+                  aria-expanded={isForceCompleteOpen}
+                  className="flex w-full items-center justify-between gap-2 bg-muted/15 px-4 py-2.5 text-left transition-colors hover:bg-muted/30 sm:px-6"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Zap className="size-3.5 shrink-0 text-muted-foreground" />
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Force complete (test)
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="h-5 border-dashed px-1.5 text-[10px] font-medium text-muted-foreground"
+                    >
+                      Dev only
+                    </Badge>
+                  </span>
+                  <ChevronDown
+                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none ${
+                      isForceCompleteOpen ? "rotate-180" : ""
+                    }`}
+                    aria-hidden
                   />
-                </div>
+                </button>
+
+                <AnimatePresence initial={false}>
+                  {isForceCompleteOpen ? (
+                    <motion.div
+                      key="force-complete-panel"
+                      initial={
+                        reduceMotion ? false : { height: 0, opacity: 0 }
+                      }
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={
+                        reduceMotion ? undefined : { height: 0, opacity: 0 }
+                      }
+                      transition={{
+                        duration: 0.28,
+                        ease: [0.16, 1, 0.3, 1],
+                      }}
+                      className="overflow-hidden border-t border-border"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2 bg-muted/10 px-4 py-2 sm:px-6">
+                        <p className="text-[11px] text-muted-foreground">
+                          Bỏ qua khóa tuần tự — chỉ dùng khi kiểm thử
+                        </p>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={bulkForceBusy || roster.length === 0}
+                          className="h-7 gap-1.5 rounded-md text-[11px]"
+                          onClick={() =>
+                            void handleBulkForceComplete(selectedActivity.id)
+                          }
+                        >
+                          <Sparkles className="size-3.5" />
+                          {bulkForceBusy
+                            ? "Đang force…"
+                            : "Force complete cả lớp"}
+                        </Button>
+                      </div>
+                      <div className="overflow-x-auto p-4 sm:p-6">
+                        <ManagerDataTable
+                          columns={forceCompleteColumns}
+                          data={roster}
+                          emptyState={
+                            <ManagerEmptyState
+                              title="Chưa có học viên"
+                              description="Roster lớp trống."
+                              icon={Users}
+                            />
+                          }
+                        />
+                      </div>
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
               </div>
             </>
           ) : (

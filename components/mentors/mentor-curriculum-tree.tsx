@@ -174,22 +174,22 @@ function AssignmentPriorityBlock({
 
   return (
     <TreeNode>
-      <div className="overflow-hidden rounded-xl border border-primary/35 bg-primary/[0.06] shadow-[inset_0_1px_0_color-mix(in_srgb,var(--primary)_12%,transparent)]">
-        <div className="flex items-center gap-2 border-b border-primary/20 px-3 py-2">
-          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-primary/15 text-primary">
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm ring-1 ring-accent/15">
+        <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2">
+          <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-accent/15 text-accent">
             <ClipboardList className="size-3.5" aria-hidden />
           </span>
           <div className="min-w-0 flex-1">
-            <p className="text-[10px] font-bold tracking-[0.14em] text-primary uppercase">
-              Ưu tiên mentor
+            <p className="text-[10px] font-bold tracking-[0.14em] text-muted-foreground uppercase">
+              Bài tập
             </p>
             <p className="truncate text-xs font-semibold text-foreground">
-              Bài tập cần theo dõi
+              Cần theo dõi / chấm
             </p>
           </div>
           <Badge
             variant="secondary"
-            className="shrink-0 border border-primary/25 bg-card font-mono text-[10px] text-primary"
+            className="shrink-0 border border-border bg-background font-mono text-[10px] text-foreground"
           >
             {assignments.length}
           </Badge>
@@ -274,12 +274,7 @@ export function MentorCurriculumTree({
             <AccordionItem
               key={module.id}
               value={module.id}
-              className={cn(
-                "overflow-hidden rounded-xl border bg-muted/25",
-                attentionCount > 0
-                  ? "border-primary/25"
-                  : "border-border",
-              )}
+              className="overflow-hidden rounded-xl border border-border bg-muted/25"
             >
               <AccordionTrigger className="gap-2 px-3 py-3 hover:no-underline">
                 <span className="flex min-w-0 flex-1 items-start gap-3 text-left">
@@ -292,8 +287,11 @@ export function MentorCurriculumTree({
                         {module.name}
                       </span>
                       {attentionCount > 0 ? (
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 font-mono text-[10px] font-bold text-primary">
-                          <ClipboardList className="size-3" aria-hidden />
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] font-bold text-foreground">
+                          <ClipboardList
+                            className="size-3 text-accent"
+                            aria-hidden
+                          />
                           {attentionCount}
                         </span>
                       ) : null}
@@ -301,7 +299,7 @@ export function MentorCurriculumTree({
                     <span className="mt-1 block text-xs text-muted-foreground">
                       {MODULE_TYPE_LABELS[module.moduleType]}
                       {attentionCount > 0
-                        ? ` · ${attentionCount} bài cần chú ý`
+                        ? ` · ${attentionCount} bài tập`
                         : null}
                     </span>
                   </span>
@@ -432,7 +430,7 @@ export function MentorCurriculumTree({
                                 <button
                                   type="button"
                                   onClick={() => toggleGroup(milestone.id)}
-                                  className="flex w-full items-start gap-2 rounded-lg border border-dashed border-primary/30 bg-primary/[0.04] px-3 py-2.5 text-left transition-colors hover:bg-primary/[0.08]"
+                                  className="flex w-full items-start gap-2 rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
                                   aria-expanded={open}
                                 >
                                   <ChevronRight
@@ -443,13 +441,13 @@ export function MentorCurriculumTree({
                                     aria-hidden
                                   />
                                   <span className="min-w-0 flex-1">
-                                    <span className="font-mono text-[10px] font-medium tracking-[0.12em] text-primary uppercase">
+                                    <span className="font-mono text-[10px] font-medium tracking-[0.12em] text-muted-foreground uppercase">
                                       Mốc · bài nộp
                                     </span>
                                     <span className="mt-0.5 flex items-center gap-1.5 font-heading text-[15px] leading-snug font-semibold text-foreground">
                                       {milestone.isCapstone ? (
                                         <Lock
-                                          className="size-3.5 shrink-0 text-primary"
+                                          className="size-3.5 shrink-0 text-foreground"
                                           aria-hidden
                                         />
                                       ) : (
@@ -464,7 +462,7 @@ export function MentorCurriculumTree({
                                   {milestone.assignmentId ? (
                                     <Badge
                                       variant="secondary"
-                                      className="mt-0.5 shrink-0 border border-primary/20 bg-card text-[10px] text-primary"
+                                      className="mt-0.5 shrink-0 border border-border bg-card text-[10px] text-foreground"
                                     >
                                       Chấm
                                     </Badge>
@@ -556,10 +554,10 @@ function AssignmentRow({
         "flex min-h-11 w-full items-start gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors",
         emphasized &&
           !isSelected &&
-          "border border-primary/20 bg-card/90 hover:border-primary/40 hover:bg-card",
+          "border border-transparent bg-muted/25 hover:border-border hover:bg-muted/50",
         emphasized &&
           isSelected &&
-          "border border-primary/50 bg-card font-medium text-foreground shadow-sm ring-2 ring-primary/20",
+          "border border-accent/40 bg-accent/10 font-medium text-foreground shadow-sm ring-1 ring-accent/20",
         !emphasized &&
           isSelected &&
           "bg-card font-medium text-foreground shadow-sm ring-1 ring-border",
@@ -574,7 +572,7 @@ function AssignmentRow({
           "mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-md",
           isQuiz
             ? "bg-accent/15 text-accent"
-            : "bg-primary/12 text-primary",
+            : "bg-muted text-foreground",
         )}
       >
         <Icon className="size-3.5" aria-hidden />
@@ -584,7 +582,7 @@ function AssignmentRow({
           <span className="text-[11px] text-muted-foreground">{prefix}:</span>
           <Badge
             variant="outline"
-            className="h-5 border-primary/25 px-1.5 text-[10px] font-semibold text-primary"
+            className="h-5 border-border px-1.5 text-[10px] font-semibold text-muted-foreground"
           >
             {ASSIGNMENT_TYPE_LABELS[assignment.assignmentType]}
           </Badge>
@@ -592,7 +590,7 @@ function AssignmentRow({
         <span className="mt-0.5 block font-medium text-foreground">
           {assignment.title?.trim() || "Bài tập"}
         </span>
-        <span className="mt-0.5 block text-[10px] font-medium text-primary/80">
+        <span className="mt-0.5 block text-[10px] font-medium text-muted-foreground">
           {isQuiz ? "Bộ đề lớp · chỉnh / khóa" : "Mở tab Chấm bài"}
         </span>
       </span>
