@@ -616,17 +616,17 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action: "Đợi vài giây — hệ thống sẽ tiếp tục thử.",
   },
 };
-/** Contexts where a curated backend string may be shown (auth only). */
-const API_MESSAGE_ALLOWED: ReadonlySet<AppErrorContext> = new Set([
-  "auth.login",
-  "auth.register",
-  "auth.verify-otp",
-  "auth.forgot-password",
-  "auth.reset-password",
-  "assignments.quiz.result",
+
+/** Placeholder client messages — not real BE copy; keep curated fallbacks instead. */
+const CLIENT_PLACEHOLDER_MESSAGES = new Set([
+  "Request failed.",
+  "Request failed",
 ]);
 
-/** Manager mutate flows — never surface raw BE messages. */
+/**
+ * Manager mutate flows — status-based Vietnamese fallbacks when BE has no message.
+ * Client-side Error tips are also suppressed here (not BE envelopes).
+ */
 const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "programs.create",
   "programs.update",
@@ -738,9 +738,17 @@ function reasonForHttpStatus(
   return null;
 }
 
+function sanitizeApiMessage(message: string | null | undefined): string | null {
+  if (!message) return null;
+  const trimmed = message.trim();
+  if (!trimmed || CLIENT_PLACEHOLDER_MESSAGES.has(trimmed)) return null;
+  if (/^Request failed with status \d+/i.test(trimmed)) return null;
+  return trimmed;
+}
+
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
   if (error instanceof ApiResponseError) {
-    return error.message || null;
+    return sanitizeApiMessage(error.message);
   }
 
   const body = error.body as {
@@ -749,7 +757,46 @@ function extractApiMessage(error: ApiRequestError | ApiResponseError): string | 
     value?: { message?: string };
   } | null;
 
-  return body?.error?.message ?? body?.value?.message ?? body?.message ?? null;
+  return sanitizeApiMessage(
+    body?.error?.message ?? body?.value?.message ?? body?.message,
+  );
+}
+
+/** Neutral next-step copy keyed by HTTP status — used when BE drives `reason`. */
+function actionForHttpStatus(status: number): string {
+  if (status === 0) {
+    return "Kiểm tra mạng internet và thử lại.";
+  }
+  if (status === 401) {
+    return "Đăng nhập lại rồi thử tiếp.";
+  }
+  if (status === 403) {
+    return "Liên hệ quản trị viên nếu bạn cần quyền này.";
+  }
+  if (status === 404) {
+    return "Kiểm tra lại thông tin hoặc quay lại trang trước.";
+  }
+  if (status === 409) {
+    return "Kiểm tra dữ liệu bị trùng rồi thử lại.";
+  }
+  if (status === 413) {
+    return "Chọn tệp nhỏ hơn rồi thử lại.";
+  }
+  if (status === 400 || status === 422) {
+    return "Kiểm tra lại thông tin đã nhập rồi thử lại.";
+  }
+  if (status >= 500) {
+    return "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.";
+  }
+  return "Vui lòng thử lại sau vài giây.";
+}
+
+function resolveAction(
+  status: number,
+  apiMessage: string | null,
+  curatedAction: string,
+): string {
+  return apiMessage ? actionForHttpStatus(status) : curatedAction;
 }
 
 function mapHttpStatusToError(
@@ -761,7 +808,11 @@ function mapHttpStatusToError(
     return {
       title: "Đăng nhập không thành công",
       reason: apiMessage ?? "Email hoặc mật khẩu không đúng.",
-      action: "Kiểm tra lại thông tin hoặc chọn Quên mật khẩu.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Kiểm tra lại thông tin hoặc chọn Quên mật khẩu.",
+      ),
     };
   }
 
@@ -769,40 +820,52 @@ function mapHttpStatusToError(
     return {
       title: "Email đã được sử dụng",
       reason: apiMessage ?? "Tài khoản với email này đã tồn tại.",
-      action: "Đăng nhập hoặc dùng email khác để đăng ký.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Đăng nhập hoặc dùng email khác để đăng ký.",
+      ),
     };
   }
 
   if (status === 409 && context === "curriculum.material.save") {
     return {
       title: "Hoạt động đã có tài liệu",
-      reason: "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
-      action: "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+      reason:
+        apiMessage ?? "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+      ),
     };
   }
 
   const fallback = CONTEXT_FALLBACKS[context];
   const statusReason = reasonForHttpStatus(status, context);
-  const useApi = API_MESSAGE_ALLOWED.has(context) && !!apiMessage;
 
   if (status >= 500) {
     return {
       title: "Máy chủ đang gặp sự cố",
-      reason: useApi ? apiMessage! : (statusReason ?? "Hệ thống tạm thời không phản hồi."),
-      action: "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
+      reason: apiMessage ?? statusReason ?? "Hệ thống tạm thời không phản hồi.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
+      ),
     };
   }
 
   if (status === 0 || status >= 400) {
+    const curatedAction =
+      status === 401
+        ? "Đăng nhập lại rồi thử tiếp."
+        : fallback.action;
+
     return {
       title: fallback.title,
-      reason: useApi
-        ? apiMessage!
-        : (statusReason ?? fallback.reason),
-      action:
-        status === 401
-          ? "Đăng nhập lại rồi thử tiếp."
-          : fallback.action,
+      reason: apiMessage ?? statusReason ?? fallback.reason,
+      action: resolveAction(status, apiMessage, curatedAction),
     };
   }
 
@@ -828,7 +891,8 @@ function fromNetworkError(_context: AppErrorContext): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
- * Raw backend messages are only used for curated auth contexts.
+ * Backend `error.message` is preferred as `reason` when present;
+ * `action` then uses status-based copy instead of context-specific tips.
  */
 export function resolveAppError(
   error: unknown,
@@ -838,16 +902,14 @@ export function resolveAppError(
     const mapped = mapHttpStatusToError(
       400,
       context,
-      API_MESSAGE_ALLOWED.has(context) ? error.message : null,
+      extractApiMessage(error),
     );
     if (mapped) return mapped;
     return CONTEXT_FALLBACKS[context];
   }
 
   if (error instanceof ApiRequestError) {
-    const apiMessage = API_MESSAGE_ALLOWED.has(context)
-      ? extractApiMessage(error)
-      : null;
+    const apiMessage = extractApiMessage(error);
     const mapped = mapHttpStatusToError(error.status, context, apiMessage);
     if (mapped) return mapped;
 
