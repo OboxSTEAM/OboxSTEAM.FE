@@ -25,3 +25,21 @@ export const completeParentProfileSchema = z.object({
 export const approveParentLinkSchema = z.object({
   token: z.string().min(1, "Token là bắt buộc."),
 });
+
+/** Path param for `GET /api/parent/children/{studentId}/progression`. */
+export const parentChildProgressionParamsSchema = z.object({
+  studentId: z.string().uuid("ID học viên không hợp lệ."),
+});
+
+/** Path params for `GET /api/parent/children/{studentId}/enrollments/{enrollmentId}/progression`. */
+export const parentEnrollmentProgressionParamsSchema = z.object({
+  studentId: z.string().uuid("ID học viên không hợp lệ."),
+  enrollmentId: z.string().uuid("ID ghi danh không hợp lệ."),
+});
+
+export type ParentChildProgressionParams = z.infer<
+  typeof parentChildProgressionParamsSchema
+>;
+export type ParentEnrollmentProgressionParams = z.infer<
+  typeof parentEnrollmentProgressionParamsSchema
+>;

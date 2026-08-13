@@ -772,6 +772,16 @@
         "method": "get"
       },
       {
+        "path": "/api/parent/children/{studentId}/progression",
+        "method": "get",
+        "description": "Parent-only summary for a verified linked student: enrollments, current stage, blockers, and recent milestones."
+      },
+      {
+        "path": "/api/parent/children/{studentId}/enrollments/{enrollmentId}/progression",
+        "method": "get",
+        "description": "Parent-only module timeline and assignment outcomes for one program enrollment. No curriculum content or resume state."
+      },
+      {
         "path": "/api/payments/checkout",
         "method": "post",
         "description": "Student initiates checkout for a paid program. Returns a hosted payment URL (Stripe or MoMo)."
@@ -2092,13 +2102,67 @@
         "name": "OperationsOverviewDtoResponseDataContent"
       },
       {
+        "name": "ParentActivityStatsDto"
+      },
+      {
+        "name": "ParentAssignmentOutcomeDto"
+      },
+      {
+        "name": "ParentBlockerDto"
+      },
+      {
         "name": "ParentCheckoutRequestDto"
+      },
+      {
+        "name": "ParentChildProgressionDto"
+      },
+      {
+        "name": "ParentChildProgressionDtoApiResult"
+      },
+      {
+        "name": "ParentChildProgressionDtoResponseDataContent"
+      },
+      {
+        "name": "ParentClassInfoDto"
+      },
+      {
+        "name": "ParentCurrentActivityDto"
+      },
+      {
+        "name": "ParentCurrentModuleDto"
+      },
+      {
+        "name": "ParentEnrollmentBriefDto"
+      },
+      {
+        "name": "ParentEnrollmentHeaderDto"
+      },
+      {
+        "name": "ParentEnrollmentProgressionDto"
+      },
+      {
+        "name": "ParentEnrollmentProgressionDtoApiResult"
+      },
+      {
+        "name": "ParentEnrollmentProgressionDtoResponseDataContent"
+      },
+      {
+        "name": "ParentLinkedStudentDto"
       },
       {
         "name": "ParentModulePaymentRequestDto"
       },
       {
+        "name": "ParentModuleProgressDto"
+      },
+      {
         "name": "ParentPaymentRequestDto"
+      },
+      {
+        "name": "ParentProgressEventDto"
+      },
+      {
+        "name": "ParentProgressionSummaryDto"
       },
       {
         "name": "PaymentResponseDto"

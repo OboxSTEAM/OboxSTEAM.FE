@@ -72,9 +72,13 @@ export {
 export {
   approveParentLinkSchema,
   completeParentProfileSchema,
+  parentChildProgressionParamsSchema,
+  parentEnrollmentProgressionParamsSchema,
   parentMagicLoginLinkParamsSchema,
   parentMagicLoginSchema,
   requestParentLinkSchema,
+  type ParentChildProgressionParams,
+  type ParentEnrollmentProgressionParams,
 } from "./parent";
 export {
   activityDetailQuerySchema,
