@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  CalendarClock,
   ClipboardList,
   ListTree,
+  MapPin,
   Sparkles,
   Users,
   Zap,
@@ -20,20 +22,9 @@ import {
   ManagerDataTable,
   type ColumnDef,
 } from "@/components/manager/shared/data-table";
-import {
-  THEME_SELECT_CONTENT,
-  THEME_SELECT_ITEM,
-  THEME_SELECT_TRIGGER,
-} from "@/lib/ui/select-styles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -55,6 +46,7 @@ import {
   type SessionAttendanceStatus,
 } from "@/lib/api";
 import {
+  formatClassSessionSchedule,
   getNextSessionForActivity,
   getSessionsForActivity,
 } from "@/lib/classes/session-helpers";
@@ -62,9 +54,7 @@ import {
   ACTIVITY_TYPE_LABELS,
   ASSIGNMENT_TYPE_LABELS,
 } from "@/lib/curriculum/constants";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { cn } from "@/lib/utils";
 
 function getInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "HV";
@@ -278,7 +268,6 @@ export function MentorClassCurriculumPanel({
   const {
     data: attendanceData,
     isLoading: isAttendanceLoading,
-    markLoading: markAttendanceLoading,
     retry: retryAttendance,
   } = useClientFetch({
     enabled: Boolean(effectiveSessionId),
@@ -291,6 +280,14 @@ export function MentorClassCurriculumPanel({
   const selectedSession =
     activitySessions.find((session) => session.id === effectiveSessionId) ??
     null;
+
+  const sessionSchedule = useMemo(() => {
+    if (!selectedSession) return null;
+    return formatClassSessionSchedule(
+      selectedSession.startTime,
+      selectedSession.endTime,
+    );
+  }, [selectedSession]);
 
   const handleSelect = useCallback(
     (next: MentorCurriculumSelection) => {
@@ -541,60 +538,65 @@ export function MentorClassCurriculumPanel({
                   </Button>
                 </div>
 
-                {selectedActivity.activityType !== "SelfPaced" ? (
-                  <div className="mt-3 max-w-md space-y-1.5">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                      Buổi học liên kết
+                {selectedActivity.activityType === "LiveOnline" ||
+                selectedActivity.activityType === "Offline" ? (
+                  sessionSchedule ? (
+                    <div className="mt-3 overflow-hidden rounded-xl border border-primary/25 bg-card">
+                      <div className="flex items-center gap-2 border-b border-border bg-primary/[0.06] px-3 py-2">
+                        <CalendarClock
+                          className="size-4 shrink-0 text-primary"
+                          aria-hidden
+                        />
+                        <p className="text-[11px] font-bold tracking-[0.12em] text-primary uppercase">
+                          Thời gian buổi học
+                        </p>
+                        {sessionSchedule.relative ? (
+                          <span className="ml-auto rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                            {sessionSchedule.relative}
+                          </span>
+                        ) : null}
+                      </div>
+                      <div className="grid gap-0 sm:grid-cols-2">
+                        <div className="border-b border-border px-4 py-3 sm:border-r sm:border-b-0">
+                          <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                            Bắt đầu
+                          </p>
+                          <p className="mt-1 font-mono text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                            {sessionSchedule.start.time}
+                          </p>
+                          <p className="mt-0.5 text-sm font-medium text-muted-foreground">
+                            {sessionSchedule.start.date}
+                          </p>
+                        </div>
+                        <div className="px-4 py-3">
+                          <p className="text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                            Kết thúc
+                          </p>
+                          <p className="mt-1 font-mono text-2xl font-bold tabular-nums tracking-tight text-foreground">
+                            {sessionSchedule.end?.time ?? "—"}
+                          </p>
+                          <p className="mt-0.5 text-sm font-medium text-muted-foreground">
+                            {sessionSchedule.end?.date ??
+                              (sessionSchedule.spansMultipleDays
+                                ? "—"
+                                : sessionSchedule.start.date)}
+                          </p>
+                        </div>
+                      </div>
+                      {selectedSession?.location?.trim() ? (
+                        <p className="flex items-center gap-1.5 border-t border-border px-4 py-2 text-xs text-muted-foreground">
+                          <MapPin className="size-3.5 shrink-0" aria-hidden />
+                          <span className="truncate">
+                            {selectedSession.location.trim()}
+                          </span>
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-xl border border-dashed border-border bg-muted/20 px-3 py-2.5 text-xs text-muted-foreground">
+                      Chưa có buổi gắn hoạt động này — không thể điểm danh.
                     </p>
-                    <Select
-                      value={effectiveSessionId || null}
-                      onValueChange={(value) => {
-                        markAttendanceLoading();
-                        setSessionId(value ?? "");
-                      }}
-                      disabled={activitySessions.length === 0}
-                    >
-                      <SelectTrigger
-                        className={cn(THEME_SELECT_TRIGGER, "w-full")}
-                      >
-                        <span className="truncate">
-                          {selectedSession
-                            ? selectedSession.title || "Buổi học"
-                            : activitySessions.length === 0
-                              ? "Chưa có buổi gắn hoạt động này"
-                              : "Chọn buổi học"}
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent
-                        align="start"
-                        alignItemWithTrigger={false}
-                        sideOffset={8}
-                        className={THEME_SELECT_CONTENT}
-                      >
-                        {activitySessions.map((session) => (
-                          <SelectItem
-                            key={session.id}
-                            value={session.id}
-                            className={THEME_SELECT_ITEM}
-                          >
-                            {session.title || "Buổi học"}
-                            {!session.requiresAttendance ? (
-                              <span className="ml-2 text-[11px] text-muted-foreground">
-                                (không điểm danh)
-                              </span>
-                            ) : null}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {selectedSession ? (
-                      <p className="text-xs text-muted-foreground">
-                        {formatApiDateTimeDisplay(selectedSession.startTime)}
-                        {" → "}
-                        {formatApiDateTimeDisplay(selectedSession.endTime)}
-                      </p>
-                    ) : null}
-                  </div>
+                  )
                 ) : null}
               </div>
 
