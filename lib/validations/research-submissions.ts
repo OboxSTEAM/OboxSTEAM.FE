@@ -12,13 +12,14 @@ export const submitResearchSubmissionSchema = z
     researchMilestoneId: z.string().uuid("ID mốc nghiên cứu không hợp lệ."),
     contentText: z.string().nullable().optional(),
     fileUrl: z.string().nullable().optional(),
-    evidenceUrls: z.array(z.string()).nullable().optional(),
+    evidenceMediaAssetIds: z.array(z.string().uuid()).nullable().optional(),
   })
   .superRefine((value, ctx) => {
     const hasText = Boolean(value.contentText?.trim());
     const hasFile = Boolean(value.fileUrl?.trim());
     const hasEvidence =
-      (value.evidenceUrls?.filter((url) => Boolean(url?.trim())).length ?? 0) > 0;
+      (value.evidenceMediaAssetIds?.filter((id) => Boolean(id?.trim())).length ??
+        0) > 0;
     if (!hasText && !hasFile && !hasEvidence) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

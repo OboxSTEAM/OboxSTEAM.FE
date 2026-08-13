@@ -68,5 +68,12 @@ export const RETROSPECTIVE_DRAFT_SAVE_DEBOUNCE_MS = 1200;
 /** Research milestone file upload limits (client-side). */
 export const RESEARCH_UPLOAD_MAX_BYTES = 25 * 1024 * 1024;
 export const RESEARCH_UPLOAD_MAX_EVIDENCE = 10;
+/** Primary deliverable — docs / images / videos under submissions/. */
 export const RESEARCH_UPLOAD_ACCEPT =
   ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar,.png,.jpg,.jpeg,.webp,.gif,.mp4,.mov,.txt";
+/**
+ * Evidence (`isEvidence=true`) — class media AI pipeline only.
+ * BE accepts .jpg/.jpeg/.png/.mp4/.mov.
+ */
+export const RESEARCH_EVIDENCE_ACCEPT = ".jpg,.jpeg,.png,.mp4,.mov";
+

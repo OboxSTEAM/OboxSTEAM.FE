@@ -42,6 +42,7 @@ import {
   setStoredRetrospectiveSubmissionId,
 } from "@/lib/curriculum/retrospective-storage";
 import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import { getEffectiveMaxAttempts, hasAttemptsRemaining } from "@/lib/curriculum/recovery-decision";
 import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { formatAssignmentTimestamp } from "@/lib/curriculum/assignment-outcome";
@@ -56,6 +57,7 @@ import {
   AssignmentPendingCard,
   AssignmentResultCard,
   AssignmentRevisionCard,
+  AttemptQuotaPill,
 } from "./assignment-outcome";
 
 type RetrospectivePanelProps = {
@@ -124,6 +126,7 @@ export function RetrospectivePanel({
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [isRetrying, setIsRetrying] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingContentRef = useRef<string | null>(null);
 
@@ -145,6 +148,7 @@ export function RetrospectivePanel({
     setIsSaving(false);
     setIsSubmitting(false);
     setIsConfirmOpen(false);
+    setIsRetrying(false);
     pendingContentRef.current = null;
     if (saveTimerRef.current) {
       clearTimeout(saveTimerRef.current);
@@ -285,6 +289,35 @@ export function RetrospectivePanel({
     }
   }, [assignmentId, attempt, contentText, flushSave, onCurriculumRefresh]);
 
+  const handleRetry = useCallback(async () => {
+    setIsRetrying(true);
+    try {
+      const previousText = contentText;
+      clearStoredRetrospectiveSubmissionId(assignmentId);
+      const startResult = await startRetrospectiveAttempt(assignmentId);
+      const next = startResult?.data;
+      if (!next) {
+        throw new Error("Retrospective start response missing data.");
+      }
+      setStoredRetrospectiveSubmissionId(assignmentId, next.submissionId);
+      setAttempt(next);
+      const seededText = next.contentText?.trim()
+        ? next.contentText
+        : previousText;
+      setContentText(seededText);
+      setLastSavedAt(next.lastSavedAt);
+      setIsConfirmOpen(false);
+      if (seededText.trim() && seededText !== (next.contentText ?? "")) {
+        await flushSave(next.submissionId, seededText);
+      }
+      await onCurriculumRefresh();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "generic");
+    } finally {
+      setIsRetrying(false);
+    }
+  }, [assignmentId, contentText, flushSave, onCurriculumRefresh]);
+
   if (!isAssignmentSelectable(flatAssignment.status)) {
     return (
       <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
@@ -343,6 +376,23 @@ export function RetrospectivePanel({
       ? `Đã nộp · ${submittedLabel}`
       : "Bài đã nộp";
 
+  const canRetryFailed =
+    attempt.status === "Graded" &&
+    attempt.passed === false &&
+    hasAttemptsRemaining(
+      attempt.attemptNumber,
+      assignment.maxAttempts,
+      recoveryRequests,
+      flatAssignment.moduleEnrollmentId,
+      assignmentId,
+    );
+  const effectiveMaxAttempts = getEffectiveMaxAttempts(
+    assignment.maxAttempts,
+    recoveryRequests,
+    flatAssignment.moduleEnrollmentId,
+    assignmentId,
+  );
+
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
       <div className="shrink-0 px-4 py-3 sm:px-5">
@@ -359,6 +409,10 @@ export function RetrospectivePanel({
           <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
             {ASSIGNMENT_TYPE_LABELS.Retrospective}
           </Badge>
+          <AttemptQuotaPill
+            attemptNumber={attempt.attemptNumber}
+            maxAttempts={effectiveMaxAttempts}
+          />
         </div>
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-learn-muted">
           {description}
@@ -452,9 +506,17 @@ export function RetrospectivePanel({
           assignmentId={assignmentId}
           attemptNumber={attempt.attemptNumber}
           maxAttempts={assignment.maxAttempts}
-          showRecoveryUi={attempt.attemptNumber >= assignment.maxAttempts}
+          showRecoveryUi={!canRetryFailed}
           recoveryRequests={recoveryRequests}
           redeliveryRequests={redeliveryRequests}
+          isRetrying={isRetrying}
+          onRetry={
+            canRetryFailed
+              ? () => {
+                  void handleRetry();
+                }
+              : undefined
+          }
           onRequestsChanged={() => {
             void refreshRecoveryRequests();
             void onCurriculumRefresh();

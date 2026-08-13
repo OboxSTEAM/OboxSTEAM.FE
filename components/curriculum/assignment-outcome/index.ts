@@ -1,6 +1,7 @@
 export { AssignmentPendingCard } from "./assignment-pending-card";
 export { AssignmentResultCard } from "./assignment-result-card";
 export { AssignmentRevisionCard } from "./assignment-revision-card";
+export { AttemptQuotaPill } from "./attempt-quota-pill";
 export {
   AssignmentStatusPill,
   getPassFailIcon,

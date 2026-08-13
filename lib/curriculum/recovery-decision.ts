@@ -47,6 +47,60 @@ export function countDecidedRecoveries(
   ).length;
 }
 
+/** Base maxAttempts plus mentor-granted extras from Approved recovery requests. */
+export function getEffectiveMaxAttempts(
+  maxAttempts: number,
+  recoveryRequests: AssessmentRecoveryRequest[],
+  moduleEnrollmentId: string,
+  assignmentId: string,
+): number {
+  const granted = recoveryRequests
+    .filter(
+      (request) =>
+        request.moduleEnrollmentId === moduleEnrollmentId &&
+        request.assignmentId === assignmentId &&
+        request.status === "Approved",
+    )
+    .reduce((sum, request) => sum + Math.max(0, request.extraAttemptsGranted), 0);
+
+  return maxAttempts + granted;
+}
+
+export function hasAttemptsRemaining(
+  attemptNumber: number,
+  maxAttempts: number,
+  recoveryRequests: AssessmentRecoveryRequest[],
+  moduleEnrollmentId: string,
+  assignmentId: string,
+): boolean {
+  return (
+    getAttemptsRemaining(
+      attemptNumber,
+      maxAttempts,
+      recoveryRequests,
+      moduleEnrollmentId,
+      assignmentId,
+    ) > 0
+  );
+}
+
+/** How many free attempts remain after the current `attemptNumber`. */
+export function getAttemptsRemaining(
+  attemptNumber: number,
+  maxAttempts: number,
+  recoveryRequests: AssessmentRecoveryRequest[],
+  moduleEnrollmentId: string,
+  assignmentId: string,
+): number {
+  const effectiveMax = getEffectiveMaxAttempts(
+    maxAttempts,
+    recoveryRequests,
+    moduleEnrollmentId,
+    assignmentId,
+  );
+  return Math.max(0, effectiveMax - attemptNumber);
+}
+
 export function findOpenRecovery(
   requests: AssessmentRecoveryRequest[],
   moduleEnrollmentId: string,
@@ -117,7 +171,13 @@ export function resolveRecoveryAction(
     return "wait-redelivery-payment";
   }
 
-  const attemptsRemaining = Math.max(0, maxAttempts - attemptNumber);
+  const effectiveMaxAttempts = getEffectiveMaxAttempts(
+    maxAttempts,
+    recoveryRequests,
+    moduleEnrollmentId,
+    assignmentId,
+  );
+  const attemptsRemaining = Math.max(0, effectiveMaxAttempts - attemptNumber);
   const decidedCount = countDecidedRecoveries(
     recoveryRequests,
     moduleEnrollmentId,

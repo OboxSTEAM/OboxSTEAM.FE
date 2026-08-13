@@ -48,6 +48,7 @@ import {
 } from "@/lib/curriculum/build-assignment-outcome";
 import {
   ASSIGNMENT_TYPE_LABELS,
+  RESEARCH_EVIDENCE_ACCEPT,
   RESEARCH_UPLOAD_ACCEPT,
   RESEARCH_UPLOAD_MAX_BYTES,
   RESEARCH_UPLOAD_MAX_EVIDENCE,
@@ -67,6 +68,10 @@ import {
   type ResearchStagingState,
 } from "@/lib/curriculum/research-staging-storage";
 import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import {
+  getEffectiveMaxAttempts,
+  hasAttemptsRemaining,
+} from "@/lib/curriculum/recovery-decision";
 import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -75,6 +80,7 @@ import {
   AssignmentPendingCard,
   AssignmentResultCard,
   AssignmentRevisionCard,
+  AttemptQuotaPill,
 } from "./assignment-outcome";
 
 type ResearchSubmissionPanelProps = {
@@ -123,15 +129,37 @@ function emptyStaging(): ResearchStagingState {
 
 function stagingFromSubmission(submission: ResearchSubmission): ResearchStagingState {
   const evidenceUrls = submission.evidenceUrls ?? [];
+  const evidenceMediaAssetIds = submission.evidenceMediaAssetIds ?? [];
+  const evidence: ResearchStagingEvidence[] = [];
+
+  for (let index = 0; index < evidenceMediaAssetIds.length; index += 1) {
+    const mediaAssetId = evidenceMediaAssetIds[index]?.trim();
+    if (!mediaAssetId) continue;
+    const url = evidenceUrls[index]?.trim() ?? "";
+    evidence.push({
+      mediaAssetId,
+      url,
+      name: url ? fileNameFromUrl(url) : `minh-chung-${index + 1}`,
+    });
+  }
+
   return {
     contentText: submission.contentText ?? "",
     fileUrl: submission.fileUrl,
     fileName: submission.fileUrl ? fileNameFromUrl(submission.fileUrl) : null,
-    evidence: evidenceUrls.map((url) => ({
-      url,
-      name: fileNameFromUrl(url),
-    })),
+    evidence,
   };
+}
+
+function isAllowedEvidenceFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return (
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".png") ||
+    name.endsWith(".mp4") ||
+    name.endsWith(".mov")
+  );
 }
 
 function resolveInitialStaging(
@@ -144,7 +172,7 @@ function resolveInitialStaging(
   if (stored && (stored.fileUrl || stored.evidence.length > 0 || stored.contentText.trim())) {
     return stored;
   }
-  if (submission.status === "ReturnedForRevision") {
+  if (isEditableStatus(submission.status)) {
     return stagingFromSubmission(submission);
   }
   return emptyStaging();
@@ -361,19 +389,35 @@ function EvidenceTile({
   onRemove?: () => void;
   disabled?: boolean;
 }) {
+  const preview = (
+    <>
+      <div className="aspect-square w-full overflow-hidden bg-learn-surface-2">
+        {url ? (
+          <FilePreviewMedia url={url} name={name} size="tile" />
+        ) : (
+          <div className="flex size-full items-center justify-center">
+            <FileText className="size-5 text-learn-faint" aria-hidden />
+          </div>
+        )}
+      </div>
+      <p
+        className="truncate border-t border-learn-border/70 px-1.5 py-1 text-[10px] font-medium leading-tight text-learn-text-strong"
+        title={name}
+      >
+        {name}
+      </p>
+    </>
+  );
+
   return (
     <div className="group relative w-[5.5rem] shrink-0 overflow-hidden rounded-md border border-learn-border bg-learn-surface">
-      <a href={url} target="_blank" rel="noopener noreferrer" className="block">
-        <div className="aspect-square w-full overflow-hidden bg-learn-surface-2">
-          <FilePreviewMedia url={url} name={name} size="tile" />
-        </div>
-        <p
-          className="truncate border-t border-learn-border/70 px-1.5 py-1 text-[10px] font-medium leading-tight text-learn-text-strong"
-          title={name}
-        >
-          {name}
-        </p>
-      </a>
+      {url ? (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="block">
+          {preview}
+        </a>
+      ) : (
+        <div className="block">{preview}</div>
+      )}
       {onRemove ? (
         <button
           type="button"
@@ -427,6 +471,10 @@ export function ResearchSubmissionPanel({
   const [uploadingTarget, setUploadingTarget] = useState<UploadTarget | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  /** Ignore graded progress submission while student starts a free retry. */
+  const [isRetaking, setIsRetaking] = useState(false);
+  /** Attempt number of the failed submission that seeded this retake. */
+  const [retakeFromAttempt, setRetakeFromAttempt] = useState<number | null>(null);
   const stagingRef = useRef(staging);
   stagingRef.current = staging;
 
@@ -464,6 +512,8 @@ export function ResearchSubmissionPanel({
     setUploadingTarget(null);
     setIsSubmitting(false);
     setIsConfirmOpen(false);
+    setIsRetaking(false);
+    setRetakeFromAttempt(null);
     primaryDragDepthRef.current = 0;
     evidenceDragDepthRef.current = 0;
   }, []);
@@ -527,7 +577,9 @@ export function ResearchSubmissionPanel({
     return milestones.find((item) => item.milestoneId === milestoneId) ?? null;
   }, [milestoneId, progressResult?.data?.milestones]);
 
-  const progressSubmissionId = milestoneProgress?.submissionId ?? localSubmissionId;
+  const progressSubmissionId = isRetaking
+    ? localSubmissionId
+    : (milestoneProgress?.submissionId ?? localSubmissionId);
 
   const {
     data: submissionResult,
@@ -554,6 +606,8 @@ export function ResearchSubmissionPanel({
     setSubmission(next);
     setLocalSubmissionId(next.id);
     if (isEditableStatus(next.status)) {
+      setIsRetaking(false);
+      setRetakeFromAttempt(null);
       setStaging(resolveInitialStaging(next, draftStorageKey ?? undefined));
       if (draftStorageKey) {
         migrateResearchStagingKey(draftStorageKey, next.id);
@@ -564,12 +618,17 @@ export function ResearchSubmissionPanel({
   }, [draftStorageKey, submissionResult?.data]);
 
   // Draft mode: canSubmit / unlocked with no submission yet.
+  // Retake seeds staging from the failed attempt in handleRetry — do not clobber.
   useEffect(() => {
     if (submission || progressSubmissionId) return;
     if (!moduleEnrollmentId || !milestoneId) return;
-    if (!(milestoneProgress?.isUnlocked || milestoneProgress?.canSubmit)) return;
+    if (isRetaking) return;
+    if (!(milestoneProgress?.isUnlocked || milestoneProgress?.canSubmit)) {
+      return;
+    }
     setStaging(resolveDraftStaging(moduleEnrollmentId, milestoneId));
   }, [
+    isRetaking,
     milestoneId,
     milestoneProgress?.canSubmit,
     milestoneProgress?.isUnlocked,
@@ -582,7 +641,7 @@ export function ResearchSubmissionPanel({
   const canSubmitProgress = milestoneProgress?.canSubmit ?? false;
   const isEditable = submission
     ? isEditableStatus(submission.status)
-    : isUnlocked || canSubmitProgress;
+    : isRetaking || isUnlocked || canSubmitProgress;
   const stagingKey = submission?.id ?? draftStorageKey;
   const blockReasons =
     milestoneProgress?.submitBlockReasons
@@ -600,6 +659,18 @@ export function ResearchSubmissionPanel({
     }
     return true;
   }, []);
+
+  const validateEvidenceFile = useCallback((file: File): boolean => {
+    if (!validateFile(file)) return false;
+    if (!isAllowedEvidenceFile(file)) {
+      showAppErrorFromUnknown(
+        new Error("Minh chứng chỉ nhận JPG, PNG, MP4 hoặc MOV."),
+        "research.upload",
+      );
+      return false;
+    }
+    return true;
+  }, [validateFile]);
 
   const uploadFiles = useCallback(
     async (files: FileList | File[], target: UploadTarget) => {
@@ -665,7 +736,7 @@ export function ResearchSubmissionPanel({
         return;
       }
 
-      const queued = list.slice(0, remaining).filter(validateFile);
+      const queued = list.slice(0, remaining).filter(validateEvidenceFile);
       if (queued.length === 0) return;
 
       setUploadingTarget("evidence");
@@ -679,13 +750,18 @@ export function ResearchSubmissionPanel({
             isEvidence: true,
           });
           const payload = result?.data;
+          const mediaAssetId = payload?.mediaAssetId?.trim();
           const urls = payload?.evidenceUrls?.filter(Boolean) ?? [];
-          const url = urls[urls.length - 1];
-          if (!url || !payload?.submissionId) {
-            throw new Error(`Không nhận được URL minh chứng cho ${file.name}.`);
+          const url = urls[urls.length - 1] ?? "";
+          if (!mediaAssetId || !payload?.submissionId) {
+            throw new Error(`Không nhận được media asset cho ${file.name}.`);
           }
           createdSubmissionId = payload.submissionId;
-          added.push({ url, name: file.name });
+          added.push({
+            mediaAssetId,
+            url,
+            name: file.name,
+          });
         }
 
         if (!createdSubmissionId) {
@@ -699,7 +775,11 @@ export function ResearchSubmissionPanel({
         persistStaging(createdSubmissionId, (prev) => {
           const nextEvidence = [...prev.evidence];
           for (const item of added) {
-            if (!nextEvidence.some((existing) => existing.url === item.url)) {
+            if (
+              !nextEvidence.some(
+                (existing) => existing.mediaAssetId === item.mediaAssetId,
+              )
+            ) {
               nextEvidence.push(item);
             }
           }
@@ -728,6 +808,7 @@ export function ResearchSubmissionPanel({
       stagingKey,
       submission?.id,
       uploadingTarget,
+      validateEvidenceFile,
       validateFile,
     ],
   );
@@ -742,11 +823,13 @@ export function ResearchSubmissionPanel({
   }, [isEditable, persistStaging, stagingKey]);
 
   const removeEvidence = useCallback(
-    (url: string) => {
+    (mediaAssetId: string) => {
       if (!isEditable || !stagingKey) return;
       persistStaging(stagingKey, (prev) => ({
         ...prev,
-        evidence: prev.evidence.filter((item) => item.url !== url),
+        evidence: prev.evidence.filter(
+          (item) => item.mediaAssetId !== mediaAssetId,
+        ),
       }));
     },
     [isEditable, persistStaging, stagingKey],
@@ -779,7 +862,7 @@ export function ResearchSubmissionPanel({
       return;
     }
 
-    if (!canSubmitProgress) {
+    if (!canSubmitProgress && !isRetaking) {
       showAppErrorFromUnknown(
         new Error(blockReasons[0] ?? "Chưa đủ điều kiện để nộp mốc này."),
         "research.submit",
@@ -795,7 +878,10 @@ export function ResearchSubmissionPanel({
         researchMilestoneId: milestoneId,
         contentText: draft.contentText.trim() || null,
         fileUrl: draft.fileUrl,
-        evidenceUrls: draft.evidence.length > 0 ? draft.evidence.map((item) => item.url) : null,
+        evidenceMediaAssetIds:
+          draft.evidence.length > 0
+            ? draft.evidence.map((item) => item.mediaAssetId)
+            : null,
       });
       const submitted = result?.data;
       if (!submitted) {
@@ -808,6 +894,8 @@ export function ResearchSubmissionPanel({
       setLocalSubmissionId(submitted.id);
       setSubmission(submitted);
       setStaging(stagingFromSubmission(submitted));
+      setIsRetaking(false);
+      setRetakeFromAttempt(null);
       showAppSuccess({
         title: "Đã nộp bài nghiên cứu",
         description: "Mentor sẽ chấm điểm và phản hồi sớm.",
@@ -823,11 +911,31 @@ export function ResearchSubmissionPanel({
     canSubmitProgress,
     draftStorageKey,
     isEditable,
+    isRetaking,
     milestoneId,
     moduleEnrollmentId,
     onCurriculumRefresh,
     stagingKey,
   ]);
+
+  const handleRetry = useCallback(() => {
+    const previous = submission;
+    const seeded = previous
+      ? stagingFromSubmission(previous)
+      : moduleEnrollmentId && milestoneId
+        ? resolveDraftStaging(moduleEnrollmentId, milestoneId)
+        : emptyStaging();
+
+    setIsRetaking(true);
+    setRetakeFromAttempt(previous?.attemptNumber ?? null);
+    setSubmission(null);
+    setLocalSubmissionId(null);
+    setStaging(seeded);
+    if (draftStorageKey) {
+      setStoredResearchStaging(draftStorageKey, seeded);
+    }
+    setIsConfirmOpen(false);
+  }, [draftStorageKey, milestoneId, moduleEnrollmentId, submission]);
 
   const makeDragHandlers = (
     target: UploadTarget,
@@ -930,7 +1038,7 @@ export function ResearchSubmissionPanel({
   const canCommit =
     isEditable &&
     hasStagedContent &&
-    canSubmitProgress &&
+    (canSubmitProgress || isRetaking) &&
     !uploadingTarget &&
     !isSubmitting &&
     Boolean(moduleEnrollmentId) &&
@@ -942,6 +1050,31 @@ export function ResearchSubmissionPanel({
 
   const primaryDrag = makeDragHandlers("primary", primaryDragDepthRef, setIsPrimaryDragging);
   const evidenceDrag = makeDragHandlers("evidence", evidenceDragDepthRef, setIsEvidenceDragging);
+
+  const recoveryEnrollmentId =
+    flatAssignment.moduleEnrollmentId ||
+    submission?.moduleEnrollmentId ||
+    moduleEnrollmentId ||
+    "";
+  const effectiveMaxAttempts = getEffectiveMaxAttempts(
+    assignment.maxAttempts,
+    recoveryRequests,
+    recoveryEnrollmentId,
+    assignmentId,
+  );
+  const canRetryFailed =
+    submission?.status === "Graded" &&
+    submission.passed === false &&
+    hasAttemptsRemaining(
+      submission.attemptNumber,
+      assignment.maxAttempts,
+      recoveryRequests,
+      recoveryEnrollmentId,
+      assignmentId,
+    );
+  const attemptCurrent =
+    submission?.attemptNumber ??
+    (isRetaking ? retakeFromAttempt : null);
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
@@ -959,6 +1092,12 @@ export function ResearchSubmissionPanel({
           <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
             {ASSIGNMENT_TYPE_LABELS.FileUpload}
           </Badge>
+          {attemptCurrent != null ? (
+            <AttemptQuotaPill
+              attemptNumber={attemptCurrent}
+              maxAttempts={effectiveMaxAttempts}
+            />
+          ) : null}
         </div>
         {description ? (
           <p className="line-clamp-2 text-sm leading-relaxed text-learn-muted">{description}</p>
@@ -998,6 +1137,12 @@ export function ResearchSubmissionPanel({
           </div>
         ) : null}
 
+        {isRetaking ? (
+          <p className="text-xs text-learn-muted">
+            Đang làm lại — tệp lần trước được giữ; xóa nếu muốn thay.
+          </p>
+        ) : null}
+
         {submission?.status === "TurnedIn" ? (
           <AssignmentPendingCard {...buildResearchPendingOutcome(submission)} />
         ) : null}
@@ -1012,6 +1157,28 @@ export function ResearchSubmissionPanel({
 
         {isEditable ? (
           <div className="space-y-3 rounded-xl border border-learn-border bg-learn-bg/60 p-3">
+            <aside
+              className={cn(
+                "rounded-lg border border-learn-accent/30 bg-learn-accent/8 px-3 py-2.5",
+                "text-xs leading-relaxed text-learn-text-strong",
+              )}
+            >
+              <p className="font-semibold text-learn-accent">Hướng dẫn nộp bài</p>
+              <ul className="mt-1.5 list-disc space-y-1 pl-4 text-learn-muted">
+                <li>
+                  <span className="font-medium text-learn-text-strong">Tệp chính:</span>{" "}
+                  báo cáo, slide, tài liệu (PDF/Office…) — không qua pipeline AI.
+                </li>
+                <li>
+                  <span className="font-medium text-learn-text-strong">Minh chứng (tuỳ chọn):</span>{" "}
+                  chỉ ảnh/video JPG, PNG, MP4, MOV để AI xử lý.
+                </li>
+                <li>
+                  Ảnh minh chứng nên có khuôn mặt bạn hoặc bạn cùng lớp để gắn thẻ AI.
+                </li>
+              </ul>
+            </aside>
+
             <section className="space-y-1.5">
               <div className="flex items-baseline justify-between gap-2">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-learn-faint">
@@ -1064,10 +1231,13 @@ export function ResearchSubmissionPanel({
                   {staging.evidence.length}/{RESEARCH_UPLOAD_MAX_EVIDENCE}
                 </p>
               </div>
+              <p className="text-[11px] leading-relaxed text-learn-muted">
+                Chỉ JPG/PNG/MP4/MOV. Ảnh nên có khuôn mặt bạn hoặc bạn cùng lớp.
+              </p>
               <input
                 ref={evidenceInputRef}
                 type="file"
-                accept={RESEARCH_UPLOAD_ACCEPT}
+                accept={RESEARCH_EVIDENCE_ACCEPT}
                 multiple
                 className="sr-only"
                 disabled={Boolean(uploadingTarget)}
@@ -1078,8 +1248,8 @@ export function ResearchSubmissionPanel({
                 }}
               />
               <DropZone
-                label="Thêm minh chứng"
-                hint="Có thể chọn nhiều tệp"
+                label="Thêm minh chứng ảnh/video"
+                hint="JPG, PNG, MP4, MOV — có thể chọn nhiều tệp"
                 disabled={
                   Boolean(uploadingTarget) ||
                   staging.evidence.length >= RESEARCH_UPLOAD_MAX_EVIDENCE
@@ -1092,12 +1262,12 @@ export function ResearchSubmissionPanel({
               {staging.evidence.length > 0 ? (
                 <ul className="flex flex-wrap gap-2 pt-0.5">
                   {staging.evidence.map((item) => (
-                    <li key={item.url}>
+                    <li key={item.mediaAssetId}>
                       <EvidenceTile
                         url={item.url}
                         name={item.name}
                         disabled={Boolean(uploadingTarget)}
-                        onRemove={() => removeEvidence(item.url)}
+                        onRemove={() => removeEvidence(item.mediaAssetId)}
                       />
                     </li>
                   ))}
@@ -1195,22 +1365,18 @@ export function ResearchSubmissionPanel({
 
       {assignment &&
       submission?.status === "Graded" &&
-      submission.passed === false ? (
+      submission.passed === false &&
+      !isRetaking ? (
         <AssignmentRecoveryActions
           moduleType={flatAssignment.moduleType}
-          moduleEnrollmentId={
-            flatAssignment.moduleEnrollmentId ||
-            submission.moduleEnrollmentId ||
-            ""
-          }
+          moduleEnrollmentId={recoveryEnrollmentId}
           assignmentId={assignmentId}
           attemptNumber={submission.attemptNumber}
           maxAttempts={assignment.maxAttempts}
-          showRecoveryUi={
-            submission.attemptNumber >= assignment.maxAttempts
-          }
+          showRecoveryUi={!canRetryFailed}
           recoveryRequests={recoveryRequests}
           redeliveryRequests={redeliveryRequests}
+          onRetry={canRetryFailed ? handleRetry : undefined}
           onRequestsChanged={() => {
             void refreshRecoveryRequests();
             void onCurriculumRefresh();

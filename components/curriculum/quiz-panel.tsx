@@ -41,6 +41,7 @@ import {
   setStoredQuizSubmissionId,
 } from "@/lib/curriculum/quiz-storage";
 import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import { hasAttemptsRemaining, getEffectiveMaxAttempts } from "@/lib/curriculum/recovery-decision";
 import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { QuizAttemptView } from "./quiz/quiz-attempt-view";
 import { QuizIntro } from "./quiz/quiz-intro";
 import { QuizResultView } from "./quiz/quiz-result-view";
+import { AttemptQuotaPill } from "./assignment-outcome";
 
 type QuizPanelProps = {
   curriculum: EnrollmentCurriculum;
@@ -470,8 +472,20 @@ export function QuizPanel({
   }
 
   const canRetry =
-    assignment.maxAttempts > 1 &&
-    (result?.attemptNumber ?? 0) < assignment.maxAttempts;
+    result != null &&
+    hasAttemptsRemaining(
+      result.attemptNumber,
+      assignment.maxAttempts,
+      recoveryRequests,
+      flatAssignment.moduleEnrollmentId,
+      assignmentId,
+    );
+  const effectiveMaxAttempts = getEffectiveMaxAttempts(
+    assignment.maxAttempts,
+    recoveryRequests,
+    flatAssignment.moduleEnrollmentId,
+    assignmentId,
+  );
 
   const isRetake = hasCompletedAttempt;
   const startLabel = isRetake ? "Làm lại bài kiểm tra" : "Bắt đầu làm bài";
@@ -496,6 +510,14 @@ export function QuizPanel({
             <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
               {ASSIGNMENT_TYPE_LABELS.Quiz}
             </Badge>
+            {(result?.attemptNumber ?? attempt?.attemptNumber) != null ? (
+              <AttemptQuotaPill
+                attemptNumber={
+                  (result?.attemptNumber ?? attempt?.attemptNumber) as number
+                }
+                maxAttempts={effectiveMaxAttempts}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}

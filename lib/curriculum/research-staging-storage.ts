@@ -1,4 +1,7 @@
 export type ResearchStagingEvidence = {
+  /** Class-media asset id — required for submit as EvidenceMediaAssetIds. */
+  mediaAssetId: string;
+  /** Preview URL from upload / GET (display only). */
   url: string;
   name: string;
 };
@@ -24,6 +27,28 @@ function storageKey(key: string): string {
   return `${STORAGE_PREFIX}${key}`;
 }
 
+function normalizeEvidence(raw: unknown): ResearchStagingEvidence[] {
+  if (!Array.isArray(raw)) return [];
+  const items: ResearchStagingEvidence[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") continue;
+    const record = entry as Record<string, unknown>;
+    const mediaAssetId =
+      typeof record.mediaAssetId === "string" ? record.mediaAssetId.trim() : "";
+    const url = typeof record.url === "string" ? record.url.trim() : "";
+    const name =
+      typeof record.name === "string" && record.name.trim()
+        ? record.name.trim()
+        : url
+          ? fileNameFromUrl(url)
+          : "minh chứng";
+    // Drop legacy URL-only staging rows — they cannot be submitted under the new contract.
+    if (!mediaAssetId || !url) continue;
+    items.push({ mediaAssetId, url, name });
+  }
+  return items;
+}
+
 export function getStoredResearchStaging(
   key: string,
 ): ResearchStagingState | null {
@@ -43,7 +68,7 @@ export function getStoredResearchStaging(
       contentText: parsed.contentText,
       fileUrl: parsed.fileUrl ?? null,
       fileName: parsed.fileName ?? null,
-      evidence: Array.isArray(parsed.evidence) ? parsed.evidence : [],
+      evidence: normalizeEvidence(parsed.evidence),
     };
   } catch {
     return null;

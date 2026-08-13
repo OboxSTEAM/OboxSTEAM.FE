@@ -9,6 +9,7 @@ import type { ModuleType } from "@/lib/api/entities/module";
 import {
   findOpenRecovery,
   findOpenRedelivery,
+  getAttemptsRemaining,
   resolveRecoveryAction,
   type RecoveryAction,
 } from "@/lib/curriculum/recovery-decision";
@@ -29,7 +30,11 @@ type AssignmentRecoveryActionsProps = {
   assignmentId: string;
   attemptNumber: number;
   maxAttempts: number;
-  /** Failed attempt with no free retries left (or Theory window grant). */
+  /**
+   * When false, only free retries (or in-flight wait states) are shown —
+   * never the "request recovery / redelivery" CTA.
+   * Parents should set this from `!hasAttemptsRemaining(...)` (or Theory deadline grant).
+   */
   showRecoveryUi: boolean;
   needsDeadlineGrant?: boolean;
   recoveryRequests: AssessmentRecoveryRequest[];
@@ -129,32 +134,41 @@ export function AssignmentRecoveryActions({
     moduleEnrollmentId,
   );
 
-  if (!showRecoveryUi && action === "retry") {
-    if (!onRetry) return null;
-    return (
-      <div
-        className={cn(
-          "flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5",
-          className,
-        )}
-      >
-        <Button
-          type="button"
-          variant="outline"
-          className="ml-auto border-learn-border"
-          disabled={isRetrying}
-          onClick={onRetry}
-        >
-          {isRetrying ? "Đang mở bài..." : "Làm lại"}
-        </Button>
-      </div>
-    );
-  }
+  const attemptsRemaining = getAttemptsRemaining(
+    attemptNumber,
+    maxAttempts,
+    recoveryRequests,
+    moduleEnrollmentId,
+    assignmentId,
+  );
 
-  if (!showRecoveryUi && action === "none") return null;
+  /**
+   * Free retries (base + mentor grants) always beat recovery CTAs.
+   * `showRecoveryUi` only gates request-* when resolve still says request
+   * (e.g. parent knows a free retry path exists before grants sync).
+   */
+  const effectiveAction: RecoveryAction = (() => {
+    if (attemptsRemaining > 0 && !needsDeadlineGrant) {
+      // Keep in-flight wait states visible; otherwise force retry.
+      if (
+        action === "wait-recovery" ||
+        action === "wait-manager" ||
+        action === "wait-redelivery-payment"
+      ) {
+        return action;
+      }
+      return "retry";
+    }
 
-  const effectiveAction =
-    showRecoveryUi || action !== "retry" ? action : "retry";
+    if (
+      !showRecoveryUi &&
+      (action === "request-recovery" || action === "request-redelivery")
+    ) {
+      return "none";
+    }
+
+    return action;
+  })();
 
   if (effectiveAction === "retry") {
     if (!onRetry) return null;

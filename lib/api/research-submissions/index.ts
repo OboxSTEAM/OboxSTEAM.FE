@@ -75,7 +75,8 @@ export async function getResearchSubmissionById(
 
 /**
  * `POST /api/research-submissions/upload?moduleEnrollmentId=&researchMilestoneId=&isEvidence=`
- * Lazy-creates a Pending draft when unlocked. Pass returned URLs into submit.
+ * Lazy-creates a Pending draft when unlocked.
+ * Primary → `fileUrl`. Evidence → `mediaAssetId` (+ preview `evidenceUrls`) for submit.
  */
 export async function uploadResearchSubmissionFile(
   file: File,

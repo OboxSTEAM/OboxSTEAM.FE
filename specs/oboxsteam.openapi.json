@@ -13292,7 +13292,7 @@
           "Media"
         ],
         "summary": "Get class gallery (student)",
-        "description": "Returns paginated media for a class without face tags. Student must be Active-enrolled in the class. Includes all video statuses (Transcoding, PendingTagging, TaggingComplete, Failed). Supports the same filters/sort/pagination as GET /api/media.",
+        "description": "Returns paginated media for a class without face tags. Student must be Active-enrolled in the class. Includes all video statuses (Transcoding, PendingTagging, TaggingComplete, Failed). Excludes research submission evidence (SubmissionEvidence-linked media). Supports the same filters/sort/pagination as GET /api/media.",
         "parameters": [
           {
             "name": "classId",
@@ -13459,7 +13459,7 @@
           "Media"
         ],
         "summary": "Get my enrollment gallery (student)",
-        "description": "Returns paginated class media from every class the student is Active-enrolled in. Filter with programId and/or classId. Same filters/sort/pagination as class gallery. Use POST /api/portfolios/me/media/from-class-gallery to copy selected items into the portfolio.",
+        "description": "Returns paginated class media from every class the student is Active-enrolled in. Filter with programId and/or classId. Same filters/sort/pagination as class gallery. Excludes research submission evidence (SubmissionEvidence-linked media). Use POST /api/portfolios/me/media/from-class-gallery to copy selected items into the portfolio.",
         "parameters": [
           {
             "name": "programId",
@@ -24815,7 +24815,7 @@
           "ResearchSubmission"
         ],
         "summary": "Upload research submission file to S3",
-        "description": "Uploads a deliverable or evidence file to S3. Lazy-creates a Pending draft when the milestone is unlocked. Returns FileUrl or EvidenceUrls (and SubmissionId) for use in submit. Set isEvidence=true for supporting evidence files.",
+        "description": "Uploads a primary deliverable (docs/images/videos under submissions/) or evidence. Lazy-creates a Pending draft when the milestone is unlocked. Primary returns FileUrl for submit. Evidence (isEvidence=true) must be image (.jpg/.jpeg/.png) or video (.mp4/.mov), runs the class media AI pipeline, links SubmissionEvidence, and returns MediaAssetId (plus EvidenceUrls preview) for submit as EvidenceMediaAssetIds.",
         "parameters": [
           {
             "name": "moduleEnrollmentId",
@@ -24838,7 +24838,7 @@
           {
             "name": "isEvidence",
             "in": "query",
-            "description": "When true, URL is returned in EvidenceUrls instead of FileUrl",
+            "description": "When true, runs media AI pipeline and returns MediaAssetId",
             "schema": {
               "type": "boolean",
               "default": false
@@ -24990,7 +24990,7 @@
           "ResearchSubmission"
         ],
         "summary": "Submit research work",
-        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. Personal AvailableUntil from approved assessment recovery is honored.",
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. Personal AvailableUntil from approved assessment recovery is honored. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -37751,6 +37751,14 @@
             },
             "nullable": true
           },
+          "evidenceMediaAssetIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          },
           "assignedGrade": {
             "type": "number",
             "format": "double",
@@ -38873,10 +38881,11 @@
             "type": "string",
             "nullable": true
           },
-          "evidenceUrls": {
+          "evidenceMediaAssetIds": {
             "type": "array",
             "items": {
-              "type": "string"
+              "type": "string",
+              "format": "uuid"
             },
             "nullable": true
           }
@@ -40214,6 +40223,11 @@
           },
           "fileUrl": {
             "type": "string",
+            "nullable": true
+          },
+          "mediaAssetId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           },
           "evidenceUrls": {
