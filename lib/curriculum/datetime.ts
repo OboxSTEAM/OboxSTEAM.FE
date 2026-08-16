@@ -20,6 +20,10 @@ export function fromApiDateTimeToLocalInput(
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function toApiDateTime(d: Date): string {
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+}
+
 /** `datetime-local` → legacy API string still accepted by create/update. */
 export function toApiDateTimeFromLocalInput(
   value: string | null | undefined,
@@ -27,7 +31,29 @@ export function toApiDateTimeFromLocalInput(
   if (!value) return null;
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return null;
-  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  return toApiDateTime(d);
+}
+
+/**
+ * Hidden LiveOnline/Offline template so create passes BE `ValidateTypeRules`
+ * (still requires StartTime, EndTime, Location). Cohort schedule stays on ClassSession.
+ */
+export function getLiveActivityTemplateDefaults(): {
+  startTime: string;
+  endTime: string;
+  location: string;
+} {
+  const start = new Date();
+  start.setDate(start.getDate() + 7);
+  start.setHours(9, 0, 0, 0);
+  const end = new Date(start);
+  end.setHours(10, 0, 0, 0);
+
+  return {
+    startTime: toApiDateTime(start),
+    endTime: toApiDateTime(end),
+    location: "Theo lịch lớp",
+  };
 }
 
 const displayFormatter = new Intl.DateTimeFormat("vi-VN", {

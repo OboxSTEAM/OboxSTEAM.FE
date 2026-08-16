@@ -86,6 +86,7 @@ import {
   createActivitySchema,
   updateActivitySchema,
 } from "@/lib/validations/curriculum";
+import { getLiveActivityTemplateDefaults } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
@@ -728,13 +729,20 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     try {
       const live = data.activityType !== "SelfPaced";
       const orderNum = Number(data.activityOrder);
+      const liveDefaults = live ? getLiveActivityTemplateDefaults() : null;
       const payload = {
-        code: data.code || null, courseId: data.courseId, name: data.name, activityType: data.activityType,
+        code: data.code, courseId: data.courseId, name: data.name, activityType: data.activityType,
         description: data.description || "", activityOrder: orderNum,
-        // Time & location live on the class session (cohort schedule), not the activity template.
-        location: null,
-        startTime: null,
-        endTime: null,
+        // Hidden BE defaults — real schedule/location live on the class session.
+        location: liveDefaults
+          ? (isEdit && activityToEdit?.location) || liveDefaults.location
+          : null,
+        startTime: liveDefaults
+          ? (isEdit && activityToEdit?.startTime) || liveDefaults.startTime
+          : null,
+        endTime: liveDefaults
+          ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
+          : null,
         maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
       };
@@ -818,9 +826,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động</Label>
-              <input type="text" placeholder="Để trống nếu không cần mã riêng" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <p className="text-[11px]" style={{ color: W.faint }}>Trường này không bắt buộc.</p>
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
+              <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+              <FErr msg={errors.code?.message} />
             </div>
             {actType !== "SelfPaced" ? (
               <div className="space-y-1.5 sm:col-span-2">

@@ -8,7 +8,6 @@ import {
   Image as ImageIcon,
   Link2,
   Upload,
-  Trash,
   Pencil,
   Check,
   X,
@@ -17,11 +16,9 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   uploadMaterial,
   updateMaterial,
-  deleteMaterial,
   type ActivityMaterial,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -142,9 +139,6 @@ export function ActivityMaterialSection({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
 
-  // Delete confirm
-  const [confirmDelete, setConfirmDelete] = useState(false);
-
   function resetUploadDraft() {
     setFile(null);
     setUploadTitle("");
@@ -220,23 +214,6 @@ export function ActivityMaterialSection({
       onChanged();
     } catch (err) {
       showAppErrorFromUnknown(err, "curriculum.material.save");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function handleDelete() {
-    if (!material) return;
-    setBusy(true);
-    try {
-      await deleteMaterial(material.id);
-      setMaterial(null);
-      setFileUrl(null);
-      showAppSuccess({ title: "Đã xóa", description: "Tài liệu đã được gỡ khỏi hoạt động." });
-      onChanged();
-    } catch (err) {
-      showAppErrorFromUnknown(err, "curriculum.material.delete");
-      throw err;
     } finally {
       setBusy(false);
     }
@@ -342,16 +319,6 @@ export function ActivityMaterialSection({
               >
                 <Pencil className="size-3.5" />
               </button>
-              <button
-                type="button"
-                title="Xóa tài liệu"
-                onClick={() => setConfirmDelete(true)}
-                disabled={busy}
-                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10"
-                style={{ borderColor: W.border, color: W.primary }}
-              >
-                <Trash className="size-3.5" />
-              </button>
             </div>
           )}
         </div>
@@ -421,17 +388,6 @@ export function ActivityMaterialSection({
           </div>
         </div>
       )}
-
-      <ConfirmDialog
-        isOpen={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        onConfirm={handleDelete}
-        title="Xác nhận xóa tài liệu"
-        description={`Bạn có chắc muốn xóa "${material?.title ?? ""}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa bỏ"
-        cancelLabel="Hủy"
-        variant="destructive"
-      />
     </div>
   );
 }

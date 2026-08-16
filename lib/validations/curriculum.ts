@@ -55,10 +55,7 @@ export const updateCourseSchema = createCourseSchema.partial().extend({
 });
 
 export const createActivitySchema = z.object({
-  code: z.preprocess(
-    (val) => (val === "" || val === undefined ? null : val),
-    z.string().min(1, "Mã hoạt động không hợp lệ.").nullable(),
-  ),
+  code: z.string().trim().min(1, "Mã hoạt động là bắt buộc."),
   courseId: z.string().uuid("ID khóa học không hợp lệ."),
   name: z.string().min(1, "Tên hoạt động là bắt buộc."),
   activityType: activityTypeSchema,

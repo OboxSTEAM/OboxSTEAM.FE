@@ -235,19 +235,6 @@ export function ExpertFormDialog({
                       className={INPUT_CLASS}
                     />
                   </FormField>
-                  <FormField
-                    id="userId"
-                    label="ID tài khoản liên kết"
-                    error={errors.userId?.message}
-                    className="sm:col-span-2"
-                  >
-                    <Input
-                      id="userId"
-                      placeholder="Để trống nếu chuyên gia chưa có tài khoản"
-                      {...register("userId")}
-                      className={cn(INPUT_CLASS, "font-mono")}
-                    />
-                  </FormField>
                 </div>
                 <FormField id="bio" label="Giới thiệu" error={errors.bio?.message}>
                   <textarea

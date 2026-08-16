@@ -57,6 +57,7 @@ import {
   type UpdateActivityInput,
 } from "@/lib/validations/curriculum";
 import { updateMaterialSchema, type UpdateMaterialInput } from "@/lib/validations/materials";
+import { getLiveActivityTemplateDefaults } from "@/lib/curriculum/datetime";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
@@ -694,17 +695,24 @@ export function ActivityFormDialog({
     setIsSubmitting(true);
     try {
       const isOnlineOrOffline = data.activityType !== "SelfPaced";
+      const liveDefaults = isOnlineOrOffline ? getLiveActivityTemplateDefaults() : null;
       const payload = {
-        code: data.code || null,
+        code: data.code,
         courseId: data.courseId,
         name: data.name,
         activityType: data.activityType,
         description: data.description || "",
         activityOrder: Number(data.activityOrder),
-        // Time & location live on the class session (cohort schedule), not the activity template.
-        location: null,
-        startTime: null,
-        endTime: null,
+        // Hidden BE defaults — real schedule/location live on the class session.
+        location: liveDefaults
+          ? (isEdit && activityToEdit?.location) || liveDefaults.location
+          : null,
+        startTime: liveDefaults
+          ? (isEdit && activityToEdit?.startTime) || liveDefaults.startTime
+          : null,
+        endTime: liveDefaults
+          ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
+          : null,
         maxCapacity: isOnlineOrOffline && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin,
         requireMediaEvidence: data.requireMediaEvidence,
@@ -767,12 +775,12 @@ export function ActivityFormDialog({
 
             <div className="space-y-1.5 col-span-2 md:col-span-1">
               <Label htmlFor="act-code" className="text-sm font-semibold text-foreground">
-                Mã Hoạt động
+                Mã Hoạt động <span className="text-primary">*</span>
               </Label>
               <Input
                 id="act-code"
                 type="text"
-                placeholder="Ví dụ: ACT-SCRATCH1"
+                placeholder="Ví dụ: ACT-01"
                 {...register("code")}
                 className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
               />

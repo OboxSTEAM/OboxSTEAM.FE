@@ -28,8 +28,8 @@ import {
   type QuestionBankListItem,
 } from "@/lib/api";
 import {
-  createAssignmentSchema,
-  updateAssignmentSchema,
+  assignmentFormSchema,
+  type AssignmentFormValues,
 } from "@/lib/validations/assignments";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -107,30 +107,15 @@ type AssignmentFormPanelProps = {
   onSuccess: (assignment: AssignmentDetail) => void;
 };
 
-type FormValues = {
-  code: string;
-  courseId: string;
-  title: string;
-  description: string;
-  assignmentType: "Retrospective" | "FileUpload" | "Quiz";
-  maxPoints: number;
-  passScore: number;
-  maxAttempts: number;
-  isRequiredForModulePass: boolean;
-  dueDate: string;
-  availableFrom: string;
-  availableUntil: string;
-  questionBankId: string;
-  questionCount: number | null;
-  timeLimitMinutes: number | null;
-  allowShuffle: boolean;
-  shuffleOptions: boolean;
-  easyPercent: number;
-  mediumPercent: number;
-  hardPercent: number;
-};
+type FormValues = AssignmentFormValues;
 
 const NO_COURSE = "none";
+
+function emptyNumberField(value: unknown): number | null {
+  if (value === "" || value == null) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isNaN(n) ? null : n;
+}
 
 export function AssignmentFormPanel({
   moduleId,
@@ -154,8 +139,7 @@ export function AssignmentFormPanel({
     setValue,
     formState: { errors },
   } = useForm<FormValues>({
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(isEdit ? updateAssignmentSchema : createAssignmentSchema) as any,
+    resolver: zodResolver(assignmentFormSchema),
     values: assignmentToEdit
       ? {
           code: assignmentToEdit.code || "",
@@ -366,6 +350,7 @@ export function AssignmentFormPanel({
                   </Select>
                 )}
               />
+              <FErr msg={errors.courseId?.message} />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
@@ -506,6 +491,7 @@ export function AssignmentFormPanel({
                     }}
                   />
                 )}
+                <FErr msg={errors.questionBankId?.message} />
                 {watch("questionBankId") &&
                   bankCourseId &&
                   !banks.some((b) => b.id === watch("questionBankId")) && (
@@ -517,11 +503,23 @@ export function AssignmentFormPanel({
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Số câu hỏi</Label>
-                <input type="number" {...register("questionCount", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
+                <input
+                  type="number"
+                  {...register("questionCount", { setValueAs: emptyNumberField })}
+                  className={IN}
+                  style={{ borderColor: W.border }}
+                />
+                <FErr msg={errors.questionCount?.message} />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thời gian (phút)</Label>
-                <input type="number" {...register("timeLimitMinutes", { valueAsNumber: true })} className={IN} style={{ borderColor: W.border }} />
+                <input
+                  type="number"
+                  {...register("timeLimitMinutes", { setValueAs: emptyNumberField })}
+                  className={IN}
+                  style={{ borderColor: W.border }}
+                />
+                <FErr msg={errors.timeLimitMinutes?.message} />
               </div>
               <div className="col-span-2 space-y-3">
                 <div className="flex items-center justify-between gap-3">
@@ -626,7 +624,12 @@ export function AssignmentFormPanel({
           </div>
         )}
       </div>
-      <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
+      <div className="flex items-center justify-end gap-3 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
+        {Object.keys(errors).length > 0 && (
+          <p className="mr-auto text-xs font-semibold" style={{ color: W.primary }}>
+            Vui lòng kiểm tra các trường bị lỗi trước khi lưu.
+          </p>
+        )}
         <Button
           type="submit"
           disabled={busy || ok}
