@@ -6,4 +6,13 @@ export const forceCompleteActivitySchema = z.object({
   activityId: z.string().uuid("ID hoạt động không hợp lệ."),
 });
 
+/** Body for `POST /api/activity-progresses/mentor-complete-bulk` (Mentor/Manager). */
+export const mentorCompleteActivityBulkSchema = z.object({
+  classSessionId: z.string().uuid("ID buổi học không hợp lệ."),
+  activityId: z.string().uuid("ID hoạt động không hợp lệ."),
+});
+
 export type ForceCompleteActivityInput = z.infer<typeof forceCompleteActivitySchema>;
+export type MentorCompleteActivityBulkInput = z.infer<
+  typeof mentorCompleteActivityBulkSchema
+>;

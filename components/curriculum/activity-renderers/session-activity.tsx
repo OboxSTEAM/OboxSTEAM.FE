@@ -1,8 +1,12 @@
-import { Calendar, ExternalLink, MapPin, Users } from "lucide-react";
+import { Calendar, CheckCircle2, ClipboardCheck, ExternalLink, MapPin, Users } from "lucide-react";
 
-import type { Activity } from "@/lib/api";
+import type { Activity, SessionAttendanceStatus } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
-import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
+import {
+  ATTENDANCE_STATUS_LABELS,
+  CLASS_SESSION_KIND_LABELS,
+  MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES,
+} from "@/lib/classes/constants";
 import { formatClassSessionSchedule } from "@/lib/classes/session-helpers";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { cn } from "@/lib/utils";
@@ -10,12 +14,16 @@ import { cn } from "@/lib/utils";
 type SessionActivityProps = {
   activity: Activity;
   nextSession?: ClassSession | null;
+  isAlreadyComplete?: boolean;
+  myAttendanceStatus?: SessionAttendanceStatus | null;
   className?: string;
 };
 
 export function SessionActivity({
   activity,
   nextSession = null,
+  isAlreadyComplete = false,
+  myAttendanceStatus = null,
   className,
 }: SessionActivityProps) {
   const isLive = activity.activityType === "LiveOnline";
@@ -27,12 +35,52 @@ export function SessionActivity({
   const maxCapacity = nextSession?.maxCapacity ?? activity.maxCapacity;
   const hasSchedule = Boolean(nextSession);
   const schedule = startTime ? formatClassSessionSchedule(startTime, endTime) : null;
+  const isAttendanceEligible =
+    myAttendanceStatus != null &&
+    MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES.has(myAttendanceStatus);
 
   return (
     <div className={cn("space-y-5", className)}>
       <p className="text-sm leading-relaxed text-learn-muted">
         {nextSession?.description || activity.description || "Chi tiết buổi học sẽ được cập nhật."}
       </p>
+
+      {isAlreadyComplete ? (
+        <div className="flex items-start gap-3 rounded-xl border border-learn-success/30 bg-learn-success/10 px-4 py-3">
+          <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-learn-success" aria-hidden />
+          <div>
+            <p className="text-sm font-semibold text-learn-success">Đã hoàn thành buổi học</p>
+            <p className="mt-0.5 text-xs text-learn-muted">
+              Mentor đã xác nhận điểm danh và đánh dấu hoạt động Done.
+            </p>
+          </div>
+        </div>
+      ) : hasSchedule ? (
+        <div className="flex items-start gap-3 rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3">
+          <ClipboardCheck className="mt-0.5 size-4 shrink-0 text-learn-faint" aria-hidden />
+          <div>
+            <p className="text-sm font-medium text-learn-text-strong">
+              Mentor sẽ hoàn thành sau điểm danh
+            </p>
+            <p className="mt-0.5 text-xs text-learn-muted">
+              Tham dự buổi học. Khi mentor điểm danh (Có mặt / Đi muộn / Có phép) và hoàn thành
+              hoạt động, tiến độ của bạn sẽ được cập nhật.
+            </p>
+            {myAttendanceStatus ? (
+              <p className="mt-2 text-xs font-medium text-learn-text-strong">
+                Điểm danh hiện tại:{" "}
+                <span
+                  className={cn(
+                    isAttendanceEligible ? "text-learn-success" : "text-learn-muted",
+                  )}
+                >
+                  {ATTENDANCE_STATUS_LABELS[myAttendanceStatus]}
+                </span>
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
 
       <dl className="space-y-3 rounded-xl border border-learn-border bg-learn-surface-2 p-4">
         {nextSession ? (

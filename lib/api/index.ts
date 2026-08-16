@@ -334,11 +334,18 @@ export {
 
 export {
   forceCompleteActivity,
+  mentorCompleteActivityBulk,
   type ActivityProgressRecord,
   type ActivityProgressStatus,
   type ForceCompleteActivityInput,
   type ForceCompleteActivityResponse,
   type ForceCompleteActivityResult,
+  type MentorCompleteActivityBulkInput,
+  type MentorCompleteBulkData,
+  type MentorCompleteBulkResponse,
+  type MentorCompleteBulkResult,
+  type MentorCompleteStudentOutcome,
+  type MentorCompleteStudentResult,
 } from "./activity-progresses";
 
 export {

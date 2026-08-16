@@ -169,6 +169,7 @@ export function CurriculumShell({
                 onSelectActivity={onSelectActivity}
                 onCurriculumRefresh={onCurriculumRefresh}
                 classSessions={classContext?.sessions ?? []}
+                classId={classContext?.classId ?? null}
               />
             )}
           </div>

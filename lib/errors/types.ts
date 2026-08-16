@@ -72,6 +72,7 @@ export type AppErrorContext =
   | "attendance.list"
   | "attendance.update"
   | "activityProgress.forceComplete"
+  | "activityProgress.mentorCompleteBulk"
   | "classQuizSet.get"
   | "classQuizSet.pull"
   | "classQuizSet.update"

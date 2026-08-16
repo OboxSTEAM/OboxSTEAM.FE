@@ -35,6 +35,10 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
   Late: "Đi muộn",
 };
 
+/** Attendance statuses eligible for `mentor-complete-bulk` after điểm danh. */
+export const MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES: ReadonlySet<SessionAttendanceStatus> =
+  new Set(["Present", "Late", "Excused"]);
+
 export const CLASS_STUDENT_ENROLLMENT_STATUS_LABELS: Record<
   ClassStudentEnrollmentStatus,
   string

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { CheckCircle2, ClipboardCheck } from "lucide-react";
 
 import { AttendanceStatusBadge } from "@/components/manager/classes/class-status-badge";
 import {
@@ -15,6 +16,7 @@ import {
   THEME_SELECT_TRIGGER,
 } from "@/lib/ui/select-styles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -22,10 +24,12 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import type { ClassSessionStudent, SessionAttendanceStatus } from "@/lib/api";
-import { ATTENDANCE_STATUS_LABELS } from "@/lib/classes/constants";
+import {
+  ATTENDANCE_STATUS_LABELS,
+  MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES,
+} from "@/lib/classes/constants";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
-import { ClipboardCheck } from "lucide-react";
 
 function getInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "HV";
@@ -41,20 +45,32 @@ type MentorActivityAttendancePanelProps = {
   students: ClassSessionStudent[];
   isLoading?: boolean;
   updatingStudentId?: string | null;
+  isCompletingActivity?: boolean;
   onStatusChange: (
     student: ClassSessionStudent,
     status: SessionAttendanceStatus,
   ) => void;
+  onCompleteActivity?: () => void;
 };
 
 export function MentorActivityAttendancePanel({
   students,
   isLoading = false,
   updatingStudentId = null,
+  isCompletingActivity = false,
   onStatusChange,
+  onCompleteActivity,
 }: MentorActivityAttendancePanelProps) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+
+  const eligibleCount = useMemo(
+    () =>
+      students.filter((student) =>
+        MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES.has(student.attendanceStatus),
+      ).length,
+    [students],
+  );
 
   const filtered = useMemo(() => {
     return students.filter((student) => {
@@ -116,7 +132,9 @@ export function MentorActivityAttendancePanel({
               if (!value) return;
               onStatusChange(student, value as SessionAttendanceStatus);
             }}
-            disabled={updatingStudentId === student.studentId}
+            disabled={
+              updatingStudentId === student.studentId || isCompletingActivity
+            }
           >
             <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
               <span className="truncate">
@@ -140,7 +158,7 @@ export function MentorActivityAttendancePanel({
         ),
       },
     ],
-    [onStatusChange, updatingStudentId],
+    [isCompletingActivity, onStatusChange, updatingStudentId],
   );
 
   return (
@@ -170,6 +188,36 @@ export function MentorActivityAttendancePanel({
           setStatusFilter("all");
         }}
       />
+
+      {onCompleteActivity ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/10 px-4 py-3 sm:px-6">
+          <p className="text-xs text-muted-foreground">
+            Hoàn thành hoạt động cho học viên{" "}
+            <span className="font-medium text-foreground">Có mặt / Đi muộn / Có phép</span>
+            {eligibleCount > 0 ? (
+              <>
+                {" "}
+                ·{" "}
+                <span className="font-semibold text-foreground tabular-nums">
+                  {eligibleCount}
+                </span>{" "}
+                đủ điều kiện
+              </>
+            ) : null}
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            disabled={eligibleCount === 0 || isCompletingActivity || isLoading}
+            className="h-8 gap-1.5 rounded-md"
+            onClick={onCompleteActivity}
+          >
+            <CheckCircle2 className="size-3.5" />
+            {isCompletingActivity ? "Đang hoàn thành…" : "Hoàn thành hoạt động"}
+          </Button>
+        </div>
+      ) : null}
+
       <div className="overflow-x-auto p-4 sm:p-6">
         <ManagerDataTable
           columns={columns}

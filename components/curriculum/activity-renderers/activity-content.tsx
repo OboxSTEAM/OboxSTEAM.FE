@@ -1,6 +1,6 @@
 "use client";
 
-import type { Activity, ResumeState } from "@/lib/api";
+import type { Activity, ResumeState, SessionAttendanceStatus } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import { cn } from "@/lib/utils";
 
@@ -13,6 +13,7 @@ type ActivityContentProps = {
   resumeState: ResumeState | null;
   isAlreadyComplete: boolean;
   nextSession?: ClassSession | null;
+  myAttendanceStatus?: SessionAttendanceStatus | null;
   onCanCompleteChange?: (canComplete: boolean) => void;
   compact?: boolean;
 };
@@ -23,11 +24,12 @@ export function ActivityContent({
   resumeState,
   isAlreadyComplete,
   nextSession = null,
+  myAttendanceStatus = null,
   onCanCompleteChange,
   compact = false,
 }: ActivityContentProps) {
   // Only SelfPaced activities can be marked done by the student.
-  // LiveOnline / Offline completion is mentor-owned.
+  // LiveOnline / Offline completion is mentor-owned via điểm danh.
   if (activity.activityType === "SelfPaced") {
     return (
       <MaterialActivity
@@ -46,6 +48,8 @@ export function ActivityContent({
     <SessionActivity
       activity={activity}
       nextSession={nextSession}
+      isAlreadyComplete={isAlreadyComplete}
+      myAttendanceStatus={myAttendanceStatus}
       className={cn(compact && "pb-1")}
     />
   );

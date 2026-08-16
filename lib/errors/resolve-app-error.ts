@@ -295,6 +295,12 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Học viên hoặc hoạt động không hợp lệ, hoặc bạn không có quyền.",
     action: "Kiểm tra học viên/hoạt động rồi thử lại.",
   },
+  "activityProgress.mentorCompleteBulk": {
+    title: "Không hoàn thành được hoạt động cho lớp",
+    reason:
+      "Buổi học hoặc hoạt động không hợp lệ, chưa có học viên đủ điều kiện, hoặc bạn không có quyền.",
+    action: "Kiểm tra điểm danh (Có mặt / Đi muộn / Có phép) rồi thử lại.",
+  },
   "classQuizSet.get": {
     title: "Không tải được bộ đề lớp",
     reason: "Máy chủ tạm thời không phản hồi hoặc bài tập không tồn tại.",
@@ -662,6 +668,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classSessions.delete",
   "attendance.update",
   "activityProgress.forceComplete",
+  "activityProgress.mentorCompleteBulk",
   "classQuizSet.pull",
   "classQuizSet.update",
   "media.upload",

@@ -9,8 +9,10 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   completeActivity,
   getActivityById,
+  getClassSessionWithStudents,
   type ClassSession,
   type EnrollmentCurriculum,
+  type SessionAttendanceStatus,
 } from "@/lib/api";
 import type { CompleteActivitySource } from "@/lib/validations/program-enrollments";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
@@ -33,6 +35,7 @@ type ActivityPanelProps = {
   onSelectActivity: (activityId: string) => void;
   onCurriculumRefresh: () => Promise<void>;
   classSessions?: ClassSession[];
+  classId?: string | null;
 };
 
 function resolveCompleteSource(
@@ -70,6 +73,7 @@ export function ActivityPanel({
   onSelectActivity,
   onCurriculumRefresh,
   classSessions = [],
+  classId = null,
 }: ActivityPanelProps) {
   const [canComplete, setCanComplete] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -124,6 +128,29 @@ export function ActivityPanel({
     if (activity.activityType === "SelfPaced") return null;
     return getNextSessionForActivity(classSessions, selectedActivityId);
   }, [activity, classSessions, selectedActivityId]);
+
+  const {
+    data: myAttendanceRow,
+  } = useClientFetch({
+    enabled: Boolean(
+      classId &&
+        nextSession?.id &&
+        activity &&
+        activity.activityType !== "SelfPaced",
+    ),
+    fetcher: async () => {
+      if (!classId || !nextSession?.id) return null;
+      const result = await getClassSessionWithStudents(classId, nextSession.id);
+      return result?.data?.students?.[0] ?? null;
+    },
+    deps: [classId, nextSession?.id],
+    onError: () => {
+      /* Attendance is supplementary for student UX; ignore fetch failures. */
+    },
+  });
+
+  const myAttendanceStatus: SessionAttendanceStatus | null =
+    myAttendanceRow?.attendanceStatus ?? null;
 
   const isAlreadyComplete =
     flatActivity?.status === "completed" ||
@@ -253,6 +280,7 @@ export function ActivityPanel({
           resumeState={resumeState}
           isAlreadyComplete={isAlreadyComplete}
           nextSession={nextSession}
+          myAttendanceStatus={myAttendanceStatus}
           onCanCompleteChange={setCanComplete}
           compact
         />
@@ -287,7 +315,7 @@ export function ActivityPanel({
             </Button>
           ) : (
             <span className="text-sm text-learn-muted">
-              Mentor sẽ xác nhận hoàn thành
+              Mentor hoàn thành sau điểm danh
             </span>
           )}
 

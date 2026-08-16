@@ -36,6 +36,7 @@ import {
   getProgramById,
   getResearchMilestonesByModule,
   hydrateProgramCurriculum,
+  mentorCompleteActivityBulk,
   updateSessionAttendance,
   type Activity,
   type AssignmentListItem,
@@ -135,6 +136,7 @@ export function MentorClassCurriculumPanel({
   const [updatingAttendanceId, setUpdatingAttendanceId] = useState<string | null>(
     null,
   );
+  const [isMentorCompleting, setIsMentorCompleting] = useState(false);
   const [forceCompletingId, setForceCompletingId] = useState<string | null>(null);
   const [bulkForceBusy, setBulkForceBusy] = useState(false);
   const [isForceCompleteOpen, setIsForceCompleteOpen] = useState(false);
@@ -343,6 +345,34 @@ export function MentorClassCurriculumPanel({
     },
     [classId, effectiveSessionId, retryAttendance],
   );
+
+  const handleMentorCompleteActivity = useCallback(async () => {
+    if (!selectedActivity || !effectiveSessionId || isMentorCompleting) return;
+
+    setIsMentorCompleting(true);
+    try {
+      const result = await mentorCompleteActivityBulk({
+        classSessionId: effectiveSessionId,
+        activityId: selectedActivity.id,
+      });
+      const outcomes = result?.data?.results ?? [];
+      const completed = outcomes.filter((row) => row.outcome === "Completed").length;
+      const alreadyDone = outcomes.filter(
+        (row) => row.outcome === "AlreadyDone",
+      ).length;
+      const skipped = outcomes.filter((row) => row.outcome === "Skipped").length;
+
+      showAppSuccess({
+        title: "Đã hoàn thành hoạt động",
+        description: `Hoàn thành ${completed} · Đã Done ${alreadyDone} · Bỏ qua ${skipped}.`,
+      });
+      retryAttendance();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "activityProgress.mentorCompleteBulk");
+    } finally {
+      setIsMentorCompleting(false);
+    }
+  }, [effectiveSessionId, isMentorCompleting, retryAttendance, selectedActivity]);
 
   const handleForceComplete = useCallback(
     async (student: ClassStudentRoster, activityId: string) => {
@@ -602,7 +632,11 @@ export function MentorClassCurriculumPanel({
                   students={attendanceStudents}
                   isLoading={isAttendanceLoading}
                   updatingStudentId={updatingAttendanceId}
+                  isCompletingActivity={isMentorCompleting}
                   onStatusChange={handleAttendanceChange}
+                  onCompleteActivity={() => {
+                    void handleMentorCompleteActivity();
+                  }}
                 />
               ) : selectedActivity.activityType !== "SelfPaced" ? (
                 <div className="p-6">

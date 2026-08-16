@@ -347,7 +347,9 @@ export {
 } from "./media";
 export {
   forceCompleteActivitySchema,
+  mentorCompleteActivityBulkSchema,
   type ForceCompleteActivityInput,
+  type MentorCompleteActivityBulkInput,
 } from "./activity-progresses";
 export {
   classQuizQuestionParamsSchema,
