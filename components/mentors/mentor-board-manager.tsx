@@ -44,6 +44,7 @@ import {
   type MentorBoardClass,
 } from "@/lib/api";
 import type { SkillSummary } from "@/lib/api/entities/skill";
+import { isMentorBoardClass } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -609,7 +610,9 @@ export function MentorBoardManager({
     onError: (error) => showAppErrorFromUnknown(error, "classMentorRequests.mine"),
   });
 
-  const classes = boardData?.data?.items ?? [];
+  const classes = (boardData?.data?.items ?? []).filter((item) =>
+    isMentorBoardClass(item.status),
+  );
   const boardPagination = boardData?.data;
   const myRequests = mineData?.data?.items ?? [];
 
@@ -673,7 +676,7 @@ export function MentorBoardManager({
   }
 
   async function handleApplyConfirm() {
-    if (!applyTarget) return;
+    if (!applyTarget || !isMentorBoardClass(applyTarget.status)) return;
     setIsSubmitting(true);
     try {
       await createClassMentorRequest({

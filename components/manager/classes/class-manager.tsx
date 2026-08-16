@@ -198,7 +198,7 @@ export function ClassManager({
         await createClass(values);
         showAppSuccess({
           title: "Đã tạo lớp học",
-          description: `Lớp ${values.name} ở trạng thái Bản nháp. Mentor sẽ được gán sau khi duyệt yêu cầu.`,
+          description: `Lớp ${values.name} ở trạng thái Bản nháp. Mở tuyển sinh để mentor thấy lớp trên bảng đăng ký.`,
         });
       }
       setFormOpen(false);

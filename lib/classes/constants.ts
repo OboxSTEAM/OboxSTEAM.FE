@@ -77,6 +77,11 @@ export const OPEN_CLASSES_QUERY = {
   status: "Open" as const,
 };
 
+/** Mentor class registration board — recruiting classes only. */
+export function isMentorBoardClass(status: ClassStatus): boolean {
+  return status === "Open";
+}
+
 export const CLASS_SESSIONS_QUERY = {
   page: 1,
   pageSize: 200,
