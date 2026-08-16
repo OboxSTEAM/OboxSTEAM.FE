@@ -14,7 +14,7 @@ export type FlatCurriculumAssignment = {
   moduleId: string;
   moduleName: string;
   moduleType: EnrollmentCurriculum["modules"][number]["moduleType"];
-  moduleEnrollmentId: string;
+  moduleEnrollmentId: string | null;
   courseId: string | null;
   courseName: string | null;
   milestoneId: string | null;

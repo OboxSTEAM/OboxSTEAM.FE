@@ -89,7 +89,7 @@ export function SessionActivity({
             <div>
               <dt className="text-learn-muted">Buổi học lớp</dt>
               <dd className="font-medium text-learn-text-strong">
-                {nextSession.title}
+                {nextSession.title || "Buổi học"}
                 <span className="mt-1 block text-xs font-normal text-learn-muted">
                   {CLASS_SESSION_KIND_LABELS[nextSession.sessionKind]}
                 </span>

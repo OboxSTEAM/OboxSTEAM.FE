@@ -111,7 +111,9 @@ export function getProgramCardExpert(
 export function formatProgramCardFooterMeta(program: Program): string {
   return [
     PROGRAM_LEVEL_LABELS[program.level],
-    program.seriesName,
-    program.estimatedDuration,
-  ].join(" · ");
+    program.seriesName || null,
+    program.estimatedDuration || null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
 }

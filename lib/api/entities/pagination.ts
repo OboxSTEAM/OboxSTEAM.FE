@@ -2,7 +2,10 @@ import { z } from "zod";
 
 export function createPaginatedSchema<T extends z.ZodType>(itemSchema: T) {
   return z.object({
-    items: z.array(itemSchema),
+    items: z
+      .array(itemSchema)
+      .nullish()
+      .transform((value) => value ?? []),
     currentPage: z.number(),
     totalPages: z.number(),
     pageSize: z.number(),

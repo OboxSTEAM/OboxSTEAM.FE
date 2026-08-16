@@ -26,7 +26,7 @@ import { RetakeCheckoutDialog } from "./retake-checkout-dialog";
 
 type AssignmentRecoveryActionsProps = {
   moduleType: ModuleType;
-  moduleEnrollmentId: string;
+  moduleEnrollmentId: string | null;
   assignmentId: string;
   attemptNumber: number;
   maxAttempts: number;
@@ -102,16 +102,18 @@ export function AssignmentRecoveryActions({
 
   const action = useMemo(
     () =>
-      resolveRecoveryAction({
-        moduleType,
-        attemptNumber,
-        maxAttempts,
-        needsDeadlineGrant,
-        recoveryRequests,
-        redeliveryRequests,
-        moduleEnrollmentId,
-        assignmentId,
-      }),
+      moduleEnrollmentId
+        ? resolveRecoveryAction({
+            moduleType,
+            attemptNumber,
+            maxAttempts,
+            needsDeadlineGrant,
+            recoveryRequests,
+            redeliveryRequests,
+            moduleEnrollmentId,
+            assignmentId,
+          })
+        : "none",
     [
       moduleType,
       attemptNumber,
@@ -123,6 +125,10 @@ export function AssignmentRecoveryActions({
       assignmentId,
     ],
   );
+
+  if (!moduleEnrollmentId) {
+    return null;
+  }
 
   const openRecovery = findOpenRecovery(
     recoveryRequests,

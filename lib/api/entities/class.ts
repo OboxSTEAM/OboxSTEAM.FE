@@ -52,8 +52,14 @@ export const classSchema = z.object({
 
 export const classWithSessionsSchema = z.object({
   id: z.string().uuid(),
-  code: z.string(),
-  name: z.string(),
+  code: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  name: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   programId: z.string().uuid(),
   mentorId: z.string().uuid().nullable(),
   startDate: z.string(),

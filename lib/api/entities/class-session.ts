@@ -26,13 +26,17 @@ export const classSessionSchema = z.object({
   activityId: z.string().uuid().nullable(),
   assignmentId: z.string().uuid().nullable(),
   sessionKind: classSessionKindSchema,
-  title: z.string(),
+  title: z.string().nullable(),
   description: z.string().nullable(),
   startTime: z.string(),
   endTime: z.string(),
   location: z.string().nullable(),
   maxCapacity: z.number().int().nullable(),
   requiresAttendance: z.boolean(),
+  requiresMentorCheckIn: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? false),
   status: classSessionStatusSchema,
   createdAt: z.string(),
   updatedAt: z.string().nullable(),

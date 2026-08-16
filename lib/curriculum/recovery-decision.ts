@@ -21,7 +21,7 @@ export type RecoveryDecisionInput = {
   needsDeadlineGrant?: boolean;
   recoveryRequests: AssessmentRecoveryRequest[];
   redeliveryRequests: ClassRedeliveryRequest[];
-  moduleEnrollmentId: string;
+  moduleEnrollmentId: string | null;
   assignmentId: string;
 };
 
@@ -36,9 +36,11 @@ const OPEN_REDELIVERY_STATUSES = new Set([
 
 export function countDecidedRecoveries(
   requests: AssessmentRecoveryRequest[],
-  moduleEnrollmentId: string,
+  moduleEnrollmentId: string | null,
   assignmentId: string,
 ): number {
+  if (!moduleEnrollmentId) return 0;
+
   return requests.filter(
     (request) =>
       request.moduleEnrollmentId === moduleEnrollmentId &&
@@ -51,9 +53,11 @@ export function countDecidedRecoveries(
 export function getEffectiveMaxAttempts(
   maxAttempts: number,
   recoveryRequests: AssessmentRecoveryRequest[],
-  moduleEnrollmentId: string,
+  moduleEnrollmentId: string | null,
   assignmentId: string,
 ): number {
+  if (!moduleEnrollmentId) return maxAttempts;
+
   const granted = recoveryRequests
     .filter(
       (request) =>
@@ -70,7 +74,7 @@ export function hasAttemptsRemaining(
   attemptNumber: number,
   maxAttempts: number,
   recoveryRequests: AssessmentRecoveryRequest[],
-  moduleEnrollmentId: string,
+  moduleEnrollmentId: string | null,
   assignmentId: string,
 ): boolean {
   return (
@@ -89,7 +93,7 @@ export function getAttemptsRemaining(
   attemptNumber: number,
   maxAttempts: number,
   recoveryRequests: AssessmentRecoveryRequest[],
-  moduleEnrollmentId: string,
+  moduleEnrollmentId: string | null,
   assignmentId: string,
 ): number {
   const effectiveMax = getEffectiveMaxAttempts(
@@ -103,9 +107,11 @@ export function getAttemptsRemaining(
 
 export function findOpenRecovery(
   requests: AssessmentRecoveryRequest[],
-  moduleEnrollmentId: string,
+  moduleEnrollmentId: string | null,
   assignmentId: string,
 ): AssessmentRecoveryRequest | null {
+  if (!moduleEnrollmentId) return null;
+
   return (
     requests.find(
       (request) =>
@@ -118,8 +124,10 @@ export function findOpenRecovery(
 
 export function findOpenRedelivery(
   requests: ClassRedeliveryRequest[],
-  moduleEnrollmentId: string,
+  moduleEnrollmentId: string | null,
 ): ClassRedeliveryRequest | null {
+  if (!moduleEnrollmentId) return null;
+
   return (
     requests.find(
       (request) =>

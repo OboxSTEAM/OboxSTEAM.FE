@@ -5,7 +5,10 @@ export const materialTypeSchema = z.string();
 /** Compact material reference in the program curriculum tree. */
 export const curriculumMaterialSummarySchema = z.object({
   materialId: z.string(),
-  materialName: z.string(),
+  materialName: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   materialType: materialTypeSchema,
 });
 

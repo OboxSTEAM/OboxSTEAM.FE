@@ -58,7 +58,10 @@ export const mentorSkillSchema = z.object({
     .nullable()
     .nullish()
     .transform((value) => value ?? null),
-  notes: z.string().nullable(),
+  notes: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   isPublic: z
     .boolean()
     .nullish()

@@ -368,7 +368,7 @@ function AttendanceManagerInner() {
               {sessionDetail ? (
                 <div className="border-b border-border px-6 py-3 text-sm text-muted-foreground">
                   <span className="font-semibold text-foreground">
-                    {sessionDetail.title}
+                    {sessionDetail.title || "Buổi học"}
                   </span>
                   {" · "}
                   {formatApiDateTimeDisplay(sessionDetail.startTime)}

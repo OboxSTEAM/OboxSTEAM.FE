@@ -167,8 +167,8 @@ export type ProgramPriceParts =
   | { isFree: true; label: "Miễn phí" }
   | { isFree: false; amount: string; unit: "đ" };
 
-export function getProgramPriceParts(price: number): ProgramPriceParts {
-  if (price === 0) {
+export function getProgramPriceParts(price: number | null | undefined): ProgramPriceParts {
+  if (price == null || price === 0) {
     return { isFree: true, label: "Miễn phí" };
   }
 
@@ -179,7 +179,7 @@ export function getProgramPriceParts(price: number): ProgramPriceParts {
   };
 }
 
-export function formatProgramPrice(price: number): string {
+export function formatProgramPrice(price: number | null | undefined): string {
   const parts = getProgramPriceParts(price);
   if (parts.isFree) return parts.label;
   return `${parts.amount} ${parts.unit}`;
