@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-/** Roles accepted by `POST /api/auth/register` (matches backend enum). */
-export const registerRoleSchema = z.enum(["Student", "Parent", "Mentor"]);
+/** Public self-register roles for `POST /api/auth/register`. Mentors are provisioned by managers. */
+export const registerRoleSchema = z.enum(["Student", "Parent"]);
 
 export type RegisterRole = z.infer<typeof registerRoleSchema>;
 
