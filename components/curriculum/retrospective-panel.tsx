@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PenLine } from "lucide-react";
+import { AlertCircle, CalendarClock, PenLine } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,37 +71,52 @@ function isEditableStatus(status: RetrospectiveSubmissionStatus): boolean {
   return status === "Pending" || status === "ReturnedForRevision";
 }
 
+function isCompletedAssignmentStatus(status: FlatCurriculumAssignment["status"]): boolean {
+  return status === "completed" || status === "submitted";
+}
+
 function isMissingSubmissionError(error: unknown): boolean {
   return error instanceof ApiRequestError && error.status === 404;
 }
 
+function formatDueDate(iso: string | null): string | null {
+  if (!iso) return null;
+  try {
+    return new Intl.DateTimeFormat("vi-VN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
+  } catch {
+    return null;
+  }
+}
+
+/** Resume an existing attempt from local storage only — never auto-start. */
 async function loadRetrospectiveAttempt(
   assignmentId: string,
-): Promise<RetrospectiveAttempt> {
+): Promise<RetrospectiveAttempt | null> {
   const storedSubmissionId = getStoredRetrospectiveSubmissionId(assignmentId);
 
-  if (storedSubmissionId) {
-    try {
-      const result = await getRetrospectiveSubmission(storedSubmissionId);
-      if (result?.data) {
-        return result.data;
-      }
-    } catch (error) {
-      if (!isMissingSubmissionError(error)) {
-        throw error;
-      }
-      clearStoredRetrospectiveSubmissionId(assignmentId);
+  if (!storedSubmissionId) {
+    return null;
+  }
+
+  try {
+    const result = await getRetrospectiveSubmission(storedSubmissionId);
+    if (result?.data) {
+      return result.data;
     }
+  } catch (error) {
+    if (!isMissingSubmissionError(error)) {
+      throw error;
+    }
+    clearStoredRetrospectiveSubmissionId(assignmentId);
   }
 
-  const startResult = await startRetrospectiveAttempt(assignmentId);
-  const attempt = startResult?.data;
-  if (!attempt) {
-    throw new Error("Retrospective start response missing data.");
-  }
-
-  setStoredRetrospectiveSubmissionId(assignmentId, attempt.submissionId);
-  return attempt;
+  return null;
 }
 
 function RetrospectivePanelSkeleton() {
@@ -110,6 +125,63 @@ function RetrospectivePanelSkeleton() {
       <Skeleton className="h-3 w-32 bg-learn-surface-2" />
       <Skeleton className="mt-3 h-6 w-2/3 bg-learn-surface-2" />
       <Skeleton className="mt-4 min-h-0 flex-1 rounded-xl bg-learn-surface-2" />
+    </div>
+  );
+}
+
+function RetrospectiveIntro({ assignment }: { assignment: AssignmentDetail }) {
+  const dueLabel = formatDueDate(assignment.dueDate);
+
+  return (
+    <div className="space-y-5">
+      <p className="text-sm leading-relaxed text-learn-muted">
+        {assignment.description ||
+          "Chia sẻ suy nghĩ, bài học rút ra và cảm nhận của bạn về hoạt động vừa qua."}
+      </p>
+
+      <dl className="grid max-w-md grid-cols-2 gap-px overflow-hidden rounded-xl border border-learn-border bg-learn-border sm:max-w-lg">
+        <div className="flex items-baseline justify-between gap-4 bg-learn-surface-2/50 px-4 py-3.5 sm:px-5 sm:py-4">
+          <dt className="text-sm text-learn-muted">Điểm đạt</dt>
+          <dd className="flex items-baseline gap-1.5">
+            <span className="font-heading text-xl font-semibold leading-none tabular-nums text-learn-text-strong sm:text-2xl">
+              {assignment.passScore}
+            </span>
+            <span className="text-sm text-learn-faint">/ {assignment.maxPoints}</span>
+          </dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-4 bg-learn-surface-2/50 px-4 py-3.5 sm:px-5 sm:py-4">
+          <dt className="text-sm text-learn-muted">Lượt làm</dt>
+          <dd className="flex items-baseline gap-1.5">
+            <span className="font-heading text-xl font-semibold leading-none tabular-nums text-learn-text-strong sm:text-2xl">
+              {assignment.maxAttempts}
+            </span>
+            <span className="text-sm text-learn-faint">lần</span>
+          </dd>
+        </div>
+      </dl>
+
+      <div className="space-y-2.5">
+        {dueLabel ? (
+          <div className="flex items-center gap-2.5 text-sm text-learn-muted">
+            <CalendarClock className="size-4 shrink-0 text-learn-faint" aria-hidden />
+            <span>
+              Hạn nộp:{" "}
+              <span className="font-medium text-learn-text-strong">{dueLabel}</span>
+            </span>
+          </div>
+        ) : null}
+
+        {assignment.isRequiredForModulePass ? (
+          <div className="flex items-center gap-2.5 text-sm text-learn-muted">
+            <AlertCircle className="size-4 shrink-0 text-learn-primary" aria-hidden />
+            <span>Bắt buộc hoàn thành để qua module.</span>
+          </div>
+        ) : null}
+      </div>
+
+      <p className="border-t border-learn-border pt-4 text-xs text-learn-faint">
+        Bài viết được lưu nháp tự động. Bạn chỉ nộp khi sẵn sàng để mentor chấm điểm.
+      </p>
     </div>
   );
 }
@@ -125,6 +197,7 @@ export function RetrospectivePanel({
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [isRetrying, setIsRetrying] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -134,6 +207,8 @@ export function RetrospectivePanel({
     () => getAssignmentBreadcrumb(curriculum, assignmentId),
     [assignmentId, curriculum],
   );
+
+  const hasCompletedAttempt = isCompletedAssignmentStatus(flatAssignment.status);
 
   const {
     recoveryRequests,
@@ -147,6 +222,7 @@ export function RetrospectivePanel({
     setLastSavedAt(null);
     setIsSaving(false);
     setIsSubmitting(false);
+    setIsStarting(false);
     setIsConfirmOpen(false);
     setIsRetrying(false);
     pendingContentRef.current = null;
@@ -192,7 +268,7 @@ export function RetrospectivePanel({
   } = useClientFetch({
     enabled: isAssignmentSelectable(flatAssignment.status),
     fetcher: async () => loadRetrospectiveAttempt(assignmentId),
-    deps: [assignmentId],
+    deps: [assignmentId, flatAssignment.status],
     onError: (error) => {
       showAppErrorFromUnknown(error, "generic");
     },
@@ -206,6 +282,7 @@ export function RetrospectivePanel({
   }, [hydratedAttempt]);
 
   const isEditable = attempt ? isEditableStatus(attempt.status) : false;
+  const showIntro = !attempt && !hasCompletedAttempt;
 
   const flushSave = useCallback(async (submissionId: string, text: string) => {
     setIsSaving(true);
@@ -242,6 +319,25 @@ export function RetrospectivePanel({
     },
     [attempt, isEditable, scheduleSave],
   );
+
+  const handleStart = useCallback(async () => {
+    setIsStarting(true);
+    try {
+      const startResult = await startRetrospectiveAttempt(assignmentId);
+      const next = startResult?.data;
+      if (!next) {
+        throw new Error("Retrospective start response missing data.");
+      }
+      setStoredRetrospectiveSubmissionId(assignmentId, next.submissionId);
+      setAttempt(next);
+      setContentText(next.contentText ?? "");
+      setLastSavedAt(next.lastSavedAt);
+    } catch (error) {
+      showAppErrorFromUnknown(error, "generic");
+    } finally {
+      setIsStarting(false);
+    }
+  }, [assignmentId]);
 
   const performSubmit = useCallback(async () => {
     if (!attempt) return;
@@ -328,22 +424,19 @@ export function RetrospectivePanel({
     );
   }
 
-  if ((isAssignmentLoading && !assignment) || (isAttemptLoading && !attempt)) {
+  if (isAssignmentLoading && !assignment) {
     return <RetrospectivePanelSkeleton />;
   }
 
-  if ((assignmentError && !assignment) || (attemptError && !attempt)) {
+  if (assignmentError && !assignment) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Không tải được bài đánh giá.</p>
         <Button
           type="button"
           variant="outline"
           className="mt-4 border-learn-border"
-          onClick={() => {
-            if (assignmentError) retryAssignment();
-            if (attemptError) retryAttempt();
-          }}
+          onClick={retryAssignment}
         >
           Thử lại
         </Button>
@@ -351,7 +444,99 @@ export function RetrospectivePanel({
     );
   }
 
-  if (!assignment || !attempt) {
+  if (!assignment) {
+    return <RetrospectivePanelSkeleton />;
+  }
+
+  const isRestoringSession =
+    isAttemptLoading &&
+    !attempt &&
+    (hasCompletedAttempt || Boolean(getStoredRetrospectiveSubmissionId(assignmentId)));
+
+  if (isRestoringSession) {
+    return <RetrospectivePanelSkeleton />;
+  }
+
+  if (attemptError && !attempt) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">Không tải được bài đánh giá.</p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 border-learn-border"
+          onClick={retryAttempt}
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  if (hasCompletedAttempt && !attempt && !isAttemptLoading) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">
+          Không tải được bài đã nộp. Thử lại hoặc mở lại từ thiết bị đã làm bài.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-4 border-learn-border"
+          onClick={retryAttempt}
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  const effectiveMaxAttempts = getEffectiveMaxAttempts(
+    assignment.maxAttempts,
+    recoveryRequests,
+    flatAssignment.moduleEnrollmentId,
+    assignmentId,
+  );
+
+  if (showIntro) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <div className="shrink-0 px-4 py-3 sm:px-5">
+          {breadcrumb ? (
+            <p className="text-xs text-learn-muted">
+              {breadcrumb.moduleName}
+              {breadcrumb.groupLabel ? ` · ${breadcrumb.groupLabel}` : null}
+            </p>
+          ) : null}
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h1 className="font-heading min-w-0 flex-1 text-lg font-semibold text-learn-text-strong sm:text-xl">
+              {assignment.title}
+            </h1>
+            <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
+              {ASSIGNMENT_TYPE_LABELS.Retrospective}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-3 sm:px-5">
+          <RetrospectiveIntro assignment={assignment} />
+        </div>
+
+        <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
+          <Button
+            type="button"
+            className="ml-auto bg-learn-primary text-white hover:bg-learn-primary/90"
+            disabled={isStarting}
+            onClick={() => void handleStart()}
+          >
+            {isStarting ? "Đang mở bài..." : "Bắt đầu viết bài"}
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!attempt) {
     return <RetrospectivePanelSkeleton />;
   }
 
@@ -386,12 +571,6 @@ export function RetrospectivePanel({
       flatAssignment.moduleEnrollmentId,
       assignmentId,
     );
-  const effectiveMaxAttempts = getEffectiveMaxAttempts(
-    assignment.maxAttempts,
-    recoveryRequests,
-    flatAssignment.moduleEnrollmentId,
-    assignmentId,
-  );
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
