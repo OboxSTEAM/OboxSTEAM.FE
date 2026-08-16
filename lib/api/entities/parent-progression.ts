@@ -68,8 +68,8 @@ export const parentEnrollmentBriefSchema = z.object({
   enrolledAt: z.string().nullable(),
   startedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
-  currentModule: parentCurrentModuleSchema.nullable(),
-  currentActivity: parentCurrentActivitySchema.nullable(),
+  currentModule: parentCurrentModuleSchema.nullish(),
+  currentActivity: parentCurrentActivitySchema.nullish(),
   lastAccessedAt: z.string().nullable(),
   blockers: z.array(parentBlockerSchema).nullable(),
 });
@@ -172,7 +172,7 @@ export const parentModuleProgressSchema = z.object({
   outcomeLabel: parentModuleOutcomeLabelSchema.nullable(),
   startedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
-  activityStats: parentActivityStatsSchema,
+  activityStats: parentActivityStatsSchema.nullish(),
   assignments: z.array(parentAssignmentOutcomeSchema).nullable(),
 });
 
@@ -180,7 +180,7 @@ export const parentModuleProgressSchema = z.object({
 export const parentEnrollmentProgressionSchema = z.object({
   studentId: z.string().uuid(),
   enrollment: parentEnrollmentHeaderSchema,
-  classInfo: parentClassInfoSchema.nullable(),
+  classInfo: parentClassInfoSchema.nullish(),
   modules: z.array(parentModuleProgressSchema).nullable(),
 });
 

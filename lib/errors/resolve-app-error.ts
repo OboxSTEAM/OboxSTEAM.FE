@@ -75,6 +75,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
   },
+  "parent.progression": {
+    title: "Không tải được tiến độ học viên",
+    reason: "Liên kết phụ huynh chưa xác nhận, hoặc máy chủ tạm thời không phản hồi.",
+    action: "Quay lại danh sách con hoặc thử tải lại trang sau vài giây.",
+  },
+  "parent.enrollment-progression": {
+    title: "Không tải được chi tiết chương trình",
+    reason: "Ghi danh không tồn tại, không thuộc học viên liên kết, hoặc máy chủ lỗi.",
+    action: "Quay lại trang tiến độ học viên hoặc thử lại sau vài giây.",
+  },
   "student.links": {
     title: "Không tải được thông tin phụ huynh",
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",

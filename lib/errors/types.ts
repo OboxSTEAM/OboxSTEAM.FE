@@ -28,6 +28,8 @@ export type AppErrorContext =
   | "parent.complete-profile"
   | "parent.approve-link"
   | "parent.links"
+  | "parent.progression"
+  | "parent.enrollment-progression"
   | "student.links"
   | "programs.list"
   | "programs.detail"

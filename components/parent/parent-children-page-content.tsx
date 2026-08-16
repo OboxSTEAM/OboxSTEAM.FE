@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { BookOpen } from "lucide-react";
+import { ArrowRight, BookOpen } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -16,49 +18,33 @@ import {
 import { getParentLinks, type ParentLinkedStudent } from "@/lib/api";
 import { isParentRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import {
+  formatParentDate,
+  getParentChildProgressionHref,
+  getParentLinkedDisplayName,
+  getParentLinkedInitials,
+} from "@/lib/parent/progression";
+import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/use-current-user";
 
-function getDisplayName(account: ParentLinkedStudent): string {
-  if (account.fullName?.trim()) return account.fullName.trim();
-  return account.email.split("@")[0] ?? "HV";
-}
-
-function getInitials(account: ParentLinkedStudent): string {
-  const name = getDisplayName(account);
-  const parts = name.split(/\s+/).filter(Boolean);
-  if (parts.length >= 2) {
-    return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
-  }
-  return name.slice(0, 2).toUpperCase();
-}
-
-function formatLinkedDate(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat("vi-VN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
-
 function LinkedStudentCard({ student }: { student: ParentLinkedStudent }) {
+  const displayName = getParentLinkedDisplayName(student);
+  const progressionHref = getParentChildProgressionHref(student.linkedUserId);
+
   return (
     <Card className="flex flex-col border-[#E5E5E0] bg-white shadow-sm">
       <CardHeader className="flex flex-row items-start gap-4 border-b border-[#E5E5E0] pb-4">
         <Avatar className="size-14 ring-2 ring-[#FAFAF5]">
           {student.avatarUrl ? (
-            <AvatarImage src={student.avatarUrl} alt={getDisplayName(student)} />
+            <AvatarImage src={student.avatarUrl} alt={displayName} />
           ) : null}
           <AvatarFallback className="bg-[#E94B3C]/10 text-base font-semibold text-[#E94B3C]">
-            {getInitials(student)}
+            {getParentLinkedInitials(student)}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
           <CardTitle className="font-heading text-lg text-[#2D2D2D]">
-            {getDisplayName(student)}
+            {displayName}
           </CardTitle>
           <CardDescription className="mt-0.5 text-[#6B6B6B]">
             {student.code}
@@ -75,7 +61,7 @@ function LinkedStudentCard({ student }: { student: ParentLinkedStudent }) {
               {student.isVerified ? "Đã xác thực" : "Chưa xác thực"}
             </Badge>
             <span className="text-xs text-[#6B6B6B]">
-              Liên kết {formatLinkedDate(student.createdAt)}
+              Liên kết {formatParentDate(student.createdAt)}
             </span>
           </div>
         </div>
@@ -94,19 +80,29 @@ function LinkedStudentCard({ student }: { student: ParentLinkedStudent }) {
           </div>
         </dl>
 
-        <div className="mt-auto rounded-xl border border-dashed border-[#E5E5E0] bg-[#FAFAF5] p-4">
+        <div className="mt-auto rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-4">
           <div className="flex items-start gap-3">
             <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-[#4FC3F7]/15 text-[#4FC3F7]">
               <BookOpen className="size-5" aria-hidden />
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="font-heading text-sm font-semibold text-[#2D2D2D]">
-                Chương trình học — sắp ra mắt
+                Tiến độ học tập
               </p>
               <p className="mt-1 text-sm text-[#6B6B6B]">
-                Thông tin khóa học và tiến độ của {getDisplayName(student)} sẽ hiển thị tại
-                đây.
+                Xem chương trình, tiến độ module và cột mốc gần đây của{" "}
+                {displayName}.
               </p>
+              <Link
+                href={progressionHref}
+                className={cn(
+                  buttonVariants({ variant: "outline", size: "sm" }),
+                  "mt-3 h-9 w-full justify-between rounded-lg border-[#E5E5E0] sm:w-auto sm:min-w-[10rem]",
+                )}
+              >
+                Xem tiến độ
+                <ArrowRight className="size-4" aria-hidden />
+              </Link>
             </div>
           </div>
         </div>
