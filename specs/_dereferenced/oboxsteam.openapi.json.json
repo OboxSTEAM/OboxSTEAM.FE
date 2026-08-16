@@ -18413,7 +18413,7 @@
           "Assignment"
         ],
         "summary": "Get assignment by ID",
-        "description": "Retrieve an assignment by its ID. Students must have an active enrollment in the assignment's module.",
+        "description": "Retrieve an assignment by its ID. Students must have a module enrollment (any status, including Completed) in the assignment's module.",
         "parameters": [
           {
             "name": "assignmentId",
@@ -32860,7 +32860,7 @@
           "Certificate"
         ],
         "summary": "Ensure / retry program certificate issuance",
-        "description": "Issues a program certificate when all activities are Done. Regenerates and re-uploads the PDF (including avatar/thumbnail images). Reuses the same certificate code when already issued.",
+        "description": "Issues a program certificate when all activities are Done. Regenerates and re-uploads the PDF (including avatar/thumbnail images). Reuses the same certificate code when already issued. Idempotent FE fallback for completed enrollments missing a certificate. Requires Student (own enrollment), Admin, or Manager.",
         "parameters": [
           {
             "name": "programEnrollmentId",
@@ -203346,7 +203346,7 @@
           "Quiz"
         ],
         "summary": "Get in-progress quiz",
-        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt. Mentors may access students in their class. Manager and Admin may access any submission.",
+        "description": "Returns quiz questions and saved answers for a Pending submission. Students may only access their own attempt and must have a module enrollment (any status). Mentors may access students in their class. Manager and Admin may access any submission.",
         "parameters": [
           {
             "name": "submissionId",
@@ -206379,7 +206379,7 @@
           "Quiz"
         ],
         "summary": "Get quiz result",
-        "description": "Returns the graded result for a submission. Students may only access their own result. Mentors may access students in their class. Manager and Admin may access any submission.",
+        "description": "Returns the graded result for a submission. Students may only access their own result and must have a module enrollment (any status). Mentors may access students in their class. Manager and Admin may access any submission.",
         "parameters": [
           {
             "name": "submissionId",

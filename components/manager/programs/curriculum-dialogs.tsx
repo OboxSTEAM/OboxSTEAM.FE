@@ -169,7 +169,7 @@ export function ModuleFormDialog({
         : [];
 
       const payload = {
-        code: data.code || null,
+        code: data.code,
         programId: data.programId,
         name: data.name,
         moduleType: data.moduleType,
@@ -256,7 +256,7 @@ export function ModuleFormDialog({
 
               <div className="space-y-1.5">
                 <Label htmlFor="module-code" className="text-sm font-semibold text-foreground">
-                  Mã Module
+                  Mã Module <span className="text-primary">*</span>
                 </Label>
                 <Input
                   id="module-code"
@@ -505,7 +505,7 @@ export function CourseFormDialog({
     setIsSubmitting(true);
     try {
       const payload = {
-        code: data.code || null,
+        code: data.code,
         moduleId: data.moduleId,
         name: data.name,
         description: data.description || "",
@@ -564,7 +564,7 @@ export function CourseFormDialog({
 
             <div className="space-y-1.5">
               <Label htmlFor="course-code" className="text-sm font-semibold text-foreground">
-                Mã Khóa học
+                Mã Khóa học <span className="text-primary">*</span>
               </Label>
               <Input
                 id="course-code"

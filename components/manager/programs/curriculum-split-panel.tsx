@@ -442,7 +442,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
       const outcomes = outcomesText
         ? outcomesText.split("\n").map((s) => s.trim()).filter(Boolean) : [];
       const payload = {
-        code: data.code || null, programId: data.programId, name: data.name, moduleType: data.moduleType,
+        code: data.code, programId: data.programId, name: data.name, moduleType: data.moduleType,
         moduleOrder: Number(data.moduleOrder), prerequisiteModuleId: data.prerequisiteModuleId || null,
         isMandatory: data.isMandatory, price: Number(data.price), retakeFee: Number(data.retakeFee), learningOutcomes: outcomes,
       };
@@ -473,21 +473,21 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
           </div>
+          <div className="mt-4 space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Module <span style={{ color: W.primary }}>*</span></Label>
+            <input type="text" placeholder="Ví dụ: MOD-ROBO1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+            <FErr msg={errors.code?.message} />
+          </div>
         </div>
         <AdvancedSection
           open={advancedOpen}
           onOpenChange={setAdvancedOpen}
-          summary="Mã, loại module, tiên quyết, kiến thức và học phí"
+          summary="Loại module, tiên quyết, kiến thức và học phí"
         >
           <div className="space-y-6">
             <div>
               <STitle>Cấu hình học tập</STitle>
               <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Module</Label>
-              <input type="text" placeholder="Để trống nếu không cần mã riêng" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <p className="text-[11px]" style={{ color: W.faint }}>Trường này không bắt buộc.</p>
-            </div>
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
@@ -577,7 +577,6 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
 }) {
   const isEdit = !!courseToEdit;
   const [busy, setBusy] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
   const { register, handleSubmit, formState: { errors } } = useForm({
@@ -592,7 +591,7 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
   const onSubmit = async (data: any) => {
     setBusy(true);
     try {
-      const payload = { code: data.code || null, moduleId: data.moduleId, name: data.name, description: data.description || "" };
+      const payload = { code: data.code, moduleId: data.moduleId, name: data.name, description: data.description || "" };
       if (isEdit && courseToEdit) {
         await updateCourse(courseToEdit.id, payload);
         showAppSuccess({ title: "Cập nhật thành công", description: `Khóa học ${data.name} đã được cập nhật.` });
@@ -616,21 +615,14 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
           <FErr msg={errors.name?.message} />
         </div>
         <div className="space-y-1.5">
+          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học <span style={{ color: W.primary }}>*</span></Label>
+          <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+          <FErr msg={errors.code?.message} />
+        </div>
+        <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
           <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
         </div>
-
-        <AdvancedSection
-          open={advancedOpen}
-          onOpenChange={setAdvancedOpen}
-          summary="Mã nội bộ của khóa học"
-        >
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học</Label>
-            <input type="text" placeholder="Để trống nếu không cần mã riêng" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-            <p className="text-[11px]" style={{ color: W.faint }}>Trường này không bắt buộc.</p>
-          </div>
-        </AdvancedSection>
 
         {isEdit && courseToEdit ? (
           <QuestionBankSection courseId={courseToEdit.id} />
