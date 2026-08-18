@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import {
   FileText,
   FileType,
@@ -12,11 +12,13 @@ import {
   Check,
   X,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
+  deleteMaterial,
   uploadMaterial,
   updateMaterial,
   type ActivityMaterial,
@@ -139,6 +141,11 @@ export function ActivityMaterialSection({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
 
+  useEffect(() => {
+    setMaterial(initialMaterial);
+    setFileUrl(initialMaterial?.fileUrl ?? null);
+  }, [initialMaterial]);
+
   function resetUploadDraft() {
     setFile(null);
     setUploadTitle("");
@@ -214,6 +221,27 @@ export function ActivityMaterialSection({
       onChanged();
     } catch (err) {
       showAppErrorFromUnknown(err, "curriculum.material.save");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!material) return;
+    setBusy(true);
+    try {
+      await deleteMaterial(material.id);
+      setMaterial(null);
+      setFileUrl(null);
+      setEditingTitle(false);
+      resetUploadDraft();
+      showAppSuccess({
+        title: "Xóa thành công",
+        description: "Đã gỡ bỏ tài liệu học tập khỏi hoạt động.",
+      });
+      onChanged();
+    } catch (err) {
+      showAppErrorFromUnknown(err, "curriculum.material.delete");
     } finally {
       setBusy(false);
     }
@@ -318,6 +346,16 @@ export function ActivityMaterialSection({
                 style={{ borderColor: W.border, color: W.muted }}
               >
                 <Pencil className="size-3.5" />
+              </button>
+              <button
+                type="button"
+                title="Xóa tài liệu"
+                onClick={() => void handleDelete()}
+                disabled={busy}
+                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:border-destructive/30 hover:bg-destructive/10"
+                style={{ borderColor: W.border, color: W.primary }}
+              >
+                <Trash2 className="size-3.5" />
               </button>
             </div>
           )}

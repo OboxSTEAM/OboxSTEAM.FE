@@ -684,13 +684,10 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     activityToEdit?.material ?? null,
   );
   const [materialLoading, setMaterialLoading] = useState(isEdit);
-  const [showMaterial, setShowMaterial] = useState(!!activityToEdit?.material);
 
-  // The activity payload may omit its material; ask the server so the checkbox
-  // reflects reality (ticked from load) and we never show a stale/other file.
-  // Material only applies to SelfPaced activities.
+  // The activity payload may omit its material; ask the server so we never show a stale file.
   useEffect(() => {
-    if (!isEdit || !activityId || activityToEdit?.activityType !== "SelfPaced") {
+    if (!isEdit || !activityId || actType !== "SelfPaced") {
       setMaterialLoading(false);
       return;
     }
@@ -700,12 +697,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       try {
         const result = await getMaterialByActivityId(activityId);
         if (cancelled) return;
-        if (result?.data) {
-          setExistingMaterial(result.data);
-          setShowMaterial(true);
-        }
+        setExistingMaterial(result?.data ?? null);
       } catch {
-        // No material yet, or not permitted — keep the upload form available.
+        if (!cancelled) setExistingMaterial(null);
       } finally {
         if (!cancelled) setMaterialLoading(false);
       }
@@ -713,7 +707,22 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     return () => {
       cancelled = true;
     };
-  }, [isEdit, activityId, activityToEdit?.activityType]);
+  }, [isEdit, activityId, actType]);
+
+  async function refreshExistingMaterial() {
+    if (!activityId || actType !== "SelfPaced") return;
+    try {
+      const result = await getMaterialByActivityId(activityId);
+      setExistingMaterial(result?.data ?? null);
+    } catch {
+      setExistingMaterial(null);
+    }
+  }
+
+  async function handleMaterialChanged() {
+    await refreshExistingMaterial();
+    onSuccess();
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
@@ -736,7 +745,8 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
           : null,
         maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
-        requireQrCheckin: data.requireQrCheckin, requireMediaEvidence: data.requireMediaEvidence,
+        requireQrCheckin: live ? data.requireQrCheckin : false,
+        requireMediaEvidence: live ? data.requireMediaEvidence : false,
       };
       if (isEdit && activityToEdit) {
         // Omit activityOrder when unchanged so BE keeps the current slot without a no-op reorder.
@@ -766,6 +776,13 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
           </div>
+          {actType === "SelfPaced" ? (
+            <div className="col-span-2 space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
+              <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+              <FErr msg={errors.code?.message} />
+            </div>
+          ) : null}
           <div className="col-span-2 flex flex-col gap-4 sm:flex-row">
             <div className="w-full shrink-0 space-y-4 sm:w-44">
               <div className="flex flex-col space-y-1.5">
@@ -773,9 +790,10 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 <Controller name="activityType" control={control} render={({ field }) => (
                   <Select value={field.value} onValueChange={(v) => {
                     field.onChange(v);
-                    // Self-paced activities have no capacity; clear stale value.
                     if (v === "SelfPaced") {
                       setValue("maxCapacity", null);
+                      setValue("requireQrCheckin", false);
+                      setValue("requireMediaEvidence", false);
                     }
                   }}>
                     <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-44 rounded-lg")}>
@@ -811,18 +829,18 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 
         </div>
 
-        <AdvancedSection
-          open={advancedOpen}
-          onOpenChange={setAdvancedOpen}
-          summary="Mã, sức chứa, check-in QR và minh chứng"
-        >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-1.5 sm:col-span-2">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-              <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-              <FErr msg={errors.code?.message} />
-            </div>
-            {actType !== "SelfPaced" ? (
+        {actType !== "SelfPaced" ? (
+          <AdvancedSection
+            open={advancedOpen}
+            onOpenChange={setAdvancedOpen}
+            summary="Mã, sức chứa, check-in QR và minh chứng"
+          >
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
+                <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+                <FErr msg={errors.code?.message} />
+              </div>
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Sức chứa tối đa</Label>
                 <input
@@ -836,69 +854,52 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 />
                 <FErr msg={errors.maxCapacity?.message} />
               </div>
-            ) : null}
-            <div className="flex min-h-10 items-center gap-2">
-              <Controller name="requireQrCheckin" control={control} render={({ field }) => (
-                <Checkbox
-                  id="qr"
-                  checked={field.value}
-                  onCheckedChange={(v) => field.onChange(v === true)}
-                  className="border-input bg-background data-checked:border-primary"
-                />
-              )} />
-              <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
+              <div className="flex min-h-10 items-center gap-2">
+                <Controller name="requireQrCheckin" control={control} render={({ field }) => (
+                  <Checkbox
+                    id="qr"
+                    checked={field.value}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                    className="border-input bg-background data-checked:border-primary"
+                  />
+                )} />
+                <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
+              </div>
+              <div className="flex min-h-10 items-center gap-2">
+                <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
+                  <Checkbox
+                    id="med"
+                    checked={field.value}
+                    onCheckedChange={(v) => field.onChange(v === true)}
+                    className="border-input bg-background data-checked:border-primary"
+                  />
+                )} />
+                <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
+              </div>
             </div>
-            <div className="flex min-h-10 items-center gap-2">
-              <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
-                <Checkbox
-                  id="med"
-                  checked={field.value}
-                  onCheckedChange={(v) => field.onChange(v === true)}
-                  className="border-input bg-background data-checked:border-primary"
-                />
-              )} />
-              <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
-            </div>
-          </div>
-        </AdvancedSection>
+          </AdvancedSection>
+        ) : null}
 
         {actType === "SelfPaced" ? (
-          <div className="border-t pt-5" style={{ borderColor: W.border }}>
-            <label className="flex cursor-pointer items-center gap-2">
-              <Checkbox
-                checked={showMaterial}
-                onCheckedChange={(v) => setShowMaterial(v === true)}
-                disabled={materialLoading}
-                className="border-input bg-background data-checked:border-primary"
-              />
-              <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Đính kèm tài liệu học tập
-              </span>
-              {materialLoading && (
-                <span className="text-xs" style={{ color: W.faint }}>Đang kiểm tra…</span>
-              )}
-            </label>
-
-            {showMaterial ? (
-              <div className="mt-4">
-                {isEdit && activityToEdit ? (
-                  materialLoading ? (
-                    <p className="text-xs" style={{ color: W.faint }}>Đang tải tài liệu…</p>
-                  ) : (
-                    <ActivityMaterialSection
-                      activityId={activityToEdit.id}
-                      initialMaterial={existingMaterial}
-                      onChanged={onSuccess}
-                    />
-                  )
-                ) : (
-                  <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
-                    Lưu hoạt động trước, sau đó bạn có thể đính kèm tài liệu học tập tại đây.
-                  </p>
-                )}
+          isEdit && activityToEdit ? (
+            materialLoading ? (
+              <div className="border-t pt-5" style={{ borderColor: W.border }}>
+                <p className="text-xs" style={{ color: W.faint }}>Đang tải tài liệu…</p>
               </div>
-            ) : null}
-          </div>
+            ) : (
+              <ActivityMaterialSection
+                activityId={activityToEdit.id}
+                initialMaterial={existingMaterial}
+                onChanged={() => void handleMaterialChanged()}
+              />
+            )
+          ) : (
+            <div className="border-t pt-5" style={{ borderColor: W.border }}>
+              <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
+                Lưu hoạt động trước, sau đó bạn có thể đính kèm tài liệu học tập tại đây.
+              </p>
+            </div>
+          )
         ) : existingMaterial ? (
           <div className="border-t pt-5" style={{ borderColor: W.border }}>
             <div className="flex items-start gap-2.5 rounded-xl border border-amber-300 bg-amber-50 p-3.5 text-xs text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-300">
