@@ -90,7 +90,6 @@ export type {
   MindMapNodeStatus,
   MindMapPath,
   MindMapPathNode,
-  SchedulingMode,
 } from "@/lib/api/entities/enrollment-curriculum-mind-map";
 
 export type {

@@ -58,7 +58,6 @@ export const createActivitySchema = z.object({
   location: z.string().nullable().optional(),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
-  maxCapacity: z.number().int().min(1, "Sức chứa tối đa phải lớn hơn 0.").nullable().optional(),
   requireQrCheckin: z.boolean().default(false),
   requireMediaEvidence: z.boolean().default(false),
 });

@@ -34,7 +34,6 @@ const KIND_STYLES: Record<ClassSessionKind, string> = {
   Lesson: "border-l-[#7CB342] bg-[#7CB342]/12 text-[#3d5c22] dark:text-[#b8e086]",
   FieldTrip: "border-l-[#7E57C2] bg-[#7E57C2]/12 text-[#51308a] dark:text-[#c4b5fd]",
   AssignmentWindow: "border-l-[#FDD835] bg-[#FDD835]/18 text-[#8A7200] dark:text-[#fde047]",
-  MentorCheckIn: "border-l-[#E94B3C] bg-primary/10 text-primary",
 };
 
 /** Solid dot color per kind for the legend and month chips. */
@@ -42,7 +41,6 @@ const KIND_DOT: Record<ClassSessionKind, string> = {
   Lesson: "bg-[#7CB342]",
   FieldTrip: "bg-[#7E57C2]",
   AssignmentWindow: "bg-[#FDD835]",
-  MentorCheckIn: "bg-primary",
 };
 
 type ParsedSession = { session: ClassSession; start: Date; end: Date };

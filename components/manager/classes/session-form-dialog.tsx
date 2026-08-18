@@ -83,7 +83,6 @@ export type ClassSessionFormSubmitPayload = {
   startTime: string;
   endTime: string;
   location?: string | null;
-  maxCapacity?: number | null;
   requiresAttendance?: boolean;
   status?: ClassSessionFormValues["status"];
 };
@@ -133,8 +132,6 @@ function toDefaultValues(
     startTime: session ? fromApiDateTimeToLocalInput(session.startTime) : slotStart,
     endTime: session ? fromApiDateTimeToLocalInput(session.endTime) : slotEnd,
     location: session?.location ?? "",
-    maxCapacity:
-      session?.maxCapacity != null ? String(session.maxCapacity) : "",
     requiresAttendance: session?.requiresAttendance ?? true,
     status: session?.status,
   };
@@ -247,9 +244,6 @@ export function SessionFormDialog({
       startTime,
       endTime,
       location: values.location?.trim() || null,
-      maxCapacity: values.maxCapacity?.trim()
-        ? Number(values.maxCapacity)
-        : null,
       requiresAttendance: values.requiresAttendance,
       status: values.status,
     });
@@ -586,21 +580,6 @@ export function SessionFormDialog({
                   placeholder="Phòng lab A hoặc https://meet.google.com/..."
                   {...register("location")}
                   className={INPUT_CLASS}
-                />
-              </FormField>
-
-              <FormField
-                id="maxCapacity"
-                label="Sĩ số tối đa"
-                error={errors.maxCapacity?.message}
-              >
-                <Input
-                  id="maxCapacity"
-                  type="number"
-                  min={1}
-                  placeholder="Theo sĩ số lớp"
-                  {...register("maxCapacity")}
-                  className={cn(INPUT_CLASS, "font-mono")}
                 />
               </FormField>
 

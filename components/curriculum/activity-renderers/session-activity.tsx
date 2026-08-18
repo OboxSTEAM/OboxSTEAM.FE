@@ -1,4 +1,4 @@
-import { Calendar, CheckCircle2, ClipboardCheck, ExternalLink, MapPin, Users } from "lucide-react";
+import { Calendar, CheckCircle2, ClipboardCheck, ExternalLink, MapPin } from "lucide-react";
 
 import type { Activity, SessionAttendanceStatus } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
@@ -32,7 +32,6 @@ export function SessionActivity({
   const startTime = nextSession?.startTime ?? null;
   const endTime = nextSession?.endTime ?? null;
   const location = nextSession?.location ?? null;
-  const maxCapacity = nextSession?.maxCapacity ?? activity.maxCapacity;
   const hasSchedule = Boolean(nextSession);
   const schedule = startTime ? formatClassSessionSchedule(startTime, endTime) : null;
   const isAttendanceEligible =
@@ -185,16 +184,6 @@ export function SessionActivity({
                   location
                 )}
               </dd>
-            </div>
-          </div>
-        ) : null}
-
-        {maxCapacity != null ? (
-          <div className="flex items-start gap-3 text-sm">
-            <Users className="mt-0.5 size-4 shrink-0 text-learn-faint" aria-hidden />
-            <div>
-              <dt className="text-learn-muted">Sức chứa</dt>
-              <dd className="font-medium text-learn-text-strong">{maxCapacity} học viên</dd>
             </div>
           </div>
         ) : null}

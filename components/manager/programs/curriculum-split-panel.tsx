@@ -669,11 +669,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
       activityType: activityToEdit.activityType, description: activityToEdit.description || "",
       activityOrder: activityToEdit.activityOrder,
-      maxCapacity: activityToEdit.maxCapacity,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
       code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
-      maxCapacity: null as number | null,
       requireQrCheckin: false, requireMediaEvidence: false,
     },
   });
@@ -744,7 +742,6 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
         endTime: liveDefaults
           ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
           : null,
-        maxCapacity: live && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: live ? data.requireQrCheckin : false,
         requireMediaEvidence: live ? data.requireMediaEvidence : false,
       };
@@ -791,7 +788,6 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   <Select value={field.value} onValueChange={(v) => {
                     field.onChange(v);
                     if (v === "SelfPaced") {
-                      setValue("maxCapacity", null);
                       setValue("requireQrCheckin", false);
                       setValue("requireMediaEvidence", false);
                     }
@@ -833,26 +829,13 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           <AdvancedSection
             open={advancedOpen}
             onOpenChange={setAdvancedOpen}
-            summary="Mã, sức chứa, check-in QR và minh chứng"
+            summary="Mã, check-in QR và minh chứng"
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
                 <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
                 <FErr msg={errors.code?.message} />
-              </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Sức chứa tối đa</Label>
-                <input
-                  type="number"
-                  placeholder="Không giới hạn"
-                  {...register("maxCapacity", {
-                    setValueAs: (value) => value === "" ? null : Number(value),
-                  })}
-                  className={IN}
-                  style={{ borderColor: errors.maxCapacity ? W.primary : W.border }}
-                />
-                <FErr msg={errors.maxCapacity?.message} />
               </div>
               <div className="flex min-h-10 items-center gap-2">
                 <Controller name="requireQrCheckin" control={control} render={({ field }) => (

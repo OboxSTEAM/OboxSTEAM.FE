@@ -653,7 +653,6 @@ export function ActivityFormDialog({
       activityType: "SelfPaced" as const,
       description: "",
       activityOrder: 1,
-      maxCapacity: null as number | null,
       requireQrCheckin: false,
       requireMediaEvidence: false,
     },
@@ -671,7 +670,6 @@ export function ActivityFormDialog({
           activityType: activityToEdit.activityType,
           description: activityToEdit.description || "",
           activityOrder: activityToEdit.activityOrder,
-          maxCapacity: activityToEdit.maxCapacity,
           requireQrCheckin: activityToEdit.requireQrCheckin,
           requireMediaEvidence: activityToEdit.requireMediaEvidence,
         });
@@ -683,7 +681,6 @@ export function ActivityFormDialog({
           activityType: "SelfPaced",
           description: "",
           activityOrder: 1,
-          maxCapacity: null,
           requireQrCheckin: false,
           requireMediaEvidence: false,
         });
@@ -713,7 +710,6 @@ export function ActivityFormDialog({
         endTime: liveDefaults
           ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
           : null,
-        maxCapacity: isOnlineOrOffline && data.maxCapacity ? Number(data.maxCapacity) : null,
         requireQrCheckin: data.requireQrCheckin,
         requireMediaEvidence: data.requireMediaEvidence,
       };
@@ -833,19 +829,6 @@ export function ActivityFormDialog({
                   trong mục{" "}
                   <span className="font-semibold text-foreground">Lịch học</span>,
                   không đặt ở cấp hoạt động.
-                </div>
-
-                <div className="space-y-1.5 col-span-2 md:col-span-1">
-                  <Label htmlFor="maxCapacity" className="text-sm font-semibold text-foreground">
-                    Sức chứa tối đa (Học viên)
-                  </Label>
-                  <Input
-                    id="maxCapacity"
-                    type="number"
-                    placeholder="Không giới hạn"
-                    {...register("maxCapacity")}
-                    className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
-                  />
                 </div>
               </>
             )}

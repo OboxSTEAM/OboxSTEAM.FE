@@ -17,7 +17,6 @@ export const CLASS_SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
   Lesson: "Buổi học",
   FieldTrip: "Thực địa",
   AssignmentWindow: "Bài tập",
-  MentorCheckIn: "Gặp mentor",
 };
 
 export const CLASS_SESSION_STATUS_LABELS: Record<ClassSessionStatus, string> = {

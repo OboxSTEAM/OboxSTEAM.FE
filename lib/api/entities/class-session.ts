@@ -5,11 +5,12 @@ import { sessionAttendanceStatusSchema } from "@/lib/api/entities/session-attend
 /**
  * Session purpose only. Delivery mode (online/offline) comes from the linked
  * activity's `activityType`, so it is intentionally not part of this enum.
- * Legacy `LiveOnline` rows are coerced to `Lesson` for backward compatibility.
+ * Legacy `LiveOnline` / `MentorCheckIn` rows are coerced to `Lesson`.
  */
 export const classSessionKindSchema = z.preprocess(
-  (value) => (value === "LiveOnline" ? "Lesson" : value),
-  z.enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"]),
+  (value) =>
+    value === "LiveOnline" || value === "MentorCheckIn" ? "Lesson" : value,
+  z.enum(["Lesson", "FieldTrip", "AssignmentWindow"]),
 );
 
 export const classSessionStatusSchema = z.enum([
@@ -31,7 +32,6 @@ export const classSessionSchema = z.object({
   startTime: z.string(),
   endTime: z.string(),
   location: z.string().nullable(),
-  maxCapacity: z.number().int().nullable(),
   requiresAttendance: z.boolean(),
   requiresMentorCheckIn: z
     .boolean()

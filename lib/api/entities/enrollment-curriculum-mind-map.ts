@@ -6,13 +6,6 @@ import { assignmentTypeSchema } from "@/lib/api/entities/assignment";
 import { materialTypeSchema } from "@/lib/api/entities/material";
 import { moduleTypeSchema } from "@/lib/api/entities/module";
 
-/** Activity scheduling mode on mind-map activity nodes. */
-export const schedulingModeSchema = z.enum([
-  "SelfPaced",
-  "ClassSynchronized",
-  "OptionalBooking",
-]);
-
 /**
  * Per-node status on the curriculum mind map.
  * Includes `in_progress` (started but incomplete) and `submitted` (assignment).
@@ -122,7 +115,6 @@ export const mindMapActivityInfoSchema = z.object({
   activityCode: z.string().nullable(),
   activityOrder: z.number(),
   activityType: activityTypeSchema,
-  schedulingMode: schedulingModeSchema,
   description: z.string().nullable(),
   material: mindMapMaterialSchema.nullable().optional(),
 });
@@ -186,7 +178,6 @@ export const enrollmentCurriculumMindMapSchema = z.object({
   modules: z.array(mindMapModuleSchema).nullable(),
 });
 
-export type SchedulingMode = z.infer<typeof schedulingModeSchema>;
 export type MindMapNodeStatus = z.infer<typeof mindMapNodeStatusSchema>;
 export type MindMapNavigation = z.infer<typeof mindMapNavigationSchema>;
 export type MindMapChildProgress = z.infer<typeof mindMapChildProgressSchema>;

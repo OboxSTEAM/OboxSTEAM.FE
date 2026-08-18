@@ -733,7 +733,6 @@ export {
   type SaveActivityCheckpointInput,
   type SaveActivityCheckpointResponse,
   type SaveActivityCheckpointResult,
-  type SchedulingMode,
   type StudentProgramEnrollmentsQuery,
 } from "./program-enrollments";
 

@@ -10,7 +10,6 @@ import {
   FileText,
   Calendar,
   MapPin,
-  Users,
   ChevronRight,
   CheckCircle2,
   Circle,
@@ -509,12 +508,6 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
                                                         activity.startTime,
                                                         activity.endTime,
                                                       )}
-                                                    </span>
-                                                  )}
-                                                  {activity.maxCapacity && (
-                                                    <span className="flex items-center gap-0.5">
-                                                      <Users className="size-2.5" />
-                                                      {activity.maxCapacity}
                                                     </span>
                                                   )}
                                                 </span>

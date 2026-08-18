@@ -13062,7 +13062,7 @@
           "Material"
         ],
         "summary": "Delete material",
-        "description": "Soft-deletes the material and removes the corresponding file from S3.",
+        "description": "Deletes the material file from S3, then removes the database record.",
         "parameters": [
           {
             "name": "materialId",
@@ -26904,11 +26904,6 @@
             "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requireQrCheckin": {
             "type": "boolean"
           },
@@ -29612,11 +29607,6 @@
             "type": "string",
             "nullable": true
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requiresAttendance": {
             "type": "boolean"
           },
@@ -29854,11 +29844,6 @@
           },
           "location": {
             "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "requiresAttendance": {
@@ -30357,11 +30342,6 @@
             "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requireQrCheckin": {
             "type": "boolean"
           },
@@ -30674,11 +30654,6 @@
           "location": {
             "maxLength": 500,
             "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "requiresAttendance": {
@@ -31589,14 +31564,6 @@
               "SelfPaced",
               "LiveOnline",
               "Offline"
-            ],
-            "type": "string"
-          },
-          "schedulingMode": {
-            "enum": [
-              "SelfPaced",
-              "ClassSynchronized",
-              "OptionalBooking"
             ],
             "type": "string"
           },
@@ -40364,11 +40331,6 @@
             "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requireQrCheckin": {
             "type": "boolean",
             "nullable": true
@@ -40689,11 +40651,6 @@
           },
           "location": {
             "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "requiresAttendance": {

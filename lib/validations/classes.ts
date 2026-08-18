@@ -158,7 +158,7 @@ export const classSessionFormSchema = z
     activityId: z.string().optional(),
     assignmentId: z.string().optional(),
     sessionKind: z
-      .enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"])
+      .enum(["Lesson", "FieldTrip", "AssignmentWindow"])
       .optional(),
     title: z
       .string()
@@ -168,7 +168,6 @@ export const classSessionFormSchema = z
     startTime: z.string().min(1, "Thời gian bắt đầu không được để trống."),
     endTime: z.string().min(1, "Thời gian kết thúc không được để trống."),
     location: z.string().max(500, "Địa điểm tối đa 500 ký tự.").optional(),
-    maxCapacity: z.string().optional(),
     requiresAttendance: z.boolean().optional(),
     status: classSessionStatusSchema.optional(),
   })
@@ -179,17 +178,6 @@ export const classSessionFormSchema = z
         path: ["endTime"],
         message: "Thời gian kết thúc phải sau thời gian bắt đầu.",
       });
-    }
-
-    if (value.maxCapacity?.trim()) {
-      const n = Number(value.maxCapacity);
-      if (!Number.isInteger(n) || n < 1) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["maxCapacity"],
-          message: "Sĩ số tối đa phải là số nguyên lớn hơn 0.",
-        });
-      }
     }
   });
 
@@ -212,7 +200,6 @@ export const createClassSessionSchema = z.object({
     .max(500, "Địa điểm tối đa 500 ký tự.")
     .nullable()
     .optional(),
-  maxCapacity: z.number().int().nullable().optional(),
   requiresAttendance: z.boolean().optional(),
 });
 
