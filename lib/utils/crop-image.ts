@@ -1,6 +1,5 @@
 import type { Area } from "react-easy-crop";
 
-const AVATAR_OUTPUT_SIZE = 1024;
 const COVER_OUTPUT_WIDTH = 1600;
 const COVER_OUTPUT_HEIGHT = 640;
 const JPEG_QUALITY = 0.95;
@@ -83,17 +82,6 @@ export async function getCroppedImageBlob(
       "image/jpeg",
       JPEG_QUALITY,
     );
-  });
-}
-
-/** Square crop for avatar upload — keep native pixels up to 1024×1024. */
-export async function getCroppedAvatarBlob(
-  imageSrc: string,
-  pixelCrop: Area,
-): Promise<Blob> {
-  return getCroppedImageBlob(imageSrc, pixelCrop, {
-    width: AVATAR_OUTPUT_SIZE,
-    height: AVATAR_OUTPUT_SIZE,
   });
 }
 

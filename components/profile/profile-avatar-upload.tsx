@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, ImagePlus, Info, Loader2, Sparkles } from "lucide-react";
 
@@ -12,19 +12,12 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { uploadAvatarSchema } from "@/lib/validations/account";
 import { cn } from "@/lib/utils";
 
-import { AvatarCropDialog } from "./avatar-crop-dialog";
-
 type ProfileAvatarUploadProps = {
   profile: UserProfile;
   onUploaded: (profile: UserProfile) => void;
 };
 
 type UploadPhase = "idle" | "uploading" | "success";
-
-type CropSource = {
-  url: string;
-  fileName: string;
-};
 
 function validateImageFile(file: File): boolean {
   const parsed = uploadAvatarSchema.safeParse({ file });
@@ -44,47 +37,20 @@ export function ProfileAvatarUpload({
   const reduceMotion = useReducedMotion();
 
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [cropSource, setCropSource] = useState<CropSource | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [phase, setPhase] = useState<UploadPhase>("idle");
 
   const isUploading = phase === "uploading";
   const isSuccess = phase === "success";
-  const isBusy = isUploading || isSuccess || Boolean(cropSource);
+  const isBusy = isUploading || isSuccess;
 
   const displayAvatar = previewUrl ?? profile.avatarUrl;
   const displayName = getProfileDisplayName(profile);
   const initials = getProfileInitials(profile);
 
-  useEffect(() => {
-    return () => {
-      if (cropSource?.url) URL.revokeObjectURL(cropSource.url);
-    };
-  }, [cropSource?.url]);
-
-  const openCropForFile = useCallback((file: File) => {
-    if (!validateImageFile(file)) return;
-
-    const url = URL.createObjectURL(file);
-    setCropSource({ url, fileName: file.name });
-  }, []);
-
-  const closeCrop = useCallback(() => {
-    setCropSource((current) => {
-      if (current?.url) URL.revokeObjectURL(current.url);
-      return null;
-    });
-  }, []);
-
-  const uploadCroppedFile = useCallback(
+  const uploadOriginalFile = useCallback(
     async (file: File) => {
-      closeCrop();
-
-      const parsed = uploadAvatarSchema.safeParse({ file });
-      if (!parsed.success) {
-        showAppErrorFromUnknown(parsed.error, "account.upload-avatar");
-        return;
-      }
+      if (!validateImageFile(file)) return;
 
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
@@ -108,13 +74,13 @@ export function ProfileAvatarUpload({
         URL.revokeObjectURL(objectUrl);
       }
     },
-    [closeCrop, onUploaded],
+    [onUploaded],
   );
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
-    if (file) openCropForFile(file);
+    if (file) void uploadOriginalFile(file);
   };
 
   const openFilePicker = () => {
@@ -151,7 +117,7 @@ export function ProfileAvatarUpload({
     if (isBusy) return;
 
     const file = event.dataTransfer.files?.[0];
-    if (file) openCropForFile(file);
+    if (file) void uploadOriginalFile(file);
   };
 
   const motionTransition = reduceMotion
@@ -159,16 +125,6 @@ export function ProfileAvatarUpload({
     : { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const };
 
   return (
-    <>
-      {cropSource ? (
-        <AvatarCropDialog
-          imageSrc={cropSource.url}
-          fileName={cropSource.fileName}
-          onCancel={closeCrop}
-          onConfirm={(file) => void uploadCroppedFile(file)}
-        />
-      ) : null}
-
       <div className="flex w-full flex-col gap-5">
         <div
           role="button"
@@ -308,7 +264,7 @@ export function ProfileAvatarUpload({
                     : "Kéo thả hoặc chọn ảnh"}
               </p>
               <p className="text-sm text-[#6B6B6B]">
-                Bạn sẽ căn khung trước khi tải lên · JPG, PNG · tối đa 5 MB
+                Ảnh gốc được tải lên nguyên vẹn · JPG, PNG · tối đa 5 MB
               </p>
             </div>
 
@@ -359,6 +315,5 @@ export function ProfileAvatarUpload({
           </div>
         </div>
       </div>
-    </>
   );
 }
