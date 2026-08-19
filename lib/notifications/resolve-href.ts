@@ -117,6 +117,7 @@ export function resolveNotificationHref(
     case "PaymentSucceeded":
     case "ModuleUnlocked":
     case "ModuleCompleted":
+    case "ModuleFailed":
     case "ModuleRetakeInitiated":
     case "ActivityCompleted":
     case "ClassEnrolled":
