@@ -107,10 +107,10 @@ function isImageFile(fileType: string | null | undefined, url?: string | null) {
 
 /** AI still running — mentor should wait, not tag manually yet. */
 function isAiProcessing(media: MediaAsset): boolean {
+  if (media.isReady) return false;
   return (
-    !media.isReady &&
-    media.videoStatus !== "Failed" &&
-    media.videoStatus !== "None"
+    media.videoStatus === "Transcoding" ||
+    media.videoStatus === "PendingTagging"
   );
 }
 
@@ -119,9 +119,14 @@ function canManuallyTag(media: MediaAsset): boolean {
   return media.isReady || media.videoStatus === "Failed";
 }
 
-function needsAiRetry(media: MediaAsset): boolean {
+/** Re-run face tagging after the pipeline finished (or failed). */
+function canRescanAi(media: MediaAsset): boolean {
+  if (isAiProcessing(media)) return false;
+  if (!isVideoFile(media.fileType, media.fileUrl)) return false;
   return (
-    media.videoStatus === "Failed" || media.videoStatus === "PendingTagging"
+    media.isReady ||
+    media.videoStatus === "TaggingComplete" ||
+    media.videoStatus === "Failed"
   );
 }
 
@@ -774,11 +779,7 @@ export function MentorClassMediaPanel({
         sticky: "right",
         className: "text-right",
         render: (media) => {
-          const video = isVideoFile(media.fileType, media.fileUrl);
-          const canRetryAi =
-            video &&
-            (media.videoStatus === "PendingTagging" ||
-              media.videoStatus === "Failed");
+          const canRetryAi = canRescanAi(media);
           return (
             <div className="flex items-center justify-end gap-1">
               <Button
@@ -1096,27 +1097,26 @@ export function MentorClassMediaPanel({
                       <p className="text-[11px] leading-snug text-muted-foreground">
                         Chờ AI xong rồi xác nhận thẻ. Không gắn thủ công lúc này.
                       </p>
-                      {isVideoFile(
-                        selectedMedia.fileType,
-                        selectedMedia.fileUrl,
-                      ) && needsAiRetry(selectedMedia) ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={isProcessingTags}
-                          onClick={() => void handleProcessTags(selectedMedia)}
-                          className="h-8 w-full rounded-lg"
-                        >
-                          {isProcessingTags ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            <ScanFace className="size-3.5" />
-                          )}
-                          Quét lại
-                        </Button>
-                      ) : null}
                     </div>
+                  ) : null}
+
+                  {canRescanAi(selectedMedia) &&
+                  selectedMedia.videoStatus !== "Failed" ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={isProcessingTags}
+                      onClick={() => void handleProcessTags(selectedMedia)}
+                      className="h-8 w-full rounded-lg"
+                    >
+                      {isProcessingTags ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : (
+                        <ScanFace className="size-3.5" />
+                      )}
+                      Quét lại
+                    </Button>
                   ) : null}
 
                   {selectedMedia.videoStatus === "Failed" ? (
