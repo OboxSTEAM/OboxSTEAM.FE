@@ -4,29 +4,45 @@ import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   createExpertSchema,
+  expertDegreeIdParamSchema,
+  expertDegreeRequestSchema,
   expertIdParamSchema,
   expertListQuerySchema,
   expertProgramAssignmentSchema,
   expertProgramParamSchema,
+  expertPublicationIdParamSchema,
+  expertPublicationRequestSchema,
   updateExpertSchema,
 } from "@/lib/validations/experts";
 
 import {
+  createExpertDegreeResponseSchema,
+  createExpertPublicationResponseSchema,
   createExpertResponseSchema,
   deleteExpertResponseSchema,
   expertProgramResponseSchema,
   getExpertByIdResponseSchema,
   getExpertsResponseSchema,
+  updateExpertDegreeResponseSchema,
+  updateExpertPublicationResponseSchema,
   updateExpertResponseSchema,
+  type CreateExpertDegreeResult,
+  type CreateExpertPublicationResult,
   type CreateExpertResult,
   type DeleteExpertResult,
   type ExpertProgramResult,
   type GetExpertByIdResult,
   type GetExpertsResult,
+  type UpdateExpertDegreeResult,
+  type UpdateExpertPublicationResult,
   type UpdateExpertResult,
 } from "./schemas";
 
 export type {
+  CreateExpertDegreeResponse,
+  CreateExpertDegreeResult,
+  CreateExpertPublicationResponse,
+  CreateExpertPublicationResult,
   CreateExpertResponse,
   CreateExpertResult,
   DeleteExpertResponse,
@@ -37,23 +53,37 @@ export type {
   GetExpertByIdResult,
   GetExpertsResponse,
   GetExpertsResult,
+  UpdateExpertDegreeResponse,
+  UpdateExpertDegreeResult,
+  UpdateExpertPublicationResponse,
+  UpdateExpertPublicationResult,
   UpdateExpertResponse,
   UpdateExpertResult,
 } from "./schemas";
 
-export type { Expert, ExpertProgram, ProgramExpert } from "@/lib/api/entities/expert";
+export type {
+  Expert,
+  ExpertDegree,
+  ExpertProgram,
+  ExpertPublication,
+  ProgramExpert,
+} from "@/lib/api/entities/expert";
 
 export type {
   CreateExpertInput,
+  ExpertDegreeRequestInput,
   ExpertListQuery,
   ExpertProgramAssignmentInput,
+  ExpertPublicationRequestInput,
   UpdateExpertInput,
 } from "@/lib/validations/experts";
 
 import type {
   CreateExpertInput,
+  ExpertDegreeRequestInput,
   ExpertListQuery,
   ExpertProgramAssignmentInput,
+  ExpertPublicationRequestInput,
   UpdateExpertInput,
 } from "@/lib/validations/experts";
 
@@ -108,6 +138,21 @@ export async function getExpertById(expertId: string): Promise<GetExpertByIdResu
     `${EXPERTS_BASE}/${parsedExpertId}`,
     getExpertByIdResponseSchema,
     { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `GET /api/experts/{id}/profile` — public, no auth. */
+export async function getExpertPublicProfile(
+  expertId: string,
+): Promise<GetExpertByIdResult> {
+  const { expertId: parsedExpertId } = expertIdParamSchema.parse({ expertId });
+
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${parsedExpertId}/profile`,
+    getExpertByIdResponseSchema,
+    { method: "GET", skipAuth: true },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
@@ -175,6 +220,102 @@ export async function removeExpertFromProgram(
   const params = expertProgramParamSchema.parse({ expertId, programId });
   const response = await apiFetchParsed(
     `${EXPERTS_BASE}/${params.expertId}/programs/${params.programId}`,
+    deleteExpertResponseSchema,
+    { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function addExpertDegree(
+  expertId: string,
+  input: ExpertDegreeRequestInput,
+): Promise<CreateExpertDegreeResult> {
+  const { expertId: parsedExpertId } = expertIdParamSchema.parse({ expertId });
+  const body = expertDegreeRequestSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${parsedExpertId}/degrees`,
+    createExpertDegreeResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function updateExpertDegree(
+  expertId: string,
+  degreeId: string,
+  input: ExpertDegreeRequestInput,
+): Promise<UpdateExpertDegreeResult> {
+  const params = expertDegreeIdParamSchema.parse({ expertId, degreeId });
+  const body = expertDegreeRequestSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${params.expertId}/degrees/${params.degreeId}`,
+    updateExpertDegreeResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function deleteExpertDegree(
+  expertId: string,
+  degreeId: string,
+): Promise<DeleteExpertResult> {
+  const params = expertDegreeIdParamSchema.parse({ expertId, degreeId });
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${params.expertId}/degrees/${params.degreeId}`,
+    deleteExpertResponseSchema,
+    { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function addExpertPublication(
+  expertId: string,
+  input: ExpertPublicationRequestInput,
+): Promise<CreateExpertPublicationResult> {
+  const { expertId: parsedExpertId } = expertIdParamSchema.parse({ expertId });
+  const body = expertPublicationRequestSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${parsedExpertId}/publications`,
+    createExpertPublicationResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function updateExpertPublication(
+  expertId: string,
+  publicationId: string,
+  input: ExpertPublicationRequestInput,
+): Promise<UpdateExpertPublicationResult> {
+  const params = expertPublicationIdParamSchema.parse({
+    expertId,
+    publicationId,
+  });
+  const body = expertPublicationRequestSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${params.expertId}/publications/${params.publicationId}`,
+    updateExpertPublicationResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function deleteExpertPublication(
+  expertId: string,
+  publicationId: string,
+): Promise<DeleteExpertResult> {
+  const params = expertPublicationIdParamSchema.parse({
+    expertId,
+    publicationId,
+  });
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${params.expertId}/publications/${params.publicationId}`,
     deleteExpertResponseSchema,
     { method: "DELETE" },
   );

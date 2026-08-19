@@ -83,6 +83,7 @@ export type ClassSessionFormSubmitPayload = {
   startTime: string;
   endTime: string;
   location?: string | null;
+  meetingUrl?: string | null;
   requiresAttendance?: boolean;
   status?: ClassSessionFormValues["status"];
 };
@@ -132,6 +133,7 @@ function toDefaultValues(
     startTime: session ? fromApiDateTimeToLocalInput(session.startTime) : slotStart,
     endTime: session ? fromApiDateTimeToLocalInput(session.endTime) : slotEnd,
     location: session?.location ?? "",
+    meetingUrl: session?.meetingUrl ?? "",
     requiresAttendance: session?.requiresAttendance ?? true,
     status: session?.status,
   };
@@ -244,6 +246,7 @@ export function SessionFormDialog({
       startTime,
       endTime,
       location: values.location?.trim() || null,
+      meetingUrl: values.meetingUrl?.trim() || null,
       requiresAttendance: values.requiresAttendance,
       status: values.status,
     });
@@ -571,14 +574,28 @@ export function SessionFormDialog({
 
               <FormField
                 id="location"
-                label="Địa điểm / link"
+                label="Địa điểm"
                 error={errors.location?.message}
                 className="sm:col-span-2"
               >
                 <Input
                   id="location"
-                  placeholder="Phòng lab A hoặc https://meet.google.com/..."
+                  placeholder="Phòng lab A, Bảo tàng Khoa học..."
                   {...register("location")}
+                  className={INPUT_CLASS}
+                />
+              </FormField>
+
+              <FormField
+                id="meetingUrl"
+                label="Link vào lớp (Live Online)"
+                error={errors.meetingUrl?.message}
+                className="sm:col-span-2"
+              >
+                <Input
+                  id="meetingUrl"
+                  placeholder="https://meet.google.com/..."
+                  {...register("meetingUrl")}
                   className={INPUT_CLASS}
                 />
               </FormField>

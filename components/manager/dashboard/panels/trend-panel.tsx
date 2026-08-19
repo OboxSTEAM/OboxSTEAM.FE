@@ -95,9 +95,7 @@ export function TrendPanel({
   return (
     <DashboardPanel className="h-full">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <DashboardSectionTitle
-          title="Xu hướng"
-        />
+        <DashboardSectionTitle title="Xu hướng tăng trưởng" />
         <div
           role="group"
           aria-label="Chọn chuỗi xu hướng"

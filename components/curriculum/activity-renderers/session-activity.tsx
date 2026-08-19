@@ -1,4 +1,14 @@
-import { Calendar, CheckCircle2, ClipboardCheck, ExternalLink, MapPin } from "lucide-react";
+"use client";
+
+import { useEffect, useState } from "react";
+import {
+  Calendar,
+  CheckCircle2,
+  ClipboardCheck,
+  ExternalLink,
+  MapPin,
+  Video,
+} from "lucide-react";
 
 import type { Activity, SessionAttendanceStatus } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
@@ -7,7 +17,13 @@ import {
   CLASS_SESSION_KIND_LABELS,
   MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES,
 } from "@/lib/classes/constants";
-import { formatClassSessionSchedule } from "@/lib/classes/session-helpers";
+import {
+  formatClassSessionSchedule,
+  formatJoinCountdown,
+  getJoinCountdownParts,
+  getLiveJoinState,
+  type LiveJoinState,
+} from "@/lib/classes/session-helpers";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { cn } from "@/lib/utils";
 
@@ -19,6 +35,188 @@ type SessionActivityProps = {
   className?: string;
 };
 
+function useLiveJoinState(session: ClassSession | null): LiveJoinState | null {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    if (!session) return;
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(timer);
+  }, [session]);
+
+  if (!session) return null;
+  return getLiveJoinState(session, now);
+}
+
+function JoinCountdownHero({
+  ms,
+  title,
+  hint,
+  tone,
+}: {
+  ms: number;
+  title: string;
+  hint: string;
+  tone: "locked" | "soon";
+}) {
+  const parts = getJoinCountdownParts(ms);
+  const units = [
+    ...(parts.days > 0 ? [{ label: "Ngày", value: parts.days }] : []),
+    { label: "Giờ", value: parts.hours },
+    { label: "Phút", value: parts.minutes },
+    { label: "Giây", value: parts.seconds },
+  ];
+  const isSoon = tone === "soon";
+
+  return (
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl border px-4 py-5 sm:px-5",
+        isSoon
+          ? "border-learn-accent/40 bg-learn-accent/10"
+          : "border-learn-accent/25 bg-learn-surface",
+      )}
+    >
+      <p className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-learn-muted">
+        {title}
+      </p>
+      <div
+        className="mt-4 flex items-stretch justify-center gap-2 sm:gap-3"
+        aria-live="polite"
+        aria-atomic="true"
+        aria-label={formatJoinCountdown(ms)}
+      >
+        {units.map((unit, index) => (
+          <div key={unit.label} className="flex items-stretch gap-2 sm:gap-3">
+            {index > 0 ? (
+              <span
+                className="hidden self-center font-heading text-2xl font-extrabold text-learn-faint sm:inline"
+                aria-hidden
+              >
+                :
+              </span>
+            ) : null}
+            <div className="min-w-[4.25rem] flex-1 sm:min-w-[5rem]">
+              <div
+                className={cn(
+                  "rounded-2xl border px-2 py-3 text-center sm:px-3 sm:py-4",
+                  isSoon
+                    ? "border-learn-accent/30 bg-learn-surface shadow-[0_8px_24px_rgba(79,195,247,0.18)]"
+                    : "border-learn-border bg-learn-surface-2",
+                )}
+              >
+                <p className="font-heading text-3xl font-extrabold tabular-nums leading-none tracking-tight text-learn-text-strong sm:text-4xl">
+                  {String(unit.value).padStart(2, "0")}
+                </p>
+              </div>
+              <p className="mt-1.5 text-center text-[11px] font-semibold uppercase tracking-wide text-learn-muted">
+                {unit.label}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-4 text-center text-sm text-learn-muted">{hint}</p>
+    </div>
+  );
+}
+
+function LiveJoinButton({ session }: { session: ClassSession }) {
+  const join = useLiveJoinState(session);
+  if (!join) return null;
+
+  if (join.phase === "cancelled") {
+    return (
+      <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+        Buổi học đã bị hủy.
+      </p>
+    );
+  }
+
+  if (join.phase === "locked") {
+    return (
+      <JoinCountdownHero
+        ms={join.msUntilOpen}
+        title="Cửa vào lớp chưa mở"
+        hint="Nút Vào lớp học sẽ mở 15 phút trước giờ bắt đầu."
+        tone="locked"
+      />
+    );
+  }
+
+  if (join.phase === "countdown") {
+    return (
+      <div className="space-y-3">
+        <JoinCountdownHero
+          ms={join.msUntilStart}
+          title="Sắp vào lớp"
+          hint="Bạn có thể tham gia từ bây giờ. Buổi học bắt đầu sau vài phút."
+          tone="soon"
+        />
+        <a
+          href={join.joinUrl ?? undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-disabled={!join.joinUrl}
+          className={cn(
+            "inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-base font-semibold",
+            join.joinUrl
+              ? "bg-learn-accent text-white hover:opacity-90"
+              : "pointer-events-none bg-learn-surface-2 text-learn-muted",
+          )}
+        >
+          <Video className="size-5" aria-hidden />
+          Vào lớp học
+          {join.joinUrl ? <ExternalLink className="size-4" aria-hidden /> : null}
+        </a>
+      </div>
+    );
+  }
+
+  if (join.phase === "live") {
+    if (!join.joinUrl) {
+      return (
+        <p className="rounded-xl border border-dashed border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+          Link buổi học chưa được cập nhật.
+        </p>
+      );
+    }
+
+    return (
+      <a
+        href={join.joinUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-learn-accent px-4 py-3.5 text-base font-semibold text-white hover:opacity-90"
+      >
+        <Video className="size-4" aria-hidden />
+        Đang diễn ra · Vào lớp học
+        <ExternalLink className="size-3.5" aria-hidden />
+      </a>
+    );
+  }
+
+  if (join.phase === "recording" && join.joinUrl) {
+    return (
+      <a
+        href={join.joinUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-learn-border bg-learn-surface px-4 py-3 text-sm font-semibold text-learn-text-strong hover:bg-learn-surface-2"
+      >
+        Xem ghi hình
+        <ExternalLink className="size-3.5" aria-hidden />
+      </a>
+    );
+  }
+
+  return (
+    <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+      Buổi học đã kết thúc.
+    </p>
+  );
+}
+
 export function SessionActivity({
   activity,
   nextSession = null,
@@ -27,8 +225,6 @@ export function SessionActivity({
   className,
 }: SessionActivityProps) {
   const isLive = activity.activityType === "LiveOnline";
-
-  // Schedule & location are owned by the class session (cohort), not the activity template.
   const startTime = nextSession?.startTime ?? null;
   const endTime = nextSession?.endTime ?? null;
   const location = nextSession?.location ?? null;
@@ -43,6 +239,8 @@ export function SessionActivity({
       <p className="text-sm leading-relaxed text-learn-muted">
         {nextSession?.description || activity.description || "Chi tiết buổi học sẽ được cập nhật."}
       </p>
+
+      {isLive && nextSession ? <LiveJoinButton session={nextSession} /> : null}
 
       {isAlreadyComplete ? (
         <div className="flex items-start gap-3 rounded-xl border border-learn-success/30 bg-learn-success/10 px-4 py-3">
@@ -164,26 +362,12 @@ export function SessionActivity({
           </div>
         </div>
 
-        {location ? (
+        {!isLive && location ? (
           <div className="flex items-start gap-3 text-sm">
             <MapPin className="mt-0.5 size-4 shrink-0 text-learn-faint" aria-hidden />
             <div className="min-w-0">
-              <dt className="text-learn-muted">{isLive ? "Liên kết tham gia" : "Địa điểm"}</dt>
-              <dd className="font-medium text-learn-text-strong">
-                {isLive && location.startsWith("http") ? (
-                  <a
-                    href={location}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-learn-accent underline-offset-2 hover:underline"
-                  >
-                    Tham gia buổi học
-                    <ExternalLink className="size-3.5" aria-hidden />
-                  </a>
-                ) : (
-                  location
-                )}
-              </dd>
+              <dt className="text-learn-muted">Địa điểm</dt>
+              <dd className="font-medium text-learn-text-strong">{location}</dd>
             </div>
           </div>
         ) : null}

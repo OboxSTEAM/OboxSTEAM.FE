@@ -55,6 +55,37 @@ export const expertProgramSchema = z.object({
 
 export type ExpertProgram = z.infer<typeof expertProgramSchema>;
 
+export const expertDegreeSchema = z.object({
+  id: z.string().uuid(),
+  expertId: z.string().uuid(),
+  title: nullableStringSchema,
+  institution: nullableStringSchema,
+  year: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
+});
+
+export type ExpertDegree = z.infer<typeof expertDegreeSchema>;
+
+export const expertPublicationSchema = z.object({
+  id: z.string().uuid(),
+  expertId: z.string().uuid(),
+  title: nullableStringSchema,
+  venue: nullableStringSchema,
+  year: z
+    .number()
+    .int()
+    .nullable()
+    .optional()
+    .transform((value) => value ?? null),
+  url: nullableStringSchema,
+});
+
+export type ExpertPublication = z.infer<typeof expertPublicationSchema>;
+
 export const expertSchema = z.object({
   id: z.string().uuid(),
   code: nullableStringSchema,
@@ -66,9 +97,18 @@ export const expertSchema = z.object({
   avatarUrl: nullableStringSchema,
   linkedInUrl: nullableStringSchema,
   achievements: nullableStringSchema,
+  specialization: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.string(),
   updatedAt: nullableStringSchema,
   programs: z.array(expertProgramSchema).nullish().transform((value) => value ?? []),
+  degrees: z.array(expertDegreeSchema).nullish().transform((value) => value ?? []),
+  publications: z
+    .array(expertPublicationSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export type Expert = z.infer<typeof expertSchema>;

@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Eye,
+  GraduationCap,
   Link2,
   Pencil,
   Plus,
@@ -24,6 +26,7 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   createExpert,
   deleteExpert,
+  getExpertById,
   getExperts,
   getPrograms,
   updateExpert,
@@ -127,8 +130,15 @@ export function ExpertManager() {
   }
 
   function openEdit(expert: Expert) {
-    setEditingExpert(expert);
-    setFormOpen(true);
+    void (async () => {
+      try {
+        const result = await getExpertById(expert.id);
+        setEditingExpert(result?.data ?? expert);
+        setFormOpen(true);
+      } catch (error) {
+        showAppErrorFromUnknown(error, "experts.update");
+      }
+    })();
   }
 
   async function handleSubmit(values: ExpertFormValues) {
@@ -263,6 +273,13 @@ export function ExpertManager() {
       className: "w-36 text-right",
       render: (expert) => (
         <div className="flex justify-end gap-1">
+          <Link
+            href={`/manager/experts/${expert.id}`}
+            aria-label={`Hồ sơ chuyên môn ${expert.fullName}`}
+            className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
+          >
+            <GraduationCap className="size-4" />
+          </Link>
           <Button
             type="button"
             variant="ghost"
@@ -385,6 +402,7 @@ export function ExpertManager() {
         isProgramsLoading={isProgramsLoading}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        onExpertChange={setEditingExpert}
       />
 
       <ConfirmDialog

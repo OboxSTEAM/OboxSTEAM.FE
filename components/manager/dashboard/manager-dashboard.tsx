@@ -15,12 +15,7 @@ import {
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
-import {
-  deltaPercent,
-  enrollmentMixFootnote,
-  paymentMixFootnote,
-  toPercentValue,
-} from "./chart-data";
+import { deltaPercent, STEAM_FILL, toPercentValue } from "./chart-data";
 import { DashboardActionQueue } from "./dashboard-action-queue";
 import { DashboardGroupHeading } from "./dashboard-panel";
 import { DashboardRangeTabs } from "./dashboard-range-tabs";
@@ -56,6 +51,18 @@ const StatusBreakdownPanel = dynamic(
     import("./panels/status-breakdown-panel").then(
       (m) => m.StatusBreakdownPanel,
     ),
+  { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
+);
+
+const RevenueMixPanel = dynamic(
+  () =>
+    import("./panels/revenue-mix-panel").then((m) => m.RevenueMixPanel),
+  { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
+);
+
+const MentorLoadPanel = dynamic(
+  () =>
+    import("./panels/mentor-load-panel").then((m) => m.MentorLoadPanel),
   { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
 );
 
@@ -218,7 +225,7 @@ export function ManagerDashboard() {
 
       <section className="space-y-3" aria-labelledby="business-group-heading">
         <div id="business-group-heading">
-          <DashboardGroupHeading title="Doanh thu và Tuyển sinh" />
+          <DashboardGroupHeading title="Kinh doanh và tuyển sinh" />
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
@@ -236,7 +243,6 @@ export function ManagerDashboard() {
               maximumFractionDigits: 0,
               notation: "compact",
             }}
-            footnote={paymentMixFootnote(revenue.revenueByGateway)}
           />
           <KpiStatCard
             label="Đăng ký mới"
@@ -246,10 +252,6 @@ export function ManagerDashboard() {
             icon={Users}
             accentClassName="text-steam-science"
             delta={enrollmentDelta}
-            footnote={
-              enrollmentMixFootnote(enrollment.programEnrollmentsByStatus) ??
-              `${formatCount(enrollment.activeStudents)} học viên đang học`
-            }
           />
         </div>
 
@@ -261,6 +263,25 @@ export function ManagerDashboard() {
           assessment={assessment}
           operations={operations}
         />
+
+        <div className="grid gap-3 lg:grid-cols-2">
+          <RevenueMixPanel
+            revenue={revenue}
+            isLoading={isLoading}
+            revealSignature={range}
+          />
+          <StatusBreakdownPanel
+            title="Tuyển sinh theo trạng thái"
+            description="Phân bổ đăng ký chương trình trong hệ thống"
+            items={enrollment.programEnrollmentsByStatus}
+            kind="enrollment"
+            href="/manager/programs"
+            linkLabel="Quản lý chương trình"
+            fill={STEAM_FILL.science}
+            isLoading={isLoading}
+            revealSignature={range}
+          />
+        </div>
 
         <TopProgramsPanel
           enrollment={enrollment}
@@ -310,11 +331,20 @@ export function ManagerDashboard() {
           />
         </div>
 
-        <StatusBreakdownPanel
-          operations={operations}
-          isLoading={isLoading}
-          revealSignature={range}
-        />
+        <div className="grid gap-3 lg:grid-cols-2">
+          <MentorLoadPanel operations={operations} />
+          <StatusBreakdownPanel
+            title="Tình trạng vận hành lớp học"
+            description="Phân bổ lớp trong hệ thống"
+            items={operations.classesByStatus}
+            kind="class"
+            href="/manager/classes"
+            linkLabel="Quản lý lớp học"
+            fill={STEAM_FILL.mathematics}
+            isLoading={isLoading}
+            revealSignature={range}
+          />
+        </div>
       </section>
     </div>
   );

@@ -150,6 +150,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chuyên gia có thể đang được sử dụng hoặc không còn tồn tại.",
     action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
   },
+  "experts.credentials": {
+    title: "Không lưu được hồ sơ chuyên môn",
+    reason: "Thông tin bằng cấp hoặc bài báo chưa hợp lệ.",
+    action: "Kiểm tra học vị, trường, năm và đường dẫn rồi thử lại.",
+  },
+  "experts.profile": {
+    title: "Không tải được hồ sơ chuyên gia",
+    reason: "Hồ sơ không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử lại sau vài giây hoặc quay lại danh sách chuyên gia.",
+  },
   "classes.list": {
     title: "Không tải được danh sách lớp",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
@@ -651,6 +661,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "experts.create",
   "experts.update",
   "experts.delete",
+  "experts.credentials",
   "classes.create",
   "classes.update",
   "classes.lifecycle",

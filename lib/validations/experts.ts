@@ -30,6 +30,14 @@ export const expertProgramAssignmentSchema = z.object({
   roleInBoard: z.string().trim().max(255, "Vai trò không được quá 255 ký tự.").optional(),
 });
 
+export const expertDegreeIdParamSchema = expertIdParamSchema.extend({
+  degreeId: z.string().uuid("ID bằng cấp không hợp lệ."),
+});
+
+export const expertPublicationIdParamSchema = expertIdParamSchema.extend({
+  publicationId: z.string().uuid("ID bài báo không hợp lệ."),
+});
+
 function isHttpUrl(value: string): boolean {
   if (value === "") return true;
   try {
@@ -44,6 +52,46 @@ const optionalUrlSchema = z
   .string()
   .trim()
   .refine(isHttpUrl, "URL phải bắt đầu bằng http:// hoặc https://.");
+
+const optionalYearSchema = z
+  .number()
+  .int("Năm phải là số nguyên.")
+  .min(1900, "Năm không hợp lệ.")
+  .max(2100, "Năm không hợp lệ.")
+  .optional();
+
+export const expertDegreeRequestSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập học vị.")
+    .max(255, "Học vị không được quá 255 ký tự."),
+  institution: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập trường.")
+    .max(255, "Tên trường không được quá 255 ký tự."),
+  year: optionalYearSchema,
+});
+
+export const expertPublicationRequestSchema = z.object({
+  title: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập tên bài.")
+    .max(500, "Tên bài không được quá 500 ký tự."),
+  venue: z
+    .string()
+    .trim()
+    .max(255, "Tạp chí/hội nghị không được quá 255 ký tự.")
+    .optional()
+    .nullable(),
+  year: optionalYearSchema,
+  url: z
+    .union([optionalUrlSchema, z.literal(""), z.null()])
+    .optional()
+    .transform((value) => (value ? value : null)),
+});
 
 export const expertUpsertSchema = z.object({
   code: z
@@ -65,6 +113,10 @@ export const expertUpsertSchema = z.object({
   avatarUrl: optionalUrlSchema,
   linkedInUrl: optionalUrlSchema,
   achievements: z.string().trim().max(4000, "Thành tựu không được quá 4000 ký tự."),
+  specialization: z
+    .array(z.string().trim().min(1).max(80, "Mỗi chuyên môn tối đa 80 ký tự."))
+    .max(20, "Tối đa 20 chuyên môn.")
+    .optional(),
   programs: z.array(expertProgramInputSchema),
 });
 
@@ -80,3 +132,7 @@ export type ExpertProgramAssignmentInput = z.infer<
 >;
 export type CreateExpertInput = z.infer<typeof createExpertSchema>;
 export type UpdateExpertInput = z.infer<typeof updateExpertSchema>;
+export type ExpertDegreeRequestInput = z.infer<typeof expertDegreeRequestSchema>;
+export type ExpertPublicationRequestInput = z.infer<
+  typeof expertPublicationRequestSchema
+>;

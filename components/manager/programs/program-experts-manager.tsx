@@ -329,6 +329,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         isProgramsLoading={false}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        onExpertChange={setEditingExpert}
       />
 
       {assignOpen ? (

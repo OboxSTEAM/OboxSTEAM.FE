@@ -10,20 +10,26 @@ export {
 } from "./auth";
 export {
   createExpertSchema,
+  expertDegreeIdParamSchema,
+  expertDegreeRequestSchema,
   expertIdParamSchema,
   expertListQuerySchema,
   expertProgramAssignmentSchema,
   expertProgramInputSchema,
   expertProgramParamSchema,
+  expertPublicationIdParamSchema,
+  expertPublicationRequestSchema,
   expertSortBySchema,
   expertUpsertSchema,
   updateExpertSchema,
   type CreateExpertInput,
+  type ExpertDegreeRequestInput,
   type ExpertIdParam,
   type ExpertListQuery,
   type ExpertProgramAssignmentInput,
   type ExpertProgramInput,
   type ExpertProgramParam,
+  type ExpertPublicationRequestInput,
   type UpdateExpertInput,
 } from "./experts";
 export {

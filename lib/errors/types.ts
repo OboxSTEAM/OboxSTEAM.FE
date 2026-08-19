@@ -43,6 +43,8 @@ export type AppErrorContext =
   | "experts.create"
   | "experts.update"
   | "experts.delete"
+  | "experts.credentials"
+  | "experts.profile"
   | "classes.list"
   | "classes.detail"
   | "classes.create"

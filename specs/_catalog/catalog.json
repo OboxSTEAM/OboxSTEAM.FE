@@ -465,7 +465,7 @@
       {
         "path": "/api/experts/{id}",
         "method": "get",
-        "description": "Retrieve detailed information for a specific expert by its ID."
+        "description": "Public expert profile including specialization, degrees, publications, and program board membership."
       },
       {
         "path": "/api/experts/{id}",
@@ -491,6 +491,41 @@
         "path": "/api/experts/{expertId}/programs/{programId}",
         "method": "delete",
         "description": "Removes a program assignment from an expert. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{id}/profile",
+        "method": "get",
+        "description": "Public profile including specialization, degrees, publications, and program board membership."
+      },
+      {
+        "path": "/api/experts/{expertId}/degrees",
+        "method": "post",
+        "description": "Adds an academic credential to the expert profile. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/degrees/{degreeId}",
+        "method": "put",
+        "description": "Updates an academic credential. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/degrees/{degreeId}",
+        "method": "delete",
+        "description": "Soft-deletes an academic credential. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/publications",
+        "method": "post",
+        "description": "Adds a publication to the expert profile. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/publications/{publicationId}",
+        "method": "put",
+        "description": "Updates a publication. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{expertId}/publications/{publicationId}",
+        "method": "delete",
+        "description": "Soft-deletes a publication. Requires Admin or Manager role."
       },
       {
         "path": "/api/highlight-video/stacks",
@@ -591,6 +626,11 @@
         "path": "/api/materials/{materialId}",
         "method": "delete",
         "description": "Deletes the material file from S3, then removes the database record."
+      },
+      {
+        "path": "/api/me/schedule",
+        "method": "get",
+        "description": "Returns occupied session intervals for the current student's active class enrollments. Cancelled sessions are omitted."
       },
       {
         "path": "/api/media/upload",
@@ -1753,6 +1793,18 @@
         "name": "ExpertCreateDto"
       },
       {
+        "name": "ExpertDegreeRequestDto"
+      },
+      {
+        "name": "ExpertDegreeResponseDto"
+      },
+      {
+        "name": "ExpertDegreeResponseDtoApiResult"
+      },
+      {
+        "name": "ExpertDegreeResponseDtoResponseDataContent"
+      },
+      {
         "name": "ExpertProgramAssignmentDto"
       },
       {
@@ -1763,6 +1815,18 @@
       },
       {
         "name": "ExpertProgramSummaryDtoResponseDataContent"
+      },
+      {
+        "name": "ExpertPublicationRequestDto"
+      },
+      {
+        "name": "ExpertPublicationResponseDto"
+      },
+      {
+        "name": "ExpertPublicationResponseDtoApiResult"
+      },
+      {
+        "name": "ExpertPublicationResponseDtoResponseDataContent"
       },
       {
         "name": "ExpertResponseDto"
@@ -2579,6 +2643,15 @@
       },
       {
         "name": "StudentMilestoneProgressDtoResponseDataContent"
+      },
+      {
+        "name": "StudentScheduleIntervalDto"
+      },
+      {
+        "name": "StudentScheduleIntervalDtoListApiResult"
+      },
+      {
+        "name": "StudentScheduleIntervalDtoListResponseDataContent"
       },
       {
         "name": "SubdomainAvailabilityResponseDto"

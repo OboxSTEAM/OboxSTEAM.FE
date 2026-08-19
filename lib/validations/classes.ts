@@ -168,6 +168,10 @@ export const classSessionFormSchema = z
     startTime: z.string().min(1, "Thời gian bắt đầu không được để trống."),
     endTime: z.string().min(1, "Thời gian kết thúc không được để trống."),
     location: z.string().max(500, "Địa điểm tối đa 500 ký tự.").optional(),
+    meetingUrl: z
+      .string()
+      .max(2048, "Link buổi học tối đa 2048 ký tự.")
+      .optional(),
     requiresAttendance: z.boolean().optional(),
     status: classSessionStatusSchema.optional(),
   })
@@ -200,7 +204,13 @@ export const createClassSessionSchema = z.object({
     .max(500, "Địa điểm tối đa 500 ký tự.")
     .nullable()
     .optional(),
+  meetingUrl: z
+    .string()
+    .max(2048, "Link buổi học tối đa 2048 ký tự.")
+    .nullable()
+    .optional(),
   requiresAttendance: z.boolean().optional(),
+  requiresMentorCheckIn: z.boolean().optional(),
 });
 
 /** Body for `PUT /api/classes/{classId}/sessions/{id}`. */

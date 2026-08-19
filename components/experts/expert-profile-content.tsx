@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
-import { Award, BookOpen, ExternalLink, Sparkles, UserRound } from "lucide-react";
+import { Award, BookOpen, ExternalLink, GraduationCap, Newspaper, Sparkles, UserRound } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -172,6 +172,65 @@ export function ExpertProfileContent({
         avatarUrl={avatarUrl}
         linkedInUrl={expert.linkedInUrl}
       />
+
+      {expert.specialization.length > 0 ? (
+        <ProfileSection title="Chuyên môn" icon={Sparkles} tone="accent">
+          <ul className="flex flex-wrap gap-2">
+            {expert.specialization.map((tag) => (
+              <li
+                key={tag}
+                className="rounded-full bg-[#4FC3F7]/10 px-2.5 py-0.5 text-xs font-medium text-[#0D6E9C]"
+              >
+                {tag}
+              </li>
+            ))}
+          </ul>
+        </ProfileSection>
+      ) : null}
+
+      {expert.degrees.length > 0 ? (
+        <ProfileSection title="Bằng cấp" icon={GraduationCap}>
+          <ul className="space-y-2">
+            {expert.degrees.map((degree) => (
+              <li key={degree.id} className="text-sm text-[#2D2D2D]">
+                <span className="font-medium">{degree.title}</span>
+                {degree.institution ? (
+                  <span className="text-[#6B6B6B]"> · {degree.institution}</span>
+                ) : null}
+                {degree.year ? (
+                  <span className="text-[#6B6B6B]"> ({degree.year})</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </ProfileSection>
+      ) : null}
+
+      {expert.publications.length > 0 ? (
+        <ProfileSection title="Bài báo" icon={Newspaper}>
+          <ul className="space-y-2">
+            {expert.publications.map((publication) => (
+              <li key={publication.id} className="text-sm">
+                {isUsableExternalUrl(publication.url) ? (
+                  <a
+                    href={publication.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-[#4FC3F7] hover:underline"
+                  >
+                    {publication.title}
+                  </a>
+                ) : (
+                  <span className="font-medium text-[#2D2D2D]">{publication.title}</span>
+                )}
+                <span className="block text-xs text-[#6B6B6B]">
+                  {[publication.venue, publication.year].filter(Boolean).join(" · ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </ProfileSection>
+      ) : null}
 
       {hasBio || hasAchievements ? (
         <div

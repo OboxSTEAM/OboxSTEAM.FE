@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
-import { Award, BriefcaseBusiness, Link2, UserRound } from "lucide-react";
+import { Award, BriefcaseBusiness, GraduationCap, Link2, UserRound } from "lucide-react";
 import { z } from "zod";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,6 +26,8 @@ import type { Expert, Program } from "@/lib/api";
 import { expertUpsertSchema } from "@/lib/validations/experts";
 import { cn } from "@/lib/utils";
 
+import { ExpertCredentialsEditor } from "./expert-credentials-editor";
+
 export type ExpertFormValues = z.infer<typeof expertUpsertSchema>;
 
 type ExpertFormDialogProps = {
@@ -37,6 +39,7 @@ type ExpertFormDialogProps = {
   isProgramsLoading: boolean;
   isSubmitting: boolean;
   onSubmit: (values: ExpertFormValues) => Promise<void>;
+  onExpertChange?: (expert: Expert) => void;
 };
 
 const INPUT_CLASS =
@@ -80,6 +83,7 @@ function toDefaultValues(
     avatarUrl: expert?.avatarUrl ?? "",
     linkedInUrl: expert?.linkedInUrl ?? "",
     achievements: expert?.achievements ?? "",
+    specialization: expert?.specialization ?? [],
     programs: assignedPrograms,
   };
 }
@@ -93,12 +97,14 @@ export function ExpertFormDialog({
   isProgramsLoading,
   isSubmitting,
   onSubmit,
+  onExpertChange,
 }: ExpertFormDialogProps) {
   const {
     control,
     register,
     reset,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<ExpertFormValues>({
     resolver: zodResolver(expertUpsertSchema),
@@ -258,6 +264,26 @@ export function ExpertFormDialog({
                     className={TEXTAREA_CLASS}
                   />
                 </FormField>
+                <FormField
+                  id="specialization"
+                  label="Chuyên môn"
+                  error={errors.specialization?.message}
+                >
+                  <Input
+                    id="specialization"
+                    placeholder="Robotics, STEM, Lập trình (cách nhau bằng dấu phẩy)"
+                    defaultValue={expert?.specialization.join(", ") ?? ""}
+                    key={`${expert?.id ?? "new"}-specialization`}
+                    onBlur={(event) => {
+                      const tags = event.target.value
+                        .split(",")
+                        .map((item) => item.trim())
+                        .filter(Boolean);
+                      setValue("specialization", tags, { shouldValidate: true });
+                    }}
+                    className={INPUT_CLASS}
+                  />
+                </FormField>
               </FormSection>
 
               <FormSection icon={BriefcaseBusiness} title="Chương trình tham gia">
@@ -330,6 +356,22 @@ export function ExpertFormDialog({
                   </div>
                 )}
               </FormSection>
+
+              {expert ? (
+                <FormSection icon={GraduationCap} title="Hồ sơ chuyên môn">
+                  <p className="-mt-2 text-xs leading-5 text-muted-foreground">
+                    Bằng cấp và bài báo lưu ngay khi thêm hoặc sửa, không cần bấm Lưu thay đổi.
+                  </p>
+                  <ExpertCredentialsEditor
+                    expert={expert}
+                    onExpertChange={(next) => onExpertChange?.(next)}
+                  />
+                </FormSection>
+              ) : (
+                <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  Lưu hồ sơ trước để thêm bằng cấp và bài báo.
+                </p>
+              )}
             </div>
           </DialogScrollBody>
 

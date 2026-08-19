@@ -32,6 +32,11 @@ export const classSessionSchema = z.object({
   startTime: z.string(),
   endTime: z.string(),
   location: z.string().nullable(),
+  meetingUrl: z
+    .string()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
   requiresAttendance: z.boolean(),
   requiresMentorCheckIn: z
     .boolean()
