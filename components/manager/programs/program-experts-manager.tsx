@@ -31,9 +31,12 @@ import {
   createExpert,
   getExpertById,
   getExperts,
+  persistExpertCredentialDrafts,
   removeExpertFromProgram,
+  syncExpertAfterMutation,
   updateExpert,
   type Expert,
+  type ExpertCredentialDrafts,
   type ProgramExpert,
   type ProgramWithModules,
 } from "@/lib/api";
@@ -92,24 +95,39 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
     }
   }
 
-  async function handleSubmit(values: ExpertFormValues) {
+  async function handleSubmit(
+    values: ExpertFormValues,
+    drafts: ExpertCredentialDrafts,
+  ) {
     setIsSubmitting(true);
     try {
       if (editingExpert) {
         await updateExpert(editingExpert.id, values);
+        const synced = await syncExpertAfterMutation(
+          editingExpert.id,
+          editingExpert,
+        );
+        if (synced) setEditingExpert(synced);
         showAppSuccess({
           title: "Đã cập nhật chuyên gia",
           description: `Thông tin của ${values.fullName} đã được lưu.`,
         });
+        setFormOpen(false);
+        setEditingExpert(null);
       } else {
-        await createExpert(values);
+        const created = await createExpert(values);
+        const expert = created?.data;
+        if (!expert) {
+          throw new Error("Không nhận được hồ sơ chuyên gia vừa tạo.");
+        }
+        await persistExpertCredentialDrafts(expert.id, drafts);
+        const synced = await syncExpertAfterMutation(expert.id, expert);
+        setEditingExpert(synced ?? expert);
         showAppSuccess({
           title: "Đã thêm chuyên gia",
-          description: `${values.fullName} đã được tạo và gán vào ${program.name}.`,
+          description: `${values.fullName} đã được tạo. Bạn có thể tiếp tục chỉnh hồ sơ chuyên môn.`,
         });
       }
-      setFormOpen(false);
-      setEditingExpert(null);
       router.refresh();
     } catch (error) {
       showAppErrorFromUnknown(

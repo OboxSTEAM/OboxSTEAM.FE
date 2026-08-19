@@ -78,6 +78,7 @@ export type {
   UpdateExpertInput,
 } from "@/lib/validations/experts";
 
+import type { Expert } from "@/lib/api/entities/expert";
 import type {
   CreateExpertInput,
   ExpertDegreeRequestInput,
@@ -321,4 +322,88 @@ export async function deleteExpertPublication(
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
+}
+
+export type ExpertCredentialDrafts = {
+  degrees: ExpertDegreeRequestInput[];
+  publications: ExpertPublicationRequestInput[];
+};
+
+export const EMPTY_CREDENTIAL_DRAFTS: ExpertCredentialDrafts = {
+  degrees: [],
+  publications: [],
+};
+
+function toDegreeRequest(degree: Expert["degrees"][number]): ExpertDegreeRequestInput {
+  return {
+    title: degree.title,
+    institution: degree.institution,
+    year: degree.year || undefined,
+  };
+}
+
+function toPublicationRequest(
+  publication: Expert["publications"][number],
+): ExpertPublicationRequestInput {
+  return {
+    title: publication.title,
+    venue: publication.venue || null,
+    year: publication.year || undefined,
+    url: publication.url || null,
+  };
+}
+
+export async function persistExpertCredentialDrafts(
+  expertId: string,
+  drafts: ExpertCredentialDrafts,
+): Promise<void> {
+  for (const degree of drafts.degrees) {
+    await addExpertDegree(expertId, degree);
+  }
+  for (const publication of drafts.publications) {
+    await addExpertPublication(expertId, publication);
+  }
+}
+
+/** Re-fetch after create/update. Re-posts nested credentials if PUT omitted/wiped them. */
+export async function syncExpertAfterMutation(
+  expertId: string,
+  previous: Expert | null,
+): Promise<Expert | null> {
+  const first = await getExpertById(expertId);
+  let fresh = first?.data ?? null;
+  if (!fresh) return previous;
+
+  const lostDegrees =
+    Boolean(previous?.degrees.length) && fresh.degrees.length === 0;
+  const lostPublications =
+    Boolean(previous?.publications.length) && fresh.publications.length === 0;
+
+  if (previous && (lostDegrees || lostPublications)) {
+    if (lostDegrees) {
+      for (const degree of previous.degrees) {
+        await addExpertDegree(expertId, toDegreeRequest(degree));
+      }
+    }
+    if (lostPublications) {
+      for (const publication of previous.publications) {
+        await addExpertPublication(expertId, toPublicationRequest(publication));
+      }
+    }
+    const again = await getExpertById(expertId);
+    fresh = again?.data ?? fresh;
+  }
+
+  if (!previous) return fresh;
+
+  return {
+    ...fresh,
+    degrees: fresh.degrees.length > 0 ? fresh.degrees : previous.degrees,
+    publications:
+      fresh.publications.length > 0 ? fresh.publications : previous.publications,
+    specialization:
+      fresh.specialization.length > 0
+        ? fresh.specialization
+        : previous.specialization,
+  };
 }

@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   Eye,
-  GraduationCap,
   Link2,
   Pencil,
   Plus,
@@ -29,8 +27,11 @@ import {
   getExpertById,
   getExperts,
   getPrograms,
+  persistExpertCredentialDrafts,
+  syncExpertAfterMutation,
   updateExpert,
   type Expert,
+  type ExpertCredentialDrafts,
   type ExpertListQuery,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -141,24 +142,39 @@ export function ExpertManager() {
     })();
   }
 
-  async function handleSubmit(values: ExpertFormValues) {
+  async function handleSubmit(
+    values: ExpertFormValues,
+    drafts: ExpertCredentialDrafts,
+  ) {
     setIsSubmitting(true);
     try {
       if (editingExpert) {
         await updateExpert(editingExpert.id, values);
+        const synced = await syncExpertAfterMutation(
+          editingExpert.id,
+          editingExpert,
+        );
+        if (synced) setEditingExpert(synced);
         showAppSuccess({
           title: "Đã cập nhật chuyên gia",
           description: `Hồ sơ của ${values.fullName} đã được lưu.`,
         });
+        setFormOpen(false);
+        setEditingExpert(null);
       } else {
-        await createExpert(values);
+        const created = await createExpert(values);
+        const expert = created?.data;
+        if (!expert) {
+          throw new Error("Không nhận được hồ sơ chuyên gia vừa tạo.");
+        }
+        await persistExpertCredentialDrafts(expert.id, drafts);
+        const synced = await syncExpertAfterMutation(expert.id, expert);
+        setEditingExpert(synced ?? expert);
         showAppSuccess({
           title: "Đã thêm chuyên gia",
-          description: `${values.fullName} đã được thêm vào danh sách.`,
+          description: `${values.fullName} đã được tạo. Bạn có thể tiếp tục chỉnh bằng cấp và bài báo.`,
         });
       }
-      setFormOpen(false);
-      setEditingExpert(null);
       retry();
     } catch (error) {
       showAppErrorFromUnknown(
@@ -270,16 +286,9 @@ export function ExpertManager() {
     },
     {
       header: "Thao tác",
-      className: "w-36 text-right",
+      className: "w-28 text-right",
       render: (expert) => (
         <div className="flex justify-end gap-1">
-          <Link
-            href={`/manager/experts/${expert.id}`}
-            aria-label={`Hồ sơ chuyên môn ${expert.fullName}`}
-            className="inline-flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
-          >
-            <GraduationCap className="size-4" />
-          </Link>
           <Button
             type="button"
             variant="ghost"

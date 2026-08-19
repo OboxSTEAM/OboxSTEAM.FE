@@ -55,32 +55,37 @@ export const expertProgramSchema = z.object({
 
 export type ExpertProgram = z.infer<typeof expertProgramSchema>;
 
+const optionalYearResponseSchema = z
+  .union([z.number(), z.string(), z.null(), z.undefined()])
+  .transform((value) => {
+    if (value == null || value === "") return null;
+    const year = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(year) || !Number.isInteger(year) || year === 0) {
+      return null;
+    }
+    return year;
+  });
+
+const optionalExpertIdSchema = z
+  .union([z.string().uuid(), z.literal(""), z.null(), z.undefined()])
+  .transform((value) => value || "");
+
 export const expertDegreeSchema = z.object({
   id: z.string().uuid(),
-  expertId: z.string().uuid(),
+  expertId: optionalExpertIdSchema,
   title: nullableStringSchema,
   institution: nullableStringSchema,
-  year: z
-    .number()
-    .int()
-    .nullable()
-    .optional()
-    .transform((value) => value ?? null),
+  year: optionalYearResponseSchema,
 });
 
 export type ExpertDegree = z.infer<typeof expertDegreeSchema>;
 
 export const expertPublicationSchema = z.object({
   id: z.string().uuid(),
-  expertId: z.string().uuid(),
+  expertId: optionalExpertIdSchema,
   title: nullableStringSchema,
   venue: nullableStringSchema,
-  year: z
-    .number()
-    .int()
-    .nullable()
-    .optional()
-    .transform((value) => value ?? null),
+  year: optionalYearResponseSchema,
   url: nullableStringSchema,
 });
 
