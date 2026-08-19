@@ -26,6 +26,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -57,7 +65,10 @@ import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
+  AlertTriangle,
   CheckCircle2,
+  ChevronRight,
+  CircleHelp,
   Eye,
   ImagePlus,
   Loader2,
@@ -137,6 +148,91 @@ type MediaListPage = {
 };
 
 const MEDIA_PAGE_SIZE = 20;
+const MEDIA_GUIDE_DISMISS_KEY = "oboxsteam.mentor-class-media.guide-dismissed";
+const MEDIA_TOOLBAR_CONTROL =
+  "h-10 rounded-lg";
+const MEDIA_FILTER_LABEL =
+  "text-xs font-medium text-[#6B7280] dark:text-muted-foreground";
+
+const MEDIA_WORKFLOW_STEPS = [
+  "Tải file",
+  "Chờ AI nhận diện",
+  "Xác nhận thẻ học viên",
+] as const;
+
+const MEDIA_WORKFLOW_NOTE =
+  "Lưu ý: Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.";
+
+function MediaWorkflowStepper({ stacked = false }: { stacked?: boolean }) {
+  return (
+    <ol
+      className={
+        stacked
+          ? "flex flex-col gap-2"
+          : "flex flex-wrap items-center gap-y-1.5"
+      }
+    >
+      {MEDIA_WORKFLOW_STEPS.map((step, index) => (
+        <li key={step} className="flex items-center">
+          {!stacked && index > 0 ? (
+            <ChevronRight
+              className="mx-1.5 size-3.5 shrink-0 text-muted-foreground/45"
+              aria-hidden
+            />
+          ) : null}
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex size-[22px] shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[10px] font-semibold tabular-nums text-muted-foreground">
+              {index + 1}
+            </span>
+            {step}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function MediaWorkflowNote() {
+  return (
+    <p className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">
+      <AlertTriangle
+        className="mt-px size-3 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+      {MEDIA_WORKFLOW_NOTE}
+    </p>
+  );
+}
+
+function MediaWorkflowHelpPopover() {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:text-foreground"
+            aria-label="Hướng dẫn quy trình"
+          />
+        }
+      >
+        <CircleHelp className="size-4" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 gap-2.5 p-3">
+        <PopoverHeader>
+          <PopoverTitle className="text-sm">Hướng dẫn quy trình</PopoverTitle>
+          <PopoverDescription className="text-xs">
+            Thư viện media của cả lớp.
+          </PopoverDescription>
+        </PopoverHeader>
+        <MediaWorkflowStepper stacked />
+        <MediaWorkflowNote />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type FileTypeFilter = "all" | "image" | "video";
 type VideoStatusFilter = "all" | MediaVideoStatus;
@@ -168,11 +264,31 @@ export function MentorClassMediaPanel({
   const [busyTagStudentId, setBusyTagStudentId] = useState<string | null>(null);
   const [isProcessingTags, setIsProcessingTags] = useState(false);
   const [addTagStudentId, setAddTagStudentId] = useState("");
+  const [isGuideVisible, setIsGuideVisible] = useState(false);
 
   const activeStudents = useMemo(
     () => roster.filter((student) => student.enrollmentStatus === "Active"),
     [roster],
   );
+
+  useEffect(() => {
+    try {
+      setIsGuideVisible(
+        window.localStorage.getItem(MEDIA_GUIDE_DISMISS_KEY) !== "1",
+      );
+    } catch {
+      setIsGuideVisible(true);
+    }
+  }, []);
+
+  function dismissMediaGuide() {
+    setIsGuideVisible(false);
+    try {
+      window.localStorage.setItem(MEDIA_GUIDE_DISMISS_KEY, "1");
+    } catch {
+      // Ignore quota / private-mode failures — hide for this session.
+    }
+  }
 
   const rosterByStudentId = useMemo(() => {
     const map = new Map<string, ClassStudentRoster>();
@@ -713,24 +829,19 @@ export function MentorClassMediaPanel({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-border bg-muted/40 px-6 py-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-3">
-          <div>
+      <div className="flex flex-col gap-3 border-b border-border bg-muted/40 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-0.5">
             <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <ScanFace className="size-4 text-primary" />
               Media của lớp
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Thư viện media của cả lớp. 1) Upload ảnh/video → 2) AI nhận diện →
-              3) Mentor xác nhận. Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.
-            </p>
+            <MediaWorkflowHelpPopover />
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Loại file
-              </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <p className={cn(MEDIA_FILTER_LABEL, "shrink-0")}>Loại file</p>
               <Select
                 value={fileTypeFilter}
                 onValueChange={(value) => {
@@ -739,7 +850,13 @@ export function MentorClassMediaPanel({
                   );
                 }}
               >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[10rem]")}>
+                <SelectTrigger
+                  className={cn(
+                    THEME_SELECT_TRIGGER,
+                    MEDIA_TOOLBAR_CONTROL,
+                    "min-w-[9.5rem]",
+                  )}
+                >
                   <span className="truncate">
                     {fileTypeFilter === "all"
                       ? "Tất cả"
@@ -767,10 +884,8 @@ export function MentorClassMediaPanel({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Trạng thái
-              </p>
+            <div className="flex items-center gap-2">
+              <p className={cn(MEDIA_FILTER_LABEL, "shrink-0")}>Trạng thái</p>
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
@@ -779,7 +894,13 @@ export function MentorClassMediaPanel({
                   );
                 }}
               >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[12rem]")}>
+                <SelectTrigger
+                  className={cn(
+                    THEME_SELECT_TRIGGER,
+                    MEDIA_TOOLBAR_CONTROL,
+                    "min-w-[12rem]",
+                  )}
+                >
                   <span className="truncate">
                     {statusFilter === "all"
                       ? "Tất cả trạng thái"
@@ -811,44 +932,67 @@ export function MentorClassMediaPanel({
                 </SelectContent>
               </Select>
             </div>
+
+            {!isLoading && totalCount > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {totalCount} media
+                {totalPages > 1
+                  ? ` · trang ${currentPage}/${totalPages}`
+                  : null}
+              </p>
+            ) : null}
+
+            <div className="flex shrink-0 items-center">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={MEDIA_ACCEPT}
+                multiple
+                className="sr-only"
+                onChange={(event) => void handleUpload(event.target.files)}
+              />
+              <Button
+                type="button"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  MEDIA_TOOLBAR_CONTROL,
+                  "bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90",
+                )}
+              >
+                {isUploading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-4" />
+                )}
+                {isUploading
+                  ? uploadProgress
+                    ? `Đang tải ${uploadProgress.done}/${uploadProgress.total}...`
+                    : "Đang tải..."
+                  : "Tải lên media"}
+              </Button>
+            </div>
           </div>
-          {!isLoading && totalCount > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {totalCount} media
-              {totalPages > 1
-                ? ` · trang ${currentPage}/${totalPages}`
-                : null}
-            </p>
-          ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={MEDIA_ACCEPT}
-            multiple
-            className="sr-only"
-            onChange={(event) => void handleUpload(event.target.files)}
-          />
-          <Button
-            type="button"
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="h-10 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            {isUploading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <ImagePlus className="size-4" />
-            )}
-            {isUploading
-              ? uploadProgress
-                ? `Đang tải ${uploadProgress.done}/${uploadProgress.total}...`
-                : "Đang tải..."
-              : "Tải lên media"}
-          </Button>
-        </div>
+        {isGuideVisible ? (
+          <div className="relative rounded-lg border border-border/80 bg-[#F8F9FA] px-3 py-2.5 pr-9 dark:bg-muted/50">
+            <MediaWorkflowStepper />
+            <div className="mt-1.5">
+              <MediaWorkflowNote />
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={dismissMediaGuide}
+              className="absolute top-1.5 right-1.5 size-6 text-muted-foreground hover:text-foreground"
+              aria-label="Ẩn hướng dẫn"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <div className={cn("overflow-x-auto p-6", isLoading && "opacity-60")}>
