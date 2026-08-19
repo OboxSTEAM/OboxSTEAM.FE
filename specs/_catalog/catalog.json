@@ -590,7 +590,7 @@
       {
         "path": "/api/materials/{materialId}",
         "method": "delete",
-        "description": "Soft-deletes the material and removes the corresponding file from S3."
+        "description": "Deletes the material file from S3, then removes the database record."
       },
       {
         "path": "/api/media/upload",

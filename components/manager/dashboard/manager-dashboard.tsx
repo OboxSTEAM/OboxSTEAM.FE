@@ -2,13 +2,7 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import Link from "next/link";
-import {
-  GraduationCap,
-  UserCheck,
-  Users,
-  Wallet,
-} from "lucide-react";
+import { CheckSquare, Clock, Target, Users, Wallet } from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { useClientFetch } from "@/hooks/use-client-fetch";
@@ -23,28 +17,22 @@ import { cn } from "@/lib/utils";
 
 import {
   deltaPercent,
-  deriveActiveClassCount,
+  enrollmentMixFootnote,
+  paymentMixFootnote,
   toPercentValue,
 } from "./chart-data";
-import { DashboardAlertStrip } from "./dashboard-alert-strip";
+import { DashboardActionQueue } from "./dashboard-action-queue";
+import { DashboardGroupHeading } from "./dashboard-panel";
 import { DashboardRangeTabs } from "./dashboard-range-tabs";
 import {
   formatCount,
   formatMoney,
-  formatRate,
   greetingByHour,
+  revenueTitleForRange,
   type AttentionItem,
 } from "./dashboard-utils";
 import { KpiStatCard } from "./kpi-stat-card";
-import { OperationsHealthPanel } from "./panels/operations-health-panel";
 import { TrendPanel } from "./panels/trend-panel";
-
-const QUICK_LINKS = [
-  { href: "/manager/programs", label: "Chương trình" },
-  { href: "/manager/classes", label: "Lớp học" },
-  { href: "/manager/assignments", label: "Bài tập" },
-  { href: "/manager/attendance", label: "Điểm danh" },
-] as const;
 
 function PanelSkeleton({ className }: { className?: string }) {
   return (
@@ -60,25 +48,7 @@ function PanelSkeleton({ className }: { className?: string }) {
 const TopProgramsPanel = dynamic(
   () =>
     import("./panels/top-programs-panel").then((m) => m.TopProgramsPanel),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[400px]" /> },
-);
-
-const RevenueMixPanel = dynamic(
-  () =>
-    import("./panels/revenue-mix-panel").then((m) => m.RevenueMixPanel),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[400px]" /> },
-);
-
-const MentorLoadPanel = dynamic(
-  () =>
-    import("./panels/mentor-load-panel").then((m) => m.MentorLoadPanel),
-  { ssr: false, loading: () => <PanelSkeleton className="h-64" /> },
-);
-
-const AssessmentPanel = dynamic(
-  () =>
-    import("./panels/assessment-panel").then((m) => m.AssessmentPanel),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[400px]" /> },
+  { ssr: false, loading: () => <PanelSkeleton className="h-[320px]" /> },
 );
 
 const StatusBreakdownPanel = dynamic(
@@ -86,7 +56,7 @@ const StatusBreakdownPanel = dynamic(
     import("./panels/status-breakdown-panel").then(
       (m) => m.StatusBreakdownPanel,
     ),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[400px]" /> },
+  { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
 );
 
 function buildActionItems(landing: DashboardLanding): AttentionItem[] {
@@ -96,7 +66,7 @@ function buildActionItems(landing: DashboardLanding): AttentionItem[] {
   if (operations.pendingMentorRequestsCount > 0) {
     items.push({
       id: "mentor-pending",
-      title: "Duyệt yêu cầu Mentor",
+      title: "Mentor chờ duyệt",
       detail: `${formatCount(operations.pendingMentorRequestsCount)} yêu cầu`,
       href: "/manager/classes",
       status: "Cần làm",
@@ -108,8 +78,8 @@ function buildActionItems(landing: DashboardLanding): AttentionItem[] {
   if (assessment.gradingBacklogCount > 0) {
     items.push({
       id: "grading-backlog",
-      title: "Backlog chấm bài",
-      detail: `${formatCount(assessment.gradingBacklogCount)} bài`,
+      title: "Bài nộp chờ chấm",
+      detail: `${formatCount(assessment.gradingBacklogCount)} bài · quá ${formatCount(assessment.gradingBacklogThresholdHours)} giờ`,
       href: "/manager/assignments",
       status: "Cần làm",
       tone: "warn",
@@ -136,18 +106,16 @@ function DashboardSkeleton() {
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-4 px-5 py-5 lg:px-6 lg:py-6">
       <div className="h-14 animate-pulse rounded-2xl bg-border/70" />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+      <div className="h-24 animate-pulse rounded-2xl bg-border/70" />
+      <div className="grid gap-3 sm:grid-cols-2">
+        {Array.from({ length: 2 }).map((_, i) => (
           <div
             key={i}
             className="h-28 animate-pulse rounded-2xl bg-border/70"
           />
         ))}
       </div>
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className="h-[320px] animate-pulse rounded-2xl bg-border/70 lg:col-span-2" />
-        <div className="h-[320px] animate-pulse rounded-2xl bg-border/70" />
-      </div>
+      <div className="h-[280px] animate-pulse rounded-2xl bg-border/70" />
     </div>
   );
 }
@@ -179,7 +147,7 @@ export function ManagerDashboard() {
     return (
       <div className="mx-auto flex max-w-[1400px] flex-col items-start gap-4 px-6 py-16 lg:px-8">
         <h2 className="font-heading text-xl font-bold text-foreground">
-          Không tải được dashboard
+          Không tải được tổng quan
         </h2>
         <p className="text-sm text-muted-foreground">
           Kiểm tra kết nối hoặc thử tải lại sau vài giây.
@@ -197,7 +165,6 @@ export function ManagerDashboard() {
 
   const { enrollment, revenue, assessment, operations } = data;
   const actionItems = buildActionItems(data);
-  const activeClassCount = deriveActiveClassCount(operations.classesByStatus);
 
   const revenueDelta = deltaPercent(
     revenue.revenueInRange,
@@ -207,16 +174,26 @@ export function ManagerDashboard() {
     enrollment.newEnrollmentsInRange,
     enrollment.newEnrollmentsInPreviousRange,
   );
-  const completionDelta = deltaPercent(
-    toPercentValue(enrollment.completionRate, enrollment.rateUnit),
+  const attendanceDelta = deltaPercent(
+    toPercentValue(operations.averageAttendanceRate, operations.rateUnit),
     toPercentValue(
-      enrollment.completionRateInPreviousRange,
-      enrollment.rateUnit,
+      operations.averageAttendanceRateInPreviousRange,
+      operations.rateUnit,
     ),
   );
+  const passRateDelta = deltaPercent(
+    toPercentValue(assessment.passRate, assessment.rateUnit),
+    toPercentValue(assessment.passRateInPreviousRange, assessment.rateUnit),
+  );
+
+  const attendanceRate = toPercentValue(
+    operations.averageAttendanceRate,
+    operations.rateUnit,
+  );
+  const passRate = toPercentValue(assessment.passRate, assessment.rateUnit);
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-4 bg-background px-5 py-5 lg:px-6 lg:py-6">
+    <div className="mx-auto w-full max-w-[1400px] space-y-6 bg-background px-5 py-5 lg:px-6 lg:py-6">
       <header className="flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-0.5">
           <p className="text-[11px] font-medium text-muted-foreground">
@@ -225,26 +202,6 @@ export function ManagerDashboard() {
           <h1 className="font-heading text-xl font-extrabold tracking-tight text-foreground sm:text-2xl">
             Tổng quan vận hành
           </h1>
-          <p className="max-w-xl text-xs text-muted-foreground sm:text-sm">
-            Số liệu theo khoảng thời gian bạn chọn — nắm tình hình và ưu tiên
-            việc cần làm.
-          </p>
-          <nav
-            aria-label="Đi nhanh tới"
-            className="flex flex-wrap items-center gap-x-1.5 gap-y-1 pt-1 text-xs text-muted-foreground"
-          >
-            {QUICK_LINKS.map((item, index) => (
-              <React.Fragment key={item.href}>
-                {index > 0 ? <span aria-hidden>·</span> : null}
-                <Link
-                  href={item.href}
-                  className="font-medium text-foreground/80 transition-colors hover:text-foreground hover:underline"
-                >
-                  {item.label}
-                </Link>
-              </React.Fragment>
-            ))}
-          </nav>
         </div>
 
         <DashboardRangeTabs
@@ -257,116 +214,108 @@ export function ManagerDashboard() {
         />
       </header>
 
-      <DashboardAlertStrip items={actionItems} />
+      <DashboardActionQueue items={actionItems} />
 
-      {/* Bento: KPIs */}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiStatCard
-          label="Doanh thu kỳ"
-          hint="So với kỳ trước"
-          value={revenue.revenueInRange}
-          href="/manager/programs"
-          icon={Wallet}
-          accentClassName="text-steam-technology"
-          delta={revenueDelta}
-          format={{
-            style: "currency",
-            currency: "VND",
-            maximumFractionDigits: 0,
-            notation: "compact",
-          }}
-          footnote={`Tích lũy ${formatMoney(revenue.totalRevenue)}`}
-        />
-        <KpiStatCard
-          label="Đăng ký mới"
-          hint="Trong kỳ đã chọn"
-          value={enrollment.newEnrollmentsInRange}
-          href="/manager/programs"
-          icon={Users}
-          accentClassName="text-steam-science"
-          delta={enrollmentDelta}
-          footnote={`${formatCount(enrollment.activeStudents)} học viên đang học`}
-        />
-        <KpiStatCard
-          label="Lớp đang chạy"
-          hint="Đang mở / Đang học"
-          value={activeClassCount}
-          href="/manager/classes"
-          icon={GraduationCap}
-          accentClassName="text-steam-engineering"
-          footnote={`Lấp đầy TB ${formatRate(toPercentValue(operations.averageCapacityUtilization, operations.rateUnit))}`}
-        />
-        <KpiStatCard
-          label="Mentor chờ duyệt"
-          hint="Yêu cầu chưa xử lý"
-          value={operations.pendingMentorRequestsCount}
-          href="/manager/classes"
-          icon={UserCheck}
-          accentClassName="text-steam-mathematics"
-          alert={operations.pendingMentorRequestsCount > 0}
-          footnote={
-            operations.pendingMentorRequestsCount > 0
-              ? "Cần xử lý tại Lớp học"
-              : completionDelta != null
-                ? `Hoàn thành ${formatRate(toPercentValue(enrollment.completionRate, enrollment.rateUnit))}`
-                : "Không có yêu cầu mới"
-          }
-        />
-      </div>
+      <section className="space-y-3" aria-labelledby="business-group-heading">
+        <div id="business-group-heading">
+          <DashboardGroupHeading title="Doanh thu và Tuyển sinh" />
+        </div>
 
-      {/* Bento: trend + ops */}
-      <div className="grid gap-3 lg:grid-cols-3">
-        <div className="min-w-0 lg:col-span-2">
-          <TrendPanel
-            range={range}
-            isLoading={isLoading}
-            enrollment={enrollment}
-            revenue={revenue}
-            assessment={assessment}
-            operations={operations}
+        <div className="grid gap-3 sm:grid-cols-2">
+          <KpiStatCard
+            label={revenueTitleForRange(range)}
+            hint="So với kỳ trước"
+            value={revenue.revenueInRange}
+            href="/manager/programs"
+            icon={Wallet}
+            accentClassName="text-steam-technology"
+            delta={revenueDelta}
+            format={{
+              style: "currency",
+              currency: "VND",
+              maximumFractionDigits: 0,
+              notation: "compact",
+            }}
+            footnote={paymentMixFootnote(revenue.revenueByGateway)}
+          />
+          <KpiStatCard
+            label="Đăng ký mới"
+            hint="Trong kỳ đã chọn"
+            value={enrollment.newEnrollmentsInRange}
+            href="/manager/programs"
+            icon={Users}
+            accentClassName="text-steam-science"
+            delta={enrollmentDelta}
+            footnote={
+              enrollmentMixFootnote(enrollment.programEnrollmentsByStatus) ??
+              `${formatCount(enrollment.activeStudents)} học viên đang học`
+            }
           />
         </div>
-        <div className="min-w-0">
-          <OperationsHealthPanel
-            enrollment={enrollment}
-            operations={operations}
-            assessment={assessment}
-            activeClassCount={activeClassCount}
-            isLoading={isLoading}
-          />
-        </div>
-      </div>
 
-      {/* Bento: programs + revenue */}
-      <div className="grid gap-3 lg:grid-cols-2">
+        <TrendPanel
+          range={range}
+          isLoading={isLoading}
+          enrollment={enrollment}
+          revenue={revenue}
+          assessment={assessment}
+          operations={operations}
+        />
+
         <TopProgramsPanel
           enrollment={enrollment}
           revenue={revenue}
           isLoading={isLoading}
           revealSignature={range}
         />
-        <RevenueMixPanel revenue={revenue} isLoading={isLoading} />
-      </div>
+      </section>
 
-      {/* Bento: assessment + classes */}
-      <div className="grid gap-3 lg:grid-cols-2">
-        <AssessmentPanel
-          assessment={assessment}
-          isLoading={isLoading}
-          revealSignature={range}
-        />
+      <section className="space-y-3" aria-labelledby="quality-group-heading">
+        <div id="quality-group-heading">
+          <DashboardGroupHeading title="Chất lượng giảng dạy" />
+        </div>
+
+        <div className="grid gap-3 sm:grid-cols-3">
+          <KpiStatCard
+            label="Điểm danh"
+            hint="Tỷ lệ có mặt trung bình"
+            value={attendanceRate}
+            href="/manager/attendance"
+            icon={CheckSquare}
+            accentClassName="text-steam-arts"
+            delta={attendanceDelta}
+            format={{ maximumFractionDigits: 1 }}
+            suffix="%"
+          />
+          <KpiStatCard
+            label="Tỷ lệ đạt"
+            hint="Trong kỳ đã chọn"
+            value={passRate}
+            href="/manager/assignments"
+            icon={Target}
+            accentClassName="text-steam-mathematics"
+            delta={passRateDelta}
+            format={{ maximumFractionDigits: 1 }}
+            suffix="%"
+          />
+          <KpiStatCard
+            label="Thời gian chấm bài trung bình"
+            hint="Giờ mỗi bài"
+            value={assessment.averageGradingTurnaroundHours}
+            href="/manager/assignments"
+            icon={Clock}
+            accentClassName="text-steam-engineering"
+            format={{ maximumFractionDigits: 1 }}
+            suffix="h"
+          />
+        </div>
+
         <StatusBreakdownPanel
           operations={operations}
           isLoading={isLoading}
           revealSignature={range}
         />
-      </div>
-
-      <MentorLoadPanel
-        operations={operations}
-        isLoading={isLoading}
-        revealSignature={range}
-      />
+      </section>
     </div>
   );
 }

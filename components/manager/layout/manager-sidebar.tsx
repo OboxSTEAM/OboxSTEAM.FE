@@ -284,7 +284,7 @@ export function ManagerSidebar() {
       title: "Platform",
       items: [
         {
-          title: "Dashboard",
+          title: "Tổng quan",
           url: "/manager",
           icon: LayoutDashboard,
           isFlat: true as const,

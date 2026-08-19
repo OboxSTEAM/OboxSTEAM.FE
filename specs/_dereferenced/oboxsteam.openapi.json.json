@@ -3973,11 +3973,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -4220,11 +4215,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -4466,11 +4456,6 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
                                   },
                                   "requireQrCheckin": {
                                     "type": "boolean"
@@ -4831,11 +4816,6 @@
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requireQrCheckin": {
                     "type": "boolean"
                   },
@@ -4892,11 +4872,6 @@
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requireQrCheckin": {
                     "type": "boolean"
                   },
@@ -4952,11 +4927,6 @@
                     "type": "string",
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
                   },
                   "requireQrCheckin": {
                     "type": "boolean"
@@ -5040,11 +5010,6 @@
                               "type": "string",
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
                             },
                             "requireQrCheckin": {
                               "type": "boolean"
@@ -5254,11 +5219,6 @@
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requireQrCheckin": {
                               "type": "boolean"
                             },
@@ -5466,11 +5426,6 @@
                               "type": "string",
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
                             },
                             "requireQrCheckin": {
                               "type": "boolean"
@@ -6240,11 +6195,6 @@
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requireQrCheckin": {
                               "type": "boolean"
                             },
@@ -6453,11 +6403,6 @@
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requireQrCheckin": {
                               "type": "boolean"
                             },
@@ -6665,11 +6610,6 @@
                               "type": "string",
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
                             },
                             "requireQrCheckin": {
                               "type": "boolean"
@@ -7277,11 +7217,6 @@
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requireQrCheckin": {
                     "type": "boolean",
                     "nullable": true
@@ -7343,11 +7278,6 @@
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requireQrCheckin": {
                     "type": "boolean",
                     "nullable": true
@@ -7408,11 +7338,6 @@
                     "type": "string",
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
                   },
                   "requireQrCheckin": {
                     "type": "boolean",
@@ -7498,11 +7423,6 @@
                               "type": "string",
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
                             },
                             "requireQrCheckin": {
                               "type": "boolean"
@@ -7712,11 +7632,6 @@
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requireQrCheckin": {
                               "type": "boolean"
                             },
@@ -7924,11 +7839,6 @@
                               "type": "string",
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
                             },
                             "requireQrCheckin": {
                               "type": "boolean"
@@ -38653,11 +38563,6 @@
                                     "type": "string",
                                     "nullable": true
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requiresAttendance": {
                                     "type": "boolean"
                                   },
@@ -38843,11 +38748,6 @@
                                     "type": "string",
                                     "nullable": true
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requiresAttendance": {
                                     "type": "boolean"
                                   },
@@ -39031,11 +38931,6 @@
                                   },
                                   "location": {
                                     "type": "string",
-                                    "nullable": true
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
                                     "nullable": true
                                   },
                                   "requiresAttendance": {
@@ -62055,11 +61950,6 @@
                                     "type": "string",
                                     "nullable": true
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requiresAttendance": {
                                     "type": "boolean"
                                   },
@@ -62213,11 +62103,6 @@
                                     "type": "string",
                                     "nullable": true
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requiresAttendance": {
                                     "type": "boolean"
                                   },
@@ -62369,11 +62254,6 @@
                                   },
                                   "location": {
                                     "type": "string",
-                                    "nullable": true
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
                                     "nullable": true
                                   },
                                   "requiresAttendance": {
@@ -62797,11 +62677,6 @@
                     "type": "string",
                     "nullable": true
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requiresAttendance": {
                     "type": "boolean"
                   },
@@ -62871,11 +62746,6 @@
                     "type": "string",
                     "nullable": true
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requiresAttendance": {
                     "type": "boolean"
                   },
@@ -62943,11 +62813,6 @@
                   "location": {
                     "maxLength": 500,
                     "type": "string",
-                    "nullable": true
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
                     "nullable": true
                   },
                   "requiresAttendance": {
@@ -63035,11 +62900,6 @@
                             },
                             "location": {
                               "type": "string",
-                              "nullable": true
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
                               "nullable": true
                             },
                             "requiresAttendance": {
@@ -63161,11 +63021,6 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requiresAttendance": {
                               "type": "boolean"
                             },
@@ -63283,11 +63138,6 @@
                             },
                             "location": {
                               "type": "string",
-                              "nullable": true
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
                               "nullable": true
                             },
                             "requiresAttendance": {
@@ -63969,11 +63819,6 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requiresAttendance": {
                               "type": "boolean"
                             },
@@ -64155,11 +64000,6 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requiresAttendance": {
                               "type": "boolean"
                             },
@@ -64339,11 +64179,6 @@
                             },
                             "location": {
                               "type": "string",
-                              "nullable": true
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
                               "nullable": true
                             },
                             "requiresAttendance": {
@@ -64956,11 +64791,6 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requiresAttendance": {
                               "type": "boolean"
                             },
@@ -65080,11 +64910,6 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requiresAttendance": {
                               "type": "boolean"
                             },
@@ -65202,11 +65027,6 @@
                             },
                             "location": {
                               "type": "string",
-                              "nullable": true
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
                               "nullable": true
                             },
                             "requiresAttendance": {
@@ -65470,11 +65290,6 @@
                     "type": "string",
                     "nullable": true
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requiresAttendance": {
                     "type": "boolean",
                     "nullable": true
@@ -65547,11 +65362,6 @@
                     "type": "string",
                     "nullable": true
                   },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
-                  },
                   "requiresAttendance": {
                     "type": "boolean",
                     "nullable": true
@@ -65622,11 +65432,6 @@
                   },
                   "location": {
                     "type": "string",
-                    "nullable": true
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
                     "nullable": true
                   },
                   "requiresAttendance": {
@@ -65726,11 +65531,6 @@
                             },
                             "location": {
                               "type": "string",
-                              "nullable": true
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
                               "nullable": true
                             },
                             "requiresAttendance": {
@@ -65852,11 +65652,6 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requiresAttendance": {
                               "type": "boolean"
                             },
@@ -65974,11 +65769,6 @@
                             },
                             "location": {
                               "type": "string",
-                              "nullable": true
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
                               "nullable": true
                             },
                             "requiresAttendance": {
@@ -67291,11 +67081,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -67577,11 +67362,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -67862,11 +67642,6 @@
                                           "type": "string",
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
-                                        },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
                                         },
                                         "requireQrCheckin": {
                                           "type": "boolean"
@@ -68365,11 +68140,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -68617,11 +68387,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -68868,11 +68633,6 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
                                   },
                                   "requireQrCheckin": {
                                     "type": "boolean"
@@ -69672,11 +69432,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -69924,11 +69679,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -70175,11 +69925,6 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
                                   },
                                   "requireQrCheckin": {
                                     "type": "boolean"
@@ -70663,11 +70408,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -70915,11 +70655,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -71166,11 +70901,6 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
                                   },
                                   "requireQrCheckin": {
                                     "type": "boolean"
@@ -72645,11 +72375,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -72897,11 +72622,6 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
-                                  },
                                   "requireQrCheckin": {
                                     "type": "boolean"
                                   },
@@ -73148,11 +72868,6 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
                                   },
                                   "requireQrCheckin": {
                                     "type": "boolean"
@@ -102165,7 +101880,7 @@
           "Material"
         ],
         "summary": "Delete material",
-        "description": "Soft-deletes the material and removes the corresponding file from S3.",
+        "description": "Deletes the material file from S3, then removes the database record.",
         "parameters": [
           {
             "name": "materialId",
@@ -119002,11 +118717,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -119358,11 +119068,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -119713,11 +119418,6 @@
                                                 "type": "string",
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
-                                              },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
                                               },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
@@ -120379,11 +120079,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -120701,11 +120396,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -121022,11 +120712,6 @@
                                           "type": "string",
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
-                                        },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
                                         },
                                         "requireQrCheckin": {
                                           "type": "boolean"
@@ -121896,11 +121581,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -122218,11 +121898,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -122539,11 +122214,6 @@
                                           "type": "string",
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
-                                        },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
                                         },
                                         "requireQrCheckin": {
                                           "type": "boolean"
@@ -123205,11 +122875,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -123527,11 +123192,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -123848,11 +123508,6 @@
                                           "type": "string",
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
-                                        },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
                                         },
                                         "requireQrCheckin": {
                                           "type": "boolean"
@@ -125397,11 +125052,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -125719,11 +125369,6 @@
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
                                         },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
-                                        },
                                         "requireQrCheckin": {
                                           "type": "boolean"
                                         },
@@ -126040,11 +125685,6 @@
                                           "type": "string",
                                           "nullable": true,
                                           "example": "15/06/2026 14:30:00"
-                                        },
-                                        "maxCapacity": {
-                                          "type": "integer",
-                                          "format": "int32",
-                                          "nullable": true
                                         },
                                         "requireQrCheckin": {
                                           "type": "boolean"
@@ -171908,11 +171548,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -172360,11 +171995,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -172811,11 +172441,6 @@
                                                 "type": "string",
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
-                                              },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
                                               },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
@@ -174049,11 +173674,6 @@
                                                       "nullable": true,
                                                       "example": "15/06/2026 14:30:00"
                                                     },
-                                                    "maxCapacity": {
-                                                      "type": "integer",
-                                                      "format": "int32",
-                                                      "nullable": true
-                                                    },
                                                     "requireQrCheckin": {
                                                       "type": "boolean"
                                                     },
@@ -174535,11 +174155,6 @@
                                                       "nullable": true,
                                                       "example": "15/06/2026 14:30:00"
                                                     },
-                                                    "maxCapacity": {
-                                                      "type": "integer",
-                                                      "format": "int32",
-                                                      "nullable": true
-                                                    },
                                                     "requireQrCheckin": {
                                                       "type": "boolean"
                                                     },
@@ -175020,11 +174635,6 @@
                                                       "type": "string",
                                                       "nullable": true,
                                                       "example": "15/06/2026 14:30:00"
-                                                    },
-                                                    "maxCapacity": {
-                                                      "type": "integer",
-                                                      "format": "int32",
-                                                      "nullable": true
                                                     },
                                                     "requireQrCheckin": {
                                                       "type": "boolean"
@@ -176800,11 +176410,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -177252,11 +176857,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -177703,11 +177303,6 @@
                                                 "type": "string",
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
-                                              },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
                                               },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
@@ -178645,11 +178240,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -179097,11 +178687,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -179548,11 +179133,6 @@
                                                 "type": "string",
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
-                                              },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
                                               },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
@@ -181489,11 +181069,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -181941,11 +181516,6 @@
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
                                               },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
-                                              },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
                                               },
@@ -182392,11 +181962,6 @@
                                                 "type": "string",
                                                 "nullable": true,
                                                 "example": "15/06/2026 14:30:00"
-                                              },
-                                              "maxCapacity": {
-                                                "type": "integer",
-                                                "format": "int32",
-                                                "nullable": true
                                               },
                                               "requireQrCheckin": {
                                                 "type": "boolean"
@@ -188491,14 +188056,6 @@
                                                     ],
                                                     "type": "string"
                                                   },
-                                                  "schedulingMode": {
-                                                    "enum": [
-                                                      "SelfPaced",
-                                                      "ClassSynchronized",
-                                                      "OptionalBooking"
-                                                    ],
-                                                    "type": "string"
-                                                  },
                                                   "description": {
                                                     "type": "string",
                                                     "nullable": true
@@ -188815,14 +188372,6 @@
                                                       "SelfPaced",
                                                       "LiveOnline",
                                                       "Offline"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "schedulingMode": {
-                                                    "enum": [
-                                                      "SelfPaced",
-                                                      "ClassSynchronized",
-                                                      "OptionalBooking"
                                                     ],
                                                     "type": "string"
                                                   },
@@ -189470,14 +189019,6 @@
                                                     ],
                                                     "type": "string"
                                                   },
-                                                  "schedulingMode": {
-                                                    "enum": [
-                                                      "SelfPaced",
-                                                      "ClassSynchronized",
-                                                      "OptionalBooking"
-                                                    ],
-                                                    "type": "string"
-                                                  },
                                                   "description": {
                                                     "type": "string",
                                                     "nullable": true
@@ -189794,14 +189335,6 @@
                                                       "SelfPaced",
                                                       "LiveOnline",
                                                       "Offline"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "schedulingMode": {
-                                                    "enum": [
-                                                      "SelfPaced",
-                                                      "ClassSynchronized",
-                                                      "OptionalBooking"
                                                     ],
                                                     "type": "string"
                                                   },
@@ -190449,14 +189982,6 @@
                                                     ],
                                                     "type": "string"
                                                   },
-                                                  "schedulingMode": {
-                                                    "enum": [
-                                                      "SelfPaced",
-                                                      "ClassSynchronized",
-                                                      "OptionalBooking"
-                                                    ],
-                                                    "type": "string"
-                                                  },
                                                   "description": {
                                                     "type": "string",
                                                     "nullable": true
@@ -190773,14 +190298,6 @@
                                                       "SelfPaced",
                                                       "LiveOnline",
                                                       "Offline"
-                                                    ],
-                                                    "type": "string"
-                                                  },
-                                                  "schedulingMode": {
-                                                    "enum": [
-                                                      "SelfPaced",
-                                                      "ClassSynchronized",
-                                                      "OptionalBooking"
                                                     ],
                                                     "type": "string"
                                                   },
@@ -227667,11 +227184,6 @@
             "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requireQrCheckin": {
             "type": "boolean"
           },
@@ -227857,11 +227369,6 @@
                     "type": "string",
                     "nullable": true,
                     "example": "15/06/2026 14:30:00"
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
-                    "nullable": true
                   },
                   "requireQrCheckin": {
                     "type": "boolean"
@@ -228056,11 +227563,6 @@
                   "type": "string",
                   "nullable": true,
                   "example": "15/06/2026 14:30:00"
-                },
-                "maxCapacity": {
-                  "type": "integer",
-                  "format": "int32",
-                  "nullable": true
                 },
                 "requireQrCheckin": {
                   "type": "boolean"
@@ -228281,11 +227783,6 @@
                           "type": "string",
                           "nullable": true,
                           "example": "15/06/2026 14:30:00"
-                        },
-                        "maxCapacity": {
-                          "type": "integer",
-                          "format": "int32",
-                          "nullable": true
                         },
                         "requireQrCheckin": {
                           "type": "boolean"
@@ -228521,11 +228018,6 @@
                       "nullable": true,
                       "example": "15/06/2026 14:30:00"
                     },
-                    "maxCapacity": {
-                      "type": "integer",
-                      "format": "int32",
-                      "nullable": true
-                    },
                     "requireQrCheckin": {
                       "type": "boolean"
                     },
@@ -228737,11 +228229,6 @@
                 "type": "string",
                 "nullable": true,
                 "example": "15/06/2026 14:30:00"
-              },
-              "maxCapacity": {
-                "type": "integer",
-                "format": "int32",
-                "nullable": true
               },
               "requireQrCheckin": {
                 "type": "boolean"
@@ -238468,11 +237955,6 @@
             "type": "string",
             "nullable": true
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requiresAttendance": {
             "type": "boolean"
           },
@@ -238568,11 +238050,6 @@
                   },
                   "location": {
                     "type": "string",
-                    "nullable": true
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
                     "nullable": true
                   },
                   "requiresAttendance": {
@@ -238678,11 +238155,6 @@
                 },
                 "location": {
                   "type": "string",
-                  "nullable": true
-                },
-                "maxCapacity": {
-                  "type": "integer",
-                  "format": "int32",
                   "nullable": true
                 },
                 "requiresAttendance": {
@@ -238814,11 +238286,6 @@
                         },
                         "location": {
                           "type": "string",
-                          "nullable": true
-                        },
-                        "maxCapacity": {
-                          "type": "integer",
-                          "format": "int32",
                           "nullable": true
                         },
                         "requiresAttendance": {
@@ -238966,11 +238433,6 @@
                       "type": "string",
                       "nullable": true
                     },
-                    "maxCapacity": {
-                      "type": "integer",
-                      "format": "int32",
-                      "nullable": true
-                    },
                     "requiresAttendance": {
                       "type": "boolean"
                     },
@@ -239092,11 +238554,6 @@
               },
               "location": {
                 "type": "string",
-                "nullable": true
-              },
-              "maxCapacity": {
-                "type": "integer",
-                "format": "int32",
                 "nullable": true
               },
               "requiresAttendance": {
@@ -239238,11 +238695,6 @@
           },
           "location": {
             "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "requiresAttendance": {
@@ -239402,11 +238854,6 @@
                   },
                   "location": {
                     "type": "string",
-                    "nullable": true
-                  },
-                  "maxCapacity": {
-                    "type": "integer",
-                    "format": "int32",
                     "nullable": true
                   },
                   "requiresAttendance": {
@@ -239580,11 +239027,6 @@
               },
               "location": {
                 "type": "string",
-                "nullable": true
-              },
-              "maxCapacity": {
-                "type": "integer",
-                "format": "int32",
                 "nullable": true
               },
               "requiresAttendance": {
@@ -239841,11 +239283,6 @@
                   "type": "string",
                   "nullable": true
                 },
-                "maxCapacity": {
-                  "type": "integer",
-                  "format": "int32",
-                  "nullable": true
-                },
                 "requiresAttendance": {
                   "type": "boolean"
                 },
@@ -240007,11 +239444,6 @@
                         },
                         "location": {
                           "type": "string",
-                          "nullable": true
-                        },
-                        "maxCapacity": {
-                          "type": "integer",
-                          "format": "int32",
                           "nullable": true
                         },
                         "requiresAttendance": {
@@ -240189,11 +239621,6 @@
                     },
                     "location": {
                       "type": "string",
-                      "nullable": true
-                    },
-                    "maxCapacity": {
-                      "type": "integer",
-                      "format": "int32",
                       "nullable": true
                     },
                     "requiresAttendance": {
@@ -240480,11 +239907,6 @@
                   "nullable": true,
                   "example": "15/06/2026 14:30:00"
                 },
-                "maxCapacity": {
-                  "type": "integer",
-                  "format": "int32",
-                  "nullable": true
-                },
                 "requireQrCheckin": {
                   "type": "boolean"
                 },
@@ -240709,11 +240131,6 @@
                           "type": "string",
                           "nullable": true,
                           "example": "15/06/2026 14:30:00"
-                        },
-                        "maxCapacity": {
-                          "type": "integer",
-                          "format": "int32",
-                          "nullable": true
                         },
                         "requireQrCheckin": {
                           "type": "boolean"
@@ -240947,11 +240364,6 @@
                         "type": "string",
                         "nullable": true,
                         "example": "15/06/2026 14:30:00"
-                      },
-                      "maxCapacity": {
-                        "type": "integer",
-                        "format": "int32",
-                        "nullable": true
                       },
                       "requireQrCheckin": {
                         "type": "boolean"
@@ -241211,11 +240623,6 @@
                                 "type": "string",
                                 "nullable": true,
                                 "example": "15/06/2026 14:30:00"
-                              },
-                              "maxCapacity": {
-                                "type": "integer",
-                                "format": "int32",
-                                "nullable": true
                               },
                               "requireQrCheckin": {
                                 "type": "boolean"
@@ -241490,11 +240897,6 @@
                             "nullable": true,
                             "example": "15/06/2026 14:30:00"
                           },
-                          "maxCapacity": {
-                            "type": "integer",
-                            "format": "int32",
-                            "nullable": true
-                          },
                           "requireQrCheckin": {
                             "type": "boolean"
                           },
@@ -241746,11 +241148,6 @@
                       "nullable": true,
                       "example": "15/06/2026 14:30:00"
                     },
-                    "maxCapacity": {
-                      "type": "integer",
-                      "format": "int32",
-                      "nullable": true
-                    },
                     "requireQrCheckin": {
                       "type": "boolean"
                     },
@@ -241923,11 +241320,6 @@
             "type": "string",
             "nullable": true,
             "example": "15/06/2026 14:30:00"
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
           },
           "requireQrCheckin": {
             "type": "boolean"
@@ -242241,11 +241633,6 @@
           "location": {
             "maxLength": 500,
             "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "requiresAttendance": {
@@ -247263,14 +246650,6 @@
                 ],
                 "type": "string"
               },
-              "schedulingMode": {
-                "enum": [
-                  "SelfPaced",
-                  "ClassSynchronized",
-                  "OptionalBooking"
-                ],
-                "type": "string"
-              },
               "description": {
                 "type": "string",
                 "nullable": true
@@ -247403,14 +246782,6 @@
               "SelfPaced",
               "LiveOnline",
               "Offline"
-            ],
-            "type": "string"
-          },
-          "schedulingMode": {
-            "enum": [
-              "SelfPaced",
-              "ClassSynchronized",
-              "OptionalBooking"
             ],
             "type": "string"
           },
@@ -247790,14 +247161,6 @@
                         "SelfPaced",
                         "LiveOnline",
                         "Offline"
-                      ],
-                      "type": "string"
-                    },
-                    "schedulingMode": {
-                      "enum": [
-                        "SelfPaced",
-                        "ClassSynchronized",
-                        "OptionalBooking"
                       ],
                       "type": "string"
                     },
@@ -248330,14 +247693,6 @@
                                   ],
                                   "type": "string"
                                 },
-                                "schedulingMode": {
-                                  "enum": [
-                                    "SelfPaced",
-                                    "ClassSynchronized",
-                                    "OptionalBooking"
-                                  ],
-                                  "type": "string"
-                                },
                                 "description": {
                                   "type": "string",
                                   "nullable": true
@@ -248654,14 +248009,6 @@
                                     "SelfPaced",
                                     "LiveOnline",
                                     "Offline"
-                                  ],
-                                  "type": "string"
-                                },
-                                "schedulingMode": {
-                                  "enum": [
-                                    "SelfPaced",
-                                    "ClassSynchronized",
-                                    "OptionalBooking"
                                   ],
                                   "type": "string"
                                 },
@@ -249287,14 +248634,6 @@
                                           ],
                                           "type": "string"
                                         },
-                                        "schedulingMode": {
-                                          "enum": [
-                                            "SelfPaced",
-                                            "ClassSynchronized",
-                                            "OptionalBooking"
-                                          ],
-                                          "type": "string"
-                                        },
                                         "description": {
                                           "type": "string",
                                           "nullable": true
@@ -249611,14 +248950,6 @@
                                             "SelfPaced",
                                             "LiveOnline",
                                             "Offline"
-                                          ],
-                                          "type": "string"
-                                        },
-                                        "schedulingMode": {
-                                          "enum": [
-                                            "SelfPaced",
-                                            "ClassSynchronized",
-                                            "OptionalBooking"
                                           ],
                                           "type": "string"
                                         },
@@ -250258,14 +249589,6 @@
                                       ],
                                       "type": "string"
                                     },
-                                    "schedulingMode": {
-                                      "enum": [
-                                        "SelfPaced",
-                                        "ClassSynchronized",
-                                        "OptionalBooking"
-                                      ],
-                                      "type": "string"
-                                    },
                                     "description": {
                                       "type": "string",
                                       "nullable": true
@@ -250582,14 +249905,6 @@
                                         "SelfPaced",
                                         "LiveOnline",
                                         "Offline"
-                                      ],
-                                      "type": "string"
-                                    },
-                                    "schedulingMode": {
-                                      "enum": [
-                                        "SelfPaced",
-                                        "ClassSynchronized",
-                                        "OptionalBooking"
                                       ],
                                       "type": "string"
                                     },
@@ -251054,14 +250369,6 @@
                       ],
                       "type": "string"
                     },
-                    "schedulingMode": {
-                      "enum": [
-                        "SelfPaced",
-                        "ClassSynchronized",
-                        "OptionalBooking"
-                      ],
-                      "type": "string"
-                    },
                     "description": {
                       "type": "string",
                       "nullable": true
@@ -251504,14 +250811,6 @@
                             ],
                             "type": "string"
                           },
-                          "schedulingMode": {
-                            "enum": [
-                              "SelfPaced",
-                              "ClassSynchronized",
-                              "OptionalBooking"
-                            ],
-                            "type": "string"
-                          },
                           "description": {
                             "type": "string",
                             "nullable": true
@@ -251828,14 +251127,6 @@
                               "SelfPaced",
                               "LiveOnline",
                               "Offline"
-                            ],
-                            "type": "string"
-                          },
-                          "schedulingMode": {
-                            "enum": [
-                              "SelfPaced",
-                              "ClassSynchronized",
-                              "OptionalBooking"
                             ],
                             "type": "string"
                           },
@@ -264642,11 +263933,6 @@
                         "nullable": true,
                         "example": "15/06/2026 14:30:00"
                       },
-                      "maxCapacity": {
-                        "type": "integer",
-                        "format": "int32",
-                        "nullable": true
-                      },
                       "requireQrCheckin": {
                         "type": "boolean"
                       },
@@ -264941,11 +264227,6 @@
                                 "type": "string",
                                 "nullable": true,
                                 "example": "15/06/2026 14:30:00"
-                              },
-                              "maxCapacity": {
-                                "type": "integer",
-                                "format": "int32",
-                                "nullable": true
                               },
                               "requireQrCheckin": {
                                 "type": "boolean"
@@ -265249,11 +264530,6 @@
                               "type": "string",
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
-                            },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
                             },
                             "requireQrCheckin": {
                               "type": "boolean"
@@ -265583,11 +264859,6 @@
                                       "type": "string",
                                       "nullable": true,
                                       "example": "15/06/2026 14:30:00"
-                                    },
-                                    "maxCapacity": {
-                                      "type": "integer",
-                                      "format": "int32",
-                                      "nullable": true
                                     },
                                     "requireQrCheckin": {
                                       "type": "boolean"
@@ -265932,11 +265203,6 @@
                                   "nullable": true,
                                   "example": "15/06/2026 14:30:00"
                                 },
-                                "maxCapacity": {
-                                  "type": "integer",
-                                  "format": "int32",
-                                  "nullable": true
-                                },
                                 "requireQrCheckin": {
                                   "type": "boolean"
                                 },
@@ -266257,11 +265523,6 @@
                             "type": "string",
                             "nullable": true,
                             "example": "15/06/2026 14:30:00"
-                          },
-                          "maxCapacity": {
-                            "type": "integer",
-                            "format": "int32",
-                            "nullable": true
                           },
                           "requireQrCheckin": {
                             "type": "boolean"
@@ -276947,11 +276208,6 @@
                               "nullable": true,
                               "example": "15/06/2026 14:30:00"
                             },
-                            "maxCapacity": {
-                              "type": "integer",
-                              "format": "int32",
-                              "nullable": true
-                            },
                             "requireQrCheckin": {
                               "type": "boolean"
                             },
@@ -277376,11 +276632,6 @@
                                       "type": "string",
                                       "nullable": true,
                                       "example": "15/06/2026 14:30:00"
-                                    },
-                                    "maxCapacity": {
-                                      "type": "integer",
-                                      "format": "int32",
-                                      "nullable": true
                                     },
                                     "requireQrCheckin": {
                                       "type": "boolean"
@@ -277814,11 +277065,6 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
-                                  },
-                                  "maxCapacity": {
-                                    "type": "integer",
-                                    "format": "int32",
-                                    "nullable": true
                                   },
                                   "requireQrCheckin": {
                                     "type": "boolean"
@@ -278278,11 +277524,6 @@
                                             "type": "string",
                                             "nullable": true,
                                             "example": "15/06/2026 14:30:00"
-                                          },
-                                          "maxCapacity": {
-                                            "type": "integer",
-                                            "format": "int32",
-                                            "nullable": true
                                           },
                                           "requireQrCheckin": {
                                             "type": "boolean"
@@ -278757,11 +277998,6 @@
                                         "nullable": true,
                                         "example": "15/06/2026 14:30:00"
                                       },
-                                      "maxCapacity": {
-                                        "type": "integer",
-                                        "format": "int32",
-                                        "nullable": true
-                                      },
                                       "requireQrCheckin": {
                                         "type": "boolean"
                                       },
@@ -279212,11 +278448,6 @@
                                   "type": "string",
                                   "nullable": true,
                                   "example": "15/06/2026 14:30:00"
-                                },
-                                "maxCapacity": {
-                                  "type": "integer",
-                                  "format": "int32",
-                                  "nullable": true
                                 },
                                 "requireQrCheckin": {
                                   "type": "boolean"
@@ -287237,11 +286468,6 @@
             "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
-            "nullable": true
-          },
           "requireQrCheckin": {
             "type": "boolean",
             "nullable": true
@@ -287578,11 +286804,6 @@
           },
           "location": {
             "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32",
             "nullable": true
           },
           "requiresAttendance": {

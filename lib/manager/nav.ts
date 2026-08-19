@@ -28,7 +28,7 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
     title: "Tổng quan",
     items: [
       {
-        label: "Dashboard",
+        label: "Tổng quan",
         href: "/manager",
         icon: LayoutDashboard,
       },

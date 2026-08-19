@@ -15,7 +15,7 @@ const FOOTER_LINKS = {
     { label: "Portfolio AI", href: "/portfolio" },
     { label: "Học trực tuyến", href: "/learn" },
     { label: "Chứng chỉ", href: "/certificates" },
-    { label: "Dashboard", href: "/dashboard" },
+    { label: "Tổng quan", href: "/manager" },
   ],
   "Về chúng tôi": [
     { label: "Giới thiệu", href: "/about" },

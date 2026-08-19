@@ -63,7 +63,6 @@ export function TopProgramsPanel({
         <BookOpen className="size-4 text-steam-science" />
         <DashboardSectionTitle
           title="Top chương trình"
-          description="Theo đăng ký hoặc doanh thu"
         />
       </div>
 

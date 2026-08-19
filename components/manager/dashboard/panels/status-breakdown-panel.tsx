@@ -1,5 +1,8 @@
 "use client";
 
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
+
 import { Bar } from "@/components/charts/bar";
 import { BarChart } from "@/components/charts/bar-chart";
 import { BarXAxis } from "@/components/charts/bar-x-axis";
@@ -71,6 +74,14 @@ export function StatusBreakdownPanel({
           />
         </BarChart>
       </div>
+
+      <Link
+        href="/manager/classes"
+        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-steam-mathematics hover:underline"
+      >
+        Quản lý lớp học
+        <ArrowUpRight className="size-3.5" />
+      </Link>
     </DashboardPanel>
   );
 }

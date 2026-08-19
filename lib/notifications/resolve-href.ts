@@ -1,5 +1,5 @@
 import type { NotificationType } from "@/lib/api/entities/notification";
-import { isManagerRole, isParentRole } from "@/lib/auth/roles";
+import { canAccessManagerArea, isParentRole } from "@/lib/auth/roles";
 import { assignmentEditHref } from "@/lib/manager/curriculum-catalog";
 import {
   parseNotificationPayload,
@@ -64,7 +64,7 @@ export function resolveNotificationHref(
   input: ResolveNotificationHrefInput,
 ): string | null {
   const { type, payload, accountRole } = input;
-  const isManager = isManagerRole(accountRole);
+  const isManager = canAccessManagerArea(accountRole);
   const isParent = isParentRole(accountRole);
 
   const programId = payloadString(payload, "programId");

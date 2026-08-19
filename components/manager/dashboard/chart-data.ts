@@ -5,7 +5,9 @@ import type {
 } from "@/lib/api";
 import { parseApiDateTime } from "@/lib/api/datetime";
 import type { ClassStatus } from "@/lib/api/entities/class";
+import type { ProgramEnrollmentStatus } from "@/lib/api/entities/program-enrollment";
 import { CLASS_STATUS_LABELS } from "@/lib/classes/constants";
+import { PROGRAM_ENROLLMENT_STATUS_LABELS } from "@/lib/programs/enrollments";
 
 import { formatCount, formatMoney } from "./dashboard-utils";
 
@@ -21,6 +23,15 @@ const CLASS_STATUS_ORDER: ClassStatus[] = [
   "InProgress",
   "Completed",
   "Cancelled",
+];
+
+const ENROLLMENT_STATUS_ORDER: ProgramEnrollmentStatus[] = [
+  "PendingPayment",
+  "Active",
+  "Deferred",
+  "Completed",
+  "Failed",
+  "Dropped",
 ];
 
 const SUBMISSION_STATUS_LABELS: Record<string, string> = {
@@ -149,12 +160,42 @@ export function gatewayLabel(gateway: string): string {
   return PAYMENT_GATEWAY_VI[gateway] ?? gateway;
 }
 
+/** Compact share line for the revenue KPI — replaces a dedicated mix chart. */
+export function paymentMixFootnote(
+  items: Array<{ gateway: string; amount: number }>,
+): string | undefined {
+  const total = items.reduce((sum, item) => sum + item.amount, 0);
+  if (total <= 0) return undefined;
+  const parts = items
+    .filter((item) => item.amount > 0)
+    .map(
+      (item) =>
+        `${gatewayLabel(item.gateway)} ${((item.amount / total) * 100).toFixed(0)}%`,
+    );
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
+/** Compact enrollment-status line — replaces a dedicated status chart. */
+export function enrollmentMixFootnote(items: StatusCount[]): string | undefined {
+  const parts = statusCountsToChartData(items, "enrollment")
+    .filter((row) => row.value > 0)
+    .map((row) => `${row.name} ${formatCount(row.value)}`);
+  return parts.length > 0 ? parts.join(" · ") : undefined;
+}
+
 export function classStatusLabel(status: string): string {
   return CLASS_STATUS_LABELS[status as ClassStatus] ?? status;
 }
 
 export function submissionStatusLabel(status: string): string {
   return SUBMISSION_STATUS_LABELS[status] ?? status;
+}
+
+export function enrollmentStatusLabel(status: string): string {
+  return (
+    PROGRAM_ENROLLMENT_STATUS_LABELS[status as ProgramEnrollmentStatus] ??
+    status
+  );
 }
 
 export type StatusChartRow = {
@@ -166,12 +207,20 @@ export type StatusChartRow = {
 /** Stable order + Vietnamese labels; zero-fills known statuses when omitted. */
 export function statusCountsToChartData(
   items: StatusCount[],
-  kind: "class" | "submission" = "class",
+  kind: "class" | "submission" | "enrollment" = "class",
 ): StatusChartRow[] {
   const order =
-    kind === "submission" ? [...SUBMISSION_STATUS_ORDER] : CLASS_STATUS_ORDER;
+    kind === "submission"
+      ? [...SUBMISSION_STATUS_ORDER]
+      : kind === "enrollment"
+        ? [...ENROLLMENT_STATUS_ORDER]
+        : CLASS_STATUS_ORDER;
   const labelFn =
-    kind === "submission" ? submissionStatusLabel : classStatusLabel;
+    kind === "submission"
+      ? submissionStatusLabel
+      : kind === "enrollment"
+        ? enrollmentStatusLabel
+        : classStatusLabel;
   const byStatus = new Map(
     items
       .filter((item) => item.status != null)
@@ -183,14 +232,4 @@ export function statusCountsToChartData(
     status,
     value: byStatus.get(status) ?? 0,
   }));
-}
-
-/** Sum Open + InProgress — mirrors GetOverviewAsync activeClassCount. */
-export function deriveActiveClassCount(items: StatusCount[]): number {
-  return items.reduce((sum, item) => {
-    if (item.status === "Open" || item.status === "InProgress") {
-      return sum + item.count;
-    }
-    return sum;
-  }, 0);
 }

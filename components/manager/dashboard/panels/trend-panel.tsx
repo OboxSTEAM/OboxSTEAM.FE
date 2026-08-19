@@ -96,8 +96,7 @@ export function TrendPanel({
     <DashboardPanel className="h-full">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
         <DashboardSectionTitle
-          title="Xu hướng theo kỳ"
-          description="Đăng ký · doanh thu · bài nộp · điểm danh"
+          title="Xu hướng"
         />
         <div
           role="group"

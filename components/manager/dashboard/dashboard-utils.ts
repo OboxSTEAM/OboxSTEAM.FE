@@ -37,6 +37,12 @@ export function greetingByHour(date = new Date()): string {
   return "Chào buổi tối";
 }
 
+export function revenueTitleForRange(range: DashboardRange): string {
+  const option = DASHBOARD_RANGE_OPTIONS.find((item) => item.value === range);
+  if (!option) return "Doanh thu 30 ngày qua";
+  return `Doanh thu ${option.label} qua`;
+}
+
 export type AttentionItem = {
   id: string;
   title: string;
