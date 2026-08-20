@@ -7,7 +7,6 @@ import {
   CalendarDays,
   ChevronsUpDown,
   ClipboardList,
-  LayoutDashboard,
   LogOut,
   RotateCcw,
   User,
@@ -46,12 +45,6 @@ const LOGO_URL =
 
 const NAV_ITEMS = [
   {
-    title: "Tổng quan",
-    url: "/mentor",
-    icon: LayoutDashboard,
-    exact: true,
-  },
-  {
     title: "Lớp của tôi",
     url: "/mentor/classes",
     icon: Users,
@@ -67,7 +60,7 @@ const NAV_ITEMS = [
     icon: ClipboardList,
   },
   {
-    title: "Phục hồi bài tập",
+    title: "Yêu cầu làm lại",
     url: "/mentor/recovery",
     icon: RotateCcw,
   },
@@ -86,9 +79,6 @@ function isNavActive(
   item: (typeof NAV_ITEMS)[number],
   pathname: string,
 ): boolean {
-  if ("exact" in item && item.exact) {
-    return pathname === item.url;
-  }
   return pathname === item.url || pathname.startsWith(`${item.url}/`);
 }
 

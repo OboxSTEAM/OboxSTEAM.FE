@@ -198,7 +198,7 @@ export function SessionCalendar({
     mode === "drawer" ? "month" : "week",
   );
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
-  const [showMini, setShowMini] = useState(mode !== "drawer");
+  const [showMini, setShowMini] = useState(true);
   const [focused, setFocused] = useState<{ id: string; nonce: number } | null>(
     null,
   );
@@ -251,7 +251,7 @@ export function SessionCalendar({
   }
 
   return (
-    <div className={cn("flex flex-col", className)}>
+    <div className={cn("flex min-h-0 flex-col", className)}>
       <CalendarToolbar
         view={view}
         anchor={anchor}
@@ -262,19 +262,26 @@ export function SessionCalendar({
         sessions={parsed}
         showMini={showMini}
         onToggleMini={() => setShowMini((value) => !value)}
+        compact={mode === "drawer"}
       />
 
-      <div className="flex flex-col lg:flex-row">
+      <div
+        className={cn(
+          "flex min-h-0 flex-1 flex-col overflow-hidden",
+          mode === "drawer" ? "md:flex-row" : "lg:flex-row",
+        )}
+      >
         {showMini ? (
           <MiniMonth
             anchor={anchor}
             today={today}
             sessions={parsed}
             onSelectDay={selectDay}
+            compact={mode === "drawer"}
           />
         ) : null}
 
-        <div className="min-w-0 flex-1">
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto">
           {view === "month" ? (
             <MonthGrid
               anchor={anchor}
@@ -284,6 +291,7 @@ export function SessionCalendar({
               onSelectSession={onSelectSession}
               onCreateAt={canCreate ? onCreateAt : undefined}
               onSelectDay={selectDay}
+              compact={mode === "drawer"}
             />
           ) : (
             <TimeGrid
@@ -294,6 +302,7 @@ export function SessionCalendar({
               focusedId={focused?.id ?? null}
               onSelectSession={onSelectSession}
               onCreateAt={canCreate ? onCreateAt : undefined}
+              compact={mode === "drawer"}
             />
           )}
         </div>
@@ -307,11 +316,13 @@ function MiniMonth({
   today,
   sessions,
   onSelectDay,
+  compact = false,
 }: {
   anchor: Date;
   today: Date;
   sessions: ParsedSession[];
   onSelectDay: (day: Date) => void;
+  compact?: boolean;
 }) {
   const [displayMonth, setDisplayMonth] = useState(() => startOfMonth(anchor));
 
@@ -332,7 +343,14 @@ function MiniMonth({
   }, [sessions]);
 
   return (
-    <div className="shrink-0 border-b border-border p-4 lg:w-[256px] lg:border-b-0 lg:border-r">
+    <div
+      className={cn(
+        "shrink-0 border-b border-border",
+        compact
+          ? "p-3 md:w-[240px] md:border-b-0 md:border-r lg:w-[256px]"
+          : "p-4 lg:w-[256px] lg:border-b-0 lg:border-r",
+      )}
+    >
       <div className="mb-2 flex items-center justify-between">
         <p className="text-sm font-bold text-foreground">
           Tháng {displayMonth.getMonth() + 1}, {displayMonth.getFullYear()}
@@ -414,6 +432,7 @@ function CalendarToolbar({
   sessions,
   showMini,
   onToggleMini,
+  compact = false,
 }: {
   view: CalendarView;
   anchor: Date;
@@ -424,6 +443,7 @@ function CalendarToolbar({
   sessions: ParsedSession[];
   showMini: boolean;
   onToggleMini: () => void;
+  compact?: boolean;
 }) {
   const rangeLabel = useMemo(() => {
     if (view === "day") {
@@ -451,9 +471,22 @@ function CalendarToolbar({
   }, [sessions, anchor]);
 
   return (
-    <div className="flex flex-col gap-3 border-b border-border bg-background/70 px-6 py-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex items-center gap-2">
+    <div
+      className={cn(
+        "shrink-0 border-b border-border bg-background/70",
+        compact ? "gap-2.5 px-3 py-3 sm:px-4" : "gap-3 px-6 py-4",
+        "flex flex-col",
+      )}
+    >
+      <div
+        className={cn(
+          "flex gap-2.5",
+          compact
+            ? "flex-col sm:flex-row sm:items-center sm:justify-between"
+            : "flex-col gap-3 lg:flex-row lg:items-center lg:justify-between",
+        )}
+      >
+        <div className="flex min-w-0 flex-wrap items-center gap-1.5 sm:gap-2">
           <Button
             type="button"
             variant="outline"
@@ -463,7 +496,8 @@ function CalendarToolbar({
             aria-pressed={showMini}
             title={showMini ? "Ẩn mini lịch" : "Hiện mini lịch"}
             className={cn(
-              "size-9 rounded-lg border-border",
+              "rounded-lg border-border",
+              compact ? "size-8" : "size-9",
               showMini && "bg-muted text-foreground",
             )}
           >
@@ -479,7 +513,10 @@ function CalendarToolbar({
             size="icon"
             onClick={onPrev}
             aria-label="Trước"
-            className="size-9 rounded-lg border-border"
+            className={cn(
+              "rounded-lg border-border",
+              compact ? "size-8" : "size-9",
+            )}
           >
             <ChevronLeft className="size-4" />
           </Button>
@@ -487,7 +524,10 @@ function CalendarToolbar({
             type="button"
             variant="outline"
             onClick={onToday}
-            className="h-9 rounded-lg border-border px-3 text-sm font-semibold"
+            className={cn(
+              "rounded-lg border-border font-semibold",
+              compact ? "h-8 px-2.5 text-xs" : "h-9 px-3 text-sm",
+            )}
           >
             Hôm nay
           </Button>
@@ -497,17 +537,30 @@ function CalendarToolbar({
             size="icon"
             onClick={onNext}
             aria-label="Sau"
-            className="size-9 rounded-lg border-border"
+            className={cn(
+              "rounded-lg border-border",
+              compact ? "size-8" : "size-9",
+            )}
           >
             <ChevronRight className="size-4" />
           </Button>
-          <p className="ml-1 flex items-center gap-2 text-sm font-semibold text-foreground">
-            <CalendarDays className="size-4 text-primary" />
-            {rangeLabel}
+          <p
+            className={cn(
+              "ml-0.5 flex min-w-0 items-center gap-1.5 font-semibold text-foreground",
+              compact ? "text-xs sm:text-sm" : "text-sm",
+            )}
+          >
+            <CalendarDays className="size-4 shrink-0 text-primary" />
+            <span className="truncate">{rangeLabel}</span>
           </p>
         </div>
 
-        <div className="flex items-center self-start rounded-xl border border-border bg-card p-1 lg:self-auto">
+        <div
+          className={cn(
+            "flex items-center rounded-xl border border-border bg-card p-1",
+            compact ? "w-full sm:w-auto sm:self-auto" : "self-start lg:self-auto",
+          )}
+        >
           {(Object.keys(VIEW_LABELS) as CalendarView[]).map((key) => (
             <button
               key={key}
@@ -515,7 +568,8 @@ function CalendarToolbar({
               onClick={() => onViewChange(key)}
               aria-pressed={view === key}
               className={cn(
-                "h-8 rounded-lg px-3 text-sm font-semibold transition",
+                "flex-1 rounded-lg font-semibold transition sm:flex-none",
+                compact ? "h-8 px-2.5 text-xs sm:px-3 sm:text-sm" : "h-8 px-3 text-sm",
                 view === key
                   ? "bg-primary text-white"
                   : "text-muted-foreground hover:bg-muted",
@@ -528,11 +582,11 @@ function CalendarToolbar({
       </div>
 
       {presentKinds.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-x-4 sm:gap-y-1.5">
           {presentKinds.map((kind) => (
             <span
               key={kind}
-              className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground"
+              className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground sm:text-xs"
             >
               <span className={cn("size-2.5 rounded-full", KIND_DOT[kind])} />
               {CLASS_SESSION_KIND_LABELS[kind]}
@@ -552,6 +606,7 @@ function TimeGrid({
   focusedId,
   onSelectSession,
   onCreateAt,
+  compact = false,
 }: {
   view: "day" | "week";
   anchor: Date;
@@ -560,6 +615,7 @@ function TimeGrid({
   focusedId?: string | null;
   onSelectSession?: (session: ClassSession) => void;
   onCreateAt?: (start: Date) => void;
+  compact?: boolean;
 }) {
   const days = useMemo(() => {
     if (view === "day") return [startOfDay(anchor)];
@@ -652,12 +708,30 @@ function TimeGrid({
 
   const gridColsClass =
     view === "day"
-      ? "grid-cols-[56px_minmax(0,1fr)]"
-      : "grid-cols-[56px_repeat(7,minmax(0,1fr))]";
+      ? "grid-cols-[48px_minmax(0,1fr)] sm:grid-cols-[56px_minmax(0,1fr)]"
+      : compact
+        ? "grid-cols-[40px_repeat(7,minmax(0,1fr))] sm:grid-cols-[48px_repeat(7,minmax(0,1fr))]"
+        : "grid-cols-[56px_repeat(7,minmax(0,1fr))]";
 
   return (
-    <div ref={scrollRef} className="relative max-h-[600px] overflow-auto">
-      <div className={view === "day" ? "min-w-0" : "min-w-[720px]"}>
+    <div
+      ref={scrollRef}
+      className={cn(
+        "relative overflow-auto",
+        compact
+          ? "max-h-[calc(100dvh-11rem)] min-h-[20rem]"
+          : "max-h-[600px]",
+      )}
+    >
+      <div
+        className={
+          view === "day"
+            ? "min-w-0"
+            : compact
+              ? "min-w-[520px] sm:min-w-[640px]"
+              : "min-w-[720px]"
+        }
+      >
         {/* Day header row */}
         <div
           className={cn(
@@ -675,7 +749,8 @@ function TimeGrid({
               <div
                 key={day.toISOString()}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 border-l border-border py-2",
+                  "flex flex-col items-center gap-0.5 border-l border-border",
+                  compact ? "py-1.5 sm:py-2" : "py-2",
                   isToday
                     ? "bg-primary/5"
                     : isWeekend
@@ -683,12 +758,18 @@ function TimeGrid({
                       : undefined,
                 )}
               >
-                <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                <span
+                  className={cn(
+                    "font-medium uppercase tracking-wider text-muted-foreground",
+                    compact ? "text-[10px] sm:text-xs" : "text-xs",
+                  )}
+                >
                   {WEEKDAY_LABELS[weekdayIndex]}
                 </span>
                 <span
                   className={cn(
-                    "flex size-7 items-center justify-center rounded-full text-sm font-bold tabular-nums",
+                    "flex items-center justify-center rounded-full font-bold tabular-nums",
+                    compact ? "size-6 text-xs sm:size-7 sm:text-sm" : "size-7 text-sm",
                     isToday ? "bg-primary text-white" : "text-foreground",
                   )}
                 >
@@ -820,6 +901,7 @@ function MonthGrid({
   onSelectSession,
   onCreateAt,
   onSelectDay,
+  compact = false,
 }: {
   anchor: Date;
   today: Date;
@@ -828,6 +910,7 @@ function MonthGrid({
   onSelectSession?: (session: ClassSession) => void;
   onCreateAt?: (start: Date) => void;
   onSelectDay?: (day: Date) => void;
+  compact?: boolean;
 }) {
   const monthStart = startOfMonth(anchor);
   const gridStart = startOfWeek(monthStart);
@@ -860,12 +943,15 @@ function MonthGrid({
   }
 
   return (
-    <div className="p-4">
+    <div className={cn(compact ? "p-2 sm:p-3" : "p-4")}>
       <div className="grid grid-cols-7 border-b border-border">
         {WEEKDAY_LABELS.map((label) => (
           <div
             key={label}
-            className="py-2 text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            className={cn(
+              "py-1.5 text-center font-semibold uppercase tracking-wider text-muted-foreground sm:py-2",
+              compact ? "text-[10px] sm:text-xs" : "text-xs",
+            )}
           >
             {label}
           </div>
@@ -885,7 +971,10 @@ function MonthGrid({
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={cn(
-                "min-h-[104px] border-b border-l border-border p-1.5 [&:nth-child(7n)]:border-r-0",
+                "border-b border-l border-border [&:nth-child(7n)]:border-r-0",
+                compact
+                  ? "min-h-[4.25rem] p-1 sm:min-h-[5.5rem] sm:p-1.5 md:min-h-[6.25rem]"
+                  : "min-h-[104px] p-1.5",
                 (onCreateAt || onSelectDay) && "cursor-pointer",
                 onCreateAt && "cursor-copy",
                 !isCurrentMonth && "bg-background/50",
@@ -893,10 +982,11 @@ function MonthGrid({
                 isSelected && "bg-primary/5",
               )}
             >
-              <div className="mb-1 flex justify-end">
+              <div className="mb-0.5 flex justify-end sm:mb-1">
                 <span
                   className={cn(
-                    "flex size-6 items-center justify-center rounded-full text-xs font-bold tabular-nums",
+                    "flex items-center justify-center rounded-full font-bold tabular-nums",
+                    compact ? "size-5 text-[10px] sm:size-6 sm:text-xs" : "size-6 text-xs",
                     isToday
                       ? "bg-primary text-white"
                       : isSelected
@@ -909,7 +999,7 @@ function MonthGrid({
                   {day.getDate()}
                 </span>
               </div>
-              <div className="space-y-1">
+              <div className={cn("space-y-0.5", !compact && "space-y-1")}>
                 {items.slice(0, MONTH_MAX_CHIPS).map((item) => {
                   const isCancelled = item.session.status === "Cancelled";
                   const isFocused = focusedId === item.session.id;
@@ -923,7 +1013,8 @@ function MonthGrid({
                       }}
                       title={`${item.session.title || "Chưa đặt tiêu đề"} · ${clock(item.start)}`}
                       className={cn(
-                        "flex w-full items-center gap-1.5 rounded-md px-1.5 py-1 text-left transition hover:bg-muted",
+                        "flex w-full items-center gap-1 rounded-md text-left transition hover:bg-muted",
+                        compact ? "px-0.5 py-0.5 sm:gap-1.5 sm:px-1.5 sm:py-1" : "gap-1.5 px-1.5 py-1",
                         isCancelled && "opacity-50 line-through",
                         isFocused &&
                           "animate-pulse bg-primary/10 ring-1 ring-primary",
@@ -931,22 +1022,31 @@ function MonthGrid({
                     >
                       <span
                         className={cn(
-                          "size-2 shrink-0 rounded-full",
+                          "shrink-0 rounded-full",
+                          compact ? "size-1.5 sm:size-2" : "size-2",
                           KIND_DOT[item.session.sessionKind],
                         )}
                       />
-                      <span className="shrink-0 text-[10px] font-semibold tabular-nums text-muted-foreground">
+                      <span className="shrink-0 text-[9px] font-semibold tabular-nums text-muted-foreground sm:text-[10px]">
                         {clock(item.start)}
                       </span>
-                      <span className="truncate text-[11px] font-medium text-foreground">
+                      <span
+                        className={cn(
+                          "truncate font-medium text-foreground",
+                          compact
+                            ? "hidden text-[10px] sm:inline sm:text-[11px]"
+                            : "text-[11px]",
+                        )}
+                      >
                         {item.session.title || "Chưa đặt tiêu đề"}
                       </span>
                     </button>
                   );
                 })}
                 {items.length > MONTH_MAX_CHIPS ? (
-                  <span className="block px-1.5 text-[10px] font-semibold text-muted-foreground">
-                    +{items.length - MONTH_MAX_CHIPS} buổi khác
+                  <span className="block px-0.5 text-[9px] font-semibold text-muted-foreground sm:px-1.5 sm:text-[10px]">
+                    +{items.length - MONTH_MAX_CHIPS}
+                    <span className="hidden sm:inline"> buổi khác</span>
                   </span>
                 ) : null}
               </div>

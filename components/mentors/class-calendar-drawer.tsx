@@ -49,43 +49,54 @@ export function ClassCalendarDrawer({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetPopup side="right" className="w-[min(100vw,32rem)] sm:max-w-lg">
-        <SheetHeader className="pr-12">
-          <SheetTitle className="flex items-center gap-2">
-            <CalendarDays className="size-4 text-primary" />
-            Lịch lớp này
-          </SheetTitle>
-          <p className="text-sm text-muted-foreground">
-            {cohortName?.trim() || "Xem nhanh lịch buổi học (chỉ đọc)"}
-          </p>
-          {detailHref ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              nativeButton={false}
-              render={<Link href={detailHref} />}
-              className="mt-1 h-8 w-fit gap-1.5 rounded-lg text-xs"
-              onClick={() => onOpenChange(false)}
-            >
-              Mở chi tiết lịch
-              <ExternalLink className="size-3" />
-            </Button>
-          ) : null}
+      <SheetPopup
+        side="right"
+        className="w-full max-w-none sm:w-[min(100vw,42rem)] lg:w-[min(100vw,56rem)] xl:w-[min(100vw,64rem)]"
+      >
+        <SheetHeader className="shrink-0 gap-2 pr-12 sm:px-5 sm:py-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0 space-y-1">
+              <SheetTitle className="flex items-center gap-2">
+                <CalendarDays className="size-4 shrink-0 text-primary" />
+                Lịch lớp này
+              </SheetTitle>
+              <p className="truncate text-sm text-muted-foreground">
+                {cohortName?.trim() || "Xem nhanh lịch buổi học (chỉ đọc)"}
+              </p>
+            </div>
+            {detailHref ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                nativeButton={false}
+                render={<Link href={detailHref} />}
+                className="h-8 shrink-0 gap-1.5 rounded-lg text-xs"
+                onClick={() => onOpenChange(false)}
+              >
+                Mở chi tiết lịch
+                <ExternalLink className="size-3" />
+              </Button>
+            ) : null}
+          </div>
           <SheetClose />
         </SheetHeader>
-        <SheetBody className="p-0">
+        <SheetBody className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">
           {!classId ? (
             <p className="px-4 py-10 text-center text-sm text-muted-foreground">
               Chưa chọn lớp.
             </p>
           ) : isLoading ? (
-            <div className="space-y-3 p-4">
-              <Skeleton className="h-8 w-full rounded-lg" />
-              <Skeleton className="h-64 w-full rounded-lg" />
+            <div className="space-y-3 p-4 sm:p-5">
+              <Skeleton className="h-10 w-full rounded-lg" />
+              <Skeleton className="h-[min(28rem,55vh)] w-full rounded-lg" />
             </div>
           ) : (
-            <SessionCalendar sessions={sessions} mode="drawer" />
+            <SessionCalendar
+              sessions={sessions}
+              mode="drawer"
+              className="min-h-0 flex-1"
+            />
           )}
         </SheetBody>
       </SheetPopup>
