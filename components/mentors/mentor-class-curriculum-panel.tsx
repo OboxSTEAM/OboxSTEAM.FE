@@ -7,6 +7,7 @@ import {
   ClipboardList,
   ListTree,
   MapPin,
+  QrCode,
   Sparkles,
   Users,
   Zap,
@@ -19,6 +20,7 @@ import {
   MentorCurriculumTree,
   type MentorCurriculumSelection,
 } from "@/components/mentors/mentor-curriculum-tree";
+import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import {
   ManagerDataTable,
@@ -50,6 +52,7 @@ import {
   type SessionAttendanceStatus,
 } from "@/lib/api";
 import {
+  canGenerateSessionCheckinQr,
   formatClassSessionSchedule,
   getNextSessionForActivity,
   getSessionsForActivity,
@@ -141,6 +144,7 @@ export function MentorClassCurriculumPanel({
   const [forceCompletingId, setForceCompletingId] = useState<string | null>(null);
   const [bulkForceBusy, setBulkForceBusy] = useState(false);
   const [isForceCompleteOpen, setIsForceCompleteOpen] = useState(false);
+  const [isQrOpen, setIsQrOpen] = useState(false);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -162,6 +166,7 @@ export function MentorClassCurriculumPanel({
 
   useEffect(() => {
     setIsForceCompleteOpen(false);
+    setIsQrOpen(false);
   }, [selectedActivityId]);
 
   const { data: programResult, isLoading: isProgramLoading, retry: retryProgram } = useClientFetch({
@@ -284,6 +289,10 @@ export function MentorClassCurriculumPanel({
       selectedActivity.activityType === "Offline")
       ? sessionId
       : "";
+
+  useEffect(() => {
+    setIsQrOpen(false);
+  }, [effectiveSessionId]);
 
   const {
     data: attendanceData,
@@ -555,27 +564,25 @@ export function MentorClassCurriculumPanel({
           ) : selection.kind === "activity" && selectedActivity ? (
             <>
               <div className="border-b border-border bg-muted/30 px-4 py-3 sm:px-6">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="text-xs text-muted-foreground">
-                      {ACTIVITY_TYPE_LABELS[selectedActivity.activityType]}
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">
+                    {ACTIVITY_TYPE_LABELS[selectedActivity.activityType]}
+                  </p>
+                  <h2 className="font-heading text-lg font-semibold text-foreground">
+                    {selectedActivity.name}
+                  </h2>
+                  {selectedActivity.description ? (
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {selectedActivity.description}
                     </p>
-                    <h2 className="font-heading text-lg font-semibold text-foreground">
-                      {selectedActivity.name}
-                    </h2>
-                    {selectedActivity.description ? (
-                      <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                        {selectedActivity.description}
-                      </p>
-                    ) : null}
-                  </div>
+                  ) : null}
                 </div>
 
                 {selectedActivity.activityType === "LiveOnline" ||
                 selectedActivity.activityType === "Offline" ? (
                   sessionSchedule ? (
                     <div className="mt-3 overflow-hidden rounded-xl border border-primary/25 bg-card">
-                      <div className="flex items-center gap-2 border-b border-border bg-primary/[0.06] px-3 py-2">
+                      <div className="flex flex-wrap items-center gap-2 border-b border-border bg-primary/[0.06] px-3 py-2">
                         <CalendarClock
                           className="size-4 shrink-0 text-primary"
                           aria-hidden
@@ -584,7 +591,7 @@ export function MentorClassCurriculumPanel({
                           Thời gian buổi học
                         </p>
                         {sessionSchedule.relative ? (
-                          <span className="ml-auto rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+                          <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary sm:ml-auto">
                             {sessionSchedule.relative}
                           </span>
                         ) : null}
@@ -623,6 +630,23 @@ export function MentorClassCurriculumPanel({
                             {selectedSession.location.trim()}
                           </span>
                         </p>
+                      ) : null}
+                      {selectedSession &&
+                      canGenerateSessionCheckinQr(selectedSession) ? (
+                        <div className="border-t border-primary/20 bg-primary/[0.08] px-3 py-3 sm:px-4">
+                          <Button
+                            type="button"
+                            onClick={() => setIsQrOpen(true)}
+                            className="h-11 w-full gap-2 rounded-xl text-sm font-semibold shadow-sm"
+                            aria-label={`QR check-in ${selectedSession.title || selectedActivity.name}`}
+                          >
+                            <QrCode className="size-4" aria-hidden />
+                            Tạo mã QR check-in
+                          </Button>
+                          <p className="mt-2 text-center text-[11px] text-muted-foreground">
+                            Field Trip — học viên quét mã để điểm danh tại chỗ
+                          </p>
+                        </div>
                       ) : null}
                     </div>
                   ) : (
@@ -736,6 +760,13 @@ export function MentorClassCurriculumPanel({
                   ) : null}
                 </AnimatePresence>
               </div>
+
+              <SessionCheckinQrDialog
+                open={isQrOpen}
+                onOpenChange={setIsQrOpen}
+                sessionId={selectedSession?.id ?? ""}
+                sessionTitle={selectedSession?.title ?? selectedActivity.name}
+              />
             </>
           ) : (
             <div className="flex min-h-full items-center justify-center p-6">

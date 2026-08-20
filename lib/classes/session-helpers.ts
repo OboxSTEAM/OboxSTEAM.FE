@@ -6,6 +6,18 @@ const ACTIVE_SESSION_STATUSES = new Set<ClassSessionStatus>([
   "InProgress",
 ]);
 
+/**
+ * QR check-in tokens are Field Trip only (geo / on-site attendance).
+ * Lesson and AssignmentWindow use manual roster updates instead.
+ */
+export function canGenerateSessionCheckinQr(session: ClassSession): boolean {
+  if (session.sessionKind !== "FieldTrip") return false;
+  if (!session.requiresAttendance) return false;
+  return (
+    session.status !== "Completed" && session.status !== "Cancelled"
+  );
+}
+
 export function getSessionsForActivity(
   sessions: ClassSession[],
   activityId: string,

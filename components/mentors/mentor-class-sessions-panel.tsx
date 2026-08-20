@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ClassSession } from "@/lib/api";
 import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
+import { canGenerateSessionCheckinQr } from "@/lib/classes/session-helpers";
 import { parseApiDateTime } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
@@ -44,10 +45,6 @@ function formatClock(date: Date): string {
 
 function formatDayLabel(date: Date): string {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`;
-}
-
-function isCheckinOpen(session: ClassSession): boolean {
-  return session.status !== "Completed" && session.status !== "Cancelled";
 }
 
 function isPastSession(session: ClassSession, now: number): boolean {
@@ -248,8 +245,7 @@ export function MentorClassSessionsPanel({
                       </td>
                       <td className="align-middle px-3 py-1.5 text-right">
                         <div className="flex items-center justify-end gap-1">
-                          {session.requiresAttendance &&
-                          isCheckinOpen(session) ? (
+                          {canGenerateSessionCheckinQr(session) ? (
                             <Button
                               type="button"
                               variant="outline"
