@@ -39,3 +39,22 @@ export function canAccessManagerArea(role: string | null | undefined): boolean {
   const normalized = normalizeAccountRole(role);
   return normalized === "Manager" || normalized === "Admin";
 }
+
+/**
+ * Default screen after login when there is no deep `returnUrl`.
+ * Student / Parent stay on the marketing landing page.
+ */
+export function getRoleHomePath(role: string | null | undefined): string {
+  if (canAccessManagerArea(role)) return "/manager";
+  if (isMentorRole(role)) return "/mentor/classes";
+  return "/";
+}
+
+/** Prefer staff consoles when a JWT carries multiple role claims. */
+export function getPreferredRoleHomePath(
+  roles: Array<string | null | undefined>,
+): string {
+  if (roles.some((role) => canAccessManagerArea(role))) return "/manager";
+  if (roles.some((role) => isMentorRole(role))) return "/mentor/classes";
+  return "/";
+}

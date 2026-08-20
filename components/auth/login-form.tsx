@@ -8,6 +8,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { login } from "@/lib/api";
+import { decodeJwtPayload, readJwtRoles } from "@/lib/auth/jwt-payload";
+import { getPreferredRoleHomePath } from "@/lib/auth/roles";
 import {
   clearRememberedEmail,
   getRememberedEmail,
@@ -33,8 +35,17 @@ type LoginFormProps = {
   linkToken?: string | null;
 };
 
-function resolveSafeReturnUrl(
+function isSafeRelativeUrl(
   returnUrl: string | null | undefined,
+): returnUrl is string {
+  return Boolean(
+    returnUrl && returnUrl.startsWith("/") && !returnUrl.startsWith("//"),
+  );
+}
+
+function resolvePostLoginPath(
+  returnUrl: string | null | undefined,
+  roles: string[],
   linkEmail?: string | null,
   linkToken?: string | null,
 ): string {
@@ -44,10 +55,12 @@ function resolveSafeReturnUrl(
   });
   if (parentDestination) return parentDestination;
 
-  if (!returnUrl || !returnUrl.startsWith("/") || returnUrl.startsWith("//")) {
-    return "/";
+  // Deep links (e.g. /manager/classes/…) win; bare landing does not.
+  if (isSafeRelativeUrl(returnUrl) && returnUrl !== "/") {
+    return returnUrl;
   }
-  return returnUrl;
+
+  return getPreferredRoleHomePath(roles);
 }
 
 export function LoginForm({
@@ -83,9 +96,15 @@ export function LoginForm({
         password: values.password,
       });
 
-      persistAuthSession(result.data, {
+      const tokens = result.data;
+      const payload = decodeJwtPayload(tokens.accessToken);
+      const roles = payload ? readJwtRoles(payload) : [];
+      const primaryRole = roles[0];
+
+      persistAuthSession(tokens, {
         email: values.email,
         displayName: values.email.split("@")[0],
+        ...(primaryRole ? { role: primaryRole } : {}),
       });
 
       if (rememberMe) {
@@ -98,7 +117,9 @@ export function LoginForm({
         title: "Đăng nhập thành công",
         description: result.message,
       });
-      router.push(resolveSafeReturnUrl(returnUrl, linkEmail, linkToken));
+      router.push(
+        resolvePostLoginPath(returnUrl, roles, linkEmail, linkToken),
+      );
     } catch (error) {
       showAppErrorFromUnknown(error, "auth.login");
     }
@@ -138,7 +159,10 @@ export function LoginForm({
               checked={rememberMe}
               onCheckedChange={(checked) => setRememberMe(checked === true)}
             />
-            <Label htmlFor="remember" className="text-sm font-normal text-[#6B6B6B]">
+            <Label
+              htmlFor="remember"
+              className="text-sm font-normal text-[#6B6B6B]"
+            >
               Ghi nhớ đăng nhập
             </Label>
           </div>
