@@ -601,11 +601,15 @@ export function SessionFormDialog({
                 <SessionCoordinatesPicker
                   latitude={watch("latitude") ?? ""}
                   longitude={watch("longitude") ?? ""}
+                  location={watch("location") ?? ""}
                   onLatitudeChange={(value) =>
                     setValue("latitude", value, { shouldValidate: true })
                   }
                   onLongitudeChange={(value) =>
                     setValue("longitude", value, { shouldValidate: true })
+                  }
+                  onLocationChange={(value) =>
+                    setValue("location", value, { shouldValidate: true })
                   }
                   latitudeError={errors.latitude?.message}
                   longitudeError={errors.longitude?.message}

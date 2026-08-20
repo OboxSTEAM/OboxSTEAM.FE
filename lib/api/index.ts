@@ -1053,6 +1053,13 @@ export {
 } from "./media";
 
 export {
+  getMySchedule,
+  type GetMyScheduleResponse,
+  type GetMyScheduleResult,
+  type StudentScheduleInterval,
+} from "./me";
+
+export {
   addHighlightSegment,
   cancelHighlightVideoItem,
   createHighlightStack,

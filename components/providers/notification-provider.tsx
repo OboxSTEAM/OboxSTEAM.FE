@@ -22,7 +22,10 @@ import {
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { resolveNotificationHrefFromNotification } from "@/lib/notifications/resolve-href";
-import { dispatchCurriculumSyncEvent } from "@/lib/realtime/curriculum-sync-bus";
+import {
+  dispatchCurriculumSyncEvent,
+  flushAllCurriculumSyncHandlers,
+} from "@/lib/realtime/curriculum-sync-bus";
 import { startNotificationHub } from "@/lib/realtime/notification-hub";
 
 const INBOX_PAGE_SIZE = 10;
@@ -266,6 +269,10 @@ export function NotificationProvider({
     dispatchCurriculumSyncEvent(event);
   }, []);
 
+  const handleHubReconnected = useCallback(() => {
+    flushAllCurriculumSyncHandlers();
+  }, []);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -274,10 +281,11 @@ export function NotificationProvider({
 
     void (async () => {
       try {
-        stopHub = await startNotificationHub(
-          handleNotificationReceived,
-          handleSyncEvent,
-        );
+        stopHub = await startNotificationHub({
+          onReceived: handleNotificationReceived,
+          onSyncEvent: handleSyncEvent,
+          onReconnected: handleHubReconnected,
+        });
         if (disposed) {
           await stopHub();
           return;
@@ -307,7 +315,12 @@ export function NotificationProvider({
           });
       }
     };
-  }, [handleNotificationReceived, handleSyncEvent, isActive]);
+  }, [
+    handleHubReconnected,
+    handleNotificationReceived,
+    handleSyncEvent,
+    isActive,
+  ]);
 
   const value = useMemo<NotificationContextValue>(
     () => ({

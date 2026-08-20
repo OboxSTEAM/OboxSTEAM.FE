@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -44,6 +44,7 @@ import {
 import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 
 import { ParentProgressBar } from "./parent-progress-bar";
 
@@ -262,6 +263,13 @@ export function ParentEnrollmentProgressionContent() {
   const [data, setData] = useState<ParentEnrollmentProgression | null>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const handleCurriculumSync = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
+
+  useCurriculumSync(data?.enrollment.programId, handleCurriculumSync);
 
   useEffect(() => {
     if (!isHydrated || isLoading) return;
@@ -314,6 +322,7 @@ export function ParentEnrollmentProgressionContent() {
     profile,
     studentId,
     enrollmentId,
+    reloadKey,
   ]);
 
   if (!isHydrated || isLoading || !isAuthenticated) {

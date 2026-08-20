@@ -152,6 +152,7 @@ export function CurriculumShell({
             {mainView === "mind-map" ? (
               <CurriculumMindMapPanel
                 enrollmentId={curriculum.enrollmentId}
+                programId={curriculum.programId}
                 onOpenLesson={handleOpenLessonFromMap}
                 className="h-full"
               />

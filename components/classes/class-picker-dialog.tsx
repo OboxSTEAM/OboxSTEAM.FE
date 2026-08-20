@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { CalendarDays, Loader2, Users } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { AlertTriangle, CalendarDays, Loader2, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -18,9 +18,19 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   createClassEnrollment,
   getClasses,
+  getClassWithSessions,
+  getMySchedule,
   type Class,
+  type ClassSession,
+  type ClassWithSessions,
+  type StudentScheduleInterval,
 } from "@/lib/api";
-import { OPEN_CLASSES_QUERY } from "@/lib/classes/constants";
+import { OPEN_CLASSES_QUERY, CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
+import {
+  findScheduleConflict,
+  pickUpcomingSessions,
+} from "@/lib/classes/schedule-conflict";
+import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -31,6 +41,14 @@ type ClassPickerDialogProps = {
   programEnrollmentId: string;
   programName?: string;
   onEnrolled?: (classId: string) => void;
+};
+
+type ClassPickerOption = {
+  classItem: Class;
+  withSessions: ClassWithSessions | null;
+  upcoming: ClassSession[];
+  conflictLabel: string | null;
+  isDisabled: boolean;
 };
 
 function formatClassDateRange(startDate: string, endDate: string): string {
@@ -49,7 +67,7 @@ function formatClassDateRange(startDate: string, endDate: string): string {
 
 function ClassOptionSkeleton() {
   return (
-  <div className="space-y-2 rounded-xl border border-[#E5E5E0] p-4">
+    <div className="space-y-2 rounded-xl border border-[#E5E5E0] p-4">
       <Skeleton className="h-4 w-2/3 bg-[#E5E5E0]" />
       <Skeleton className="h-3 w-full bg-[#E5E5E0]" />
       <Skeleton className="h-3 w-1/2 bg-[#E5E5E0]" />
@@ -57,15 +75,45 @@ function ClassOptionSkeleton() {
   );
 }
 
+function SessionPreviewList({ sessions }: { sessions: ClassSession[] }) {
+  if (sessions.length === 0) {
+    return (
+      <p className="text-xs text-[#6B6B6B]">
+        Chưa có buổi học thật trên lịch lớp.
+      </p>
+    );
+  }
+
+  return (
+    <ul className="space-y-1">
+      {sessions.map((session) => (
+        <li
+          key={session.id}
+          className="flex items-start justify-between gap-2 text-xs text-[#6B6B6B]"
+        >
+          <span className="min-w-0 truncate font-medium text-[#2D2D2D]">
+            {session.title?.trim() ||
+              CLASS_SESSION_KIND_LABELS[session.sessionKind]}
+          </span>
+          <span className="shrink-0 tabular-nums">
+            {formatApiDateTimeDisplay(session.startTime) || "—"}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ClassOptionCard({
-  classItem,
+  option,
   isSelected,
   onSelect,
 }: {
-  classItem: Class;
+  option: ClassPickerOption;
   isSelected: boolean;
   onSelect: () => void;
 }) {
+  const { classItem, upcoming, conflictLabel, isDisabled } = option;
   const seatsLabel =
     classItem.maxCapacity > 0
       ? `${classItem.seatsTaken}/${classItem.maxCapacity} chỗ`
@@ -75,13 +123,17 @@ function ClassOptionCard({
     <button
       type="button"
       onClick={onSelect}
+      disabled={isDisabled}
       className={cn(
         "w-full rounded-xl border p-4 text-left transition-colors",
-        isSelected
+        isDisabled && "cursor-not-allowed opacity-60",
+        isSelected && !isDisabled
           ? "border-[#4FC3F7] bg-[#E8F7FD] ring-2 ring-[#4FC3F7]/30"
           : "border-[#E5E5E0] bg-white hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
+        isDisabled && isSelected && "ring-0",
       )}
       aria-pressed={isSelected}
+      aria-disabled={isDisabled}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -100,13 +152,17 @@ function ClassOptionCard({
         ) : null}
       </div>
 
-      <div className="mt-3 space-y-1.5 text-sm text-[#6B6B6B]">
+      <div className="mt-3 space-y-2 text-sm text-[#6B6B6B]">
         <p className="inline-flex items-center gap-1.5">
           <CalendarDays className="size-3.5 shrink-0" aria-hidden />
           {formatClassDateRange(classItem.startDate, classItem.endDate)}
         </p>
-        {classItem.scheduleSummary ? (
-          <p className="line-clamp-2">{classItem.scheduleSummary}</p>
+        <SessionPreviewList sessions={upcoming} />
+        {conflictLabel ? (
+          <p className="inline-flex items-start gap-1.5 rounded-lg border border-[#E94B3C]/25 bg-[#FFF0EE] px-2.5 py-1.5 text-xs font-medium text-[#a82a1e]">
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            {conflictLabel}
+          </p>
         ) : null}
       </div>
     </button>
@@ -127,20 +183,55 @@ export function ClassPickerDialog({
   const { data, isLoading, hasError, retry } = useClientFetch({
     enabled: open,
     fetcher: async () => {
-      const result = await getClasses(
-        {
-          ...OPEN_CLASSES_QUERY,
-          programId,
-        },
-        { includeSeatsTaken: true },
+      const [classesResult, scheduleResult] = await Promise.all([
+        getClasses(
+          {
+            ...OPEN_CLASSES_QUERY,
+            programId,
+          },
+          { includeSeatsTaken: true },
+        ),
+        getMySchedule().catch(() => null),
+      ]);
+
+      const classes = classesResult?.data?.items ?? [];
+      const busy: StudentScheduleInterval[] = scheduleResult?.data ?? [];
+
+      const withSessionsList = await Promise.all(
+        classes.map(async (classItem) => {
+          try {
+            const result = await getClassWithSessions(classItem.id);
+            return result?.data ?? null;
+          } catch {
+            return null;
+          }
+        }),
       );
-      return result?.data?.items ?? [];
+
+      return classes.map((classItem, index): ClassPickerOption => {
+        const withSessions = withSessionsList[index];
+        const sessions = withSessions?.sessions ?? [];
+        const conflict = findScheduleConflict(sessions, busy, {
+          excludeClassId: classItem.id,
+        });
+        return {
+          classItem,
+          withSessions,
+          upcoming: pickUpcomingSessions(sessions),
+          conflictLabel: conflict?.label ?? null,
+          isDisabled: conflict != null,
+        };
+      });
     },
     deps: [open, programId],
     onError: (error) => showAppErrorFromUnknown(error, "generic"),
   });
 
-  const classes = data ?? [];
+  const options = data ?? [];
+  const selectableOptions = useMemo(
+    () => options.filter((option) => !option.isDisabled),
+    [options],
+  );
 
   useEffect(() => {
     if (!open) {
@@ -150,12 +241,26 @@ export function ClassPickerDialog({
   }, [open]);
 
   useEffect(() => {
-    if (!open || classes.length === 0) return;
-    setSelectedClassId((current) => current ?? classes[0]?.id ?? null);
-  }, [classes, open]);
+    if (!open || selectableOptions.length === 0) return;
+    setSelectedClassId(
+      (current) =>
+        current ??
+        selectableOptions[0]?.classItem.id ??
+        null,
+    );
+  }, [open, selectableOptions]);
+
+  const selectedOption = options.find(
+    (option) => option.classItem.id === selectedClassId,
+  );
+  const canConfirm =
+    selectedOption != null &&
+    !selectedOption.isDisabled &&
+    !isSubmitting &&
+    options.length > 0;
 
   const handleConfirm = useCallback(async () => {
-    if (!selectedClassId) return;
+    if (!selectedClassId || selectedOption?.isDisabled) return;
 
     setIsSubmitting(true);
     try {
@@ -176,7 +281,13 @@ export function ClassPickerDialog({
     } finally {
       setIsSubmitting(false);
     }
-  }, [onEnrolled, onOpenChange, programEnrollmentId, selectedClassId]);
+  }, [
+    onEnrolled,
+    onOpenChange,
+    programEnrollmentId,
+    selectedClassId,
+    selectedOption?.isDisabled,
+  ]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -206,19 +317,22 @@ export function ClassPickerDialog({
                 Thử lại
               </Button>
             </div>
-          ) : classes.length === 0 ? (
+          ) : options.length === 0 ? (
             <div className="rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] px-4 py-6 text-center">
               <p className="text-sm text-[#6B6B6B]">
                 Chưa có lớp đang mở cho chương trình này. Vui lòng quay lại sau.
               </p>
             </div>
           ) : (
-            classes.map((classItem) => (
+            options.map((option) => (
               <ClassOptionCard
-                key={classItem.id}
-                classItem={classItem}
-                isSelected={selectedClassId === classItem.id}
-                onSelect={() => setSelectedClassId(classItem.id)}
+                key={option.classItem.id}
+                option={option}
+                isSelected={selectedClassId === option.classItem.id}
+                onSelect={() => {
+                  if (option.isDisabled) return;
+                  setSelectedClassId(option.classItem.id);
+                }}
               />
             ))
           )}
@@ -236,7 +350,7 @@ export function ClassPickerDialog({
           <Button
             type="button"
             onClick={() => void handleConfirm()}
-            disabled={!selectedClassId || isSubmitting || classes.length === 0}
+            disabled={!canConfirm}
           >
             {isSubmitting ? (
               <>

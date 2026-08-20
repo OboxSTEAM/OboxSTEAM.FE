@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -49,6 +49,7 @@ import { PROGRAM_LEVEL_LABELS } from "@/lib/programs/constants";
 import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 
 import { ParentProgressBar } from "./parent-progress-bar";
 
@@ -257,6 +258,19 @@ export function ParentChildProgressionContent() {
   const [data, setData] = useState<ParentChildProgression | null>(null);
   const [isFetching, setIsFetching] = useState(true);
   const [fetchError, setFetchError] = useState<unknown>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const programIds = useMemo(
+    () =>
+      [...new Set((data?.enrollments ?? []).map((item) => item.programId))],
+    [data?.enrollments],
+  );
+
+  const handleCurriculumSync = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
+
+  useCurriculumSync(programIds, handleCurriculumSync);
 
   useEffect(() => {
     if (!isHydrated || isLoading) return;
@@ -299,7 +313,14 @@ export function ParentChildProgressionContent() {
     return () => {
       cancelled = true;
     };
-  }, [isHydrated, isLoading, isAuthenticated, profile, studentId]);
+  }, [
+    isHydrated,
+    isLoading,
+    isAuthenticated,
+    profile,
+    studentId,
+    reloadKey,
+  ]);
 
   if (!isHydrated || isLoading || !isAuthenticated) {
     return <ProgressionSkeleton />;

@@ -8137,6 +8137,430 @@
         }
       }
     },
+    "/api/classes/{classId}/sessions/generate": {
+      "post": {
+        "tags": [
+          "ClassSession"
+        ],
+        "summary": "Generate sessions from a weekly pattern",
+        "description": "Bulk-creates sessions for the class from the program curriculum: LiveOnline/Offline activities (ordered by module, course, then ActivityOrder) and assignments fill consecutive weekly slots starting from the class start date. Fails fast on mentor schedule overlap; nothing is saved unless every slot is valid.",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateClassSessionsRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateClassSessionsRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/GenerateClassSessionsRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionResponseDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionResponseDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionResponseDtoListApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-sessions/{id}/checkin-token": {
+      "post": {
+        "tags": [
+          "ClassSessionCheckIn"
+        ],
+        "summary": "Generate or rotate the check-in QR token",
+        "description": "Generates a fresh QR token and 6-digit fallback code for the session. The pair expires after 60 seconds — call again to rotate. Only the assigned mentor (or Manager/Admin) may generate.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionCheckInTokenResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionCheckInTokenResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassSessionCheckInTokenResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-sessions/{id}/checkin": {
+      "post": {
+        "tags": [
+          "ClassSessionCheckIn"
+        ],
+        "summary": "Check in to a session",
+        "description": "Student self check-in using the QR token (mobile scan) or the 6-digit fallback code (web manual entry). Records attendance as Present.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCheckInRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCheckInRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCheckInRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAttendanceResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAttendanceResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAttendanceResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/courses": {
       "get": {
         "tags": [
@@ -27823,19 +28247,10 @@
             "type": "integer",
             "format": "int32"
           },
-          "location": {
-            "type": "string",
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
-          },
-          "startTime": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "endTime": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
           },
           "requireQrCheckin": {
             "type": "boolean"
@@ -30487,6 +30902,76 @@
         },
         "additionalProperties": false
       },
+      "ClassSessionCheckInRequestDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "code": {
+            "maxLength": 6,
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionCheckInTokenResponseDto": {
+        "type": "object",
+        "properties": {
+          "classSessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "token": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "expiresAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionCheckInTokenResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ClassSessionCheckInTokenResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionCheckInTokenResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ClassSessionCheckInTokenResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "ClassSessionResponseDto": {
         "type": "object",
         "properties": {
@@ -30544,6 +31029,16 @@
             "type": "string",
             "nullable": true
           },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "requiresAttendance": {
             "type": "boolean"
           },
@@ -30582,6 +31077,42 @@
           },
           "error": {
             "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionResponseDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ClassSessionResponseDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionResponseDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassSessionResponseDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -30785,6 +31316,16 @@
           },
           "meetingUrl": {
             "type": "string",
+            "nullable": true
+          },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
             "nullable": true
           },
           "requiresAttendance": {
@@ -31118,6 +31659,10 @@
             "type": "string",
             "nullable": true
           },
+          "courseOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
           "createdAt": {
             "type": "string",
             "example": "15/06/2026 14:30:00"
@@ -31269,19 +31814,10 @@
             "type": "integer",
             "format": "int32"
           },
-          "location": {
-            "type": "string",
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
-          },
-          "startTime": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "endTime": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
           },
           "requireQrCheckin": {
             "type": "boolean"
@@ -31602,6 +32138,20 @@
             "type": "string",
             "nullable": true
           },
+          "latitude": {
+            "maximum": 90,
+            "minimum": -90,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "maximum": 180,
+            "minimum": -180,
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "requiresAttendance": {
             "type": "boolean"
           },
@@ -31629,6 +32179,10 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "courseOrder": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -33802,6 +34356,41 @@
             "minLength": 1,
             "type": "string",
             "format": "email"
+          }
+        },
+        "additionalProperties": false
+      },
+      "GenerateClassSessionsRequestDto": {
+        "required": [
+          "daysOfWeek",
+          "sessionEndTime",
+          "sessionStartTime"
+        ],
+        "type": "object",
+        "properties": {
+          "daysOfWeek": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "enum": [
+                "Sunday",
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday"
+              ],
+              "type": "string"
+            }
+          },
+          "sessionStartTime": {
+            "type": "string",
+            "format": "time"
+          },
+          "sessionEndTime": {
+            "type": "string",
+            "format": "time"
           }
         },
         "additionalProperties": false
@@ -41557,19 +42146,10 @@
             "format": "int32",
             "nullable": true
           },
-          "location": {
-            "type": "string",
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
-          },
-          "startTime": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "endTime": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
           },
           "requireQrCheckin": {
             "type": "boolean",
@@ -41897,6 +42477,16 @@
             "type": "string",
             "nullable": true
           },
+          "latitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "longitude": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
           "requiresAttendance": {
             "type": "boolean",
             "nullable": true
@@ -41936,6 +42526,11 @@
           },
           "description": {
             "type": "string",
+            "nullable": true
+          },
+          "courseOrder": {
+            "type": "integer",
+            "format": "int32",
             "nullable": true
           }
         },

@@ -1,16 +1,26 @@
 "use client";
 
-import { ExternalLink, MapPin } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { ExternalLink, Loader2, MapPin, Search } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+type GeocodeHit = {
+  label: string;
+  latitude: number;
+  longitude: number;
+};
+
 type SessionCoordinatesPickerProps = {
   latitude: string;
   longitude: string;
+  location?: string;
   onLatitudeChange: (value: string) => void;
   onLongitudeChange: (value: string) => void;
+  onLocationChange?: (value: string) => void;
   latitudeError?: string;
   longitudeError?: string;
   className?: string;
@@ -26,12 +36,23 @@ function parseCoordinate(value: string): number | null {
 export function SessionCoordinatesPicker({
   latitude,
   longitude,
+  location = "",
   onLatitudeChange,
   onLongitudeChange,
+  onLocationChange,
   latitudeError,
   longitudeError,
   className,
 }: SessionCoordinatesPickerProps) {
+  const listId = useId();
+  const [query, setQuery] = useState(location);
+  const [results, setResults] = useState<GeocodeHit[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
+  const [isOpen, setIsOpen] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
+
   const lat = parseCoordinate(latitude);
   const lng = parseCoordinate(longitude);
   const hasPreview = lat != null && lng != null;
@@ -42,15 +63,144 @@ export function SessionCoordinatesPicker({
     ? `https://maps.google.com/maps?q=${lat},${lng}&z=15&output=embed`
     : null;
 
+  useEffect(() => {
+    setQuery(location);
+  }, [location]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      abortRef.current?.abort();
+    };
+  }, []);
+
+  function scheduleSearch(nextQuery: string) {
+    setQuery(nextQuery);
+    setSearchError(null);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = nextQuery.trim();
+    if (trimmed.length < 2) {
+      setResults([]);
+      setIsOpen(false);
+      setIsSearching(false);
+      return;
+    }
+
+    setIsSearching(true);
+    debounceRef.current = setTimeout(() => {
+      void runSearch(trimmed);
+    }, 400);
+  }
+
+  async function runSearch(trimmed: string) {
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
+    try {
+      const response = await fetch(
+        `/api/geocode/search?q=${encodeURIComponent(trimmed)}`,
+        { signal: controller.signal },
+      );
+      const json = (await response.json()) as {
+        results?: GeocodeHit[];
+        error?: string;
+      };
+      if (!response.ok) {
+        setSearchError(json.error ?? "Không tìm được địa chỉ.");
+        setResults([]);
+        setIsOpen(false);
+        return;
+      }
+      const next = json.results ?? [];
+      setResults(next);
+      setIsOpen(next.length > 0);
+    } catch (error) {
+      if ((error as { name?: string })?.name === "AbortError") return;
+      setSearchError("Không tìm được địa chỉ.");
+      setResults([]);
+      setIsOpen(false);
+    } finally {
+      setIsSearching(false);
+    }
+  }
+
+  function applyHit(hit: GeocodeHit) {
+    setQuery(hit.label);
+    onLocationChange?.(hit.label);
+    onLatitudeChange(String(hit.latitude));
+    onLongitudeChange(String(hit.longitude));
+    setResults([]);
+    setIsOpen(false);
+    setSearchError(null);
+  }
+
   return (
     <div className={cn("space-y-3", className)}>
       <div className="flex items-start gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
         <MapPin className="mt-0.5 size-3.5 shrink-0 text-primary" aria-hidden />
         <p>
-          Nhập tọa độ GPS cho buổi offline/field trip. Vĩ độ và kinh độ phải được
-          gửi cùng nhau (UTC, không cần API key — dùng link/embed Google Maps).
+          Tìm địa chỉ qua OpenStreetMap (không cần Google API key), hoặc nhập
+          tay vĩ độ/kinh độ. Cặp tọa độ phải gửi cùng nhau.
         </p>
       </div>
+
+      {onLocationChange ? (
+        <div className="relative space-y-1.5">
+          <Label htmlFor={`${listId}-address`}>Tìm địa chỉ</Label>
+          <div className="relative">
+            <Search
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
+            <Input
+              id={`${listId}-address`}
+              value={query}
+              onChange={(event) => scheduleSearch(event.target.value)}
+              onFocus={() => {
+                if (results.length > 0) setIsOpen(true);
+              }}
+              placeholder="VD: Bảo tàng Khoa học TP.HCM"
+              className="h-10 rounded-lg pl-9"
+              autoComplete="off"
+              aria-autocomplete="list"
+              aria-controls={`${listId}-results`}
+              aria-expanded={isOpen}
+            />
+            {isSearching ? (
+              <Loader2
+                className="absolute top-1/2 right-3 size-4 -translate-y-1/2 animate-spin text-muted-foreground"
+                aria-hidden
+              />
+            ) : null}
+          </div>
+          {searchError ? (
+            <p className="text-xs font-medium text-primary">{searchError}</p>
+          ) : null}
+          {isOpen && results.length > 0 ? (
+            <ul
+              id={`${listId}-results`}
+              role="listbox"
+              className="absolute z-20 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-popover shadow-md"
+            >
+              {results.map((hit) => (
+                <li key={`${hit.latitude},${hit.longitude},${hit.label}`}>
+                  <button
+                    type="button"
+                    role="option"
+                    className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => applyHit(hit)}
+                  >
+                    {hit.label}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1.5">
@@ -104,7 +254,19 @@ export function SessionCoordinatesPicker({
             </a>
           ) : null}
         </div>
-      ) : null}
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          disabled={query.trim().length < 2 || isSearching}
+          onClick={() => void runSearch(query.trim())}
+        >
+          <Search className="size-3.5" aria-hidden />
+          Tìm lại địa chỉ
+        </Button>
+      )}
     </div>
   );
 }

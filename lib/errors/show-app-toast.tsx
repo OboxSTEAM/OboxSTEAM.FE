@@ -29,10 +29,13 @@ export function showAppErrorFromUnknown(
   showAppError(resolveAppError(error, context));
 }
 
-export function showAppSuccess(state: AppSuccessState): void {
+export function showAppSuccess(
+  state: AppSuccessState,
+  options?: { id?: string; duration?: number },
+): void {
   toast.custom(() => <AppSuccessToast {...state} />, {
-    id: SUCCESS_TOAST_ID,
-    duration: 5000,
+    id: options?.id ?? SUCCESS_TOAST_ID,
+    duration: options?.duration ?? 5000,
     unstyled: true,
     classNames: {
       toast: "p-0 bg-transparent border-0 shadow-none",
