@@ -48,9 +48,9 @@ const W = {
 // ─── Activity type → display prefix ──────────────────────────────────────
 const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced:    "Đọc/Xem",
-  LiveOnline:   "Buổi học",
-  Offline:      "Thực hành",
-  OfflineClass: "Thực hành",
+  LiveOnline:   "Online",
+  Offline:      "Offline",
+  OfflineClass: "Offline",
 };
 
 // ─── Module type badge styles ─────────────────────────────────────────────

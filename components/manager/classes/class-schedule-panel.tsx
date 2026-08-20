@@ -10,6 +10,7 @@ import {
   X,
 } from "lucide-react";
 
+import { ClassDateRange } from "@/components/classes/class-date-range";
 import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import {
@@ -47,10 +48,7 @@ import {
   CLASS_SESSION_STATUS_LABELS,
   CLASS_SESSIONS_QUERY,
 } from "@/lib/classes/constants";
-import {
-  formatApiDateTimeDisplay,
-  parseApiDateTime,
-} from "@/lib/curriculum/datetime";
+import { parseApiDateTime } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   THEME_SELECT_CONTENT,
@@ -269,11 +267,11 @@ export function ClassSchedulePanel({
 
   const columns: ColumnDef<ClassSession>[] = [
     {
-      header: "Buổi học",
+      header: "Session",
       render: (session) => (
         <div className="min-w-0">
           <p className="truncate font-semibold text-foreground">
-            {session.title || "Chưa đặt tiêu đề"}
+            {session.title || "Untitled"}
           </p>
           <p className="text-xs text-muted-foreground">
             {CLASS_SESSION_KIND_LABELS[session.sessionKind]}
@@ -283,12 +281,13 @@ export function ClassSchedulePanel({
     },
     {
       header: "Thời gian",
-      className: "min-w-40 text-xs text-muted-foreground",
+      className: "min-w-36",
       render: (session) => (
-        <div className="space-y-0.5">
-          <p>{formatApiDateTimeDisplay(session.startTime) || "—"}</p>
-          <p>→ {formatApiDateTimeDisplay(session.endTime) || "—"}</p>
-        </div>
+        <ClassDateRange
+          startDate={session.startTime}
+          endDate={session.endTime}
+          layout="stack"
+        />
       ),
     },
     {
@@ -360,10 +359,10 @@ export function ClassSchedulePanel({
             >
               <span className="truncate">
                 {kindFilter === "all"
-                  ? "Mọi loại"
+                  ? "All types"
                   : (CLASS_SESSION_KIND_LABELS[
                       kindFilter as ClassSessionKind
-                    ] ?? "Mọi loại")}
+                    ] ?? "All types")}
               </span>
             </SelectTrigger>
             <SelectContent
@@ -373,7 +372,7 @@ export function ClassSchedulePanel({
               className={THEME_SELECT_CONTENT}
             >
               <SelectItem value="all" className={THEME_SELECT_ITEM}>
-                Mọi loại
+                All types
               </SelectItem>
               {Object.entries(CLASS_SESSION_KIND_LABELS).map(
                 ([value, label]) => (

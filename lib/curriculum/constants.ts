@@ -6,14 +6,14 @@ import type {
 
 export const ACTIVITY_TYPE_LABELS: Record<ActivityType, string> = {
   SelfPaced: "Tự học",
-  LiveOnline: "Trực tuyến",
-  Offline: "Thực hành",
+  LiveOnline: "Online",
+  Offline: "Offline",
 };
 
 export const ACTIVITY_TITLE_PREFIX: Record<ActivityType, string> = {
   SelfPaced: "Đọc/Xem",
-  LiveOnline: "Buổi học",
-  Offline: "Thực hành",
+  LiveOnline: "Online",
+  Offline: "Offline",
 };
 
 export const ACTIVITY_NAV_STATUS_META: Record<

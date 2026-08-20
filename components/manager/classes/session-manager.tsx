@@ -19,6 +19,7 @@ import {
 import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
+import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   ManagerDataTable,
@@ -55,7 +56,6 @@ import {
   CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -305,11 +305,11 @@ function SessionManagerInner() {
 
   const columns: ColumnDef<ClassSession>[] = [
     {
-      header: "Buổi học",
+      header: "Session",
       render: (session) => (
         <div className="min-w-0">
           <p className="truncate font-semibold text-foreground">
-            {session.title || "Chưa đặt tiêu đề"}
+            {session.title || "Untitled"}
           </p>
           <p className="text-xs text-muted-foreground">
             {CLASS_SESSION_KIND_LABELS[session.sessionKind]}
@@ -319,12 +319,13 @@ function SessionManagerInner() {
     },
     {
       header: "Thời gian",
-      className: "min-w-44 text-xs text-muted-foreground",
+      className: "min-w-36",
       render: (session) => (
-        <div className="space-y-0.5">
-          <p>{formatApiDateTimeDisplay(session.startTime) || "—"}</p>
-          <p>→ {formatApiDateTimeDisplay(session.endTime) || "—"}</p>
-        </div>
+        <ClassDateRange
+          startDate={session.startTime}
+          endDate={session.endTime}
+          layout="stack"
+        />
       ),
     },
     {
@@ -509,7 +510,7 @@ function SessionManagerInner() {
                       setPage(1);
                     },
                     options: [
-                      { value: "all", label: "Mọi loại" },
+                      { value: "all", label: "All types" },
                       ...Object.entries(CLASS_SESSION_KIND_LABELS).map(
                         ([value, label]) => ({ value, label }),
                       ),

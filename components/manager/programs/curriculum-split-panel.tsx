@@ -115,8 +115,8 @@ const W = {
 
 const ACTIVITY_TYPE_LABELS: Record<string, string> = {
   SelfPaced: "Tự học",
-  LiveOnline: "Online trực tiếp",
-  Offline: "Offline tại lớp",
+  LiveOnline: "Online",
+  Offline: "Offline",
 }
 
 const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
@@ -799,8 +799,8 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                     </SelectTrigger>
                     <SelectContent className={THEME_SELECT_CONTENT}>
                       <SelectItem value="SelfPaced" className={THEME_SELECT_ITEM}>Tự học</SelectItem>
-                      <SelectItem value="LiveOnline" className={THEME_SELECT_ITEM}>Online trực tiếp</SelectItem>
-                      <SelectItem value="Offline" className={THEME_SELECT_ITEM}>Offline tại lớp</SelectItem>
+                      <SelectItem value="LiveOnline" className={THEME_SELECT_ITEM}>Online</SelectItem>
+                      <SelectItem value="Offline" className={THEME_SELECT_ITEM}>Offline</SelectItem>
                     </SelectContent>
                   </Select>
                 )} />

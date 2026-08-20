@@ -799,8 +799,8 @@ export function ActivityFormDialog({
                     </SelectTrigger>
                     <SelectContent className={LIGHT_SELECT_CONTENT}>
                       <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học (Self-Paced)</SelectItem>
-                      <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online trực tiếp (LiveOnline)</SelectItem>
-                      <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline tại lớp (Offline)</SelectItem>
+                      <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online</SelectItem>
+                      <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline</SelectItem>
                     </SelectContent>
                   </Select>
                 )}

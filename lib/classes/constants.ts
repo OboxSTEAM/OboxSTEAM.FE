@@ -14,9 +14,9 @@ export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
 };
 
 export const CLASS_SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
-  Lesson: "Buổi học",
-  FieldTrip: "Thực địa",
-  AssignmentWindow: "Bài tập",
+  Lesson: "Lesson",
+  FieldTrip: "Field Trip",
+  AssignmentWindow: "Assignment",
 };
 
 export const CLASS_SESSION_STATUS_LABELS: Record<ClassSessionStatus, string> = {
