@@ -35,7 +35,6 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
   fromApiDateTimeToLocalInput,
-  toApiDateTimeFromLocalInput,
 } from "@/lib/curriculum/datetime";
 
 const W = {
@@ -172,9 +171,6 @@ export function MilestoneFormPanel({
           assignmentDescription: data.assignmentDescription || null,
           maxPoints: Number(data.maxPoints),
           passScore: Number(data.passScore),
-          dueDate: toApiDateTimeFromLocalInput(data.dueDate),
-          availableFrom: toApiDateTimeFromLocalInput(data.availableFrom),
-          availableUntil: toApiDateTimeFromLocalInput(data.availableUntil),
         });
         result = res?.data ?? null;
         showAppSuccess({ title: "Cập nhật thành công", description: `Milestone "${data.title}" đã lưu.` });
@@ -191,9 +187,9 @@ export function MilestoneFormPanel({
           assignmentType: data.assignmentType,
           maxPoints: Number(data.maxPoints),
           passScore: Number(data.passScore),
-          dueDate: toApiDateTimeFromLocalInput(data.dueDate),
-          availableFrom: toApiDateTimeFromLocalInput(data.availableFrom),
-          availableUntil: toApiDateTimeFromLocalInput(data.availableUntil),
+          dueDate: null,
+          availableFrom: null,
+          availableUntil: null,
           maxAttempts: Number(data.maxAttempts),
         });
         result = res?.data ?? null;
@@ -343,9 +339,8 @@ export function MilestoneFormPanel({
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Điểm đạt</Label>
               <input type="number" step="0.1" {...register("passScore", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Hạn nộp</Label>
-              <input type="datetime-local" {...register("dueDate")} className={IN} style={{ borderColor: W.border }} />
+            <div className="col-span-2 rounded-lg border border-dashed px-3 py-2.5 text-xs" style={{ borderColor: W.border, color: W.muted }}>
+              Lịch mở / hạn nộp do mentor thiết lập khi mở bài cho học viên.
             </div>
             {!isEdit && (
               <div className="space-y-1.5">
@@ -353,14 +348,6 @@ export function MilestoneFormPanel({
                 <input type="number" {...register("maxAttempts", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
               </div>
             )}
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mở từ</Label>
-              <input type="datetime-local" {...register("availableFrom")} className={IN} style={{ borderColor: W.border }} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Đóng lúc</Label>
-              <input type="datetime-local" {...register("availableUntil")} className={IN} style={{ borderColor: W.border }} />
-            </div>
           </div>
         </div>
 

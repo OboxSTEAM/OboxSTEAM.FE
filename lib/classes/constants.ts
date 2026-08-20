@@ -76,9 +76,12 @@ export const OPEN_CLASSES_QUERY = {
   status: "Open" as const,
 };
 
-/** Mentor class registration board — recruiting classes only. */
+/**
+ * Mentor board / request: Draft classes that already have a schedule
+ * and no mentor. The board API applies the same filter; this is a client guard.
+ */
 export function isMentorBoardClass(status: ClassStatus): boolean {
-  return status === "Open";
+  return status === "Draft";
 }
 
 export const CLASS_SESSIONS_QUERY = {

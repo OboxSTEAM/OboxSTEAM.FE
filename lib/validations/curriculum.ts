@@ -34,6 +34,15 @@ export const updateModuleSchema = createModuleSchema.partial().extend({
   programId: z.string().uuid("ID chương trình không hợp lệ.").optional(),
 });
 
+const durationMinutesSchema = z.preprocess(
+  (val) => {
+    if (val === "" || val === undefined || val === null) return null;
+    if (typeof val === "number" && Number.isNaN(val)) return null;
+    return val;
+  },
+  z.number().int().min(1, "Thời lượng phải là số nguyên lớn hơn 0.").nullable(),
+);
+
 export const createCourseSchema = z.object({
   code: z.string().trim().min(1, "Mã khóa học là bắt buộc."),
   moduleId: z.string().uuid("ID module không hợp lệ."),
@@ -42,29 +51,58 @@ export const createCourseSchema = z.object({
     (val) => (val === "" || val === undefined ? null : val),
     z.string().nullable(),
   ),
+  courseOrder: z.number().int().min(1, "Thứ tự khóa học phải lớn hơn 0."),
 });
 
 export const updateCourseSchema = createCourseSchema.partial().extend({
   moduleId: z.string().uuid("ID module không hợp lệ.").optional(),
 });
 
-export const createActivitySchema = z.object({
-  code: z.string().trim().min(1, "Mã hoạt động là bắt buộc."),
-  courseId: z.string().uuid("ID khóa học không hợp lệ."),
-  name: z.string().min(1, "Tên hoạt động là bắt buộc."),
-  activityType: activityTypeSchema,
-  description: z.string().nullable().optional(),
-  activityOrder: z.number().int().min(1, "Thứ tự hoạt động phải lớn hơn 0."),
-  location: z.string().nullable().optional(),
-  startTime: z.string().nullable().optional(),
-  endTime: z.string().nullable().optional(),
-  requireQrCheckin: z.boolean().default(false),
-  requireMediaEvidence: z.boolean().default(false),
-});
+export const createActivitySchema = z
+  .object({
+    code: z.string().trim().min(1, "Mã hoạt động là bắt buộc."),
+    courseId: z.string().uuid("ID khóa học không hợp lệ."),
+    name: z.string().min(1, "Tên hoạt động là bắt buộc."),
+    activityType: activityTypeSchema,
+    description: z.string().nullable().optional(),
+    activityOrder: z.number().int().min(1, "Thứ tự hoạt động phải lớn hơn 0."),
+    durationMinutes: durationMinutesSchema.optional(),
+    requireQrCheckin: z.boolean().default(false),
+    requireMediaEvidence: z.boolean().default(false),
+  })
+  .superRefine((value, ctx) => {
+    if (value.activityType === "SelfPaced") return;
+    if (value.durationMinutes == null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["durationMinutes"],
+        message: "Nhập thời lượng (phút) cho hoạt động online/offline.",
+      });
+    }
+  });
 
-export const updateActivitySchema = createActivitySchema.partial().extend({
-  courseId: z.string().uuid("ID khóa học không hợp lệ.").optional(),
-});
+export const updateActivitySchema = z
+  .object({
+    code: z.string().trim().min(1, "Mã hoạt động là bắt buộc.").optional(),
+    courseId: z.string().uuid("ID khóa học không hợp lệ.").optional(),
+    name: z.string().min(1, "Tên hoạt động là bắt buộc.").optional(),
+    activityType: activityTypeSchema.optional(),
+    description: z.string().nullable().optional(),
+    activityOrder: z.number().int().min(1, "Thứ tự hoạt động phải lớn hơn 0.").optional(),
+    durationMinutes: durationMinutesSchema.optional(),
+    requireQrCheckin: z.boolean().optional(),
+    requireMediaEvidence: z.boolean().optional(),
+  })
+  .superRefine((value, ctx) => {
+    if (value.activityType === "SelfPaced") return;
+    if (value.activityType && value.durationMinutes == null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["durationMinutes"],
+        message: "Nhập thời lượng (phút) cho hoạt động online/offline.",
+      });
+    }
+  });
 
 export type ModuleIdParam = z.infer<typeof moduleIdParamSchema>;
 export type CourseIdParam = z.infer<typeof courseIdParamSchema>;

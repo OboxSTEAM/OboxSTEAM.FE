@@ -14,6 +14,7 @@ export const curriculumActivitySchema = z.object({
   activityName: z.string(),
   activityOrder: z.number(),
   activityType: activityTypeSchema,
+  durationMinutes: z.number().int().nullable().optional(),
   material: curriculumMaterialSummarySchema.nullable(),
 });
 
@@ -25,9 +26,7 @@ export const activitySchema = z.object({
   activityType: activityTypeSchema,
   description: z.string().nullable().optional(),
   activityOrder: z.number(),
-  location: z.string().nullable().optional(),
-  startTime: z.string().nullable().optional(),
-  endTime: z.string().nullable().optional(),
+  durationMinutes: z.number().int().nullable().optional(),
   requireQrCheckin: z.preprocess((val) => val === true, z.boolean()),
   requireMediaEvidence: z.preprocess((val) => val === true, z.boolean()),
   createdAt: z.string().nullable().optional(),

@@ -149,6 +149,7 @@ export {
   classEnrollmentIdParamSchema,
   classEnrollmentSortBySchema,
   classEnrollmentsByProgramQuerySchema,
+  buildClassFormSchema,
   classFormSchema,
   classIdParamSchema,
   classListQuerySchema,

@@ -913,7 +913,7 @@ export function MentorSkillsSection({
       {isExpanded ? (
         <CardContent className="px-4 pb-3 pt-0 sm:px-5">
           <p className="mb-2.5 text-xs text-muted-foreground">
-            Cập nhật kỹ năng tại đây để khớp với lớp đang tuyển — không cần vào
+            Cập nhật kỹ năng tại đây để khớp với lớp Bản nháp đang nhận mentor — không cần vào
             hồ sơ cá nhân.
           </p>
           {isLoading && list.length === 0 ? (

@@ -56,6 +56,11 @@ import {
   CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
+import {
+  canGenerateClassSessions,
+  countActiveClassSessions,
+  getOccupiedCurriculumItemIds,
+} from "@/lib/classes/lifecycle";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -87,11 +92,14 @@ function SessionManagerInner() {
 
   const { data: classesData, isLoading: isClassesLoading } = useClientFetch({
     fetcher: () =>
-      getClasses({
-        sortBy: "name",
-        page: 1,
-        pageSize: 100,
-      }),
+      getClasses(
+        {
+          sortBy: "name",
+          page: 1,
+          pageSize: 100,
+        },
+        { includeSeatsTaken: true },
+      ),
     deps: [],
     onError: (error) => showAppErrorFromUnknown(error, "classes.list"),
   });
@@ -158,6 +166,16 @@ function SessionManagerInner() {
         session.location?.toLowerCase().includes(q),
     );
   }, [search, sessionsData?.data?.items]);
+
+  const allSessions = sessionsData?.data?.items ?? [];
+  const generateGate = canGenerateClassSessions({
+    seatsTaken: selectedClass?.seatsTaken ?? 0,
+    activeSessionCount: countActiveClassSessions(allSessions),
+  });
+  const occupiedItems = useMemo(
+    () => getOccupiedCurriculumItemIds(allSessions, editingSession?.id),
+    [allSessions, editingSession?.id],
+  );
 
   function updateClassId(nextClassId: string) {
     setPage(1);
@@ -413,12 +431,14 @@ function SessionManagerInner() {
           type="button"
           variant="outline"
           onClick={() => setGenerateOpen(true)}
-          disabled={!classId || totalCount > 0}
+          disabled={!classId || !generateGate.ok}
           className="h-11 gap-2 rounded-xl px-4 font-semibold disabled:opacity-50"
           title={
-            totalCount > 0
-              ? "Chỉ dùng khi lớp chưa có buổi học nào"
-              : undefined
+            !classId
+              ? undefined
+              : generateGate.ok
+                ? undefined
+                : generateGate.reason
           }
         >
           <Sparkles className="size-4" />
@@ -621,6 +641,8 @@ function SessionManagerInner() {
         modules={modules}
         isModulesLoading={isModulesLoading}
         isSubmitting={isSubmitting}
+        occupiedActivityIds={occupiedItems.activityIds}
+        occupiedAssignmentIds={occupiedItems.assignmentIds}
         onSubmit={handleSubmit}
       />
 

@@ -34,26 +34,12 @@ export function toApiDateTimeFromLocalInput(
   return toApiDateTime(d);
 }
 
-/**
- * Hidden LiveOnline/Offline template so create passes BE `ValidateTypeRules`
- * (still requires StartTime, EndTime, Location). Cohort schedule stays on ClassSession.
- */
-export function getLiveActivityTemplateDefaults(): {
-  startTime: string;
-  endTime: string;
-  location: string;
-} {
-  const start = new Date();
-  start.setDate(start.getDate() + 7);
-  start.setHours(9, 0, 0, 0);
-  const end = new Date(start);
-  end.setHours(10, 0, 0, 0);
-
-  return {
-    startTime: toApiDateTime(start),
-    endTime: toApiDateTime(end),
-    location: "Theo lịch lớp",
-  };
+/** Compact duration chip, e.g. `90 phút`. */
+export function formatDurationMinutes(
+  minutes: number | null | undefined,
+): string {
+  if (minutes == null || minutes <= 0) return "";
+  return `${minutes} phút`;
 }
 
 const displayFormatter = new Intl.DateTimeFormat("vi-VN", {

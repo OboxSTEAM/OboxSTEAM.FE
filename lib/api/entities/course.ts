@@ -17,6 +17,7 @@ export const courseSchema = z.object({
   mentorId: z.string().nullable().optional(),
   name: z.string(),
   description: z.string().nullable().optional(),
+  courseOrder: z.preprocess((val) => val ?? 1, z.number().int().min(1)),
   createdAt: z.string().nullable().optional(),
   updatedAt: z.string().nullable().optional(),
   activities: z.preprocess(

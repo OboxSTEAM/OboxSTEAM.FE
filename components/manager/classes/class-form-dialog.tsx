@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { CalendarRange, Sparkles, Users } from "lucide-react";
@@ -33,9 +33,10 @@ import {
   toApiDateTimeFromLocalInput,
 } from "@/lib/curriculum/datetime";
 import {
-  classFormSchema,
+  buildClassFormSchema,
   type ClassFormValues,
 } from "@/lib/validations/classes";
+import { CLASS_CREATE_LEAD_DAYS, getMinClassStartLocalInput } from "@/lib/classes/lifecycle";
 import {
   LIGHT_SELECT_CONTENT,
   LIGHT_SELECT_ITEM,
@@ -100,6 +101,11 @@ export function ClassFormDialog({
   defaultProgramId,
   onSubmit,
 }: ClassFormDialogProps) {
+  const isCreate = !classItem;
+  const formSchema = useMemo(
+    () => buildClassFormSchema({ requireCreateLeadTime: isCreate }),
+    [isCreate],
+  );
   const {
     control,
     register,
@@ -107,7 +113,7 @@ export function ClassFormDialog({
     handleSubmit,
     formState: { errors },
   } = useForm<ClassFormValues>({
-    resolver: zodResolver(classFormSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: toDefaultValues(classItem, defaultProgramId),
   });
 
@@ -152,8 +158,8 @@ export function ClassFormDialog({
             </DialogTitle>
             <DialogDescription>
               {classItem
-                ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết."
-                : "Lớp tạo ở trạng thái Bản nháp. Mở tuyển sinh rồi mentor mới thấy lớp để xin nhận; bạn duyệt tại chi tiết lớp."}
+                ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết (lớp Bản nháp đã có lịch)."
+                : "Thứ tự: tạo lớp Bản nháp → xếp lịch → mentor xin nhận → mở tuyển sinh → học viên ghi danh → bắt đầu lớp."}
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />
@@ -321,9 +327,19 @@ export function ClassFormDialog({
                   <Input
                     id="startDate"
                     type="datetime-local"
+                    min={isCreate ? getMinClassStartLocalInput() : undefined}
                     {...register("startDate")}
                     className={INPUT_CLASS}
                   />
+                  {isCreate ? (
+                    <p className="text-xs text-muted-foreground">
+                      Phải cách hôm nay ít nhất {CLASS_CREATE_LEAD_DAYS} ngày.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Đổi ngày có thể bị từ chối nếu buổi học hiện có nằm ngoài khoảng mới.
+                    </p>
+                  )}
                 </FormField>
                 <FormField
                   id="endDate"

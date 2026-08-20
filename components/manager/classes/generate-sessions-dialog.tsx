@@ -168,17 +168,18 @@ export function GenerateSessionsDialog({
             <DialogDescription>
               {cohortName?.trim()
                 ? `Lớp “${cohortName.trim()}” — xếp buổi học theo thứ tự khung chương trình từ ngày bắt đầu lớp.`
-                : "Xếp buổi học theo khung chương trình. Chỉ dùng khi lớp chưa có buổi nào."}
+                : "Xếp buổi theo khung chương trình (Module → Course → Activity). Không cần mentor. Xóa/hủy buổi active trước nếu tạo lại."}
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />
 
           <DialogScrollBody className="space-y-5">
             <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
-              <p>• Bỏ qua hoạt động SelfPaced.</p>
+              <p>• Bỏ qua hoạt động SelfPaced. 1 mục curriculum = 1 buổi.</p>
               <p>• LiveOnline → Lesson · Offline → FieldTrip · Assignment → AssignmentWindow.</p>
-              <p>• Lớp cần có mentor; toàn bộ lịch được tạo all-or-nothing.</p>
-              <p>• Thời gian nhập theo UTC.</p>
+              <p>• Không cần mentor. Thời lượng từng buổi lấy từ DurationMinutes trên hoạt động.</p>
+              <p>• Chặn nếu lớp đã có học viên, hoặc còn buổi active (xóa/hủy trước).</p>
+              <p>• Thời gian nhập theo UTC. Không đủ chỗ → nới EndDate hoặc thêm ngày.</p>
             </div>
 
             <fieldset className="space-y-2">

@@ -172,18 +172,18 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classes.create": {
     title: "Không tạo được lớp học",
-    reason: "Thông tin lớp chưa hợp lệ hoặc mã lớp đã tồn tại.",
-    action: "Kiểm tra mã, tên, chương trình và lịch học rồi thử lại.",
+    reason: "Thông tin lớp chưa hợp lệ, mã đã tồn tại, hoặc ngày bắt đầu chưa đủ 14 ngày.",
+    action: "Kiểm tra mã, tên, chương trình và ngày bắt đầu (≥ 14 ngày nữa) rồi thử lại.",
   },
   "classes.update": {
     title: "Không cập nhật được lớp học",
-    reason: "Thông tin chưa hợp lệ hoặc lớp không còn tồn tại.",
-    action: "Tải lại trang, kiểm tra thông tin rồi thử lưu lại.",
+    reason: "Thông tin chưa hợp lệ, hoặc buổi học hiện có nằm ngoài khoảng ngày mới.",
+    action: "Tải lại trang, dời lịch buổi học hoặc mở rộng ngày lớp rồi thử lưu lại.",
   },
   "classes.lifecycle": {
     title: "Không chuyển được trạng thái lớp",
-    reason: "Lớp không ở trạng thái phù hợp hoặc yêu cầu bị từ chối.",
-    action: "Tải lại thông tin lớp và thử lại thao tác.",
+    reason: "Lớp thiếu mentor, lịch chưa khớp khung chương trình, hoặc ngày bắt đầu đã quá hạn.",
+    action: "Gán mentor, xếp đủ lịch, kiểm tra ngày bắt đầu rồi thử lại.",
   },
   "classMentorRequests.list": {
     title: "Không tải được yêu cầu mentor",
@@ -202,8 +202,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classMentorRequests.create": {
     title: "Không gửi được yêu cầu",
-    reason: "Lớp không còn nhận đăng ký hoặc bạn đã có yêu cầu đang chờ.",
-    action: "Tải lại bảng lớp và kiểm tra trạng thái yêu cầu.",
+    reason: "Chỉ lớp Bản nháp đã có lịch, chưa có mentor mới nhận đăng ký.",
+    action: "Tải lại bảng lớp và chọn lớp Draft còn trống mentor.",
   },
   "classMentorRequests.withdraw": {
     title: "Không rút được yêu cầu",
@@ -212,8 +212,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classMentorRequests.approve": {
     title: "Không duyệt được yêu cầu mentor",
-    reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc lớp đã có mentor.",
-    action: "Tải lại danh sách yêu cầu và thử lại.",
+    reason: "Lớp đã mất lịch, đã có mentor, hoặc yêu cầu không còn chờ duyệt.",
+    action: "Kiểm tra lịch lớp rồi tải lại danh sách yêu cầu.",
   },
   "classMentorRequests.reject": {
     title: "Không từ chối được yêu cầu mentor",
@@ -270,6 +270,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Không lấy được điểm tự chấm của học viên.",
     action: "Thử lại hoặc xem điểm trên bảng danh sách.",
   },
+  "assignments.schedule": {
+    title: "Không cập nhật được lịch mở bài",
+    reason: "Khung thời gian chưa hợp lệ hoặc bạn không có quyền sửa bài tập này.",
+    action: "Kiểm tra mở từ / đóng lúc / hạn nộp rồi thử lại.",
+  },
   "classSessions.list": {
     title: "Không tải được lịch học",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
@@ -277,13 +282,13 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classSessions.create": {
     title: "Không tạo được buổi học",
-    reason: "Thông tin buổi học chưa hợp lệ hoặc lịch bị trùng.",
-    action: "Kiểm tra tiêu đề, module và khung giờ rồi thử lại.",
+    reason: "Thiếu mục chương trình, trùng buổi active, hoặc khung giờ không hợp lệ.",
+    action: "Chọn đúng một hoạt động/bài tập chưa có buổi, kiểm tra giờ học rồi thử lại.",
   },
   "classSessions.generate": {
     title: "Không tạo được lịch tự động",
-    reason: "Lớp chưa sẵn sàng hoặc khung thời gian không đủ cho chương trình.",
-    action: "Kiểm tra mentor, ngày học và khoảng thời gian lớp rồi thử lại.",
+    reason: "Lớp đã có học viên, còn buổi active, hoặc khoảng ngày không đủ chỗ.",
+    action: "Xóa/hủy buổi cũ nếu cần, nới EndDate, rồi thử lại. Không cần mentor khi tạo lịch.",
   },
   "classSessions.checkinToken": {
     title: "Không hiển thị được QR check-in",
@@ -297,8 +302,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classSessions.update": {
     title: "Không cập nhật được buổi học",
-    reason: "Thông tin chưa hợp lệ hoặc buổi học không còn tồn tại.",
-    action: "Tải lại lịch học, kiểm tra thông tin rồi thử lưu lại.",
+    reason: "Mục chương trình bị trùng buổi active, hoặc thông tin chưa hợp lệ.",
+    action: "Tải lại lịch học, chọn mục chưa có buổi rồi thử lưu lại.",
   },
   "classSessions.delete": {
     title: "Không xóa được buổi học",
@@ -398,8 +403,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "curriculum.activity.save": {
     title: "Không lưu được hoạt động",
-    reason: "Thông tin hoạt động chưa hợp lệ hoặc lịch học chưa đúng.",
-    action: "Kiểm tra tên, loại, thứ tự và thời gian (nếu có) rồi thử lại.",
+    reason: "Thông tin hoạt động chưa hợp lệ hoặc thời lượng chưa đúng.",
+    action: "Kiểm tra tên, loại, thứ tự và thời lượng (phút) rồi thử lại.",
   },
   "curriculum.material.save": {
     title: "Không lưu được tài liệu",
@@ -414,7 +419,7 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   "curriculum.assignment.save": {
     title: "Không lưu được bài tập",
     reason: "Thông tin bài tập chưa hợp lệ hoặc đã trùng mã.",
-    action: "Kiểm tra tiêu đề, điểm, và cấu hình rồi thử lại.",
+    action: "Kiểm tra tiêu đề, điểm và cấu hình (thời lượng làm bài nếu là quiz) rồi thử lại.",
   },
   "curriculum.milestone.save": {
     title: "Không lưu được milestone",
@@ -689,6 +694,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "mentors.skills.visibility",
   "mentors.skills.delete",
   "assignments.submissions.grade",
+  "assignments.schedule",
   "classSessions.create",
   "classSessions.update",
   "classSessions.delete",
@@ -754,7 +760,10 @@ function reasonForHttpStatus(
       return "Mã lớp đã tồn tại hoặc xung đột dữ liệu lớp.";
     }
     if (context.startsWith("curriculum.")) {
-      return "Mã hoặc tên đã tồn tại trong chương trình.";
+      return "Không sửa được khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên — hoặc mã/tên đã tồn tại.";
+    }
+    if (context === "classSessions.create" || context === "classSessions.update") {
+      return "Mục chương trình này đã có buổi học active trên lớp.";
     }
     if (context === "highlight.segment") {
       return "Đoạn mới chồng lên khoảng đã có trong highlight (overlap).";

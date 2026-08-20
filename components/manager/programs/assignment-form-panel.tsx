@@ -35,7 +35,6 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
   fromApiDateTimeToLocalInput,
-  toApiDateTimeFromLocalInput,
 } from "@/lib/curriculum/datetime";
 
 /* ─── Palette (mirrors curriculum-split-panel) ─────────────────────────────── */
@@ -227,9 +226,14 @@ export function AssignmentFormPanel({
         passScore: Number(data.passScore),
         maxAttempts: Number(data.maxAttempts),
         isRequiredForModulePass: data.isRequiredForModulePass,
-        dueDate: toApiDateTimeFromLocalInput(data.dueDate),
-        availableFrom: toApiDateTimeFromLocalInput(data.availableFrom),
-        availableUntil: toApiDateTimeFromLocalInput(data.availableUntil),
+        // Lịch mở bài do mentor set theo lớp/chương trình — manager không ghi đè khi sửa.
+        ...(isEdit
+          ? {}
+          : {
+              dueDate: null,
+              availableFrom: null,
+              availableUntil: null,
+            }),
         allowShuffle: isQuiz ? data.allowShuffle : false,
         shuffleOptions: isQuiz ? data.shuffleOptions : false,
         questionBankId: isQuiz ? data.questionBankId || null : null,
@@ -274,6 +278,9 @@ export function AssignmentFormPanel({
       <div className="space-y-6 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
+          <p className="mb-3 text-xs" style={{ color: W.muted }}>
+            Lịch mở / hạn nộp do mentor thiết lập khi mở bài cho học viên — không cần nhập khi tạo khung bài tập.
+          </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
@@ -409,24 +416,6 @@ export function AssignmentFormPanel({
           </div>
         </div>
 
-        <div>
-          <STitle>Thời gian</STitle>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Hạn nộp</Label>
-              <input type="datetime-local" {...register("dueDate")} className={IN} style={{ borderColor: W.border }} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mở từ</Label>
-              <input type="datetime-local" {...register("availableFrom")} className={IN} style={{ borderColor: W.border }} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Đóng lúc</Label>
-              <input type="datetime-local" {...register("availableUntil")} className={IN} style={{ borderColor: W.border }} />
-            </div>
-          </div>
-        </div>
-
         {isQuiz && (
           <div>
             <STitle>Cấu hình trắc nghiệm</STitle>
@@ -512,7 +501,7 @@ export function AssignmentFormPanel({
                 <FErr msg={errors.questionCount?.message} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thời gian (phút)</Label>
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thời lượng làm bài (phút)</Label>
                 <input
                   type="number"
                   {...register("timeLimitMinutes", { setValueAs: emptyNumberField })}

@@ -86,7 +86,7 @@ import {
   createActivitySchema,
   updateActivitySchema,
 } from "@/lib/validations/curriculum";
-import { getLiveActivityTemplateDefaults } from "@/lib/curriculum/datetime";
+import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
@@ -572,28 +572,52 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 /* ══════════════════════════════════════════════════════════════════════════════
    COURSE FORM PANEL
 ══════════════════════════════════════════════════════════════════════════════ */
-function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
-  moduleId: string; courseToEdit: Course | null; onSuccess: () => void;
+function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }: {
+  moduleId: string;
+  courseToEdit: Course | null;
+  coursesInModule: Course[];
+  onSuccess: () => void;
 }) {
   const isEdit = !!courseToEdit;
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
+  const nextCourseOrder = useMemo(() => {
+    const max = coursesInModule.reduce((m, c) => Math.max(m, c.courseOrder ?? 0), 0);
+    return max + 1;
+  }, [coursesInModule]);
 
   const { register, handleSubmit, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateCourseSchema : createCourseSchema),
     shouldUnregister: false,
     values: courseToEdit
-      ? { code: courseToEdit.code || "", moduleId: courseToEdit.moduleId, name: courseToEdit.name, description: courseToEdit.description || "" }
-      : { code: "", moduleId, name: "", description: "" },
+      ? {
+          code: courseToEdit.code || "",
+          moduleId: courseToEdit.moduleId,
+          name: courseToEdit.name,
+          description: courseToEdit.description || "",
+          courseOrder: courseToEdit.courseOrder ?? 1,
+        }
+      : { code: "", moduleId, name: "", description: "", courseOrder: nextCourseOrder },
   });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     setBusy(true);
     try {
-      const payload = { code: data.code, moduleId: data.moduleId, name: data.name, description: data.description || "" };
+      const orderNum = Number(data.courseOrder);
+      const payload = {
+        code: data.code,
+        moduleId: data.moduleId,
+        name: data.name,
+        description: data.description || "",
+        courseOrder: orderNum,
+      };
       if (isEdit && courseToEdit) {
-        await updateCourse(courseToEdit.id, payload);
+        const orderUnchanged = orderNum === courseToEdit.courseOrder;
+        await updateCourse(courseToEdit.id, {
+          ...payload,
+          courseOrder: orderUnchanged ? undefined : orderNum,
+        });
         showAppSuccess({ title: "Cập nhật thành công", description: `Khóa học ${data.name} đã được cập nhật.` });
       } else {
         await createCourse(payload);
@@ -618,6 +642,11 @@ function CourseFormPanel({ moduleId, courseToEdit, onSuccess }: {
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học <span style={{ color: W.primary }}>*</span></Label>
           <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
           <FErr msg={errors.code?.message} />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự khóa học <span style={{ color: W.primary }}>*</span></Label>
+          <input type="number" min={1} {...register("courseOrder", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: errors.courseOrder ? W.primary : W.border }} />
+          <FErr msg={errors.courseOrder?.message} />
         </div>
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
@@ -654,7 +683,6 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 }) {
   const isEdit = !!activityToEdit;
   const [busy, setBusy] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
   const nextOrder = useMemo(() => {
@@ -669,9 +697,11 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       code: activityToEdit.code || "", courseId: activityToEdit.courseId, name: activityToEdit.name,
       activityType: activityToEdit.activityType, description: activityToEdit.description || "",
       activityOrder: activityToEdit.activityOrder,
+      durationMinutes: activityToEdit.durationMinutes ?? null,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
       code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
+      durationMinutes: null,
       requireQrCheckin: false, requireMediaEvidence: false,
     },
   });
@@ -728,19 +758,11 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     try {
       const live = data.activityType !== "SelfPaced";
       const orderNum = Number(data.activityOrder);
-      const liveDefaults = live ? getLiveActivityTemplateDefaults() : null;
       const payload = {
         code: data.code, courseId: data.courseId, name: data.name, activityType: data.activityType,
         description: data.description || "", activityOrder: orderNum,
-        // Hidden BE defaults — real schedule/location live on the class session.
-        location: liveDefaults
-          ? (isEdit && activityToEdit?.location) || liveDefaults.location
-          : null,
-        startTime: liveDefaults
-          ? (isEdit && activityToEdit?.startTime) || liveDefaults.startTime
-          : null,
-        endTime: liveDefaults
-          ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
+        durationMinutes: live
+          ? Number(data.durationMinutes) || DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES
           : null,
         requireQrCheckin: live ? data.requireQrCheckin : false,
         requireMediaEvidence: live ? data.requireMediaEvidence : false,
@@ -763,7 +785,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr icon={ActivityIcon} color="#9c27b0" title={isEdit ? `Chỉnh sửa: ${activityToEdit!.name}` : "Tạo Hoạt động mới"} sub="Hoạt động học tập trong khóa học" />
       <div className="space-y-4 p-5">
         <STitle>Thông tin hoạt động</STitle>
@@ -773,13 +795,11 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
           </div>
-          {actType === "SelfPaced" ? (
-            <div className="col-span-2 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-              <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-              <FErr msg={errors.code?.message} />
-            </div>
-          ) : null}
+          <div className="col-span-2 space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
+            <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+            <FErr msg={errors.code?.message} />
+          </div>
           <div className="col-span-2 flex flex-col gap-4 sm:flex-row">
             <div className="w-full shrink-0 space-y-4 sm:w-44">
               <div className="flex flex-col space-y-1.5">
@@ -790,6 +810,9 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                     if (v === "SelfPaced") {
                       setValue("requireQrCheckin", false);
                       setValue("requireMediaEvidence", false);
+                      setValue("durationMinutes", null);
+                    } else if (!activityToEdit?.durationMinutes) {
+                      setValue("durationMinutes", DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES);
                     }
                   }}>
                     <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-44 rounded-lg")}>
@@ -813,55 +836,57 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           </div>
 
           {actType !== "SelfPaced" && (
-            <div
-              className="col-span-2 rounded-lg border border-dashed px-3 py-2.5 text-sm"
-              style={{ borderColor: W.border, background: W.surface2, color: W.faint }}
-            >
-              Thời gian và địa điểm/link buổi học được xếp theo từng lớp trong mục{" "}
-              <span className="font-semibold" style={{ color: W.textStrong }}>Lịch học</span>,
-              không đặt ở cấp hoạt động.
-            </div>
+            <>
+              <div className="col-span-2 space-y-1.5">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                  Thời lượng (phút) <span style={{ color: W.primary }}>*</span>
+                </Label>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder={String(DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES)}
+                  {...register("durationMinutes", { valueAsNumber: true })}
+                  className={cn(IN, "font-mono")}
+                  style={{ borderColor: errors.durationMinutes ? W.primary : W.border }}
+                />
+                <FErr msg={errors.durationMinutes?.message} />
+              </div>
+              <div
+                className="col-span-2 rounded-lg border border-dashed px-3 py-2.5 text-sm"
+                style={{ borderColor: W.border, background: W.surface2, color: W.faint }}
+              >
+                Thời lượng dùng khi xếp ClassSession. Giờ và địa điểm thật nằm trên{" "}
+                <span className="font-semibold" style={{ color: W.textStrong }}>Lịch học</span>
+                {" "}của từng lớp.
+              </div>
+              <div className="col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="flex min-h-10 items-center gap-2">
+                  <Controller name="requireQrCheckin" control={control} render={({ field }) => (
+                    <Checkbox
+                      id="qr"
+                      checked={field.value}
+                      onCheckedChange={(v) => field.onChange(v === true)}
+                      className="border-input bg-background data-checked:border-primary"
+                    />
+                  )} />
+                  <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
+                </div>
+                <div className="flex min-h-10 items-center gap-2">
+                  <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
+                    <Checkbox
+                      id="med"
+                      checked={field.value}
+                      onCheckedChange={(v) => field.onChange(v === true)}
+                      className="border-input bg-background data-checked:border-primary"
+                    />
+                  )} />
+                  <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
+                </div>
+              </div>
+            </>
           )}
 
         </div>
-
-        {actType !== "SelfPaced" ? (
-          <AdvancedSection
-            open={advancedOpen}
-            onOpenChange={setAdvancedOpen}
-            summary="Mã, check-in QR và minh chứng"
-          >
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-                <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-                <FErr msg={errors.code?.message} />
-              </div>
-              <div className="flex min-h-10 items-center gap-2">
-                <Controller name="requireQrCheckin" control={control} render={({ field }) => (
-                  <Checkbox
-                    id="qr"
-                    checked={field.value}
-                    onCheckedChange={(v) => field.onChange(v === true)}
-                    className="border-input bg-background data-checked:border-primary"
-                  />
-                )} />
-                <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
-              </div>
-              <div className="flex min-h-10 items-center gap-2">
-                <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
-                  <Checkbox
-                    id="med"
-                    checked={field.value}
-                    onCheckedChange={(v) => field.onChange(v === true)}
-                    className="border-input bg-background data-checked:border-primary"
-                  />
-                )} />
-                <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
-              </div>
-            </div>
-          </AdvancedSection>
-        ) : null}
 
         {actType === "SelfPaced" ? (
           isEdit && activityToEdit ? (
@@ -1891,10 +1916,12 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       );
     }
     if (sel.kind === "course-new") {
+      const mod = modules.find((m) => m.id === sel.moduleId) || null;
       return (
         <CourseFormPanel
           moduleId={sel.moduleId}
           courseToEdit={null}
+          coursesInModule={mod?.courses ?? []}
           onSuccess={() => {
             onRefresh();
             select({ kind: "module", id: sel.moduleId });
@@ -1903,10 +1930,16 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
       );
     }
     if (sel.kind === "course") {
-      const course =
-        modules.find((m) => m.id === sel.moduleId)?.courses?.find((c) => c.id === sel.id) || null;
+      const mod = modules.find((m) => m.id === sel.moduleId);
+      const course = mod?.courses?.find((c) => c.id === sel.id) || null;
       return (
-        <CourseFormPanel key={sel.id} moduleId={sel.moduleId} courseToEdit={course} onSuccess={onRefresh} />
+        <CourseFormPanel
+          key={sel.id}
+          moduleId={sel.moduleId}
+          courseToEdit={course}
+          coursesInModule={mod?.courses ?? []}
+          onSuccess={onRefresh}
+        />
       );
     }
     if (sel.kind === "activity-new") {

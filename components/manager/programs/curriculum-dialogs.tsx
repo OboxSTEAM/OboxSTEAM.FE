@@ -57,7 +57,7 @@ import {
   type UpdateActivityInput,
 } from "@/lib/validations/curriculum";
 import { updateMaterialSchema, type UpdateMaterialInput } from "@/lib/validations/materials";
-import { getLiveActivityTemplateDefaults } from "@/lib/curriculum/datetime";
+import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
@@ -453,6 +453,7 @@ type CourseFormDialogProps = {
   onOpenChange: (open: boolean) => void;
   moduleId: string;
   courseToEdit?: Course | null;
+  coursesInModule?: Course[];
   onSuccess: () => void;
 };
 
@@ -461,10 +462,13 @@ export function CourseFormDialog({
   onOpenChange,
   moduleId,
   courseToEdit,
+  coursesInModule = [],
   onSuccess,
 }: CourseFormDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const isEdit = !!courseToEdit;
+  const nextCourseOrder =
+    coursesInModule.reduce((max, course) => Math.max(max, course.courseOrder ?? 0), 0) + 1;
 
   const {
     register,
@@ -478,6 +482,7 @@ export function CourseFormDialog({
       moduleId,
       name: "",
       description: "",
+      courseOrder: nextCourseOrder,
     },
   });
 
@@ -489,6 +494,7 @@ export function CourseFormDialog({
           moduleId: courseToEdit.moduleId,
           name: courseToEdit.name,
           description: courseToEdit.description || "",
+          courseOrder: courseToEdit.courseOrder ?? 1,
         });
       } else {
         reset({
@@ -496,23 +502,30 @@ export function CourseFormDialog({
           moduleId,
           name: "",
           description: "",
+          courseOrder: nextCourseOrder,
         });
       }
     }
-  }, [isOpen, courseToEdit, moduleId, reset]);
+  }, [isOpen, courseToEdit, moduleId, nextCourseOrder, reset]);
 
   const onSubmit = async (data: any) => {
     setIsSubmitting(true);
     try {
+      const orderNum = Number(data.courseOrder);
       const payload = {
         code: data.code,
         moduleId: data.moduleId,
         name: data.name,
         description: data.description || "",
+        courseOrder: orderNum,
       };
 
       if (isEdit && courseToEdit) {
-        await updateCourse(courseToEdit.id, payload);
+        const orderUnchanged = orderNum === courseToEdit.courseOrder;
+        await updateCourse(courseToEdit.id, {
+          ...payload,
+          courseOrder: orderUnchanged ? undefined : orderNum,
+        });
         showAppSuccess({
           title: "Cập nhật thành công",
           description: `Đã cập nhật thông tin khóa học ${data.name}.`,
@@ -575,6 +588,22 @@ export function CourseFormDialog({
               />
               {errors.code && (
                 <p className="text-xs font-semibold text-primary mt-1">{errors.code.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="courseOrder" className="text-sm font-semibold text-foreground">
+                Thứ tự khóa học <span className="text-primary">*</span>
+              </Label>
+              <Input
+                id="courseOrder"
+                type="number"
+                min={1}
+                {...register("courseOrder", { valueAsNumber: true })}
+                className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
+              />
+              {errors.courseOrder && (
+                <p className="text-xs font-semibold text-primary mt-1">{errors.courseOrder.message}</p>
               )}
             </div>
 
@@ -643,6 +672,8 @@ export function ActivityFormDialog({
     control,
     watch,
     reset,
+    setValue,
+    getValues,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(isEdit ? updateActivitySchema : createActivitySchema),
@@ -653,6 +684,7 @@ export function ActivityFormDialog({
       activityType: "SelfPaced" as const,
       description: "",
       activityOrder: 1,
+      durationMinutes: null,
       requireQrCheckin: false,
       requireMediaEvidence: false,
     },
@@ -670,6 +702,7 @@ export function ActivityFormDialog({
           activityType: activityToEdit.activityType,
           description: activityToEdit.description || "",
           activityOrder: activityToEdit.activityOrder,
+          durationMinutes: activityToEdit.durationMinutes ?? null,
           requireQrCheckin: activityToEdit.requireQrCheckin,
           requireMediaEvidence: activityToEdit.requireMediaEvidence,
         });
@@ -681,6 +714,7 @@ export function ActivityFormDialog({
           activityType: "SelfPaced",
           description: "",
           activityOrder: 1,
+          durationMinutes: null,
           requireQrCheckin: false,
           requireMediaEvidence: false,
         });
@@ -692,7 +726,6 @@ export function ActivityFormDialog({
     setIsSubmitting(true);
     try {
       const isOnlineOrOffline = data.activityType !== "SelfPaced";
-      const liveDefaults = isOnlineOrOffline ? getLiveActivityTemplateDefaults() : null;
       const payload = {
         code: data.code,
         courseId: data.courseId,
@@ -700,15 +733,8 @@ export function ActivityFormDialog({
         activityType: data.activityType,
         description: data.description || "",
         activityOrder: Number(data.activityOrder),
-        // Hidden BE defaults — real schedule/location live on the class session.
-        location: liveDefaults
-          ? (isEdit && activityToEdit?.location) || liveDefaults.location
-          : null,
-        startTime: liveDefaults
-          ? (isEdit && activityToEdit?.startTime) || liveDefaults.startTime
-          : null,
-        endTime: liveDefaults
-          ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
+        durationMinutes: isOnlineOrOffline
+          ? Number(data.durationMinutes) || DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES
           : null,
         requireQrCheckin: data.requireQrCheckin,
         requireMediaEvidence: data.requireMediaEvidence,
@@ -793,7 +819,18 @@ export function ActivityFormDialog({
                 name="activityType"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
+                  <Select
+                    value={field.value}
+                    onValueChange={(value) => {
+                      field.onChange(value ?? "");
+                      if (value && value !== "SelfPaced" && !getValues("durationMinutes")) {
+                        setValue(
+                          "durationMinutes",
+                          DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES,
+                        );
+                      }
+                    }}
+                  >
                     <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-10 rounded-lg border-border")}>
                       <SelectValue placeholder="Chọn loại hoạt động" />
                     </SelectTrigger>
@@ -824,11 +861,27 @@ export function ActivityFormDialog({
 
             {activityType !== "SelfPaced" && (
               <>
+                <div className="space-y-1.5 col-span-2 md:col-span-1">
+                  <Label htmlFor="durationMinutes" className="text-sm font-semibold text-foreground">
+                    Thời lượng (phút) <span className="text-primary">*</span>
+                  </Label>
+                  <Input
+                    id="durationMinutes"
+                    type="number"
+                    min={1}
+                    placeholder={String(DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES)}
+                    {...register("durationMinutes", { valueAsNumber: true })}
+                    className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
+                  />
+                  {errors.durationMinutes && (
+                    <p className="text-xs font-semibold text-primary mt-1">
+                      {errors.durationMinutes.message}
+                    </p>
+                  )}
+                </div>
                 <div className="col-span-2 rounded-lg border border-dashed border-border bg-background px-3 py-2.5 text-sm text-muted-foreground">
-                  Thời gian và địa điểm/link buổi học được xếp theo từng lớp
-                  trong mục{" "}
-                  <span className="font-semibold text-foreground">Lịch học</span>,
-                  không đặt ở cấp hoạt động.
+                  Thời lượng dùng khi xếp ClassSession. Giờ và địa điểm thật nằm
+                  trên lịch lớp, không đặt ở cấp hoạt động.
                 </div>
               </>
             )}
