@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarDays, ClipboardCheck } from "lucide-react";
+import { CalendarDays, ClipboardCheck, QrCode } from "lucide-react";
+
+import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
 
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
@@ -42,6 +44,10 @@ function formatClock(date: Date): string {
 
 function formatDayLabel(date: Date): string {
   return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`;
+}
+
+function isCheckinOpen(session: ClassSession): boolean {
+  return session.status !== "Completed" && session.status !== "Cancelled";
 }
 
 function isPastSession(session: ClassSession, now: number): boolean {
@@ -89,6 +95,7 @@ export function MentorClassSessionsPanel({
   isLoading = false,
   onTakeAttendance,
 }: MentorClassSessionsPanelProps) {
+  const [checkinSession, setCheckinSession] = useState<ClassSession | null>(null);
   const now = useMemo(() => Date.now(), []);
 
   const ordered = useMemo(
@@ -240,23 +247,39 @@ export function MentorClassSessionsPanel({
                         <ClassSessionStatusBadge status={session.status} />
                       </td>
                       <td className="align-middle px-3 py-1.5 text-right">
-                        {session.requiresAttendance && !past ? (
-                          <Button
-                            type="button"
-                            variant={next ? "default" : "ghost"}
-                            size="sm"
-                            onClick={() => onTakeAttendance(session)}
-                            className="h-7 gap-1 rounded-md px-2 text-[11px]"
-                            aria-label={`Điểm danh ${session.title || "buổi học"}`}
-                          >
-                            <ClipboardCheck className="size-3.5" />
-                            <span className="hidden sm:inline">Điểm danh</span>
-                          </Button>
-                        ) : (
-                          <span className="text-[10px] text-muted-foreground">
-                            —
-                          </span>
-                        )}
+                        <div className="flex items-center justify-end gap-1">
+                          {session.requiresAttendance &&
+                          isCheckinOpen(session) ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCheckinSession(session)}
+                              className="h-7 gap-1 rounded-md px-2 text-[11px]"
+                              aria-label={`QR check-in ${session.title || "buổi học"}`}
+                            >
+                              <QrCode className="size-3.5" />
+                              <span className="hidden sm:inline">QR</span>
+                            </Button>
+                          ) : null}
+                          {session.requiresAttendance && !past ? (
+                            <Button
+                              type="button"
+                              variant={next ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => onTakeAttendance(session)}
+                              className="h-7 gap-1 rounded-md px-2 text-[11px]"
+                              aria-label={`Điểm danh ${session.title || "buổi học"}`}
+                            >
+                              <ClipboardCheck className="size-3.5" />
+                              <span className="hidden sm:inline">Điểm danh</span>
+                            </Button>
+                          ) : !session.requiresAttendance ? (
+                            <span className="text-[10px] text-muted-foreground">
+                              —
+                            </span>
+                          ) : null}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -266,6 +289,15 @@ export function MentorClassSessionsPanel({
           </table>
         </div>
       )}
+
+      <SessionCheckinQrDialog
+        open={checkinSession != null}
+        onOpenChange={(open) => {
+          if (!open) setCheckinSession(null);
+        }}
+        sessionId={checkinSession?.id ?? ""}
+        sessionTitle={checkinSession?.title}
+      />
     </section>
   );
 }

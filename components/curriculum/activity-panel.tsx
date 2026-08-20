@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useCurrentUser } from "@/components/providers/current-user-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,9 +78,14 @@ export function ActivityPanel({
 }: ActivityPanelProps) {
   const [canComplete, setCanComplete] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [attendanceStatusOverride, setAttendanceStatusOverride] =
+    useState<SessionAttendanceStatus | null>(null);
+  const { profile } = useCurrentUser();
+  const currentStudentId = profile?.id ?? null;
 
   useEffect(() => {
     setCanComplete(false);
+    setAttendanceStatusOverride(null);
   }, [selectedActivityId]);
 
   const flatActivity = useMemo(
@@ -139,18 +145,29 @@ export function ActivityPanel({
         activity.activityType !== "SelfPaced",
     ),
     fetcher: async () => {
-      if (!classId || !nextSession?.id) return null;
+      if (!classId || !nextSession?.id || !currentStudentId) return null;
       const result = await getClassSessionWithStudents(classId, nextSession.id);
-      return result?.data?.students?.[0] ?? null;
+      return (
+        result?.data?.students?.find(
+          (row) => row.studentId === currentStudentId,
+        ) ?? null
+      );
     },
-    deps: [classId, nextSession?.id],
+    deps: [classId, nextSession?.id, currentStudentId],
     onError: () => {
       /* Attendance is supplementary for student UX; ignore fetch failures. */
     },
   });
 
   const myAttendanceStatus: SessionAttendanceStatus | null =
-    myAttendanceRow?.attendanceStatus ?? null;
+    attendanceStatusOverride ?? myAttendanceRow?.attendanceStatus ?? null;
+
+  const handleAttendanceChange = useCallback(
+    (status: SessionAttendanceStatus) => {
+      setAttendanceStatusOverride(status);
+    },
+    [],
+  );
 
   const isAlreadyComplete =
     flatActivity?.status === "completed" ||
@@ -281,6 +298,7 @@ export function ActivityPanel({
           isAlreadyComplete={isAlreadyComplete}
           nextSession={nextSession}
           myAttendanceStatus={myAttendanceStatus}
+          onAttendanceChange={handleAttendanceChange}
           onCanCompleteChange={setCanComplete}
           compact
         />

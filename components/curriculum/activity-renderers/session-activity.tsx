@@ -10,6 +10,8 @@ import {
   Video,
 } from "lucide-react";
 
+import { StudentSessionCheckinPanel } from "@/components/curriculum/student-session-checkin-panel";
+import { SessionLocationMap } from "@/components/maps/session-location-map";
 import type { Activity, SessionAttendanceStatus } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import {
@@ -32,6 +34,7 @@ type SessionActivityProps = {
   nextSession?: ClassSession | null;
   isAlreadyComplete?: boolean;
   myAttendanceStatus?: SessionAttendanceStatus | null;
+  onAttendanceChange?: (status: SessionAttendanceStatus) => void;
   className?: string;
 };
 
@@ -222,12 +225,17 @@ export function SessionActivity({
   nextSession = null,
   isAlreadyComplete = false,
   myAttendanceStatus = null,
+  onAttendanceChange,
   className,
 }: SessionActivityProps) {
   const isLive = activity.activityType === "LiveOnline";
+  const isOffline =
+    activity.activityType === "Offline" || nextSession?.sessionKind === "FieldTrip";
   const startTime = nextSession?.startTime ?? null;
   const endTime = nextSession?.endTime ?? null;
   const location = nextSession?.location ?? null;
+  const hasCoordinates =
+    nextSession?.latitude != null && nextSession?.longitude != null;
   const hasSchedule = Boolean(nextSession);
   const schedule = startTime ? formatClassSessionSchedule(startTime, endTime) : null;
   const isAttendanceEligible =
@@ -241,6 +249,18 @@ export function SessionActivity({
       </p>
 
       {isLive && nextSession ? <LiveJoinButton session={nextSession} /> : null}
+
+      {hasSchedule &&
+      nextSession &&
+      nextSession.status !== "Completed" &&
+      nextSession.status !== "Cancelled" ? (
+        <StudentSessionCheckinPanel
+          sessionId={nextSession.id}
+          requireQrCheckin={activity.requireQrCheckin}
+          initialStatus={myAttendanceStatus}
+          onCheckedIn={onAttendanceChange}
+        />
+      ) : null}
 
       {isAlreadyComplete ? (
         <div className="flex items-start gap-3 rounded-xl border border-learn-success/30 bg-learn-success/10 px-4 py-3">
@@ -371,16 +391,25 @@ export function SessionActivity({
             </div>
           </div>
         ) : null}
-
-        {nextSession?.requiresAttendance ? (
-          <div className="text-sm text-learn-muted">• Yêu cầu điểm danh trong buổi học</div>
-        ) : null}
       </dl>
+
+      {isOffline && hasCoordinates && nextSession ? (
+        <SessionLocationMap
+          latitude={nextSession.latitude as number}
+          longitude={nextSession.longitude as number}
+          locationLabel={location}
+          variant="learn"
+        />
+      ) : null}
 
       {!hasSchedule ? (
         <p className="rounded-lg border border-dashed border-learn-border bg-learn-surface-2 px-3 py-2 text-sm text-learn-muted">
           Lịch lớp chưa được công bố. Vui lòng quay lại sau.
         </p>
+      ) : null}
+
+      {nextSession?.requiresAttendance ? (
+        <div className="text-sm text-learn-muted">• Yêu cầu điểm danh trong buổi học</div>
       ) : null}
 
       {!isLive ? (

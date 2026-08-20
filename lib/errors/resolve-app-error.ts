@@ -280,6 +280,21 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Thông tin buổi học chưa hợp lệ hoặc lịch bị trùng.",
     action: "Kiểm tra tiêu đề, module và khung giờ rồi thử lại.",
   },
+  "classSessions.generate": {
+    title: "Không tạo được lịch tự động",
+    reason: "Lớp chưa sẵn sàng hoặc khung thời gian không đủ cho chương trình.",
+    action: "Kiểm tra mentor, ngày học và khoảng thời gian lớp rồi thử lại.",
+  },
+  "classSessions.checkinToken": {
+    title: "Không hiển thị được QR check-in",
+    reason: "Buổi học không mở check-in hoặc bạn không có quyền.",
+    action: "Kiểm tra trạng thái buổi học và thử lại.",
+  },
+  "classSessions.checkin": {
+    title: "Check-in không thành công",
+    reason: "Mã check-in không hợp lệ hoặc đã hết hạn.",
+    action: "Nhờ mentor hiển thị mã QR mới và thử lại.",
+  },
   "classSessions.update": {
     title: "Không cập nhật được buổi học",
     reason: "Thông tin chưa hợp lệ hoặc buổi học không còn tồn tại.",
@@ -677,6 +692,9 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classSessions.create",
   "classSessions.update",
   "classSessions.delete",
+  "classSessions.generate",
+  "classSessions.checkinToken",
+  "classSessions.checkin",
   "attendance.update",
   "activityProgress.forceComplete",
   "activityProgress.mentorCompleteBulk",

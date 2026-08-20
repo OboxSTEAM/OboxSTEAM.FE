@@ -14,6 +14,7 @@ type ActivityContentProps = {
   isAlreadyComplete: boolean;
   nextSession?: ClassSession | null;
   myAttendanceStatus?: SessionAttendanceStatus | null;
+  onAttendanceChange?: (status: SessionAttendanceStatus) => void;
   onCanCompleteChange?: (canComplete: boolean) => void;
   compact?: boolean;
 };
@@ -25,6 +26,7 @@ export function ActivityContent({
   isAlreadyComplete,
   nextSession = null,
   myAttendanceStatus = null,
+  onAttendanceChange,
   onCanCompleteChange,
   compact = false,
 }: ActivityContentProps) {
@@ -50,6 +52,7 @@ export function ActivityContent({
       nextSession={nextSession}
       isAlreadyComplete={isAlreadyComplete}
       myAttendanceStatus={myAttendanceStatus}
+      onAttendanceChange={onAttendanceChange}
       className={cn(compact && "pb-1")}
     />
   );

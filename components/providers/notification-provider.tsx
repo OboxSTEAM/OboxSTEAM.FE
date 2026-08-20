@@ -22,6 +22,7 @@ import {
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { resolveNotificationHrefFromNotification } from "@/lib/notifications/resolve-href";
+import { dispatchCurriculumSyncEvent } from "@/lib/realtime/curriculum-sync-bus";
 import { startNotificationHub } from "@/lib/realtime/notification-hub";
 
 const INBOX_PAGE_SIZE = 10;
@@ -261,6 +262,10 @@ export function NotificationProvider({
     void refreshInbox();
   }, [isActive, refreshInbox]);
 
+  const handleSyncEvent = useCallback((event: Parameters<typeof dispatchCurriculumSyncEvent>[0]) => {
+    dispatchCurriculumSyncEvent(event);
+  }, []);
+
   useEffect(() => {
     if (!isActive) return;
 
@@ -269,7 +274,10 @@ export function NotificationProvider({
 
     void (async () => {
       try {
-        stopHub = await startNotificationHub(handleNotificationReceived);
+        stopHub = await startNotificationHub(
+          handleNotificationReceived,
+          handleSyncEvent,
+        );
         if (disposed) {
           await stopHub();
           return;
@@ -299,7 +307,7 @@ export function NotificationProvider({
           });
       }
     };
-  }, [handleNotificationReceived, isActive]);
+  }, [handleNotificationReceived, handleSyncEvent, isActive]);
 
   const value = useMemo<NotificationContextValue>(
     () => ({

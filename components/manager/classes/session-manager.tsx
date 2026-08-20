@@ -4,19 +4,21 @@ import { Suspense, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ClipboardCheck,
-  Pencil,
-  Plus,
-  Trash2,
   CalendarDays,
+  ClipboardCheck,
   LayoutGrid,
   List,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
 } from "lucide-react";
 
 import {
   SessionFormDialog,
   type ClassSessionFormSubmitPayload,
 } from "@/components/manager/classes/session-form-dialog";
+import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
@@ -78,6 +80,7 @@ function SessionManagerInner() {
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
+  const [generateOpen, setGenerateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
     id: string;
@@ -424,6 +427,21 @@ function SessionManagerInner() {
         </div>
         <Button
           type="button"
+          variant="outline"
+          onClick={() => setGenerateOpen(true)}
+          disabled={!classId || totalCount > 0}
+          className="h-11 gap-2 rounded-xl px-4 font-semibold disabled:opacity-50"
+          title={
+            totalCount > 0
+              ? "Chỉ dùng khi lớp chưa có buổi học nào"
+              : undefined
+          }
+        >
+          <Sparkles className="size-4" />
+          Tạo lịch tự động
+        </Button>
+        <Button
+          type="button"
           onClick={openCreate}
           disabled={!classId}
           className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98] disabled:opacity-50"
@@ -631,6 +649,17 @@ function SessionManagerInner() {
         description={`Buổi “${deleteTarget?.title || ""}” sẽ bị xóa mềm khỏi lịch lớp.`}
         confirmLabel="Xóa buổi học"
         variant="destructive"
+      />
+
+      <GenerateSessionsDialog
+        open={generateOpen}
+        onOpenChange={setGenerateOpen}
+        classId={classId}
+        className={selectedClass?.name}
+        onGenerated={() => {
+          markLoading();
+          retry();
+        }}
       />
     </div>
   );

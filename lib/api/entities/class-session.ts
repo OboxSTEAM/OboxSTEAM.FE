@@ -32,6 +32,20 @@ export const classSessionSchema = z.object({
   startTime: z.string(),
   endTime: z.string(),
   location: z.string().nullable(),
+  latitude: z
+    .number()
+    .min(-90)
+    .max(90)
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
+  longitude: z
+    .number()
+    .min(-180)
+    .max(180)
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
   meetingUrl: z
     .string()
     .nullable()

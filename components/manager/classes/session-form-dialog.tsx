@@ -51,6 +51,10 @@ import {
 import { cn } from "@/lib/utils";
 
 import { DateTimePicker } from "./date-time-picker";
+import {
+  parseSessionCoordinateFields,
+  SessionCoordinatesPicker,
+} from "@/components/maps/session-coordinates-picker";
 
 const INPUT_CLASS =
   "h-10 rounded-lg border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
@@ -83,6 +87,8 @@ export type ClassSessionFormSubmitPayload = {
   startTime: string;
   endTime: string;
   location?: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
   meetingUrl?: string | null;
   requiresAttendance?: boolean;
   status?: ClassSessionFormValues["status"];
@@ -133,6 +139,10 @@ function toDefaultValues(
     startTime: session ? fromApiDateTimeToLocalInput(session.startTime) : slotStart,
     endTime: session ? fromApiDateTimeToLocalInput(session.endTime) : slotEnd,
     location: session?.location ?? "",
+    latitude:
+      session?.latitude != null ? String(session.latitude) : "",
+    longitude:
+      session?.longitude != null ? String(session.longitude) : "",
     meetingUrl: session?.meetingUrl ?? "",
     requiresAttendance: session?.requiresAttendance ?? true,
     status: session?.status,
@@ -246,6 +256,7 @@ export function SessionFormDialog({
       startTime,
       endTime,
       location: values.location?.trim() || null,
+      ...parseSessionCoordinateFields(values.latitude, values.longitude),
       meetingUrl: values.meetingUrl?.trim() || null,
       requiresAttendance: values.requiresAttendance,
       status: values.status,
@@ -585,6 +596,21 @@ export function SessionFormDialog({
                   className={INPUT_CLASS}
                 />
               </FormField>
+
+              <div className="sm:col-span-2">
+                <SessionCoordinatesPicker
+                  latitude={watch("latitude") ?? ""}
+                  longitude={watch("longitude") ?? ""}
+                  onLatitudeChange={(value) =>
+                    setValue("latitude", value, { shouldValidate: true })
+                  }
+                  onLongitudeChange={(value) =>
+                    setValue("longitude", value, { shouldValidate: true })
+                  }
+                  latitudeError={errors.latitude?.message}
+                  longitudeError={errors.longitude?.message}
+                />
+              </div>
 
               <FormField
                 id="meetingUrl"

@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
+import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import {
   forceCompleteActivity,
   getAssignments,
@@ -163,7 +164,7 @@ export function MentorClassCurriculumPanel({
     setIsForceCompleteOpen(false);
   }, [selectedActivityId]);
 
-  const { data: programResult, isLoading: isProgramLoading } = useClientFetch({
+  const { data: programResult, isLoading: isProgramLoading, retry: retryProgram } = useClientFetch({
     fetcher: async () => {
       const result = await getProgramById(programId);
       const program = result?.data ?? null;
@@ -175,6 +176,12 @@ export function MentorClassCurriculumPanel({
   });
 
   const modules = programResult?.modules ?? [];
+
+  const handleProgramSync = useCallback(() => {
+    retryProgram();
+  }, [retryProgram]);
+
+  useCurriculumSync(programId, handleProgramSync);
 
   const { data: assignmentsData, isLoading: isAssignmentsLoading } =
     useClientFetch({

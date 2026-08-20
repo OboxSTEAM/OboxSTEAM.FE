@@ -1,6 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 
 import { ClassManager } from "@/components/manager/classes/class-manager";
@@ -8,9 +9,9 @@ import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
+import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { type ProgramWithModules } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
 
 // ─── Stepper tab config ────────────────────────────────────────────────────────
 type TabId = "curriculum" | "experts" | "reviews" | "classes";
@@ -88,6 +89,12 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
+
+  const handleSilentSync = useCallback(() => {
+    router.refresh();
+  }, [router]);
+
+  useCurriculumSync(program.id, handleSilentSync);
 
   if (initialProgram !== prevInitial) {
     setPrevInitial(initialProgram);

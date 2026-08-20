@@ -597,6 +597,7 @@ export {
   createClass,
   createClassSession,
   deleteClassSession,
+  generateClassSessions,
   getClassById,
   getClassSessionById,
   getClassSessionWithStudents,
@@ -628,12 +629,14 @@ export {
   type ClassWithSessions,
   type CreateClassInput,
   type CreateClassSessionInput,
+  type GenerateClassSessionsInput,
   type DeleteClassSessionResponse,
   type DeleteClassSessionResult,
   type GetClassSessionWithStudentsResponse,
   type GetClassSessionWithStudentsResult,
   type GetClassSessionsResponse,
   type GetClassSessionsResult,
+  type GenerateClassSessionsResult,
   type GetClassWithSessionsResponse,
   type GetClassWithSessionsResult,
   type GetClassWithStudentsResponse,
@@ -651,6 +654,14 @@ export {
   type UpdateClassSessionInput,
   type UpdateSessionAttendanceInput,
 } from "./classes";
+
+export {
+  createSessionCheckinToken,
+  studentSessionCheckin,
+  type SessionCheckinToken,
+  type SessionCheckinTokenResult,
+  type SessionCheckinResult,
+} from "./class-sessions";
 
 export {
   approveClassMentorRequest,
