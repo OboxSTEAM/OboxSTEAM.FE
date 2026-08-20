@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
+import { ClassCalendarDrawer } from "@/components/mentors/class-calendar-drawer";
 import { MentorClassCurriculumPanel } from "@/components/mentors/mentor-class-curriculum-panel";
 import { MentorClassMediaPanel } from "@/components/mentors/mentor-class-media-panel";
 import { MentorClassGradingPanel } from "@/components/mentors/mentor-class-grading-panel";
@@ -54,6 +55,7 @@ function getInitials(name: string | null | undefined): string {
 const TAB_VALUES = [
   "students",
   "sessions",
+  "lich-hoc",
   "curriculum",
   "grading",
   "media",
@@ -61,9 +63,13 @@ const TAB_VALUES = [
 
 type MentorClassTab = (typeof TAB_VALUES)[number];
 
+function normalizeTab(value: MentorClassTab): MentorClassTab {
+  return value === "lich-hoc" ? "sessions" : value;
+}
+
 function parseTab(value: string | null): MentorClassTab {
   if (value && (TAB_VALUES as readonly string[]).includes(value)) {
-    return value as MentorClassTab;
+    return normalizeTab(value as MentorClassTab);
   }
   return "students";
 }
@@ -79,6 +85,7 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
   const deepActivityId = searchParams.get("activityId");
   const deepSessionId = searchParams.get("sessionId");
   const deepAssignmentId = searchParams.get("assignmentId");
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   function replaceQuery(next: {
     tab?: MentorClassTab;
@@ -253,6 +260,15 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
         >
           <ArrowLeft className="size-4" />
           Danh sách
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setCalendarOpen(true)}
+          className="h-11 gap-2 rounded-xl border-border"
+        >
+          <CalendarDays className="size-4" />
+          Lịch lớp này
         </Button>
       </ManagerPageHeader>
 
@@ -436,6 +452,14 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
           </TabsContent>
         </Tabs>
       </div>
+
+      <ClassCalendarDrawer
+        open={calendarOpen}
+        onOpenChange={setCalendarOpen}
+        classId={classId}
+        className={classItem.name}
+        detailHref={`/mentor/classes/${classId}?tab=lich-hoc`}
+      />
     </div>
   );
 }

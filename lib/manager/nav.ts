@@ -1,15 +1,16 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BookOpen,
   CalendarDays,
   CheckSquare,
   ClipboardList,
   FileQuestion,
   LayoutDashboard,
-  LayoutGrid,
+  RefreshCw,
   Target,
   Upload,
-  UserCheck,
   Users,
+  UserCheck,
 } from "lucide-react";
 
 export type ManagerNavItem = {
@@ -23,9 +24,10 @@ export type ManagerNavGroup = {
   items: ManagerNavItem[];
 };
 
+/** Workflow-oriented manager IA — flat links under group labels (no parent==child). */
 export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
   {
-    title: "Tổng quan",
+    title: "Hôm nay",
     items: [
       {
         label: "Tổng quan",
@@ -35,13 +37,48 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
     ],
   },
   {
-    title: "Chương trình & Nội dung",
+    title: "Nội dung",
     items: [
       {
         label: "Chương trình",
         href: "/manager/programs",
-        icon: LayoutGrid,
+        icon: BookOpen,
       },
+    ],
+  },
+  {
+    title: "Vận hành",
+    items: [
+      {
+        label: "Lớp học",
+        href: "/manager/classes",
+        icon: Users,
+      },
+      {
+        label: "Lịch học",
+        href: "/manager/sessions",
+        icon: CalendarDays,
+      },
+      {
+        label: "Điểm danh",
+        href: "/manager/attendance",
+        icon: CheckSquare,
+      },
+      {
+        label: "Học lại lớp",
+        href: "/manager/redelivery",
+        icon: RefreshCw,
+      },
+      {
+        label: "Chuyên gia",
+        href: "/manager/experts",
+        icon: UserCheck,
+      },
+    ],
+  },
+  {
+    title: "Thư viện",
+    items: [
       {
         label: "Tài liệu",
         href: "/manager/materials",
@@ -64,34 +101,12 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
       },
     ],
   },
-  {
-    title: "Lớp học",
-    items: [
-      {
-        label: "Lớp học",
-        href: "/manager/classes",
-        icon: Users,
-      },
-      {
-        label: "Lịch học",
-        href: "/manager/sessions",
-        icon: CalendarDays,
-      },
-      {
-        label: "Điểm danh",
-        href: "/manager/attendance",
-        icon: CheckSquare,
-      },
-      {
-        label: "Chuyên gia",
-        href: "/manager/experts",
-        icon: Users,
-      },
-      {
-        label: "Duyệt Mentor",
-        href: "/manager/mentors",
-        icon: UserCheck,
-      },
-    ],
-  },
 ];
+
+export function isManagerNavItemActive(
+  href: string,
+  pathname: string,
+): boolean {
+  if (href === "/manager") return pathname === "/manager";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}

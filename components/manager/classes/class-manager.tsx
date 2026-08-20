@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   CalendarDays,
   Eye,
+  LayoutGrid,
   Pencil,
   Play,
   Plus,
@@ -309,7 +310,7 @@ export function ClassManager({
     {
       header: "Thao tác",
       sticky: "right",
-      className: "w-44 text-right",
+      className: "w-52 text-right",
       render: (classItem) => {
         const next = getNextClassLifecycleAction(classItem.status);
         return (
@@ -331,12 +332,28 @@ export function ClassManager({
               size="icon"
               nativeButton={false}
               render={
-                <Link href={`/manager/sessions?classId=${classItem.id}`} />
+                <Link
+                  href={`/manager/classes/${classItem.id}?tab=lich-hoc`}
+                />
               }
               aria-label={`Lịch học ${classItem.name}`}
               className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
             >
               <CalendarDays className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              nativeButton={false}
+              render={
+                <Link href={`/manager/sessions?classId=${classItem.id}`} />
+              }
+              aria-label={`Hub lịch tổng ${classItem.name}`}
+              title="Lịch tổng (nhiều lớp)"
+              className="size-9 rounded-lg text-muted-foreground opacity-0 transition-opacity hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] group-hover:opacity-100 focus-visible:opacity-100"
+            >
+              <LayoutGrid className="size-4" />
             </Button>
             <Button
               type="button"

@@ -138,7 +138,7 @@ export function MentorScheduleOverview() {
   return (
     <div className="flex flex-col gap-6">
       <ManagerPageHeader
-        title="Lịch học"
+        title="Lịch dạy"
         description="Tổng quan mọi buổi học của các lớp bạn phụ trách."
       />
 
@@ -193,7 +193,7 @@ export function MentorScheduleOverview() {
                 size="sm"
                 nativeButton={false}
                 render={
-                  <Link href={`/mentor/classes/${classFilter}?tab=sessions`} />
+                  <Link href={`/mentor/classes/${classFilter}?tab=lich-hoc`} />
                 }
                 className="h-9 gap-1.5 rounded-lg"
               >
@@ -235,6 +235,7 @@ export function MentorScheduleOverview() {
           ) : (
             <SessionCalendar
               sessions={visibleSessions}
+              mode="read"
               onSelectSession={(session) => {
                 const params = new URLSearchParams({ tab: "curriculum" });
                 if (session.activityId) {

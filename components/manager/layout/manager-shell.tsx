@@ -20,7 +20,7 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/manager/activities")) return "Hoạt động";
   if (pathname.startsWith("/manager/materials")) return "Tài liệu";
   if (pathname.startsWith("/manager/question-bank")) return "Ngân hàng câu hỏi";
-  if (pathname.startsWith("/manager/milestones")) return "Milestone";
+  if (pathname.startsWith("/manager/milestones")) return "Milestone nghiên cứu";
   if (pathname.startsWith("/manager/classes")) return "Lớp học";
   if (pathname.startsWith("/manager/redelivery")) return "Học lại lớp";
   if (pathname.startsWith("/manager/sessions")) return "Lịch học";
@@ -103,7 +103,7 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider className="h-screen overflow-hidden">
       <Suspense fallback={<div className="w-64 shrink-0 border-r border-border bg-background" />}>
-        <ManagerSidebar />
+        <ManagerSidebar onOpenSearch={openCommand} />
       </Suspense>
       <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">
         <ManagerHeader title={pageTitle} onOpenCommand={openCommand} />

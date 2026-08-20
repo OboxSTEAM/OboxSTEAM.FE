@@ -1,5 +1,11 @@
-import { redirect } from "next/navigation";
+import type { Metadata } from "next";
+
+import { MentorOverview } from "@/components/mentors/mentor-overview";
+
+export const metadata: Metadata = {
+  title: "Tổng quan Mentor",
+};
 
 export default function MentorIndexPage() {
-  redirect("/mentor/classes");
+  return <MentorOverview />;
 }

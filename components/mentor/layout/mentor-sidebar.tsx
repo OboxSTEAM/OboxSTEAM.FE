@@ -7,6 +7,7 @@ import {
   CalendarDays,
   ChevronsUpDown,
   ClipboardList,
+  LayoutDashboard,
   LogOut,
   RotateCcw,
   User,
@@ -45,22 +46,28 @@ const LOGO_URL =
 
 const NAV_ITEMS = [
   {
+    title: "Tổng quan",
+    url: "/mentor",
+    icon: LayoutDashboard,
+    exact: true,
+  },
+  {
     title: "Lớp của tôi",
     url: "/mentor/classes",
     icon: Users,
   },
   {
-    title: "Lịch học",
+    title: "Lịch dạy",
     url: "/mentor/schedule",
     icon: CalendarDays,
   },
   {
-    title: "Đăng ký lớp",
+    title: "Đơn đăng ký lớp",
     url: "/mentor/board",
     icon: ClipboardList,
   },
   {
-    title: "Yêu cầu làm lại",
+    title: "Phục hồi bài tập",
     url: "/mentor/recovery",
     icon: RotateCcw,
   },
@@ -73,6 +80,16 @@ function getInitials(name?: string | null): string {
     return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
+}
+
+function isNavActive(
+  item: (typeof NAV_ITEMS)[number],
+  pathname: string,
+): boolean {
+  if ("exact" in item && item.exact) {
+    return pathname === item.url;
+  }
+  return pathname === item.url || pathname.startsWith(`${item.url}/`);
 }
 
 export function MentorSidebar() {
@@ -124,8 +141,7 @@ export function MentorSidebar() {
           ) : null}
           <SidebarMenu className="space-y-1">
             {NAV_ITEMS.map((item) => {
-              const isActive =
-                pathname === item.url || pathname.startsWith(`${item.url}/`);
+              const isActive = isNavActive(item, pathname);
 
               return (
                 <SidebarMenuItem key={item.title}>
@@ -230,7 +246,7 @@ export function MentorSidebar() {
                     className="cursor-pointer gap-2 rounded-lg p-2 text-foreground focus:bg-muted focus:text-foreground not-data-[variant=destructive]:focus:**:!text-foreground"
                   >
                     <User className="size-4 !text-foreground" />
-                    Hồ sơ cá nhân
+                    Hồ sơ
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border/60" />

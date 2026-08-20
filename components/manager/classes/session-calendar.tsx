@@ -162,24 +162,43 @@ function layoutDay(
   return result;
 }
 
+export type SessionCalendarMode = "edit" | "read" | "drawer";
+
 export type SessionCalendarProps = {
   sessions: ClassSession[];
+  /**
+   * - `edit` — create on empty slots (default when `onCreateAt` is set)
+   * - `read` — view only
+   * - `drawer` — compact read-only (month default, mini hidden)
+   */
+  mode?: SessionCalendarMode;
   onSelectSession?: (session: ClassSession) => void;
   /** Fired when an empty slot/day is clicked, with the suggested start time. */
   onCreateAt?: (start: Date) => void;
+  /** Fired when a day is selected in the mini month or month grid. */
+  onSelectDay?: (day: Date) => void;
   /** After a create/update, navigate to and briefly highlight this session. */
   focusSession?: { id: string; nonce: number } | null;
+  className?: string;
 };
 
 export function SessionCalendar({
   sessions,
+  mode = "edit",
   onSelectSession,
   onCreateAt,
+  onSelectDay,
   focusSession,
+  className,
 }: SessionCalendarProps) {
-  const [view, setView] = useState<CalendarView>("week");
+  const isReadOnly = mode === "read" || mode === "drawer";
+  const canCreate = !isReadOnly && !!onCreateAt;
+
+  const [view, setView] = useState<CalendarView>(() =>
+    mode === "drawer" ? "month" : "week",
+  );
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
-  const [showMini, setShowMini] = useState(true);
+  const [showMini, setShowMini] = useState(mode !== "drawer");
   const [focused, setFocused] = useState<{ id: string; nonce: number } | null>(
     null,
   );
@@ -225,15 +244,21 @@ export function SessionCalendar({
     });
   }
 
+  function selectDay(day: Date) {
+    const next = startOfDay(day);
+    setAnchor(next);
+    onSelectDay?.(next);
+  }
+
   return (
-    <div className="flex flex-col">
+    <div className={cn("flex flex-col", className)}>
       <CalendarToolbar
         view={view}
         anchor={anchor}
         onViewChange={setView}
         onPrev={() => shift(-1)}
         onNext={() => shift(1)}
-        onToday={() => setAnchor(startOfDay(new Date()))}
+        onToday={() => selectDay(new Date())}
         sessions={parsed}
         showMini={showMini}
         onToggleMini={() => setShowMini((value) => !value)}
@@ -245,7 +270,7 @@ export function SessionCalendar({
             anchor={anchor}
             today={today}
             sessions={parsed}
-            onSelectDay={(day) => setAnchor(startOfDay(day))}
+            onSelectDay={selectDay}
           />
         ) : null}
 
@@ -257,7 +282,8 @@ export function SessionCalendar({
               sessions={parsed}
               focusedId={focused?.id ?? null}
               onSelectSession={onSelectSession}
-              onCreateAt={onCreateAt}
+              onCreateAt={canCreate ? onCreateAt : undefined}
+              onSelectDay={selectDay}
             />
           ) : (
             <TimeGrid
@@ -267,7 +293,7 @@ export function SessionCalendar({
               sessions={parsed}
               focusedId={focused?.id ?? null}
               onSelectSession={onSelectSession}
-              onCreateAt={onCreateAt}
+              onCreateAt={canCreate ? onCreateAt : undefined}
             />
           )}
         </div>
@@ -793,6 +819,7 @@ function MonthGrid({
   focusedId,
   onSelectSession,
   onCreateAt,
+  onSelectDay,
 }: {
   anchor: Date;
   today: Date;
@@ -800,6 +827,7 @@ function MonthGrid({
   focusedId?: string | null;
   onSelectSession?: (session: ClassSession) => void;
   onCreateAt?: (start: Date) => void;
+  onSelectDay?: (day: Date) => void;
 }) {
   const monthStart = startOfMonth(anchor);
   const gridStart = startOfWeek(monthStart);
@@ -822,8 +850,10 @@ function MonthGrid({
     return map;
   }, [sessions]);
 
-  function handleDayCreate(day: Date) {
-    if (!onCreateAt) return;
+  function handleDayClick(day: Date) {
+    onSelectDay?.(startOfDay(day));
+    // When a day-select handler is present (split schedule view), don't also create.
+    if (onSelectDay || !onCreateAt) return;
     const start = new Date(day);
     start.setHours(9, 0, 0, 0);
     onCreateAt(start);
@@ -847,17 +877,20 @@ function MonthGrid({
           const items = byDay.get(key) ?? [];
           const isCurrentMonth = day.getMonth() === monthStart.getMonth();
           const isToday = isSameDay(day, today);
+          const isSelected = isSameDay(day, anchor);
           const weekdayIndex = (day.getDay() + 6) % 7;
           const isWeekend = weekdayIndex >= 5;
           return (
             <div
               key={day.toISOString()}
-              onClick={() => handleDayCreate(day)}
+              onClick={() => handleDayClick(day)}
               className={cn(
                 "min-h-[104px] border-b border-l border-border p-1.5 [&:nth-child(7n)]:border-r-0",
+                (onCreateAt || onSelectDay) && "cursor-pointer",
                 onCreateAt && "cursor-copy",
                 !isCurrentMonth && "bg-background/50",
                 isWeekend && isCurrentMonth && "bg-background/40",
+                isSelected && "bg-primary/5",
               )}
             >
               <div className="mb-1 flex justify-end">
@@ -866,9 +899,11 @@ function MonthGrid({
                     "flex size-6 items-center justify-center rounded-full text-xs font-bold tabular-nums",
                     isToday
                       ? "bg-primary text-white"
-                      : isCurrentMonth
-                        ? "text-foreground"
-                        : "text-muted-foreground",
+                      : isSelected
+                        ? "bg-primary/15 text-primary"
+                        : isCurrentMonth
+                          ? "text-foreground"
+                          : "text-muted-foreground",
                   )}
                 >
                   {day.getDate()}

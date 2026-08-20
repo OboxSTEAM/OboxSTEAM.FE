@@ -11,10 +11,13 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import { isMentorRole } from "@/lib/auth/roles";
 
 function resolvePageTitle(pathname: string): string {
+  if (pathname === "/mentor") return "Tổng quan";
   if (pathname.startsWith("/mentor/classes")) return "Lớp của tôi";
-  if (pathname.startsWith("/mentor/board")) return "Đăng ký lớp";
-  if (pathname.startsWith("/mentor/requests")) return "Đăng ký lớp";
-  if (pathname.startsWith("/mentor/recovery")) return "Yêu cầu làm lại";
+  if (pathname.startsWith("/mentor/schedule")) return "Lịch dạy";
+  if (pathname.startsWith("/mentor/board")) return "Đơn đăng ký lớp";
+  if (pathname.startsWith("/mentor/requests")) return "Đơn đăng ký lớp";
+  if (pathname.startsWith("/mentor/recovery")) return "Phục hồi bài tập";
+  if (pathname.startsWith("/mentor/profile")) return "Hồ sơ";
   return "Mentor";
 }
 

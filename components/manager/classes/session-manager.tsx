@@ -393,7 +393,7 @@ function SessionManagerInner() {
     <div className="flex flex-col gap-6">
       <ManagerPageHeader
         title="Lịch học"
-        description="Quản lý buổi học theo từng lớp cohort."
+        description="Lịch tổng — xem và quản lý buổi học trên nhiều lớp. Chọn lớp bên dưới để bắt đầu."
       >
         <div className="flex items-center rounded-xl border border-border bg-card p-1">
           <button
@@ -574,6 +574,7 @@ function SessionManagerInner() {
                 ) : (
                   <SessionCalendar
                     sessions={filteredSessions}
+                    mode="edit"
                     focusSession={pendingFocus}
                     onSelectSession={(session) => {
                       setCreateDefaultStart(null);

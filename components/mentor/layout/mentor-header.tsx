@@ -18,10 +18,13 @@ import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 
 const PATH_LABELS: Record<string, string> = {
-  mentor: "Mentor",
+  mentor: "Tổng quan",
   classes: "Lớp của tôi",
-  board: "Đăng ký lớp",
-  requests: "Đăng ký lớp",
+  schedule: "Lịch dạy",
+  board: "Đơn đăng ký lớp",
+  requests: "Đơn đăng ký lớp",
+  recovery: "Phục hồi bài tập",
+  profile: "Hồ sơ",
 };
 
 const UUID_RE =

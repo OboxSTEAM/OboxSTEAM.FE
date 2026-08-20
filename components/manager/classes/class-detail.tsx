@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
@@ -15,6 +16,7 @@ import {
   type ClassFormSubmitPayload,
 } from "@/components/manager/classes/class-form-dialog";
 import { ClassMentorAssignmentPanel } from "@/components/manager/classes/class-mentor-assignment-panel";
+import { ClassSchedulePanel } from "@/components/manager/classes/class-schedule-panel";
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ClassScheduleSummary } from "@/components/classes/class-schedule-summary";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
@@ -28,6 +30,7 @@ import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   completeClass,
@@ -52,14 +55,41 @@ function getInitials(name: string | null | undefined): string {
     .join("");
 }
 
+const TAB_VALUES = ["tong-quan", "lich-hoc"] as const;
+type ClassDetailTab = (typeof TAB_VALUES)[number];
+
+function parseTab(value: string | null): ClassDetailTab {
+  if (value && (TAB_VALUES as readonly string[]).includes(value)) {
+    return value as ClassDetailTab;
+  }
+  // Back-compat aliases
+  if (value === "sessions" || value === "schedule") return "lich-hoc";
+  return "tong-quan";
+}
+
 type ClassDetailProps = {
   classId: string;
 };
 
-export function ClassDetail({ classId }: ClassDetailProps) {
+function ClassDetailInner({ classId }: ClassDetailProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab = parseTab(searchParams.get("tab"));
+
   const [formOpen, setFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [lifecycleOpen, setLifecycleOpen] = useState(false);
+
+  function setTab(next: ClassDetailTab) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (next === "tong-quan") params.delete("tab");
+    else params.set("tab", next);
+    const qs = params.toString();
+    router.replace(
+      qs ? `/manager/classes/${classId}?${qs}` : `/manager/classes/${classId}`,
+      { scroll: false },
+    );
+  }
 
   const { data, isLoading, retry } = useClientFetch({
     fetcher: () => getClassWithStudents(classId),
@@ -229,11 +259,14 @@ export function ClassDetail({ classId }: ClassDetailProps) {
           type="button"
           variant="outline"
           nativeButton={false}
-          render={<Link href={`/manager/sessions?classId=${classItem.id}`} />}
+          render={
+            <Link href={`/manager/sessions?classId=${classItem.id}`} />
+          }
           className="h-11 gap-2 rounded-xl border-border"
+          title="Mở lịch tổng (nhiều lớp)"
         >
           <CalendarDays className="size-4" />
-          Lịch học
+          Hub lịch
         </Button>
         <Button
           type="button"
@@ -280,42 +313,81 @@ export function ClassDetail({ classId }: ClassDetailProps) {
           ) : null}
         </section>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:items-start">
-          <div className="min-w-0 lg:sticky lg:top-4">
-            <ClassMentorAssignmentPanel
-              classId={classItem.id}
-              mentorId={classItem.mentorId}
-              requiredSkills={classItem.requiredSkills}
-              onChanged={retry}
-            />
-          </div>
+        <Tabs
+          value={tab}
+          onValueChange={(value) => {
+            if (!value) return;
+            setTab(parseTab(value));
+          }}
+          className="gap-4"
+        >
+          <TabsList
+            variant="line"
+            className="h-auto w-full justify-start gap-1 rounded-none border-b border-border bg-transparent p-0"
+          >
+            <TabsTrigger
+              value="tong-quan"
+              className="rounded-none px-4 py-2.5 data-active:text-primary"
+            >
+              <Users className="size-4" />
+              Tổng quan
+            </TabsTrigger>
+            <TabsTrigger
+              value="lich-hoc"
+              className="rounded-none px-4 py-2.5 data-active:text-primary"
+            >
+              <CalendarDays className="size-4" />
+              Lịch học
+            </TabsTrigger>
+          </TabsList>
 
-          <section className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-            <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
-              <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                <Users className="size-4 text-primary" />
-                Danh sách học viên
-              </p>
-              <p className="font-mono text-xs text-muted-foreground">
-                {roster.length} học viên
-              </p>
-            </div>
-            <div className="overflow-x-auto p-6">
-              <ManagerDataTable
-                columns={columns}
-                data={roster}
-                isLoading={isLoading}
-                emptyState={
-                  <ManagerEmptyState
-                    title="Chưa có học viên trong lớp"
-                    description="Học viên sẽ xuất hiện sau khi ghi danh lớp từ chương trình đã thanh toán."
-                    icon={Users}
+          <TabsContent value="tong-quan" className="mt-0">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,7fr)] lg:items-start">
+              <div className="min-w-0 lg:sticky lg:top-4">
+                <ClassMentorAssignmentPanel
+                  classId={classItem.id}
+                  mentorId={classItem.mentorId}
+                  requiredSkills={classItem.requiredSkills}
+                  onChanged={retry}
+                />
+              </div>
+
+              <section className="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+                <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <Users className="size-4 text-primary" />
+                    Danh sách học viên
+                  </p>
+                  <p className="font-mono text-xs text-muted-foreground">
+                    {roster.length} học viên
+                  </p>
+                </div>
+                <div className="overflow-x-auto p-6">
+                  <ManagerDataTable
+                    columns={columns}
+                    data={roster}
+                    isLoading={isLoading}
+                    emptyState={
+                      <ManagerEmptyState
+                        title="Chưa có học viên trong lớp"
+                        description="Học viên sẽ xuất hiện sau khi ghi danh lớp từ chương trình đã thanh toán."
+                        icon={Users}
+                      />
+                    }
                   />
-                }
-              />
+                </div>
+              </section>
             </div>
-          </section>
-        </div>
+          </TabsContent>
+
+          <TabsContent value="lich-hoc" className="mt-0">
+            <ClassSchedulePanel
+              classId={classItem.id}
+              cohortName={classItem.name}
+              programId={classItem.programId}
+            />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <ClassFormDialog
@@ -354,5 +426,21 @@ function MetaCard({
       </p>
       {children}
     </div>
+  );
+}
+
+export function ClassDetail({ classId }: ClassDetailProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col gap-6">
+          <ManagerPageHeader title="Chi tiết lớp" description="Đang tải...">
+            <Skeleton className="h-11 w-28 rounded-xl" />
+          </ManagerPageHeader>
+        </div>
+      }
+    >
+      <ClassDetailInner classId={classId} />
+    </Suspense>
   );
 }
