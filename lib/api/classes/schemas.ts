@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import { classSchema, classWithSessionsSchema } from "@/lib/api/entities/class";
+import { classCurriculumProgressSchema } from "@/lib/api/entities/class-curriculum-progress";
 import {
   classSessionSchema,
   classSessionWithStudentsSchema,
@@ -59,6 +60,13 @@ export const sessionAttendanceResponseSchema = createApiResponseSchema(
   sessionAttendanceValueSchema,
 );
 
+export const classCurriculumProgressValueSchema = createApiValueSchema(
+  classCurriculumProgressSchema,
+);
+export const getClassCurriculumProgressResponseSchema = createApiResponseSchema(
+  classCurriculumProgressValueSchema,
+);
+
 export type GetClassesResponse = z.infer<typeof getClassesResponseSchema>;
 export type GetClassesResult = GetClassesResponse["value"];
 
@@ -102,3 +110,9 @@ export type GetSessionAttendanceResult = GetSessionAttendanceResponse["value"];
 
 export type SessionAttendanceResponse = z.infer<typeof sessionAttendanceResponseSchema>;
 export type SessionAttendanceResult = SessionAttendanceResponse["value"];
+
+export type GetClassCurriculumProgressResponse = z.infer<
+  typeof getClassCurriculumProgressResponseSchema
+>;
+export type GetClassCurriculumProgressResult =
+  GetClassCurriculumProgressResponse["value"];

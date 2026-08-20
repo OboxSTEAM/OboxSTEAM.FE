@@ -185,6 +185,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Lớp không ở trạng thái phù hợp hoặc yêu cầu bị từ chối.",
     action: "Tải lại thông tin lớp và thử lại thao tác.",
   },
+  "classes.curriculumProgress": {
+    title: "Không tải được tiến độ chương trình",
+    reason: "Máy chủ tạm thời không phản hồi hoặc bạn không có quyền xem lớp này.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
   "classMentorRequests.list": {
     title: "Không tải được yêu cầu mentor",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",

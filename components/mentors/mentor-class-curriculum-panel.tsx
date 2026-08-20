@@ -19,6 +19,7 @@ import { MentorClassQuizSetPanel } from "@/components/mentors/mentor-class-quiz-
 import {
   MentorCurriculumTree,
   type MentorCurriculumSelection,
+  type MentorCurriculumTreeProgress,
 } from "@/components/mentors/mentor-curriculum-tree";
 import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
@@ -35,6 +36,7 @@ import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import {
   forceCompleteActivity,
   getAssignments,
+  getClassCurriculumProgress,
   getClassSessionWithStudents,
   getProgramById,
   getResearchMilestonesByModule,
@@ -44,6 +46,7 @@ import {
   type Activity,
   type AssignmentListItem,
   type AssignmentType,
+  type ClassCurriculumProgress,
   type ClassSession,
   type ClassSessionStudent,
   type ClassStudentRoster,
@@ -102,6 +105,36 @@ function resolveAssignmentType(
     }
   }
   return null;
+}
+
+function toTreeProgress(
+  data: ClassCurriculumProgress | null | undefined,
+): MentorCurriculumTreeProgress | null {
+  if (!data) return null;
+
+  const activitiesById: MentorCurriculumTreeProgress["activitiesById"] = {};
+  const assignmentsById: MentorCurriculumTreeProgress["assignmentsById"] = {};
+
+  for (const module of data.modules ?? []) {
+    for (const activity of module.activities ?? []) {
+      activitiesById[activity.activityId] = {
+        completedCount: activity.completedCount,
+        inProgressCount: activity.inProgressCount,
+      };
+    }
+    for (const assignment of module.assignments ?? []) {
+      assignmentsById[assignment.assignmentId] = {
+        submittedCount: assignment.submittedCount,
+        gradedCount: assignment.gradedCount,
+      };
+    }
+  }
+
+  return {
+    totalStudents: data.totalStudents,
+    activitiesById,
+    assignmentsById,
+  };
 }
 
 type MentorClassCurriculumPanelProps = {
@@ -251,6 +284,24 @@ export function MentorClassCurriculumPanel({
     return map;
   }, [assignments, milestonesByModule]);
 
+  const {
+    data: curriculumProgressValue,
+    retry: retryCurriculumProgress,
+  } = useClientFetch({
+    fetcher: async () => {
+      const result = await getClassCurriculumProgress(classId);
+      return result?.data ?? null;
+    },
+    deps: [classId],
+    onError: (error) =>
+      showAppErrorFromUnknown(error, "classes.curriculumProgress"),
+  });
+
+  const treeProgress = useMemo(
+    () => toTreeProgress(curriculumProgressValue),
+    [curriculumProgressValue],
+  );
+
   const selectedActivity =
     selection?.kind === "activity"
       ? findActivityInModules(modules, selection.activityId)
@@ -383,12 +434,19 @@ export function MentorClassCurriculumPanel({
         description: `Hoàn thành ${completed} · Đã Done ${alreadyDone} · Bỏ qua ${skipped}.`,
       });
       retryAttendance();
+      retryCurriculumProgress();
     } catch (error) {
       showAppErrorFromUnknown(error, "activityProgress.mentorCompleteBulk");
     } finally {
       setIsMentorCompleting(false);
     }
-  }, [effectiveSessionId, isMentorCompleting, retryAttendance, selectedActivity]);
+  }, [
+    effectiveSessionId,
+    isMentorCompleting,
+    retryAttendance,
+    retryCurriculumProgress,
+    selectedActivity,
+  ]);
 
   const handleForceComplete = useCallback(
     async (student: ClassStudentRoster, activityId: string) => {
@@ -402,13 +460,14 @@ export function MentorClassCurriculumPanel({
           title: "Force complete (test)",
           description: `${student.studentName || student.studentCode || "Học viên"} đã được đánh dấu Done.`,
         });
+        retryCurriculumProgress();
       } catch (error) {
         showAppErrorFromUnknown(error, "activityProgress.forceComplete");
       } finally {
         setForceCompletingId(null);
       }
     },
-    [],
+    [retryCurriculumProgress],
   );
 
   const handleBulkForceComplete = useCallback(
@@ -433,8 +492,9 @@ export function MentorClassCurriculumPanel({
         title: "Force complete hàng loạt (test)",
         description: `Đã xử lý ${ok}/${active.length} học viên active.`,
       });
+      retryCurriculumProgress();
     },
-    [roster],
+    [roster, retryCurriculumProgress],
   );
 
   const forceCompleteColumns: ColumnDef<ClassStudentRoster>[] = useMemo(
@@ -527,6 +587,7 @@ export function MentorClassCurriculumPanel({
                 milestonesByModule={milestonesByModule ?? {}}
                 selection={selection}
                 onSelect={handleSelect}
+                progress={treeProgress}
               />
             )}
           </div>

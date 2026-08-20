@@ -50,6 +50,7 @@ export type AppErrorContext =
   | "classes.create"
   | "classes.update"
   | "classes.lifecycle"
+  | "classes.curriculumProgress"
   | "classMentorRequests.list"
   | "classMentorRequests.board"
   | "classMentorRequests.mine"

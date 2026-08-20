@@ -29,6 +29,7 @@ import {
   classSessionResponseSchema,
   deleteClassSessionResponseSchema,
   generateClassSessionsResponseSchema,
+  getClassCurriculumProgressResponseSchema,
   getClassSessionWithStudentsResponseSchema,
   getClassSessionsResponseSchema,
   getClassWithSessionsResponseSchema,
@@ -39,6 +40,7 @@ import {
   type ClassResult,
   type ClassSessionResult,
   type DeleteClassSessionResult,
+  type GetClassCurriculumProgressResult,
   type GetClassSessionWithStudentsResult,
   type GetClassSessionsResult,
   type GenerateClassSessionsResult,
@@ -56,6 +58,8 @@ export type {
   ClassSessionResult,
   DeleteClassSessionResponse,
   DeleteClassSessionResult,
+  GetClassCurriculumProgressResponse,
+  GetClassCurriculumProgressResult,
   GetClassSessionWithStudentsResponse,
   GetClassSessionWithStudentsResult,
   GetClassSessionsResponse,
@@ -79,6 +83,13 @@ export type {
   ClassStatus,
   ClassWithSessions,
 } from "@/lib/api/entities/class";
+
+export type {
+  ClassCurriculumActivityProgress,
+  ClassCurriculumAssignmentProgress,
+  ClassCurriculumModuleProgress,
+  ClassCurriculumProgress,
+} from "@/lib/api/entities/class-curriculum-progress";
 
 export type {
   ClassStudentEnrollmentStatus,
@@ -238,6 +249,21 @@ export async function getClassById(classId: string): Promise<ClassResult> {
   const response = await apiFetchParsed(
     `${CLASSES_BASE}/${parsedClassId}`,
     classResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** Class-aggregate activity/assignment progress for the mentor curriculum tree. */
+export async function getClassCurriculumProgress(
+  classId: string,
+): Promise<GetClassCurriculumProgressResult> {
+  const { classId: parsedClassId } = classIdParamSchema.parse({ classId });
+
+  const response = await apiFetchParsed(
+    `${CLASSES_BASE}/${parsedClassId}/curriculum-progress`,
+    getClassCurriculumProgressResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);
