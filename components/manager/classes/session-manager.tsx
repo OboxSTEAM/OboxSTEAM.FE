@@ -1,11 +1,9 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
-  ClipboardCheck,
   LayoutGrid,
   List,
   Pencil,
@@ -343,24 +341,9 @@ function SessionManagerInner() {
     },
     {
       header: "Thao tác",
-      className: "w-36 text-right",
+      className: "w-24 text-right",
       render: (session) => (
         <div className="flex justify-end gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            nativeButton={false}
-            render={
-              <Link
-                href={`/manager/attendance?classId=${classId}&sessionId=${session.id}`}
-              />
-            }
-            aria-label={`Điểm danh ${session.title}`}
-            className="size-9 rounded-lg text-muted-foreground hover:bg-[#7CB342]/10 hover:text-[#3d5c22] dark:hover:text-[#b8e086]"
-          >
-            <ClipboardCheck className="size-4" />
-          </Button>
           <Button
             type="button"
             variant="ghost"

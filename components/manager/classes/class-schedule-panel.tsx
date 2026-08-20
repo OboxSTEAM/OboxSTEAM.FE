@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
   CalendarDays,
-  ClipboardCheck,
   Pencil,
   Plus,
   Sparkles,
@@ -26,6 +24,12 @@ import {
 } from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -48,6 +52,12 @@ import {
   parseApiDateTime,
 } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  THEME_SELECT_CONTENT,
+  THEME_SELECT_ITEM,
+  THEME_SELECT_TRIGGER,
+} from "@/lib/ui/select-styles";
+import { cn } from "@/lib/utils";
 
 type ClassSchedulePanelProps = {
   classId: string;
@@ -293,24 +303,9 @@ export function ClassSchedulePanel({
     },
     {
       header: "Thao tác",
-      className: "w-36 text-right",
+      className: "w-24 text-right",
       render: (session) => (
         <div className="flex justify-end gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            nativeButton={false}
-            render={
-              <Link
-                href={`/manager/attendance?classId=${classId}&sessionId=${session.id}`}
-              />
-            }
-            aria-label={`Điểm danh ${session.title}`}
-            className="size-8 rounded-lg text-muted-foreground hover:bg-[#7CB342]/10 hover:text-[#3d5c22]"
-          >
-            <ClipboardCheck className="size-4" />
-          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -352,40 +347,88 @@ export function ClassSchedulePanel({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             value={kindFilter}
-            onChange={(event) => {
+            onValueChange={(value) => {
               markLoading();
-              setKindFilter(event.target.value);
+              setKindFilter(value ?? "all");
             }}
-            className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm"
-            aria-label="Lọc loại buổi"
           >
-            <option value="all">Mọi loại</option>
-            {Object.entries(CLASS_SESSION_KIND_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <select
+            <SelectTrigger
+              aria-label="Lọc loại buổi"
+              className={cn(THEME_SELECT_TRIGGER, "min-w-[9.5rem]")}
+            >
+              <span className="truncate">
+                {kindFilter === "all"
+                  ? "Mọi loại"
+                  : (CLASS_SESSION_KIND_LABELS[
+                      kindFilter as ClassSessionKind
+                    ] ?? "Mọi loại")}
+              </span>
+            </SelectTrigger>
+            <SelectContent
+              align="end"
+              alignItemWithTrigger={false}
+              sideOffset={8}
+              className={THEME_SELECT_CONTENT}
+            >
+              <SelectItem value="all" className={THEME_SELECT_ITEM}>
+                Mọi loại
+              </SelectItem>
+              {Object.entries(CLASS_SESSION_KIND_LABELS).map(
+                ([value, label]) => (
+                  <SelectItem
+                    key={value}
+                    value={value}
+                    className={THEME_SELECT_ITEM}
+                  >
+                    {label}
+                  </SelectItem>
+                ),
+              )}
+            </SelectContent>
+          </Select>
+          <Select
             value={statusFilter}
-            onChange={(event) => {
+            onValueChange={(value) => {
               markLoading();
-              setStatusFilter(event.target.value);
+              setStatusFilter(value ?? "all");
             }}
-            className="h-9 rounded-lg border border-border bg-background px-2.5 text-sm"
-            aria-label="Lọc trạng thái"
           >
-            <option value="all">Mọi trạng thái</option>
-            {Object.entries(CLASS_SESSION_STATUS_LABELS).map(
-              ([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ),
-            )}
-          </select>
+            <SelectTrigger
+              aria-label="Lọc trạng thái"
+              className={cn(THEME_SELECT_TRIGGER, "min-w-[11rem]")}
+            >
+              <span className="truncate">
+                {statusFilter === "all"
+                  ? "Mọi trạng thái"
+                  : (CLASS_SESSION_STATUS_LABELS[
+                      statusFilter as ClassSessionStatus
+                    ] ?? "Mọi trạng thái")}
+              </span>
+            </SelectTrigger>
+            <SelectContent
+              align="end"
+              alignItemWithTrigger={false}
+              sideOffset={8}
+              className={THEME_SELECT_CONTENT}
+            >
+              <SelectItem value="all" className={THEME_SELECT_ITEM}>
+                Mọi trạng thái
+              </SelectItem>
+              {Object.entries(CLASS_SESSION_STATUS_LABELS).map(
+                ([value, label]) => (
+                  <SelectItem
+                    key={value}
+                    value={value}
+                    className={THEME_SELECT_ITEM}
+                  >
+                    {label}
+                  </SelectItem>
+                ),
+              )}
+            </SelectContent>
+          </Select>
           <Button
             type="button"
             variant="outline"

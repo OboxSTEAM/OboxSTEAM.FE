@@ -4,14 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import {
-  ChevronsUpDown,
-  LogOut,
-  Search,
-  User,
-} from "lucide-react";
+import { ChevronsUpDown, LogOut, Search, User } from "lucide-react";
 
-import { ManagerSidebarSchedule } from "@/components/manager/layout/manager-sidebar-schedule";
 import {
   Avatar,
   AvatarFallback,
@@ -70,7 +64,6 @@ export function ManagerSidebar({ onOpenSearch }: ManagerSidebarProps) {
   const { profile } = useCurrentUser();
   const { isMobile, state } = useSidebar();
   const [navQuery, setNavQuery] = React.useState("");
-  const [scheduleOpen, setScheduleOpen] = React.useState(false);
 
   const filteredGroups = React.useMemo(() => {
     const q = navQuery.trim().toLowerCase();
@@ -200,17 +193,7 @@ export function ManagerSidebar({ onOpenSearch }: ManagerSidebarProps) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="gap-2 border-t border-border/60 p-3">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <ManagerSidebarSchedule
-              open={scheduleOpen}
-              onOpenChange={setScheduleOpen}
-              collapsed={state === "collapsed"}
-            />
-          </SidebarMenuItem>
-        </SidebarMenu>
-
+      <SidebarFooter className="border-t border-border/60 p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>

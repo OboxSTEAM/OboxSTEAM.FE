@@ -2,7 +2,6 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   CalendarDays,
-  CheckSquare,
   ClipboardList,
   FileQuestion,
   LayoutDashboard,
@@ -58,11 +57,6 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         label: "Lịch học",
         href: "/manager/sessions",
         icon: CalendarDays,
-      },
-      {
-        label: "Điểm danh",
-        href: "/manager/attendance",
-        icon: CheckSquare,
       },
       {
         label: "Học lại lớp",
