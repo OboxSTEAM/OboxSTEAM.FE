@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Eye, UsersRound } from "lucide-react";
+import { CalendarDays, Eye, UsersRound } from "lucide-react";
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
@@ -13,6 +13,7 @@ import {
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
+import { ClassCalendarDrawer } from "@/components/mentors/class-calendar-drawer";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
@@ -67,6 +68,7 @@ export function MentorClassManager() {
   const [programFilter, setProgramFilter] = useState("all");
   const [sort, setSort] = useState<SortValue>("startDate-desc");
   const [page, setPage] = useState(1);
+  const [calendarClass, setCalendarClass] = useState<Class | null>(null);
 
   const {
     data: mentorProfile,
@@ -204,19 +206,31 @@ export function MentorClassManager() {
     {
       header: "Thao tác",
       sticky: "right",
-      className: "w-24 text-right",
+      className: "w-28 text-right",
       render: (classItem) => (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          nativeButton={false}
-          render={<Link href={`/mentor/classes/${classItem.id}`} />}
-          aria-label={`Xem ${classItem.name}`}
-          className="size-9 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
-        >
-          <Eye className="size-4" />
-        </Button>
+        <div className="flex justify-end gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={() => setCalendarClass(classItem)}
+            aria-label={`Lịch lớp ${classItem.name}`}
+            className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
+          >
+            <CalendarDays className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            nativeButton={false}
+            render={<Link href={`/mentor/classes/${classItem.id}`} />}
+            aria-label={`Xem ${classItem.name}`}
+            className="size-9 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
+          >
+            <Eye className="size-4" />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -350,6 +364,20 @@ export function MentorClassManager() {
           />
         )}
       </div>
+
+      <ClassCalendarDrawer
+        open={calendarClass !== null}
+        onOpenChange={(open) => {
+          if (!open) setCalendarClass(null);
+        }}
+        classId={calendarClass?.id ?? null}
+        className={calendarClass?.name}
+        detailHref={
+          calendarClass
+            ? `/mentor/classes/${calendarClass.id}?tab=lich-hoc`
+            : null
+        }
+      />
     </div>
   );
 }

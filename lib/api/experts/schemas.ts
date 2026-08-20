@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import { expertProgramSchema, expertSchema } from "@/lib/api/entities/expert";
+import {
+  expertDegreeSchema,
+  expertProgramSchema,
+  expertPublicationSchema,
+  expertSchema,
+} from "@/lib/api/entities/expert";
 import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
@@ -27,6 +32,22 @@ export const deleteExpertResponseSchema = createApiResponseSchema(
 export const expertProgramResponseSchema = createApiResponseSchema(
   expertProgramValueSchema,
 );
+export const expertDegreeValueSchema = createApiValueSchema(expertDegreeSchema);
+export const expertPublicationValueSchema = createApiValueSchema(
+  expertPublicationSchema,
+);
+export const createExpertDegreeResponseSchema = createApiResponseSchema(
+  expertDegreeValueSchema,
+);
+export const updateExpertDegreeResponseSchema = createApiResponseSchema(
+  expertDegreeValueSchema,
+);
+export const createExpertPublicationResponseSchema = createApiResponseSchema(
+  expertPublicationValueSchema,
+);
+export const updateExpertPublicationResponseSchema = createApiResponseSchema(
+  expertPublicationValueSchema,
+);
 
 export type GetExpertsResponse = z.infer<typeof getExpertsResponseSchema>;
 export type GetExpertsResult = GetExpertsResponse["value"];
@@ -40,3 +61,19 @@ export type DeleteExpertResponse = z.infer<typeof deleteExpertResponseSchema>;
 export type DeleteExpertResult = DeleteExpertResponse["value"];
 export type ExpertProgramResponse = z.infer<typeof expertProgramResponseSchema>;
 export type ExpertProgramResult = ExpertProgramResponse["value"];
+export type CreateExpertDegreeResponse = z.infer<
+  typeof createExpertDegreeResponseSchema
+>;
+export type CreateExpertDegreeResult = CreateExpertDegreeResponse["value"];
+export type UpdateExpertDegreeResponse = z.infer<
+  typeof updateExpertDegreeResponseSchema
+>;
+export type UpdateExpertDegreeResult = UpdateExpertDegreeResponse["value"];
+export type CreateExpertPublicationResponse = z.infer<
+  typeof createExpertPublicationResponseSchema
+>;
+export type CreateExpertPublicationResult = CreateExpertPublicationResponse["value"];
+export type UpdateExpertPublicationResponse = z.infer<
+  typeof updateExpertPublicationResponseSchema
+>;
+export type UpdateExpertPublicationResult = UpdateExpertPublicationResponse["value"];

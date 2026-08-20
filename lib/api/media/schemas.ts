@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 import {
+  classGalleryMediaSchema,
   mediaAssetSchema,
   mediaProgressSchema,
   mediaTagSchema,
@@ -27,16 +28,6 @@ export const mediaProgressValueSchema = z.object({
   data: mediaProgressSchema,
 });
 
-/** Legacy flat list (`GET /api/media/class-session/{id}`). */
-export const mediaAssetListValueSchema = z.object({
-  code: z.string().nullish().transform((value) => value ?? "OK"),
-  message: z.string().nullish().transform((value) => value ?? ""),
-  data: z
-    .array(mediaAssetSchema)
-    .nullish()
-    .transform((value) => value ?? []),
-});
-
 /** Paginated list (`GET /api/media`). */
 export const paginatedMediaAssetsSchema = createPaginatedSchema(
   mediaAssetSchema,
@@ -53,12 +44,31 @@ export const mediaAssetPaginationValueSchema = z.object({
   data: paginatedMediaAssetsSchema,
 });
 
+/** Paginated student gallery (`GET /api/media/class/{classId}/gallery`, `GET /api/media/my-gallery`). */
+export const paginatedClassGalleryMediaSchema = createPaginatedSchema(
+  classGalleryMediaSchema,
+).extend({
+  items: z
+    .array(classGalleryMediaSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const classGalleryPaginationValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: paginatedClassGalleryMediaSchema,
+});
+
 export const getMediaListResponseSchema = createApiResponseSchema(
   mediaAssetPaginationValueSchema,
 );
-export const getMediaByClassSessionResponseSchema = createApiResponseSchema(
-  mediaAssetListValueSchema,
+export const getClassGalleryResponseSchema = createApiResponseSchema(
+  classGalleryPaginationValueSchema,
 );
+
+/** Same envelope as class gallery. */
+export const getMyGalleryResponseSchema = getClassGalleryResponseSchema;
 export const getMediaByIdResponseSchema =
   createApiResponseSchema(mediaAssetValueSchema);
 export const getMediaProgressResponseSchema = createApiResponseSchema(
@@ -82,10 +92,13 @@ export const deleteMediaTagResponseSchema = createApiResponseSchema(
 export type GetMediaListResponse = z.infer<typeof getMediaListResponseSchema>;
 export type GetMediaListResult = GetMediaListResponse["value"];
 
-export type GetMediaByClassSessionResponse = z.infer<
-  typeof getMediaByClassSessionResponseSchema
+export type GetClassGalleryResponse = z.infer<
+  typeof getClassGalleryResponseSchema
 >;
-export type GetMediaByClassSessionResult = GetMediaByClassSessionResponse["value"];
+export type GetClassGalleryResult = GetClassGalleryResponse["value"];
+
+export type GetMyGalleryResponse = z.infer<typeof getMyGalleryResponseSchema>;
+export type GetMyGalleryResult = GetMyGalleryResponse["value"];
 
 export type GetMediaByIdResponse = z.infer<typeof getMediaByIdResponseSchema>;
 export type GetMediaByIdResult = GetMediaByIdResponse["value"];

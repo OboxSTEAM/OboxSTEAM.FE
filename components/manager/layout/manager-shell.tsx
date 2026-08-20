@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ManagerHeader } from "@/components/manager/layout/manager-header";
 import { ManagerSidebar } from "@/components/manager/layout/manager-sidebar";
 import { ManagerCommandPalette } from "@/components/manager/command-palette/manager-command-palette";
-import { isManagerRole } from "@/lib/auth/roles";
+import { canAccessManagerArea } from "@/lib/auth/roles";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Suspense } from "react";
@@ -20,8 +20,9 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/manager/activities")) return "Hoạt động";
   if (pathname.startsWith("/manager/materials")) return "Tài liệu";
   if (pathname.startsWith("/manager/question-bank")) return "Ngân hàng câu hỏi";
-  if (pathname.startsWith("/manager/milestones")) return "Milestone";
+  if (pathname.startsWith("/manager/milestones")) return "Milestone nghiên cứu";
   if (pathname.startsWith("/manager/classes")) return "Lớp học";
+  if (pathname.startsWith("/manager/redelivery")) return "Học lại lớp";
   if (pathname.startsWith("/manager/sessions")) return "Lịch học";
   if (pathname.startsWith("/manager/attendance")) return "Điểm danh";
   if (pathname.startsWith("/manager/assignments")) return "Bài tập";
@@ -76,19 +77,12 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isHydrated || isLoading) return;
 
-    // Debug: remove after verifying role from BE
-    console.debug("[ManagerShell] guard check", {
-      isAuthenticated,
-      role: profile?.role,
-      isManagerRole: profile ? isManagerRole(profile.role) : "no profile yet",
-    });
-
     if (!isAuthenticated) {
       router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
       return;
     }
     // Wait until profile is loaded before checking role
-    if (profile && !isManagerRole(profile.role)) {
+    if (profile && !canAccessManagerArea(profile.role)) {
       router.replace("/");
     }
   }, [isAuthenticated, isHydrated, isLoading, profile, pathname, router]);
@@ -100,7 +94,7 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) {
     return <ManagerShellSkeleton />;
   }
-  if (profile && !isManagerRole(profile.role)) {
+  if (profile && !canAccessManagerArea(profile.role)) {
     return <ManagerShellSkeleton />;
   }
 
@@ -109,7 +103,7 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider className="h-screen overflow-hidden">
       <Suspense fallback={<div className="w-64 shrink-0 border-r border-border bg-background" />}>
-        <ManagerSidebar />
+        <ManagerSidebar onOpenSearch={openCommand} />
       </Suspense>
       <SidebarInset className="flex flex-1 flex-col overflow-hidden bg-background">
         <ManagerHeader title={pageTitle} onOpenCommand={openCommand} />

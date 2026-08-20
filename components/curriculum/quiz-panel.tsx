@@ -40,12 +40,16 @@ import {
   getStoredQuizSubmissionId,
   setStoredQuizSubmissionId,
 } from "@/lib/curriculum/quiz-storage";
+import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
+import { hasAttemptsRemaining, getEffectiveMaxAttempts } from "@/lib/curriculum/recovery-decision";
+import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 import { QuizAttemptView } from "./quiz/quiz-attempt-view";
 import { QuizIntro } from "./quiz/quiz-intro";
 import { QuizResultView } from "./quiz/quiz-result-view";
+import { AttemptQuotaPill } from "./assignment-outcome";
 
 type QuizPanelProps = {
   curriculum: EnrollmentCurriculum;
@@ -161,6 +165,12 @@ export function QuizPanel({
     () => getAssignmentBreadcrumb(curriculum, assignmentId),
     [assignmentId, curriculum],
   );
+
+  const {
+    recoveryRequests,
+    redeliveryRequests,
+    refresh: refreshRecoveryRequests,
+  } = useMyRecoveryRequests(true);
 
   const resetAttemptState = useCallback(() => {
     setPhase("intro");
@@ -462,13 +472,26 @@ export function QuizPanel({
   }
 
   const canRetry =
-    assignment.maxAttempts > 1 &&
-    (result?.attemptNumber ?? 0) < assignment.maxAttempts;
+    result != null &&
+    hasAttemptsRemaining(
+      result.attemptNumber,
+      assignment.maxAttempts,
+      recoveryRequests,
+      flatAssignment.moduleEnrollmentId,
+      assignmentId,
+    );
+  const effectiveMaxAttempts = getEffectiveMaxAttempts(
+    assignment.maxAttempts,
+    recoveryRequests,
+    flatAssignment.moduleEnrollmentId,
+    assignmentId,
+  );
 
   const isRetake = hasCompletedAttempt;
   const startLabel = isRetake ? "Làm lại bài kiểm tra" : "Bắt đầu làm bài";
   const showIntroStart = phase === "intro";
-  const showResultRetry = phase === "result" && canRetry;
+  const showResultRecovery =
+    phase === "result" && result != null && result.passed === false;
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-learn-border bg-learn-surface shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
@@ -487,6 +510,14 @@ export function QuizPanel({
             <Badge variant="secondary" className="bg-learn-surface-2 text-learn-muted">
               {ASSIGNMENT_TYPE_LABELS.Quiz}
             </Badge>
+            {(result?.attemptNumber ?? attempt?.attemptNumber) != null ? (
+              <AttemptQuotaPill
+                attemptNumber={
+                  (result?.attemptNumber ?? attempt?.attemptNumber) as number
+                }
+                maxAttempts={effectiveMaxAttempts}
+              />
+            ) : null}
           </div>
         </div>
       ) : null}
@@ -536,21 +567,30 @@ export function QuizPanel({
         </div>
       ) : null}
 
-      {showResultRetry ? (
-        <div className="flex shrink-0 flex-wrap items-center gap-2 border-t border-learn-border px-4 py-2.5 sm:px-5">
-          <Button
-            type="button"
-            variant="outline"
-            className="ml-auto border-learn-border"
-            disabled={isStarting}
-            onClick={() => {
-              resetAttemptState();
-              void handleStart();
-            }}
-          >
-            {isStarting ? "Đang mở bài..." : "Làm lại"}
-          </Button>
-        </div>
+      {showResultRecovery && result ? (
+        <AssignmentRecoveryActions
+          moduleType={flatAssignment.moduleType}
+          moduleEnrollmentId={flatAssignment.moduleEnrollmentId}
+          assignmentId={assignmentId}
+          attemptNumber={result.attemptNumber}
+          maxAttempts={assignment.maxAttempts}
+          showRecoveryUi={!canRetry}
+          recoveryRequests={recoveryRequests}
+          redeliveryRequests={redeliveryRequests}
+          isRetrying={isStarting}
+          onRetry={
+            canRetry
+              ? () => {
+                  resetAttemptState();
+                  void handleStart();
+                }
+              : undefined
+          }
+          onRequestsChanged={() => {
+            void refreshRecoveryRequests();
+            void onCurriculumRefresh();
+          }}
+        />
       ) : null}
 
       <Dialog

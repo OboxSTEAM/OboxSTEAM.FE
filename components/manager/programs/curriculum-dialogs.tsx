@@ -57,6 +57,7 @@ import {
   type UpdateActivityInput,
 } from "@/lib/validations/curriculum";
 import { updateMaterialSchema, type UpdateMaterialInput } from "@/lib/validations/materials";
+import { getLiveActivityTemplateDefaults } from "@/lib/curriculum/datetime";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
@@ -168,7 +169,7 @@ export function ModuleFormDialog({
         : [];
 
       const payload = {
-        code: data.code || null,
+        code: data.code,
         programId: data.programId,
         name: data.name,
         moduleType: data.moduleType,
@@ -255,7 +256,7 @@ export function ModuleFormDialog({
 
               <div className="space-y-1.5">
                 <Label htmlFor="module-code" className="text-sm font-semibold text-foreground">
-                  Mã Module
+                  Mã Module <span className="text-primary">*</span>
                 </Label>
                 <Input
                   id="module-code"
@@ -504,7 +505,7 @@ export function CourseFormDialog({
     setIsSubmitting(true);
     try {
       const payload = {
-        code: data.code || null,
+        code: data.code,
         moduleId: data.moduleId,
         name: data.name,
         description: data.description || "",
@@ -563,7 +564,7 @@ export function CourseFormDialog({
 
             <div className="space-y-1.5">
               <Label htmlFor="course-code" className="text-sm font-semibold text-foreground">
-                Mã Khóa học
+                Mã Khóa học <span className="text-primary">*</span>
               </Label>
               <Input
                 id="course-code"
@@ -652,7 +653,6 @@ export function ActivityFormDialog({
       activityType: "SelfPaced" as const,
       description: "",
       activityOrder: 1,
-      maxCapacity: null as number | null,
       requireQrCheckin: false,
       requireMediaEvidence: false,
     },
@@ -670,7 +670,6 @@ export function ActivityFormDialog({
           activityType: activityToEdit.activityType,
           description: activityToEdit.description || "",
           activityOrder: activityToEdit.activityOrder,
-          maxCapacity: activityToEdit.maxCapacity,
           requireQrCheckin: activityToEdit.requireQrCheckin,
           requireMediaEvidence: activityToEdit.requireMediaEvidence,
         });
@@ -682,7 +681,6 @@ export function ActivityFormDialog({
           activityType: "SelfPaced",
           description: "",
           activityOrder: 1,
-          maxCapacity: null,
           requireQrCheckin: false,
           requireMediaEvidence: false,
         });
@@ -694,18 +692,24 @@ export function ActivityFormDialog({
     setIsSubmitting(true);
     try {
       const isOnlineOrOffline = data.activityType !== "SelfPaced";
+      const liveDefaults = isOnlineOrOffline ? getLiveActivityTemplateDefaults() : null;
       const payload = {
-        code: data.code || null,
+        code: data.code,
         courseId: data.courseId,
         name: data.name,
         activityType: data.activityType,
         description: data.description || "",
         activityOrder: Number(data.activityOrder),
-        // Time & location live on the class session (cohort schedule), not the activity template.
-        location: null,
-        startTime: null,
-        endTime: null,
-        maxCapacity: isOnlineOrOffline && data.maxCapacity ? Number(data.maxCapacity) : null,
+        // Hidden BE defaults — real schedule/location live on the class session.
+        location: liveDefaults
+          ? (isEdit && activityToEdit?.location) || liveDefaults.location
+          : null,
+        startTime: liveDefaults
+          ? (isEdit && activityToEdit?.startTime) || liveDefaults.startTime
+          : null,
+        endTime: liveDefaults
+          ? (isEdit && activityToEdit?.endTime) || liveDefaults.endTime
+          : null,
         requireQrCheckin: data.requireQrCheckin,
         requireMediaEvidence: data.requireMediaEvidence,
       };
@@ -767,12 +771,12 @@ export function ActivityFormDialog({
 
             <div className="space-y-1.5 col-span-2 md:col-span-1">
               <Label htmlFor="act-code" className="text-sm font-semibold text-foreground">
-                Mã Hoạt động
+                Mã Hoạt động <span className="text-primary">*</span>
               </Label>
               <Input
                 id="act-code"
                 type="text"
-                placeholder="Ví dụ: ACT-SCRATCH1"
+                placeholder="Ví dụ: ACT-01"
                 {...register("code")}
                 className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
               />
@@ -795,8 +799,8 @@ export function ActivityFormDialog({
                     </SelectTrigger>
                     <SelectContent className={LIGHT_SELECT_CONTENT}>
                       <SelectItem value="SelfPaced" className={LIGHT_SELECT_ITEM}>Tự học (Self-Paced)</SelectItem>
-                      <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online trực tiếp (LiveOnline)</SelectItem>
-                      <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline tại lớp (Offline)</SelectItem>
+                      <SelectItem value="LiveOnline" className={LIGHT_SELECT_ITEM}>Online</SelectItem>
+                      <SelectItem value="Offline" className={LIGHT_SELECT_ITEM}>Offline</SelectItem>
                     </SelectContent>
                   </Select>
                 )}
@@ -825,19 +829,6 @@ export function ActivityFormDialog({
                   trong mục{" "}
                   <span className="font-semibold text-foreground">Lịch học</span>,
                   không đặt ở cấp hoạt động.
-                </div>
-
-                <div className="space-y-1.5 col-span-2 md:col-span-1">
-                  <Label htmlFor="maxCapacity" className="text-sm font-semibold text-foreground">
-                    Sức chứa tối đa (Học viên)
-                  </Label>
-                  <Input
-                    id="maxCapacity"
-                    type="number"
-                    placeholder="Không giới hạn"
-                    {...register("maxCapacity")}
-                    className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
-                  />
                 </div>
               </>
             )}

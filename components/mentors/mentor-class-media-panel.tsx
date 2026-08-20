@@ -7,7 +7,7 @@ import {
 } from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { MediaPipelineStatus } from "@/components/mentors/media-pipeline-status";
-import { MediaTagAvatarStack, MediaStudentAvatar } from "@/components/mentors/media-tag-avatar-stack";
+import { MediaTagAvatarStack, MediaStudentAvatar, MediaTagConfidence } from "@/components/mentors/media-tag-avatar-stack";
 import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
@@ -26,6 +26,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Popover,
+  PopoverContent,
+  PopoverDescription,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -43,7 +51,6 @@ import {
   processMediaTags,
   updateMediaTagVerification,
   uploadClassMedia,
-  type ClassSession,
   type ClassStudentRoster,
   type MediaAsset,
   type MediaProgress,
@@ -58,7 +65,10 @@ import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
+  AlertTriangle,
   CheckCircle2,
+  ChevronRight,
+  CircleHelp,
   Eye,
   ImagePlus,
   Loader2,
@@ -95,19 +105,12 @@ function isImageFile(fileType: string | null | undefined, url?: string | null) {
   );
 }
 
-function confidenceLabel(score: number): string {
-  if (score >= 0.9) return "Rất cao";
-  if (score >= 0.7) return "Cao";
-  if (score >= 0.5) return "Trung bình";
-  return "Thấp";
-}
-
 /** AI still running — mentor should wait, not tag manually yet. */
 function isAiProcessing(media: MediaAsset): boolean {
+  if (media.isReady) return false;
   return (
-    !media.isReady &&
-    media.videoStatus !== "Failed" &&
-    media.videoStatus !== "None"
+    media.videoStatus === "Transcoding" ||
+    media.videoStatus === "PendingTagging"
   );
 }
 
@@ -116,9 +119,14 @@ function canManuallyTag(media: MediaAsset): boolean {
   return media.isReady || media.videoStatus === "Failed";
 }
 
-function needsAiRetry(media: MediaAsset): boolean {
+/** Re-run face tagging after the pipeline finished (or failed). */
+function canRescanAi(media: MediaAsset): boolean {
+  if (isAiProcessing(media)) return false;
+  if (!isVideoFile(media.fileType, media.fileUrl)) return false;
   return (
-    media.videoStatus === "Failed" || media.videoStatus === "PendingTagging"
+    media.isReady ||
+    media.videoStatus === "TaggingComplete" ||
+    media.videoStatus === "Failed"
   );
 }
 
@@ -145,29 +153,108 @@ type MediaListPage = {
 };
 
 const MEDIA_PAGE_SIZE = 20;
+const MEDIA_GUIDE_DISMISS_KEY = "oboxsteam.mentor-class-media.guide-dismissed";
+const MEDIA_TOOLBAR_CONTROL =
+  "h-10 rounded-lg";
+const MEDIA_FILTER_LABEL =
+  "text-xs font-medium text-[#6B7280] dark:text-muted-foreground";
+
+const MEDIA_WORKFLOW_STEPS = [
+  "Tải file",
+  "Chờ AI nhận diện",
+  "Xác nhận thẻ học viên",
+] as const;
+
+const MEDIA_WORKFLOW_NOTE =
+  "Lưu ý: Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.";
+
+function MediaWorkflowStepper({ stacked = false }: { stacked?: boolean }) {
+  return (
+    <ol
+      className={
+        stacked
+          ? "flex flex-col gap-2"
+          : "flex flex-wrap items-center gap-y-1.5"
+      }
+    >
+      {MEDIA_WORKFLOW_STEPS.map((step, index) => (
+        <li key={step} className="flex items-center">
+          {!stacked && index > 0 ? (
+            <ChevronRight
+              className="mx-1.5 size-3.5 shrink-0 text-muted-foreground/45"
+              aria-hidden
+            />
+          ) : null}
+          <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span className="flex size-[22px] shrink-0 items-center justify-center rounded-full border border-border bg-muted text-[10px] font-semibold tabular-nums text-muted-foreground">
+              {index + 1}
+            </span>
+            {step}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+function MediaWorkflowNote() {
+  return (
+    <p className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">
+      <AlertTriangle
+        className="mt-px size-3 shrink-0 text-muted-foreground"
+        aria-hidden
+      />
+      {MEDIA_WORKFLOW_NOTE}
+    </p>
+  );
+}
+
+function MediaWorkflowHelpPopover() {
+  return (
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:text-foreground"
+            aria-label="Hướng dẫn quy trình"
+          />
+        }
+      >
+        <CircleHelp className="size-4" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 gap-2.5 p-3">
+        <PopoverHeader>
+          <PopoverTitle className="text-sm">Hướng dẫn quy trình</PopoverTitle>
+          <PopoverDescription className="text-xs">
+            Thư viện media của cả lớp.
+          </PopoverDescription>
+        </PopoverHeader>
+        <MediaWorkflowStepper stacked />
+        <MediaWorkflowNote />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 type FileTypeFilter = "all" | "image" | "video";
 type VideoStatusFilter = "all" | MediaVideoStatus;
 
 type MentorClassMediaPanelProps = {
   classId: string;
-  sessions: ClassSession[];
   roster: ClassStudentRoster[];
-  isSessionsLoading?: boolean;
 };
 
 export function MentorClassMediaPanel({
   classId,
-  sessions,
   roster,
-  isSessionsLoading = false,
 }: MentorClassMediaPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [sessionFilter, setSessionFilter] = useState("all");
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [statusFilter, setStatusFilter] = useState<VideoStatusFilter>("all");
   const [page, setPage] = useState(1);
-  const [uploadSessionId, setUploadSessionId] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{
     done: number;
@@ -182,11 +269,31 @@ export function MentorClassMediaPanel({
   const [busyTagStudentId, setBusyTagStudentId] = useState<string | null>(null);
   const [isProcessingTags, setIsProcessingTags] = useState(false);
   const [addTagStudentId, setAddTagStudentId] = useState("");
+  const [isGuideVisible, setIsGuideVisible] = useState(false);
 
   const activeStudents = useMemo(
     () => roster.filter((student) => student.enrollmentStatus === "Active"),
     [roster],
   );
+
+  useEffect(() => {
+    try {
+      setIsGuideVisible(
+        window.localStorage.getItem(MEDIA_GUIDE_DISMISS_KEY) !== "1",
+      );
+    } catch {
+      setIsGuideVisible(true);
+    }
+  }, []);
+
+  function dismissMediaGuide() {
+    setIsGuideVisible(false);
+    try {
+      window.localStorage.setItem(MEDIA_GUIDE_DISMISS_KEY, "1");
+    } catch {
+      // Ignore quota / private-mode failures — hide for this session.
+    }
+  }
 
   const rosterByStudentId = useMemo(() => {
     const map = new Map<string, ClassStudentRoster>();
@@ -200,8 +307,6 @@ export function MentorClassMediaPanel({
     fetcher: async (): Promise<MediaListPage> => {
       const result = await getMediaList({
         classId,
-        classSessionId:
-          sessionFilter === "all" ? undefined : sessionFilter,
         fileType: fileTypeFilter === "all" ? undefined : fileTypeFilter,
         videoStatus: statusFilter === "all" ? undefined : statusFilter,
         page,
@@ -217,7 +322,7 @@ export function MentorClassMediaPanel({
         totalCount: pageData?.totalCount ?? 0,
       };
     },
-    deps: [classId, sessionFilter, fileTypeFilter, statusFilter, page],
+    deps: [classId, fileTypeFilter, statusFilter, page],
     onError: (error) => showAppErrorFromUnknown(error, "media.list"),
   });
 
@@ -332,14 +437,6 @@ export function MentorClassMediaPanel({
     [mediaItems, progressById],
   );
 
-  const sessionTitleById = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const session of sessions) {
-      map.set(session.id, session.title || "Buổi học");
-    }
-    return map;
-  }, [sessions]);
-
   const selectedMediaBase =
     detailMedia?.id === selectedMediaId
       ? detailMedia
@@ -417,7 +514,6 @@ export function MentorClassMediaPanel({
         try {
           const result = await uploadClassMedia(file, {
             classId,
-            classSessionId: uploadSessionId || undefined,
           });
           const uploaded = result?.data;
           if (uploaded) {
@@ -445,11 +541,7 @@ export function MentorClassMediaPanel({
             : "Media đã lên danh sách — mở chi tiết để xác nhận thẻ AI.",
         });
 
-        if (uploadSessionId && sessionFilter === "all") {
-          applyListFilter(() => setSessionFilter(uploadSessionId));
-        } else {
-          retry();
-        }
+        retry();
       }
     } finally {
       setIsUploading(false);
@@ -650,16 +742,6 @@ export function MentorClassMediaPanel({
         ),
       },
       {
-        header: "Buổi học",
-        render: (media) => (
-          <span className="text-sm text-foreground">
-            {media.classSessionId
-              ? sessionTitleById.get(media.classSessionId) || "Buổi học"
-              : "Không gắn buổi"}
-          </span>
-        ),
-      },
-      {
         header: "Thời gian",
         render: (media) => (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
@@ -669,10 +751,12 @@ export function MentorClassMediaPanel({
       },
       {
         header: "Tiến trình",
-        className: "min-w-[13.5rem] whitespace-normal",
+        className: "min-w-[10.5rem] whitespace-normal",
         render: (media) => (
           <MediaPipelineStatus
             compact
+            mediaId={media.id}
+            uploadedAt={media.uploadedAt}
             videoStatus={media.videoStatus}
             isReady={media.isReady}
             progress={progressById[media.id]}
@@ -695,11 +779,7 @@ export function MentorClassMediaPanel({
         sticky: "right",
         className: "text-right",
         render: (media) => {
-          const video = isVideoFile(media.fileType, media.fileUrl);
-          const canRetryAi =
-            video &&
-            (media.videoStatus === "PendingTagging" ||
-              media.videoStatus === "Failed");
+          const canRetryAi = canRescanAi(media);
           return (
             <div className="flex items-center justify-end gap-1">
               <Button
@@ -741,7 +821,6 @@ export function MentorClassMediaPanel({
       },
     ],
     [
-      sessionTitleById,
       isProcessingTags,
       progressById,
       timedOutIds,
@@ -751,64 +830,19 @@ export function MentorClassMediaPanel({
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-border bg-muted/40 px-6 py-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-3">
-          <div>
+      <div className="flex flex-col gap-3 border-b border-border bg-muted/40 px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-0.5">
             <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
               <ScanFace className="size-4 text-primary" />
               Media của lớp
             </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              1) Upload ảnh/video → 2) AI nhận diện khuôn mặt → 3) Mentor xác
-              nhận. Chỉ gắn thẻ thủ công khi AI lỗi hoặc bỏ sót.
-            </p>
+            <MediaWorkflowHelpPopover />
           </div>
 
-          <div className="flex flex-wrap gap-3">
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Lọc theo buổi
-              </p>
-              <Select
-                value={sessionFilter}
-                onValueChange={(value) => {
-                  applyListFilter(() => setSessionFilter(value ?? "all"));
-                }}
-                disabled={isSessionsLoading}
-              >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[14rem]")}>
-                  <span className="truncate">
-                    {sessionFilter === "all"
-                      ? "Tất cả media của lớp"
-                      : sessionTitleById.get(sessionFilter) || "Buổi học"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent
-                  align="start"
-                  alignItemWithTrigger={false}
-                  sideOffset={8}
-                  className={THEME_SELECT_CONTENT}
-                >
-                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
-                    Tất cả media của lớp
-                  </SelectItem>
-                  {sessions.map((session) => (
-                    <SelectItem
-                      key={session.id}
-                      value={session.id}
-                      className={THEME_SELECT_ITEM}
-                    >
-                      {session.title || "Buổi học"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Loại file
-              </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2">
+              <p className={cn(MEDIA_FILTER_LABEL, "shrink-0")}>Loại file</p>
               <Select
                 value={fileTypeFilter}
                 onValueChange={(value) => {
@@ -817,7 +851,13 @@ export function MentorClassMediaPanel({
                   );
                 }}
               >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[10rem]")}>
+                <SelectTrigger
+                  className={cn(
+                    THEME_SELECT_TRIGGER,
+                    MEDIA_TOOLBAR_CONTROL,
+                    "min-w-[9.5rem]",
+                  )}
+                >
                   <span className="truncate">
                     {fileTypeFilter === "all"
                       ? "Tất cả"
@@ -845,10 +885,8 @@ export function MentorClassMediaPanel({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Trạng thái
-              </p>
+            <div className="flex items-center gap-2">
+              <p className={cn(MEDIA_FILTER_LABEL, "shrink-0")}>Trạng thái</p>
               <Select
                 value={statusFilter}
                 onValueChange={(value) => {
@@ -857,7 +895,13 @@ export function MentorClassMediaPanel({
                   );
                 }}
               >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[12rem]")}>
+                <SelectTrigger
+                  className={cn(
+                    THEME_SELECT_TRIGGER,
+                    MEDIA_TOOLBAR_CONTROL,
+                    "min-w-[12rem]",
+                  )}
+                >
                   <span className="truncate">
                     {statusFilter === "all"
                       ? "Tất cả trạng thái"
@@ -890,83 +934,66 @@ export function MentorClassMediaPanel({
               </Select>
             </div>
 
-            <div className="space-y-1.5">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                Gắn buổi khi upload
+            {!isLoading && totalCount > 0 ? (
+              <p className="text-xs text-muted-foreground">
+                {totalCount} media
+                {totalPages > 1
+                  ? ` · trang ${currentPage}/${totalPages}`
+                  : null}
               </p>
-              <Select
-                value={uploadSessionId || "none"}
-                onValueChange={(value) =>
-                  setUploadSessionId(!value || value === "none" ? "" : value)
-                }
-                disabled={isSessionsLoading}
+            ) : null}
+
+            <div className="flex shrink-0 items-center">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={MEDIA_ACCEPT}
+                multiple
+                className="sr-only"
+                onChange={(event) => void handleUpload(event.target.files)}
+              />
+              <Button
+                type="button"
+                disabled={isUploading}
+                onClick={() => fileInputRef.current?.click()}
+                className={cn(
+                  MEDIA_TOOLBAR_CONTROL,
+                  "bg-primary px-4 font-semibold text-primary-foreground hover:bg-primary/90",
+                )}
               >
-                <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "min-w-[14rem]")}>
-                  <span className="truncate">
-                    {uploadSessionId
-                      ? sessionTitleById.get(uploadSessionId) || "Buổi học"
-                      : "Không gắn buổi"}
-                  </span>
-                </SelectTrigger>
-                <SelectContent
-                  align="start"
-                  alignItemWithTrigger={false}
-                  sideOffset={8}
-                  className={THEME_SELECT_CONTENT}
-                >
-                  <SelectItem value="none" className={THEME_SELECT_ITEM}>
-                    Không gắn buổi
-                  </SelectItem>
-                  {sessions.map((session) => (
-                    <SelectItem
-                      key={session.id}
-                      value={session.id}
-                      className={THEME_SELECT_ITEM}
-                    >
-                      {session.title || "Buổi học"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                {isUploading ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ImagePlus className="size-4" />
+                )}
+                {isUploading
+                  ? uploadProgress
+                    ? `Đang tải ${uploadProgress.done}/${uploadProgress.total}...`
+                    : "Đang tải..."
+                  : "Tải lên media"}
+              </Button>
             </div>
           </div>
-          {!isLoading && totalCount > 0 ? (
-            <p className="text-xs text-muted-foreground">
-              {totalCount} media
-              {totalPages > 1
-                ? ` · trang ${currentPage}/${totalPages}`
-                : null}
-            </p>
-          ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept={MEDIA_ACCEPT}
-            multiple
-            className="sr-only"
-            onChange={(event) => void handleUpload(event.target.files)}
-          />
-          <Button
-            type="button"
-            disabled={isUploading}
-            onClick={() => fileInputRef.current?.click()}
-            className="h-10 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
-          >
-            {isUploading ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <ImagePlus className="size-4" />
-            )}
-            {isUploading
-              ? uploadProgress
-                ? `Đang tải ${uploadProgress.done}/${uploadProgress.total}...`
-                : "Đang tải..."
-              : "Tải lên media"}
-          </Button>
-        </div>
+        {isGuideVisible ? (
+          <div className="relative rounded-lg border border-border/80 bg-[#F8F9FA] px-3 py-2.5 pr-9 dark:bg-muted/50">
+            <MediaWorkflowStepper />
+            <div className="mt-1.5">
+              <MediaWorkflowNote />
+            </div>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={dismissMediaGuide}
+              className="absolute top-1.5 right-1.5 size-6 text-muted-foreground hover:text-foreground"
+              aria-label="Ẩn hướng dẫn"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        ) : null}
       </div>
 
       <div className={cn("overflow-x-auto p-6", isLoading && "opacity-60")}>
@@ -1014,208 +1041,225 @@ export function MentorClassMediaPanel({
 
           {isDetailLoading && !selectedMedia ? (
             <DialogScrollBody>
-              <Skeleton className="h-72 w-full rounded-xl" />
-              <Skeleton className="mt-4 h-8 w-48 rounded-lg" />
-              <Skeleton className="mt-6 h-24 w-full rounded-xl" />
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Skeleton className="h-64 w-full flex-1 rounded-xl" />
+                <Skeleton className="h-44 w-full rounded-xl sm:w-[15.5rem]" />
+              </div>
+              <Skeleton className="mt-5 h-36 w-full rounded-xl" />
             </DialogScrollBody>
           ) : selectedMedia ? (
             <DialogScrollBody>
-              <div className="relative overflow-hidden rounded-xl border border-border bg-muted">
-                {selectedMedia.fileUrl &&
-                isImageFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={selectedMedia.fileUrl}
-                    alt="Media preview"
-                    className="mx-auto max-h-72 object-contain"
-                  />
-                ) : selectedMedia.fileUrl &&
-                  isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
-                  <video
-                    src={selectedMedia.fileUrl}
-                    controls
-                    className="mx-auto max-h-72 w-full bg-black"
-                  />
-                ) : (
-                  <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
-                    Không có file xem trước
-                  </div>
-                )}
-                {isDetailLoading ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-background/40">
-                    <Loader2 className="size-6 animate-spin text-muted-foreground" />
-                  </div>
-                ) : null}
-              </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-stretch">
+                <div className="relative min-w-0 flex-1 overflow-hidden rounded-xl border border-border bg-muted">
+                  {selectedMedia.fileUrl &&
+                  isImageFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedMedia.fileUrl}
+                      alt="Media preview"
+                      className="mx-auto max-h-64 object-contain sm:max-h-72"
+                    />
+                  ) : selectedMedia.fileUrl &&
+                    isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) ? (
+                    <video
+                      src={selectedMedia.fileUrl}
+                      controls
+                      className="mx-auto max-h-64 w-full bg-black sm:max-h-72"
+                    />
+                  ) : (
+                    <div className="flex h-40 items-center justify-center text-sm text-muted-foreground">
+                      Không có file xem trước
+                    </div>
+                  )}
+                  {isDetailLoading ? (
+                    <div className="absolute inset-0 flex items-center justify-center bg-background/40">
+                      <Loader2 className="size-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : null}
+                </div>
 
-              <div className="mt-4">
-                <MediaPipelineStatus
-                  videoStatus={selectedMedia.videoStatus}
-                  isReady={selectedMedia.isReady}
-                  progress={progressById[selectedMedia.id]}
-                  timedOut={Boolean(timedOutIds[selectedMedia.id])}
-                />
-              </div>
+                <div className="flex w-full shrink-0 flex-col gap-2 sm:w-[15.5rem]">
+                  <MediaPipelineStatus
+                    mediaId={selectedMedia.id}
+                    uploadedAt={selectedMedia.uploadedAt}
+                    videoStatus={selectedMedia.videoStatus}
+                    isReady={selectedMedia.isReady}
+                    progress={progressById[selectedMedia.id]}
+                    timedOut={Boolean(timedOutIds[selectedMedia.id])}
+                    className="max-w-none"
+                  />
 
-              {isAiProcessing(selectedMedia) ? (
-                <div className="mt-4 space-y-3 rounded-xl border border-border bg-muted/40 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    Đang xử lý pipeline
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Chờ chuyển mã / AI xong rồi xác nhận thẻ. Không gắn thủ công ở
-                    bước này.
-                  </p>
-                  {isVideoFile(selectedMedia.fileType, selectedMedia.fileUrl) &&
-                  needsAiRetry(selectedMedia) ? (
+                  {isAiProcessing(selectedMedia) ? (
+                    <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-3">
+                      <p className="text-xs font-medium text-foreground">
+                        Đang xử lý pipeline
+                      </p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">
+                        Chờ AI xong rồi xác nhận thẻ. Không gắn thủ công lúc này.
+                      </p>
+                    </div>
+                  ) : null}
+
+                  {canRescanAi(selectedMedia) &&
+                  selectedMedia.videoStatus !== "Failed" ? (
                     <Button
                       type="button"
                       variant="outline"
+                      size="sm"
                       disabled={isProcessingTags}
                       onClick={() => void handleProcessTags(selectedMedia)}
-                      className="rounded-lg"
+                      className="h-8 w-full rounded-lg"
                     >
                       {isProcessingTags ? (
-                        <Loader2 className="size-4 animate-spin" />
+                        <Loader2 className="size-3.5 animate-spin" />
                       ) : (
-                        <ScanFace className="size-4" />
+                        <ScanFace className="size-3.5" />
                       )}
-                      Quét lại face tagging
+                      Quét lại
                     </Button>
                   ) : null}
-                </div>
-              ) : null}
 
-              {selectedMedia.videoStatus === "Failed" ? (
-                <div className="mt-4 space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
-                  <p className="text-sm font-medium text-foreground">
-                    AI nhận diện thất bại
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Thử quét lại. Nếu vẫn lỗi, gắn thẻ thủ công tên học viên bên
-                    dưới.
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isProcessingTags}
-                    onClick={() => void handleProcessTags(selectedMedia)}
-                    className="rounded-lg"
-                  >
-                    {isProcessingTags ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <ScanFace className="size-4" />
-                    )}
-                    Quét lại AI
-                  </Button>
+                  {selectedMedia.videoStatus === "Failed" ? (
+                    <div className="space-y-2 rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+                      <p className="text-xs font-medium text-foreground">
+                        AI thất bại
+                      </p>
+                      <p className="text-[11px] leading-snug text-muted-foreground">
+                        Quét lại hoặc gắn thẻ thủ công bên dưới.
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isProcessingTags}
+                        onClick={() => void handleProcessTags(selectedMedia)}
+                        className="h-8 w-full rounded-lg"
+                      >
+                        {isProcessingTags ? (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        ) : (
+                          <ScanFace className="size-3.5" />
+                        )}
+                        Quét lại AI
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
+              </div>
 
-              <div className="mt-6 space-y-3">
-                <div className="flex items-center justify-between gap-3">
+              <div className="mt-5 overflow-hidden rounded-xl border border-border">
+                <div className="flex items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2.5">
                   <h3 className="text-sm font-semibold text-foreground">
-                    Thẻ AI nhận diện ({selectedMedia.tags.length})
+                    Thẻ học viên
                   </h3>
+                  <span className="text-xs tabular-nums text-muted-foreground">
+                    {selectedMedia.tags.length} thẻ
+                    {selectedMedia.tags.filter((t) => t.isVerified).length > 0
+                      ? ` · ${selectedMedia.tags.filter((t) => t.isVerified).length} đã xác nhận`
+                      : null}
+                  </span>
                 </div>
 
-                {selectedMedia.tags.length === 0 ? (
-                  <p className="rounded-lg border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                    {isAiProcessing(selectedMedia)
-                      ? "Chưa có thẻ — đang chờ AI quét."
-                      : selectedMedia.videoStatus === "Failed"
-                        ? "AI chưa tạo được thẻ. Quét lại hoặc gắn thủ công bên dưới."
-                        : "AI không nhận diện được học viên nào. Gắn thẻ thủ công nếu cần."}
-                  </p>
-                ) : (
-                  <ul className="space-y-2">
-                    {selectedMedia.tags.map((tag) => {
-                      const student = rosterByStudentId.get(tag.studentId);
-                      const name =
-                        tag.studentName?.trim() ||
-                        student?.studentName?.trim() ||
-                        "Học viên";
+                <div className="p-3">
+                  {selectedMedia.tags.length === 0 ? (
+                    <p className="px-1 py-4 text-center text-sm text-muted-foreground">
+                      {isAiProcessing(selectedMedia)
+                        ? "Chưa có thẻ — đang chờ AI quét."
+                        : selectedMedia.videoStatus === "Failed"
+                          ? "AI chưa tạo được thẻ. Quét lại hoặc gắn thủ công."
+                          : "AI không nhận diện được học viên nào. Gắn thủ công nếu cần."}
+                    </p>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {selectedMedia.tags.map((tag, tagIndex) => {
+                        const student = rosterByStudentId.get(tag.studentId);
+                        const name =
+                          tag.studentName?.trim() ||
+                          student?.studentName?.trim() ||
+                          "Học viên";
 
-                      return (
-                        <li
-                          key={tag.id}
-                          className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between"
-                        >
-                          <div className="flex min-w-0 items-center gap-3">
-                            <MediaStudentAvatar
-                              name={name}
-                              avatarUrl={student?.avatarUrl}
-                              isVerified={tag.isVerified}
-                            />
-                            <div className="min-w-0">
-                              <p className="truncate font-medium text-foreground">
-                                {name}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Độ tin cậy{" "}
-                                {Math.round(tag.confidenceScore * 100)}% (
-                                {confidenceLabel(tag.confidenceScore)})
-                                {tag.hasOtherFaces
-                                  ? " · Có nhiều khuôn mặt"
-                                  : ""}
-                              </p>
+                        return (
+                          <li
+                            key={`${tag.id}:${tag.studentId}:${tagIndex}`}
+                            className="flex flex-col gap-2.5 py-2.5 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                          >
+                            <div className="flex min-w-0 flex-1 items-center gap-3">
+                              <MediaStudentAvatar
+                                name={name}
+                                avatarUrl={student?.avatarUrl}
+                                isVerified={tag.isVerified}
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-sm font-medium text-foreground">
+                                  {name}
+                                </p>
+                                {tag.hasOtherFaces ? (
+                                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                                    Nhiều khuôn mặt trong khung
+                                  </p>
+                                ) : null}
+                              </div>
+                              <MediaTagConfidence
+                                score={tag.confidenceScore}
+                                className="shrink-0"
+                              />
                             </div>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            {tag.isVerified ? (
-                              <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
-                                <CheckCircle2 className="mr-1 size-3" />
-                                Đã xác nhận
-                              </Badge>
-                            ) : (
-                              <Badge
+                            <div className="flex flex-wrap items-center gap-1.5 sm:justify-end">
+                              {tag.isVerified ? (
+                                <Badge className="rounded-full bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15 dark:text-[#b8e086]">
+                                  <CheckCircle2 className="mr-1 size-3" />
+                                  Đã xác nhận
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="outline"
+                                  className="rounded-full text-muted-foreground"
+                                >
+                                  Chưa xác nhận
+                                </Badge>
+                              )}
+                              <Button
+                                type="button"
                                 variant="outline"
-                                className="rounded-full text-muted-foreground"
+                                size="sm"
+                                disabled={busyTagStudentId === tag.studentId}
+                                onClick={() =>
+                                  void handleVerifyTag(tag, !tag.isVerified)
+                                }
+                                className="h-7 rounded-lg px-2.5 text-xs"
                               >
-                                Chưa xác nhận
-                              </Badge>
-                            )}
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={busyTagStudentId === tag.studentId}
-                              onClick={() =>
-                                void handleVerifyTag(tag, !tag.isVerified)
-                              }
-                              className="h-8 rounded-lg"
-                            >
-                              {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              disabled={busyTagStudentId === tag.studentId}
-                              onClick={() => void handleRemoveTag(tag)}
-                              className="size-8 text-muted-foreground hover:text-destructive"
-                              aria-label="Gỡ thẻ"
-                            >
-                              <X className="size-4" />
-                            </Button>
-                          </div>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
+                                {tag.isVerified ? "Bỏ xác nhận" : "Xác nhận"}
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                disabled={busyTagStudentId === tag.studentId}
+                                onClick={() => void handleRemoveTag(tag)}
+                                className="size-7 text-muted-foreground hover:text-destructive"
+                                aria-label="Gỡ thẻ"
+                              >
+                                <X className="size-3.5" />
+                              </Button>
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </div>
 
                 {canManuallyTag(selectedMedia) ? (
-                  <div className="space-y-2 rounded-xl border border-dashed border-border bg-muted/20 p-3">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Gắn thẻ thủ công (dự phòng)
+                  <div className="border-t border-border bg-muted/20 px-3 py-2.5">
+                    <div className="mb-2 flex items-baseline justify-between gap-2">
+                      <p className="text-xs font-medium text-foreground">
+                        Thêm thủ công
                       </p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground">
                         {selectedMedia.videoStatus === "Failed" ||
                         selectedMedia.tags.length === 0
-                          ? "Dùng khi AI lỗi hoặc không nhận ra học viên."
-                          : "Chỉ thêm học viên mà AI bỏ sót."}
+                          ? "Khi AI lỗi hoặc bỏ sót"
+                          : "Chỉ học viên AI bỏ sót"}
                       </p>
                     </div>
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -1227,9 +1271,9 @@ export function MentorClassMediaPanel({
                         disabled={untaggedStudents.length === 0}
                       >
                         <SelectTrigger
-                          className={cn(THEME_SELECT_TRIGGER, "w-full flex-1")}
+                          className={cn(THEME_SELECT_TRIGGER, "h-8 w-full flex-1")}
                         >
-                          <span className="truncate">
+                          <span className="truncate text-xs">
                             {untaggedStudents.length === 0
                               ? "Tất cả học viên đã được gắn thẻ"
                               : addTagStudentId
@@ -1264,14 +1308,15 @@ export function MentorClassMediaPanel({
                       <Button
                         type="button"
                         variant="outline"
+                        size="sm"
                         disabled={
                           !addTagStudentId ||
                           busyTagStudentId === addTagStudentId
                         }
                         onClick={() => void handleAddTag()}
-                        className="h-9 rounded-lg"
+                        className="h-8 shrink-0 rounded-lg"
                       >
-                        <UserPlus className="size-4" />
+                        <UserPlus className="size-3.5" />
                         Gắn thẻ
                       </Button>
                     </div>

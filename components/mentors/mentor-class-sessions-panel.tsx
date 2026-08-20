@@ -1,29 +1,19 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  CalendarDays,
-  ClipboardCheck,
-  LayoutGrid,
-  List,
-  MapPin,
-} from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, ClipboardCheck, QrCode } from "lucide-react";
 
-import { SessionCalendar } from "@/components/manager/classes/session-calendar";
+import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
+
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
-import {
-  ManagerDataTable,
-  type ColumnDef,
-} from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
-import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ClassSession } from "@/lib/api";
-import {
-  CLASS_SESSION_KIND_LABELS,
-  CLASS_SESSION_STATUS_LABELS,
-} from "@/lib/classes/constants";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
+import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
+import { canGenerateSessionCheckinQr } from "@/lib/classes/session-helpers";
+import { parseApiDateTime } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
 type MentorClassSessionsPanelProps = {
@@ -32,278 +22,278 @@ type MentorClassSessionsPanelProps = {
   onTakeAttendance: (session: ClassSession) => void;
 };
 
+type DayGroup = {
+  key: string;
+  label: string;
+  weekday: string;
+  sessions: ClassSession[];
+};
+
+const WEEKDAY_SHORT = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"] as const;
+
+function pad(n: number): string {
+  return String(n).padStart(2, "0");
+}
+
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function formatClock(date: Date): string {
+  return `${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+function formatDayLabel(date: Date): string {
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}`;
+}
+
+function isPastSession(session: ClassSession, now: number): boolean {
+  if (session.status === "Completed" || session.status === "Cancelled") {
+    return true;
+  }
+  if (session.status === "InProgress") return false;
+  const end = parseApiDateTime(session.endTime);
+  return end ? end.getTime() < now : false;
+}
+
+function isNextSession(
+  session: ClassSession,
+  ordered: ClassSession[],
+  now: number,
+): boolean {
+  const next = ordered.find((item) => !isPastSession(item, now));
+  return next?.id === session.id;
+}
+
+function groupByDay(sessions: ClassSession[]): DayGroup[] {
+  const map = new Map<string, DayGroup>();
+
+  for (const session of sessions) {
+    const start = parseApiDateTime(session.startTime);
+    const key = start ? dayKey(start) : `unknown-${session.id}`;
+    const existing = map.get(key);
+    if (existing) {
+      existing.sessions.push(session);
+      continue;
+    }
+    map.set(key, {
+      key,
+      label: start ? formatDayLabel(start) : "—",
+      weekday: start ? WEEKDAY_SHORT[start.getDay()] : "—",
+      sessions: [session],
+    });
+  }
+
+  return [...map.values()];
+}
+
 export function MentorClassSessionsPanel({
   sessions,
   isLoading = false,
   onTakeAttendance,
 }: MentorClassSessionsPanelProps) {
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
-  const [search, setSearch] = useState("");
-  const [sessionKind, setSessionKind] = useState("all");
-  const [status, setStatus] = useState("all");
+  const [checkinSession, setCheckinSession] = useState<ClassSession | null>(null);
+  const now = useMemo(() => Date.now(), []);
 
-  const isCalendar = viewMode === "calendar";
-
-  const filteredSessions = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return sessions.filter((session) => {
-      if (sessionKind !== "all" && session.sessionKind !== sessionKind) {
-        return false;
-      }
-      if (status !== "all" && session.status !== status) {
-        return false;
-      }
-      if (!q) return true;
-      return (
-        session.title?.toLowerCase().includes(q) ||
-        session.location?.toLowerCase().includes(q) ||
-        false
-      );
-    });
-  }, [sessions, search, sessionKind, status]);
-
-  const columns: ColumnDef<ClassSession>[] = useMemo(
-    () => [
-      {
-        header: "Buổi học",
-        render: (session) => (
-          <div className="min-w-0">
-            <p className="truncate font-semibold text-foreground">
-              {session.title || "Buổi học"}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              {CLASS_SESSION_KIND_LABELS[session.sessionKind] ??
-                session.sessionKind}
-            </p>
-          </div>
-        ),
-      },
-      {
-        header: "Thời gian",
-        className: "min-w-44 text-xs text-muted-foreground",
-        render: (session) => (
-          <div className="space-y-0.5">
-            <p>{formatApiDateTimeDisplay(session.startTime) || "—"}</p>
-            <p>→ {formatApiDateTimeDisplay(session.endTime) || "—"}</p>
-          </div>
-        ),
-      },
-      {
-        header: "Địa điểm",
-        className: "min-w-0 max-w-[13rem] w-[13rem] overflow-hidden",
-        render: (session) => {
-          const location = session.location?.trim();
-          if (!location) {
-            return <span className="text-xs text-muted-foreground">—</span>;
-          }
-
-          const isUrl = /^https?:\/\//i.test(location);
-
-          return (
-            <div className="flex min-w-0 max-w-full items-center gap-1.5 text-xs text-muted-foreground">
-              <MapPin className="size-3.5 shrink-0" />
-              {isUrl ? (
-                <a
-                  href={location}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  title={location}
-                  className="min-w-0 flex-1 truncate text-primary hover:underline"
-                >
-                  {location}
-                </a>
-              ) : (
-                <span title={location} className="min-w-0 flex-1 truncate">
-                  {location}
-                </span>
-              )}
-            </div>
-          );
-        },
-      },
-      {
-        header: "Trạng thái",
-        className: "w-40 whitespace-nowrap",
-        render: (session) => (
-          <ClassSessionStatusBadge status={session.status} />
-        ),
-      },
-      {
-        header: "",
-        className: "w-36 whitespace-nowrap text-right",
-        render: (session) =>
-          session.requiresAttendance ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => onTakeAttendance(session)}
-              className="h-8 rounded-lg border-border"
-            >
-              <ClipboardCheck className="size-3.5" />
-              Điểm danh
-            </Button>
-          ) : null,
-      },
-    ],
-    [onTakeAttendance],
+  const ordered = useMemo(
+    () => [...sessions].sort((a, b) => a.startTime.localeCompare(b.startTime)),
+    [sessions],
   );
 
-  const hasFilters =
-    search.trim() !== "" || sessionKind !== "all" || status !== "all";
+  const dayGroups = useMemo(() => groupByDay(ordered), [ordered]);
+
+  const upcomingCount = useMemo(
+    () => ordered.filter((session) => !isPastSession(session, now)).length,
+    [ordered, now],
+  );
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-border bg-muted/40 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center justify-between gap-3 sm:justify-start">
+      <div className="flex flex-col gap-2 border-b border-border bg-muted/40 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+        <div className="min-w-0">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <CalendarDays className="size-4 text-primary" />
-            Lịch buổi học
+            Lịch lớp này
           </p>
-          <p className="font-mono text-xs text-muted-foreground sm:hidden">
-            {filteredSessions.length}/{sessions.length} buổi
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {isLoading && sessions.length === 0
+              ? "Đang tải…"
+              : `${sessions.length} buổi · ${upcomingCount} sắp tới`}
           </p>
         </div>
-
-        <div className="flex items-center gap-3">
-          <p className="hidden font-mono text-xs text-muted-foreground sm:block">
-            <span className="font-bold text-foreground">
-              {filteredSessions.length}
-            </span>
-            {hasFilters ? ` / ${sessions.length}` : ""} buổi
-          </p>
-          <div className="inline-flex rounded-xl border border-border bg-background p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode("calendar")}
-              aria-pressed={isCalendar}
-              className={cn(
-                "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition",
-                isCalendar
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <LayoutGrid className="size-4" />
-              Lịch
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode("list")}
-              aria-pressed={!isCalendar}
-              className={cn(
-                "flex h-9 items-center gap-1.5 rounded-lg px-3 text-sm font-semibold transition",
-                !isCalendar
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <List className="size-4" />
-              Danh sách
-            </button>
-          </div>
-        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/mentor/schedule" />}
+          className="h-8 gap-1.5 rounded-lg text-xs"
+        >
+          <CalendarDays className="size-3.5" />
+          Lịch tổng
+        </Button>
       </div>
 
-      <ManagerFilterBar
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Tìm theo tiêu đề hoặc địa điểm..."
-        filters={[
-          {
-            key: "kind",
-            placeholder: "Loại buổi",
-            value: sessionKind,
-            onChange: (value) => setSessionKind(value || "all"),
-            options: [
-              { value: "all", label: "Mọi loại" },
-              ...Object.entries(CLASS_SESSION_KIND_LABELS).map(
-                ([value, label]) => ({
-                  value,
-                  label,
-                }),
-              ),
-            ],
-          },
-          {
-            key: "status",
-            placeholder: "Trạng thái",
-            value: status,
-            onChange: (value) => setStatus(value || "all"),
-            options: [
-              { value: "all", label: "Mọi trạng thái" },
-              ...Object.entries(CLASS_SESSION_STATUS_LABELS).map(
-                ([value, label]) => ({
-                  value,
-                  label,
-                }),
-              ),
-            ],
-          },
-        ]}
-        showClear={hasFilters}
-        onClearFilters={() => {
-          setSearch("");
-          setSessionKind("all");
-          setStatus("all");
-        }}
-      />
-
-      {isCalendar ? (
-        filteredSessions.length === 0 && !isLoading ? (
-          <div className="p-6">
-            <ManagerEmptyState
-              title={hasFilters ? "Không có buổi khớp bộ lọc" : "Chưa có buổi học"}
-              description={
-                hasFilters
-                  ? "Thử xóa bộ lọc để xem toàn bộ lịch lớp."
-                  : "Quản lý sẽ tạo lịch học cho lớp. Bạn có thể điểm danh khi buổi học sẵn sàng."
-              }
-              icon={CalendarDays}
-              actionLabel={hasFilters ? "Xóa bộ lọc" : undefined}
-              onAction={
-                hasFilters
-                  ? () => {
-                      setSearch("");
-                      setSessionKind("all");
-                      setStatus("all");
-                    }
-                  : undefined
-              }
-            />
-          </div>
-        ) : (
-          <div className={cn(isLoading && "opacity-60")}>
-            <SessionCalendar
-              sessions={filteredSessions}
-              onSelectSession={(session) => {
-                if (session.requiresAttendance) {
-                  onTakeAttendance(session);
-                }
-              }}
-            />
-          </div>
-        )
-      ) : (
-        <div className="overflow-x-auto p-6">
-          <ManagerDataTable
-            columns={columns}
-            data={filteredSessions}
-            isLoading={isLoading}
-            emptyState={
-              <ManagerEmptyState
-                title={hasFilters ? "Không có buổi khớp bộ lọc" : "Chưa có buổi học"}
-                description={
-                  hasFilters
-                    ? "Thử xóa bộ lọc để xem toàn bộ lịch lớp."
-                    : "Quản lý sẽ tạo lịch học cho lớp. Bạn có thể điểm danh khi buổi học sẵn sàng."
-                }
-                icon={CalendarDays}
-              />
-            }
+      {isLoading && sessions.length === 0 ? (
+        <div className="space-y-2 p-4">
+          <Skeleton className="h-8 w-full rounded-md" />
+          <Skeleton className="h-8 w-full rounded-md" />
+          <Skeleton className="h-8 w-full rounded-md" />
+        </div>
+      ) : sessions.length === 0 ? (
+        <div className="p-6">
+          <ManagerEmptyState
+            title="Chưa có buổi học"
+            description="Quản lý sẽ tạo lịch cho lớp. Mở Lịch tổng để xem mọi lớp."
+            icon={CalendarDays}
           />
         </div>
+      ) : (
+        <div className="max-h-[min(420px,55vh)] overflow-y-auto overscroll-contain">
+          <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
+            <thead className="sticky top-0 z-10 bg-card/95 backdrop-blur-sm">
+              <tr className="border-b border-border text-[10px] font-bold tracking-wider text-muted-foreground uppercase">
+                <th className="w-16 px-3 py-2 font-bold">Ngày</th>
+                <th className="w-[6.5rem] px-2 py-2 font-bold">Giờ</th>
+                <th className="px-2 py-2 font-bold">Buổi</th>
+                <th className="w-28 px-2 py-2 font-bold">Loại</th>
+                <th className="w-28 px-2 py-2 font-bold">TT</th>
+                <th className="w-24 px-3 py-2 text-right font-bold"> </th>
+              </tr>
+            </thead>
+            <tbody>
+              {dayGroups.map((group) =>
+                group.sessions.map((session, index) => {
+                  const start = parseApiDateTime(session.startTime);
+                  const end = parseApiDateTime(session.endTime);
+                  const past = isPastSession(session, now);
+                  const next = isNextSession(session, ordered, now);
+                  const timeLabel =
+                    start && end
+                      ? `${formatClock(start)}–${formatClock(end)}`
+                      : start
+                        ? formatClock(start)
+                        : "—";
+
+                  return (
+                    <tr
+                      key={session.id}
+                      className={cn(
+                        "border-b border-border/70 last:border-b-0",
+                        next && "bg-primary/[0.06]",
+                        past && !next && "bg-muted/10 text-muted-foreground",
+                      )}
+                    >
+                      <td className="align-middle px-3 py-1.5">
+                        {index === 0 ? (
+                          <div className="flex flex-col leading-tight">
+                            <span className="font-mono text-[11px] font-bold tabular-nums text-foreground">
+                              {group.label}
+                            </span>
+                            <span className="text-[10px] font-semibold text-muted-foreground">
+                              {group.weekday}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="sr-only">{group.label}</span>
+                        )}
+                      </td>
+                      <td className="align-middle px-2 py-1.5">
+                        <span
+                          className={cn(
+                            "font-mono text-xs tabular-nums",
+                            next ? "font-semibold text-primary" : undefined,
+                          )}
+                        >
+                          {timeLabel}
+                        </span>
+                      </td>
+                      <td className="align-middle px-2 py-1.5">
+                        <div className="min-w-0">
+                          <p
+                            className={cn(
+                              "truncate text-sm leading-snug",
+                              next
+                                ? "font-semibold text-foreground"
+                                : "font-medium text-foreground",
+                              past && !next && "text-muted-foreground",
+                            )}
+                            title={session.title || "Buổi học"}
+                          >
+                            {next ? (
+                              <span className="mr-1.5 inline-flex rounded bg-primary px-1 py-px text-[9px] font-bold tracking-wide text-primary-foreground uppercase">
+                                Next
+                              </span>
+                            ) : null}
+                            {session.title || "Buổi học"}
+                          </p>
+                          {session.location?.trim() ? (
+                            <p className="truncate text-[10px] text-muted-foreground">
+                              {session.location.trim()}
+                            </p>
+                          ) : null}
+                        </div>
+                      </td>
+                      <td className="align-middle px-2 py-1.5">
+                        <span className="text-[11px] text-muted-foreground">
+                          {CLASS_SESSION_KIND_LABELS[session.sessionKind] ??
+                            session.sessionKind}
+                        </span>
+                      </td>
+                      <td className="align-middle px-2 py-1.5">
+                        <ClassSessionStatusBadge status={session.status} />
+                      </td>
+                      <td className="align-middle px-3 py-1.5 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          {canGenerateSessionCheckinQr(session) ? (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setCheckinSession(session)}
+                              className="h-7 gap-1 rounded-md px-2 text-[11px]"
+                              aria-label={`QR check-in ${session.title || "buổi học"}`}
+                            >
+                              <QrCode className="size-3.5" />
+                              <span className="hidden sm:inline">QR</span>
+                            </Button>
+                          ) : null}
+                          {session.requiresAttendance && !past ? (
+                            <Button
+                              type="button"
+                              variant={next ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => onTakeAttendance(session)}
+                              className="h-7 gap-1 rounded-md px-2 text-[11px]"
+                              aria-label={`Điểm danh ${session.title || "buổi học"}`}
+                            >
+                              <ClipboardCheck className="size-3.5" />
+                              <span className="hidden sm:inline">Điểm danh</span>
+                            </Button>
+                          ) : !session.requiresAttendance ? (
+                            <span className="text-[10px] text-muted-foreground">
+                              —
+                            </span>
+                          ) : null}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                }),
+              )}
+            </tbody>
+          </table>
+        </div>
       )}
+
+      <SessionCheckinQrDialog
+        open={checkinSession != null}
+        onOpenChange={(open) => {
+          if (!open) setCheckinSession(null);
+        }}
+        sessionId={checkinSession?.id ?? ""}
+        sessionTitle={checkinSession?.title}
+      />
     </section>
   );
 }

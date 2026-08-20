@@ -1,4 +1,8 @@
-/** Re-export shared Select tokens — prefer `@/lib/ui/select-styles` for new code. */
+/**
+ * Re-export shared Select tokens.
+ * Prefer the default styles on `@/components/ui/select` for new code.
+ * Import from `@/lib/ui/select-styles` when you need `DARK_*` overrides.
+ */
 
 export {
   DARK_SELECT_CONTENT,

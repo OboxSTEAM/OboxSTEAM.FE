@@ -158,6 +158,34 @@ export const reorderPortfolioSectionsSchema = z.object({
     .min(1, "Danh sách section không được trống."),
 });
 
+/** Body for `POST /api/portfolios/me/media/from-class-gallery`. */
+export const importClassGalleryMediaSchema = z.object({
+  mediaAssetIds: z
+    .array(z.string().uuid("ID media lớp học không hợp lệ."))
+    .min(1, "Chọn ít nhất một media từ gallery."),
+  portfolioCustomItemId: z
+    .string()
+    .uuid("ID mục portfolio không hợp lệ.")
+    .nullable()
+    .optional(),
+  portfolioSectionId: z
+    .string()
+    .uuid("ID section portfolio không hợp lệ.")
+    .nullable()
+    .optional(),
+});
+
+/** Body for `POST /api/portfolios/me/media/from-highlight-reel`. */
+export const importHighlightReelMediaSchema = z.object({
+  highlightVideoItemId: z.string().uuid("ID highlight video không hợp lệ."),
+  portfolioSectionId: z.string().uuid("ID section portfolio không hợp lệ."),
+  caption: z
+    .string()
+    .max(255, "Chú thích tối đa 255 ký tự.")
+    .nullable()
+    .optional(),
+});
+
 export type PortfolioItemIdParam = z.infer<typeof portfolioItemIdParamSchema>;
 export type PortfolioSectionIdParam = z.infer<typeof portfolioSectionIdParamSchema>;
 export type PortfolioMediaIdParam = z.infer<typeof portfolioMediaIdParamSchema>;
@@ -175,3 +203,9 @@ export type ReorderPortfolioItemsInput = z.infer<typeof reorderPortfolioItemsSch
 export type CreatePortfolioSectionInput = z.infer<typeof createPortfolioSectionSchema>;
 export type UpdatePortfolioSectionInput = z.infer<typeof updatePortfolioSectionSchema>;
 export type ReorderPortfolioSectionsInput = z.infer<typeof reorderPortfolioSectionsSchema>;
+export type ImportClassGalleryMediaInput = z.infer<
+  typeof importClassGalleryMediaSchema
+>;
+export type ImportHighlightReelMediaInput = z.infer<
+  typeof importHighlightReelMediaSchema
+>;

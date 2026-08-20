@@ -19,7 +19,10 @@ export const researchSubmissionSchema = z.object({
   status: researchSubmissionStatusSchema,
   contentText: z.string().nullable(),
   fileUrl: z.string().nullable(),
-  evidenceUrls: z.array(z.string()).nullable(),
+  /** Preview URLs for display — not sent on submit. */
+  evidenceUrls: z.array(z.string()).nullable().optional(),
+  /** Media asset IDs for evidence — use these on submit. */
+  evidenceMediaAssetIds: z.array(z.string().uuid()).nullable().optional(),
   assignedGrade: z.number().nullable(),
   passScore: z.number(),
   maxPoints: z.number(),
@@ -32,11 +35,15 @@ export const researchSubmissionSchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
-/** Payload returned after upload; merge into submit body. */
+/**
+ * Payload from `POST /api/research-submissions/upload`.
+ * Primary → `fileUrl`. Evidence (`isEvidence=true`) → `mediaAssetId` + preview `evidenceUrls`.
+ */
 export const researchSubmissionUploadPayloadSchema = z.object({
-  contentText: z.string().nullable(),
-  fileUrl: z.string().nullable(),
-  evidenceUrls: z.array(z.string()).nullable(),
+  submissionId: z.string().uuid(),
+  fileUrl: z.string().nullable().optional(),
+  mediaAssetId: z.string().uuid().nullable().optional(),
+  evidenceUrls: z.array(z.string()).nullable().optional(),
 });
 
 export type ResearchSubmissionStatus = z.infer<typeof researchSubmissionStatusSchema>;

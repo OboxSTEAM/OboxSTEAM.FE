@@ -1,5 +1,5 @@
 import type { NotificationType } from "@/lib/api/entities/notification";
-import { isManagerRole, isParentRole } from "@/lib/auth/roles";
+import { canAccessManagerArea, isParentRole } from "@/lib/auth/roles";
 import { assignmentEditHref } from "@/lib/manager/curriculum-catalog";
 import {
   parseNotificationPayload,
@@ -64,7 +64,7 @@ export function resolveNotificationHref(
   input: ResolveNotificationHrefInput,
 ): string | null {
   const { type, payload, accountRole } = input;
-  const isManager = isManagerRole(accountRole);
+  const isManager = canAccessManagerArea(accountRole);
   const isParent = isParentRole(accountRole);
 
   const programId = payloadString(payload, "programId");
@@ -117,6 +117,7 @@ export function resolveNotificationHref(
     case "PaymentSucceeded":
     case "ModuleUnlocked":
     case "ModuleCompleted":
+    case "ModuleFailed":
     case "ModuleRetakeInitiated":
     case "ActivityCompleted":
     case "ClassEnrolled":
@@ -158,6 +159,24 @@ export function resolveNotificationHref(
         return classId ? `/manager/classes/${classId}` : null;
       }
       return programId ? getProgramLearnHref(programId) : null;
+
+    case "AssessmentRecoveryRequested":
+      return "/mentor/recovery";
+
+    case "AssessmentRecoveryApproved":
+    case "AssessmentRecoveryRejected":
+      if (!programId) return null;
+      return assignmentId
+        ? learnWithAssignment(programId, assignmentId)
+        : getProgramLearnHref(programId);
+
+    case "ClassRedeliveryPendingManager":
+      return "/manager/redelivery";
+
+    case "ClassRedeliveryMatchedPendingPayment":
+    case "ClassRedeliveryRejected":
+    case "ClassRedeliveryCompleted":
+      return programId ? getProgramLearnHref(programId) : "/courses";
 
     case "ParentLinkRequested":
     case "ParentLinkVerified":

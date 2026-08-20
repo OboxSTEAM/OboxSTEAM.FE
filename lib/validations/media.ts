@@ -21,6 +21,57 @@ export const mediaListQuerySchema = z.object({
   pageSize: z.number().int().positive().max(100).optional(),
 });
 
+/** Path param for `GET /api/media/class/{classId}/gallery`. */
+export const classGalleryClassIdParamSchema = z.object({
+  classId: z.string().uuid("ID lớp học không hợp lệ."),
+});
+
+/**
+ * Query params for `GET /api/media/class/{classId}/gallery`.
+ * Same filters/sort/pagination as `GET /api/media` (classId is path-only).
+ */
+export const classGalleryQuerySchema = z.object({
+  classSessionId: z.string().uuid().optional(),
+  fileType: z.string().optional(),
+  videoStatus: z
+    .enum([
+      "None",
+      "Transcoding",
+      "PendingTagging",
+      "TaggingComplete",
+      "Failed",
+    ])
+    .optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().max(100).optional(),
+});
+
+/**
+ * Query params for `GET /api/media/my-gallery`.
+ * Cross-enrollment gallery; optional programId / classId filters.
+ */
+export const myGalleryQuerySchema = z.object({
+  programId: z.string().uuid().optional(),
+  classId: z.string().uuid().optional(),
+  classSessionId: z.string().uuid().optional(),
+  fileType: z.string().optional(),
+  videoStatus: z
+    .enum([
+      "None",
+      "Transcoding",
+      "PendingTagging",
+      "TaggingComplete",
+      "Failed",
+    ])
+    .optional(),
+  sortBy: z.string().optional(),
+  isDescending: z.boolean().optional(),
+  page: z.number().int().positive().optional(),
+  pageSize: z.number().int().positive().max(100).optional(),
+});
+
 /** Query params for `POST /api/media/upload`. */
 export const mediaUploadQuerySchema = z.object({
   classId: z.string().uuid("ID lớp học không hợp lệ."),
@@ -30,11 +81,6 @@ export const mediaUploadQuerySchema = z.object({
 /** Path param for media-scoped routes. */
 export const mediaIdParamSchema = z.object({
   mediaId: z.string().uuid("ID media không hợp lệ."),
-});
-
-/** Path param for `GET /api/media/class-session/{classSessionId}`. */
-export const mediaClassSessionParamSchema = z.object({
-  classSessionId: z.string().uuid("ID buổi học không hợp lệ."),
 });
 
 /** Path params for tag routes. */
@@ -54,9 +100,13 @@ export const updateMediaTagVerificationSchema = z.object({
 });
 
 export type MediaListQuery = z.infer<typeof mediaListQuerySchema>;
+export type ClassGalleryClassIdParam = z.infer<
+  typeof classGalleryClassIdParamSchema
+>;
+export type ClassGalleryQuery = z.infer<typeof classGalleryQuerySchema>;
+export type MyGalleryQuery = z.infer<typeof myGalleryQuerySchema>;
 export type MediaUploadQuery = z.infer<typeof mediaUploadQuerySchema>;
 export type MediaIdParam = z.infer<typeof mediaIdParamSchema>;
-export type MediaClassSessionParam = z.infer<typeof mediaClassSessionParamSchema>;
 export type MediaTagParams = z.infer<typeof mediaTagParamsSchema>;
 export type AddMediaTagInput = z.infer<typeof addMediaTagSchema>;
 export type UpdateMediaTagVerificationInput = z.infer<

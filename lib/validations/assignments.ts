@@ -13,6 +13,8 @@ export const assignmentTypeInputSchema = z.enum([
   "Quiz",
 ]);
 
+export type AssignmentTypeInput = z.infer<typeof assignmentTypeInputSchema>;
+
 /** Shared field shape for `Create`/`UpdateAssignmentRequestDto`. Dates use `dd/MM/yyyy HH:mm:ss`. */
 const assignmentFieldsSchema = z.object({
   code: z.string().nullable().optional(),
@@ -39,23 +41,59 @@ const assignmentFieldsSchema = z.object({
 });
 
 /** Quiz assignments must have difficulty percentages summing to 100. */
-function quizPercentValid(v: z.infer<typeof assignmentFieldsSchema>): boolean {
+function quizPercentValid(v: {
+  assignmentType: AssignmentTypeInput;
+  easyPercent: number;
+  mediumPercent: number;
+  hardPercent: number;
+}): boolean {
   if (v.assignmentType !== "Quiz") return true;
   return v.easyPercent + v.mediumPercent + v.hardPercent === 100;
 }
 
-export const createAssignmentSchema = assignmentFieldsSchema.refine(quizPercentValid, {
+const QUIZ_PERCENT_REFINE = {
   message: "Tổng tỉ lệ độ khó (dễ + trung bình + khó) phải bằng 100%.",
-  path: ["easyPercent"],
-});
+  path: ["easyPercent"] as PropertyKey[],
+};
+
+export const createAssignmentSchema = assignmentFieldsSchema.refine(
+  quizPercentValid,
+  QUIZ_PERCENT_REFINE,
+);
 
 export const updateAssignmentSchema = assignmentFieldsSchema
   .partial()
   .extend({ moduleId: z.string().uuid("ID module không hợp lệ.").optional() });
 
-export type AssignmentTypeInput = z.infer<typeof assignmentTypeInputSchema>;
+/**
+ * Manager assignment create/edit form.
+ * `moduleId` is injected from the selected tree node, not a form field.
+ * `courseId` uses `"none"` when the assignment is not attached to a course.
+ */
+export const assignmentFormSchema = assignmentFieldsSchema
+  .omit({ moduleId: true })
+  .extend({
+    code: z.string(),
+    courseId: z.string(),
+    description: z.string(),
+    dueDate: z.string(),
+    availableFrom: z.string(),
+    availableUntil: z.string(),
+    questionBankId: z.string(),
+    questionCount: z.number().int().min(0).nullable().optional(),
+    timeLimitMinutes: z.number().int().min(1).nullable().optional(),
+    isRequiredForModulePass: z.boolean(),
+    allowShuffle: z.boolean(),
+    shuffleOptions: z.boolean(),
+    easyPercent: z.number().int().min(0).max(100),
+    mediumPercent: z.number().int().min(0).max(100),
+    hardPercent: z.number().int().min(0).max(100),
+  })
+  .refine(quizPercentValid, QUIZ_PERCENT_REFINE);
+
 export type CreateAssignmentInput = z.infer<typeof createAssignmentSchema>;
 export type UpdateAssignmentInput = z.infer<typeof updateAssignmentSchema>;
+export type AssignmentFormValues = z.infer<typeof assignmentFormSchema>;
 
 /** Query params for `GET /api/assignments`. */
 export const assignmentListQuerySchema = z.object({

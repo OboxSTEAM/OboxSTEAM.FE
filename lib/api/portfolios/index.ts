@@ -6,6 +6,8 @@ import { ApiResponseError } from "@/lib/api/errors";
 import {
   createPortfolioItemSchema,
   createPortfolioSectionSchema,
+  importClassGalleryMediaSchema,
+  importHighlightReelMediaSchema,
   portfolioItemIdParamSchema,
   portfolioMediaIdParamSchema,
   portfolioSectionIdParamSchema,
@@ -22,6 +24,8 @@ import {
 import type {
   CreatePortfolioItemInput,
   CreatePortfolioSectionInput,
+  ImportClassGalleryMediaInput,
+  ImportHighlightReelMediaInput,
   PortfolioSubdomainAvailabilityQuery,
   ReorderPortfolioItemsInput,
   ReorderPortfolioSectionsInput,
@@ -45,6 +49,8 @@ import {
   deletePortfolioSectionResponseSchema,
   getMyPortfolioResponseSchema,
   getPublicPortfolioBySubdomainResponseSchema,
+  importClassGalleryMediaResponseSchema,
+  importHighlightReelMediaResponseSchema,
   listPortfolioMediaResponseSchema,
   portfolioSectionValueSchema,
   reorderPortfolioItemsResponseSchema,
@@ -65,6 +71,8 @@ import {
   type DeletePortfolioSectionResult,
   type GetMyPortfolioResult,
   type GetPublicPortfolioBySubdomainResult,
+  type ImportClassGalleryMediaResult,
+  type ImportHighlightReelMediaResult,
   type ListPortfolioMediaResult,
   type ReorderPortfolioItemsResult,
   type ReorderPortfolioSectionsResult,
@@ -96,6 +104,10 @@ export type {
   GetMyPortfolioResult,
   GetPublicPortfolioBySubdomainResponse,
   GetPublicPortfolioBySubdomainResult,
+  ImportClassGalleryMediaResponse,
+  ImportClassGalleryMediaResult,
+  ImportHighlightReelMediaResponse,
+  ImportHighlightReelMediaResult,
   ListPortfolioMediaResponse,
   ListPortfolioMediaResult,
   ReorderPortfolioItemsResponse,
@@ -142,6 +154,7 @@ export type {
   PortfolioThemeSlotOverrides,
   PublicPortfolio,
   SubdomainAvailability,
+  ImportClassGalleryMediaResultData,
 } from "@/lib/api/entities/portfolio";
 
 export {
@@ -154,6 +167,8 @@ export {
 export type {
   CreatePortfolioItemInput,
   CreatePortfolioSectionInput,
+  ImportClassGalleryMediaInput,
+  ImportHighlightReelMediaInput,
   PortfolioItemIdParam,
   PortfolioMediaAssetRef,
   PortfolioMediaIdParam,
@@ -360,7 +375,7 @@ export async function reorderPortfolioItems(
   return requireApiValue(response.value);
 }
 
-/** `POST /api/portfolios/me/sync` — idempotently imports certificates and graded capstone projects. */
+/** `POST /api/portfolios/me/sync` — idempotently imports certificates and graded capstone projects (not highlight reels). */
 export async function syncPortfolioItems(): Promise<SyncPortfolioItemsResult> {
   const response = await apiFetchParsed(
     `${PORTFOLIOS_BASE}/me/sync`,
@@ -371,7 +386,7 @@ export async function syncPortfolioItems(): Promise<SyncPortfolioItemsResult> {
   return requireApiValue(response.value);
 }
 
-/** `POST /api/portfolios/me/media` — multipart image upload (jpg/jpeg/png, max 5 MB). */
+/** `POST /api/portfolios/me/media` — multipart upload (jpg/png ≤ 5 MB, mp4/mov ≤ 2 GB). */
 export async function uploadPortfolioMedia(file: File): Promise<UploadPortfolioMediaResult> {
   const formData = new FormData();
   formData.append("file", file);
@@ -406,6 +421,43 @@ export async function deletePortfolioMedia(
     `${PORTFOLIOS_BASE}/me/media/${parsedMediaId}`,
     deletePortfolioMediaResponseSchema,
     { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/portfolios/me/media/from-class-gallery` — copy ready class-gallery
+ * media into independent portfolio assets. Optionally append to an item or section.
+ */
+export async function importClassGalleryMedia(
+  input: ImportClassGalleryMediaInput,
+): Promise<ImportClassGalleryMediaResult> {
+  const body = importClassGalleryMediaSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media/from-class-gallery`,
+    importClassGalleryMediaResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/portfolios/me/media/from-highlight-reel` — copy a completed highlight
+ * video into a portfolio Video asset and append it to a Gallery section.
+ * Idempotent by highlight video item id; does not create HighlightReel items.
+ */
+export async function importHighlightReelMedia(
+  input: ImportHighlightReelMediaInput,
+): Promise<ImportHighlightReelMediaResult> {
+  const body = importHighlightReelMediaSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/media/from-highlight-reel`,
+    importHighlightReelMediaResponseSchema,
+    { method: "POST", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

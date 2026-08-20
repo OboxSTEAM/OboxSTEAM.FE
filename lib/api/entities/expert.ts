@@ -55,6 +55,42 @@ export const expertProgramSchema = z.object({
 
 export type ExpertProgram = z.infer<typeof expertProgramSchema>;
 
+const optionalYearResponseSchema = z
+  .union([z.number(), z.string(), z.null(), z.undefined()])
+  .transform((value) => {
+    if (value == null || value === "") return null;
+    const year = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(year) || !Number.isInteger(year) || year === 0) {
+      return null;
+    }
+    return year;
+  });
+
+const optionalExpertIdSchema = z
+  .union([z.string().uuid(), z.literal(""), z.null(), z.undefined()])
+  .transform((value) => value || "");
+
+export const expertDegreeSchema = z.object({
+  id: z.string().uuid(),
+  expertId: optionalExpertIdSchema,
+  title: nullableStringSchema,
+  institution: nullableStringSchema,
+  year: optionalYearResponseSchema,
+});
+
+export type ExpertDegree = z.infer<typeof expertDegreeSchema>;
+
+export const expertPublicationSchema = z.object({
+  id: z.string().uuid(),
+  expertId: optionalExpertIdSchema,
+  title: nullableStringSchema,
+  venue: nullableStringSchema,
+  year: optionalYearResponseSchema,
+  url: nullableStringSchema,
+});
+
+export type ExpertPublication = z.infer<typeof expertPublicationSchema>;
+
 export const expertSchema = z.object({
   id: z.string().uuid(),
   code: nullableStringSchema,
@@ -66,9 +102,18 @@ export const expertSchema = z.object({
   avatarUrl: nullableStringSchema,
   linkedInUrl: nullableStringSchema,
   achievements: nullableStringSchema,
+  specialization: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.string(),
   updatedAt: nullableStringSchema,
   programs: z.array(expertProgramSchema).nullish().transform((value) => value ?? []),
+  degrees: z.array(expertDegreeSchema).nullish().transform((value) => value ?? []),
+  publications: z
+    .array(expertPublicationSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export type Expert = z.infer<typeof expertSchema>;

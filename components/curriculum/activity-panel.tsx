@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { useCurrentUser } from "@/components/providers/current-user-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -9,8 +10,10 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   completeActivity,
   getActivityById,
+  getClassSessionWithStudents,
   type ClassSession,
   type EnrollmentCurriculum,
+  type SessionAttendanceStatus,
 } from "@/lib/api";
 import type { CompleteActivitySource } from "@/lib/validations/program-enrollments";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
@@ -33,6 +36,7 @@ type ActivityPanelProps = {
   onSelectActivity: (activityId: string) => void;
   onCurriculumRefresh: () => Promise<void>;
   classSessions?: ClassSession[];
+  classId?: string | null;
 };
 
 function resolveCompleteSource(
@@ -70,12 +74,18 @@ export function ActivityPanel({
   onSelectActivity,
   onCurriculumRefresh,
   classSessions = [],
+  classId = null,
 }: ActivityPanelProps) {
   const [canComplete, setCanComplete] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
+  const [attendanceStatusOverride, setAttendanceStatusOverride] =
+    useState<SessionAttendanceStatus | null>(null);
+  const { profile } = useCurrentUser();
+  const currentStudentId = profile?.id ?? null;
 
   useEffect(() => {
     setCanComplete(false);
+    setAttendanceStatusOverride(null);
   }, [selectedActivityId]);
 
   const flatActivity = useMemo(
@@ -125,12 +135,57 @@ export function ActivityPanel({
     return getNextSessionForActivity(classSessions, selectedActivityId);
   }, [activity, classSessions, selectedActivityId]);
 
+  const {
+    data: myAttendanceRow,
+  } = useClientFetch({
+    enabled: Boolean(
+      classId &&
+        nextSession?.id &&
+        activity &&
+        activity.activityType !== "SelfPaced",
+    ),
+    fetcher: async () => {
+      if (!classId || !nextSession?.id || !currentStudentId) return null;
+      const result = await getClassSessionWithStudents(classId, nextSession.id);
+      return (
+        result?.data?.students?.find(
+          (row) => row.studentId === currentStudentId,
+        ) ?? null
+      );
+    },
+    deps: [classId, nextSession?.id, currentStudentId],
+    onError: () => {
+      /* Attendance is supplementary for student UX; ignore fetch failures. */
+    },
+  });
+
+  const myAttendanceStatus: SessionAttendanceStatus | null =
+    attendanceStatusOverride ?? myAttendanceRow?.attendanceStatus ?? null;
+
+  const handleAttendanceChange = useCallback(
+    (status: SessionAttendanceStatus) => {
+      setAttendanceStatusOverride(status);
+    },
+    [],
+  );
+
   const isAlreadyComplete =
     flatActivity?.status === "completed" ||
     activity?.learningProgress?.activityStatus === "Done";
 
+  /** Student-driven complete API is SelfPaced-only; sessions are mentor-marked. */
+  const canStudentComplete = activity?.activityType === "SelfPaced";
+
   const handleComplete = useCallback(async () => {
-    if (!selectedActivityId || !activity || !canComplete || isAlreadyComplete) return;
+    if (
+      !selectedActivityId ||
+      !activity ||
+      !canStudentComplete ||
+      !canComplete ||
+      isAlreadyComplete
+    ) {
+      return;
+    }
 
     setIsCompleting(true);
     try {
@@ -160,6 +215,7 @@ export function ActivityPanel({
   }, [
     activity,
     canComplete,
+    canStudentComplete,
     curriculum.enrollmentId,
     isAlreadyComplete,
     onCurriculumRefresh,
@@ -241,6 +297,8 @@ export function ActivityPanel({
           resumeState={resumeState}
           isAlreadyComplete={isAlreadyComplete}
           nextSession={nextSession}
+          myAttendanceStatus={myAttendanceStatus}
+          onAttendanceChange={handleAttendanceChange}
           onCanCompleteChange={setCanComplete}
           compact
         />
@@ -264,7 +322,7 @@ export function ActivityPanel({
         <div className="ml-auto flex flex-wrap items-center gap-2">
           {isAlreadyComplete ? (
             <span className="text-sm font-medium text-learn-success">Đã hoàn thành</span>
-          ) : (
+          ) : canStudentComplete ? (
             <Button
               type="button"
               className="bg-learn-primary text-white hover:bg-learn-primary/90"
@@ -273,6 +331,10 @@ export function ActivityPanel({
             >
               {isCompleting ? "Đang lưu..." : "Hoàn thành & Tiếp tục"}
             </Button>
+          ) : (
+            <span className="text-sm text-learn-muted">
+              Mentor hoàn thành sau điểm danh
+            </span>
           )}
 
           <Button

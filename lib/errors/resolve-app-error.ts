@@ -75,6 +75,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
   },
+  "parent.progression": {
+    title: "Không tải được tiến độ học viên",
+    reason: "Liên kết phụ huynh chưa xác nhận, hoặc máy chủ tạm thời không phản hồi.",
+    action: "Quay lại danh sách con hoặc thử tải lại trang sau vài giây.",
+  },
+  "parent.enrollment-progression": {
+    title: "Không tải được chi tiết chương trình",
+    reason: "Ghi danh không tồn tại, không thuộc học viên liên kết, hoặc máy chủ lỗi.",
+    action: "Quay lại trang tiến độ học viên hoặc thử lại sau vài giây.",
+  },
   "student.links": {
     title: "Không tải được thông tin phụ huynh",
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
@@ -139,6 +149,16 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không xóa được chuyên gia",
     reason: "Chuyên gia có thể đang được sử dụng hoặc không còn tồn tại.",
     action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
+  },
+  "experts.credentials": {
+    title: "Không lưu được hồ sơ chuyên môn",
+    reason: "Thông tin bằng cấp hoặc bài báo chưa hợp lệ.",
+    action: "Kiểm tra học vị, trường, năm và đường dẫn rồi thử lại.",
+  },
+  "experts.profile": {
+    title: "Không tải được hồ sơ chuyên gia",
+    reason: "Hồ sơ không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử lại sau vài giây hoặc quay lại danh sách chuyên gia.",
   },
   "classes.list": {
     title: "Không tải được danh sách lớp",
@@ -260,6 +280,21 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Thông tin buổi học chưa hợp lệ hoặc lịch bị trùng.",
     action: "Kiểm tra tiêu đề, module và khung giờ rồi thử lại.",
   },
+  "classSessions.generate": {
+    title: "Không tạo được lịch tự động",
+    reason: "Lớp chưa sẵn sàng hoặc khung thời gian không đủ cho chương trình.",
+    action: "Kiểm tra mentor, ngày học và khoảng thời gian lớp rồi thử lại.",
+  },
+  "classSessions.checkinToken": {
+    title: "Không hiển thị được QR check-in",
+    reason: "Buổi học không mở check-in hoặc bạn không có quyền.",
+    action: "Kiểm tra trạng thái buổi học và thử lại.",
+  },
+  "classSessions.checkin": {
+    title: "Check-in không thành công",
+    reason: "Mã check-in không hợp lệ hoặc đã hết hạn.",
+    action: "Nhờ mentor hiển thị mã QR mới và thử lại.",
+  },
   "classSessions.update": {
     title: "Không cập nhật được buổi học",
     reason: "Thông tin chưa hợp lệ hoặc buổi học không còn tồn tại.",
@@ -279,6 +314,32 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không cập nhật được điểm danh",
     reason: "Trạng thái không hợp lệ hoặc bạn không có quyền thao tác.",
     action: "Tải lại roster và thử cập nhật lại.",
+  },
+  "activityProgress.forceComplete": {
+    title: "Không force-complete được hoạt động",
+    reason: "Học viên hoặc hoạt động không hợp lệ, hoặc bạn không có quyền.",
+    action: "Kiểm tra học viên/hoạt động rồi thử lại.",
+  },
+  "activityProgress.mentorCompleteBulk": {
+    title: "Không hoàn thành được hoạt động cho lớp",
+    reason:
+      "Buổi học hoặc hoạt động không hợp lệ, chưa có học viên đủ điều kiện, hoặc bạn không có quyền.",
+    action: "Kiểm tra điểm danh (Có mặt / Đi muộn / Có phép) rồi thử lại.",
+  },
+  "classQuizSet.get": {
+    title: "Không tải được bộ đề lớp",
+    reason: "Máy chủ tạm thời không phản hồi hoặc bài tập không tồn tại.",
+    action: "Chọn lại bài quiz hoặc thử tải lại sau vài giây.",
+  },
+  "classQuizSet.pull": {
+    title: "Không kéo được bộ đề lớp",
+    reason: "Bộ đề có thể đã khóa, ngân hàng câu hỏi trống, hoặc bạn không có quyền.",
+    action: "Nếu đã có học viên nộp bài, bộ đề bị khóa và không thể kéo lại.",
+  },
+  "classQuizSet.update": {
+    title: "Không cập nhật được câu hỏi",
+    reason: "Bộ đề đã khóa hoặc nội dung câu hỏi chưa hợp lệ.",
+    action: "Kiểm tra nội dung rồi thử lại. Bộ đề khóa sau khi có bài nộp.",
   },
   "media.list": {
     title: "Không tải được media",
@@ -415,6 +476,56 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Liên kết thanh toán không hợp lệ hoặc đã hết hạn (24 giờ).",
     action: "Nhờ học viên gửi lại yêu cầu thanh toán từ trang chương trình.",
   },
+  "payments.checkout-retake": {
+    title: "Không thể thanh toán học lại",
+    reason: "Yêu cầu học lại chưa sẵn sàng thanh toán hoặc máy chủ từ chối.",
+    action: "Kiểm tra trạng thái yêu cầu học lại rồi thử lại.",
+  },
+  "payments.request-parent-retake": {
+    title: "Không gửi được yêu cầu thanh toán học lại",
+    reason: "Phụ huynh chưa liên kết, chưa xác nhận, hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra liên kết phụ huynh trong hồ sơ và thử lại.",
+  },
+  "invoices.list": {
+    title: "Không tải được danh sách hóa đơn",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ tạm thời không phản hồi.",
+    action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
+  "invoices.detail": {
+    title: "Không tải được hóa đơn",
+    reason: "Hóa đơn không tồn tại hoặc máy chủ tạm thời không phản hồi.",
+    action: "Kiểm tra lại liên kết hoặc vào Khóa học của tôi.",
+  },
+  "assessment-recovery.create": {
+    title: "Không gửi được yêu cầu làm lại",
+    reason: "Bạn có thể đã hết lượt yêu cầu, hoặc bài tập chưa đủ điều kiện phục hồi.",
+    action: "Kiểm tra số lần yêu cầu còn lại hoặc cân nhắc học lại lớp.",
+  },
+  "assessment-recovery.list": {
+    title: "Không tải được yêu cầu làm lại",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử tải lại trang sau vài giây.",
+  },
+  "assessment-recovery.decide": {
+    title: "Không xử lý được yêu cầu làm lại",
+    reason: "Yêu cầu có thể đã được xử lý hoặc bạn không có quyền quyết định.",
+    action: "Tải lại danh sách chờ duyệt và thử lại.",
+  },
+  "class-redelivery.create": {
+    title: "Không gửi được yêu cầu học lại lớp",
+    reason: "Module chưa đủ điều kiện học lại hoặc yêu cầu đang chờ xử lý.",
+    action: "Kiểm tra trạng thái ghi danh module rồi thử lại.",
+  },
+  "class-redelivery.list": {
+    title: "Không tải được yêu cầu học lại lớp",
+    reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử tải lại trang sau vài giây.",
+  },
+  "class-redelivery.decide": {
+    title: "Không xử lý được yêu cầu học lại lớp",
+    reason: "Yêu cầu có thể đã được xử lý hoặc lớp đích không hợp lệ.",
+    action: "Tải lại hàng đợi quản lý và chọn lớp khác nếu cần.",
+  },
   "enrollments.list": {
     title: "Không tải được khóa học",
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
@@ -490,19 +601,73 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Thông tin section chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
     action: "Kiểm tra tiêu đề và nội dung rồi thử lại.",
   },
+  "portfolio.gallery.import": {
+    title: "Không nhập được media từ lớp",
+    reason: "Media chưa sẵn sàng, không thuộc lớp đã ghi danh, hoặc máy chủ từ chối.",
+    action: "Chọn media đã sẵn sàng và thử kéo thả lại.",
+  },
+  "highlight.load": {
+    title: "Không tải được highlight video",
+    reason: "Máy chủ tạm thời không phản hồi hoặc yêu cầu bị từ chối.",
+    action: "Thử tải lại sau vài giây.",
+  },
+  "highlight.create": {
+    title: "Không tạo được highlight",
+    reason: "Lớp không hợp lệ, đang có job xử lý, hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra lớp và mô tả điểm mạnh rồi thử lại.",
+  },
+  "highlight.trim": {
+    title: "Không cắt được video highlight",
+    reason: "Khoảng thời gian không hợp lệ hoặc video chưa hoàn tất xử lý.",
+    action: "Chọn đoạn cần loại bỏ trên video đã hoàn tất và thử lại.",
+  },
+  "highlight.segment": {
+    title: "Không thêm được đoạn media",
+    reason: "Media nguồn không hợp lệ, khoảng thời gian sai, hoặc overlap với đoạn đã có (409).",
+    action: "Chọn media từ source-media và khoảng không chồng rồi thử lại.",
+  },
+  "highlight.delete": {
+    title: "Không xóa được highlight",
+    reason: "Stack/item đang xử lý hoặc máy chủ từ chối yêu cầu.",
+    action: "Đợi job hoàn tất hoặc thử lại sau.",
+  },
+  "highlight.attach": {
+    title: "Không đồng bộ highlight vào portfolio",
+    reason: "Video chưa sẵn sàng hoặc máy chủ từ chối đồng bộ.",
+    action: "Đợi video hoàn tất rồi thử đồng bộ lại.",
+  },
+  "highlight.cancel": {
+    title: "Không hủy được job highlight",
+    reason: "Item không còn Processing hoặc máy chủ từ chối hủy.",
+    action: "Tải lại trạng thái stack rồi thử lại.",
+  },
+  "highlight.retry": {
+    title: "Không thử lại được highlight",
+    reason: "Chỉ retry được item Initial đã Failed/Cancelled.",
+    action: "Xóa phiên bản Trim/SegmentAdd lỗi rồi tạo lại, hoặc chọn item Initial.",
+  },
+  "highlight.regenerate": {
+    title: "Không tạo lại được highlight",
+    reason: "Stack đã đủ slot, đang Processing, hoặc máy chủ từ chối.",
+    action: "Xóa một phiên bản cũ rồi thử regenerate.",
+  },
+  "highlight.progress": {
+    title: "Không theo dõi được tiến trình highlight",
+    reason: "Máy chủ tạm thời không phản hồi tiến trình job.",
+    action: "Đợi vài giây — hệ thống sẽ tiếp tục thử.",
+  },
 };
 
-/** Contexts where a curated backend string may be shown (auth only). */
-const API_MESSAGE_ALLOWED: ReadonlySet<AppErrorContext> = new Set([
-  "auth.login",
-  "auth.register",
-  "auth.verify-otp",
-  "auth.forgot-password",
-  "auth.reset-password",
-  "assignments.quiz.result",
+/** Placeholder client messages — not real BE copy; keep curated fallbacks instead. */
+const CLIENT_PLACEHOLDER_MESSAGES = new Set([
+  "Request failed.",
+  "Request failed",
 ]);
 
-/** Manager mutate flows — never surface raw BE messages. */
+/**
+ * Manager mutate flows — status-based Vietnamese fallbacks when BE has no message.
+ * Client-side Error tips are also suppressed here (not BE envelopes).
+ */
 const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "programs.create",
   "programs.update",
@@ -511,6 +676,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "experts.create",
   "experts.update",
   "experts.delete",
+  "experts.credentials",
   "classes.create",
   "classes.update",
   "classes.lifecycle",
@@ -526,13 +692,29 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classSessions.create",
   "classSessions.update",
   "classSessions.delete",
+  "classSessions.generate",
+  "classSessions.checkinToken",
+  "classSessions.checkin",
   "attendance.update",
+  "activityProgress.forceComplete",
+  "activityProgress.mentorCompleteBulk",
+  "classQuizSet.pull",
+  "classQuizSet.update",
   "media.upload",
   "media.delete",
   "media.processTags",
   "media.tag.add",
   "media.tag.verify",
   "media.tag.delete",
+  "portfolio.gallery.import",
+  "highlight.create",
+  "highlight.trim",
+  "highlight.segment",
+  "highlight.delete",
+  "highlight.attach",
+  "highlight.cancel",
+  "highlight.retry",
+  "highlight.regenerate",
   "curriculum.module.save",
   "curriculum.course.save",
   "curriculum.activity.save",
@@ -574,6 +756,17 @@ function reasonForHttpStatus(
     if (context.startsWith("curriculum.")) {
       return "Mã hoặc tên đã tồn tại trong chương trình.";
     }
+    if (context === "highlight.segment") {
+      return "Đoạn mới chồng lên khoảng đã có trong highlight (overlap).";
+    }
+    if (
+      context === "highlight.create" ||
+      context === "highlight.regenerate" ||
+      context === "highlight.trim" ||
+      context === "highlight.retry"
+    ) {
+      return "Stack đang Processing hoặc đã hết slot phiên bản.";
+    }
     return "Dữ liệu bị trùng với mục đã có.";
   }
   if (status === 413) {
@@ -591,9 +784,17 @@ function reasonForHttpStatus(
   return null;
 }
 
+function sanitizeApiMessage(message: string | null | undefined): string | null {
+  if (!message) return null;
+  const trimmed = message.trim();
+  if (!trimmed || CLIENT_PLACEHOLDER_MESSAGES.has(trimmed)) return null;
+  if (/^Request failed with status \d+/i.test(trimmed)) return null;
+  return trimmed;
+}
+
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
   if (error instanceof ApiResponseError) {
-    return error.message || null;
+    return sanitizeApiMessage(error.message);
   }
 
   const body = error.body as {
@@ -602,7 +803,46 @@ function extractApiMessage(error: ApiRequestError | ApiResponseError): string | 
     value?: { message?: string };
   } | null;
 
-  return body?.error?.message ?? body?.value?.message ?? body?.message ?? null;
+  return sanitizeApiMessage(
+    body?.error?.message ?? body?.value?.message ?? body?.message,
+  );
+}
+
+/** Neutral next-step copy keyed by HTTP status — used when BE drives `reason`. */
+function actionForHttpStatus(status: number): string {
+  if (status === 0) {
+    return "Kiểm tra mạng internet và thử lại.";
+  }
+  if (status === 401) {
+    return "Đăng nhập lại rồi thử tiếp.";
+  }
+  if (status === 403) {
+    return "Liên hệ quản trị viên nếu bạn cần quyền này.";
+  }
+  if (status === 404) {
+    return "Kiểm tra lại thông tin hoặc quay lại trang trước.";
+  }
+  if (status === 409) {
+    return "Kiểm tra dữ liệu bị trùng rồi thử lại.";
+  }
+  if (status === 413) {
+    return "Chọn tệp nhỏ hơn rồi thử lại.";
+  }
+  if (status === 400 || status === 422) {
+    return "Kiểm tra lại thông tin đã nhập rồi thử lại.";
+  }
+  if (status >= 500) {
+    return "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.";
+  }
+  return "Vui lòng thử lại sau vài giây.";
+}
+
+function resolveAction(
+  status: number,
+  apiMessage: string | null,
+  curatedAction: string,
+): string {
+  return apiMessage ? actionForHttpStatus(status) : curatedAction;
 }
 
 function mapHttpStatusToError(
@@ -614,7 +854,11 @@ function mapHttpStatusToError(
     return {
       title: "Đăng nhập không thành công",
       reason: apiMessage ?? "Email hoặc mật khẩu không đúng.",
-      action: "Kiểm tra lại thông tin hoặc chọn Quên mật khẩu.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Kiểm tra lại thông tin hoặc chọn Quên mật khẩu.",
+      ),
     };
   }
 
@@ -622,40 +866,52 @@ function mapHttpStatusToError(
     return {
       title: "Email đã được sử dụng",
       reason: apiMessage ?? "Tài khoản với email này đã tồn tại.",
-      action: "Đăng nhập hoặc dùng email khác để đăng ký.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Đăng nhập hoặc dùng email khác để đăng ký.",
+      ),
     };
   }
 
   if (status === 409 && context === "curriculum.material.save") {
     return {
       title: "Hoạt động đã có tài liệu",
-      reason: "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
-      action: "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+      reason:
+        apiMessage ?? "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+      ),
     };
   }
 
   const fallback = CONTEXT_FALLBACKS[context];
   const statusReason = reasonForHttpStatus(status, context);
-  const useApi = API_MESSAGE_ALLOWED.has(context) && !!apiMessage;
 
   if (status >= 500) {
     return {
       title: "Máy chủ đang gặp sự cố",
-      reason: useApi ? apiMessage! : (statusReason ?? "Hệ thống tạm thời không phản hồi."),
-      action: "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
+      reason: apiMessage ?? statusReason ?? "Hệ thống tạm thời không phản hồi.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
+      ),
     };
   }
 
   if (status === 0 || status >= 400) {
+    const curatedAction =
+      status === 401
+        ? "Đăng nhập lại rồi thử tiếp."
+        : fallback.action;
+
     return {
       title: fallback.title,
-      reason: useApi
-        ? apiMessage!
-        : (statusReason ?? fallback.reason),
-      action:
-        status === 401
-          ? "Đăng nhập lại rồi thử tiếp."
-          : fallback.action,
+      reason: apiMessage ?? statusReason ?? fallback.reason,
+      action: resolveAction(status, apiMessage, curatedAction),
     };
   }
 
@@ -681,7 +937,8 @@ function fromNetworkError(_context: AppErrorContext): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
- * Raw backend messages are only used for curated auth contexts.
+ * Backend `error.message` is preferred as `reason` when present;
+ * `action` then uses status-based copy instead of context-specific tips.
  */
 export function resolveAppError(
   error: unknown,
@@ -691,16 +948,14 @@ export function resolveAppError(
     const mapped = mapHttpStatusToError(
       400,
       context,
-      API_MESSAGE_ALLOWED.has(context) ? error.message : null,
+      extractApiMessage(error),
     );
     if (mapped) return mapped;
     return CONTEXT_FALLBACKS[context];
   }
 
   if (error instanceof ApiRequestError) {
-    const apiMessage = API_MESSAGE_ALLOWED.has(context)
-      ? extractApiMessage(error)
-      : null;
+    const apiMessage = extractApiMessage(error);
     const mapped = mapHttpStatusToError(error.status, context, apiMessage);
     if (mapped) return mapped;
 

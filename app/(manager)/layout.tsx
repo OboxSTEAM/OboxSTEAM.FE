@@ -5,7 +5,7 @@ import { ManagerShell } from "@/components/manager/layout/manager-shell";
 export const metadata: Metadata = {
   title: {
     template: "%s — Manager | OboxSTEAM",
-    default: "Manager Dashboard — OboxSTEAM",
+    default: "Tổng quan — OboxSTEAM",
   },
   robots: { index: false, follow: false },
 };

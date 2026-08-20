@@ -3,7 +3,6 @@
 import * as React from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Search } from "lucide-react";
 
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
@@ -17,7 +16,6 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 const PATH_LABELS: Record<string, string> = {
   manager: "Tổng quan",
@@ -28,8 +26,9 @@ const PATH_LABELS: Record<string, string> = {
   activities: "Hoạt động",
   materials: "Tài liệu",
   "question-bank": "Ngân hàng câu hỏi",
-  milestones: "Milestone",
+  milestones: "Milestone nghiên cứu",
   classes: "Lớp học",
+  redelivery: "Học lại lớp",
   sessions: "Lịch học",
   attendance: "Điểm danh",
   assignments: "Bài tập",
@@ -41,7 +40,7 @@ const PATH_LABELS: Record<string, string> = {
 
 export function ManagerHeader({
   title: _title,
-  onOpenCommand,
+  onOpenCommand: _onOpenCommand,
 }: {
   title?: string;
   onOpenCommand?: () => void;
@@ -133,21 +132,8 @@ export function ManagerHeader({
         </Breadcrumb>
       </div>
 
-      {/* Right section: Command + notifications */}
+      {/* Right section: notifications + theme */}
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onOpenCommand}
-          className="size-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted"
-          aria-label="Tìm kiếm (⌘K)"
-          title="Tìm kiếm (⌘K)"
-        >
-          <Search className="size-5" />
-        </Button>
-        <kbd className="pointer-events-none hidden h-7 select-none items-center gap-1 rounded-md border border-border bg-background px-2 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
-          ⌘K
-        </kbd>
         <NotificationBell />
         <ThemeToggle className="text-muted-foreground hover:text-foreground hover:bg-muted" />
       </div>

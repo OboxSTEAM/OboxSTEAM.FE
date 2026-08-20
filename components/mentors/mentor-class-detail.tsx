@@ -1,20 +1,20 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { Suspense, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
-  ClipboardCheck,
   ClipboardPen,
   Images,
+  ListTree,
   Users,
 } from "lucide-react";
 
-import {
-  AttendanceStatusBadge,
-  ClassStatusBadge,
-} from "@/components/manager/classes/class-status-badge";
+import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
+import { ClassCalendarDrawer } from "@/components/mentors/class-calendar-drawer";
+import { MentorClassCurriculumPanel } from "@/components/mentors/mentor-class-curriculum-panel";
 import { MentorClassMediaPanel } from "@/components/mentors/mentor-class-media-panel";
 import { MentorClassGradingPanel } from "@/components/mentors/mentor-class-grading-panel";
 import { MentorClassSessionsPanel } from "@/components/mentors/mentor-class-sessions-panel";
@@ -24,40 +24,23 @@ import {
 } from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
-import {
-  THEME_SELECT_CONTENT,
-  THEME_SELECT_ITEM,
-  THEME_SELECT_TRIGGER,
-} from "@/lib/ui/select-styles";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getClassSessions,
-  getClassSessionWithStudents,
   getClassWithStudents,
   getPrograms,
-  updateSessionAttendance,
-  type ClassSessionStudent,
   type ClassStudentRoster,
-  type SessionAttendanceStatus,
 } from "@/lib/api";
 import {
-  ATTENDANCE_STATUS_LABELS,
   CLASS_SESSIONS_QUERY,
   CLASS_STUDENT_ENROLLMENT_STATUS_LABELS,
 } from "@/lib/classes/constants";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
-import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { cn } from "@/lib/utils";
+import { showAppErrorFromUnknown } from "@/lib/errors";
 
 function getInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "HV";
@@ -69,16 +52,77 @@ function getInitials(name: string | null | undefined): string {
     .join("");
 }
 
+const TAB_VALUES = [
+  "students",
+  "sessions",
+  "lich-hoc",
+  "curriculum",
+  "grading",
+  "media",
+] as const;
+
+type MentorClassTab = (typeof TAB_VALUES)[number];
+
+function normalizeTab(value: MentorClassTab): MentorClassTab {
+  return value === "lich-hoc" ? "sessions" : value;
+}
+
+function parseTab(value: string | null): MentorClassTab {
+  if (value && (TAB_VALUES as readonly string[]).includes(value)) {
+    return normalizeTab(value as MentorClassTab);
+  }
+  return "students";
+}
+
 type MentorClassDetailProps = {
   classId: string;
 };
 
-export function MentorClassDetail({ classId }: MentorClassDetailProps) {
-  const [tab, setTab] = useState("students");
-  const [selectedSessionId, setSelectedSessionId] = useState("");
-  const [updatingStudentId, setUpdatingStudentId] = useState<string | null>(
-    null,
-  );
+function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tab = parseTab(searchParams.get("tab"));
+  const deepActivityId = searchParams.get("activityId");
+  const deepSessionId = searchParams.get("sessionId");
+  const deepAssignmentId = searchParams.get("assignmentId");
+  const [calendarOpen, setCalendarOpen] = useState(false);
+
+  function replaceQuery(next: {
+    tab?: MentorClassTab;
+    activityId?: string | null;
+    sessionId?: string | null;
+    assignmentId?: string | null;
+  }) {
+    const params = new URLSearchParams(searchParams.toString());
+    const nextTab = next.tab ?? tab;
+    params.set("tab", nextTab);
+
+    const setOrDelete = (key: string, value: string | null | undefined) => {
+      if (value === undefined) return;
+      if (value) params.set(key, value);
+      else params.delete(key);
+    };
+
+    setOrDelete("activityId", next.activityId);
+    setOrDelete("sessionId", next.sessionId);
+    setOrDelete("assignmentId", next.assignmentId);
+
+    if (nextTab === "curriculum") {
+      // Keep activity / session / assignment deep-links for Chương trình.
+    } else if (nextTab === "grading") {
+      params.delete("activityId");
+      params.delete("sessionId");
+      // Keep assignmentId so Chấm bài can open the matching bài.
+    } else {
+      params.delete("activityId");
+      params.delete("sessionId");
+      params.delete("assignmentId");
+    }
+
+    router.replace(`/mentor/classes/${classId}?${params.toString()}`, {
+      scroll: false,
+    });
+  }
 
   const { data, isLoading } = useClientFetch({
     fetcher: () => getClassWithStudents(classId),
@@ -97,12 +141,8 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
     onError: () => undefined,
   });
 
-  const {
-    data: sessionsData,
-    isLoading: isSessionsLoading,
-  } = useClientFetch({
-    enabled:
-      tab === "sessions" || tab === "attendance" || tab === "media",
+  const { data: sessionsData, isLoading: isSessionsLoading } = useClientFetch({
+    enabled: tab === "sessions" || tab === "curriculum",
     fetcher: () =>
       getClassSessions(classId, {
         ...CLASS_SESSIONS_QUERY,
@@ -111,60 +151,13 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
     onError: (error) => showAppErrorFromUnknown(error, "classSessions.list"),
   });
 
-  const sessions = sessionsData?.data?.items ?? [];
-  const effectiveSessionId =
-    selectedSessionId ||
-    sessions.find((session) => session.requiresAttendance)?.id ||
-    sessions[0]?.id ||
-    "";
-
-  const {
-    data: attendanceData,
-    isLoading: isAttendanceLoading,
-    markLoading: markAttendanceLoading,
-    retry: retryAttendance,
-  } = useClientFetch({
-    enabled: tab === "attendance" && !!effectiveSessionId,
-    fetcher: () => getClassSessionWithStudents(classId, effectiveSessionId),
-    deps: [classId, effectiveSessionId, tab],
-    onError: (error) => showAppErrorFromUnknown(error, "attendance.list"),
-  });
-
   const classItem = data?.data ?? null;
   const roster = classItem?.students ?? [];
+  const sessions = sessionsData?.data?.items ?? [];
   const programName =
     programsData?.data?.items.find(
       (program) => program.id === classItem?.programId,
     )?.name ?? "—";
-  const attendanceStudents = attendanceData?.data?.students ?? [];
-  const selectedSession =
-    sessions.find((session) => session.id === effectiveSessionId) ?? null;
-
-  async function handleAttendanceChange(
-    student: ClassSessionStudent,
-    status: SessionAttendanceStatus,
-  ) {
-    if (!effectiveSessionId || student.attendanceStatus === status) return;
-
-    setUpdatingStudentId(student.studentId);
-    try {
-      await updateSessionAttendance(
-        classId,
-        effectiveSessionId,
-        student.studentId,
-        { status },
-      );
-      showAppSuccess({
-        title: "Đã cập nhật điểm danh",
-        description: `${student.studentName || student.studentCode || "Học viên"}: ${ATTENDANCE_STATUS_LABELS[status]}.`,
-      });
-      retryAttendance();
-    } catch (error) {
-      showAppErrorFromUnknown(error, "attendance.update");
-    } finally {
-      setUpdatingStudentId(null);
-    }
-  }
 
   const studentColumns: ColumnDef<ClassStudentRoster>[] = useMemo(
     () => [
@@ -214,86 +207,6 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
       },
     ],
     [],
-  );
-
-  const attendanceColumns: ColumnDef<ClassSessionStudent>[] = useMemo(
-    () => [
-      {
-        header: "Học viên",
-        render: (student) => (
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar className="size-9 border border-border">
-              <AvatarImage src={student.avatarUrl || undefined} alt="" />
-              <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
-                {getInitials(student.studentName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-foreground">
-                {student.studentName || "Chưa cập nhật tên"}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {student.studentCode || student.email || "—"}
-              </p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        header: "Trạng thái",
-        className: "w-36",
-        render: (student) => (
-          <AttendanceStatusBadge status={student.attendanceStatus} />
-        ),
-      },
-      {
-        header: "Check-in",
-        className: "w-40 text-xs text-muted-foreground",
-        render: (student) =>
-          formatApiDateTimeDisplay(student.checkedInAt) || "—",
-      },
-      {
-        header: "Cập nhật",
-        className: "min-w-48",
-        render: (student) => (
-          <Select
-            value={student.attendanceStatus}
-            onValueChange={(value) => {
-              if (!value) return;
-              void handleAttendanceChange(
-                student,
-                value as SessionAttendanceStatus,
-              );
-            }}
-            disabled={updatingStudentId === student.studentId}
-          >
-            <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
-              <span className="truncate">
-                {ATTENDANCE_STATUS_LABELS[student.attendanceStatus] ??
-                  "Chọn trạng thái"}
-              </span>
-            </SelectTrigger>
-            <SelectContent
-              align="start"
-              alignItemWithTrigger={false}
-              sideOffset={8}
-              className={THEME_SELECT_CONTENT}
-            >
-              {Object.entries(ATTENDANCE_STATUS_LABELS).map(([value, label]) => (
-                <SelectItem
-                  key={value}
-                  value={value}
-                  className={THEME_SELECT_ITEM}
-                >
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ),
-      },
-    ],
-    [updatingStudentId, effectiveSessionId],
   );
 
   if (isLoading && !classItem) {
@@ -348,6 +261,15 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
           <ArrowLeft className="size-4" />
           Danh sách
         </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setCalendarOpen(true)}
+          className="h-11 gap-2 rounded-xl border-border"
+        >
+          <CalendarDays className="size-4" />
+          Lịch lớp này
+        </Button>
       </ManagerPageHeader>
 
       <div className="space-y-6 px-6 pb-12">
@@ -385,7 +307,13 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
         <Tabs
           value={tab}
           onValueChange={(value) => {
-            if (value) setTab(value);
+            if (!value) return;
+            replaceQuery({
+              tab: parseTab(value),
+              activityId: null,
+              sessionId: null,
+              assignmentId: null,
+            });
           }}
           className="gap-4"
         >
@@ -408,11 +336,11 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
               Lịch học
             </TabsTrigger>
             <TabsTrigger
-              value="attendance"
+              value="curriculum"
               className="rounded-none px-4 py-2.5 data-active:text-primary"
             >
-              <ClipboardCheck className="size-4" />
-              Điểm danh
+              <ListTree className="size-4" />
+              Chương trình
             </TabsTrigger>
             <TabsTrigger
               value="grading"
@@ -463,99 +391,52 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
               sessions={sessions}
               isLoading={isSessionsLoading}
               onTakeAttendance={(session) => {
-                setSelectedSessionId(session.id);
-                setTab("attendance");
+                replaceQuery({
+                  tab: "curriculum",
+                  activityId: session.activityId,
+                  sessionId: session.id,
+                  assignmentId: null,
+                });
               }}
             />
           </TabsContent>
 
-          <TabsContent value="attendance" className="mt-0">
-            <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <div className="border-b border-border bg-muted/40 px-6 py-4">
-                <p className="mb-3 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Buổi học
-                </p>
-                <Select
-                  value={effectiveSessionId || null}
-                  onValueChange={(value) => {
-                    markAttendanceLoading();
-                    setSelectedSessionId(value ?? "");
-                  }}
-                  disabled={isSessionsLoading || sessions.length === 0}
-                >
-                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full max-w-md")}>
-                    <span className="truncate">
-                      {isSessionsLoading
-                        ? "Đang tải buổi học..."
-                        : selectedSession
-                          ? selectedSession.title || "Buổi học"
-                          : "Chọn buổi học"}
-                    </span>
-                  </SelectTrigger>
-                  <SelectContent
-                    align="start"
-                    alignItemWithTrigger={false}
-                    sideOffset={8}
-                    className={cn(
-                      THEME_SELECT_CONTENT,
-                      "w-auto! min-w-[min(100vw-2rem,22rem)] max-w-[min(100vw-2rem,28rem)]",
-                    )}
-                  >
-                    {sessions.map((session) => (
-                      <SelectItem
-                        key={session.id}
-                        value={session.id}
-                        className={cn(THEME_SELECT_ITEM, "cursor-pointer")}
-                      >
-                        {session.title || "Buổi học"}
-                        {!session.requiresAttendance ? (
-                          <span className="ml-2 text-[11px] text-muted-foreground">
-                            (không điểm danh)
-                          </span>
-                        ) : null}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {selectedSession ? (
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {formatApiDateTimeDisplay(selectedSession.startTime)}
-                    {" → "}
-                    {formatApiDateTimeDisplay(selectedSession.endTime)}
-                  </p>
-                ) : null}
-              </div>
-
-              <div className="overflow-x-auto p-6">
-                {!effectiveSessionId ? (
-                  <ManagerEmptyState
-                    title="Chọn buổi học để điểm danh"
-                    description="Lớp chưa có buổi học hoặc chưa chọn buổi. Quay lại tab Lịch học để xem danh sách."
-                    icon={ClipboardCheck}
-                  />
-                ) : (
-                  <ManagerDataTable
-                    columns={attendanceColumns}
-                    data={attendanceStudents}
-                    isLoading={isAttendanceLoading}
-                    emptyState={
-                      <ManagerEmptyState
-                        title="Chưa có học viên để điểm danh"
-                        description="Roster điểm danh sẽ hiển thị khi lớp có học viên active cho buổi học này."
-                        icon={ClipboardCheck}
-                      />
-                    }
-                  />
-                )}
-              </div>
-            </section>
+          <TabsContent value="curriculum" className="mt-0">
+            {classItem.programId ? (
+              <MentorClassCurriculumPanel
+                classId={classId}
+                programId={classItem.programId}
+                roster={roster}
+                sessions={sessions}
+                initialActivityId={deepActivityId}
+                initialSessionId={deepSessionId}
+                initialAssignmentId={deepAssignmentId}
+                onOpenGrading={(assignmentId) =>
+                  replaceQuery({
+                    tab: "grading",
+                    activityId: null,
+                    sessionId: null,
+                    assignmentId,
+                  })
+                }
+              />
+            ) : (
+              <ManagerEmptyState
+                title="Chưa tải được chương trình"
+                description="Lớp không có programId."
+                icon={ListTree}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="grading" className="mt-0">
-            {classItem?.programId ? (
+            {classItem.programId ? (
               <MentorClassGradingPanel
                 classId={classId}
                 programId={classItem.programId}
+                initialAssignmentId={
+                  tab === "grading" ? deepAssignmentId : null
+                }
               />
             ) : (
               <ManagerEmptyState
@@ -567,16 +448,33 @@ export function MentorClassDetail({ classId }: MentorClassDetailProps) {
           </TabsContent>
 
           <TabsContent value="media" className="mt-0">
-            <MentorClassMediaPanel
-              classId={classId}
-              sessions={sessions}
-              roster={roster}
-              isSessionsLoading={isSessionsLoading}
-            />
+            <MentorClassMediaPanel classId={classId} roster={roster} />
           </TabsContent>
         </Tabs>
       </div>
+
+      <ClassCalendarDrawer
+        open={calendarOpen}
+        onOpenChange={setCalendarOpen}
+        classId={classId}
+        className={classItem.name}
+        detailHref={`/mentor/classes/${classId}?tab=lich-hoc`}
+      />
     </div>
+  );
+}
+
+export function MentorClassDetail({ classId }: MentorClassDetailProps) {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex flex-col gap-6">
+          <ManagerPageHeader title="Chi tiết lớp" description="Đang tải..." />
+        </div>
+      }
+    >
+      <MentorClassDetailInner classId={classId} />
+    </Suspense>
   );
 }
 

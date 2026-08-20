@@ -158,7 +158,7 @@ export const classSessionFormSchema = z
     activityId: z.string().optional(),
     assignmentId: z.string().optional(),
     sessionKind: z
-      .enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"])
+      .enum(["Lesson", "FieldTrip", "AssignmentWindow"])
       .optional(),
     title: z
       .string()
@@ -168,7 +168,12 @@ export const classSessionFormSchema = z
     startTime: z.string().min(1, "Thời gian bắt đầu không được để trống."),
     endTime: z.string().min(1, "Thời gian kết thúc không được để trống."),
     location: z.string().max(500, "Địa điểm tối đa 500 ký tự.").optional(),
-    maxCapacity: z.string().optional(),
+    latitude: z.string().optional(),
+    longitude: z.string().optional(),
+    meetingUrl: z
+      .string()
+      .max(2048, "Link buổi học tối đa 2048 ký tự.")
+      .optional(),
     requiresAttendance: z.boolean().optional(),
     status: classSessionStatusSchema.optional(),
   })
@@ -181,15 +186,87 @@ export const classSessionFormSchema = z
       });
     }
 
-    if (value.maxCapacity?.trim()) {
-      const n = Number(value.maxCapacity);
-      if (!Number.isInteger(n) || n < 1) {
+    const latText = value.latitude?.trim();
+    const lngText = value.longitude?.trim();
+    const hasLat = Boolean(latText);
+    const hasLng = Boolean(lngText);
+    if (hasLat !== hasLng) {
+      ctx.addIssue({
+        code: "custom",
+        path: hasLat ? ["longitude"] : ["latitude"],
+        message: "Nhập cả vĩ độ và kinh độ, hoặc để trống cả hai.",
+      });
+      return;
+    }
+    if (hasLat && hasLng) {
+      const lat = Number(latText);
+      const lng = Number(lngText);
+      if (!Number.isFinite(lat) || lat < -90 || lat > 90) {
         ctx.addIssue({
           code: "custom",
-          path: ["maxCapacity"],
-          message: "Sĩ số tối đa phải là số nguyên lớn hơn 0.",
+          path: ["latitude"],
+          message: "Vĩ độ phải từ -90 đến 90.",
         });
       }
+      if (!Number.isFinite(lng) || lng < -180 || lng > 180) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["longitude"],
+          message: "Kinh độ phải từ -180 đến 180.",
+        });
+      }
+    }
+  });
+
+/** .NET `DayOfWeek` names for bulk session generation. */
+export const dotnetDayOfWeekSchema = z.enum([
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+]);
+
+/** `latitude`/`longitude` must be sent together when either is present. */
+export const sessionCoordinatesSchema = z
+  .object({
+    latitude: z.number().min(-90).max(90).nullable().optional(),
+    longitude: z.number().min(-180).max(180).nullable().optional(),
+  })
+  .superRefine((value, ctx) => {
+    const hasLat = value.latitude != null;
+    const hasLng = value.longitude != null;
+    if (hasLat !== hasLng) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Vui lòng nhập cả vĩ độ và kinh độ.",
+        path: hasLat ? ["longitude"] : ["latitude"],
+      });
+    }
+  });
+
+/** Body for `POST /api/classes/{classId}/sessions/generate`. */
+export const generateClassSessionsSchema = z
+  .object({
+    daysOfWeek: z
+      .array(dotnetDayOfWeekSchema)
+      .min(1, "Chọn ít nhất một ngày trong tuần."),
+    sessionStartTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}:\d{2}$/, "Giờ bắt đầu phải theo định dạng HH:mm:ss (UTC)."),
+    sessionEndTime: z
+      .string()
+      .regex(/^\d{2}:\d{2}:\d{2}$/, "Giờ kết thúc phải theo định dạng HH:mm:ss (UTC)."),
+  })
+  .superRefine((value, ctx) => {
+    if (value.sessionEndTime <= value.sessionStartTime) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Giờ kết thúc phải sau giờ bắt đầu.",
+        path: ["sessionEndTime"],
+      });
     }
   });
 
@@ -212,8 +289,15 @@ export const createClassSessionSchema = z.object({
     .max(500, "Địa điểm tối đa 500 ký tự.")
     .nullable()
     .optional(),
-  maxCapacity: z.number().int().nullable().optional(),
+  meetingUrl: z
+    .string()
+    .max(2048, "Link buổi học tối đa 2048 ký tự.")
+    .nullable()
+    .optional(),
   requiresAttendance: z.boolean().optional(),
+  requiresMentorCheckIn: z.boolean().optional(),
+  latitude: z.number().min(-90).max(90).nullable().optional(),
+  longitude: z.number().min(-180).max(180).nullable().optional(),
 });
 
 /** Body for `PUT /api/classes/{classId}/sessions/{id}`. */
@@ -303,3 +387,5 @@ export type SessionAttendanceStudentParams = z.infer<
   typeof sessionAttendanceStudentParamsSchema
 >;
 export type UpdateSessionAttendanceInput = z.infer<typeof updateSessionAttendanceSchema>;
+export type DotNetDayOfWeek = z.infer<typeof dotnetDayOfWeekSchema>;
+export type GenerateClassSessionsInput = z.infer<typeof generateClassSessionsSchema>;

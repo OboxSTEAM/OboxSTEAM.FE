@@ -30,7 +30,7 @@ export function ManagerEmptyState({
       <h3 className="font-heading mt-5 text-lg font-bold text-foreground">
         {title}
       </h3>
-      <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+      <p className="mx-auto mt-2 max-w-sm whitespace-normal text-center text-sm text-muted-foreground">
         {description}
       </p>
 

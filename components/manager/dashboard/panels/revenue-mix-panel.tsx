@@ -1,148 +1,100 @@
 "use client";
 
-import { Wallet } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight } from "lucide-react";
 
-import { Ring } from "@/components/charts/ring";
-import { RingCenter } from "@/components/charts/ring-center";
-import { RingChart } from "@/components/charts/ring-chart";
-import {
-  Legend,
-  LegendItem,
-  LegendLabel,
-  LegendMarker,
-  LegendValue,
-} from "@/components/charts/legend";
+import { Bar } from "@/components/charts/bar";
+import { BarChart } from "@/components/charts/bar-chart";
+import { BarXAxis } from "@/components/charts/bar-x-axis";
+import { ChartTooltip } from "@/components/charts/tooltip";
+import { Grid } from "@/components/charts/grid";
+import { YAxis } from "@/components/charts/y-axis";
 import type { RevenueOverview } from "@/lib/api";
 
-import {
-  CHART_SERIES_COLORS,
-  gatewayLabel,
-} from "../chart-data";
+import { gatewayLabel, STEAM_FILL } from "../chart-data";
 import {
   DashboardPanel,
   DashboardSectionTitle,
 } from "../dashboard-panel";
-import { formatCount, formatMoney, prefersReducedMotion } from "../dashboard-utils";
+import { formatMoney, prefersReducedMotion } from "../dashboard-utils";
 
 type RevenueMixPanelProps = {
   revenue: RevenueOverview;
   isLoading?: boolean;
+  revealSignature: string;
 };
 
-export function RevenueMixPanel({ revenue, isLoading }: RevenueMixPanelProps) {
+export function RevenueMixPanel({
+  revenue,
+  isLoading,
+  revealSignature,
+}: RevenueMixPanelProps) {
   const reducedMotion = prefersReducedMotion();
-  const gateways = revenue.revenueByGateway;
-  const total = Math.max(
-    revenue.revenueInRange,
-    gateways.reduce((sum, g) => sum + g.amount, 0),
-    1,
+  const total = revenue.revenueByGateway.reduce(
+    (sum, item) => sum + item.amount,
+    0,
   );
-
-  const ringData = gateways.map((g, index) => ({
-    label: gatewayLabel(g.gateway),
-    value: g.amount,
-    maxValue: total,
-    color: CHART_SERIES_COLORS[index % CHART_SERIES_COLORS.length],
+  const data = revenue.revenueByGateway.map((item) => ({
+    name: gatewayLabel(item.gateway),
+    value: total > 0 ? (item.amount / total) * 100 : 0,
+    amount: item.amount,
   }));
-
-  const legendItems = ringData.map((item) => ({
-    label: item.label,
-    value: item.value,
-    maxValue: item.maxValue,
-    color: item.color ?? CHART_SERIES_COLORS[0],
-  }));
-
-  if (isLoading) {
-    return (
-      <DashboardPanel>
-        <DashboardSectionTitle
-          title="Doanh thu kỳ"
-          description="Phân bổ theo cổng thanh toán"
-        />
-        <div className="mt-4 flex flex-col items-center gap-3">
-          <div className="size-36 animate-pulse rounded-full bg-border/70" />
-          <div className="h-20 w-full animate-pulse rounded-xl bg-border/70" />
-        </div>
-      </DashboardPanel>
-    );
-  }
+  const formatAxis = (value: number) => `${value.toFixed(0)}%`;
 
   return (
     <DashboardPanel>
-      <div className="mb-2 flex items-center gap-2">
-        <Wallet className="size-4 text-steam-technology" />
-        <DashboardSectionTitle
-          title="Doanh thu kỳ"
-          description="Phân bổ theo cổng thanh toán"
-        />
+      <DashboardSectionTitle
+        title="Tỷ trọng kênh thanh toán"
+        description="Phần trăm doanh thu theo cổng, không lặp số tiền KPI"
+      />
+
+      <div className="mt-3 h-[220px]">
+        {data.length === 0 && !isLoading ? (
+          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
+            Chưa có giao dịch trong kỳ
+          </div>
+        ) : (
+          <BarChart
+            data={data}
+            xDataKey="name"
+            status={isLoading ? "loading" : "ready"}
+            revealSignature={`${revealSignature}-gateway`}
+            animationDuration={reducedMotion ? 0 : 1100}
+            aspectRatio="auto"
+            className="h-full"
+            barGap={0.45}
+            margin={{ top: 8, right: 12, bottom: 28, left: 40 }}
+          >
+            <Grid horizontal hideHorizontalEdgeLines numTicksRows={3} />
+            <Bar dataKey="value" fill={STEAM_FILL.technology} lineCap="round" />
+            <YAxis formatValue={formatAxis} numTicks={3} />
+            <BarXAxis />
+            <ChartTooltip
+              content={({ point }) => (
+                <div className="rounded-lg bg-popover px-3 py-2 text-popover-foreground shadow-md">
+                  <p className="text-[11px] text-muted-foreground">
+                    {String(point.name ?? "—")}
+                  </p>
+                  <p className="mt-0.5 text-sm font-semibold tabular-nums">
+                    {Number(point.value ?? 0).toFixed(1)}%
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">
+                      {formatMoney(Number(point.amount ?? 0))}
+                    </span>
+                  </p>
+                </div>
+              )}
+            />
+          </BarChart>
+        )}
       </div>
 
-      <p className="font-heading text-xl font-black tabular-nums text-steam-technology">
-        {formatMoney(revenue.revenueInRange)}
-      </p>
-      <p className="mt-0.5 text-[11px] text-muted-foreground">
-        Tổng tích lũy {formatMoney(revenue.totalRevenue)} ·{" "}
-        {formatCount(revenue.invoiceCount)} hóa đơn
-      </p>
-
-      {ringData.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Chưa có dữ liệu cổng thanh toán
-        </p>
-      ) : (
-        <div className="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] sm:items-center">
-          <RingChart
-            data={ringData}
-            strokeWidth={11}
-            ringGap={5}
-            baseInnerRadius={40}
-            className="mx-auto max-w-[180px]"
-            enterTransition={
-              reducedMotion ? { duration: 0 } : undefined
-            }
-          >
-            {ringData.map((_, index) => (
-              <Ring key={index} index={index} />
-            ))}
-            <RingCenter
-              defaultLabel="Trong kỳ"
-              formatOptions={{
-                style: "currency",
-                currency: "VND",
-                maximumFractionDigits: 0,
-                notation: "compact",
-              }}
-            />
-          </RingChart>
-
-          <Legend items={legendItems} className="gap-0.5">
-            <LegendItem className="flex items-center gap-2 px-1 py-0.5">
-              <LegendMarker />
-              <LegendLabel className="min-w-0 flex-1 truncate text-xs font-medium" />
-              <LegendValue
-                className="text-xs tabular-nums"
-                formatValue={formatMoney}
-                showPercentage
-              />
-            </LegendItem>
-          </Legend>
-        </div>
-      )}
-
-      <dl className="mt-3 space-y-1.5 border-t border-border/70 pt-3 text-[11px]">
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">Giá trị đơn TB</dt>
-          <dd className="font-mono font-medium text-foreground">
-            {formatMoney(revenue.averageOrderValue)}
-          </dd>
-        </div>
-        <div className="flex justify-between gap-2">
-          <dt className="text-muted-foreground">Yêu cầu thanh toán đang chờ</dt>
-          <dd className="font-mono font-medium text-foreground">
-            {formatCount(revenue.pendingPaymentRequestsCount)}
-          </dd>
-        </div>
-      </dl>
+      <Link
+        href="/manager/programs"
+        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-steam-technology hover:underline"
+      >
+        Chương trình và thanh toán
+        <ArrowUpRight className="size-3.5" />
+      </Link>
     </DashboardPanel>
   );
 }

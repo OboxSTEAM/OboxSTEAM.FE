@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpen } from "lucide-react";
@@ -25,15 +25,25 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { CertificateCongratsBox } from "@/components/certificates/certificate-congrats-box";
+import { EnrollmentInvoicesSection } from "@/components/courses/enrollment-invoices-section";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { getMyCertificates } from "@/lib/api/certificates";
+import {
+  ensureProgramCertificate,
+  getMyCertificates,
+} from "@/lib/api/certificates";
 import type { CertificateListItem } from "@/lib/api/entities/certificate";
+import type { Invoice } from "@/lib/api/entities/invoice";
+import { getMyInvoices } from "@/lib/api/invoices";
 import {
   getMyProgramEnrollments,
   type MyProgramEnrollmentsQuery,
 } from "@/lib/api/program-enrollments";
 import { isParentRole, isStudentRole } from "@/lib/auth/roles";
+import {
+  shouldEnsureProgramCertificate,
+  toCertificateListItem,
+} from "@/lib/certificates/ensure";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import {
   DEFAULT_MY_ENROLLMENTS_QUERY,
@@ -97,7 +107,11 @@ export function MyCoursesPageContent() {
       onError: (error) => showAppErrorFromUnknown(error, "enrollments.list"),
     });
 
-  const { data: certificates } = useClientFetch({
+  const {
+    data: certificates,
+    isLoading: isCertificatesLoading,
+    mutate: mutateCertificates,
+  } = useClientFetch({
     enabled: canFetch,
     fetcher: async () => {
       try {
@@ -111,11 +125,108 @@ export function MyCoursesPageContent() {
     deps: [canFetch],
   });
 
+  const { data: invoices } = useClientFetch({
+    enabled: canFetch,
+    fetcher: async () => {
+      try {
+        const result = await getMyInvoices();
+        return result?.data ?? [];
+      } catch {
+        return [];
+      }
+    },
+    deps: [canFetch],
+  });
+
+  /** One ensure attempt per enrollment per page mount — avoids retry loops on BE 4xx. */
+  const ensuredEnrollmentIdsRef = useRef(new Set<string>());
+
+  useEffect(() => {
+    if (
+      !canFetch ||
+      isFetching ||
+      isCertificatesLoading ||
+      !data?.items.length
+    ) {
+      return;
+    }
+
+    const certificatesByProgram = new Map<string, CertificateListItem>();
+    for (const certificate of certificates ?? []) {
+      if (!certificatesByProgram.has(certificate.programId)) {
+        certificatesByProgram.set(certificate.programId, certificate);
+      }
+    }
+
+    const pending = data.items.filter((enrollment) => {
+      if (ensuredEnrollmentIdsRef.current.has(enrollment.id)) return false;
+      return shouldEnsureProgramCertificate(
+        enrollment,
+        certificatesByProgram.has(enrollment.programId),
+      );
+    });
+
+    if (pending.length === 0) return;
+
+    for (const enrollment of pending) {
+      ensuredEnrollmentIdsRef.current.add(enrollment.id);
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      const settled = await Promise.allSettled(
+        pending.map(async (enrollment) => {
+          const result = await ensureProgramCertificate(enrollment.id);
+          const detail = result?.data;
+          return detail ? toCertificateListItem(detail) : null;
+        }),
+      );
+
+      if (cancelled) return;
+
+      const issued = settled.flatMap((result) => {
+        if (result.status !== "fulfilled" || result.value == null) return [];
+        return [result.value];
+      });
+
+      if (issued.length === 0) return;
+
+      mutateCertificates((previous) => {
+        const next = [...(previous ?? [])];
+        for (const item of issued) {
+          if (!next.some((certificate) => certificate.programId === item.programId)) {
+            next.push(item);
+          }
+        }
+        return next;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    canFetch,
+    certificates,
+    data,
+    isCertificatesLoading,
+    isFetching,
+    mutateCertificates,
+  ]);
+
   const certificatesByProgramId = new Map<string, CertificateListItem>();
   for (const certificate of certificates ?? []) {
     if (!certificatesByProgramId.has(certificate.programId)) {
       certificatesByProgramId.set(certificate.programId, certificate);
     }
+  }
+
+  const invoicesByProgramId = new Map<string, Invoice[]>();
+  for (const invoice of invoices ?? []) {
+    const list = invoicesByProgramId.get(invoice.programId) ?? [];
+    list.push(invoice);
+    invoicesByProgramId.set(invoice.programId, list);
   }
 
   const handleSortChange = useCallback(
@@ -278,8 +389,12 @@ export function MyCoursesPageContent() {
               const certificate = certificatesByProgramId.get(
                 enrollment.programId,
               );
+              const programInvoices =
+                invoicesByProgramId.get(enrollment.programId) ?? [];
+              const hasExtras =
+                certificate != null || programInvoices.length > 0;
 
-              if (!certificate) {
+              if (!hasExtras) {
                 return (
                   <EnrollmentCard
                     key={enrollment.id}
@@ -297,7 +412,10 @@ export function MyCoursesPageContent() {
                     enrollment={enrollment}
                     className="h-auto rounded-none border-0 shadow-none"
                   />
-                  <CertificateCongratsBox certificate={certificate} />
+                  <EnrollmentInvoicesSection invoices={programInvoices} />
+                  {certificate ? (
+                    <CertificateCongratsBox certificate={certificate} />
+                  ) : null}
                 </div>
               );
             })}

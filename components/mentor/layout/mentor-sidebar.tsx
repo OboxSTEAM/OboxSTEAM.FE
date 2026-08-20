@@ -4,9 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
+  CalendarDays,
   ChevronsUpDown,
   ClipboardList,
   LogOut,
+  RotateCcw,
   User,
   Users,
 } from "lucide-react";
@@ -48,9 +50,19 @@ const NAV_ITEMS = [
     icon: Users,
   },
   {
-    title: "Đăng ký lớp",
+    title: "Lịch dạy",
+    url: "/mentor/schedule",
+    icon: CalendarDays,
+  },
+  {
+    title: "Đơn đăng ký lớp",
     url: "/mentor/board",
     icon: ClipboardList,
+  },
+  {
+    title: "Yêu cầu làm lại",
+    url: "/mentor/recovery",
+    icon: RotateCcw,
   },
 ] as const;
 
@@ -61,6 +73,13 @@ function getInitials(name?: string | null): string {
     return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
+}
+
+function isNavActive(
+  item: (typeof NAV_ITEMS)[number],
+  pathname: string,
+): boolean {
+  return pathname === item.url || pathname.startsWith(`${item.url}/`);
 }
 
 export function MentorSidebar() {
@@ -112,8 +131,7 @@ export function MentorSidebar() {
           ) : null}
           <SidebarMenu className="space-y-1">
             {NAV_ITEMS.map((item) => {
-              const isActive =
-                pathname === item.url || pathname.startsWith(`${item.url}/`);
+              const isActive = isNavActive(item, pathname);
 
               return (
                 <SidebarMenuItem key={item.title}>
@@ -218,7 +236,7 @@ export function MentorSidebar() {
                     className="cursor-pointer gap-2 rounded-lg p-2 text-foreground focus:bg-muted focus:text-foreground not-data-[variant=destructive]:focus:**:!text-foreground"
                   >
                     <User className="size-4 !text-foreground" />
-                    Hồ sơ cá nhân
+                    Hồ sơ
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border/60" />

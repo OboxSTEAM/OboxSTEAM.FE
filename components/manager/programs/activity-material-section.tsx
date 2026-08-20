@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from "react";
 import {
   FileText,
   FileType,
@@ -8,20 +8,19 @@ import {
   Image as ImageIcon,
   Link2,
   Upload,
-  Trash,
   Pencil,
   Check,
   X,
   ExternalLink,
+  Trash2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
+  deleteMaterial,
   uploadMaterial,
   updateMaterial,
-  deleteMaterial,
   type ActivityMaterial,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -142,8 +141,10 @@ export function ActivityMaterialSection({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
 
-  // Delete confirm
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  useEffect(() => {
+    setMaterial(initialMaterial);
+    setFileUrl(initialMaterial?.fileUrl ?? null);
+  }, [initialMaterial]);
 
   function resetUploadDraft() {
     setFile(null);
@@ -232,11 +233,15 @@ export function ActivityMaterialSection({
       await deleteMaterial(material.id);
       setMaterial(null);
       setFileUrl(null);
-      showAppSuccess({ title: "Đã xóa", description: "Tài liệu đã được gỡ khỏi hoạt động." });
+      setEditingTitle(false);
+      resetUploadDraft();
+      showAppSuccess({
+        title: "Xóa thành công",
+        description: "Đã gỡ bỏ tài liệu học tập khỏi hoạt động.",
+      });
       onChanged();
     } catch (err) {
       showAppErrorFromUnknown(err, "curriculum.material.delete");
-      throw err;
     } finally {
       setBusy(false);
     }
@@ -345,12 +350,12 @@ export function ActivityMaterialSection({
               <button
                 type="button"
                 title="Xóa tài liệu"
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => void handleDelete()}
                 disabled={busy}
-                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10"
+                className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:border-destructive/30 hover:bg-destructive/10"
                 style={{ borderColor: W.border, color: W.primary }}
               >
-                <Trash className="size-3.5" />
+                <Trash2 className="size-3.5" />
               </button>
             </div>
           )}
@@ -421,17 +426,6 @@ export function ActivityMaterialSection({
           </div>
         </div>
       )}
-
-      <ConfirmDialog
-        isOpen={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        onConfirm={handleDelete}
-        title="Xác nhận xóa tài liệu"
-        description={`Bạn có chắc muốn xóa "${material?.title ?? ""}"? Hành động này không thể hoàn tác.`}
-        confirmLabel="Xóa bỏ"
-        cancelLabel="Hủy"
-        variant="destructive"
-      />
     </div>
   );
 }

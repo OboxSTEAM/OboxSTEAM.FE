@@ -4,15 +4,19 @@ import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 import {
   addMediaTagSchema,
-  mediaClassSessionParamSchema,
+  classGalleryClassIdParamSchema,
+  classGalleryQuerySchema,
   mediaIdParamSchema,
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
+  myGalleryQuerySchema,
   updateMediaTagVerificationSchema,
   type AddMediaTagInput,
+  type ClassGalleryQuery,
   type MediaListQuery,
   type MediaUploadQuery,
+  type MyGalleryQuery,
   type UpdateMediaTagVerificationInput,
 } from "@/lib/validations/media";
 
@@ -20,26 +24,29 @@ import {
   addMediaTagResponseSchema,
   deleteMediaResponseSchema,
   deleteMediaTagResponseSchema,
+  getClassGalleryResponseSchema,
   getMediaByIdResponseSchema,
-  getMediaByClassSessionResponseSchema,
   getMediaListResponseSchema,
   getMediaProgressResponseSchema,
+  getMyGalleryResponseSchema,
   processMediaTagsResponseSchema,
   updateMediaTagVerificationResponseSchema,
   uploadMediaResponseSchema,
   type AddMediaTagResult,
   type DeleteMediaResult,
   type DeleteMediaTagResult,
-  type GetMediaByClassSessionResult,
+  type GetClassGalleryResult,
   type GetMediaByIdResult,
   type GetMediaListResult,
   type GetMediaProgressResult,
+  type GetMyGalleryResult,
   type ProcessMediaTagsResult,
   type UpdateMediaTagVerificationResult,
   type UploadMediaResult,
 } from "./schemas";
 
 export type {
+  ClassGalleryMedia,
   FaceSegment,
   LabelTimelineEntry,
   MediaAsset,
@@ -55,14 +62,16 @@ export type {
   DeleteMediaResult,
   DeleteMediaTagResponse,
   DeleteMediaTagResult,
-  GetMediaByClassSessionResponse,
-  GetMediaByClassSessionResult,
+  GetClassGalleryResponse,
+  GetClassGalleryResult,
   GetMediaByIdResponse,
   GetMediaByIdResult,
   GetMediaListResponse,
   GetMediaListResult,
   GetMediaProgressResponse,
   GetMediaProgressResult,
+  GetMyGalleryResponse,
+  GetMyGalleryResult,
   ProcessMediaTagsResponse,
   ProcessMediaTagsResult,
   UpdateMediaTagVerificationResponse,
@@ -73,11 +82,13 @@ export type {
 
 export type {
   AddMediaTagInput,
-  MediaClassSessionParam,
+  ClassGalleryClassIdParam,
+  ClassGalleryQuery,
   MediaIdParam,
   MediaListQuery,
   MediaTagParams,
   MediaUploadQuery,
+  MyGalleryQuery,
   UpdateMediaTagVerificationInput,
 } from "@/lib/validations/media";
 
@@ -115,7 +126,9 @@ function isUninitializedMediaStorageError(error: unknown): boolean {
   return false;
 }
 
-function emptyMediaListResult(): GetMediaListResult {
+function emptyMediaListResult(
+  pageSize = 50,
+): GetMediaListResult {
   return {
     code: "OK",
     message: "Chưa có media.",
@@ -123,7 +136,7 @@ function emptyMediaListResult(): GetMediaListResult {
       items: [],
       currentPage: 1,
       totalPages: 0,
-      pageSize: 50,
+      pageSize,
       totalCount: 0,
       hasPrevious: false,
       hasNext: false,
@@ -131,11 +144,19 @@ function emptyMediaListResult(): GetMediaListResult {
   };
 }
 
-function emptyMediaSessionListResult(): GetMediaByClassSessionResult {
+function emptyClassGalleryResult(pageSize = 20): GetClassGalleryResult {
   return {
     code: "OK",
     message: "Chưa có media.",
-    data: [],
+    data: {
+      items: [],
+      currentPage: 1,
+      totalPages: 0,
+      pageSize,
+      totalCount: 0,
+      hasPrevious: false,
+      hasNext: false,
+    },
   };
 }
 
@@ -185,6 +206,76 @@ export async function getMediaList(
   }
 }
 
+/**
+ * `GET /api/media/class/{classId}/gallery` — student class gallery (no face tags).
+ * Requires Active enrollment in the class. Includes all video statuses.
+ */
+export async function getClassGallery(
+  classId: string,
+  params?: ClassGalleryQuery,
+): Promise<GetClassGalleryResult> {
+  const { classId: parsedClassId } = classGalleryClassIdParamSchema.parse({
+    classId,
+  });
+  const pageSize = params?.pageSize ?? 20;
+
+  try {
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}/class/${parsedClassId}/gallery${buildQueryString(
+        {
+          page: 1,
+          pageSize,
+          isDescending: true,
+          ...params,
+        },
+        classGalleryQuerySchema,
+      )}`,
+      getClassGalleryResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return emptyClassGalleryResult(pageSize);
+    }
+    throw error;
+  }
+}
+
+/**
+ * `GET /api/media/my-gallery` — paginated media from every Active-enrolled class.
+ * Filter with programId and/or classId. Same sort/pagination as class gallery.
+ */
+export async function getMyGallery(
+  params?: MyGalleryQuery,
+): Promise<GetMyGalleryResult> {
+  const pageSize = params?.pageSize ?? 20;
+
+  try {
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}/my-gallery${buildQueryString(
+        {
+          page: 1,
+          pageSize,
+          isDescending: true,
+          ...params,
+        },
+        myGalleryQuerySchema,
+      )}`,
+      getMyGalleryResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return emptyClassGalleryResult(pageSize);
+    }
+    throw error;
+  }
+}
+
 /** `GET /api/media/{mediaId}` — one asset including face tags. */
 export async function getMediaById(mediaId: string): Promise<GetMediaByIdResult> {
   const { mediaId: parsedId } = mediaIdParamSchema.parse({ mediaId });
@@ -211,30 +302,6 @@ export async function getMediaProgress(
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
-}
-
-/** `GET /api/media/class-session/{classSessionId}` — flat list for one session. */
-export async function getMediaByClassSession(
-  classSessionId: string,
-): Promise<GetMediaByClassSessionResult> {
-  try {
-    const { classSessionId: parsedId } = mediaClassSessionParamSchema.parse({
-      classSessionId,
-    });
-
-    const response = await apiFetchParsed(
-      `${MEDIA_BASE}/class-session/${parsedId}`,
-      getMediaByClassSessionResponseSchema,
-      { method: "GET" },
-    );
-    assertApiSuccess(response);
-    return requireApiValue(response.value);
-  } catch (error) {
-    if (isUninitializedMediaStorageError(error)) {
-      return emptyMediaSessionListResult();
-    }
-    throw error;
-  }
 }
 
 /** `POST /api/media/upload` — multipart image/video for a class. */

@@ -10,7 +10,6 @@ import {
   FileText,
   Calendar,
   MapPin,
-  Users,
   ChevronRight,
   CheckCircle2,
   Circle,
@@ -49,9 +48,9 @@ const W = {
 // ─── Activity type → display prefix ──────────────────────────────────────
 const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced:    "Đọc/Xem",
-  LiveOnline:   "Buổi học",
-  Offline:      "Thực hành",
-  OfflineClass: "Thực hành",
+  LiveOnline:   "Online",
+  Offline:      "Offline",
+  OfflineClass: "Offline",
 };
 
 // ─── Module type badge styles ─────────────────────────────────────────────
@@ -509,12 +508,6 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
                                                         activity.startTime,
                                                         activity.endTime,
                                                       )}
-                                                    </span>
-                                                  )}
-                                                  {activity.maxCapacity && (
-                                                    <span className="flex items-center gap-0.5">
-                                                      <Users className="size-2.5" />
-                                                      {activity.maxCapacity}
                                                     </span>
                                                   )}
                                                 </span>

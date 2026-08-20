@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { CalendarClock } from "lucide-react";
+import {
+  CalendarClock,
+  Link2,
+  MapPin,
+  Video,
+} from "lucide-react";
 
 import {
   LIGHT_SELECT_CONTENT,
@@ -12,6 +17,11 @@ import {
 } from "@/components/programs/program-select-styles";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Dialog,
   DialogClose,
@@ -51,6 +61,10 @@ import {
 import { cn } from "@/lib/utils";
 
 import { DateTimePicker } from "./date-time-picker";
+import {
+  parseSessionCoordinateFields,
+  SessionCoordinatesPicker,
+} from "@/components/maps/session-coordinates-picker";
 
 const INPUT_CLASS =
   "h-10 rounded-lg border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
@@ -83,7 +97,9 @@ export type ClassSessionFormSubmitPayload = {
   startTime: string;
   endTime: string;
   location?: string | null;
-  maxCapacity?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  meetingUrl?: string | null;
   requiresAttendance?: boolean;
   status?: ClassSessionFormValues["status"];
 };
@@ -133,8 +149,11 @@ function toDefaultValues(
     startTime: session ? fromApiDateTimeToLocalInput(session.startTime) : slotStart,
     endTime: session ? fromApiDateTimeToLocalInput(session.endTime) : slotEnd,
     location: session?.location ?? "",
-    maxCapacity:
-      session?.maxCapacity != null ? String(session.maxCapacity) : "",
+    latitude:
+      session?.latitude != null ? String(session.latitude) : "",
+    longitude:
+      session?.longitude != null ? String(session.longitude) : "",
+    meetingUrl: session?.meetingUrl ?? "",
     requiresAttendance: session?.requiresAttendance ?? true,
     status: session?.status,
   };
@@ -169,8 +188,24 @@ export function SessionFormDialog({
   }, [open, reset, session, defaultStart]);
 
   const selectedModuleId = watch("moduleId");
+  const sessionKind = watch("sessionKind") ?? "Lesson";
+  /** Soft preference only — both venue modes stay available. */
+  const prefersPlace = sessionKind === "FieldTrip";
+  const [extraVenueOpen, setExtraVenueOpen] = useState(false);
   const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
   const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const hasMeetingUrl = Boolean(getValues("meetingUrl")?.trim());
+    const hasPlace = Boolean(
+      getValues("location")?.trim() ||
+        getValues("latitude")?.trim() ||
+        getValues("longitude")?.trim(),
+    );
+    // Soft preference only: open the secondary venue when it already has data.
+    setExtraVenueOpen(prefersPlace ? hasMeetingUrl : hasPlace);
+  }, [open, sessionKind, prefersPlace, getValues]);
 
   // Load activities for the chosen module the same way the curriculum builder
   // does (module → course → activities are hydrated per course), so the picker
@@ -247,9 +282,8 @@ export function SessionFormDialog({
       startTime,
       endTime,
       location: values.location?.trim() || null,
-      maxCapacity: values.maxCapacity?.trim()
-        ? Number(values.maxCapacity)
-        : null,
+      ...parseSessionCoordinateFields(values.latitude, values.longitude),
+      meetingUrl: values.meetingUrl?.trim() || null,
       requiresAttendance: values.requiresAttendance,
       status: values.status,
     });
@@ -293,6 +327,108 @@ export function SessionFormDialog({
                   className={INPUT_CLASS}
                 />
               </FormField>
+
+              <FormField
+                id="sessionKind"
+                label="Loại buổi"
+                error={errors.sessionKind?.message}
+              >
+                <Controller
+                  control={control}
+                  name="sessionKind"
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || "Lesson"}
+                      onValueChange={(value) =>
+                        field.onChange(value ?? "Lesson")
+                      }
+                    >
+                      <SelectTrigger
+                        id="sessionKind"
+                        className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
+                      >
+                        <span className="truncate">
+                          {CLASS_SESSION_KIND_LABELS[
+                            (field.value ||
+                              "Lesson") as keyof typeof CLASS_SESSION_KIND_LABELS
+                          ] ?? "Chọn loại"}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent
+                        align="start"
+                        alignItemWithTrigger={false}
+                        sideOffset={8}
+                        className={LIGHT_SELECT_CONTENT}
+                      >
+                        {Object.entries(CLASS_SESSION_KIND_LABELS).map(
+                          ([value, label]) => (
+                            <SelectItem
+                              key={value}
+                              value={value}
+                              className={LIGHT_SELECT_ITEM}
+                            >
+                              {label}
+                            </SelectItem>
+                          ),
+                        )}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </FormField>
+
+              {session ? (
+                <FormField
+                  id="status"
+                  label="Trạng thái"
+                  error={errors.status?.message}
+                >
+                  <Controller
+                    control={control}
+                    name="status"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value || "Scheduled"}
+                        onValueChange={(value) =>
+                          field.onChange(value ?? "Scheduled")
+                        }
+                      >
+                        <SelectTrigger
+                          id="status"
+                          className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
+                        >
+                          <span className="truncate">
+                            {CLASS_SESSION_STATUS_LABELS[
+                              (field.value ||
+                                "Scheduled") as keyof typeof CLASS_SESSION_STATUS_LABELS
+                            ] ?? "Trạng thái"}
+                          </span>
+                        </SelectTrigger>
+                        <SelectContent
+                          align="start"
+                          alignItemWithTrigger={false}
+                          sideOffset={8}
+                          className={LIGHT_SELECT_CONTENT}
+                        >
+                          {Object.entries(CLASS_SESSION_STATUS_LABELS).map(
+                            ([value, label]) => (
+                              <SelectItem
+                                key={value}
+                                value={value}
+                                className={LIGHT_SELECT_ITEM}
+                              >
+                                {label}
+                              </SelectItem>
+                            ),
+                          )}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                </FormField>
+              ) : (
+                <div className="hidden sm:block" aria-hidden />
+              )}
 
               <FormField
                 id="moduleId"
@@ -420,106 +556,6 @@ export function SessionFormDialog({
                 </p>
               </FormField>
 
-              <FormField
-                id="sessionKind"
-                label="Loại buổi"
-                error={errors.sessionKind?.message}
-              >
-                <Controller
-                  control={control}
-                  name="sessionKind"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || "Lesson"}
-                      onValueChange={(value) =>
-                        field.onChange(value ?? "Lesson")
-                      }
-                    >
-                      <SelectTrigger
-                        id="sessionKind"
-                        className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
-                      >
-                        <span className="truncate">
-                          {CLASS_SESSION_KIND_LABELS[
-                            (field.value ||
-                              "Lesson") as keyof typeof CLASS_SESSION_KIND_LABELS
-                          ] ?? "Chọn loại"}
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent
-                        align="start"
-                        alignItemWithTrigger={false}
-                        sideOffset={8}
-                        className={LIGHT_SELECT_CONTENT}
-                      >
-                        {Object.entries(CLASS_SESSION_KIND_LABELS).map(
-                          ([value, label]) => (
-                            <SelectItem
-                              key={value}
-                              value={value}
-                              className={LIGHT_SELECT_ITEM}
-                            >
-                              {label}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-
-              {session ? (
-                <FormField
-                  id="status"
-                  label="Trạng thái"
-                  error={errors.status?.message}
-                >
-                  <Controller
-                    control={control}
-                    name="status"
-                    render={({ field }) => (
-                      <Select
-                        value={field.value || "Scheduled"}
-                        onValueChange={(value) =>
-                          field.onChange(value ?? "Scheduled")
-                        }
-                      >
-                        <SelectTrigger
-                          id="status"
-                          className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
-                        >
-                          <span className="truncate">
-                            {CLASS_SESSION_STATUS_LABELS[
-                              (field.value ||
-                                "Scheduled") as keyof typeof CLASS_SESSION_STATUS_LABELS
-                            ] ?? "Trạng thái"}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent
-                          align="start"
-                          alignItemWithTrigger={false}
-                          sideOffset={8}
-                          className={LIGHT_SELECT_CONTENT}
-                        >
-                          {Object.entries(CLASS_SESSION_STATUS_LABELS).map(
-                            ([value, label]) => (
-                              <SelectItem
-                                key={value}
-                                value={value}
-                                className={LIGHT_SELECT_ITEM}
-                              >
-                                {label}
-                              </SelectItem>
-                            ),
-                          )}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  />
-                </FormField>
-              ) : null}
-
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="startTime">
                   Thời gian
@@ -575,34 +611,113 @@ export function SessionFormDialog({
                 ) : null}
               </div>
 
-              <FormField
-                id="location"
-                label="Địa điểm / link"
-                error={errors.location?.message}
-                className="sm:col-span-2"
-              >
-                <Input
-                  id="location"
-                  placeholder="Phòng lab A hoặc https://meet.google.com/..."
-                  {...register("location")}
-                  className={INPUT_CLASS}
-                />
-              </FormField>
+              <div className="sm:col-span-2 space-y-3">
+                <div className="flex items-center gap-2">
+                  {prefersPlace ? (
+                    <MapPin className="size-4 text-primary" aria-hidden />
+                  ) : (
+                    <Video className="size-4 text-primary" aria-hidden />
+                  )}
+                  <p className="font-heading text-sm font-bold text-foreground">
+                    {prefersPlace ? "Địa điểm" : "Link buổi học"}
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {prefersPlace
+                    ? "Field Trip ưu tiên tìm địa chỉ / tọa độ. Bạn vẫn có thể thêm link họp nếu cần."
+                    : "Lesson ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
+                </p>
 
-              <FormField
-                id="maxCapacity"
-                label="Sĩ số tối đa"
-                error={errors.maxCapacity?.message}
-              >
-                <Input
-                  id="maxCapacity"
-                  type="number"
-                  min={1}
-                  placeholder="Theo sĩ số lớp"
-                  {...register("maxCapacity")}
-                  className={cn(INPUT_CLASS, "font-mono")}
-                />
-              </FormField>
+                {prefersPlace ? (
+                  <SessionCoordinatesPicker
+                    latitude={watch("latitude") ?? ""}
+                    longitude={watch("longitude") ?? ""}
+                    location={watch("location") ?? ""}
+                    onLatitudeChange={(value) =>
+                      setValue("latitude", value, { shouldValidate: true })
+                    }
+                    onLongitudeChange={(value) =>
+                      setValue("longitude", value, { shouldValidate: true })
+                    }
+                    onLocationChange={(value) =>
+                      setValue("location", value, { shouldValidate: true })
+                    }
+                    latitudeError={errors.latitude?.message}
+                    longitudeError={errors.longitude?.message}
+                  />
+                ) : (
+                  <FormField
+                    id="meetingUrl"
+                    label="Meeting URL"
+                    error={errors.meetingUrl?.message}
+                  >
+                    <Input
+                      id="meetingUrl"
+                      placeholder="https://meet.google.com/..."
+                      {...register("meetingUrl")}
+                      className={INPUT_CLASS}
+                    />
+                  </FormField>
+                )}
+
+                <Collapsible
+                  open={extraVenueOpen}
+                  onOpenChange={setExtraVenueOpen}
+                >
+                  <CollapsibleTrigger
+                    type="button"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >                    {prefersPlace ? (
+                      <>
+                        <Link2 className="size-3.5" />
+                        {extraVenueOpen
+                          ? "Ẩn link họp"
+                          : "Thêm link họp (tuỳ chọn)"}
+                      </>
+                    ) : (
+                      <>
+                        <MapPin className="size-3.5" />
+                        {extraVenueOpen
+                          ? "Ẩn địa điểm"
+                          : "Thêm địa điểm (tuỳ chọn)"}
+                      </>
+                    )}
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-3 space-y-3">
+                    {prefersPlace ? (
+                      <FormField
+                        id="meetingUrlOptional"
+                        label="Meeting URL"
+                        error={errors.meetingUrl?.message}
+                      >
+                        <Input
+                          id="meetingUrlOptional"
+                          placeholder="https://meet.google.com/..."
+                          {...register("meetingUrl")}
+                          className={INPUT_CLASS}
+                        />
+                      </FormField>
+                    ) : (
+                      <SessionCoordinatesPicker
+                        latitude={watch("latitude") ?? ""}
+                        longitude={watch("longitude") ?? ""}
+                        location={watch("location") ?? ""}
+                        onLatitudeChange={(value) =>
+                          setValue("latitude", value, { shouldValidate: true })
+                        }
+                        onLongitudeChange={(value) =>
+                          setValue("longitude", value, { shouldValidate: true })
+                        }
+                        onLocationChange={(value) =>
+                          setValue("location", value, { shouldValidate: true })
+                        }
+                        latitudeError={errors.latitude?.message}
+                        longitudeError={errors.longitude?.message}
+                      />
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
 
               <div className="flex items-end pb-2">
                 <Controller

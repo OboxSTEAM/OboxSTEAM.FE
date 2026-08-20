@@ -20,8 +20,11 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const PATH_LABELS: Record<string, string> = {
   mentor: "Mentor",
   classes: "Lớp của tôi",
-  board: "Đăng ký lớp",
-  requests: "Đăng ký lớp",
+  schedule: "Lịch dạy",
+  board: "Đơn đăng ký lớp",
+  requests: "Đơn đăng ký lớp",
+  recovery: "Yêu cầu làm lại",
+  profile: "Hồ sơ",
 };
 
 const UUID_RE =

@@ -1,24 +1,25 @@
 "use client";
 
 import { Suspense, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
-  ClipboardCheck,
-  Pencil,
-  Plus,
-  Trash2,
   CalendarDays,
   LayoutGrid,
   List,
+  Pencil,
+  Plus,
+  Sparkles,
+  Trash2,
 } from "lucide-react";
 
 import {
   SessionFormDialog,
   type ClassSessionFormSubmitPayload,
 } from "@/components/manager/classes/session-form-dialog";
+import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
+import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   ManagerDataTable,
@@ -55,7 +56,6 @@ import {
   CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -78,6 +78,7 @@ function SessionManagerInner() {
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
+  const [generateOpen, setGenerateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
     id: string;
@@ -304,11 +305,11 @@ function SessionManagerInner() {
 
   const columns: ColumnDef<ClassSession>[] = [
     {
-      header: "Buổi học",
+      header: "Session",
       render: (session) => (
         <div className="min-w-0">
           <p className="truncate font-semibold text-foreground">
-            {session.title || "Chưa đặt tiêu đề"}
+            {session.title || "Untitled"}
           </p>
           <p className="text-xs text-muted-foreground">
             {CLASS_SESSION_KIND_LABELS[session.sessionKind]}
@@ -318,12 +319,13 @@ function SessionManagerInner() {
     },
     {
       header: "Thời gian",
-      className: "min-w-44 text-xs text-muted-foreground",
+      className: "min-w-36",
       render: (session) => (
-        <div className="space-y-0.5">
-          <p>{formatApiDateTimeDisplay(session.startTime) || "—"}</p>
-          <p>→ {formatApiDateTimeDisplay(session.endTime) || "—"}</p>
-        </div>
+        <ClassDateRange
+          startDate={session.startTime}
+          endDate={session.endTime}
+          layout="stack"
+        />
       ),
     },
     {
@@ -340,24 +342,9 @@ function SessionManagerInner() {
     },
     {
       header: "Thao tác",
-      className: "w-36 text-right",
+      className: "w-24 text-right",
       render: (session) => (
         <div className="flex justify-end gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            nativeButton={false}
-            render={
-              <Link
-                href={`/manager/attendance?classId=${classId}&sessionId=${session.id}`}
-              />
-            }
-            aria-label={`Điểm danh ${session.title}`}
-            className="size-9 rounded-lg text-muted-foreground hover:bg-[#7CB342]/10 hover:text-[#3d5c22] dark:hover:text-[#b8e086]"
-          >
-            <ClipboardCheck className="size-4" />
-          </Button>
           <Button
             type="button"
             variant="ghost"
@@ -390,7 +377,7 @@ function SessionManagerInner() {
     <div className="flex flex-col gap-6">
       <ManagerPageHeader
         title="Lịch học"
-        description="Quản lý buổi học theo từng lớp cohort."
+        description="Lịch tổng — xem và quản lý buổi học trên nhiều lớp. Chọn lớp bên dưới để bắt đầu."
       >
         <div className="flex items-center rounded-xl border border-border bg-card p-1">
           <button
@@ -422,6 +409,21 @@ function SessionManagerInner() {
             Danh sách
           </button>
         </div>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setGenerateOpen(true)}
+          disabled={!classId || totalCount > 0}
+          className="h-11 gap-2 rounded-xl px-4 font-semibold disabled:opacity-50"
+          title={
+            totalCount > 0
+              ? "Chỉ dùng khi lớp chưa có buổi học nào"
+              : undefined
+          }
+        >
+          <Sparkles className="size-4" />
+          Tạo lịch tự động
+        </Button>
         <Button
           type="button"
           onClick={openCreate}
@@ -508,7 +510,7 @@ function SessionManagerInner() {
                       setPage(1);
                     },
                     options: [
-                      { value: "all", label: "Mọi loại" },
+                      { value: "all", label: "All types" },
                       ...Object.entries(CLASS_SESSION_KIND_LABELS).map(
                         ([value, label]) => ({ value, label }),
                       ),
@@ -556,6 +558,7 @@ function SessionManagerInner() {
                 ) : (
                   <SessionCalendar
                     sessions={filteredSessions}
+                    mode="edit"
                     focusSession={pendingFocus}
                     onSelectSession={(session) => {
                       setCreateDefaultStart(null);
@@ -631,6 +634,17 @@ function SessionManagerInner() {
         description={`Buổi “${deleteTarget?.title || ""}” sẽ bị xóa mềm khỏi lịch lớp.`}
         confirmLabel="Xóa buổi học"
         variant="destructive"
+      />
+
+      <GenerateSessionsDialog
+        open={generateOpen}
+        onOpenChange={setGenerateOpen}
+        classId={classId}
+        className={selectedClass?.name}
+        onGenerated={() => {
+          markLoading();
+          retry();
+        }}
       />
     </div>
   );

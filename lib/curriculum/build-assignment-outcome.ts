@@ -26,8 +26,8 @@ export function buildQuizResultOutcome(
   const studentLabel = result.studentName?.trim() || null;
 
   const summary = hideQuestionStats
-    ? `Lần ${result.attemptNumber}`
-    : `Lần ${result.attemptNumber} · ${result.correctCount}/${result.totalQuestions} câu đúng · ${wrongCount} câu sai`;
+    ? undefined
+    : `${result.correctCount}/${result.totalQuestions} câu đúng · ${wrongCount} câu sai`;
 
   return {
     passed: result.passed,
@@ -60,7 +60,7 @@ export function buildRetrospectiveGradedOutcome(
 
   return {
     passed,
-    summary: attempt.attemptNumber > 1 ? `Lần ${attempt.attemptNumber}` : undefined,
+    summary: undefined,
     assignedGrade: attempt.assignedGrade ?? 0,
     maxPoints: attempt.maxPoints,
     passScore: attempt.passScore,
@@ -105,7 +105,7 @@ export function buildResearchGradedOutcome(
 
   return {
     passed,
-    summary: submission.attemptNumber > 1 ? `Lần ${submission.attemptNumber}` : undefined,
+    summary: undefined,
     assignedGrade: submission.assignedGrade ?? 0,
     maxPoints: submission.maxPoints,
     passScore: submission.passScore,

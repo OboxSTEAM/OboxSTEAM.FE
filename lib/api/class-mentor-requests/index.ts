@@ -106,7 +106,7 @@ export async function getMyClassMentorRequests(
   return requireApiValue(response.value);
 }
 
-/** Mentor: board of Draft/Open classes without a mentor. */
+/** Mentor: board of unassigned classes (API may include Draft; UI keeps Open only). */
 export async function getMentorBoard(
   params?: MentorBoardQuery,
 ): Promise<GetMentorBoardResult> {

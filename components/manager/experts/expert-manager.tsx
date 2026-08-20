@@ -24,10 +24,14 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   createExpert,
   deleteExpert,
+  getExpertById,
   getExperts,
   getPrograms,
+  persistExpertCredentialDrafts,
+  syncExpertAfterMutation,
   updateExpert,
   type Expert,
+  type ExpertCredentialDrafts,
   type ExpertListQuery,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -127,28 +131,50 @@ export function ExpertManager() {
   }
 
   function openEdit(expert: Expert) {
-    setEditingExpert(expert);
-    setFormOpen(true);
+    void (async () => {
+      try {
+        const result = await getExpertById(expert.id);
+        setEditingExpert(result?.data ?? expert);
+        setFormOpen(true);
+      } catch (error) {
+        showAppErrorFromUnknown(error, "experts.update");
+      }
+    })();
   }
 
-  async function handleSubmit(values: ExpertFormValues) {
+  async function handleSubmit(
+    values: ExpertFormValues,
+    drafts: ExpertCredentialDrafts,
+  ) {
     setIsSubmitting(true);
     try {
       if (editingExpert) {
         await updateExpert(editingExpert.id, values);
+        const synced = await syncExpertAfterMutation(
+          editingExpert.id,
+          editingExpert,
+        );
+        if (synced) setEditingExpert(synced);
         showAppSuccess({
           title: "Đã cập nhật chuyên gia",
           description: `Hồ sơ của ${values.fullName} đã được lưu.`,
         });
+        setFormOpen(false);
+        setEditingExpert(null);
       } else {
-        await createExpert(values);
+        const created = await createExpert(values);
+        const expert = created?.data;
+        if (!expert) {
+          throw new Error("Không nhận được hồ sơ chuyên gia vừa tạo.");
+        }
+        await persistExpertCredentialDrafts(expert.id, drafts);
+        const synced = await syncExpertAfterMutation(expert.id, expert);
+        setEditingExpert(synced ?? expert);
         showAppSuccess({
           title: "Đã thêm chuyên gia",
-          description: `${values.fullName} đã được thêm vào danh sách.`,
+          description: `${values.fullName} đã được tạo. Bạn có thể tiếp tục chỉnh bằng cấp và bài báo.`,
         });
       }
-      setFormOpen(false);
-      setEditingExpert(null);
       retry();
     } catch (error) {
       showAppErrorFromUnknown(
@@ -260,7 +286,7 @@ export function ExpertManager() {
     },
     {
       header: "Thao tác",
-      className: "w-36 text-right",
+      className: "w-28 text-right",
       render: (expert) => (
         <div className="flex justify-end gap-1">
           <Button
@@ -385,6 +411,7 @@ export function ExpertManager() {
         isProgramsLoading={isProgramsLoading}
         isSubmitting={isSubmitting}
         onSubmit={handleSubmit}
+        onExpertChange={setEditingExpert}
       />
 
       <ConfirmDialog

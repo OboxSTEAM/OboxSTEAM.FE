@@ -1,0 +1,1249 @@
+"use client";
+
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Check,
+  Clapperboard,
+  Loader2,
+  Play,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Scissors,
+  Square,
+  Trash2,
+} from "lucide-react";
+import { useReducedMotion } from "motion/react";
+
+import { HighlightSegmentDialog } from "@/components/portfolio/editor/highlight/highlight-segment-dialog";
+import { HighlightSourceClipsStrip } from "@/components/portfolio/editor/highlight/highlight-source-clips-strip";
+import { HighlightTrimDialog } from "@/components/portfolio/editor/highlight/highlight-trim-dialog";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
+import { Textarea } from "@/components/ui/textarea";
+import { MediaLightbox } from "@/components/media/media-lightbox";
+import { VideoThumb } from "@/components/media/video-thumb";
+import { useClientFetch } from "@/hooks/use-client-fetch";
+import { useHighlightItemProgressPolling } from "@/hooks/use-highlight-stack-polling";
+import {
+  addHighlightSegment,
+  cancelHighlightVideoItem,
+  createHighlightStack,
+  createPortfolioSection,
+  deleteHighlightStack,
+  deleteHighlightVideoItem,
+  getHighlightSourceMedia,
+  getHighlightStackById,
+  getHighlightStacks,
+  getMyGallery,
+  getMyPortfolio,
+  importHighlightReelMedia,
+  regenerateHighlightStack,
+  retryHighlightVideoItem,
+  trimHighlightVideo,
+  type HighlightSourceMedia,
+  type HighlightVideoItem,
+  type HighlightVideoProgress,
+  type HighlightVideoStack,
+  type PortfolioSection,
+} from "@/lib/api";
+import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  formatHighlightTime,
+  msToSeconds,
+  toHighlightApiTime,
+} from "@/lib/portfolio/highlight-time";
+import { cn } from "@/lib/utils";
+
+/** Flow A — show / create at most 3 topics (stacks) per class. */
+const MAX_VISIBLE_STACKS = 3;
+
+const GENERATION_KIND_LABELS: Record<
+  HighlightVideoItem["generationKind"],
+  string
+> = {
+  Initial: "Bản gốc",
+  Trim: "Đã cắt",
+  SegmentAdd: "Đã thêm đoạn",
+};
+
+const STATUS_LABELS: Record<HighlightVideoItem["status"], string> = {
+  None: "Chưa bắt đầu",
+  Processing: "Đang tạo",
+  Completed: "Xong",
+  Failed: "Lỗi",
+  Cancelled: "Đã hủy",
+};
+
+type HighlightWorkspaceProps = {
+  onClose?: () => void;
+  /** After attach: updated Gallery section (mediaAssets include the reel). */
+  onAttachedToGallery?: (section: PortfolioSection) => void;
+};
+
+type ClassOption = {
+  classId: string;
+  label: string;
+};
+
+type EditorDialog = "none" | "trim" | "segment";
+
+function sortByRequestedAtDesc(items: HighlightVideoItem[]): HighlightVideoItem[] {
+  return [...items].sort((a, b) => {
+    const aTime = a.requestedAt ?? "";
+    const bTime = b.requestedAt ?? "";
+    return bTime.localeCompare(aTime);
+  });
+}
+
+function latestItem(stack: HighlightVideoStack | null): HighlightVideoItem | null {
+  const items = stack?.items ?? [];
+  if (items.length === 0) return null;
+  return sortByRequestedAtDesc(items)[0] ?? null;
+}
+
+function latestCompleted(stack: HighlightVideoStack | null): HighlightVideoItem | null {
+  const items = (stack?.items ?? []).filter(
+    (item) => item.status === "Completed" && Boolean(item.videoUrl),
+  );
+  if (items.length === 0) return null;
+  return sortByRequestedAtDesc(items)[0] ?? null;
+}
+
+function findProcessingItem(
+  stack: HighlightVideoStack | null,
+): HighlightVideoItem | null {
+  return (stack?.items ?? []).find((item) => item.status === "Processing") ?? null;
+}
+
+function findRetryableItem(
+  stack: HighlightVideoStack | null,
+): HighlightVideoItem | null {
+  const candidates = (stack?.items ?? []).filter(
+    (item) =>
+      item.generationKind === "Initial" &&
+      (item.status === "Failed" || item.status === "Cancelled"),
+  );
+  return sortByRequestedAtDesc(candidates)[0] ?? null;
+}
+
+function statusTone(status: HighlightVideoItem["status"]): string {
+  switch (status) {
+    case "Completed":
+      return "bg-[#7CB342]/15 text-[#3d6b14]";
+    case "Processing":
+      return "bg-[#4FC3F7]/15 text-[#0f7cad]";
+    case "Failed":
+      return "bg-destructive/10 text-destructive";
+    case "Cancelled":
+      return "bg-muted text-muted-foreground";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+}
+
+function ZoneLabel({
+  children,
+  meta,
+}: {
+  children: ReactNode;
+  meta?: ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <p className="min-w-0 flex-1 text-[11px] font-semibold tracking-wide text-foreground">
+        {children}
+      </p>
+      {meta ? (
+        <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground">
+          {meta}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function ProgressPanel({
+  progress,
+  statusLabel,
+  reduceMotion,
+  onCancel,
+  isCancelling,
+}: {
+  progress: HighlightVideoProgress | null;
+  statusLabel?: string | null;
+  reduceMotion: boolean;
+  onCancel: () => void;
+  isCancelling: boolean;
+}) {
+  const phase = progress?.phase ?? "";
+  const isEncoding =
+    /encod/i.test(phase) ||
+    (progress?.percentComplete != null && progress.percentComplete > 0);
+  const percent =
+    progress?.percentComplete == null
+      ? null
+      : Math.min(100, Math.max(0, progress.percentComplete));
+
+  return (
+    <div className="rounded-xl border border-[#4FC3F7]/35 bg-[#4FC3F7]/8 px-3 py-3">
+      <div className="flex items-start gap-3">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#4FC3F7]/20 text-[#0f7cad]">
+          <Loader2
+            className={cn("size-4", !reduceMotion && "animate-spin")}
+            strokeWidth={2.25}
+          />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">
+            {isEncoding ? "Đang xuất video…" : "Đang dựng highlight…"}
+          </p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            {progress?.statusLabel ??
+              statusLabel ??
+              (isEncoding
+                ? "Sắp xong — đang ghép thành file video."
+                : "AI đang chọn đoạn theo điểm mạnh của bạn.")}
+          </p>
+          {isEncoding && percent != null ? (
+            <Progress value={percent} className="mt-2 gap-1">
+              <ProgressLabel className="text-[11px]">Tiến độ</ProgressLabel>
+              <ProgressValue className="text-[11px]" />
+            </Progress>
+          ) : (
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#4FC3F7]/25">
+              <div
+                className={cn(
+                  "h-full w-2/5 rounded-full bg-[#4FC3F7]",
+                  !reduceMotion && "animate-pulse",
+                )}
+              />
+            </div>
+          )}
+        </div>
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 shrink-0 rounded-lg"
+          disabled={isCancelling}
+          onClick={onCancel}
+        >
+          {isCancelling ? (
+            <Loader2 className="size-3.5 animate-spin" />
+          ) : (
+            <Square className="size-3.5" />
+          )}
+          Hủy
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function TerminalIssuePanel({
+  item,
+  onRetry,
+  onDelete,
+  canRetry,
+  isMutating,
+}: {
+  item: HighlightVideoItem;
+  onRetry: () => void;
+  onDelete: () => void;
+  canRetry: boolean;
+  isMutating: boolean;
+}) {
+  const isFailed = item.status === "Failed";
+  return (
+    <div
+      className={cn(
+        "rounded-xl border px-3 py-3",
+        isFailed
+          ? "border-destructive/30 bg-destructive/5"
+          : "border-border bg-muted/40",
+      )}
+    >
+      <p className="text-sm font-semibold text-foreground">
+        {isFailed ? "Không tạo được video" : "Đã hủy lần tạo này"}
+      </p>
+      {item.failureReason ? (
+        <p className="mt-1 text-[11px] text-muted-foreground">{item.failureReason}</p>
+      ) : (
+        <p className="mt-1 text-[11px] text-muted-foreground">
+          {isFailed
+            ? "Thử lại bản gốc, hoặc xóa lần chỉnh này để tạo tiếp."
+            : "Lần chỉnh đã hủy vẫn chiếm chỗ — thử lại hoặc xóa để tiếp tục."}
+        </p>
+      )}
+      <div className="mt-2 flex flex-wrap gap-2">
+        {canRetry ? (
+          <Button
+            type="button"
+            size="sm"
+            className="h-8 rounded-lg"
+            disabled={isMutating}
+            onClick={onRetry}
+          >
+            <RotateCcw className="size-3.5" />
+            Thử lại
+          </Button>
+        ) : null}
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          className="h-8 rounded-lg"
+          disabled={isMutating}
+          onClick={onDelete}
+        >
+          <Trash2 className="size-3.5" />
+          Xóa lần chỉnh
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export function HighlightWorkspace({
+  onClose,
+  onAttachedToGallery,
+}: HighlightWorkspaceProps) {
+  const reduceMotion = useReducedMotion() ?? false;
+  const [classId, setClassId] = useState("");
+  const [strengthDescription, setStrengthDescription] = useState("");
+  const [activeStackId, setActiveStackId] = useState<string | null>(null);
+  const [pollItemId, setPollItemId] = useState<string | null>(null);
+  const [pollNonce, setPollNonce] = useState(0);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isMutating, setIsMutating] = useState(false);
+  const [isCancelling, setIsCancelling] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [editorDialog, setEditorDialog] = useState<EditorDialog>("none");
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  /** When set, trim/segment/sync use this completed item instead of the latest. */
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+
+  const { data: classSeed, isLoading: isLoadingClasses } = useClientFetch({
+    enabled: true,
+    fetcher: async () => {
+      const result = await getMyGallery({
+        page: 1,
+        pageSize: 100,
+        isDescending: true,
+      });
+      return result?.data?.items ?? [];
+    },
+    deps: [],
+    onError: (error) => showAppErrorFromUnknown(error, "media.list"),
+  });
+
+  const classOptions = useMemo(() => {
+    const map = new Map<string, ClassOption>();
+    for (const item of classSeed ?? []) {
+      if (!map.has(item.classId)) {
+        map.set(item.classId, {
+          classId: item.classId,
+          label:
+            [item.className, item.programName].filter(Boolean).join(" · ") ||
+            "Lớp học",
+        });
+      }
+    }
+    return [...map.values()];
+  }, [classSeed]);
+
+  useEffect(() => {
+    if (!classId && classOptions[0]) {
+      setClassId(classOptions[0].classId);
+    }
+  }, [classId, classOptions]);
+
+  const {
+    data: stacks,
+    isLoading: isLoadingStacks,
+    retry: refreshStacks,
+    mutate: mutateStacks,
+  } = useClientFetch({
+    enabled: Boolean(classId),
+    fetcher: async () => {
+      if (!classId) return [];
+      const result = await getHighlightStacks({ classId });
+      return (result?.data ?? []).slice(0, MAX_VISIBLE_STACKS);
+    },
+    deps: [classId],
+    onError: (error) => showAppErrorFromUnknown(error, "highlight.load"),
+  });
+
+  const {
+    progress,
+    stack: polledStack,
+    isPolling,
+    setStack: setPolledStack,
+    setProgress,
+  } = useHighlightItemProgressPolling({
+    stackId: activeStackId,
+    itemId: pollItemId,
+    pollNonce,
+    enabled: Boolean(activeStackId) && Boolean(pollItemId),
+    onTerminal: ({ progress: terminal, stack }) => {
+      mutateStacks((current) =>
+        (current ?? []).map((item) => (item.id === stack.id ? stack : item)),
+      );
+      setPolledStack(stack);
+      setPollItemId(null);
+      if (terminal.status === "Completed") {
+        showAppSuccess({ title: "Highlight đã sẵn sàng" });
+      } else if (terminal.status === "Failed") {
+        showAppErrorFromUnknown(
+          new Error(terminal.failureReason ?? "Highlight xử lý thất bại."),
+          "highlight.create",
+        );
+      }
+    },
+    onTimedOut: () => {
+      setPollItemId(null);
+      showAppErrorFromUnknown(
+        new Error("Hết thời gian chờ highlight."),
+        "highlight.progress",
+      );
+    },
+  });
+
+  const activeStack =
+    polledStack ??
+    (stacks ?? []).find((stack) => stack.id === activeStackId) ??
+    null;
+
+  const latestCompletedItem = latestCompleted(activeStack);
+  const selectedCompletedItem = selectedItemId
+    ? (activeStack?.items ?? []).find(
+        (item) =>
+          item.id === selectedItemId &&
+          item.status === "Completed" &&
+          Boolean(item.videoUrl),
+      ) ?? null
+    : null;
+  /** Working video for preview / cắt / thêm đoạn / đồng bộ. */
+  const completedItem = selectedCompletedItem ?? latestCompletedItem;
+  const currentItem = latestItem(activeStack);
+  const processingItem = findProcessingItem(activeStack);
+  const retryableItem = findRetryableItem(activeStack);
+  const durationSeconds = msToSeconds(completedItem?.durationMs);
+
+  const showProcessing =
+    isPolling ||
+    activeStack?.hasProcessingItem ||
+    processingItem != null ||
+    currentItem?.status === "Processing";
+
+  const terminalIssueItem =
+    !showProcessing &&
+    (retryableItem ??
+      ((currentItem?.status === "Failed" || currentItem?.status === "Cancelled")
+        ? currentItem
+        : null));
+
+  const canCreateStack = (stacks ?? []).length < MAX_VISIBLE_STACKS;
+  const canCreateItem = Boolean(activeStack?.canCreateItem) && !showProcessing;
+
+  const { data: sourceMedia, isLoading: isLoadingSourceMedia } = useClientFetch({
+    enabled:
+      Boolean(activeStackId) &&
+      editorDialog === "segment" &&
+      Boolean(completedItem),
+    fetcher: async () => {
+      if (!activeStackId) return [] as HighlightSourceMedia[];
+      const result = await getHighlightSourceMedia(activeStackId);
+      return result?.data ?? [];
+    },
+    deps: [activeStackId, editorDialog, completedItem?.id],
+    onError: (error) => showAppErrorFromUnknown(error, "highlight.load"),
+  });
+
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (
+        event.key === "Escape" &&
+        editorDialog === "none" &&
+        !isPolling &&
+        !isCreating
+      ) {
+        onClose?.();
+      }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose, isPolling, isCreating, editorDialog]);
+
+  /** Resume progress poll when selecting a stack that is already Processing. */
+  useEffect(() => {
+    if (!activeStack || pollItemId || isPolling) return;
+    const processing = findProcessingItem(activeStack);
+    if (processing) {
+      setPollItemId(processing.id);
+    }
+  }, [activeStack, pollItemId, isPolling]);
+
+  const selectClass = (nextClassId: string) => {
+    if (nextClassId === classId) return;
+    setClassId(nextClassId);
+    setActiveStackId(null);
+    setPolledStack(null);
+    setPollItemId(null);
+    setSelectedItemId(null);
+    setEditorDialog("none");
+  };
+
+  const beginPollForStack = (stack: HighlightVideoStack) => {
+    setActiveStackId(stack.id);
+    setPolledStack(stack);
+    setSelectedItemId(null);
+    const processing = findProcessingItem(stack) ?? latestItem(stack);
+    if (processing && processing.status === "Processing") {
+      setPollItemId(processing.id);
+      setPollNonce((value) => value + 1);
+    } else {
+      setPollItemId(null);
+    }
+  };
+
+  const beginPollForItem = (
+    stackId: string,
+    item: HighlightVideoItem,
+    stackHint?: HighlightVideoStack | null,
+  ) => {
+    setActiveStackId(stackId);
+    if (stackHint) setPolledStack(stackHint);
+    setSelectedItemId(null);
+    setPollItemId(item.id);
+    setPollNonce((value) => value + 1);
+    setProgress(null);
+  };
+
+  const handleCreate = async () => {
+    if (!classId || !canCreateStack) return;
+    setIsCreating(true);
+    try {
+      const result = await createHighlightStack({
+        classId,
+        strengthDescription: strengthDescription.trim() || null,
+      });
+      const stack = result?.data;
+      if (!stack) throw new Error("Không nhận được chủ đề highlight.");
+      mutateStacks((current) =>
+        [stack, ...(current ?? [])].slice(0, MAX_VISIBLE_STACKS),
+      );
+      beginPollForStack(stack);
+      setEditorDialog("none");
+      showAppSuccess({ title: "Đã bắt đầu tạo highlight" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.create");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleRegenerate = async () => {
+    if (!activeStackId || !canCreateItem) return;
+    setIsMutating(true);
+    try {
+      const result = await regenerateHighlightStack(activeStackId);
+      const stack = result?.data;
+      if (!stack) throw new Error("Không nhận được chủ đề sau khi làm lại.");
+      mutateStacks((current) =>
+        (current ?? []).map((item) => (item.id === stack.id ? stack : item)),
+      );
+      beginPollForStack(stack);
+      showAppSuccess({ title: "Đã bắt đầu regenerate" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.regenerate");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleRetry = async () => {
+    if (!activeStackId || !retryableItem) return;
+    setIsMutating(true);
+    try {
+      const result = await retryHighlightVideoItem(
+        activeStackId,
+        retryableItem.id,
+      );
+      const item = result?.data;
+      if (!item) throw new Error("Không nhận được item sau retry.");
+      beginPollForItem(activeStackId, item, activeStack);
+      showAppSuccess({ title: "Đã gửi retry" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.retry");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleCancel = async () => {
+    if (!activeStackId || !pollItemId) return;
+    setIsCancelling(true);
+    try {
+      await cancelHighlightVideoItem(activeStackId, pollItemId);
+      setPollItemId(null);
+      setProgress(null);
+      const stackResult = await getHighlightStackById(activeStackId);
+      const stack = stackResult?.data;
+      if (stack) {
+        setPolledStack(stack);
+        mutateStacks((current) =>
+          (current ?? []).map((item) => (item.id === stack.id ? stack : item)),
+        );
+      } else {
+        refreshStacks();
+      }
+      showAppSuccess({
+        title: "Đã hủy",
+        description: "Lần chỉnh đã hủy vẫn chiếm chỗ — thử lại hoặc xóa để tiếp tục.",
+      });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.cancel");
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
+  const handleTrim = async (payload: {
+    startSeconds: number;
+    endSeconds: number;
+    description: string;
+  }) => {
+    if (!activeStackId || !completedItem || !canCreateItem) return;
+    if (payload.endSeconds <= payload.startSeconds) {
+      showAppErrorFromUnknown(
+        new Error("Khoảng cắt không hợp lệ."),
+        "highlight.trim",
+      );
+      return;
+    }
+    setIsMutating(true);
+    try {
+      const result = await trimHighlightVideo(activeStackId, completedItem.id, {
+        trimDescription: payload.description || null,
+        excludeRanges: [
+          {
+            start: toHighlightApiTime(payload.startSeconds),
+            end: toHighlightApiTime(payload.endSeconds),
+          },
+        ],
+      });
+      const item = result?.data;
+      if (!item) throw new Error("Không nhận được item sau trim.");
+      beginPollForItem(activeStackId, item, activeStack);
+      setEditorDialog("none");
+      showAppSuccess({ title: "Đã gửi yêu cầu cắt video" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.trim");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleAddSegment = async (payload: {
+    mediaId: string;
+    startSeconds: number;
+    endSeconds: number;
+    description: string;
+  }) => {
+    if (!activeStackId || !completedItem || !canCreateItem) return;
+    if (payload.endSeconds <= payload.startSeconds) {
+      showAppErrorFromUnknown(
+        new Error("Khoảng đoạn không hợp lệ."),
+        "highlight.segment",
+      );
+      return;
+    }
+    setIsMutating(true);
+    try {
+      const result = await addHighlightSegment(
+        activeStackId,
+        completedItem.id,
+        {
+          mediaId: payload.mediaId,
+          start: toHighlightApiTime(payload.startSeconds),
+          end: toHighlightApiTime(payload.endSeconds),
+          description: payload.description || null,
+        },
+      );
+      const item = result?.data;
+      if (!item) throw new Error("Không nhận được item sau add-segment.");
+      beginPollForItem(activeStackId, item, activeStack);
+      setEditorDialog("none");
+      showAppSuccess({ title: "Đã gửi yêu cầu thêm đoạn" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.segment");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleDeleteItem = async (item: HighlightVideoItem) => {
+    if (!activeStackId || item.status === "Processing") return;
+    setIsMutating(true);
+    try {
+      await deleteHighlightVideoItem(activeStackId, item.id);
+      setPollItemId(null);
+      setPolledStack(null);
+      if (selectedItemId === item.id) setSelectedItemId(null);
+      refreshStacks();
+      showAppSuccess({ title: "Đã xóa lần chỉnh" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.delete");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleDeleteStack = async (stackId: string, stack: HighlightVideoStack) => {
+    if (stack.hasProcessingItem) return;
+    setIsMutating(true);
+    try {
+      await deleteHighlightStack(stackId);
+      if (activeStackId === stackId) {
+        setActiveStackId(null);
+        setPolledStack(null);
+        setPollItemId(null);
+        setSelectedItemId(null);
+      }
+      refreshStacks();
+      showAppSuccess({ title: "Đã xóa chủ đề" });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.delete");
+    } finally {
+      setIsMutating(false);
+    }
+  };
+
+  const handleSyncPortfolio = async () => {
+    if (!completedItem?.videoUrl) return;
+    setIsSyncing(true);
+    try {
+      const portfolioResult = await getMyPortfolio();
+      const portfolio = portfolioResult.data;
+      if (!portfolio) throw new Error("Không tải được portfolio.");
+
+      let gallerySection =
+        (portfolio.sections ?? []).find((section) => section.kind === "Gallery") ??
+        null;
+
+      if (!gallerySection) {
+        const created = await createPortfolioSection({
+          kind: "Gallery",
+          title: null,
+          isVisible: true,
+        });
+        gallerySection = created.data;
+      }
+
+      const caption = activeStack?.strengthDescription?.trim() || null;
+
+      const result = await importHighlightReelMedia({
+        highlightVideoItemId: completedItem.id,
+        portfolioSectionId: gallerySection.id,
+        caption,
+      });
+
+      const section = result.data.section ?? gallerySection;
+      onAttachedToGallery?.(section);
+      showAppSuccess({
+        title: "Đã thêm vào Gallery",
+        description: result.message || "Mở tab Gallery để xem video highlight.",
+      });
+      onClose?.();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "highlight.attach");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const stackCount = (stacks ?? []).length;
+  const activeTitle =
+    activeStack?.strengthDescription?.trim() || "Chủ đề đang chọn";
+  const workingKindLabel = completedItem
+    ? GENERATION_KIND_LABELS[completedItem.generationKind]
+    : null;
+  const historyItems = sortByRequestedAtDesc(activeStack?.items ?? []);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm leading-relaxed text-muted-foreground">
+        Chọn lớp, tạo chủ đề theo điểm mạnh, xem video rồi cắt hoặc thêm đoạn
+        trước khi đưa vào Gallery.
+      </p>
+
+      {/* Class picker */}
+      <div className="space-y-1.5">
+        <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+          Lớp học
+        </p>
+        {isLoadingClasses ? (
+          <p className="text-xs text-muted-foreground">Đang tải lớp…</p>
+        ) : classOptions.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Chưa có lớp trong gallery của bạn.
+          </p>
+        ) : (
+          <ul className="space-y-1.5" role="listbox" aria-label="Chọn lớp học">
+            {classOptions.map((option) => {
+              const selected = option.classId === classId;
+              return (
+                <li key={option.classId} role="option" aria-selected={selected}>
+                  <button
+                    type="button"
+                    onClick={() => selectClass(option.classId)}
+                    className={cn(
+                      "flex w-full items-start gap-2.5 rounded-xl border px-3 py-2.5 text-left transition",
+                      "outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
+                      selected
+                        ? "border-[#4FC3F7] bg-[#4FC3F7]/12 shadow-[0_0_0_1px_rgba(79,195,247,0.35)]"
+                        : "border-border bg-card hover:border-[#4FC3F7]/45 hover:bg-muted/40",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border",
+                        selected
+                          ? "border-[#0f7cad] bg-[#0f7cad] text-white"
+                          : "border-[#C9C9C2] bg-background",
+                      )}
+                      aria-hidden
+                    >
+                      {selected ? (
+                        <Check className="size-2.5" strokeWidth={3} />
+                      ) : null}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "block text-sm leading-snug",
+                          selected
+                            ? "font-semibold text-[#0f7cad]"
+                            : "font-medium text-foreground",
+                        )}
+                      >
+                        {option.label}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      {/* Create topic */}
+      <div className="space-y-2 rounded-xl border border-border bg-card p-3">
+        <div className="space-y-1">
+          <Label htmlFor="strength-desc" className="text-[11px]">
+            Điểm mạnh của bạn (tuỳ chọn)
+          </Label>
+          <Textarea
+            id="strength-desc"
+            value={strengthDescription}
+            onChange={(event) => setStrengthDescription(event.target.value)}
+            placeholder="VD: cười tự tin, khéo lắp robot…"
+            className="min-h-16 resize-none rounded-lg text-sm"
+            disabled={!classId}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Mỗi chủ đề = một hướng highlight. Bạn có thể cắt và thêm đoạn sau.
+          </p>
+        </div>
+        <Button
+          type="button"
+          className="h-9 w-full rounded-lg"
+          disabled={!classId || !canCreateStack || isCreating || isPolling}
+          onClick={() => void handleCreate()}
+        >
+          {isCreating ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Clapperboard className="size-4" />
+          )}
+          Tạo chủ đề highlight
+        </Button>
+        {!canCreateStack && classId ? (
+          <p className="text-[11px] text-muted-foreground">
+            Tối đa {MAX_VISIBLE_STACKS} chủ đề / lớp. Xóa chủ đề cũ để tạo mới.
+          </p>
+        ) : null}
+      </div>
+
+      {/* Topic picker */}
+      <section className="space-y-2" aria-labelledby="highlight-zone-stacks">
+        <ZoneLabel meta={`${stackCount}/${MAX_VISIBLE_STACKS}`}>
+          <span id="highlight-zone-stacks">Chủ đề</span>
+        </ZoneLabel>
+        {!classId ? (
+          <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Chọn lớp ở trên để xem chủ đề.
+          </p>
+        ) : isLoadingStacks ? (
+          <p className="text-xs text-muted-foreground">Đang tải…</p>
+        ) : stackCount === 0 ? (
+          <p className="rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
+            Chưa có chủ đề highlight cho lớp này.
+          </p>
+        ) : (
+          <ul className="overflow-hidden rounded-xl border border-border bg-card">
+            {(stacks ?? []).map((stack, index) => {
+              const selected = stack.id === activeStackId;
+              const title =
+                stack.strengthDescription?.trim() || `Chủ đề ${index + 1}`;
+              return (
+                <li
+                  key={stack.id}
+                  className="flex items-stretch border-b border-border last:border-b-0"
+                >
+                  <button
+                    type="button"
+                    className={cn(
+                      "flex min-w-0 flex-1 items-center gap-2.5 px-2.5 py-2.5 text-left transition",
+                      "outline-none focus-visible:bg-[#4FC3F7]/10",
+                      selected ? "bg-[#FAFAF5]" : "hover:bg-muted/50",
+                    )}
+                    onClick={() => {
+                      setActiveStackId(stack.id);
+                      setPolledStack(stack);
+                      setSelectedItemId(null);
+                      setEditorDialog("none");
+                      const processing = findProcessingItem(stack);
+                      setPollItemId(processing?.id ?? null);
+                      if (processing) setPollNonce((v) => v + 1);
+                    }}
+                  >
+                    <span
+                      className={cn(
+                        "flex size-6 shrink-0 items-center justify-center rounded-md text-[11px] font-bold tabular-nums",
+                        selected
+                          ? "bg-[#0f7cad] text-white"
+                          : "bg-muted text-muted-foreground",
+                      )}
+                    >
+                      {index + 1}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-xs font-semibold text-foreground">
+                        {title}
+                      </span>
+                      <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                        <span className="tabular-nums">
+                          {stack.itemCount}/{stack.maxItems} lần chỉnh
+                        </span>
+                        {stack.hasProcessingItem ? (
+                          <span className="inline-flex items-center gap-1 text-[#0f7cad]">
+                            <span className="size-1.5 rounded-full bg-[#4FC3F7]" />
+                            đang tạo
+                          </span>
+                        ) : null}
+                        {!stack.canCreateItem && !stack.hasProcessingItem ? (
+                          <span>đã đầy</span>
+                        ) : null}
+                      </span>
+                    </span>
+                    {selected ? (
+                      <Check
+                        className="size-3.5 shrink-0 text-[#0f7cad]"
+                        strokeWidth={2.5}
+                      />
+                    ) : null}
+                  </button>
+                  <Button
+                    type="button"
+                    size="icon-sm"
+                    variant="ghost"
+                    className="my-auto mr-1 shrink-0"
+                    aria-label="Xóa chủ đề"
+                    disabled={isMutating || stack.hasProcessingItem}
+                    onClick={() => void handleDeleteStack(stack.id, stack)}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+
+      {/* Stage: only when a topic is selected */}
+      {activeStack ? (
+        <section
+          className="space-y-3 rounded-2xl border border-[#E5E5E0] bg-[#F5F5F0] p-3"
+          aria-labelledby="highlight-zone-stage"
+        >
+          <div className="space-y-1">
+            <ZoneLabel meta={`${activeStack.itemCount}/${activeStack.maxItems}`}>
+              <span id="highlight-zone-stage">Video & chỉnh sửa</span>
+            </ZoneLabel>
+            <p className="line-clamp-2 text-xs font-medium text-foreground">
+              {activeTitle}
+            </p>
+          </div>
+
+          {showProcessing ? (
+            <ProgressPanel
+              progress={progress}
+              statusLabel={
+                processingItem?.statusLabel ?? currentItem?.statusLabel
+              }
+              reduceMotion={reduceMotion}
+              onCancel={() => void handleCancel()}
+              isCancelling={isCancelling}
+            />
+          ) : null}
+
+          {terminalIssueItem ? (
+            <TerminalIssuePanel
+              item={terminalIssueItem}
+              canRetry={
+                terminalIssueItem.generationKind === "Initial" &&
+                (terminalIssueItem.status === "Failed" ||
+                  terminalIssueItem.status === "Cancelled")
+              }
+              isMutating={isMutating}
+              onRetry={() => void handleRetry()}
+              onDelete={() => void handleDeleteItem(terminalIssueItem)}
+            />
+          ) : null}
+
+          {completedItem?.videoUrl ? (
+            <div className="space-y-3">
+              <div className="overflow-hidden rounded-xl bg-[#2D2D2D] ring-1 ring-black/5">
+                <VideoThumb
+                  src={completedItem.videoUrl}
+                  durationLabel={
+                    durationSeconds > 0
+                      ? formatHighlightTime(durationSeconds)
+                      : null
+                  }
+                  className="w-full"
+                  onClick={() => setIsPreviewOpen(true)}
+                  aria-label="Xem video highlight"
+                />
+              </div>
+              <MediaLightbox
+                items={[
+                  {
+                    id: completedItem.id,
+                    url: completedItem.videoUrl,
+                    kind: "video",
+                    caption: workingKindLabel,
+                  },
+                ]}
+                index={isPreviewOpen ? 0 : null}
+                open={isPreviewOpen}
+                onClose={() => setIsPreviewOpen(false)}
+                enableNav={false}
+              />
+
+              <div className="flex items-center justify-between gap-2">
+                <span
+                  className={cn(
+                    "rounded-md px-1.5 py-0.5 text-[10px] font-semibold",
+                    statusTone(completedItem.status),
+                  )}
+                >
+                  {workingKindLabel}
+                  {selectedCompletedItem &&
+                  latestCompletedItem &&
+                  selectedCompletedItem.id !== latestCompletedItem.id
+                    ? " · đang xem"
+                    : null}
+                </span>
+                {durationSeconds > 0 ? (
+                  <span className="rounded-md bg-white px-2 py-0.5 text-[11px] font-semibold tabular-nums text-foreground ring-1 ring-border">
+                    {formatHighlightTime(durationSeconds)}
+                  </span>
+                ) : null}
+              </div>
+
+              <HighlightSourceClipsStrip clips={completedItem.sourceClips} />
+
+              <div className="space-y-1.5">
+                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                  Bạn có thể làm gì?
+                </p>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 w-full rounded-lg bg-white"
+                  onClick={() => setIsPreviewOpen(true)}
+                >
+                  <Play className="size-3.5 fill-current" />
+                  Xem video
+                </Button>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-9 rounded-lg bg-white"
+                    disabled={!canCreateItem || isMutating}
+                    onClick={() => setEditorDialog("trim")}
+                  >
+                    <Scissors className="size-3.5" />
+                    Cắt bỏ đoạn
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    className="h-9 rounded-lg bg-white"
+                    disabled={!canCreateItem || isMutating}
+                    onClick={() => setEditorDialog("segment")}
+                  >
+                    <Plus className="size-3.5" />
+                    Thêm đoạn
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  className="h-8 w-full rounded-lg text-muted-foreground"
+                  disabled={!canCreateItem || isMutating}
+                  onClick={() => void handleRegenerate()}
+                >
+                  <RefreshCw className="size-3.5" />
+                  Làm lại từ đầu
+                </Button>
+              </div>
+
+              <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
+                <Button
+                  type="button"
+                  className="h-9 w-full rounded-xl"
+                  disabled={isSyncing}
+                  onClick={() => void handleSyncPortfolio()}
+                >
+                  {isSyncing ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : null}
+                  Thêm vào Gallery
+                </Button>
+                <button
+                  type="button"
+                  className="mx-auto block text-[11px] text-muted-foreground underline-offset-2 hover:text-destructive hover:underline disabled:opacity-50"
+                  disabled={isMutating}
+                  onClick={() => void handleDeleteItem(completedItem)}
+                >
+                  Xóa lần chỉnh đang xem
+                </button>
+              </div>
+            </div>
+          ) : !showProcessing && !terminalIssueItem ? (
+            <p className="rounded-lg bg-white/70 px-3 py-5 text-center text-xs text-muted-foreground">
+              Video chưa sẵn sàng.
+            </p>
+          ) : null}
+
+          {historyItems.length > 0 ? (
+            <div className="space-y-1.5 border-t border-[#E5E5E0] pt-3">
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-semibold tracking-wide text-muted-foreground">
+                  Các lần chỉnh
+                </p>
+                <p className="text-[10px] text-muted-foreground">
+                  Chạm một bản đã xong để xem / cắt / thêm đoạn từ bản đó.
+                </p>
+              </div>
+              <ul className="overflow-hidden rounded-lg bg-white ring-1 ring-border">
+                {historyItems.map((item) => {
+                  const canSelect =
+                    item.status === "Completed" && Boolean(item.videoUrl);
+                  const isWorking = completedItem?.id === item.id;
+                  return (
+                    <li
+                      key={item.id}
+                      className="flex items-center gap-1 border-b border-border last:border-b-0"
+                    >
+                      <button
+                        type="button"
+                        disabled={!canSelect}
+                        className={cn(
+                          "flex min-w-0 flex-1 items-center gap-2 px-2.5 py-2 text-left text-[11px] transition",
+                          canSelect
+                            ? "hover:bg-muted/50"
+                            : "cursor-default opacity-80",
+                          isWorking && "bg-[#4FC3F7]/10",
+                        )}
+                        onClick={() => {
+                          if (!canSelect) return;
+                          setSelectedItemId(item.id);
+                          setIsPreviewOpen(false);
+                          setEditorDialog("none");
+                        }}
+                      >
+                        <span
+                          className={cn(
+                            "shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold",
+                            statusTone(item.status),
+                          )}
+                        >
+                          {STATUS_LABELS[item.status]}
+                        </span>
+                        <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                          {GENERATION_KIND_LABELS[item.generationKind]}
+                          {isWorking ? (
+                            <span className="text-[#0f7cad]"> · đang xem</span>
+                          ) : null}
+                        </span>
+                      </button>
+                      {item.status !== "Processing" ? (
+                        <button
+                          type="button"
+                          className="mr-2 shrink-0 text-muted-foreground hover:text-destructive"
+                          aria-label="Xóa lần chỉnh"
+                          disabled={isMutating}
+                          onClick={() => void handleDeleteItem(item)}
+                        >
+                          <Trash2 className="size-3" />
+                        </button>
+                      ) : null}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : null}
+        </section>
+      ) : null}
+
+      {completedItem?.videoUrl ? (
+        <HighlightTrimDialog
+          open={editorDialog === "trim"}
+          onOpenChange={(open) => setEditorDialog(open ? "trim" : "none")}
+          videoUrl={completedItem.videoUrl}
+          durationSeconds={durationSeconds}
+          isSubmitting={isMutating}
+          onSubmit={(payload) => void handleTrim(payload)}
+        />
+      ) : null}
+
+      <HighlightSegmentDialog
+        open={editorDialog === "segment"}
+        onOpenChange={(open) => setEditorDialog(open ? "segment" : "none")}
+        sourceMedia={sourceMedia ?? []}
+        isLoadingSourceMedia={isLoadingSourceMedia}
+        isSubmitting={isMutating}
+        onSubmit={(payload) => void handleAddSegment(payload)}
+      />
+    </div>
+  );
+}

@@ -95,12 +95,29 @@ function issuedAtFromParts(day: string, month: string, year: string): string {
   return `${year}-${pad2(Number(month))}-${pad2(safeDay)}`;
 }
 
+function selectDatePart(value: string | null): string {
+  if (!value || value === "none") return "";
+  return value;
+}
+
+function clampIssuedDay(day: string, month: string, year: string): string {
+  if (!day) return "";
+  const maxDay = daysInMonth(
+    Number(month) || 0,
+    Number(year) || EVIDENCE_CURRENT_YEAR,
+  );
+  const n = Number(day);
+  if (!Number.isFinite(n) || n < 1) return "";
+  return String(Math.min(n, maxDay));
+}
+
 type EvidenceFormRow = {
   title: string;
   issuer: string;
   url: string;
-  /** `yyyy-MM-dd` from day/month/year selects; empty when unset. */
-  issuedAt: string;
+  issuedDay: string;
+  issuedMonth: string;
+  issuedYear: string;
   credentialId: string;
 };
 
@@ -108,7 +125,9 @@ const EMPTY_EVIDENCE_ROW: EvidenceFormRow = {
   title: "",
   issuer: "",
   url: "",
-  issuedAt: "",
+  issuedDay: "",
+  issuedMonth: "",
+  issuedYear: "",
   credentialId: "",
 };
 
@@ -118,9 +137,9 @@ function evidenceRowFromApi(evidence: MentorSkillEvidence): EvidenceFormRow {
     title: evidence.title,
     issuer: evidence.issuer ?? "",
     url: evidence.url,
-    issuedAt: parsed
-      ? `${parsed.getFullYear()}-${pad2(parsed.getMonth() + 1)}-${pad2(parsed.getDate())}`
-      : "",
+    issuedDay: parsed ? String(parsed.getDate()) : "",
+    issuedMonth: parsed ? String(parsed.getMonth() + 1) : "",
+    issuedYear: parsed ? String(parsed.getFullYear()) : "",
     credentialId: evidence.credentialId ?? "",
   };
 }
@@ -130,9 +149,17 @@ function isEvidenceRowEmpty(row: EvidenceFormRow): boolean {
     !row.title.trim() &&
     !row.issuer.trim() &&
     !row.url.trim() &&
-    !row.issuedAt &&
+    !row.issuedDay &&
+    !row.issuedMonth &&
+    !row.issuedYear &&
     !row.credentialId.trim()
   );
+}
+
+function isIssuedAtPartial(row: EvidenceFormRow): boolean {
+  const any = Boolean(row.issuedDay || row.issuedMonth || row.issuedYear);
+  const all = Boolean(row.issuedDay && row.issuedMonth && row.issuedYear);
+  return any && !all;
 }
 
 /**
@@ -153,11 +180,20 @@ function mapEvidenceRows(
       };
     }
 
+    if (isIssuedAtPartial(row)) {
+      return {
+        inputs: [],
+        error: "Ngày cấp cần đủ ngày, tháng và năm (hoặc để trống cả ba).",
+      };
+    }
+
     const candidate = {
       title: row.title.trim(),
       issuer: row.issuer.trim() || null,
       url: row.url.trim(),
-      issuedAt: row.issuedAt || null,
+      issuedAt:
+        issuedAtFromParts(row.issuedDay, row.issuedMonth, row.issuedYear) ||
+        null,
       credentialId: row.credentialId.trim() || null,
     };
     const parsed = mentorSkillEvidenceInputSchema.safeParse(candidate);
@@ -224,18 +260,11 @@ function SkillEvidenceEditor({
       ) : (
         <ul className="space-y-3">
           {rows.map((row, index) => {
-            const rowYear = row.issuedAt ? row.issuedAt.slice(0, 4) : "";
-            const rowMonth = row.issuedAt
-              ? String(Number(row.issuedAt.slice(5, 7)))
-              : "";
-            const rowDay = row.issuedAt
-              ? String(Number(row.issuedAt.slice(8, 10)))
-              : "";
             const dayOptions = Array.from(
               {
                 length: daysInMonth(
-                  Number(rowMonth) || 0,
-                  Number(rowYear) || EVIDENCE_CURRENT_YEAR,
+                  Number(row.issuedMonth) || 0,
+                  Number(row.issuedYear) || EVIDENCE_CURRENT_YEAR,
                 ),
               },
               (_, i) => i + 1,
@@ -330,14 +359,10 @@ function SkillEvidenceEditor({
                   </label>
                   <div className="grid grid-cols-3 gap-2">
                     <Select
-                      value={rowDay || null}
+                      value={row.issuedDay || null}
                       onValueChange={(value) =>
                         updateRow(index, {
-                          issuedAt: issuedAtFromParts(
-                            value && value !== "none" ? value : "",
-                            rowMonth,
-                            rowYear,
-                          ),
+                          issuedDay: selectDatePart(value),
                         })
                       }
                       disabled={disabled}
@@ -347,7 +372,7 @@ function SkillEvidenceEditor({
                         aria-label="Ngày cấp"
                       >
                         <span className="truncate">
-                          {rowDay ? `Ngày ${rowDay}` : "Ngày"}
+                          {row.issuedDay ? `Ngày ${row.issuedDay}` : "Ngày"}
                         </span>
                       </SelectTrigger>
                       <SelectContent
@@ -364,16 +389,18 @@ function SkillEvidenceEditor({
                       </SelectContent>
                     </Select>
                     <Select
-                      value={rowMonth || null}
-                      onValueChange={(value) =>
+                      value={row.issuedMonth || null}
+                      onValueChange={(value) => {
+                        const issuedMonth = selectDatePart(value);
                         updateRow(index, {
-                          issuedAt: issuedAtFromParts(
-                            rowDay,
-                            value && value !== "none" ? value : "",
-                            rowYear,
+                          issuedMonth,
+                          issuedDay: clampIssuedDay(
+                            row.issuedDay,
+                            issuedMonth,
+                            row.issuedYear,
                           ),
-                        })
-                      }
+                        });
+                      }}
                       disabled={disabled}
                     >
                       <SelectTrigger
@@ -381,7 +408,9 @@ function SkillEvidenceEditor({
                         aria-label="Tháng cấp"
                       >
                         <span className="truncate">
-                          {rowMonth ? `Tháng ${rowMonth}` : "Tháng"}
+                          {row.issuedMonth
+                            ? `Tháng ${row.issuedMonth}`
+                            : "Tháng"}
                         </span>
                       </SelectTrigger>
                       <SelectContent
@@ -398,23 +427,27 @@ function SkillEvidenceEditor({
                       </SelectContent>
                     </Select>
                     <Select
-                      value={rowYear || null}
-                      onValueChange={(value) =>
+                      value={row.issuedYear || null}
+                      onValueChange={(value) => {
+                        const issuedYear = selectDatePart(value);
                         updateRow(index, {
-                          issuedAt: issuedAtFromParts(
-                            rowDay,
-                            rowMonth,
-                            value && value !== "none" ? value : "",
+                          issuedYear,
+                          issuedDay: clampIssuedDay(
+                            row.issuedDay,
+                            row.issuedMonth,
+                            issuedYear,
                           ),
-                        })
-                      }
+                        });
+                      }}
                       disabled={disabled}
                     >
                       <SelectTrigger
                         className="h-8 w-full min-w-0 text-sm"
                         aria-label="Năm cấp"
                       >
-                        <span className="truncate">{rowYear || "Năm"}</span>
+                        <span className="truncate">
+                          {row.issuedYear || "Năm"}
+                        </span>
                       </SelectTrigger>
                       <SelectContent
                         align="start"

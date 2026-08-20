@@ -12,7 +12,9 @@ import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useClientFetch } from "@/hooks/use-client-fetch";
@@ -60,54 +62,60 @@ export function ExpertProfileDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="flex flex-col gap-0 p-0 sm:max-w-2xl">
-        <div className="relative shrink-0 border-b border-[#E5E5E0] px-7 pb-4 pt-5">
-          <DialogClose className="top-4 right-4" />
-          <DialogTitle className="text-lg">Thông tin chuyên gia</DialogTitle>
+      <DialogScrollPopup className="max-h-[min(92dvh,52rem)] sm:max-w-4xl">
+        <DialogScrollHeader className="px-7">
+          <DialogClose />
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            Hội đồng chuyên gia
+          </p>
+          <DialogTitle className="mt-1 text-lg font-semibold tracking-tight">
+            Hồ sơ học thuật
+          </DialogTitle>
           <DialogDescription className="sr-only">
-            Chi tiết chuyên gia, tiểu sử và chương trình tham gia.
+            Hồ sơ học thuật của chuyên gia: giới thiệu, học vấn, công bố và hội đồng
+            chương trình.
           </DialogDescription>
-        </div>
+        </DialogScrollHeader>
 
-        <div className="px-7 py-5">
-            {hasError ? (
-              <div className="py-6 text-center">
-                <p className="text-sm text-[#6B6B6B]">
-                  Không tải được thông tin chuyên gia.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="mt-3"
-                  onClick={retry}
-                >
-                  Thử lại
-                </Button>
+        <DialogScrollBody className="bg-[#FAFAF5] px-7 py-6 dark:bg-background">
+          {hasError ? (
+            <div className="py-10 text-center">
+              <p className="text-sm text-muted-foreground">
+                Không tải được hồ sơ chuyên gia.
+              </p>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={retry}
+              >
+                Thử lại
+              </Button>
+            </div>
+          ) : isLoading && (!data || data.id !== expertId) ? (
+            preview ? (
+              <div className="space-y-8">
+                <ExpertProfilePreview
+                  fullName={preview.fullName}
+                  title={preview.title}
+                  organization={preview.organization}
+                  avatarUrl={previewAvatarUrl}
+                  code={preview.code}
+                />
+                <ExpertProfileSkeleton hideIdentity />
               </div>
-            ) : isLoading && (!data || data.id !== expertId) ? (
-              preview ? (
-                <div className="space-y-4">
-                  <ExpertProfilePreview
-                    fullName={preview.fullName}
-                    title={preview.title}
-                    organization={preview.organization}
-                    avatarUrl={previewAvatarUrl}
-                    code={preview.code}
-                  />
-                  <ExpertProfileSkeleton />
-                </div>
-              ) : (
-                <ExpertProfileSkeleton />
-              )
-            ) : data && data.id === expertId ? (
-              <ExpertProfileContent
-                expert={data}
-                currentProgramId={currentProgramId}
-              />
-            ) : null}
-        </div>
-      </DialogPopup>
+            ) : (
+              <ExpertProfileSkeleton />
+            )
+          ) : data && data.id === expertId ? (
+            <ExpertProfileContent
+              expert={data}
+              currentProgramId={currentProgramId}
+            />
+          ) : null}
+        </DialogScrollBody>
+      </DialogScrollPopup>
     </Dialog>
   );
 }

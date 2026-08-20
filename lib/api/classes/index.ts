@@ -15,8 +15,10 @@ import {
   updateClassSchema,
   updateClassSessionSchema,
   updateSessionAttendanceSchema,
+  generateClassSessionsSchema,
   type CreateClassInput,
   type CreateClassSessionInput,
+  type GenerateClassSessionsInput,
   type UpdateClassInput,
   type UpdateClassSessionInput,
   type UpdateSessionAttendanceInput,
@@ -26,6 +28,7 @@ import {
   classResponseSchema,
   classSessionResponseSchema,
   deleteClassSessionResponseSchema,
+  generateClassSessionsResponseSchema,
   getClassSessionWithStudentsResponseSchema,
   getClassSessionsResponseSchema,
   getClassWithSessionsResponseSchema,
@@ -38,6 +41,7 @@ import {
   type DeleteClassSessionResult,
   type GetClassSessionWithStudentsResult,
   type GetClassSessionsResult,
+  type GenerateClassSessionsResult,
   type GetClassWithSessionsResult,
   type GetClassWithStudentsResult,
   type GetClassesResult,
@@ -56,6 +60,8 @@ export type {
   GetClassSessionWithStudentsResult,
   GetClassSessionsResponse,
   GetClassSessionsResult,
+  GenerateClassSessionsResponse,
+  GenerateClassSessionsResult,
   GetClassWithSessionsResponse,
   GetClassWithSessionsResult,
   GetClassWithStudentsResponse,
@@ -97,6 +103,7 @@ export type { Paginated } from "@/lib/api/entities/pagination";
 export type {
   CreateClassInput,
   CreateClassSessionInput,
+  GenerateClassSessionsInput,
   UpdateClassInput,
   UpdateClassSessionInput,
   UpdateSessionAttendanceInput,
@@ -408,6 +415,23 @@ export async function deleteClassSession(
     `${CLASSES_BASE}/${parsed.classId}/sessions/${parsed.sessionId}`,
     deleteClassSessionResponseSchema,
     { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** Bulk-generate weekly sessions from curriculum order (Admin/Manager). */
+export async function generateClassSessions(
+  classId: string,
+  input: GenerateClassSessionsInput,
+): Promise<GenerateClassSessionsResult> {
+  const { classId: parsedClassId } = classIdParamSchema.parse({ classId });
+  const body = generateClassSessionsSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${CLASSES_BASE}/${parsedClassId}/sessions/generate`,
+    generateClassSessionsResponseSchema,
+    { method: "POST", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

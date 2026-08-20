@@ -18,10 +18,7 @@ export const activityIdParamSchema = z.object({
 });
 
 export const createModuleSchema = z.object({
-  code: z.preprocess(
-    (val) => (val === "" || val === undefined ? null : val),
-    z.string().min(1, "Mã module không hợp lệ.").nullable(),
-  ),
+  code: z.string().trim().min(1, "Mã module là bắt buộc."),
   programId: z.string().uuid("ID chương trình không hợp lệ."),
   name: z.string().min(1, "Tên module là bắt buộc."),
   moduleType: moduleTypeSchema,
@@ -38,10 +35,7 @@ export const updateModuleSchema = createModuleSchema.partial().extend({
 });
 
 export const createCourseSchema = z.object({
-  code: z.preprocess(
-    (val) => (val === "" || val === undefined ? null : val),
-    z.string().min(1, "Mã khóa học là bắt buộc.").nullable(),
-  ),
+  code: z.string().trim().min(1, "Mã khóa học là bắt buộc."),
   moduleId: z.string().uuid("ID module không hợp lệ."),
   name: z.string().min(1, "Tên khóa học là bắt buộc."),
   description: z.preprocess(
@@ -55,10 +49,7 @@ export const updateCourseSchema = createCourseSchema.partial().extend({
 });
 
 export const createActivitySchema = z.object({
-  code: z.preprocess(
-    (val) => (val === "" || val === undefined ? null : val),
-    z.string().min(1, "Mã hoạt động không hợp lệ.").nullable(),
-  ),
+  code: z.string().trim().min(1, "Mã hoạt động là bắt buộc."),
   courseId: z.string().uuid("ID khóa học không hợp lệ."),
   name: z.string().min(1, "Tên hoạt động là bắt buộc."),
   activityType: activityTypeSchema,
@@ -67,7 +58,6 @@ export const createActivitySchema = z.object({
   location: z.string().nullable().optional(),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
-  maxCapacity: z.number().int().min(1, "Sức chứa tối đa phải lớn hơn 0.").nullable().optional(),
   requireQrCheckin: z.boolean().default(false),
   requireMediaEvidence: z.boolean().default(false),
 });

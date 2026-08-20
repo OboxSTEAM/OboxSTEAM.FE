@@ -112,7 +112,10 @@ export function ManagerDataTable<T>({
               ))
             ) : data.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={columns.length} className="p-0">
+                <TableCell
+                  colSpan={columns.length}
+                  className="whitespace-normal p-0"
+                >
                   {emptyState ?? (
                     <div className="py-12 text-center text-sm text-muted-foreground">
                       Không tìm thấy dữ liệu.

@@ -23,7 +23,14 @@ export const mediaTagSchema = z.object({
   id: z.string().uuid(),
   studentId: z.string().uuid(),
   studentName: z.string().nullable(),
-  confidenceScore: z.number(),
+  /** BE sends 0–100 (%). Clamp; only (0, 1) treated as legacy ratio. */
+  confidenceScore: z.coerce.number().transform((value) => {
+    if (!Number.isFinite(value)) return 0;
+    if (value > 0 && value < 1) {
+      return Math.min(100, Math.max(0, value * 100));
+    }
+    return Math.min(100, Math.max(0, value));
+  }),
   isVerified: z.boolean(),
   hasOtherFaces: z.boolean(),
   faceSegments: z
@@ -51,6 +58,36 @@ export const mediaAssetSchema = z.object({
     .array(mediaTagSchema)
     .nullish()
     .transform((value) => value ?? []),
+});
+
+/**
+ * Student gallery row (`GET /api/media/class/{classId}/gallery`,
+ * `GET /api/media/my-gallery`). Same core fields as `MediaAsset` but without
+ * face tags / label timeline; includes class/program labels for multi-class views.
+ */
+export const classGalleryMediaSchema = z.object({
+  id: z.string().uuid(),
+  uploaderId: z.string().uuid(),
+  classId: z.string().uuid(),
+  className: z.string().nullable().nullish().transform((value) => value ?? null),
+  programId: z
+    .string()
+    .uuid()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
+  programName: z
+    .string()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
+  classSessionId: z.string().uuid().nullable(),
+  fileUrl: z.string().nullable(),
+  fileType: z.string().nullable(),
+  videoStatus: mediaVideoStatusSchema,
+  statusLabel: z.string().nullable(),
+  isReady: z.boolean(),
+  uploadedAt: z.string().nullable(),
 });
 
 /**
@@ -85,4 +122,5 @@ export type FaceSegment = z.infer<typeof faceSegmentSchema>;
 export type LabelTimelineEntry = z.infer<typeof labelTimelineEntrySchema>;
 export type MediaTag = z.infer<typeof mediaTagSchema>;
 export type MediaAsset = z.infer<typeof mediaAssetSchema>;
+export type ClassGalleryMedia = z.infer<typeof classGalleryMediaSchema>;
 export type MediaProgress = z.infer<typeof mediaProgressSchema>;

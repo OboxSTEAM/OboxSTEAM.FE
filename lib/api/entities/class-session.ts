@@ -5,11 +5,12 @@ import { sessionAttendanceStatusSchema } from "@/lib/api/entities/session-attend
 /**
  * Session purpose only. Delivery mode (online/offline) comes from the linked
  * activity's `activityType`, so it is intentionally not part of this enum.
- * Legacy `LiveOnline` rows are coerced to `Lesson` for backward compatibility.
+ * Legacy `LiveOnline` / `MentorCheckIn` rows are coerced to `Lesson`.
  */
 export const classSessionKindSchema = z.preprocess(
-  (value) => (value === "LiveOnline" ? "Lesson" : value),
-  z.enum(["Lesson", "FieldTrip", "AssignmentWindow", "MentorCheckIn"]),
+  (value) =>
+    value === "LiveOnline" || value === "MentorCheckIn" ? "Lesson" : value,
+  z.enum(["Lesson", "FieldTrip", "AssignmentWindow"]),
 );
 
 export const classSessionStatusSchema = z.enum([
@@ -26,13 +27,35 @@ export const classSessionSchema = z.object({
   activityId: z.string().uuid().nullable(),
   assignmentId: z.string().uuid().nullable(),
   sessionKind: classSessionKindSchema,
-  title: z.string(),
+  title: z.string().nullable(),
   description: z.string().nullable(),
   startTime: z.string(),
   endTime: z.string(),
   location: z.string().nullable(),
-  maxCapacity: z.number().int().nullable(),
+  latitude: z
+    .number()
+    .min(-90)
+    .max(90)
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
+  longitude: z
+    .number()
+    .min(-180)
+    .max(180)
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
+  meetingUrl: z
+    .string()
+    .nullable()
+    .nullish()
+    .transform((value) => value ?? null),
   requiresAttendance: z.boolean(),
+  requiresMentorCheckIn: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? false),
   status: classSessionStatusSchema,
   createdAt: z.string(),
   updatedAt: z.string().nullable(),

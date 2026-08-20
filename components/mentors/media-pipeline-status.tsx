@@ -1,22 +1,44 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
+import { CheckCircle2Icon, CircleIcon, Loader2, XCircleIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
 import type { MediaProgress, MediaVideoStatus } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 const STAGES = [
   { key: "upload", label: "Tải lên" },
   { key: "transcode", label: "Chuyển mã" },
-  { key: "tagging", label: "AI" },
-  { key: "ready", label: "Xong" },
+  { key: "tagging", label: "Nhận diện AI" },
+  { key: "ready", label: "Sẵn sàng" },
 ] as const;
+
+/** Max catch-up when progress jumps (e.g. image instantly ready). */
+const CATCH_UP_MS = 1400;
+/** Treat uploads this fresh as “just uploaded” for mount reveal. */
+const FRESH_UPLOAD_MS = 10_000;
+
+type PipelineResolved = {
+  status: MediaVideoStatus;
+  ready: boolean;
+  failed: boolean;
+  percent: number | null;
+  isTranscoding: boolean;
+  isTagging: boolean;
+  stepIndex: number;
+  statusLabel: string | null;
+};
 
 function resolvePipelineStatus(
   videoStatus: MediaVideoStatus,
   isReady: boolean,
   progress?: MediaProgress | null,
-) {
+): PipelineResolved {
   const status = progress?.videoStatus ?? videoStatus;
   const failed = progress?.isFailed ?? status === "Failed";
   const isTranscoding = !failed && status === "Transcoding";
@@ -61,29 +83,175 @@ function resolvePipelineStatus(
   };
 }
 
-function segmentFillPercent({
-  index,
-  stepIndex,
-  ready,
-  failed,
-  isTranscoding,
-  isTagging,
-  percent,
-}: {
-  index: number;
-  stepIndex: number;
-  ready: boolean;
-  failed: boolean;
-  isTranscoding: boolean;
-  isTagging: boolean;
-  percent: number | null;
-}): number {
-  if (ready || index < stepIndex) return 100;
-  if (index > stepIndex) return 0;
-  if (failed) return 100;
-  if (isTranscoding) return percent == null ? 18 : Math.max(percent, 6);
-  if (isTagging) return 70;
-  return 100;
+function fillWithinStage(resolved: PipelineResolved): number {
+  if (resolved.ready || resolved.failed) return 100;
+  if (resolved.isTranscoding) {
+    return resolved.percent == null ? 18 : Math.max(resolved.percent, 6);
+  }
+  if (resolved.isTagging) return 70;
+  return 55;
+}
+
+function overallFromResolved(resolved: PipelineResolved): number {
+  if (resolved.ready) return 100;
+  const fill = fillWithinStage(resolved);
+  return Math.min(
+    99.5,
+    ((resolved.stepIndex + fill / 100) / STAGES.length) * 100,
+  );
+}
+
+function isFreshUpload(uploadedAt?: string | null): boolean {
+  if (!uploadedAt) return false;
+  const t = new Date(uploadedAt).getTime();
+  if (Number.isNaN(t)) return false;
+  return Date.now() - t < FRESH_UPLOAD_MS;
+}
+
+function easeOutCubic(t: number): number {
+  return 1 - (1 - t) ** 3;
+}
+
+/**
+ * Smooth displayed % toward target. Fresh ready uploads reveal from 0;
+ * already-ready on open snaps. Later jumps (instant image pipeline) catch up.
+ */
+function useSmoothedProgress(
+  target: number,
+  {
+    mediaKey,
+    revealFromStart,
+  }: {
+    mediaKey: string;
+    revealFromStart: boolean;
+  },
+): number {
+  const [display, setDisplay] = useState(() =>
+    revealFromStart ? 0 : target,
+  );
+  const displayRef = useRef(display);
+  displayRef.current = display;
+
+  const mediaKeyRef = useRef(mediaKey);
+
+  useEffect(() => {
+    if (mediaKeyRef.current === mediaKey) return;
+    mediaKeyRef.current = mediaKey;
+    const next = revealFromStart ? 0 : target;
+    displayRef.current = next;
+    setDisplay(next);
+  }, [mediaKey, revealFromStart, target]);
+
+  useEffect(() => {
+    const from = displayRef.current;
+    const delta = target - from;
+
+    if (Math.abs(delta) < 0.15) {
+      if (from !== target) {
+        displayRef.current = target;
+        setDisplay(target);
+      }
+      return;
+    }
+
+    // Regression (rare) — snap back.
+    if (delta < 0) {
+      displayRef.current = target;
+      setDisplay(target);
+      return;
+    }
+
+    const duration = Math.min(
+      CATCH_UP_MS,
+      Math.max(420, (delta / 100) * CATCH_UP_MS),
+    );
+    const startedAt = performance.now();
+    let raf = 0;
+
+    const tick = (now: number) => {
+      const t = Math.min(1, (now - startedAt) / duration);
+      const next = from + delta * easeOutCubic(t);
+      displayRef.current = next;
+      setDisplay(next);
+      if (t < 1) {
+        raf = requestAnimationFrame(tick);
+      } else {
+        displayRef.current = target;
+        setDisplay(target);
+      }
+    };
+
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, mediaKey]);
+
+  return display;
+}
+
+function displayMeta(displayPercent: number, failed: boolean) {
+  const stageFloat = (displayPercent / 100) * STAGES.length;
+  const clamped = Math.min(STAGES.length, Math.max(0, stageFloat));
+  const displayReady = !failed && displayPercent >= 99.5;
+  const activeIndex = displayReady
+    ? STAGES.length - 1
+    : Math.min(STAGES.length - 1, Math.floor(clamped));
+
+  return { stageFloat: clamped, displayReady, activeIndex };
+}
+
+function stageState(
+  index: number,
+  {
+    stageFloat,
+    displayReady,
+    failed,
+    failedStepIndex,
+  }: {
+    stageFloat: number;
+    displayReady: boolean;
+    failed: boolean;
+    failedStepIndex: number;
+  },
+): "done" | "active" | "pending" | "failed" {
+  if (failed && index === failedStepIndex) return "failed";
+  if (displayReady || stageFloat >= index + 1) return "done";
+  if (Math.floor(stageFloat) === index) return "active";
+  return "pending";
+}
+
+function completedCount(
+  stageFloat: number,
+  displayReady: boolean,
+  failed: boolean,
+  failedStepIndex: number,
+): number {
+  if (displayReady) return STAGES.length;
+  let count = 0;
+  for (let i = 0; i < STAGES.length; i++) {
+    const state = stageState(i, {
+      stageFloat,
+      displayReady,
+      failed,
+      failedStepIndex,
+    });
+    if (state === "done") count += 1;
+  }
+  return count;
+}
+
+function activeStatusLabel(
+  resolved: PipelineResolved,
+  displayReady: boolean,
+): string {
+  if (resolved.failed) return resolved.statusLabel?.trim() || "Thất bại";
+  if (displayReady || resolved.ready) return "Sẵn sàng";
+  if (resolved.isTranscoding) {
+    return resolved.percent == null
+      ? "Đang chuyển mã"
+      : `Chuyển mã ${Math.round(resolved.percent)}%`;
+  }
+  if (resolved.isTagging) return "Nhận diện AI";
+  return "Đã tải lên";
 }
 
 type MediaPipelineStatusProps = {
@@ -92,12 +260,16 @@ type MediaPipelineStatusProps = {
   progress?: MediaProgress | null;
   timedOut?: boolean;
   compact?: boolean;
+  /** Stable id — resets smoothed progress when switching media. */
+  mediaId?: string;
+  uploadedAt?: string | null;
   className?: string;
 };
 
 /**
- * Staged pipeline bar for table / detail:
- * Upload → Transcode (% fill) → AI → Ready.
+ * Pipeline progress for mentor media:
+ * - Detail: checklist (label + N/4 + thin bar + read-only stages)
+ * - List (`compact`): mini bar + short status, no stage list
  */
 export function MediaPipelineStatus({
   videoStatus,
@@ -105,172 +277,166 @@ export function MediaPipelineStatus({
   progress,
   timedOut = false,
   compact = false,
+  mediaId,
+  uploadedAt = null,
   className,
 }: MediaPipelineStatusProps) {
-  const {
-    ready,
-    failed,
-    percent,
-    isTranscoding,
-    isTagging,
-    stepIndex,
-    statusLabel,
-  } = resolvePipelineStatus(videoStatus, isReady, progress);
+  const resolved = resolvePipelineStatus(videoStatus, isReady, progress);
+  const target = overallFromResolved(resolved);
+  const mediaKey = mediaId ?? `${videoStatus}:${isReady}`;
+  // Fresh ready upload → animate 0→100. Already-ready on open → snap. In-flight → snap then catch up.
+  const revealFromStart =
+    resolved.ready && !resolved.failed && isFreshUpload(uploadedAt);
 
-  const activeLabel = failed
-    ? statusLabel?.trim() || "Thất bại"
-    : ready
-      ? "Sẵn sàng"
-      : isTranscoding
-        ? percent == null
-          ? "Đang chuyển mã"
-          : `Chuyển mã ${Math.round(percent)}%`
-        : isTagging
-          ? "Nhận diện AI"
-          : "Đã tải lên";
+  const displayPercent = useSmoothedProgress(target, {
+    mediaKey,
+    revealFromStart,
+  });
+
+  const { stageFloat, displayReady, activeIndex } = displayMeta(
+    displayPercent,
+    resolved.failed,
+  );
+  const doneCount = completedCount(
+    stageFloat,
+    displayReady,
+    resolved.failed,
+    resolved.stepIndex,
+  );
+  const label = activeStatusLabel(resolved, displayReady);
+
+  const indicatorTone = resolved.failed
+    ? "[&_[data-slot=progress-indicator]]:!bg-destructive"
+    : displayReady || doneCount === STAGES.length
+      ? "[&_[data-slot=progress-indicator]]:!bg-[#7CB342]"
+      : "[&_[data-slot=progress-indicator]]:!bg-foreground";
+
+  const progressClass = cn("w-full gap-x-2 gap-y-1", indicatorTone);
+
+  if (compact) {
+    return (
+      <div
+        className={cn(
+          "flex min-w-[9.5rem] max-w-[12rem] flex-col gap-1 whitespace-normal",
+          className,
+        )}
+      >
+        <Progress
+          value={displayPercent}
+          className={cn(progressClass, "[&_[data-slot=progress-track]]:h-1")}
+        >
+          <ProgressLabel
+            className={cn(
+              "min-w-0 flex-1 truncate text-[11px] font-medium leading-tight",
+              resolved.failed
+                ? "text-destructive"
+                : displayReady
+                  ? "text-[#3d5c22] dark:text-[#b8e086]"
+                  : "text-foreground",
+            )}
+          >
+            {label}
+          </ProgressLabel>
+          <ProgressValue className="shrink-0 text-[10px] text-muted-foreground">
+            {() => `${doneCount}/${STAGES.length}`}
+          </ProgressValue>
+        </Progress>
+
+        {timedOut && !resolved.ready && !resolved.failed ? (
+          <p className="text-[10px] text-muted-foreground">Đang chậm</p>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div
       className={cn(
-        "flex flex-col gap-1.5 whitespace-normal",
-        compact ? "min-w-[12.5rem]" : "min-w-[16rem]",
+        "flex w-full max-w-[15.5rem] flex-col gap-3 rounded-xl border border-border bg-muted/30 p-3",
         className,
       )}
     >
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-1">
-        <span aria-hidden className="min-w-0" />
-        <p
-          className={cn(
-            "max-w-full truncate text-center text-xs font-medium",
-            failed
-              ? "text-destructive"
-              : ready
-                ? "text-[#3d5c22] dark:text-[#b8e086]"
-                : "text-foreground",
-          )}
-        >
-          {activeLabel}
-        </p>
-        <div className="flex min-w-0 items-center justify-end">
-          {isTagging ? (
-            <Loader2 className="size-3.5 shrink-0 animate-spin text-primary" />
-          ) : isTranscoding && percent != null ? (
-            <span className="font-mono text-[11px] font-semibold tabular-nums text-muted-foreground">
-              {Math.round(percent)}%
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      <div
-        className="flex h-2 w-full gap-0.5 overflow-hidden rounded-full"
-        role="progressbar"
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={
-          ready
-            ? 100
-            : failed
-              ? undefined
-              : isTranscoding && percent != null
-                ? Math.round((1 + percent / 100) * 25)
-                : Math.round(((stepIndex + 0.5) / STAGES.length) * 100)
-        }
-        aria-label={activeLabel}
+      <Progress
+        value={displayPercent}
+        className={cn(progressClass, "[&_[data-slot=progress-track]]:h-1.5")}
       >
+        <ProgressLabel className="text-xs font-semibold text-foreground">
+          Tiến trình
+        </ProgressLabel>
+        <ProgressValue className="text-[11px] text-muted-foreground">
+          {() =>
+            resolved.failed
+              ? "Lỗi"
+              : `${doneCount}/${STAGES.length}`
+          }
+        </ProgressValue>
+      </Progress>
+
+      <ul className="flex flex-col gap-1.5">
         {STAGES.map((stage, index) => {
-          const fill = segmentFillPercent({
-            index,
-            stepIndex,
-            ready,
-            failed,
-            isTranscoding,
-            isTagging,
-            percent,
+          const state = stageState(index, {
+            stageFloat,
+            displayReady,
+            failed: resolved.failed,
+            failedStepIndex: resolved.stepIndex,
           });
-          const isActive = !ready && index === stepIndex;
-          const isDone = ready || index < stepIndex;
+          const isActive = state === "active";
+          const showSpinner =
+            isActive &&
+            (resolved.isTagging ||
+              (resolved.isTranscoding && resolved.percent == null));
 
           return (
-            <div
+            <li
               key={stage.key}
-              className="relative h-full min-w-0 flex-1 overflow-hidden rounded-sm bg-muted"
+              className={cn(
+                "flex items-center gap-2 text-xs transition-colors",
+                state === "done" || state === "failed" || state === "active"
+                  ? "text-foreground"
+                  : "text-muted-foreground",
+              )}
             >
-              <div
-                className={cn(
-                  "absolute inset-y-0 left-0 rounded-sm transition-[width] duration-500 ease-out",
-                  failed && isActive
-                    ? "bg-destructive"
-                    : isDone || ready
-                      ? "bg-[#7CB342]"
-                      : isActive && isTagging
-                        ? "animate-pulse bg-primary"
-                        : isActive
-                          ? "bg-primary"
-                          : "bg-transparent",
+              <div className="relative flex size-3.5 shrink-0 items-center justify-center">
+                {state === "done" ? (
+                  <CheckCircle2Icon className="size-3.5 text-[#7CB342]" />
+                ) : state === "failed" ? (
+                  <XCircleIcon className="size-3.5 text-destructive" />
+                ) : showSpinner ? (
+                  <Loader2 className="size-3 animate-spin text-primary" />
+                ) : (
+                  <CircleIcon
+                    className={cn(
+                      "size-3.5",
+                      isActive ? "text-foreground" : "text-muted-foreground/70",
+                    )}
+                  />
                 )}
-                style={{ width: `${fill}%` }}
-              />
-            </div>
+              </div>
+              <span className="min-w-0 flex-1 truncate leading-tight">
+                {stage.label}
+                {isActive &&
+                resolved.isTranscoding &&
+                resolved.percent != null ? (
+                  <span className="ml-1 font-mono text-[10px] tabular-nums text-muted-foreground">
+                    {Math.round(resolved.percent)}%
+                  </span>
+                ) : null}
+              </span>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
-      {!compact ? (
-        <div className="flex gap-0.5">
-          {STAGES.map((stage, index) => {
-            const isDone = ready || index < stepIndex;
-            const isActive = !ready && !failed && index === stepIndex;
-            return (
-              <span
-                key={stage.key}
-                className={cn(
-                  "min-w-0 flex-1 truncate text-center text-[10px] leading-tight",
-                  failed && index === stepIndex
-                    ? "font-medium text-destructive"
-                    : isDone || ready
-                      ? "font-medium text-[#3d5c22] dark:text-[#b8e086]"
-                      : isActive
-                        ? "font-medium text-foreground"
-                        : "text-muted-foreground",
-                )}
-              >
-                {stage.label}
-              </span>
-            );
-          })}
-        </div>
-      ) : (
-        <div className="flex gap-0.5">
-          {STAGES.map((stage, index) => {
-            const isDone = ready || index < stepIndex;
-            const isActive = !ready && !failed && index === stepIndex;
-            return (
-              <span
-                key={stage.key}
-                className={cn(
-                  "min-w-0 flex-1 truncate text-center text-[9px] leading-tight",
-                  failed && index === stepIndex
-                    ? "text-destructive"
-                    : isDone || ready
-                      ? "text-[#3d5c22]/80 dark:text-[#b8e086]/80"
-                      : isActive
-                        ? "text-foreground"
-                        : "text-muted-foreground/80",
-                )}
-              >
-                {stage.label}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {timedOut && !ready && !failed ? (
-        <p className="text-[11px] text-muted-foreground">
+      {timedOut && !resolved.ready && !resolved.failed ? (
+        <p className="text-[10px] text-muted-foreground">
           Đang chậm — thử tải lại
         </p>
       ) : null}
+
+      <span className="sr-only">
+        {label}
+        {activeIndex >= 0 ? `, bước ${activeIndex + 1}` : null}
+      </span>
     </div>
   );
 }

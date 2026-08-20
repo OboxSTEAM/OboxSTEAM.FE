@@ -11,6 +11,7 @@ import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas
 
 export const paginatedClassesSchema = createPaginatedSchema(classSchema);
 export const paginatedClassSessionsSchema = createPaginatedSchema(classSessionSchema);
+export const classSessionListValueSchema = createApiValueSchema(z.array(classSessionSchema));
 export const paginatedSessionAttendanceSchema =
   createPaginatedSchema(sessionAttendanceSchema);
 
@@ -19,6 +20,7 @@ export const classValueSchema = createApiValueSchema(classSchema);
 export const classWithStudentsValueSchema = createApiValueSchema(classSchema);
 export const classWithSessionsValueSchema = createApiValueSchema(classWithSessionsSchema);
 export const classSessionsListValueSchema = createApiValueSchema(paginatedClassSessionsSchema);
+export const generateClassSessionsValueSchema = classSessionListValueSchema;
 export const classSessionValueSchema = createApiValueSchema(classSessionSchema);
 export const classSessionWithStudentsValueSchema = createApiValueSchema(
   classSessionWithStudentsSchema,
@@ -39,6 +41,9 @@ export const getClassWithSessionsResponseSchema = createApiResponseSchema(
 );
 export const getClassSessionsResponseSchema = createApiResponseSchema(
   classSessionsListValueSchema,
+);
+export const generateClassSessionsResponseSchema = createApiResponseSchema(
+  generateClassSessionsValueSchema,
 );
 export const classSessionResponseSchema = createApiResponseSchema(classSessionValueSchema);
 export const getClassSessionWithStudentsResponseSchema = createApiResponseSchema(
@@ -72,6 +77,11 @@ export type GetClassWithSessionsResult = GetClassWithSessionsResponse["value"];
 
 export type GetClassSessionsResponse = z.infer<typeof getClassSessionsResponseSchema>;
 export type GetClassSessionsResult = GetClassSessionsResponse["value"];
+
+export type GenerateClassSessionsResponse = z.infer<
+  typeof generateClassSessionsResponseSchema
+>;
+export type GenerateClassSessionsResult = GenerateClassSessionsResponse["value"];
 
 export type ClassSessionResponse = z.infer<typeof classSessionResponseSchema>;
 export type ClassSessionResult = ClassSessionResponse["value"];

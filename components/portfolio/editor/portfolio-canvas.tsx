@@ -7,6 +7,7 @@ import {
   useMemo,
   useState,
   type CSSProperties,
+  type DragEvent,
   type ReactNode,
 } from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
@@ -45,6 +46,10 @@ import {
   PortfolioReveal,
   type GalleryImage,
 } from "@/components/portfolio/reactbits/slots";
+import {
+  PortfolioVideoGallery,
+  type GalleryVideo,
+} from "@/components/portfolio/reactbits/video-gallery";
 import { RichText } from "@/components/portfolio/render/rich-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,6 +68,7 @@ import type {
   PortfolioItem,
   PortfolioItemType,
   PortfolioMediaAsset,
+  PortfolioMediaUpload,
   PortfolioSection,
   PortfolioSectionKind,
   PortfolioTheme,
@@ -73,6 +79,11 @@ import {
 } from "@/lib/api/entities/portfolio";
 import { getReadableTextColor, relativeLuminance } from "@/lib/portfolio/color-utils";
 import { editorChrome } from "@/lib/portfolio/editor-chrome";
+import {
+  hasGalleryDragTypes,
+  readClassMediaDragData,
+  readPortfolioMediaDragData,
+} from "@/lib/portfolio/gallery-dnd";
 import {
   fromDateInputValue,
   formatPortfolioItemDateRange,
@@ -90,10 +101,13 @@ import { hasPortfolioHtmlTags } from "@/lib/portfolio/sanitize-html";
 import {
   GALLERY_SLOT_OPTIONS,
   HERO_TEXT_SLOT_OPTIONS,
+  VIDEO_SLOT_OPTIONS,
   getPresetPersonality,
   resolvePortfolioTheme,
+  resolveVideoSlotId,
   type GallerySlotId,
   type ResolvedPortfolioTheme,
+  type VideoSlotId,
 } from "@/lib/portfolio/theme-presets";
 import { cn } from "@/lib/utils";
 
@@ -162,6 +176,16 @@ export type PortfolioCanvasProps = {
   /** Persist section order after a drop. */
   onCommitReorderSections?: () => void;
   onToggleSectionVisibility?: (section: PortfolioSection, visible: boolean) => void;
+  /** Drop class-gallery media onto a Gallery section (import + attach). */
+  onImportClassGalleryToSection?: (
+    sectionId: string,
+    mediaAssetIds: string[],
+  ) => Promise<void>;
+  /** Drop existing portfolio media onto a Gallery section. */
+  onAttachPortfolioMediaToSection?: (
+    sectionId: string,
+    assets: PortfolioMediaUpload[],
+  ) => Promise<void>;
 };
 
 function hasHtmlTags(value: string): boolean {
@@ -292,6 +316,11 @@ function resolveGalleryVariant(
   return resolved.gallery;
 }
 
+function resolveVideoVariant(section: PortfolioSection): VideoSlotId {
+  const settings = parseSectionSettingsJson(section.settingsJson);
+  return resolveVideoSlotId(settings?.videoVariant);
+}
+
 /** Mini preview tiles — mirrors design-panel SelectBox pattern. */
 function GalleryStylePreview({
   id,
@@ -342,13 +371,65 @@ function GalleryStylePreview({
   );
 }
 
+function VideoStylePreview({
+  id,
+  isDark = false,
+}: {
+  id: VideoSlotId;
+  isDark?: boolean;
+}) {
+  const well = isDark ? "bg-[#2a2a2a]" : "bg-[#F5F5F0]";
+  if (id === "FeaturedReel") {
+    return (
+      <div className={cn("flex h-10 flex-col gap-0.5 overflow-hidden rounded-lg p-1", well)}>
+        <span className="h-5 w-full rounded-sm bg-[#2D2D2D]/80" />
+        <div className="flex flex-1 gap-0.5">
+          <span className="flex-1 rounded-sm bg-[#4FC3F7]/35" />
+          <span className="flex-1 rounded-sm bg-[#4FC3F7]/25" />
+          <span className="flex-1 rounded-sm bg-[#4FC3F7]/20" />
+        </div>
+      </div>
+    );
+  }
+  if (id === "Filmstrip") {
+    return (
+      <div className={cn("flex h-10 items-center gap-1 overflow-hidden rounded-lg px-1", well)}>
+        <span className="h-6 w-10 shrink-0 rounded-sm bg-[#2D2D2D]/70" />
+        <span className="h-7 w-12 shrink-0 rounded-sm bg-[#2D2D2D]/90" />
+        <span className="h-6 w-10 shrink-0 rounded-sm bg-[#2D2D2D]/70" />
+      </div>
+    );
+  }
+  return (
+    <div className={cn("grid h-10 grid-cols-2 gap-0.5 overflow-hidden rounded-lg p-1", well)}>
+      {[0, 1, 2, 3].map((i) => (
+        <span key={i} className="rounded-sm bg-[#2D2D2D]/55" />
+      ))}
+    </div>
+  );
+}
+
 function sectionMediaToGalleryImages(
   mediaAssets: PortfolioMediaAsset[] | null | undefined,
 ): GalleryImage[] {
   return (mediaAssets ?? [])
-    .filter((asset) => Boolean(asset.url))
+    .filter((asset) => Boolean(asset.url) && asset.type !== "Video")
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .map((asset) => ({
+      src: asset.url!,
+      alt: asset.caption ?? undefined,
+      caption: asset.caption,
+    }));
+}
+
+function sectionMediaToGalleryVideos(
+  mediaAssets: PortfolioMediaAsset[] | null | undefined,
+): GalleryVideo[] {
+  return (mediaAssets ?? [])
+    .filter((asset) => Boolean(asset.url) && asset.type === "Video")
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .map((asset) => ({
+      id: asset.id,
       src: asset.url!,
       alt: asset.caption ?? undefined,
       caption: asset.caption,
@@ -1439,14 +1520,20 @@ function CustomSectionEditable({
   section,
   resolved,
   onUpdateSection,
+  onImportClassGalleryToSection,
+  onAttachPortfolioMediaToSection,
 }: {
   section: PortfolioSection;
   resolved: ResolvedPortfolioTheme;
   onUpdateSection?: PortfolioCanvasProps["onUpdateSection"];
+  onImportClassGalleryToSection?: PortfolioCanvasProps["onImportClassGalleryToSection"];
+  onAttachPortfolioMediaToSection?: PortfolioCanvasProps["onAttachPortfolioMediaToSection"];
 }) {
   const dimmed = !section.isVisible;
   const [editingAssetId, setEditingAssetId] = useState<string | null>(null);
   const [draftCaption, setDraftCaption] = useState("");
+  const [isDropActive, setIsDropActive] = useState(false);
+  const [isDropping, setIsDropping] = useState(false);
 
   const patch = (next: Partial<PortfolioSection>) => {
     onUpdateSection?.(section.id, next);
@@ -1460,16 +1547,36 @@ function CustomSectionEditable({
     [section.mediaAssets],
   );
 
+  const imageAssets = useMemo(
+    () => sortedAssets.filter((asset) => asset.type !== "Video"),
+    [sortedAssets],
+  );
+
+  const videoAssets = useMemo(
+    () => sortedAssets.filter((asset) => asset.type === "Video"),
+    [sortedAssets],
+  );
+
   const editingAsset =
     editingAssetId == null
       ? null
       : (sortedAssets.find((asset) => asset.id === editingAssetId) ?? null);
 
-  const openCaptionEditor = (index: number) => {
-    const asset = sortedAssets[index];
+  const openCaptionEditor = (assetId: string) => {
+    const asset = sortedAssets.find((item) => item.id === assetId);
     if (!asset) return;
     setEditingAssetId(asset.id);
     setDraftCaption(asset.caption ?? "");
+  };
+
+  const openImageCaptionEditor = (index: number) => {
+    const asset = imageAssets[index];
+    if (asset) openCaptionEditor(asset.id);
+  };
+
+  const openVideoCaptionEditor = (index: number) => {
+    const asset = videoAssets[index];
+    if (asset) openCaptionEditor(asset.id);
   };
 
   const closeCaptionEditor = () => {
@@ -1497,6 +1604,68 @@ function CustomSectionEditable({
       ),
     });
     closeCaptionEditor();
+  };
+
+  const removeAssetById = (assetId: string) => {
+    patch({
+      mediaAssets: (section.mediaAssets ?? []).filter(
+        (asset) => asset.id !== assetId,
+      ),
+    });
+    if (editingAssetId === assetId) closeCaptionEditor();
+  };
+
+  const removeImageAt = (index: number) => {
+    const asset = imageAssets[index];
+    if (asset) removeAssetById(asset.id);
+  };
+
+  const removeVideoAt = (index: number) => {
+    const asset = videoAssets[index];
+    if (asset) removeAssetById(asset.id);
+  };
+
+  const handleGalleryDrop = async (
+    event: DragEvent<HTMLDivElement>,
+  ) => {
+    event.preventDefault();
+    setIsDropActive(false);
+    if (section.kind !== "Gallery" || isDropping) return;
+
+    const classPayload = readClassMediaDragData(event.dataTransfer);
+    if (classPayload && onImportClassGalleryToSection) {
+      setIsDropping(true);
+      try {
+        await onImportClassGalleryToSection(
+          section.id,
+          classPayload.mediaAssetIds,
+        );
+      } finally {
+        setIsDropping(false);
+      }
+      return;
+    }
+
+    const portfolioPayload = readPortfolioMediaDragData(event.dataTransfer);
+    if (portfolioPayload && onAttachPortfolioMediaToSection) {
+      setIsDropping(true);
+      try {
+        await onAttachPortfolioMediaToSection(
+          section.id,
+          portfolioPayload.assets.map((asset) => ({
+            id: asset.id,
+            url: asset.url,
+            type: asset.type,
+            fileName: null,
+            contentType: null,
+            sizeBytes: 0,
+            createdAt: "",
+          })),
+        );
+      } finally {
+        setIsDropping(false);
+      }
+    }
   };
 
   return (
@@ -1531,7 +1700,43 @@ function CustomSectionEditable({
           ) : null}
 
           {section.kind === "Gallery" ? (
-            <div className="space-y-4">
+            <div
+              className={cn(
+                "space-y-4 rounded-2xl transition-[box-shadow,background-color]",
+                isDropActive &&
+                  "bg-[#4FC3F7]/10 ring-2 ring-[#4FC3F7]/60 ring-offset-2",
+                isDropping && "opacity-70",
+              )}
+              onDragEnter={(event) => {
+                if (!hasGalleryDragTypes([...event.dataTransfer.types])) return;
+                event.preventDefault();
+                setIsDropActive(true);
+              }}
+              onDragOver={(event) => {
+                if (!hasGalleryDragTypes([...event.dataTransfer.types])) return;
+                event.preventDefault();
+                event.dataTransfer.dropEffect = "copy";
+                setIsDropActive(true);
+              }}
+              onDragLeave={(event) => {
+                if (event.currentTarget.contains(event.relatedTarget as Node)) {
+                  return;
+                }
+                setIsDropActive(false);
+              }}
+              onDrop={(event) => {
+                void handleGalleryDrop(event);
+              }}
+            >
+              {isDropActive ? (
+                <p
+                  className={cn(
+                    "rounded-xl border border-dashed border-[#4FC3F7] px-3 py-2 text-center text-xs font-semibold text-[#0f7cad]",
+                  )}
+                >
+                  Thả để gắn vào thư viện ảnh này
+                </p>
+              ) : null}
               <div className="space-y-2">
                 <p
                   className={cn(
@@ -1539,7 +1744,7 @@ function CustomSectionEditable({
                     resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]",
                   )}
                 >
-                  Kiểu thư viện
+                  Kiểu thư viện ảnh
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
                   {GALLERY_SLOT_OPTIONS.map((option) => {
@@ -1595,33 +1800,120 @@ function CustomSectionEditable({
                 </div>
               </div>
 
+              <div className="space-y-2">
+                <p
+                  className={cn(
+                    "text-[11px] font-semibold uppercase tracking-[0.14em]",
+                    resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]",
+                  )}
+                >
+                  Kiểu thư viện video
+                </p>
+                <div className="grid grid-cols-3 gap-2">
+                  {VIDEO_SLOT_OPTIONS.map((option) => {
+                    const selected =
+                      resolveVideoVariant(section) === option.id;
+                    return (
+                      <button
+                        key={option.id}
+                        type="button"
+                        aria-pressed={selected}
+                        aria-label={option.label}
+                        onClick={() => {
+                          const current =
+                            parseSectionSettingsJson(section.settingsJson) ??
+                            {};
+                          patch({
+                            settingsJson: serializeSectionSettingsJson({
+                              ...current,
+                              videoVariant: option.id,
+                            }),
+                          });
+                        }}
+                        className={cn(
+                          "rounded-2xl border p-2 text-left transition-colors outline-none",
+                          "focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
+                          "active:scale-[0.98]",
+                          selected
+                            ? resolved.isDark
+                              ? "border-[#4FC3F7] bg-[rgba(79,195,247,0.14)]"
+                              : "border-[#4FC3F7] bg-[rgba(79,195,247,0.08)]"
+                            : resolved.isDark
+                              ? "border-[#FAFAF5]/12 bg-[#1a1a1a]/80 hover:border-[#FAFAF5]/22 hover:bg-[#222]"
+                              : "border-[#E5E5E0] bg-white hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
+                        )}
+                      >
+                        <VideoStylePreview
+                          id={option.id}
+                          isDark={resolved.isDark}
+                        />
+                        <p
+                          className={cn(
+                            "mt-1.5 truncate text-[11px] font-semibold tracking-tight",
+                            resolved.isDark
+                              ? "text-[#FAFAF5]/90"
+                              : "text-[#2D2D2D]",
+                          )}
+                        >
+                          {option.label}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
               <MediaUploader
                 assets={section.mediaAssets}
                 onChange={(assets) => patch({ mediaAssets: assets })}
-                label="Ảnh thư viện"
+                label="media thư viện"
                 isDark={resolved.isDark}
                 hideAttachedList
               />
 
-              {sortedAssets.length > 0 ? (
+              {imageAssets.length > 0 ? (
                 <p
                   className={cn(
                     "text-[11px]",
                     resolved.isDark ? "text-[#FAFAF5]/45" : "text-[#8A8A84]",
                   )}
                 >
-                  Nhấp vào ảnh để sửa chú thích hoặc gỡ ảnh
+                  Nhấp ảnh để sửa chú thích · dùng ✕ để gỡ
                 </p>
               ) : null}
 
-              <PortfolioGallery
-                slot={resolveGalleryVariant(section, resolved)}
-                images={sectionMediaToGalleryImages(section.mediaAssets)}
-                onImageActivate={openCaptionEditor}
-                isDark={resolved.isDark}
-                primaryColor={resolved.primaryColor}
-                backgroundStyle={resolved.backgroundStyle}
-              />
+              {imageAssets.length > 0 ? (
+                <PortfolioGallery
+                  slot={resolveGalleryVariant(section, resolved)}
+                  images={sectionMediaToGalleryImages(section.mediaAssets)}
+                  onImageActivate={openImageCaptionEditor}
+                  onRemove={removeImageAt}
+                  isDark={resolved.isDark}
+                  primaryColor={resolved.primaryColor}
+                  backgroundStyle={resolved.backgroundStyle}
+                />
+              ) : null}
+
+              {videoAssets.length > 0 ? (
+                <div className="space-y-2">
+                  <p
+                    className={cn(
+                      "text-[11px]",
+                      resolved.isDark ? "text-[#FAFAF5]/45" : "text-[#8A8A84]",
+                    )}
+                  >
+                    Nhấp video để xem lớn · &quot;Sửa chú thích&quot; để chỉnh ·
+                    ✕ để gỡ
+                  </p>
+                  <PortfolioVideoGallery
+                    slot={resolveVideoVariant(section)}
+                    videos={sectionMediaToGalleryVideos(section.mediaAssets)}
+                    isDark={resolved.isDark}
+                    onVideoEdit={openVideoCaptionEditor}
+                    onRemove={removeVideoAt}
+                  />
+                </div>
+              ) : null}
 
               <Dialog
                 open={editingAsset != null}
@@ -1632,20 +1924,34 @@ function CustomSectionEditable({
                 <DialogPopup className="max-w-sm">
                   <DialogClose />
                   <DialogHeader>
-                    <DialogTitle>Chỉnh ảnh</DialogTitle>
+                    <DialogTitle>
+                      {editingAsset?.type === "Video"
+                        ? "Chỉnh video"
+                        : "Chỉnh ảnh"}
+                    </DialogTitle>
                     <DialogDescription>
-                      Cập nhật chú thích hiển thị trên thư viện, hoặc gỡ ảnh
+                      Cập nhật chú thích hiển thị trên thư viện, hoặc gỡ media
                       khỏi phần này.
                     </DialogDescription>
                   </DialogHeader>
 
                   {editingAsset?.url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={editingAsset.url}
-                      alt=""
-                      className="mt-1 aspect-video w-full rounded-xl object-cover"
-                    />
+                    editingAsset.type === "Video" ? (
+                      <video
+                        src={editingAsset.url}
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="mt-1 aspect-video w-full rounded-xl bg-black object-cover"
+                      />
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={editingAsset.url}
+                        alt=""
+                        className="mt-1 aspect-video w-full rounded-xl object-cover"
+                      />
+                    )
                   ) : null}
 
                   <div className="space-y-2">
@@ -1654,7 +1960,7 @@ function CustomSectionEditable({
                       id="gallery-caption"
                       value={draftCaption}
                       onChange={(event) => setDraftCaption(event.target.value)}
-                      placeholder="Mô tả ngắn cho ảnh…"
+                      placeholder="Mô tả ngắn…"
                       className="rounded-xl"
                       autoFocus
                       onKeyDown={(event) => {
@@ -1674,7 +1980,7 @@ function CustomSectionEditable({
                       onClick={removeEditingAsset}
                     >
                       <Trash2 className="size-3.5" />
-                      Gỡ ảnh
+                      Gỡ
                     </Button>
                     <div className="flex gap-2">
                       <Button
@@ -1972,6 +2278,8 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
     onCommitReorderSections,
     onToggleSectionVisibility,
     onAddSection,
+    onImportClassGalleryToSection,
+    onAttachPortfolioMediaToSection,
   } = props;
 
   const reduceMotion = useReducedMotion() ?? false;
@@ -2068,6 +2376,8 @@ export function PortfolioCanvas(props: PortfolioCanvasProps) {
             section={section}
             resolved={resolved}
             onUpdateSection={onUpdateSection}
+            onImportClassGalleryToSection={onImportClassGalleryToSection}
+            onAttachPortfolioMediaToSection={onAttachPortfolioMediaToSection}
           />
         );
       default:

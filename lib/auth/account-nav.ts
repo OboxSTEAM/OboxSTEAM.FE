@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 
 import {
-  isManagerRole,
+  canAccessManagerArea,
+  isAdminRole,
   isMentorRole,
   isParentRole,
-  normalizeAccountRole,
 } from "@/lib/auth/roles";
 
 export type AccountNavItem = {
@@ -89,7 +89,7 @@ export const MENTOR_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
 
 export const MANAGER_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   {
-    label: "Dashboard",
+    label: "Tổng quan",
     href: "/manager",
     icon: Shield,
     description: "Tổng quan quản lý",
@@ -107,7 +107,7 @@ export const ACCOUNT_NAV_ITEMS = STUDENT_ACCOUNT_NAV_ITEMS;
 
 export function getAccountNavItems(role?: string | null): AccountNavItem[] {
   if (isParentRole(role)) return PARENT_ACCOUNT_NAV_ITEMS;
-  if (isManagerRole(role)) return MANAGER_ACCOUNT_NAV_ITEMS;
+  if (canAccessManagerArea(role)) return MANAGER_ACCOUNT_NAV_ITEMS;
   if (isMentorRole(role)) return MENTOR_ACCOUNT_NAV_ITEMS;
   return STUDENT_ACCOUNT_NAV_ITEMS;
 }
@@ -115,8 +115,9 @@ export function getAccountNavItems(role?: string | null): AccountNavItem[] {
 /** Short role label for header / account menu when name is unavailable. */
 export function getAccountRoleLabel(role?: string | null): string {
   if (isParentRole(role)) return "Phụ huynh";
-  if (isManagerRole(role)) return "Quản lý";
-  if (normalizeAccountRole(role) === "Mentor") return "Mentor";
+  if (isAdminRole(role)) return "Quản trị";
+  if (canAccessManagerArea(role)) return "Quản lý";
+  if (isMentorRole(role)) return "Mentor";
   return "Học viên";
 }
 

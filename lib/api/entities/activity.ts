@@ -28,7 +28,6 @@ export const activitySchema = z.object({
   location: z.string().nullable().optional(),
   startTime: z.string().nullable().optional(),
   endTime: z.string().nullable().optional(),
-  maxCapacity: z.number().nullable().optional(),
   requireQrCheckin: z.preprocess((val) => val === true, z.boolean()),
   requireMediaEvidence: z.preprocess((val) => val === true, z.boolean()),
   createdAt: z.string().nullable().optional(),

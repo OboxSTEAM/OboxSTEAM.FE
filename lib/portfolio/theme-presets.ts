@@ -46,6 +46,9 @@ export type GallerySlotId =
   | "Carousel"
   | "Grid";
 
+/** Portfolio video showcase layouts (Gallery section video assets). */
+export type VideoSlotId = "VideoGrid" | "Filmstrip" | "FeaturedReel";
+
 export type RevealSlotId = "AnimatedContent" | "FadeContent" | "None";
 
 export type ThemePreset = {
@@ -283,6 +286,25 @@ export const GALLERY_SLOT_OPTIONS: Array<{ id: GallerySlotId; label: string }> =
   { id: "Carousel", label: "Carousel" },
   { id: "Grid", label: "Grid" },
 ];
+
+export const VIDEO_SLOT_OPTIONS: Array<{ id: VideoSlotId; label: string }> = [
+  { id: "VideoGrid", label: "Grid" },
+  { id: "Filmstrip", label: "Filmstrip" },
+  { id: "FeaturedReel", label: "Featured" },
+];
+
+export const DEFAULT_VIDEO_SLOT: VideoSlotId = "FeaturedReel";
+
+export function isVideoSlotId(value: string | null | undefined): value is VideoSlotId {
+  return VIDEO_SLOT_OPTIONS.some((option) => option.id === value);
+}
+
+export function resolveVideoSlotId(
+  value: string | null | undefined,
+  fallback: VideoSlotId = DEFAULT_VIDEO_SLOT,
+): VideoSlotId {
+  return isVideoSlotId(value) ? value : fallback;
+}
 
 export const REVEAL_SLOT_OPTIONS: Array<{ id: RevealSlotId; label: string }> = [
   { id: "AnimatedContent", label: "Animated" },

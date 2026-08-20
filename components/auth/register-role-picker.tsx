@@ -1,7 +1,7 @@
 "use client";
 
 import type { LucideIcon } from "lucide-react";
-import { GraduationCap, Presentation, Users } from "lucide-react";
+import { GraduationCap, Users } from "lucide-react";
 
 import type { RegisterRole } from "@/lib/api/entities/user";
 import { cn } from "@/lib/utils";
@@ -26,12 +26,6 @@ const REGISTER_ROLE_OPTIONS: {
     label: "Phụ huynh",
     hint: "Theo dõi tiến độ",
     icon: Users,
-  },
-  {
-    value: "Mentor",
-    label: "Mentor",
-    hint: "Giảng dạy STEAM",
-    icon: Presentation,
   },
 ];
 
@@ -58,7 +52,7 @@ export function RegisterRolePicker({
         role="radiogroup"
         aria-labelledby="register-role-label"
         aria-invalid={error ? "true" : undefined}
-        className="grid grid-cols-3 gap-2"
+        className="grid grid-cols-2 gap-2"
         onBlur={onBlur}
       >
         {REGISTER_ROLE_OPTIONS.map((option) => {

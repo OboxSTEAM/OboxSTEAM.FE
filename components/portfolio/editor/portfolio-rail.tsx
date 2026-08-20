@@ -1,11 +1,16 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Link2, Palette, LayoutList, X } from "lucide-react";
+import { Clapperboard, Images, Link2, Palette, LayoutList, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
-export type PortfolioPanelId = "design" | "items" | "links";
+export type PortfolioPanelId =
+  | "design"
+  | "items"
+  | "links"
+  | "gallery"
+  | "highlight";
 
 const RAIL_ITEMS: Array<{
   id: PortfolioPanelId;
@@ -14,9 +19,10 @@ const RAIL_ITEMS: Array<{
 }> = [
   { id: "design", label: "Thiết kế", icon: Palette },
   { id: "items", label: "Mục", icon: LayoutList },
+  { id: "gallery", label: "Thư viện", icon: Images },
+  { id: "highlight", label: "Highlight", icon: Clapperboard },
   { id: "links", label: "Liên kết", icon: Link2 },
 ];
-
 type PortfolioRailProps = {
   active: PortfolioPanelId | null;
   onSelect: (panel: PortfolioPanelId | null) => void;

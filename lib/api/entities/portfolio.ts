@@ -46,7 +46,7 @@ export const portfolioDensitySchema = z.enum(PORTFOLIO_DENSITY_VALUES);
 export const portfolioBackgroundStyleSchema = z.enum(PORTFOLIO_BACKGROUND_STYLE_VALUES);
 export const portfolioCardStyleSchema = z.enum(PORTFOLIO_CARD_STYLE_VALUES);
 export const portfolioItemSpanSchema = z.enum(PORTFOLIO_ITEM_SPAN_VALUES);
-export const portfolioMediaTypeSchema = z.enum(["Image"]);
+export const portfolioMediaTypeSchema = z.enum(["Image", "Video"]);
 export const portfolioSectionKindSchema = z.enum([
   "ProjectsGroup",
   "ActivitiesGroup",
@@ -74,7 +74,10 @@ export const portfolioThemeSlotOverridesSchema = z
 /** Gallery (and future) settings stored in `section.settingsJson`. */
 export const portfolioSectionSettingsSchema = z
   .object({
+    /** Image gallery layout (`GALLERY_SLOT_OPTIONS`). */
     variant: z.string().optional(),
+    /** Video showcase layout (`VIDEO_SLOT_OPTIONS`). */
+    videoVariant: z.string().optional(),
   })
   .passthrough();
 
@@ -219,6 +222,19 @@ export const portfolioSectionSchema = z.object({
   updatedAt: z.string().nullable(),
 });
 
+/**
+ * Shared result for class-gallery and highlight-reel media imports —
+ * copied assets plus optional updated item/section when appended to a gallery.
+ */
+export const importClassGalleryMediaResultSchema = z.object({
+  assets: z
+    .array(portfolioMediaUploadSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  item: portfolioItemSchema.nullish().transform((value) => value ?? null),
+  section: portfolioSectionSchema.nullish().transform((value) => value ?? null),
+});
+
 export const portfolioSchema = z.object({
   id: z.string().uuid(),
   code: z.string().nullable(),
@@ -282,6 +298,9 @@ export type PortfolioLink = z.infer<typeof portfolioLinkSchema>;
 export type PortfolioAppendixItem = z.infer<typeof portfolioAppendixItemSchema>;
 export type PortfolioMediaAsset = z.infer<typeof portfolioMediaAssetSchema>;
 export type PortfolioMediaUpload = z.infer<typeof portfolioMediaUploadSchema>;
+export type ImportClassGalleryMediaResultData = z.infer<
+  typeof importClassGalleryMediaResultSchema
+>;
 export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 export type PortfolioSection = z.infer<typeof portfolioSectionSchema>;
 export type Portfolio = z.infer<typeof portfolioSchema>;

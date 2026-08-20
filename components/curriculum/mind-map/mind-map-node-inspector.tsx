@@ -171,10 +171,6 @@ export function MindMapNodeInspector({
                   ACTIVITY_TYPE_LABELS[node.activity.activityInfo.activityType]
                 }
               />
-              <MetaRow
-                label="Lịch học"
-                value={node.activity.activityInfo.schedulingMode}
-              />
               {node.activity.activityInfo.material?.materialName ? (
                 <MetaRow
                   label="Tài liệu"

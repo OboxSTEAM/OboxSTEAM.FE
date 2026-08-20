@@ -10,20 +10,26 @@ export {
 } from "./auth";
 export {
   createExpertSchema,
+  expertDegreeIdParamSchema,
+  expertDegreeRequestSchema,
   expertIdParamSchema,
   expertListQuerySchema,
   expertProgramAssignmentSchema,
   expertProgramInputSchema,
   expertProgramParamSchema,
+  expertPublicationIdParamSchema,
+  expertPublicationRequestSchema,
   expertSortBySchema,
   expertUpsertSchema,
   updateExpertSchema,
   type CreateExpertInput,
+  type ExpertDegreeRequestInput,
   type ExpertIdParam,
   type ExpertListQuery,
   type ExpertProgramAssignmentInput,
   type ExpertProgramInput,
   type ExpertProgramParam,
+  type ExpertPublicationRequestInput,
   type UpdateExpertInput,
 } from "./experts";
 export {
@@ -72,9 +78,13 @@ export {
 export {
   approveParentLinkSchema,
   completeParentProfileSchema,
+  parentChildProgressionParamsSchema,
+  parentEnrollmentProgressionParamsSchema,
   parentMagicLoginLinkParamsSchema,
   parentMagicLoginSchema,
   requestParentLinkSchema,
+  type ParentChildProgressionParams,
+  type ParentEnrollmentProgressionParams,
 } from "./parent";
 export {
   activityDetailQuerySchema,
@@ -94,11 +104,39 @@ export {
 } from "./materials";
 export {
   checkoutPaymentSchema,
+  checkoutRetakePaymentSchema,
   parentCheckoutLinkParamsSchema,
   parentCheckoutSchema,
   paymentIdParamSchema,
   requestParentPaymentSchema,
+  requestParentRetakePaymentSchema,
 } from "./payments";
+export {
+  invoiceIdParamSchema,
+  invoicePaymentIdParamSchema,
+  type InvoiceIdParam,
+  type InvoicePaymentIdParam,
+} from "./invoices";
+export {
+  approveAssessmentRecoveryRequestSchema,
+  assessmentRecoveryRequestIdParamSchema,
+  createAssessmentRecoveryRequestSchema,
+  rejectAssessmentRecoveryRequestSchema,
+  type ApproveAssessmentRecoveryRequestInput,
+  type AssessmentRecoveryRequestIdParam,
+  type CreateAssessmentRecoveryRequestInput,
+  type RejectAssessmentRecoveryRequestInput,
+} from "./assessment-recovery-requests";
+export {
+  assignTargetClassRedeliveryRequestSchema,
+  classRedeliveryRequestIdParamSchema,
+  createClassRedeliveryRequestSchema,
+  rejectClassRedeliveryRequestSchema,
+  type AssignTargetClassRedeliveryRequestInput,
+  type ClassRedeliveryRequestIdParam,
+  type CreateClassRedeliveryRequestInput,
+  type RejectClassRedeliveryRequestInput,
+} from "./class-redelivery-requests";
 export {
   certificateCodeParamSchema,
   certificateIdParamSchema,
@@ -211,6 +249,7 @@ export {
   assignmentIdParamSchema,
   assignmentListQuerySchema,
   assignmentSubmissionsQuerySchema,
+  assignmentFormSchema,
   assignmentTypeInputSchema,
   createAssignmentSchema,
   gradeAssignmentSubmissionSchema,
@@ -224,6 +263,7 @@ export {
   type AssignmentIdParam,
   type AssignmentListQuery,
   type AssignmentSubmissionsQuery,
+  type AssignmentFormValues,
   type AssignmentTypeInput,
   type CreateAssignmentInput,
   type GradeAssignmentSubmissionInput,
@@ -238,6 +278,8 @@ export {
 export {
   createPortfolioItemSchema,
   createPortfolioSectionSchema,
+  importClassGalleryMediaSchema,
+  importHighlightReelMediaSchema,
   portfolioItemIdParamSchema,
   portfolioMediaAssetRefSchema,
   portfolioMediaIdParamSchema,
@@ -253,6 +295,8 @@ export {
   updatePortfolioSubdomainSchema,
   type CreatePortfolioItemInput,
   type CreatePortfolioSectionInput,
+  type ImportClassGalleryMediaInput,
+  type ImportHighlightReelMediaInput,
   type PortfolioItemIdParam,
   type PortfolioMediaAssetRef,
   type PortfolioMediaIdParam,
@@ -270,12 +314,10 @@ export {
 export {
   gradeResearchSubmissionSchema,
   researchSubmissionIdParamSchema,
-  startResearchSubmissionSchema,
   submitResearchSubmissionSchema,
   uploadResearchSubmissionQuerySchema,
   type GradeResearchSubmissionInput,
   type ResearchSubmissionIdParam,
-  type StartResearchSubmissionInput,
   type SubmitResearchSubmissionInput,
   type UploadResearchSubmissionQuery,
 } from "./research-submissions";
@@ -293,17 +335,49 @@ export {
 } from "./notifications";
 export {
   addMediaTagSchema,
-  mediaClassSessionParamSchema,
+  classGalleryClassIdParamSchema,
+  classGalleryQuerySchema,
   mediaIdParamSchema,
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
+  myGalleryQuerySchema,
   updateMediaTagVerificationSchema,
   type AddMediaTagInput,
-  type MediaClassSessionParam,
+  type ClassGalleryClassIdParam,
+  type ClassGalleryQuery,
   type MediaIdParam,
   type MediaListQuery,
   type MediaTagParams,
   type MediaUploadQuery,
+  type MyGalleryQuery,
   type UpdateMediaTagVerificationInput,
 } from "./media";
+export {
+  forceCompleteActivitySchema,
+  mentorCompleteActivityBulkSchema,
+  type ForceCompleteActivityInput,
+  type MentorCompleteActivityBulkInput,
+} from "./activity-progresses";
+export {
+  classQuizQuestionParamsSchema,
+  classQuizSetParamsSchema,
+  updateClassQuizQuestionSchema,
+  type ClassQuizQuestionParams,
+  type ClassQuizSetParams,
+  type UpdateClassQuizQuestionInput,
+} from "./class-quiz-set";
+export {
+  addHighlightSegmentSchema,
+  createHighlightStackSchema,
+  highlightStackIdParamSchema,
+  highlightStackItemParamsSchema,
+  highlightStacksQuerySchema,
+  trimHighlightVideoSchema,
+  type AddHighlightSegmentInput,
+  type CreateHighlightStackInput,
+  type HighlightStackIdParam,
+  type HighlightStackItemParams,
+  type HighlightStacksQuery,
+  type TrimHighlightVideoInput,
+} from "./highlight-video";

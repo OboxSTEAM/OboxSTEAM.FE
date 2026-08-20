@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/curriculum/mind-map";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
+import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 
 import { MindMapCanvas } from "./mind-map-canvas";
 import { MindMapNodeInspector } from "./mind-map-node-inspector";
@@ -22,6 +23,7 @@ import { MindMapSkeleton } from "./mind-map-skeleton";
 
 type CurriculumMindMapPanelProps = {
   enrollmentId: string;
+  programId?: string | null;
   onOpenLesson: (params: {
     activityId?: string;
     assignmentId?: string;
@@ -71,6 +73,7 @@ function createLoadingState(
 
 export function CurriculumMindMapPanel({
   enrollmentId,
+  programId,
   onOpenLesson,
   className,
 }: CurriculumMindMapPanelProps) {
@@ -78,6 +81,13 @@ export function CurriculumMindMapPanel({
   const [retryKey, setRetryKey] = useState(0);
   const [state, setState] = useState<LoadState>(() =>
     createLoadingState(enrollmentId, 0),
+  );
+
+  useCurriculumSync(
+    programId,
+    useCallback(() => {
+      setRetryKey((current) => current + 1);
+    }, []),
   );
 
   if (

@@ -14,10 +14,9 @@ export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
 };
 
 export const CLASS_SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
-  Lesson: "Buổi học",
-  FieldTrip: "Thực địa",
-  AssignmentWindow: "Bài tập",
-  MentorCheckIn: "Gặp mentor",
+  Lesson: "Lesson",
+  FieldTrip: "Field Trip",
+  AssignmentWindow: "Assignment",
 };
 
 export const CLASS_SESSION_STATUS_LABELS: Record<ClassSessionStatus, string> = {
@@ -34,6 +33,10 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
   Excused: "Có phép",
   Late: "Đi muộn",
 };
+
+/** Attendance statuses eligible for `mentor-complete-bulk` after điểm danh. */
+export const MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES: ReadonlySet<SessionAttendanceStatus> =
+  new Set(["Present", "Late", "Excused"]);
 
 export const CLASS_STUDENT_ENROLLMENT_STATUS_LABELS: Record<
   ClassStudentEnrollmentStatus,
@@ -72,6 +75,11 @@ export const OPEN_CLASSES_QUERY = {
   pageSize: 50,
   status: "Open" as const,
 };
+
+/** Mentor class registration board — recruiting classes only. */
+export function isMentorBoardClass(status: ClassStatus): boolean {
+  return status === "Open";
+}
 
 export const CLASS_SESSIONS_QUERY = {
   page: 1,

@@ -1,22 +1,20 @@
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
-import { createApiPost } from "@/lib/api/create-endpoint";
 import {
   gradeResearchSubmissionSchema,
   researchSubmissionIdParamSchema,
-  startResearchSubmissionSchema,
   submitResearchSubmissionSchema,
   uploadResearchSubmissionQuerySchema,
 } from "@/lib/validations/research-submissions";
 import type {
   GradeResearchSubmissionInput,
   SubmitResearchSubmissionInput,
+  UploadResearchSubmissionQuery,
 } from "@/lib/validations/research-submissions";
 
 import {
   getResearchSubmissionByIdResponseSchema,
   gradeResearchSubmissionResponseSchema,
-  researchSubmissionValueSchema,
   submitResearchSubmissionResponseSchema,
   uploadResearchSubmissionFileResponseSchema,
   type GetResearchSubmissionByIdResult,
@@ -30,8 +28,6 @@ export type {
   GetResearchSubmissionByIdResult,
   GradeResearchSubmissionResponse,
   GradeResearchSubmissionResult,
-  StartResearchSubmissionResponse,
-  StartResearchSubmissionResult,
   SubmitResearchSubmissionResponse,
   SubmitResearchSubmissionResult,
   UploadResearchSubmissionFileResponse,
@@ -47,7 +43,6 @@ export type {
 export type {
   GradeResearchSubmissionInput,
   ResearchSubmissionIdParam,
-  StartResearchSubmissionInput,
   SubmitResearchSubmissionInput,
   UploadResearchSubmissionQuery,
 } from "@/lib/validations/research-submissions";
@@ -60,13 +55,6 @@ function requireApiValue<T>(value: T | null): T {
   }
   return value;
 }
-
-/** `POST /api/research-submissions/start` */
-export const startResearchSubmission = createApiPost({
-  path: `${RESEARCH_SUBMISSIONS_BASE}/start`,
-  input: startResearchSubmissionSchema,
-  value: researchSubmissionValueSchema,
-});
 
 /** `GET /api/research-submissions/{submissionId}` */
 export async function getResearchSubmissionById(
@@ -85,24 +73,32 @@ export async function getResearchSubmissionById(
   return requireApiValue(response.value);
 }
 
-/** `POST /api/research-submissions/{submissionId}/upload` */
+/**
+ * `POST /api/research-submissions/upload?moduleEnrollmentId=&researchMilestoneId=&isEvidence=`
+ * Lazy-creates a Pending draft when unlocked.
+ * Primary → `fileUrl`. Evidence → `mediaAssetId` (+ preview `evidenceUrls`) for submit.
+ */
 export async function uploadResearchSubmissionFile(
-  submissionId: string,
   file: File,
-  options: { isEvidence?: boolean } = {},
+  query: UploadResearchSubmissionQuery,
 ): Promise<UploadResearchSubmissionFileResult> {
-  const { submissionId: parsedSubmissionId } = researchSubmissionIdParamSchema.parse({
-    submissionId,
-  });
-  const { isEvidence = false } = uploadResearchSubmissionQuerySchema.parse(options);
+  const {
+    moduleEnrollmentId,
+    researchMilestoneId,
+    isEvidence = false,
+  } = uploadResearchSubmissionQuerySchema.parse(query);
 
   const formData = new FormData();
   formData.append("file", file);
 
-  const query = isEvidence ? "?isEvidence=true" : "";
+  const params = new URLSearchParams({
+    moduleEnrollmentId,
+    researchMilestoneId,
+    isEvidence: String(isEvidence),
+  });
 
   const response = await apiFetchParsed(
-    `${RESEARCH_SUBMISSIONS_BASE}/${parsedSubmissionId}/upload${query}`,
+    `${RESEARCH_SUBMISSIONS_BASE}/upload?${params.toString()}`,
     uploadResearchSubmissionFileResponseSchema,
     {
       method: "POST",
@@ -113,18 +109,18 @@ export async function uploadResearchSubmissionFile(
   return requireApiValue(response.value);
 }
 
-/** `POST /api/research-submissions/{submissionId}/submit` */
+/**
+ * `POST /api/research-submissions/submit`
+ * Creates submission when none exists (unlocked + activities + availability),
+ * or turns in existing Pending / ReturnedForRevision.
+ */
 export async function submitResearchSubmission(
-  submissionId: string,
   input: SubmitResearchSubmissionInput,
 ): Promise<SubmitResearchSubmissionResult> {
-  const { submissionId: parsedSubmissionId } = researchSubmissionIdParamSchema.parse({
-    submissionId,
-  });
   const body = submitResearchSubmissionSchema.parse(input);
 
   const response = await apiFetchParsed(
-    `${RESEARCH_SUBMISSIONS_BASE}/${parsedSubmissionId}/submit`,
+    `${RESEARCH_SUBMISSIONS_BASE}/submit`,
     submitResearchSubmissionResponseSchema,
     { method: "POST", body },
   );

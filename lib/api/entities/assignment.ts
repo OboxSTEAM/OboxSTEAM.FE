@@ -16,14 +16,22 @@ export const enrollmentAssignmentStatusSchema = z.enum([
 
 export const enrollmentCurriculumAssignmentSchema = z.object({
   assignmentId: z.string(),
-  assignmentCode: z.string(),
-  title: z.string(),
+  assignmentCode: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  title: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   assignmentType: assignmentTypeSchema,
   maxPoints: z.number(),
   passScore: z.number(),
   isRequiredForModulePass: z.boolean(),
-  dueDate: z.string(),
-  status: enrollmentAssignmentStatusSchema,
+  dueDate: z.string().nullable(),
+  status: enrollmentAssignmentStatusSchema
+    .nullish()
+    .transform((value) => value ?? "locked"),
 });
 
 export type AssignmentType = z.infer<typeof assignmentTypeSchema>;

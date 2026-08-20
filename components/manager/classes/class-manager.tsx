@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   CalendarDays,
   Eye,
-  Pencil,
   Play,
   Plus,
   UsersRound,
@@ -177,11 +176,6 @@ export function ClassManager({
     setPage(1);
   }
 
-  function openEdit(classItem: Class) {
-    setEditingClass(classItem);
-    setFormOpen(true);
-  }
-
   async function handleSubmit(values: ClassFormSubmitPayload) {
     setIsSubmitting(true);
     try {
@@ -198,7 +192,7 @@ export function ClassManager({
         await createClass(values);
         showAppSuccess({
           title: "Đã tạo lớp học",
-          description: `Lớp ${values.name} ở trạng thái Bản nháp. Mentor sẽ được gán sau khi duyệt yêu cầu.`,
+          description: `Lớp ${values.name} ở trạng thái Bản nháp. Mở tuyển sinh để mentor thấy lớp trên bảng đăng ký.`,
         });
       }
       setFormOpen(false);
@@ -309,7 +303,7 @@ export function ClassManager({
     {
       header: "Thao tác",
       sticky: "right",
-      className: "w-44 text-right",
+      className: "w-32 text-right",
       render: (classItem) => {
         const next = getNextClassLifecycleAction(classItem.status);
         return (
@@ -331,7 +325,9 @@ export function ClassManager({
               size="icon"
               nativeButton={false}
               render={
-                <Link href={`/manager/sessions?classId=${classItem.id}`} />
+                <Link
+                  href={`/manager/classes/${classItem.id}?tab=lich-hoc`}
+                />
               }
               aria-label={`Lịch học ${classItem.name}`}
               className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200]"
@@ -342,30 +338,26 @@ export function ClassManager({
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => openEdit(classItem)}
-              aria-label={`Sửa ${classItem.name}`}
-              className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              disabled={!next}
+              onClick={() => {
+                if (!next) return;
+                setLifecycleTarget({
+                  classItem,
+                  action: next.action,
+                  label: next.label,
+                });
+              }}
+              aria-label={next?.label ?? "Không có bước tiếp theo"}
+              aria-hidden={!next}
+              tabIndex={next ? undefined : -1}
+              className={
+                next
+                  ? "size-9 rounded-lg text-[#7CB342] hover:bg-[#7CB342]/10 hover:text-[#3d5c22]"
+                  : "pointer-events-none size-9 rounded-lg opacity-0"
+              }
             >
-              <Pencil className="size-4" />
+              <Play className="size-4" />
             </Button>
-            {next ? (
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() =>
-                  setLifecycleTarget({
-                    classItem,
-                    action: next.action,
-                    label: next.label,
-                  })
-                }
-                aria-label={next.label}
-                className="size-9 rounded-lg text-[#7CB342] hover:bg-[#7CB342]/10 hover:text-[#3d5c22]"
-              >
-                <Play className="size-4" />
-              </Button>
-            ) : null}
           </div>
         );
       },

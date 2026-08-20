@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
 import { Button } from "@/components/ui/button";
+import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import {
   getClassSessions,
   getClassWithStudents,
@@ -263,6 +264,8 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
     selectedActivityId,
     selectedAssignmentId,
   ]);
+
+  useCurriculumSync(programId, handleCurriculumRefresh);
 
   const handleClassEnrolled = useCallback(
     async (classId: string) => {

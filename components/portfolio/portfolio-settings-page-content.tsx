@@ -13,8 +13,10 @@ import {
 import { SectionOutlinePanel } from "@/components/portfolio/editor/section-outline-panel";
 import { PortfolioToolbar } from "@/components/portfolio/editor/portfolio-toolbar";
 import { DesignPanel } from "@/components/portfolio/editor/panels/design-panel";
+import { GalleryPanel } from "@/components/portfolio/editor/panels/gallery-panel";
 import { ItemsPanel } from "@/components/portfolio/editor/panels/items-panel";
 import { LinksPanel } from "@/components/portfolio/editor/panels/links-panel";
+import { HighlightWorkspace } from "@/components/portfolio/editor/highlight/highlight-workspace";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -39,6 +41,7 @@ import type {
   PortfolioItemType,
   PortfolioLink,
   PortfolioMediaAsset,
+  PortfolioMediaUpload,
   PortfolioSection,
   PortfolioSectionKind,
   PortfolioTheme,
@@ -50,6 +53,7 @@ import {
   deletePortfolioItem,
   deletePortfolioSection,
   getMyPortfolio,
+  importClassGalleryMedia,
   reorderPortfolioItems,
   reorderPortfolioSections,
   syncPortfolioItems,
@@ -73,6 +77,8 @@ import { nullIfEmptyHtml, preferAlignedHtml } from "@/lib/portfolio/sanitize-htm
 const PANEL_TITLES: Record<PortfolioPanelId, string> = {
   design: "Thiết kế & Font",
   items: "Mục portfolio",
+  gallery: "Thư viện media",
+  highlight: "Highlight video",
   links: "Liên kết ngoài",
 };
 
@@ -286,6 +292,7 @@ export function PortfolioSettingsPageContent() {
     null,
   );
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isImportingGallery, setIsImportingGallery] = useState(false);
 
   const draftRef = useRef<Portfolio | null>(null);
   const baselineRef = useRef<Portfolio | null>(null);
@@ -885,6 +892,109 @@ export function PortfolioSettingsPageContent() {
     [handleUpdateSection],
   );
 
+  const gallerySections = useMemo(
+    () => (draft?.sections ?? []).filter((section) => section.kind === "Gallery"),
+    [draft?.sections],
+  );
+
+  const applyServerSection = useCallback((section: PortfolioSection) => {
+    setBaseline((current) => {
+      if (!current) return current;
+      const exists = (current.sections ?? []).some((item) => item.id === section.id);
+      return {
+        ...current,
+        sections: exists
+          ? (current.sections ?? []).map((item) =>
+              item.id === section.id ? section : item,
+            )
+          : [...(current.sections ?? []), section],
+      };
+    });
+    setDraft((current) => {
+      if (!current) return current;
+      const exists = (current.sections ?? []).some((item) => item.id === section.id);
+      return {
+        ...current,
+        sections: exists
+          ? (current.sections ?? []).map((item) =>
+              item.id === section.id ? section : item,
+            )
+          : [...(current.sections ?? []), section],
+      };
+    });
+  }, []);
+
+  const handleImportClassGalleryToSection = useCallback(
+    async (sectionId: string, mediaAssetIds: string[]) => {
+      if (mediaAssetIds.length === 0) return;
+      setIsImportingGallery(true);
+      try {
+        const result = await importClassGalleryMedia({
+          mediaAssetIds,
+          portfolioSectionId: sectionId,
+        });
+        if (result.data.section) {
+          applyServerSection(result.data.section);
+        } else {
+          const importedAssets: PortfolioMediaAsset[] = result.data.assets.map(
+            (asset, index) => ({
+              id: asset.id,
+              url: asset.url,
+              type: asset.type,
+              caption: null,
+              displayOrder: index,
+            }),
+          );
+          const currentSection = draftRef.current?.sections?.find(
+            (section) => section.id === sectionId,
+          );
+          const existing = currentSection?.mediaAssets ?? [];
+          const merged = [
+            ...existing,
+            ...importedAssets.filter(
+              (asset) => !existing.some((item) => item.id === asset.id),
+            ),
+          ].map((asset, index) => ({ ...asset, displayOrder: index }));
+          await handleUpdateSection(sectionId, { mediaAssets: merged });
+        }
+        showAppSuccess({
+          title: "Đã nhập media từ lớp",
+          description: "Media đã gắn vào section và có trong thư viện tải lên.",
+        });
+      } catch (error) {
+        showAppErrorFromUnknown(error, "portfolio.gallery.import");
+      } finally {
+        setIsImportingGallery(false);
+      }
+    },
+    [applyServerSection, handleUpdateSection],
+  );
+
+  const handleAttachPortfolioMediaToSection = useCallback(
+    async (sectionId: string, assets: PortfolioMediaUpload[]) => {
+      if (assets.length === 0) return;
+      const currentSection = draftRef.current?.sections?.find(
+        (section) => section.id === sectionId,
+      );
+      const existing = currentSection?.mediaAssets ?? [];
+      const next: PortfolioMediaAsset[] = [
+        ...existing,
+        ...assets
+          .filter((asset) => !existing.some((item) => item.id === asset.id))
+          .map((asset) => ({
+            id: asset.id,
+            url: asset.url,
+            type: asset.type,
+            caption: null,
+            displayOrder: 0,
+          })),
+      ].map((asset, index) => ({ ...asset, displayOrder: index }));
+      await handleUpdateSection(sectionId, { mediaAssets: next });
+      showAppSuccess({ title: "Đã gắn media vào Gallery" });
+    },
+    [handleUpdateSection],
+  );
+
   const outlineEntries = useMemo(() => {
     if (!draft) return [];
 
@@ -1112,6 +1222,24 @@ export function PortfolioSettingsPageContent() {
                 }
               />
             ) : null}
+            {activePanel === "gallery" ? (
+              <GalleryPanel
+                gallerySections={gallerySections}
+                isImporting={isImportingGallery}
+                onCreateGallerySection={() => handleAddSection("Gallery")}
+                onImportToSection={handleImportClassGalleryToSection}
+                onAttachPortfolioMedia={handleAttachPortfolioMediaToSection}
+              />
+            ) : null}
+            {activePanel === "highlight" ? (
+              <HighlightWorkspace
+                onClose={() => setActivePanel(null)}
+                onAttachedToGallery={(section) => {
+                  applyServerSection(section);
+                  setActivePanel("gallery");
+                }}
+              />
+            ) : null}
           </PortfolioPanelHost>
         ) : null}
 
@@ -1142,6 +1270,8 @@ export function PortfolioSettingsPageContent() {
             onReorderSections={handlePreviewReorderSections}
             onCommitReorderSections={() => void handleCommitReorderSections()}
             onToggleSectionVisibility={handleToggleSectionVisibility}
+            onImportClassGalleryToSection={handleImportClassGalleryToSection}
+            onAttachPortfolioMediaToSection={handleAttachPortfolioMediaToSection}
           />
         </main>
       </div>
