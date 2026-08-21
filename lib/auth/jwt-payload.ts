@@ -37,8 +37,31 @@ export function readJwtEmail(payload: JwtPayloadRecord): string | undefined {
 }
 
 export function readJwtRole(payload: JwtPayloadRecord): string | undefined {
-  return readStringClaim(payload, [
+  return readJwtRoles(payload)[0];
+}
+
+/** All role claims from a JWT (ASP.NET may emit a string or string[]). */
+export function readJwtRoles(payload: JwtPayloadRecord): string[] {
+  const keys = [
     "role",
     "http://schemas.microsoft.com/ws/2008/06/identity/claims/role",
-  ]);
+  ];
+  const roles: string[] = [];
+
+  for (const key of keys) {
+    const value = payload[key];
+    if (typeof value === "string" && value.trim()) {
+      roles.push(value.trim());
+      continue;
+    }
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item === "string" && item.trim()) {
+          roles.push(item.trim());
+        }
+      }
+    }
+  }
+
+  return roles;
 }

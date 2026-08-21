@@ -185,6 +185,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Lớp thiếu mentor, lịch chưa khớp khung chương trình, hoặc ngày bắt đầu đã quá hạn.",
     action: "Gán mentor, xếp đủ lịch, kiểm tra ngày bắt đầu rồi thử lại.",
   },
+  "classes.curriculumProgress": {
+    title: "Không tải được tiến độ chương trình",
+    reason: "Máy chủ tạm thời không phản hồi hoặc bạn không có quyền xem lớp này.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
   "classMentorRequests.list": {
     title: "Không tải được yêu cầu mentor",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
