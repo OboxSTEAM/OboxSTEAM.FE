@@ -158,8 +158,8 @@ export function ClassFormDialog({
             </DialogTitle>
             <DialogDescription>
               {classItem
-                ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết (lớp Bản nháp đã có lịch)."
-                : "Thứ tự: tạo lớp Bản nháp → xếp lịch → mentor xin nhận → mở tuyển sinh → học viên ghi danh → bắt đầu lớp."}
+                ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết (lớp Chờ mentor)."
+                : "Thứ tự: tạo lớp Bản nháp → xếp lịch → sẵn sàng tìm mentor → mentor xin nhận → mở tuyển sinh → học viên ghi danh → bắt đầu lớp."}
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />

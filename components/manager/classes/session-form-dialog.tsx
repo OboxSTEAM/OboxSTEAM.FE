@@ -85,13 +85,6 @@ function addMinutes(localInput: string, minutes: number): string {
   return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
 }
 
-/** Auto-fill end time only when empty or not after the new start. */
-function shouldSyncEnd(start: string, end: string | undefined | null): boolean {
-  if (!start) return false;
-  if (!end) return true;
-  return new Date(end).getTime() <= new Date(start).getTime();
-}
-
 export type ClassSessionFormSubmitPayload = {
   moduleId: string;
   activityId?: string | null;
@@ -100,7 +93,8 @@ export type ClassSessionFormSubmitPayload = {
   title: string;
   description?: string | null;
   startTime: string;
-  endTime: string;
+  /** Omit for activity sessions — BE derives End from DurationMinutes. */
+  endTime?: string;
   location?: string | null;
   latitude?: number | null;
   longitude?: number | null;
@@ -204,7 +198,11 @@ export function SessionFormDialog({
   }, [open, reset, session, defaultStart]);
 
   const selectedModuleId = watch("moduleId");
+  const selectedActivityId = watch("activityId") ?? "";
+  const selectedAssignmentId = watch("assignmentId") ?? "";
   const sessionKind = watch("sessionKind") ?? "Lesson";
+  const isActivitySession = Boolean(selectedActivityId.trim());
+  const isAssignmentSession = Boolean(selectedAssignmentId.trim());
   /** Soft preference only — both venue modes stay available. */
   const prefersPlace = sessionKind === "FieldTrip";
   const [extraVenueOpen, setExtraVenueOpen] = useState(false);
@@ -333,32 +331,39 @@ export function SessionFormDialog({
       activity?.durationMinutes && activity.durationMinutes > 0
         ? activity.durationMinutes
         : DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES;
-    const end = getValues("endTime");
-    if (shouldSyncEnd(start, end) || activity?.durationMinutes) {
-      setValue("endTime", addMinutes(start, minutes), { shouldValidate: true });
-    }
+    setValue("endTime", addMinutes(start, minutes), { shouldValidate: true });
   }
 
   async function handleFormSubmit(values: ClassSessionFormValues) {
     const startTime = toApiDateTimeFromLocalInput(values.startTime);
-    const endTime = toApiDateTimeFromLocalInput(values.endTime);
-    if (!startTime || !endTime) return;
+    if (!startTime) return;
 
-    await onSubmit({
+    const activityId = values.activityId?.trim() || null;
+    const assignmentId = values.assignmentId?.trim() || null;
+    const isAssignmentSession = Boolean(assignmentId);
+
+    const payload: ClassSessionFormSubmitPayload = {
       moduleId: values.moduleId,
-      activityId: values.activityId?.trim() || null,
-      assignmentId: values.assignmentId?.trim() || null,
+      activityId,
+      assignmentId,
       sessionKind: values.sessionKind,
       title: values.title.trim(),
       description: values.description?.trim() || null,
       startTime,
-      endTime,
       location: values.location?.trim() || null,
       ...parseSessionCoordinateFields(values.latitude, values.longitude),
       meetingUrl: values.meetingUrl?.trim() || null,
       requiresAttendance: values.requiresAttendance,
       status: values.status,
-    });
+    };
+
+    if (isAssignmentSession) {
+      const endTime = toApiDateTimeFromLocalInput(values.endTime ?? "");
+      if (!endTime) return;
+      payload.endTime = endTime;
+    }
+
+    await onSubmit(payload);
   }
 
   return (
@@ -746,11 +751,12 @@ export function SessionFormDialog({
                           invalid={!!errors.startTime}
                           onChange={(next) => {
                             field.onChange(next);
-                            const activityId = getValues("activityId");
-                            const activity = activityOptions.find(
-                              (item) => item.id === activityId,
-                            );
-                            applyActivityDuration(activity, next);
+                            if (isActivitySession) {
+                              const activity = activityOptions.find(
+                                (item) => item.id === selectedActivityId,
+                              );
+                              applyActivityDuration(activity, next);
+                            }
                           }}
                         />
                       </div>
@@ -768,12 +774,29 @@ export function SessionFormDialog({
                           placeholder="Kết thúc"
                           value={field.value ?? ""}
                           invalid={!!errors.endTime}
-                          onChange={field.onChange}
+                          disabled={isActivitySession || !isAssignmentSession}
+                          onChange={
+                            isAssignmentSession ? field.onChange : () => undefined
+                          }
                         />
                       </div>
                     )}
                   />
                 </div>
+                {isActivitySession ? (
+                  <p className="text-xs text-muted-foreground">
+                    Buổi hoạt động: chỉ chọn giờ bắt đầu. Kết thúc = Start +
+                    DurationMinutes (BE tính, không gửi EndTime).
+                  </p>
+                ) : isAssignmentSession ? (
+                  <p className="text-xs text-muted-foreground">
+                    Buổi bài tập: chọn cả thời điểm bắt đầu và kết thúc.
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Chọn hoạt động hoặc bài tập để mở khung giờ phù hợp.
+                  </p>
+                )}
                 {errors.startTime?.message || errors.endTime?.message ? (
                   <p className="text-xs font-medium text-primary">
                     {errors.startTime?.message ?? errors.endTime?.message}

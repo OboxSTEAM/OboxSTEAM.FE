@@ -64,3 +64,22 @@ export const programUpsertSchema = z.object({
 
 export const createProgramSchema = programUpsertSchema;
 export const updateProgramSchema = programUpsertSchema;
+
+export const uploadProgramThumbnailSchema = z.object({
+  file: z
+    .instanceof(File, { message: "Vui lòng chọn ảnh thumbnail." })
+    .refine((file) => file.size > 0, "Tệp ảnh không hợp lệ.")
+    .refine(
+      (file) => file.type.startsWith("image/"),
+      "Chỉ chấp nhận tệp hình ảnh (JPG, PNG, …).",
+    )
+    .refine(
+      (file) => file.size <= 5 * 1024 * 1024,
+      "Ảnh thumbnail không được vượt quá 5 MB.",
+    ),
+});
+
+export type UploadProgramThumbnailInput = z.infer<
+  typeof uploadProgramThumbnailSchema
+>;
+

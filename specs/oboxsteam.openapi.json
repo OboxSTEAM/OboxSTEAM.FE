@@ -4269,7 +4269,7 @@
           "Class"
         ],
         "summary": "Mentor board of available classes",
-        "description": "Lists Draft/Open classes with no assigned mentor. Prefer GET /api/class-mentor-requests/board.",
+        "description": "Lists ReadyForMentor classes with no assigned mentor. Prefer GET /api/class-mentor-requests/board.",
         "parameters": [
           {
             "name": "search",
@@ -4467,7 +4467,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -5006,7 +5007,7 @@
           "Class"
         ],
         "summary": "Update class information",
-        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires Admin or Manager role.",
+        "description": "Updates class cohort details. Status changes must use ReadyForMentor, Open, Start, or Complete endpoints. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -5165,7 +5166,7 @@
           "Class"
         ],
         "summary": "Delete a class",
-        "description": "Soft-deletes a Draft or Open class cohort and its sessions. Open classes may only be deleted when they have no active students. Requires Manager role.",
+        "description": "Soft-deletes a Draft, ReadyForMentor, or Open class cohort and its sessions. Open classes may only be deleted when they have no active students. Requires Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -5301,13 +5302,135 @@
         }
       }
     },
+    "/api/classes/{id}/ready-for-mentor": {
+      "post": {
+        "tags": [
+          "Class"
+        ],
+        "summary": "Mark a class ready for mentor assignment",
+        "description": "Transitions a class from Draft to ReadyForMentor once the timetable covers the curriculum. Mentors may then request the class. Students cannot enroll until Open. Requires Admin or Manager role.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/classes/{id}/open": {
       "post": {
         "tags": [
           "Class"
         ],
         "summary": "Open a class for enrollment",
-        "description": "Transitions a class from Draft to Open. Requires Admin or Manager role.",
+        "description": "Transitions a class from ReadyForMentor to Open. Requires an assigned mentor and a complete timetable. Students may enroll after this step. Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -6404,7 +6527,7 @@
           "ClassMentorRequest"
         ],
         "summary": "Mentor board of available classes",
-        "description": "Lists Draft/Open classes with no assigned mentor that mentors can request.",
+        "description": "Lists ReadyForMentor classes with no assigned mentor that mentors can request.",
         "parameters": [
           {
             "name": "search",
@@ -9414,7 +9537,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -9623,7 +9747,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -9832,7 +9957,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -10041,7 +10167,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -10250,7 +10377,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -10459,7 +10587,8 @@
                 "Open",
                 "InProgress",
                 "Completed",
-                "Cancelled"
+                "Cancelled",
+                "ReadyForMentor"
               ],
               "type": "string"
             }
@@ -11438,6 +11567,143 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BooleanApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/experts/{id}/avatar": {
+      "post": {
+        "tags": [
+          "Expert"
+        ],
+        "summary": "Upload expert avatar",
+        "description": "Uploads a new avatar image for the specified expert. Replaces the existing avatar if one exists.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpertResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpertResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExpertResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -30536,7 +30802,8 @@
               "Open",
               "InProgress",
               "Completed",
-              "Cancelled"
+              "Cancelled",
+              "ReadyForMentor"
             ],
             "type": "string"
           },
@@ -31159,7 +31426,8 @@
               "Open",
               "InProgress",
               "Completed",
-              "Cancelled"
+              "Cancelled",
+              "ReadyForMentor"
             ],
             "type": "string"
           },
@@ -31888,7 +32156,8 @@
               "Open",
               "InProgress",
               "Completed",
-              "Cancelled"
+              "Cancelled",
+              "ReadyForMentor"
             ],
             "type": "string"
           },
@@ -42737,7 +43006,8 @@
               "Open",
               "InProgress",
               "Completed",
-              "Cancelled"
+              "Cancelled",
+              "ReadyForMentor"
             ],
             "type": "string",
             "nullable": true

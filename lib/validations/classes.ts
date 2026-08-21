@@ -189,7 +189,8 @@ export const classSessionFormSchema = z
       .max(255, "Tiêu đề buổi học tối đa 255 ký tự."),
     description: z.string().optional(),
     startTime: z.string().min(1, "Thời gian bắt đầu không được để trống."),
-    endTime: z.string().min(1, "Thời gian kết thúc không được để trống."),
+    /** Required for assignment windows; display-only for activity (BE derives End). */
+    endTime: z.string().optional(),
     location: z.string().max(500, "Địa điểm tối đa 500 ký tự.").optional(),
     latitude: z.string().optional(),
     longitude: z.string().optional(),
@@ -201,12 +202,34 @@ export const classSessionFormSchema = z
     status: classSessionStatusSchema.optional(),
   })
   .superRefine((value, ctx) => {
-    if (value.startTime && value.endTime && value.endTime <= value.startTime) {
+    const hasActivity = Boolean(value.activityId?.trim());
+    const hasAssignment = Boolean(value.assignmentId?.trim());
+    if (hasActivity === hasAssignment) {
       ctx.addIssue({
         code: "custom",
-        path: ["endTime"],
-        message: "Thời gian kết thúc phải sau thời gian bắt đầu.",
+        path: hasActivity ? ["assignmentId"] : ["activityId"],
+        message: "Chọn đúng một mục chương trình: hoạt động hoặc bài tập.",
       });
+    }
+
+    if (hasAssignment) {
+      if (!value.endTime?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["endTime"],
+          message: "Thời gian kết thúc không được để trống.",
+        });
+      } else if (
+        value.startTime &&
+        value.endTime &&
+        value.endTime <= value.startTime
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["endTime"],
+          message: "Thời gian kết thúc phải sau thời gian bắt đầu.",
+        });
+      }
     }
 
     const latText = value.latitude?.trim();
@@ -238,16 +261,6 @@ export const classSessionFormSchema = z
           message: "Kinh độ phải từ -180 đến 180.",
         });
       }
-    }
-
-    const hasActivity = Boolean(value.activityId?.trim());
-    const hasAssignment = Boolean(value.assignmentId?.trim());
-    if (hasActivity === hasAssignment) {
-      ctx.addIssue({
-        code: "custom",
-        path: hasActivity ? ["assignmentId"] : ["activityId"],
-        message: "Chọn đúng một mục chương trình: hoạt động hoặc bài tập.",
-      });
     }
   });
 
@@ -337,7 +350,8 @@ const classSessionBodySchema = z.object({
     .max(255, "Tiêu đề buổi học tối đa 255 ký tự."),
   description: z.string().nullable().optional(),
   startTime: z.string().min(1, "Thời gian bắt đầu không được để trống."),
-  endTime: z.string().min(1, "Thời gian kết thúc không được để trống."),
+  /** Required for assignment; omit for activity (BE = Start + DurationMinutes). */
+  endTime: z.string().min(1, "Thời gian kết thúc không được để trống.").optional(),
   location: z
     .string()
     .max(500, "Địa điểm tối đa 500 ký tự.")
@@ -354,9 +368,30 @@ const classSessionBodySchema = z.object({
   longitude: z.number().min(-180).max(180).nullable().optional(),
 });
 
+function refineSessionEndTimeForCurriculumItem(
+  value: {
+    activityId?: string | null;
+    assignmentId?: string | null;
+    endTime?: string | null;
+  },
+  ctx: z.RefinementCtx,
+) {
+  const hasAssignment = Boolean(value.assignmentId?.trim());
+  if (hasAssignment && !value.endTime?.trim()) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["endTime"],
+      message: "Buổi bài tập cần thời gian kết thúc.",
+    });
+  }
+}
+
 /** Body for `POST /api/classes/{classId}/sessions`. */
 export const createClassSessionSchema = classSessionBodySchema.superRefine(
-  (value, ctx) => refineCurriculumItemXor(value, ctx, true),
+  (value, ctx) => {
+    refineCurriculumItemXor(value, ctx, true);
+    refineSessionEndTimeForCurriculumItem(value, ctx);
+  },
 );
 
 /** Body for `PUT /api/classes/{classId}/sessions/{id}`. */
@@ -366,7 +401,20 @@ export const updateClassSessionSchema = classSessionBodySchema
   .extend({
     status: classSessionStatusSchema.optional(),
   })
-  .superRefine((value, ctx) => refineCurriculumItemXor(value, ctx, false));
+  .superRefine((value, ctx) => {
+    refineCurriculumItemXor(value, ctx, false);
+    // Only enforce End when this update sets/keeps an assignment link.
+    if (value.assignmentId !== undefined || value.endTime !== undefined) {
+      const hasAssignment = Boolean(value.assignmentId?.trim());
+      if (hasAssignment && value.endTime !== undefined && !value.endTime?.trim()) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["endTime"],
+          message: "Buổi bài tập cần thời gian kết thúc.",
+        });
+      }
+    }
+  });
 
 /** Body for `POST /api/class-enrollments`. */
 export const createClassEnrollmentSchema = z.object({

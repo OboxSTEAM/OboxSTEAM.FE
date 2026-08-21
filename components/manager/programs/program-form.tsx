@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import {
   ImageOff,
+  Loader2,
   Upload,
   Trash2,
   AlertCircle,
@@ -26,7 +27,9 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import { programUpsertSchema } from "@/lib/validations/programs";
+import { uploadProgramThumbnail, type ProgramWithModules } from "@/lib/api";
+import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { programUpsertSchema, uploadProgramThumbnailSchema } from "@/lib/validations/programs";
 import { cn } from "@/lib/utils";
 import {
   LIGHT_SELECT_CONTENT,
@@ -38,8 +41,11 @@ import {
 export type ProgramFormValues = z.infer<typeof programUpsertSchema>;
 
 export type ProgramFormProps = {
+  /** When set, enables multipart thumbnail upload via `POST /api/programs/{id}/thumbnail`. */
+  programId?: string;
   initialValues?: Partial<ProgramFormValues>;
   onSubmit: (values: ProgramFormValues) => Promise<void>;
+  onThumbnailUploaded?: (program: ProgramWithModules) => void;
   isLoading?: boolean;
   /** Extra buttons rendered in the sticky action bar */
   actionSlot?: React.ReactNode;
@@ -94,17 +100,23 @@ function FormSectionTitle({ children }: { children: React.ReactNode }) {
 
 // ── Main Form ─────────────────────────────────────────────────────────────
 export function ProgramForm({
+  programId,
   initialValues,
   onSubmit,
+  onThumbnailUploaded,
   isLoading = false,
 }: ProgramFormProps) {
   const isEdit = Boolean(initialValues?.name);
+  const canUploadThumbnail = Boolean(programId);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImageOpen, setIsImageOpen] = useState(!isEdit);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!isEdit);
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   const {
     register,
     handleSubmit,
     control,
+    setValue,
     formState: { errors },
   } = useForm<ProgramFormValues>({
     resolver: zodResolver(programUpsertSchema),
@@ -141,6 +153,40 @@ export function ProgramForm({
       }
     },
   );
+
+  async function handleThumbnailFile(file: File) {
+    if (!programId) return;
+
+    const parsed = uploadProgramThumbnailSchema.safeParse({ file });
+    if (!parsed.success) {
+      showAppErrorFromUnknown(parsed.error, "programs.upload-thumbnail");
+      return;
+    }
+
+    setIsUploadingThumbnail(true);
+    try {
+      const result = await uploadProgramThumbnail(programId, parsed.data.file);
+      if (!result?.data) {
+        throw new Error("Không nhận được chương trình sau khi tải ảnh.");
+      }
+      const nextUrl = result.data.thumbnailUrl ?? "";
+      setValue("thumbnailUrl", nextUrl, { shouldDirty: true, shouldValidate: true });
+      onThumbnailUploaded?.(result.data);
+      showAppSuccess({
+        title: "Đã cập nhật ảnh chương trình",
+        description: result.message,
+      });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "programs.upload-thumbnail");
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  }
+
+  function openThumbnailPicker() {
+    if (!canUploadThumbnail || isUploadingThumbnail || isLoading) return;
+    fileInputRef.current?.click();
+  }
 
   return (
     <form onSubmit={onFormSubmit} className="flex flex-col gap-6">
@@ -186,14 +232,27 @@ export function ProgramForm({
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow hover:bg-muted"
+                    disabled={!canUploadThumbnail || isUploadingThumbnail || isLoading}
+                    onClick={openThumbnailPicker}
+                    className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow hover:bg-muted disabled:opacity-50"
                   >
-                    <Upload className="size-3.5" />
+                    {isUploadingThumbnail ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="size-3.5" />
+                    )}
                     Thay thế
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary/90"
+                    disabled={isUploadingThumbnail || isLoading}
+                    onClick={() =>
+                      setValue("thumbnailUrl", "", {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      })
+                    }
+                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary/90 disabled:opacity-50"
                   >
                     <Trash2 className="size-3.5" />
                     Xóa
@@ -201,36 +260,88 @@ export function ProgramForm({
                 </div>
               </>
             ) : (
-              <div className="flex h-full flex-col items-center justify-center gap-3 p-4">
+              <button
+                type="button"
+                disabled={!canUploadThumbnail || isUploadingThumbnail || isLoading}
+                onClick={openThumbnailPicker}
+                className="flex h-full w-full flex-col items-center justify-center gap-3 p-4 disabled:cursor-not-allowed"
+              >
                 <div
                   className="flex size-12 items-center justify-center rounded-xl"
                   style={{ background: `${catColor}12` }}
                 >
-                  <ImageOff className="size-6" style={{ color: catColor }} />
+                  {isUploadingThumbnail ? (
+                    <Loader2 className="size-6 animate-spin" style={{ color: catColor }} />
+                  ) : (
+                    <ImageOff className="size-6" style={{ color: catColor }} />
+                  )}
                 </div>
                 <p className="text-center text-[11px] text-muted-foreground leading-relaxed">
-                  Xem trước ảnh bằng cách nhập URL bên phải hoặc ở dưới
+                  {canUploadThumbnail
+                    ? "Chọn ảnh JPG/PNG (tối đa 5 MB) để tải lên"
+                    : "Tạo chương trình trước, rồi tải ảnh lên — hoặc dán URL bên phải"}
                 </p>
-              </div>
+              </button>
             )}
           </div>
 
           {/* URL input and info */}
           <div className="flex-1 w-full space-y-4">
             <div>
-              <label className={LBL}>URL ảnh thumbnail</label>
-              <Input
-                id="thumbnailUrl"
-                placeholder="https://example.com/image.jpg"
-                {...register("thumbnailUrl")}
-                className={cn(INPUT_CLS, "text-xs font-mono w-full")}
-              />
+              <label className={LBL}>
+                {canUploadThumbnail ? "Ảnh thumbnail" : "URL ảnh thumbnail"}
+              </label>
+              {canUploadThumbnail ? (
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    disabled={isUploadingThumbnail || isLoading}
+                    onClick={openThumbnailPicker}
+                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+                  >
+                    {isUploadingThumbnail ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Upload className="size-3.5" />
+                    )}
+                    {thumbUrl ? "Tải ảnh mới" : "Tải ảnh lên"}
+                  </button>
+                  <Input
+                    id="thumbnailUrl"
+                    readOnly
+                    value={thumbUrl ?? ""}
+                    placeholder="Ảnh sẽ hiện URL sau khi tải lên"
+                    className={cn(INPUT_CLS, "text-xs font-mono w-full bg-muted")}
+                  />
+                </div>
+              ) : (
+                <Input
+                  id="thumbnailUrl"
+                  placeholder="https://example.com/image.jpg"
+                  {...register("thumbnailUrl")}
+                  className={cn(INPUT_CLS, "text-xs font-mono w-full")}
+                />
+              )}
               <FieldError message={errors.thumbnailUrl?.message} />
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Bạn có thể dán link hình ảnh chất lượng cao vào ô trên để thay đổi ảnh nền đại diện của chương trình học này.
+              {canUploadThumbnail
+                ? "Ảnh được tải lên máy chủ và gắn trực tiếp vào chương trình. JPG/PNG · tối đa 5 MB."
+                : "Sau khi tạo chương trình, bạn có thể tải ảnh lên bằng endpoint thumbnail. Khi tạo mới vẫn có thể dán URL tạm thời."}
             </p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.target.value = "";
+                if (file) void handleThumbnailFile(file);
+              }}
+            />
 
             {/* STEAM category accent strip */}
             {category && (

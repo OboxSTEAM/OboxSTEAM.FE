@@ -177,8 +177,9 @@ export function GenerateSessionsDialog({
             <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
               <p>• Bỏ qua hoạt động SelfPaced. 1 mục curriculum = 1 buổi.</p>
               <p>• LiveOnline → Lesson · Offline → FieldTrip · Assignment → AssignmentWindow.</p>
-              <p>• Không cần mentor. Thời lượng từng buổi lấy từ DurationMinutes trên hoạt động.</p>
-              <p>• Chặn nếu lớp đã có học viên, hoặc còn buổi active (xóa/hủy trước).</p>
+              <p>• Activity: End = Start + DurationMinutes (không dùng SessionEndTime).</p>
+              <p>• Assignment window: độ dài = SessionEndTime − SessionStartTime (End khung giờ chỉ áp dụng cho bài tập).</p>
+              <p>• Không cần mentor. Chặn nếu lớp đã có học viên, hoặc còn buổi active (xóa/hủy trước).</p>
               <p>• Thời gian nhập theo UTC. Không đủ chỗ → nới EndDate hoặc thêm ngày.</p>
             </div>
 
@@ -215,7 +216,7 @@ export function GenerateSessionsDialog({
             <div className="space-y-1.5">
               <Label className="flex items-center gap-2">
                 <CalendarClock className="size-4 text-primary" aria-hidden />
-                Khung giờ (UTC)
+                Khung giờ UTC (End chỉ cho assignment)
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -232,6 +233,10 @@ export function GenerateSessionsDialog({
                   className="h-10 rounded-lg"
                 />
               </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Start áp dụng mọi buổi. End chỉ quyết định độ dài cửa sổ bài tập;
+                buổi activity lấy DurationMinutes từ khung chương trình.
+              </p>
               {(errors.sessionStartTime?.message ||
                 errors.sessionEndTime?.message) && (
                 <p className="text-xs font-medium text-primary">

@@ -7,6 +7,7 @@ import { skillSummarySchema } from "@/lib/api/entities/skill";
 
 export const classStatusSchema = z.enum([
   "Draft",
+  "ReadyForMentor",
   "Open",
   "InProgress",
   "Completed",

@@ -27,6 +27,7 @@ export {
   updateExpert,
   updateExpertDegree,
   updateExpertPublication,
+  uploadExpertAvatar,
   type CreateExpertInput,
   type CreateExpertResponse,
   type CreateExpertResult,
@@ -54,6 +55,8 @@ export {
   type UpdateExpertInput,
   type UpdateExpertResponse,
   type UpdateExpertResult,
+  type UploadExpertAvatarResponse,
+  type UploadExpertAvatarResult,
 } from "./experts";
 
 export {
@@ -127,6 +130,7 @@ export {
   getPrograms,
   getProgramsWithModules,
   updateProgram,
+  uploadProgramThumbnail,
   type CreateProgramInput,
   type CreateProgramResponse,
   type CreateProgramResult,
@@ -161,6 +165,8 @@ export {
   type UpdateProgramInput,
   type UpdateProgramResponse,
   type UpdateProgramResult,
+  type UploadProgramThumbnailResponse,
+  type UploadProgramThumbnailResult,
 } from "./programs";
 
 export {
@@ -607,6 +613,7 @@ export {
   getClassWithStudents,
   getClasses,
   getSessionAttendance,
+  markClassReadyForMentor,
   openClass,
   startClass,
   updateClass,

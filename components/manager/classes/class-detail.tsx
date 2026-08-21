@@ -37,6 +37,7 @@ import {
   getClassSessions,
   getClassWithStudents,
   getPrograms,
+  markClassReadyForMentor,
   openClass,
   startClass,
   updateClass,
@@ -46,6 +47,7 @@ import { CLASS_SESSIONS_QUERY, getNextClassLifecycleAction } from "@/lib/classes
 import {
   countActiveClassSessions,
   getOpenClassBlockersFromClass,
+  getReadyForMentorBlockersFromClass,
 } from "@/lib/classes/lifecycle";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -131,12 +133,13 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
   const activeSessionCount = countActiveClassSessions(
     sessionsData?.data?.items ?? [],
   );
-  const openBlockers =
-    classItem && nextLifecycle?.action === "open"
-      ? getOpenClassBlockersFromClass(classItem, activeSessionCount)
-      : [];
-  const canRunLifecycle =
-    nextLifecycle?.action !== "open" || openBlockers.length === 0;
+  const lifecycleBlockers =
+    classItem && nextLifecycle?.action === "ready"
+      ? getReadyForMentorBlockersFromClass(classItem, activeSessionCount)
+      : classItem && nextLifecycle?.action === "open"
+        ? getOpenClassBlockersFromClass(classItem, activeSessionCount)
+        : [];
+  const canRunLifecycle = lifecycleBlockers.length === 0;
 
   async function handleSubmit(values: ClassFormSubmitPayload) {
     if (!classItem) return;
@@ -162,9 +165,15 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
   async function handleLifecycle() {
     if (!classItem || !nextLifecycle) return;
     try {
-      if (nextLifecycle.action === "open") await openClass(classItem.id);
-      else if (nextLifecycle.action === "start") await startClass(classItem.id);
-      else await completeClass(classItem.id);
+      if (nextLifecycle.action === "ready") {
+        await markClassReadyForMentor(classItem.id);
+      } else if (nextLifecycle.action === "open") {
+        await openClass(classItem.id);
+      } else if (nextLifecycle.action === "start") {
+        await startClass(classItem.id);
+      } else {
+        await completeClass(classItem.id);
+      }
 
       showAppSuccess({
         title: "Đã cập nhật trạng thái",
@@ -303,7 +312,7 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
             onClick={() => setLifecycleOpen(true)}
             disabled={!canRunLifecycle}
             title={
-              canRunLifecycle ? undefined : openBlockers.join(" · ")
+              canRunLifecycle ? undefined : lifecycleBlockers.join(" · ")
             }
             className="h-11 gap-2 rounded-xl bg-[#7CB342] px-5 font-semibold text-white hover:bg-[#6BA338] active:scale-[0.98] disabled:opacity-50"
           >
@@ -394,7 +403,7 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
                     emptyState={
                       <ManagerEmptyState
                         title="Chưa có học viên trong lớp"
-                        description="Học viên chỉ ghi danh sau khi lớp được mở tuyển sinh (đã có mentor và lịch khớp khung chương trình)."
+                        description="Học viên chỉ ghi danh sau khi lớp được mở tuyển sinh (đã có mentor và lịch khớp khung chương trình). Trạng thái Chờ mentor chưa cho enroll."
                         icon={Users}
                       />
                     }
@@ -432,11 +441,13 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
         onConfirm={handleLifecycle}
         title={nextLifecycle?.label ?? "Chuyển trạng thái?"}
         description={
-          nextLifecycle?.action === "open"
-            ? `Mở tuyển sinh yêu cầu: mentor, lịch khớp khung chương trình, ngày bắt đầu còn ở tương lai. Xác nhận mở lớp “${classItem.name || classItem.code}”.`
-            : nextLifecycle?.action === "start"
-              ? `Bắt đầu lớp vẫn cần coverage khớp curriculum. Xác nhận “${nextLifecycle.label}” cho “${classItem.name || classItem.code}”.`
-              : `Xác nhận “${nextLifecycle?.label ?? ""}” cho lớp “${classItem.name || classItem.code}”.`
+          nextLifecycle?.action === "ready"
+            ? `Đưa lớp lên bảng mentor khi lịch đã cover curriculum và ngày bắt đầu còn ở tương lai (chưa cần mentor). Xác nhận “${classItem.name || classItem.code}”.`
+            : nextLifecycle?.action === "open"
+              ? `Mở tuyển sinh yêu cầu: mentor, lịch khớp khung chương trình, ngày bắt đầu còn ở tương lai. Xác nhận mở lớp “${classItem.name || classItem.code}”.`
+              : nextLifecycle?.action === "start"
+                ? `Bắt đầu lớp vẫn cần coverage khớp curriculum. Xác nhận “${nextLifecycle.label}” cho “${classItem.name || classItem.code}”.`
+                : `Xác nhận “${nextLifecycle?.label ?? ""}” cho lớp “${classItem.name || classItem.code}”.`
         }
         confirmLabel={nextLifecycle?.label ?? "Xác nhận"}
       />

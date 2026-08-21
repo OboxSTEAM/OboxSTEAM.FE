@@ -7,6 +7,7 @@ import type { SessionAttendanceStatus } from "@/lib/api/entities/session-attenda
 
 export const CLASS_STATUS_LABELS: Record<ClassStatus, string> = {
   Draft: "Bản nháp",
+  ReadyForMentor: "Chờ mentor",
   Open: "Đang tuyển sinh",
   InProgress: "Đang học",
   Completed: "Hoàn thành",
@@ -77,11 +78,16 @@ export const OPEN_CLASSES_QUERY = {
 };
 
 /**
- * Mentor board / request: Draft classes that already have a schedule
- * and no mentor. The board API applies the same filter; this is a client guard.
+ * Mentor board / request: ReadyForMentor classes with no assigned mentor.
+ * The board API applies the same filter; this is a client guard.
  */
 export function isMentorBoardClass(status: ClassStatus): boolean {
-  return status === "Draft";
+  return status === "ReadyForMentor";
+}
+
+/** Student class picker / enroll — only Open cohorts are joinable. */
+export function isStudentJoinableClass(status: ClassStatus): boolean {
+  return status === "Open";
 }
 
 export const CLASS_SESSIONS_QUERY = {
@@ -91,12 +97,21 @@ export const CLASS_SESSIONS_QUERY = {
   isDescending: false,
 };
 
+export type ClassLifecycleAction = "ready" | "open" | "start" | "complete";
+
 /** Next lifecycle action available for a class status, if any. */
 export function getNextClassLifecycleAction(
   status: ClassStatus,
-): { action: "open" | "start" | "complete"; label: string } | null {
-  if (status === "Draft") return { action: "open", label: "Mở tuyển sinh" };
+): { action: ClassLifecycleAction; label: string } | null {
+  if (status === "Draft") {
+    return { action: "ready", label: "Sẵn sàng tìm mentor" };
+  }
+  if (status === "ReadyForMentor") {
+    return { action: "open", label: "Mở tuyển sinh" };
+  }
   if (status === "Open") return { action: "start", label: "Bắt đầu lớp" };
-  if (status === "InProgress") return { action: "complete", label: "Hoàn thành lớp" };
+  if (status === "InProgress") {
+    return { action: "complete", label: "Hoàn thành lớp" };
+  }
   return null;
 }

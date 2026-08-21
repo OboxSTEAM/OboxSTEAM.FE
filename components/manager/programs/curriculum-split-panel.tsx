@@ -953,6 +953,7 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
       <PHdr icon={LayoutGrid} color={W.primary} title={program.name} sub={`Mã: ${program.code} · Thông tin chung`} />
       <div className="p-5">
         <ProgramForm
+          programId={program.id}
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",
@@ -961,6 +962,10 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
             status: program.status, price: program.price,
           }}
           onSubmit={handleUpdate}
+          onThumbnailUploaded={() => {
+            router.refresh();
+            onSuccess();
+          }}
           isLoading={busy}
         />
       </div>

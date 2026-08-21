@@ -10,6 +10,7 @@ import {
   programReviewsQuerySchema,
   reviewIdParamSchema,
   updateProgramSchema,
+  uploadProgramThumbnailSchema,
 } from "@/lib/validations/programs";
 
 import {
@@ -22,6 +23,7 @@ import {
   getProgramsWithModulesResponseSchema,
   programMutationValueSchema,
   updateProgramResponseSchema,
+  uploadProgramThumbnailResponseSchema,
   type CreateProgramResult,
   type DeleteProgramResult,
   type DeleteProgramReviewResult,
@@ -31,6 +33,7 @@ import {
   type GetProgramsResult,
   type GetProgramsWithModulesResult,
   type UpdateProgramResult,
+  type UploadProgramThumbnailResult,
 } from "./schemas";
 
 export type {
@@ -52,6 +55,8 @@ export type {
   GetProgramsWithModulesResult,
   UpdateProgramResponse,
   UpdateProgramResult,
+  UploadProgramThumbnailResponse,
+  UploadProgramThumbnailResult,
 } from "./schemas";
 
 export type {
@@ -222,6 +227,26 @@ export async function updateProgram(
     `${PROGRAMS_BASE}/${programId}`,
     updateProgramResponseSchema,
     { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/programs/{id}/thumbnail` — multipart image upload. */
+export async function uploadProgramThumbnail(
+  id: string,
+  file: File,
+): Promise<UploadProgramThumbnailResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+  const { file: parsedFile } = uploadProgramThumbnailSchema.parse({ file });
+
+  const formData = new FormData();
+  formData.append("file", parsedFile);
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/thumbnail`,
+    uploadProgramThumbnailResponseSchema,
+    { method: "POST", body: formData },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

@@ -130,6 +130,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Đóng hộp thoại và thử lại sau vài giây.",
   },
+  "programs.upload-thumbnail": {
+    title: "Không tải lên được ảnh chương trình",
+    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
+  },
   "experts.list": {
     title: "Không tải được danh sách chuyên gia",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
@@ -160,6 +165,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Hồ sơ không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Thử lại sau vài giây hoặc quay lại danh sách chuyên gia.",
   },
+  "experts.upload-avatar": {
+    title: "Không tải lên được ảnh chuyên gia",
+    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
+  },
   "classes.list": {
     title: "Không tải được danh sách lớp",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
@@ -182,8 +192,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classes.lifecycle": {
     title: "Không chuyển được trạng thái lớp",
-    reason: "Lớp thiếu mentor, lịch chưa khớp khung chương trình, hoặc ngày bắt đầu đã quá hạn.",
-    action: "Gán mentor, xếp đủ lịch, kiểm tra ngày bắt đầu rồi thử lại.",
+    reason:
+      "Lớp thiếu mentor (khi mở tuyển sinh), lịch chưa khớp khung chương trình, hoặc ngày bắt đầu đã quá hạn.",
+    action:
+      "Xếp đủ lịch trước khi đưa lên bảng mentor; gán mentor trước khi mở tuyển sinh; kiểm tra ngày bắt đầu rồi thử lại.",
   },
   "classes.curriculumProgress": {
     title: "Không tải được tiến độ chương trình",
@@ -207,8 +219,9 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classMentorRequests.create": {
     title: "Không gửi được yêu cầu",
-    reason: "Chỉ lớp Bản nháp đã có lịch, chưa có mentor mới nhận đăng ký.",
-    action: "Tải lại bảng lớp và chọn lớp Draft còn trống mentor.",
+    reason:
+      "Chỉ lớp Chờ mentor (ReadyForMentor), đã có lịch, chưa có mentor mới nhận đăng ký.",
+    action: "Tải lại bảng lớp và chọn lớp Chờ mentor còn trống mentor.",
   },
   "classMentorRequests.withdraw": {
     title: "Không rút được yêu cầu",
@@ -287,8 +300,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classSessions.create": {
     title: "Không tạo được buổi học",
-    reason: "Thiếu mục chương trình, trùng buổi active, hoặc khung giờ không hợp lệ.",
-    action: "Chọn đúng một hoạt động/bài tập chưa có buổi, kiểm tra giờ học rồi thử lại.",
+    reason:
+      "Thiếu mục chương trình, trùng buổi active, EndTime không hợp lệ với buổi activity, hoặc khung giờ sai.",
+    action:
+      "Buổi activity chỉ gửi StartTime; buổi bài tập cần Start + End. Chọn mục chưa có buổi rồi thử lại.",
   },
   "classSessions.generate": {
     title: "Không tạo được lịch tự động",
@@ -307,8 +322,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classSessions.update": {
     title: "Không cập nhật được buổi học",
-    reason: "Mục chương trình bị trùng buổi active, hoặc thông tin chưa hợp lệ.",
-    action: "Tải lại lịch học, chọn mục chưa có buổi rồi thử lưu lại.",
+    reason:
+      "Không được gửi EndTime cho buổi activity, mục bị trùng buổi active, hoặc thông tin chưa hợp lệ.",
+    action:
+      "Dời buổi activity chỉ bằng StartTime; bài tập mới đổi End. Tải lại lịch rồi thử lưu.",
   },
   "classSessions.delete": {
     title: "Không xóa được buổi học",
@@ -683,10 +700,12 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "programs.update",
   "programs.delete",
   "programs.reviews.delete",
+  "programs.upload-thumbnail",
   "experts.create",
   "experts.update",
   "experts.delete",
   "experts.credentials",
+  "experts.upload-avatar",
   "classes.create",
   "classes.update",
   "classes.lifecycle",

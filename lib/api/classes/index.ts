@@ -297,7 +297,22 @@ export async function updateClass(
   return requireApiValue(response.value);
 }
 
-/** Transitions a class Draft -> Open. */
+/** Transitions a class Draft → ReadyForMentor. */
+export async function markClassReadyForMentor(
+  classId: string,
+): Promise<ClassResult> {
+  const { classId: parsedClassId } = classIdParamSchema.parse({ classId });
+
+  const response = await apiFetchParsed(
+    `${CLASSES_BASE}/${parsedClassId}/ready-for-mentor`,
+    classResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** Transitions a class ReadyForMentor → Open. */
 export async function openClass(classId: string): Promise<ClassResult> {
   return postClassLifecycle(classId, "open");
 }
@@ -400,13 +415,30 @@ export async function getClassSessionWithStudents(
   return requireApiValue(response.value);
 }
 
+function omitEndTimeForActivitySession<
+  T extends {
+    activityId?: string | null;
+    assignmentId?: string | null;
+    endTime?: string | null;
+  },
+>(body: T): Omit<T, "endTime"> | T {
+  const hasActivity = Boolean(body.activityId?.trim());
+  const hasAssignment = Boolean(body.assignmentId?.trim());
+  if (hasActivity && !hasAssignment && "endTime" in body) {
+    const { endTime: _omit, ...rest } = body;
+    return rest;
+  }
+  return body;
+}
+
 export async function createClassSession(
   input: CreateClassSessionInput,
 ): Promise<ClassSessionResult> {
-  const body = createClassSessionSchema.parse(input);
+  const parsed = createClassSessionSchema.parse(input);
+  const body = omitEndTimeForActivitySession(parsed);
 
   const response = await apiFetchParsed(
-    `${CLASSES_BASE}/${body.classId}/sessions`,
+    `${CLASSES_BASE}/${parsed.classId}/sessions`,
     classSessionResponseSchema,
     { method: "POST", body },
   );
@@ -419,11 +451,12 @@ export async function updateClassSession(
   sessionId: string,
   input: UpdateClassSessionInput,
 ): Promise<ClassSessionResult> {
-  const parsed = classSessionParamsSchema.parse({ classId, sessionId });
-  const body = updateClassSessionSchema.parse(input);
+  const parsedParams = classSessionParamsSchema.parse({ classId, sessionId });
+  const parsed = updateClassSessionSchema.parse(input);
+  const body = omitEndTimeForActivitySession(parsed);
 
   const response = await apiFetchParsed(
-    `${CLASSES_BASE}/${parsed.classId}/sessions/${parsed.sessionId}`,
+    `${CLASSES_BASE}/${parsedParams.classId}/sessions/${parsedParams.sessionId}`,
     classSessionResponseSchema,
     { method: "PUT", body },
   );

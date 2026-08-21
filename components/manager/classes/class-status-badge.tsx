@@ -12,6 +12,8 @@ import { cn } from "@/lib/utils";
 const CLASS_STATUS_STYLES: Record<ClassStatus, string> = {
   Draft:
     "bg-[#4FC3F7]/15 text-[#0d6e9c] dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc] border-[#4FC3F7]/25 dark:border-[#4FC3F7]/40",
+  ReadyForMentor:
+    "bg-[#26A69A]/15 text-[#00695c] dark:bg-[#26A69A]/20 dark:text-[#5eead4] border-[#26A69A]/25 dark:border-[#26A69A]/40",
   Open: "bg-[#7CB342]/15 text-[#3d5c22] dark:bg-[#7CB342]/20 dark:text-[#b8e086] border-[#7CB342]/20 dark:border-[#7CB342]/35",
   InProgress:
     "bg-[#FDD835]/20 text-[#8A7200] dark:bg-[#FDD835]/20 dark:text-[#fde047] border-[#FDD835]/35 dark:border-[#FDD835]/45",

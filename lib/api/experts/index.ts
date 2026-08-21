@@ -13,6 +13,7 @@ import {
   expertPublicationIdParamSchema,
   expertPublicationRequestSchema,
   updateExpertSchema,
+  uploadExpertAvatarSchema,
 } from "@/lib/validations/experts";
 
 import {
@@ -26,6 +27,7 @@ import {
   updateExpertDegreeResponseSchema,
   updateExpertPublicationResponseSchema,
   updateExpertResponseSchema,
+  uploadExpertAvatarResponseSchema,
   type CreateExpertDegreeResult,
   type CreateExpertPublicationResult,
   type CreateExpertResult,
@@ -36,6 +38,7 @@ import {
   type UpdateExpertDegreeResult,
   type UpdateExpertPublicationResult,
   type UpdateExpertResult,
+  type UploadExpertAvatarResult,
 } from "./schemas";
 
 export type {
@@ -59,6 +62,8 @@ export type {
   UpdateExpertPublicationResult,
   UpdateExpertResponse,
   UpdateExpertResult,
+  UploadExpertAvatarResponse,
+  UploadExpertAvatarResult,
 } from "./schemas";
 
 export type {
@@ -182,6 +187,26 @@ export async function updateExpert(
     `${EXPERTS_BASE}/${parsedExpertId}`,
     updateExpertResponseSchema,
     { method: "PUT", body: toExpertRequest(body) },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/experts/{id}/avatar` — multipart image upload. */
+export async function uploadExpertAvatar(
+  expertId: string,
+  file: File,
+): Promise<UploadExpertAvatarResult> {
+  const { expertId: parsedExpertId } = expertIdParamSchema.parse({ expertId });
+  const { file: parsedFile } = uploadExpertAvatarSchema.parse({ file });
+
+  const formData = new FormData();
+  formData.append("file", parsedFile);
+
+  const response = await apiFetchParsed(
+    `${EXPERTS_BASE}/${parsedExpertId}/avatar`,
+    uploadExpertAvatarResponseSchema,
+    { method: "POST", body: formData },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

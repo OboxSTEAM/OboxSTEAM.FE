@@ -87,6 +87,32 @@ export function canGenerateClassSessions(input: {
   return { ok: true };
 }
 
+/** Draft → ReadyForMentor: coverage + future StartDate (no mentor required). */
+export function getReadyForMentorBlockers(input: {
+  activeSessionCount: number;
+  startDate: string;
+}): string[] {
+  const blockers: string[] = [];
+  if (input.activeSessionCount <= 0) {
+    blockers.push("Chưa có lịch học khớp khung chương trình");
+  }
+  if (!isApiDateTimeInFuture(input.startDate)) {
+    blockers.push("Ngày bắt đầu đã quá hạn — hãy dời lịch lớp rồi mới mở bảng mentor");
+  }
+  return blockers;
+}
+
+export function getReadyForMentorBlockersFromClass(
+  classItem: Pick<Class, "startDate">,
+  activeSessionCount: number,
+): string[] {
+  return getReadyForMentorBlockers({
+    activeSessionCount,
+    startDate: classItem.startDate,
+  });
+}
+
+/** ReadyForMentor → Open: mentor + coverage + future StartDate. */
 export function getOpenClassBlockers(input: {
   mentorId: string | null;
   activeSessionCount: number;
