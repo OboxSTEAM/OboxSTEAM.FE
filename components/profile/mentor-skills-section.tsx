@@ -474,10 +474,14 @@ function SkillEvidenceEditor({
 }
 
 const PROFICIENCY_STYLES: Record<SkillProficiencyLevel, string> = {
-  Beginner: "border-[#E5E5E0] bg-[#F5F5F0] text-[#6B6B6B]",
-  Intermediate: "border-[#4FC3F7]/30 bg-[#4FC3F7]/12 text-[#0d6e9c]",
-  Advanced: "border-[#7CB342]/25 bg-[#7CB342]/15 text-[#3d5c22]",
-  Expert: "border-[#FDD835]/35 bg-[#FDD835]/20 text-[#8A7200]",
+  Beginner:
+    "border-border bg-muted text-muted-foreground",
+  Intermediate:
+    "border-[#4FC3F7]/30 bg-[#4FC3F7]/12 text-[#0d6e9c] dark:border-[#4FC3F7]/40 dark:bg-[#4FC3F7]/20 dark:text-[#7dd3fc]",
+  Advanced:
+    "border-[#7CB342]/25 bg-[#7CB342]/15 text-[#3d5c22] dark:border-[#7CB342]/40 dark:bg-[#7CB342]/20 dark:text-[#a3e635]",
+  Expert:
+    "border-[#FDD835]/35 bg-[#FDD835]/20 text-[#8A7200] dark:border-[#FDD835]/40 dark:bg-[#FDD835]/20 dark:text-[#fde047]",
 };
 
 async function fetchSkillCatalog(): Promise<SkillSummary[]> {
@@ -510,16 +514,16 @@ function SkillRow({
   return (
     <li
       className={cn(
-        "border-b border-[#E5E5E0] px-3 py-2.5 transition-[opacity,filter,background-color] duration-300 last:border-b-0",
+        "border-b border-border px-3 py-2.5 transition-[opacity,filter,background-color] duration-300 last:border-b-0",
         isBusy && "cursor-wait opacity-70",
-        isHidden && "bg-[#F5F5F0]/80 opacity-45 grayscale-[0.35]",
+        isHidden && "bg-muted/60 opacity-55 grayscale-[0.35]",
       )}
     >
       <div className="flex min-w-0 items-center gap-2">
         <span
           className={cn(
-            "min-w-0 flex-1 truncate text-sm font-medium text-[#2D2D2D]",
-            isHidden && "text-[#6B6B6B]",
+            "min-w-0 flex-1 truncate text-sm font-medium text-foreground",
+            isHidden && "text-muted-foreground",
           )}
         >
           {name}
@@ -527,7 +531,7 @@ function SkillRow({
         {isHidden ? (
           <Badge
             variant="outline"
-            className="shrink-0 rounded-full border-[#E5E5E0] bg-white/70 px-2 py-0 text-[10px] font-semibold text-[#6B6B6B]"
+            className="shrink-0 rounded-full border-border bg-muted/70 px-2 py-0 text-[10px] font-semibold text-muted-foreground"
           >
             Đang ẩn
           </Badge>
@@ -554,7 +558,7 @@ function SkillRow({
               ? "Hiện kỹ năng với học viên"
               : "Ẩn kỹ năng khỏi học viên"
           }
-          className="size-7 shrink-0 text-[#6B6B6B] hover:text-[#2D2D2D]"
+          className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
         >
           {isHidden ? (
             <EyeOff className="size-3.5" />
@@ -570,7 +574,7 @@ function SkillRow({
           onClick={() => onEdit(item)}
           aria-label="Chỉnh sửa kỹ năng"
           title="Chỉnh sửa kỹ năng"
-          className="size-7 shrink-0 text-[#6B6B6B] hover:text-[#2D2D2D]"
+          className="size-7 shrink-0 text-muted-foreground hover:text-foreground"
         >
           <Pencil className="size-3.5" />
         </Button>
@@ -582,7 +586,7 @@ function SkillRow({
           onClick={() => onDelete(item)}
           aria-label="Xóa kỹ năng"
           title="Xóa kỹ năng"
-          className="size-7 shrink-0 text-[#6B6B6B] hover:text-[#E94B3C]"
+          className="size-7 shrink-0 text-muted-foreground hover:text-destructive"
         >
           <Trash2 className="size-3.5" />
         </Button>
@@ -594,7 +598,7 @@ function SkillRow({
         item.notes?.trim()) && (
         <p
           className={cn(
-            "mt-0.5 truncate text-[11px] text-[#6B6B6B]",
+            "mt-0.5 truncate text-[11px] text-muted-foreground",
             isHidden && "opacity-80",
           )}
         >
