@@ -58,3 +58,20 @@ export function getPreferredRoleHomePath(
   if (roles.some((role) => isMentorRole(role))) return "/mentor/classes";
   return "/";
 }
+
+/**
+ * Whether any of `roles` may open `path` after login.
+ * Staff consoles are role-gated; other relative paths are allowed for any role.
+ */
+export function canRolesAccessPath(
+  roles: Array<string | null | undefined>,
+  path: string,
+): boolean {
+  if (path === "/manager" || path.startsWith("/manager/")) {
+    return roles.some((role) => canAccessManagerArea(role));
+  }
+  if (path === "/mentor" || path.startsWith("/mentor/")) {
+    return roles.some((role) => isMentorRole(role));
+  }
+  return true;
+}

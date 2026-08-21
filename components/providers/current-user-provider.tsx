@@ -45,6 +45,8 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
 
   const isMountedRef = useRef(false);
   const fetchGenerationRef = useRef(0);
+  const accessToken = session?.accessToken ?? null;
+  const previousAccessTokenRef = useRef<string | null>(null);
 
   const syncSessionFromProfile = useCallback((nextProfile: UserProfile) => {
     const current = getAuthSession();
@@ -112,8 +114,22 @@ export function CurrentUserProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     if (!isHydrated) return;
+
+    // Re-login can keep `isAuthenticated === true` while swapping tokens.
+    // Drop the previous profile immediately so role shells don't bounce on stale roles.
+    if (
+      previousAccessTokenRef.current !== null &&
+      previousAccessTokenRef.current !== accessToken
+    ) {
+      setProfile(null);
+      if (accessToken) {
+        setIsLoading(true);
+      }
+    }
+    previousAccessTokenRef.current = accessToken;
+
     void fetchProfile();
-  }, [isHydrated, isAuthenticated, fetchProfile]);
+  }, [isHydrated, isAuthenticated, accessToken, fetchProfile]);
 
   const value = useMemo<CurrentUserContextValue>(
     () => ({
