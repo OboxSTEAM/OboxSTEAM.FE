@@ -237,3 +237,15 @@ export function getLiveJoinState(
     msUntilStart: startMs - nowMs,
   };
 }
+
+/**
+ * Student self check-in / join actions unlock 15 minutes before start
+ * (`countdown` + `live` phases from {@link getLiveJoinState}).
+ */
+export function isSessionAttendanceWindowOpen(
+  session: ClassSession,
+  now = new Date(),
+): boolean {
+  const phase = getLiveJoinState(session, now).phase;
+  return phase === "countdown" || phase === "live";
+}

@@ -258,6 +258,74 @@ function LiveJoinButton({ session }: { session: ClassSession }) {
   );
 }
 
+/** Same 15-minute open window + countdown clock as online, for field / offline. */
+function OfflineSessionWindow({
+  join,
+  requireQrCheckin,
+}: {
+  join: LiveJoinState;
+  requireQrCheckin: boolean;
+}) {
+  if (join.phase === "cancelled") {
+    return (
+      <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+        Buổi học đã bị hủy.
+      </p>
+    );
+  }
+
+  if (join.phase === "locked") {
+    return (
+      <JoinCountdownHero
+        ms={join.msUntilOpen}
+        title="Cửa check-in chưa mở"
+        hint={
+          requireQrCheckin
+            ? "Form check-in QR sẽ mở 15 phút trước giờ bắt đầu."
+            : "Thời gian đến lớp / điểm danh mở 15 phút trước giờ bắt đầu."
+        }
+        tone="locked"
+      />
+    );
+  }
+
+  if (join.phase === "countdown") {
+    return (
+      <JoinCountdownHero
+        ms={join.msUntilStart}
+        title="Sắp đến giờ"
+        hint={
+          requireQrCheckin
+            ? "Bạn có thể check-in từ bây giờ. Buổi học bắt đầu sau vài phút."
+            : "Hãy có mặt đúng địa điểm. Buổi học bắt đầu sau vài phút."
+        }
+        tone="soon"
+      />
+    );
+  }
+
+  if (join.phase === "live") {
+    return (
+      <p className="rounded-xl border border-[#E8A87C]/35 bg-[#E8A87C]/12 px-4 py-3 text-sm font-semibold text-[#8B5E3C]">
+        Buổi học đang diễn ra — đến đúng địa điểm
+        {requireQrCheckin ? " và hoàn tất check-in" : ""}.
+      </p>
+    );
+  }
+
+  return (
+    <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+      Buổi học đã kết thúc.
+    </p>
+  );
+}
+
+function isAttendanceCheckedIn(
+  status: SessionAttendanceStatus | null | undefined,
+): boolean {
+  return status === "Present" || status === "Late" || status === "Excused";
+}
+
 function CompletionOrMentorNote({
   isAlreadyComplete,
   hasSchedule,
@@ -494,8 +562,14 @@ function OfflineSessionLayout({
   const location = nextSession?.location ?? null;
   const hasCoordinates =
     nextSession?.latitude != null && nextSession?.longitude != null;
-  const showCheckin =
+  const canCheckin =
     nextSession != null && canGenerateSessionCheckinQr(nextSession);
+  const joinState = useLiveJoinState(nextSession);
+  const showCheckinPanel =
+    canCheckin &&
+    (isAttendanceCheckedIn(myAttendanceStatus) ||
+      joinState?.phase === "countdown" ||
+      joinState?.phase === "live");
 
   return (
     <div className="space-y-5">
@@ -504,53 +578,60 @@ function OfflineSessionLayout({
         <p className="text-sm leading-relaxed text-learn-muted">{description}</p>
       </div>
 
-      {hasSchedule && nextSession ? (
-        <div className="overflow-hidden rounded-2xl border border-[#E8A87C]/35 bg-[#E8A87C]/8">
-          <div className="space-y-3 border-b border-[#E8A87C]/25 px-4 py-4 sm:px-5">
-            <div className="flex items-start gap-3">
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#E8A87C]/25 text-[#8B5E3C]">
-                <MapPin className="size-5" aria-hidden />
-              </span>
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8B5E3C]">
-                  Địa điểm
-                </p>
-                <p className="mt-1 font-heading text-base font-bold leading-snug text-learn-text-strong">
-                  {location?.trim() || "Địa điểm sẽ được cập nhật"}
-                </p>
-                <p className="mt-1 text-xs text-learn-muted">
-                  {nextSession.title || "Buổi học trực tiếp"}
-                  <span className="text-learn-faint">
-                    {" "}
-                    · {CLASS_SESSION_KIND_LABELS[nextSession.sessionKind]}
-                  </span>
-                </p>
+      {hasSchedule && nextSession && joinState ? (
+        <div className="space-y-3 rounded-2xl border border-[#E8A87C]/35 bg-gradient-to-b from-[#E8A87C]/10 to-transparent p-4 sm:p-5">
+          <OfflineSessionWindow
+            join={joinState}
+            requireQrCheckin={Boolean(activity.requireQrCheckin) || canCheckin}
+          />
+
+          <div className="overflow-hidden rounded-2xl border border-[#E8A87C]/35 bg-[#E8A87C]/8">
+            <div className="space-y-3 border-b border-[#E8A87C]/25 px-4 py-4 sm:px-5">
+              <div className="flex items-start gap-3">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#E8A87C]/25 text-[#8B5E3C]">
+                  <MapPin className="size-5" aria-hidden />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#8B5E3C]">
+                    Địa điểm
+                  </p>
+                  <p className="mt-1 font-heading text-base font-bold leading-snug text-learn-text-strong">
+                    {location?.trim() || "Địa điểm sẽ được cập nhật"}
+                  </p>
+                  <p className="mt-1 text-xs text-learn-muted">
+                    {nextSession.title || "Buổi học trực tiếp"}
+                    <span className="text-learn-faint">
+                      {" "}
+                      · {CLASS_SESSION_KIND_LABELS[nextSession.sessionKind]}
+                    </span>
+                  </p>
+                </div>
               </div>
+
+              {schedule ? (
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-learn-muted">
+                    Giờ đến lớp
+                  </p>
+                  <ScheduleTimeline schedule={schedule} />
+                </div>
+              ) : null}
             </div>
 
-            {schedule ? (
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-learn-muted">
-                  Giờ đến lớp
-                </p>
-                <ScheduleTimeline schedule={schedule} />
-              </div>
+            {hasCoordinates ? (
+              <SessionLocationMap
+                latitude={nextSession.latitude as number}
+                longitude={nextSession.longitude as number}
+                locationLabel={location}
+                variant="learn"
+                className="rounded-none border-0 border-t border-[#E8A87C]/25"
+              />
             ) : null}
           </div>
-
-          {hasCoordinates ? (
-            <SessionLocationMap
-              latitude={nextSession.latitude as number}
-              longitude={nextSession.longitude as number}
-              locationLabel={location}
-              variant="learn"
-              className="rounded-none border-0 border-t border-[#E8A87C]/25"
-            />
-          ) : null}
         </div>
       ) : null}
 
-      {showCheckin ? (
+      {showCheckinPanel && nextSession ? (
         <StudentSessionCheckinPanel
           sessionId={nextSession.id}
           requireQrCheckin={activity.requireQrCheckin}
