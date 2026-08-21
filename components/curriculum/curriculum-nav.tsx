@@ -13,6 +13,7 @@ import {
 import type { EnrollmentCurriculum, EnrollmentCurriculumAssignment } from "@/lib/api";
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
+import { localizeUserFacingMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 import { CurriculumClassBar } from "./curriculum-class-bar";
@@ -297,7 +298,9 @@ export function CurriculumNav({
                       </span>
                       <span className="mt-1 block text-xs text-learn-muted">
                         {MODULE_TYPE_LABELS[module.moduleType]}
-                        {module.lockReason ? ` · ${module.lockReason}` : null}
+                        {module.lockReason
+                          ? ` · ${localizeUserFacingMessage(module.lockReason, "Module chưa mở khóa.")}`
+                          : null}
                       </span>
                     </span>
                   </span>

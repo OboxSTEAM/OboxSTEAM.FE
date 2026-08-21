@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 
 import type { AppErrorContext, AppErrorState } from "./types";
+import { translateApiMessage } from "./translate-api-message";
 
 const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   generic: {
@@ -130,6 +131,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Đóng hộp thoại và thử lại sau vài giây.",
   },
+  "programs.upload-thumbnail": {
+    title: "Không tải lên được ảnh chương trình",
+    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
+  },
   "experts.list": {
     title: "Không tải được danh sách chuyên gia",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
@@ -160,6 +166,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Hồ sơ không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Thử lại sau vài giây hoặc quay lại danh sách chuyên gia.",
   },
+  "experts.upload-avatar": {
+    title: "Không tải lên được ảnh chuyên gia",
+    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
+    action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
+  },
   "classes.list": {
     title: "Không tải được danh sách lớp",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
@@ -172,18 +183,20 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classes.create": {
     title: "Không tạo được lớp học",
-    reason: "Thông tin lớp chưa hợp lệ hoặc mã lớp đã tồn tại.",
-    action: "Kiểm tra mã, tên, chương trình và lịch học rồi thử lại.",
+    reason: "Thông tin lớp chưa hợp lệ, mã đã tồn tại, hoặc ngày bắt đầu chưa đủ 14 ngày.",
+    action: "Kiểm tra mã, tên, chương trình và ngày bắt đầu (≥ 14 ngày nữa) rồi thử lại.",
   },
   "classes.update": {
     title: "Không cập nhật được lớp học",
-    reason: "Thông tin chưa hợp lệ hoặc lớp không còn tồn tại.",
-    action: "Tải lại trang, kiểm tra thông tin rồi thử lưu lại.",
+    reason: "Thông tin chưa hợp lệ, hoặc buổi học hiện có nằm ngoài khoảng ngày mới.",
+    action: "Tải lại trang, dời lịch buổi học hoặc mở rộng ngày lớp rồi thử lưu lại.",
   },
   "classes.lifecycle": {
     title: "Không chuyển được trạng thái lớp",
-    reason: "Lớp không ở trạng thái phù hợp hoặc yêu cầu bị từ chối.",
-    action: "Tải lại thông tin lớp và thử lại thao tác.",
+    reason:
+      "Lớp thiếu mentor (khi mở tuyển sinh), lịch chưa khớp khung chương trình, hoặc ngày bắt đầu đã quá hạn.",
+    action:
+      "Xếp đủ lịch trước khi đưa lên bảng mentor; gán mentor trước khi mở tuyển sinh; kiểm tra ngày bắt đầu rồi thử lại.",
   },
   "classes.curriculumProgress": {
     title: "Không tải được tiến độ chương trình",
@@ -207,8 +220,9 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classMentorRequests.create": {
     title: "Không gửi được yêu cầu",
-    reason: "Lớp không còn nhận đăng ký hoặc bạn đã có yêu cầu đang chờ.",
-    action: "Tải lại bảng lớp và kiểm tra trạng thái yêu cầu.",
+    reason:
+      "Chỉ lớp Chờ mentor (ReadyForMentor), đã có lịch, chưa có mentor mới nhận đăng ký.",
+    action: "Tải lại bảng lớp và chọn lớp Chờ mentor còn trống mentor.",
   },
   "classMentorRequests.withdraw": {
     title: "Không rút được yêu cầu",
@@ -217,8 +231,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classMentorRequests.approve": {
     title: "Không duyệt được yêu cầu mentor",
-    reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc lớp đã có mentor.",
-    action: "Tải lại danh sách yêu cầu và thử lại.",
+    reason: "Lớp đã mất lịch, đã có mentor, hoặc yêu cầu không còn chờ duyệt.",
+    action: "Kiểm tra lịch lớp rồi tải lại danh sách yêu cầu.",
   },
   "classMentorRequests.reject": {
     title: "Không từ chối được yêu cầu mentor",
@@ -275,6 +289,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Không lấy được điểm tự chấm của học viên.",
     action: "Thử lại hoặc xem điểm trên bảng danh sách.",
   },
+  "assignments.schedule": {
+    title: "Không cập nhật được lịch mở bài",
+    reason: "Khung thời gian chưa hợp lệ hoặc bạn không có quyền sửa bài tập này.",
+    action: "Kiểm tra mở từ / đóng lúc / hạn nộp rồi thử lại.",
+  },
   "classSessions.list": {
     title: "Không tải được lịch học",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp không tồn tại.",
@@ -282,13 +301,15 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classSessions.create": {
     title: "Không tạo được buổi học",
-    reason: "Thông tin buổi học chưa hợp lệ hoặc lịch bị trùng.",
-    action: "Kiểm tra tiêu đề, module và khung giờ rồi thử lại.",
+    reason:
+      "Thiếu mục chương trình, trùng buổi active, EndTime không hợp lệ với buổi activity, hoặc khung giờ sai.",
+    action:
+      "Buổi activity chỉ gửi StartTime; buổi bài tập cần Start + End. Chọn mục chưa có buổi rồi thử lại.",
   },
   "classSessions.generate": {
     title: "Không tạo được lịch tự động",
-    reason: "Lớp chưa sẵn sàng hoặc khung thời gian không đủ cho chương trình.",
-    action: "Kiểm tra mentor, ngày học và khoảng thời gian lớp rồi thử lại.",
+    reason: "Lớp đã có học viên, còn buổi active, hoặc khoảng ngày không đủ chỗ.",
+    action: "Xóa/hủy buổi cũ nếu cần, nới EndDate, rồi thử lại. Không cần mentor khi tạo lịch.",
   },
   "classSessions.checkinToken": {
     title: "Không hiển thị được QR check-in",
@@ -302,8 +323,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "classSessions.update": {
     title: "Không cập nhật được buổi học",
-    reason: "Thông tin chưa hợp lệ hoặc buổi học không còn tồn tại.",
-    action: "Tải lại lịch học, kiểm tra thông tin rồi thử lưu lại.",
+    reason:
+      "Không được gửi EndTime cho buổi activity, mục bị trùng buổi active, hoặc thông tin chưa hợp lệ.",
+    action:
+      "Dời buổi activity chỉ bằng StartTime; bài tập mới đổi End. Tải lại lịch rồi thử lưu.",
   },
   "classSessions.delete": {
     title: "Không xóa được buổi học",
@@ -403,8 +426,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "curriculum.activity.save": {
     title: "Không lưu được hoạt động",
-    reason: "Thông tin hoạt động chưa hợp lệ hoặc lịch học chưa đúng.",
-    action: "Kiểm tra tên, loại, thứ tự và thời gian (nếu có) rồi thử lại.",
+    reason: "Thông tin hoạt động chưa hợp lệ hoặc thời lượng chưa đúng.",
+    action: "Kiểm tra tên, loại, thứ tự và thời lượng (phút) rồi thử lại.",
   },
   "curriculum.material.save": {
     title: "Không lưu được tài liệu",
@@ -419,7 +442,7 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   "curriculum.assignment.save": {
     title: "Không lưu được bài tập",
     reason: "Thông tin bài tập chưa hợp lệ hoặc đã trùng mã.",
-    action: "Kiểm tra tiêu đề, điểm, và cấu hình rồi thử lại.",
+    action: "Kiểm tra tiêu đề, điểm và cấu hình (thời lượng làm bài nếu là quiz) rồi thử lại.",
   },
   "curriculum.milestone.save": {
     title: "Không lưu được milestone",
@@ -678,10 +701,12 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "programs.update",
   "programs.delete",
   "programs.reviews.delete",
+  "programs.upload-thumbnail",
   "experts.create",
   "experts.update",
   "experts.delete",
   "experts.credentials",
+  "experts.upload-avatar",
   "classes.create",
   "classes.update",
   "classes.lifecycle",
@@ -694,6 +719,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "mentors.skills.visibility",
   "mentors.skills.delete",
   "assignments.submissions.grade",
+  "assignments.schedule",
   "classSessions.create",
   "classSessions.update",
   "classSessions.delete",
@@ -759,7 +785,10 @@ function reasonForHttpStatus(
       return "Mã lớp đã tồn tại hoặc xung đột dữ liệu lớp.";
     }
     if (context.startsWith("curriculum.")) {
-      return "Mã hoặc tên đã tồn tại trong chương trình.";
+      return "Không sửa được khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên — hoặc mã/tên đã tồn tại.";
+    }
+    if (context === "classSessions.create" || context === "classSessions.update") {
+      return "Mục chương trình này đã có buổi học active trên lớp.";
     }
     if (context === "highlight.segment") {
       return "Đoạn mới chồng lên khoảng đã có trong highlight (overlap).";
@@ -794,7 +823,8 @@ function sanitizeApiMessage(message: string | null | undefined): string | null {
   const trimmed = message.trim();
   if (!trimmed || CLIENT_PLACEHOLDER_MESSAGES.has(trimmed)) return null;
   if (/^Request failed with status \d+/i.test(trimmed)) return null;
-  return trimmed;
+  // Prefer Vietnamese; drop unmapped English so curated context reason wins.
+  return translateApiMessage(trimmed);
 }
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
@@ -942,8 +972,8 @@ function fromNetworkError(_context: AppErrorContext): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
- * Backend `error.message` is preferred as `reason` when present;
- * `action` then uses status-based copy instead of context-specific tips.
+ * Backend `error.message` is localized to Vietnamese when known; otherwise
+ * curated context/`status` copy is used for `reason`.
  */
 export function resolveAppError(
   error: unknown,
@@ -977,7 +1007,7 @@ export function resolveAppError(
     return fromNetworkError(context);
   }
 
-  // Intentional client-side tips — keep if message looks user-facing (Vietnamese), not technical.
+  // Intentional client-side tips — localize English; keep Vietnamese as-is.
   if (error instanceof Error && error.message) {
     const looksTechnical =
       /[A-Z][a-z]+Exception|\bDTO\b|\bUUID\b|\bHttpStatus\b|at\s+\w+\.|System\.|Request failed|NullReference|SqlException/i.test(
@@ -987,7 +1017,7 @@ export function resolveAppError(
       const fallback = CONTEXT_FALLBACKS[context];
       return {
         title: fallback.title,
-        reason: error.message,
+        reason: translateApiMessage(error.message) ?? fallback.reason,
         action: fallback.action,
       };
     }

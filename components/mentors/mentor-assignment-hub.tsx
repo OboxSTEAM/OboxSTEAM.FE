@@ -52,7 +52,7 @@ export function MentorAssignmentHub() {
     <div className="flex min-h-full flex-col">
       <ManagerPageHeader
         title="Đăng ký lớp"
-        description="Quản lý kỹ năng, tìm lớp đang tuyển mentor — mở panel để theo dõi yêu cầu đã gửi."
+        description="Quản lý kỹ năng, tìm lớp Chờ mentor trên bảng — mở panel để theo dõi yêu cầu đã gửi."
       >
         <Button
           type="button"
@@ -85,7 +85,7 @@ export function MentorAssignmentHub() {
               Lớp mentor
             </h3>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Lớp đang tuyển và lớp đã xin / đã nhận xếp chung — ưu tiên hiện
+              Lớp Chờ mentor và lớp đã xin / đã nhận xếp chung — ưu tiên hiện
               trước. Chip xanh = kỹ năng bạn đã khớp.
             </p>
           </div>

@@ -218,7 +218,7 @@
       {
         "path": "/api/classes/mentor-board",
         "method": "get",
-        "description": "Lists Draft/Open classes with no assigned mentor. Prefer GET /api/class-mentor-requests/board."
+        "description": "Lists ReadyForMentor classes with no assigned mentor. Prefer GET /api/class-mentor-requests/board."
       },
       {
         "path": "/api/classes",
@@ -241,6 +241,11 @@
         "description": "Retrieve class details including all scheduled sessions for the cohort, ordered by start time."
       },
       {
+        "path": "/api/classes/{classId}/curriculum-progress",
+        "method": "get",
+        "description": "Returns activity Done/InProgress counts and assignment submitted/graded aggregates for active students in the class. Modules/activities/assignments are always included (zeros when no progress). Roster PII is not returned. Requires the assigned mentor of the class."
+      },
+      {
         "path": "/api/classes/{id}",
         "method": "get",
         "description": "Retrieve detailed information for a specific class cohort by its ID, including SeatsTaken."
@@ -248,17 +253,22 @@
       {
         "path": "/api/classes/{id}",
         "method": "put",
-        "description": "Updates class cohort details. Status changes must use Open, Start, or Complete endpoints. Requires Admin or Manager role."
+        "description": "Updates class cohort details. Status changes must use ReadyForMentor, Open, Start, or Complete endpoints. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}",
         "method": "delete",
-        "description": "Soft-deletes a Draft or Open class cohort and its sessions. Open classes may only be deleted when they have no active students. Requires Manager role."
+        "description": "Soft-deletes a Draft, ReadyForMentor, or Open class cohort and its sessions. Open classes may only be deleted when they have no active students. Requires Manager role."
+      },
+      {
+        "path": "/api/classes/{id}/ready-for-mentor",
+        "method": "post",
+        "description": "Transitions a class from Draft to ReadyForMentor once the timetable covers the curriculum. Mentors may then request the class. Students cannot enroll until Open. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}/open",
         "method": "post",
-        "description": "Transitions a class from Draft to Open. Requires Admin or Manager role."
+        "description": "Transitions a class from ReadyForMentor to Open. Requires an assigned mentor and a complete timetable. Students may enroll after this step. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}/start",
@@ -298,7 +308,7 @@
       {
         "path": "/api/class-mentor-requests/board",
         "method": "get",
-        "description": "Lists Draft/Open classes with no assigned mentor that mentors can request."
+        "description": "Lists ReadyForMentor classes with no assigned mentor that mentors can request."
       },
       {
         "path": "/api/class-mentor-requests",
@@ -391,6 +401,21 @@
         "path": "/api/classes/{classId}/sessions/{id}",
         "method": "delete",
         "description": "Soft-deletes a class session. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/classes/{classId}/sessions/generate",
+        "method": "post",
+        "description": "Bulk-creates sessions for the class from the program curriculum: LiveOnline/Offline activities (ordered by module, course, then ActivityOrder) and assignments fill consecutive weekly slots starting from the class start date. Fails fast on mentor schedule overlap; nothing is saved unless every slot is valid."
+      },
+      {
+        "path": "/api/class-sessions/{id}/checkin-token",
+        "method": "post",
+        "description": "Generates a fresh QR token and 6-digit fallback code for the session. The pair expires after 60 seconds — call again to rotate. Only the assigned mentor (or Manager/Admin) may generate."
+      },
+      {
+        "path": "/api/class-sessions/{id}/checkin",
+        "method": "post",
+        "description": "Student self check-in using the QR token (mobile scan) or the 6-digit fallback code (web manual entry). Records attendance as Present."
       },
       {
         "path": "/api/courses",
@@ -491,6 +516,11 @@
         "path": "/api/experts/{expertId}/programs/{programId}",
         "method": "delete",
         "description": "Removes a program assignment from an expert. Requires Admin or Manager role."
+      },
+      {
+        "path": "/api/experts/{id}/avatar",
+        "method": "post",
+        "description": "Uploads a new avatar image for the specified expert. Replaces the existing avatar if one exists."
       },
       {
         "path": "/api/experts/{id}/profile",
@@ -979,7 +1009,7 @@
       {
         "path": "/api/programs",
         "method": "post",
-        "description": "Creates a new program with the provided information. Requires Admin or Manager role."
+        "description": "Creates a new program with form-data program information and uploads thumbnail image. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/with-modules",
@@ -1010,6 +1040,11 @@
         "path": "/api/programs/name/{name}",
         "method": "get",
         "description": "Retrieve a single program by its exact name (case-insensitive)."
+      },
+      {
+        "path": "/api/programs/{id}/thumbnail",
+        "method": "post",
+        "description": "Uploads a new thumbnail image for the specified program. Replaces the existing thumbnail if one exists."
       },
       {
         "path": "/api/program-enrollments/{id}",
@@ -1409,6 +1444,24 @@
         "name": "CheckoutResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassCurriculumActivityProgressDto"
+      },
+      {
+        "name": "ClassCurriculumAssignmentProgressDto"
+      },
+      {
+        "name": "ClassCurriculumModuleProgressDto"
+      },
+      {
+        "name": "ClassCurriculumProgressDto"
+      },
+      {
+        "name": "ClassCurriculumProgressDtoApiResult"
+      },
+      {
+        "name": "ClassCurriculumProgressDtoResponseDataContent"
+      },
+      {
         "name": "ClassEnrollmentResponseDto"
       },
       {
@@ -1523,10 +1576,28 @@
         "name": "ClassResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassSessionCheckInRequestDto"
+      },
+      {
+        "name": "ClassSessionCheckInTokenResponseDto"
+      },
+      {
+        "name": "ClassSessionCheckInTokenResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionCheckInTokenResponseDtoResponseDataContent"
+      },
+      {
         "name": "ClassSessionResponseDto"
       },
       {
         "name": "ClassSessionResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionResponseDtoListApiResult"
+      },
+      {
+        "name": "ClassSessionResponseDtoListResponseDataContent"
       },
       {
         "name": "ClassSessionResponseDtoPagination"
@@ -1641,9 +1712,6 @@
       },
       {
         "name": "CreatePortfolioSectionRequestDto"
-      },
-      {
-        "name": "CreateProgramRequestDto"
       },
       {
         "name": "CreateProgramReviewDto"
@@ -1857,6 +1925,9 @@
       },
       {
         "name": "ForgotPasswordRequestDto"
+      },
+      {
+        "name": "GenerateClassSessionsRequestDto"
       },
       {
         "name": "GradeAssignmentSubmissionRequestDto"

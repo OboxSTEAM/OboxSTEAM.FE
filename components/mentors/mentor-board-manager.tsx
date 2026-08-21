@@ -704,7 +704,7 @@ export function MentorBoardManager({
       {embedded ? null : (
         <ManagerPageHeader
           title="Bảng lớp"
-          description="Lớp đang tuyển và lớp bạn đã xin / đã nhận — ưu tiên hiện trước."
+          description="Lớp Chờ mentor (đã cover lịch), chưa có mentor — và lớp bạn đã xin / đã nhận."
         />
       )}
 
@@ -757,7 +757,7 @@ export function MentorBoardManager({
         ) : listEmpty ? (
           <ManagerEmptyState
             title="Chưa có lớp phù hợp"
-            description="Thử đổi bộ lọc hoặc quay lại sau khi có lớp mới mở tuyển mentor."
+            description="Thử đổi bộ lọc hoặc quay lại sau khi có lớp Chờ mentor trên bảng."
             actionLabel={hasActiveFilters ? "Xóa bộ lọc" : undefined}
             onAction={hasActiveFilters ? handleClearFilters : undefined}
           />

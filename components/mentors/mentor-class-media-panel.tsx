@@ -42,6 +42,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useMediaProgressPolling } from "@/hooks/use-media-progress-polling";
+import { useMediaSync } from "@/hooks/use-media-sync";
 import {
   addMediaTag,
   deleteMedia,
@@ -476,6 +477,14 @@ export function MentorClassMediaPanel({
       setIsDetailLoading(false);
     }
   }
+
+  useMediaSync((mediaId) => {
+    markLoading();
+    retry();
+    if (mediaId && selectedMediaIdRef.current === mediaId) {
+      void openMediaDetail(mediaId);
+    }
+  });
 
   async function refreshSelectedDetail(mediaId: string) {
     try {

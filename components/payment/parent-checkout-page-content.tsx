@@ -14,7 +14,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { parentCheckout } from "@/lib/api";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { showAppErrorFromUnknown, localizeUserFacingMessage } from "@/lib/errors";
 import { persistParentCheckoutAuth } from "@/lib/payment/parent-checkout-auth";
 import { cn } from "@/lib/utils";
 import { parentCheckoutLinkParamsSchema } from "@/lib/validations/payments";
@@ -60,7 +60,10 @@ export function ParentCheckoutPageContent() {
       } catch (error) {
         setFlowState("error");
         setErrorMessage(
-          error instanceof Error ? error.message : "Yêu cầu thất bại.",
+          localizeUserFacingMessage(
+            error instanceof Error ? error.message : null,
+            "Không hoàn tất được thanh toán phụ huynh. Mở lại liên kết từ email.",
+          ),
         );
         showAppErrorFromUnknown(error, "payments.parent-checkout");
       }

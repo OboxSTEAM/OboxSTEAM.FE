@@ -48,6 +48,7 @@ export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
       <ProgramEnrollCta
         programId={program.id}
         price={program.price}
+        programStatus={program.status}
         variant="sidebar"
         className="mt-4"
       />

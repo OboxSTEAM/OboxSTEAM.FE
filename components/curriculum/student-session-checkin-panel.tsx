@@ -10,7 +10,7 @@ import { studentSessionCheckin } from "@/lib/api/class-sessions";
 import type { SessionAttendanceStatus } from "@/lib/api/entities/session-attendance";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 import { ATTENDANCE_STATUS_LABELS } from "@/lib/classes/constants";
-import { showAppSuccess } from "@/lib/errors";
+import { showAppSuccess, translateApiMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 type StudentSessionCheckinPanelProps = {
@@ -193,11 +193,11 @@ export function StudentSessionCheckinPanel({
 
 function extractCheckinErrorMessage(error: unknown): string | null {
   if (error instanceof ApiResponseError) {
-    return error.message?.trim() || null;
+    return translateApiMessage(error.message);
   }
   if (error instanceof ApiRequestError) {
     const body = error.body as { error?: { message?: string } } | null;
-    return body?.error?.message?.trim() || null;
+    return translateApiMessage(body?.error?.message);
   }
   return null;
 }

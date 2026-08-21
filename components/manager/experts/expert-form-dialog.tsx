@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useFieldArray, useForm, useWatch } from "react-hook-form";
 import {
   Award,
   BriefcaseBusiness,
   GraduationCap,
+  ImagePlus,
   Link2,
+  Loader2,
   Search,
   UserRound,
 } from "lucide-react";
@@ -31,11 +33,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   EMPTY_CREDENTIAL_DRAFTS,
+  uploadExpertAvatar,
   type Expert,
   type ExpertCredentialDrafts,
   type Program,
 } from "@/lib/api";
-import { expertUpsertSchema } from "@/lib/validations/experts";
+import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { expertUpsertSchema, uploadExpertAvatarSchema } from "@/lib/validations/experts";
 import { cn } from "@/lib/utils";
 
 import { ExpertCredentialsEditor } from "./expert-credentials-editor";
@@ -115,10 +119,12 @@ export function ExpertFormDialog({
   onExpertChange,
 }: ExpertFormDialogProps) {
   const expertId = expert?.id ?? null;
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [credentialDrafts, setCredentialDrafts] = useState<ExpertCredentialDrafts>(
     EMPTY_CREDENTIAL_DRAFTS,
   );
   const [programQuery, setProgramQuery] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [specializationText, setSpecializationText] = useState(
     expert?.specialization.join(", ") ?? "",
   );
@@ -182,6 +188,35 @@ export function ExpertFormDialog({
     }
   }
 
+  async function handleAvatarFile(file: File) {
+    if (!expertId) return;
+
+    const parsed = uploadExpertAvatarSchema.safeParse({ file });
+    if (!parsed.success) {
+      showAppErrorFromUnknown(parsed.error, "experts.upload-avatar");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    try {
+      const result = await uploadExpertAvatar(expertId, parsed.data.file);
+      if (!result?.data) {
+        throw new Error("Không nhận được hồ sơ chuyên gia sau khi tải ảnh.");
+      }
+      const nextUrl = result.data.avatarUrl ?? "";
+      setValue("avatarUrl", nextUrl, { shouldDirty: true, shouldValidate: true });
+      onExpertChange?.(result.data);
+      showAppSuccess({
+        title: "Đã cập nhật ảnh đại diện",
+        description: result.message,
+      });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "experts.upload-avatar");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogScrollPopup className="max-w-6xl">
@@ -217,13 +252,54 @@ export function ExpertFormDialog({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="avatarUrl">URL ảnh đại diện</Label>
-                <Input
-                  id="avatarUrl"
-                  placeholder="https://..."
-                  {...register("avatarUrl")}
-                  className={INPUT_CLASS}
-                />
+                <Label htmlFor={expertId ? "avatar-file" : "avatarUrl"}>
+                  Ảnh đại diện
+                </Label>
+                {expertId ? (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isUploadingAvatar || isSubmitting}
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-11 w-full gap-2 rounded-xl"
+                    >
+                      {isUploadingAvatar ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <ImagePlus className="size-4" />
+                      )}
+                      {avatarUrl ? "Tải ảnh mới" : "Tải ảnh lên"}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      id="avatar-file"
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="sr-only"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.target.value = "";
+                        if (file) void handleAvatarFile(file);
+                      }}
+                    />
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      JPG/PNG · tối đa 5 MB. Ảnh được lưu ngay qua API avatar.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <Input
+                      id="avatarUrl"
+                      placeholder="https://... (hoặc tải ảnh sau khi tạo)"
+                      {...register("avatarUrl")}
+                      className={INPUT_CLASS}
+                    />
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                      Sau khi tạo chuyên gia, bạn có thể tải ảnh lên trực tiếp.
+                    </p>
+                  </>
+                )}
                 <FieldError message={errors.avatarUrl?.message} />
               </div>
 

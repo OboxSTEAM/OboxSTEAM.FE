@@ -19,6 +19,7 @@ export type ChartPoint = {
 
 const CLASS_STATUS_ORDER: ClassStatus[] = [
   "Draft",
+  "ReadyForMentor",
   "Open",
   "InProgress",
   "Completed",

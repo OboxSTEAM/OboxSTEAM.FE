@@ -123,6 +123,23 @@ export const expertUpsertSchema = z.object({
 export const createExpertSchema = expertUpsertSchema;
 export const updateExpertSchema = expertUpsertSchema;
 
+export const uploadExpertAvatarSchema = z.object({
+  file: z
+    .instanceof(File, { message: "Vui lòng chọn ảnh đại diện." })
+    .refine((file) => file.size > 0, "Tệp ảnh không hợp lệ.")
+    .refine(
+      (file) => file.type.startsWith("image/"),
+      "Chỉ chấp nhận tệp hình ảnh (JPG, PNG, …).",
+    )
+    .refine(
+      (file) => file.size <= 5 * 1024 * 1024,
+      "Ảnh đại diện không được vượt quá 5 MB.",
+    ),
+});
+
+export type UploadExpertAvatarInput = z.infer<typeof uploadExpertAvatarSchema>;
+
+
 export type ExpertListQuery = z.infer<typeof expertListQuerySchema>;
 export type ExpertIdParam = z.infer<typeof expertIdParamSchema>;
 export type ExpertProgramParam = z.infer<typeof expertProgramParamSchema>;

@@ -26,6 +26,9 @@ export const createExpertResponseSchema = createApiResponseSchema(
 export const updateExpertResponseSchema = createApiResponseSchema(
   expertMutationValueSchema,
 );
+export const uploadExpertAvatarResponseSchema = createApiResponseSchema(
+  expertMutationValueSchema,
+);
 export const deleteExpertResponseSchema = createApiResponseSchema(
   deleteExpertValueSchema,
 );
@@ -57,6 +60,10 @@ export type CreateExpertResponse = z.infer<typeof createExpertResponseSchema>;
 export type CreateExpertResult = CreateExpertResponse["value"];
 export type UpdateExpertResponse = z.infer<typeof updateExpertResponseSchema>;
 export type UpdateExpertResult = UpdateExpertResponse["value"];
+export type UploadExpertAvatarResponse = z.infer<
+  typeof uploadExpertAvatarResponseSchema
+>;
+export type UploadExpertAvatarResult = UploadExpertAvatarResponse["value"];
 export type DeleteExpertResponse = z.infer<typeof deleteExpertResponseSchema>;
 export type DeleteExpertResult = DeleteExpertResponse["value"];
 export type ExpertProgramResponse = z.infer<typeof expertProgramResponseSchema>;

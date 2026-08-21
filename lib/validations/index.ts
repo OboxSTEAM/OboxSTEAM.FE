@@ -22,6 +22,7 @@ export {
   expertSortBySchema,
   expertUpsertSchema,
   updateExpertSchema,
+  uploadExpertAvatarSchema,
   type CreateExpertInput,
   type ExpertDegreeRequestInput,
   type ExpertIdParam,
@@ -31,6 +32,7 @@ export {
   type ExpertProgramParam,
   type ExpertPublicationRequestInput,
   type UpdateExpertInput,
+  type UploadExpertAvatarInput,
 } from "./experts";
 export {
   addMentorSkillSchema,
@@ -74,6 +76,8 @@ export {
   programSortBySchema,
   programUpsertSchema,
   updateProgramSchema,
+  uploadProgramThumbnailSchema,
+  type UploadProgramThumbnailInput,
 } from "./programs";
 export {
   approveParentLinkSchema,
@@ -149,6 +153,7 @@ export {
   classEnrollmentIdParamSchema,
   classEnrollmentSortBySchema,
   classEnrollmentsByProgramQuerySchema,
+  buildClassFormSchema,
   classFormSchema,
   classIdParamSchema,
   classListQuerySchema,

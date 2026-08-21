@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/sheet";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useMediaSync } from "@/hooks/use-media-sync";
 import {
   getClassGallery,
   type ClassGalleryMedia,
@@ -176,6 +177,11 @@ export function CurriculumClassGallery({ classId }: CurriculumClassGalleryProps)
   const currentPage = data?.currentPage ?? page;
   const totalPages = data?.totalPages ?? 1;
   const totalCount = data?.totalCount ?? 0;
+
+  useMediaSync(() => {
+    markLoading();
+    retry();
+  });
 
   const previewableItems = items.filter((item) => Boolean(item.fileUrl));
   const lightboxItems: MediaLightboxItem[] = previewableItems.map((item) => ({

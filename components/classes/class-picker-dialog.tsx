@@ -25,7 +25,7 @@ import {
   type ClassWithSessions,
   type StudentScheduleInterval,
 } from "@/lib/api";
-import { OPEN_CLASSES_QUERY, CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
+import { OPEN_CLASSES_QUERY, CLASS_SESSION_KIND_LABELS, isStudentJoinableClass } from "@/lib/classes/constants";
 import {
   findScheduleConflict,
   pickUpcomingSessions,
@@ -194,8 +194,9 @@ export function ClassPickerDialog({
         getMySchedule().catch(() => null),
       ]);
 
-      const classes = classesResult?.data?.items ?? [];
-      const busy: StudentScheduleInterval[] = scheduleResult?.data ?? [];
+      const classes = (classesResult?.data?.items ?? []).filter((classItem) =>
+        isStudentJoinableClass(classItem.status),
+      );      const busy: StudentScheduleInterval[] = scheduleResult?.data ?? [];
 
       const withSessionsList = await Promise.all(
         classes.map(async (classItem) => {

@@ -40,6 +40,7 @@ export const submissionStatusFilterSchema = z.enum([
 
 export const classStatusFilterSchema = z.enum([
   "Draft",
+  "ReadyForMentor",
   "Open",
   "InProgress",
   "Completed",

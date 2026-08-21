@@ -168,17 +168,19 @@ export function GenerateSessionsDialog({
             <DialogDescription>
               {cohortName?.trim()
                 ? `Lớp “${cohortName.trim()}” — xếp buổi học theo thứ tự khung chương trình từ ngày bắt đầu lớp.`
-                : "Xếp buổi học theo khung chương trình. Chỉ dùng khi lớp chưa có buổi nào."}
+                : "Xếp buổi theo khung chương trình (Module → Course → Activity). Không cần mentor. Xóa/hủy buổi active trước nếu tạo lại."}
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />
 
           <DialogScrollBody className="space-y-5">
             <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
-              <p>• Bỏ qua hoạt động SelfPaced.</p>
+              <p>• Bỏ qua hoạt động SelfPaced. 1 mục curriculum = 1 buổi.</p>
               <p>• LiveOnline → Lesson · Offline → FieldTrip · Assignment → AssignmentWindow.</p>
-              <p>• Lớp cần có mentor; toàn bộ lịch được tạo all-or-nothing.</p>
-              <p>• Thời gian nhập theo UTC.</p>
+              <p>• Activity: End = Start + DurationMinutes (không dùng SessionEndTime).</p>
+              <p>• Assignment window: độ dài = SessionEndTime − SessionStartTime (End khung giờ chỉ áp dụng cho bài tập).</p>
+              <p>• Không cần mentor. Chặn nếu lớp đã có học viên, hoặc còn buổi active (xóa/hủy trước).</p>
+              <p>• Thời gian nhập theo UTC. Không đủ chỗ → nới EndDate hoặc thêm ngày.</p>
             </div>
 
             <fieldset className="space-y-2">
@@ -214,7 +216,7 @@ export function GenerateSessionsDialog({
             <div className="space-y-1.5">
               <Label className="flex items-center gap-2">
                 <CalendarClock className="size-4 text-primary" aria-hidden />
-                Khung giờ (UTC)
+                Khung giờ UTC (End chỉ cho assignment)
               </Label>
               <div className="flex items-center gap-2">
                 <Input
@@ -231,6 +233,10 @@ export function GenerateSessionsDialog({
                   className="h-10 rounded-lg"
                 />
               </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                Start áp dụng mọi buổi. End chỉ quyết định độ dài cửa sổ bài tập;
+                buổi activity lấy DurationMinutes từ khung chương trình.
+              </p>
               {(errors.sessionStartTime?.message ||
                 errors.sessionEndTime?.message) && (
                 <p className="text-xs font-medium text-primary">

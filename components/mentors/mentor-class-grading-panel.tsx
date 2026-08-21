@@ -16,6 +16,7 @@ import {
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { AssignmentResultCard } from "@/components/curriculum/assignment-outcome";
+import { MentorAssignmentScheduleCard } from "@/components/mentors/mentor-assignment-schedule-card";
 import {
   ManagerDataTable,
   type ColumnDef,
@@ -420,6 +421,18 @@ function AssignmentPromptDialog({
                   {assignment.passScore}
                 </p>
               </div>
+              {assignment.availableFrom || assignment.availableUntil ? (
+                <div className="sm:col-span-2">
+                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Khung mở bài
+                  </p>
+                  <ClassDateRange
+                    startDate={assignment.availableFrom}
+                    endDate={assignment.availableUntil}
+                    layout="inline"
+                  />
+                </div>
+              ) : null}
               {assignment.dueDate ? (
                 <div className="sm:col-span-2">
                   <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -639,6 +652,7 @@ export function MentorClassGradingPanel({
     isLoading: isAssignmentDetailLoading,
     hasError: hasAssignmentDetailError,
     retry: retryAssignmentDetail,
+    mutate: mutateAssignmentDetail,
   } = useClientFetch({
     enabled: !!assignmentId,
     fetcher: async () => {
@@ -1179,6 +1193,17 @@ export function MentorClassGradingPanel({
                     <BookOpenText className="size-3.5" />
                     Xem đề đầy đủ
                   </Button>
+                </div>
+              ) : null}
+
+              {assignmentId && assignmentDetail ? (
+                <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
+                  <MentorAssignmentScheduleCard
+                    assignment={assignmentDetail}
+                    onUpdated={(next) => {
+                      mutateAssignmentDetail(next);
+                    }}
+                  />
                 </div>
               ) : null}
 

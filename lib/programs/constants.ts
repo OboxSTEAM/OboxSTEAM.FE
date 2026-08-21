@@ -100,11 +100,39 @@ export const PROGRAM_SORT_OPTIONS: ProgramSortOption[] = [
   },
 ];
 
+/** Public catalog / enrollment: only programs currently open. */
+export const PUBLIC_PROGRAM_STATUS = "Active" as const;
+
+export const PROGRAM_STATUS_LABELS: Record<string, string> = {
+  Active: "Đang mở",
+  Draft: "Bản nháp",
+  Inactive: "Đã ngừng",
+};
+
+export function isProgramOpenForEnrollment(
+  status: string | null | undefined,
+): boolean {
+  return status === PUBLIC_PROGRAM_STATUS;
+}
+
+export function getProgramEnrollmentClosedMessage(
+  status: string | null | undefined,
+): string {
+  if (status === "Draft") {
+    return "Chương trình chưa mở đăng ký.";
+  }
+  if (status === "Inactive") {
+    return "Chương trình đã ngừng nhận đăng ký.";
+  }
+  return "Chương trình hiện không nhận đăng ký.";
+}
+
 export const DEFAULT_PROGRAM_QUERY: ProgramListQuery = {
   page: 1,
   pageSize: 8,
   sortBy: "rating",
   isDescending: true,
+  status: PUBLIC_PROGRAM_STATUS,
 };
 
 export const MODULE_TYPE_LABELS: Record<ModuleType, string> = {

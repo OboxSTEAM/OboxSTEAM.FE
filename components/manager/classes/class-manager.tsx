@@ -31,6 +31,7 @@ import {
   createClass,
   getClasses,
   getPrograms,
+  markClassReadyForMentor,
   openClass,
   startClass,
   updateClass,
@@ -41,6 +42,7 @@ import {
 import {
   CLASS_STATUS_LABELS,
   getNextClassLifecycleAction,
+  type ClassLifecycleAction,
 } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 
@@ -81,7 +83,7 @@ function toSortQuery(
 
 type LifecycleTarget = {
   classItem: Class;
-  action: "open" | "start" | "complete";
+  action: ClassLifecycleAction;
   label: string;
 };
 
@@ -192,7 +194,7 @@ export function ClassManager({
         await createClass(values);
         showAppSuccess({
           title: "Đã tạo lớp học",
-          description: `Lớp ${values.name} ở trạng thái Bản nháp. Mở tuyển sinh để mentor thấy lớp trên bảng đăng ký.`,
+          description: `Lớp ${values.name} ở trạng thái Bản nháp. Tiếp theo: xếp lịch → sẵn sàng tìm mentor → mentor xin nhận → mở tuyển sinh.`,
         });
       }
       setFormOpen(false);
@@ -212,7 +214,8 @@ export function ClassManager({
     if (!lifecycleTarget) return;
     const { classItem, action, label } = lifecycleTarget;
     try {
-      if (action === "open") await openClass(classItem.id);
+      if (action === "ready") await markClassReadyForMentor(classItem.id);
+      else if (action === "open") await openClass(classItem.id);
       else if (action === "start") await startClass(classItem.id);
       else await completeClass(classItem.id);
 
@@ -410,7 +413,7 @@ export function ClassManager({
       {!embedded ? (
         <ManagerPageHeader
           title="Quản lý lớp học"
-          description="Tạo lớp cohort, mở tuyển sinh và theo dõi sĩ số theo chương trình."
+          description="Tạo lớp Bản nháp, xếp lịch, gán mentor rồi mới mở tuyển sinh."
           breadcrumbs={[{ label: "Lớp học" }]}
         >
           <Button
@@ -450,7 +453,7 @@ export function ClassManager({
               </Button>
             ) : (
               <p className="hidden text-xs text-muted-foreground sm:block">
-                Mentor được gán bằng cách duyệt yêu cầu tại chi tiết lớp
+                Mentor xin nhận trên lớp Chờ mentor — duyệt tại chi tiết lớp
               </p>
             )}
           </div>
@@ -519,7 +522,13 @@ export function ClassManager({
         }}
         onConfirm={handleLifecycle}
         title={lifecycleTarget?.label ?? "Chuyển trạng thái?"}
-        description={`Xác nhận “${lifecycleTarget?.label ?? ""}” cho lớp “${lifecycleTarget?.classItem.name || lifecycleTarget?.classItem.code || ""}”.`}
+        description={
+          lifecycleTarget?.action === "ready"
+            ? `Đưa lớp lên bảng mentor khi lịch đã cover curriculum và ngày bắt đầu còn ở tương lai (chưa cần mentor). Xác nhận “${lifecycleTarget.classItem.name || lifecycleTarget.classItem.code || ""}”.`
+            : lifecycleTarget?.action === "open"
+              ? `Mở tuyển sinh chỉ thành công khi đã có mentor, lịch khớp khung chương trình, và ngày bắt đầu còn ở tương lai. Xác nhận mở lớp “${lifecycleTarget.classItem.name || lifecycleTarget.classItem.code || ""}”.`
+              : `Xác nhận “${lifecycleTarget?.label ?? ""}” cho lớp “${lifecycleTarget?.classItem.name || lifecycleTarget?.classItem.code || ""}”.`
+        }
         confirmLabel={lifecycleTarget?.label ?? "Xác nhận"}
       />
     </div>

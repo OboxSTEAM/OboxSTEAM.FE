@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { isMentorRole, isParentRole, isStudentRole } from "@/lib/auth/roles";
+import { localizeUserFacingMessage } from "@/lib/errors";
 
 import { ProfileAvatarUpload } from "./profile-avatar-upload";
 import { ProfileDetails } from "./profile-details";
@@ -68,7 +69,10 @@ export function ProfilePageContent() {
         </p>
         {error ? (
           <p className="mt-4 text-xs text-[#6B6B6B]">
-            {error instanceof Error ? error.message : "Yêu cầu thất bại."}
+            {localizeUserFacingMessage(
+              error instanceof Error ? error.message : null,
+              "Yêu cầu thất bại. Thử đăng nhập lại.",
+            )}
           </p>
         ) : null}
       </div>

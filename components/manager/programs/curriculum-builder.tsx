@@ -8,8 +8,7 @@ import {
   PlusCircle,
   FolderPlus,
   FileText,
-  Calendar,
-  MapPin,
+  Clock,
   ChevronRight,
   CheckCircle2,
   Circle,
@@ -26,7 +25,7 @@ import {
 import { deleteModule, deleteCourse, deleteActivity, type ProgramWithModules } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { formatProgramPrice, MODULE_TYPE_LABELS } from "@/lib/programs/constants";
-import { formatActivityScheduleRange } from "@/lib/curriculum/datetime";
+import { formatDurationMinutes } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
 // ─── Theme-aware palette (flips under .dark) ───────────────────────────────
@@ -493,23 +492,11 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
                                             <span className="min-w-0 flex-1 leading-snug text-sm">
                                               <span style={{ color: W.faint }}>{prefix}: </span>
                                               {activity.name}
-                                              {activity.activityType !== "SelfPaced" && (
-                                                <span className="ml-2 inline-flex items-center gap-2 text-[11px]" style={{ color: W.faint }}>
-                                                  {activity.location && (
-                                                    <span className="flex items-center gap-0.5">
-                                                      <MapPin className="size-2.5" />
-                                                      <span className="truncate max-w-[100px]">{activity.location}</span>
-                                                    </span>
-                                                  )}
-                                                  {activity.startTime && (
-                                                    <span className="flex items-center gap-0.5">
-                                                      <Calendar className="size-2.5" />
-                                                      {formatActivityScheduleRange(
-                                                        activity.startTime,
-                                                        activity.endTime,
-                                                      )}
-                                                    </span>
-                                                  )}
+                                              {activity.activityType !== "SelfPaced" &&
+                                                activity.durationMinutes != null && (
+                                                <span className="ml-2 inline-flex items-center gap-0.5 text-[11px]" style={{ color: W.faint }}>
+                                                  <Clock className="size-2.5" />
+                                                  {formatDurationMinutes(activity.durationMinutes)}
                                                 </span>
                                               )}
                                             </span>
@@ -645,6 +632,10 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
         onOpenChange={(open) => setActiveCourseDialog({ open, moduleId: "", course: null })}
         moduleId={activeCourseDialog.moduleId}
         courseToEdit={activeCourseDialog.course}
+        coursesInModule={
+          program.modules?.find((module) => module.id === activeCourseDialog.moduleId)
+            ?.courses ?? []
+        }
         onSuccess={onRefresh}
       />
       <ActivityFormDialog

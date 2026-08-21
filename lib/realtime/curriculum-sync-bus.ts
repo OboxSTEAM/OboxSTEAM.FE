@@ -57,10 +57,20 @@ function runProgramHandlers(programId: string, showToast: boolean): void {
 /** Dispatch hub `syncEvent` to registered screens (debounced 2s per program). */
 export function dispatchCurriculumSyncEvent(event: SyncEvent): void {
   if (!isCurriculumStructureChanged(event)) return;
+  requestCurriculumSync(event.entityId, { showToast: true });
+}
 
-  const programId = event.entityId;
-  if (!handlersByProgramId.get(programId)?.size) return;
+/**
+ * Soft sync from related notifications (e.g. MaterialUpdated) when BE does not
+ * emit `curriculum.structureChanged`. Same debounce bucket as hub events.
+ */
+export function requestCurriculumSync(
+  programId: string,
+  options?: { showToast?: boolean },
+): void {
+  if (!programId || !handlersByProgramId.get(programId)?.size) return;
 
+  const showToast = options?.showToast === true;
   const existing = debounceTimersByProgramId.get(programId);
   if (existing) clearTimeout(existing);
 
@@ -68,7 +78,7 @@ export function dispatchCurriculumSyncEvent(event: SyncEvent): void {
     programId,
     setTimeout(() => {
       debounceTimersByProgramId.delete(programId);
-      runProgramHandlers(programId, true);
+      runProgramHandlers(programId, showToast);
     }, CURRICULUM_SYNC_DEBOUNCE_MS),
   );
 }

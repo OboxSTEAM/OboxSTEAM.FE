@@ -48,6 +48,11 @@ import {
   CLASS_SESSION_STATUS_LABELS,
   CLASS_SESSIONS_QUERY,
 } from "@/lib/classes/constants";
+import {
+  canGenerateClassSessions,
+  countActiveClassSessions,
+  getOccupiedCurriculumItemIds,
+} from "@/lib/classes/lifecycle";
 import { parseApiDateTime } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
@@ -61,6 +66,8 @@ type ClassSchedulePanelProps = {
   classId: string;
   cohortName?: string | null;
   programId?: string | null;
+  seatsTaken?: number;
+  onSessionsChanged?: () => void;
 };
 
 type WeekGroup = {
@@ -118,6 +125,8 @@ export function ClassSchedulePanel({
   classId,
   cohortName,
   programId,
+  seatsTaken = 0,
+  onSessionsChanged,
 }: ClassSchedulePanelProps) {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [formOpen, setFormOpen] = useState(false);
@@ -190,6 +199,15 @@ export function ClassSchedulePanel({
   }, [sessions, selectedDay]);
 
   const weekGroups = useMemo(() => groupByWeek(dayFiltered), [dayFiltered]);
+  const activeSessionCount = countActiveClassSessions(sessions);
+  const generateGate = canGenerateClassSessions({
+    seatsTaken,
+    activeSessionCount,
+  });
+  const occupiedItems = useMemo(
+    () => getOccupiedCurriculumItemIds(sessions, editingSession?.id),
+    [sessions, editingSession?.id],
+  );
 
   function openCreate() {
     setEditingSession(null);
@@ -227,6 +245,7 @@ export function ClassSchedulePanel({
       setCreateDefaultStart(null);
       if (focusId) setPendingFocus({ id: focusId, nonce: Date.now() });
       retry();
+      onSessionsChanged?.();
     } catch (error) {
       showAppErrorFromUnknown(
         error,
@@ -259,6 +278,7 @@ export function ClassSchedulePanel({
         };
       });
       retry();
+      onSessionsChanged?.();
     } catch (error) {
       showAppErrorFromUnknown(error, "classSessions.delete");
       throw error;
@@ -432,13 +452,9 @@ export function ClassSchedulePanel({
             type="button"
             variant="outline"
             onClick={() => setGenerateOpen(true)}
-            disabled={totalCount > 0}
+            disabled={!generateGate.ok}
             className="h-9 gap-1.5 rounded-lg"
-            title={
-              totalCount > 0
-                ? "Chỉ dùng khi lớp chưa có buổi học nào"
-                : undefined
-            }
+            title={generateGate.ok ? undefined : generateGate.reason}
           >
             <Sparkles className="size-3.5" />
             Tạo lịch
@@ -556,6 +572,8 @@ export function ClassSchedulePanel({
         modules={modules}
         isModulesLoading={isModulesLoading}
         isSubmitting={isSubmitting}
+        occupiedActivityIds={occupiedItems.activityIds}
+        occupiedAssignmentIds={occupiedItems.assignmentIds}
         onSubmit={handleSubmit}
       />
 
@@ -579,6 +597,7 @@ export function ClassSchedulePanel({
         onGenerated={() => {
           markLoading();
           retry();
+          onSessionsChanged?.();
         }}
       />
     </div>

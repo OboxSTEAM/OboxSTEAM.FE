@@ -37,6 +37,9 @@ export const createProgramResponseSchema = createApiResponseSchema(
 export const updateProgramResponseSchema = createApiResponseSchema(
   programMutationValueSchema,
 );
+export const uploadProgramThumbnailResponseSchema = createApiResponseSchema(
+  programMutationValueSchema,
+);
 export const deleteProgramResponseSchema = createApiResponseSchema(
   programDeleteValueSchema,
 );
@@ -63,6 +66,9 @@ export type GetProgramsWithModulesResponse = z.infer<typeof getProgramsWithModul
 export type GetProgramByIdResponse = z.infer<typeof getProgramByIdResponseSchema>;
 export type CreateProgramResponse = z.infer<typeof createProgramResponseSchema>;
 export type UpdateProgramResponse = z.infer<typeof updateProgramResponseSchema>;
+export type UploadProgramThumbnailResponse = z.infer<
+  typeof uploadProgramThumbnailResponseSchema
+>;
 export type DeleteProgramResponse = z.infer<typeof deleteProgramResponseSchema>;
 
 export type GetProgramsResult = GetProgramsResponse["value"];
@@ -70,6 +76,7 @@ export type GetProgramsWithModulesResult = GetProgramsWithModulesResponse["value
 export type GetProgramByIdResult = GetProgramByIdResponse["value"];
 export type CreateProgramResult = CreateProgramResponse["value"];
 export type UpdateProgramResult = UpdateProgramResponse["value"];
+export type UploadProgramThumbnailResult = UploadProgramThumbnailResponse["value"];
 export type DeleteProgramResult = DeleteProgramResponse["value"];
 export type GetProgramReviewsResponse = z.infer<
   typeof getProgramReviewsResponseSchema

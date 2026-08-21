@@ -14,6 +14,7 @@ import {
   ASSIGNMENT_TYPE_LABELS,
 } from "@/lib/curriculum/constants";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
+import { localizeUserFacingMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 type MindMapNodeInspectorProps = {
@@ -142,7 +143,12 @@ export function MindMapNodeInspector({
           </p>
           <p className="mt-1.5 text-sm font-medium text-learn-text-strong">{nextActionHint}</p>
           {node.lockReason ? (
-            <p className="mt-2 text-sm font-medium text-learn-muted">{node.lockReason}</p>
+            <p className="mt-2 text-sm font-medium text-learn-muted">
+              {localizeUserFacingMessage(
+                node.lockReason,
+                "Hoàn thành các mục trước để mở khóa.",
+              )}
+            </p>
           ) : null}
         </div>
 
