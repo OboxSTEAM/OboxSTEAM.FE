@@ -297,6 +297,7 @@ export function ProgramDetailHero({
               <ProgramEnrollCta
                 programId={program.id}
                 price={program.price}
+                programStatus={program.status}
                 variant="hero"
               />
             </div>

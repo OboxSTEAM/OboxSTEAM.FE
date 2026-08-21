@@ -26,7 +26,13 @@ import {
   dispatchCurriculumSyncEvent,
   flushAllCurriculumSyncHandlers,
 } from "@/lib/realtime/curriculum-sync-bus";
+import { flushAllMediaSyncHandlers } from "@/lib/realtime/media-sync-bus";
+import { dispatchNotificationSideEffects } from "@/lib/realtime/notification-side-effects";
 import { startNotificationHub } from "@/lib/realtime/notification-hub";
+import { getMediaById } from "@/lib/api/media";
+import { isMentorRole } from "@/lib/auth/roles";
+import { localizeUserFacingMessage } from "@/lib/errors";
+import { parseNotificationPayload, payloadString } from "@/lib/notifications/parse-payload";
 
 const INBOX_PAGE_SIZE = 10;
 const STALE_MS = 30_000;
@@ -217,6 +223,38 @@ export function NotificationProvider({
     async (notification: Notification) => {
       await markRead(notification.id);
 
+      const mediaTypes = new Set([
+        "MediaVideoReady",
+        "MediaProcessingFailed",
+        "MediaAiTaggingFailed",
+        "MediaTagsProcessed",
+      ]);
+
+      if (
+        mediaTypes.has(notification.type) &&
+        isMentorRole(accountRole)
+      ) {
+        const payload = parseNotificationPayload(notification.payloadJson);
+        const mediaId =
+          payloadString(payload, "mediaAssetId") ??
+          notification.entityId?.trim() ??
+          null;
+        if (mediaId) {
+          try {
+            const result = await getMediaById(mediaId);
+            const classId = result?.data?.classId;
+            if (classId) {
+              router.push(
+                `/mentor/classes/${classId}?tab=media&mediaId=${encodeURIComponent(mediaId)}`,
+              );
+              return;
+            }
+          } catch {
+            /* Fall through to generic href. */
+          }
+        }
+      }
+
       const href = resolveNotificationHrefFromNotification({
         type: notification.type,
         payloadJson: notification.payloadJson,
@@ -242,9 +280,17 @@ export function NotificationProvider({
         setUnreadCount((prev) => prev + 1);
       }
 
+      dispatchNotificationSideEffects(notification);
+
       showAppSuccess({
-        title: notification.title?.trim() || "Thông báo mới",
-        description: notification.body?.trim() || undefined,
+        title: localizeUserFacingMessage(
+          notification.title,
+          "Thông báo mới",
+        ),
+        description: localizeUserFacingMessage(
+          notification.body,
+          "",
+        ) || undefined,
       });
     },
     [],
@@ -271,6 +317,7 @@ export function NotificationProvider({
 
   const handleHubReconnected = useCallback(() => {
     flushAllCurriculumSyncHandlers();
+    flushAllMediaSyncHandlers();
   }, []);
 
   useEffect(() => {

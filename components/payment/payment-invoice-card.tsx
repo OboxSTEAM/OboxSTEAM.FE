@@ -4,19 +4,19 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import type { Payment } from "@/lib/api/entities/payment";
 import { SITE } from "@/lib/landing/content";
-import {
-  PAYMENT_GATEWAY_LABELS,
-  PAYMENT_STATUS_LABELS,
-} from "@/lib/payment/constants";
+import { PAYMENT_STATUS_LABELS } from "@/lib/payment/constants";
 import {
   formatPaymentAmount,
   formatPaymentDateTime,
   shortenPaymentId,
 } from "@/lib/payment/format";
+import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 type PaymentInvoiceCardProps = {
   payment: Payment;
+  programName?: string | null;
+  programThumbnailUrl?: string | null;
   footer?: ReactNode;
   className?: string;
 };
@@ -62,9 +62,14 @@ function InvoiceRow({
 
 export function PaymentInvoiceCard({
   payment,
+  programName,
+  programThumbnailUrl,
   footer,
   className,
 }: PaymentInvoiceCardProps) {
+  const resolvedName = programName?.trim() || null;
+  const thumbnailUrl = getProgramThumbnailUrl(programThumbnailUrl);
+
   return (
     <article
       className={cn(
@@ -97,6 +102,30 @@ export function PaymentInvoiceCard({
         </div>
       </header>
 
+      {resolvedName ? (
+        <div className="border-b border-[#E5E5E0] px-6 py-5 sm:px-8">
+          <div className="flex items-center gap-4">
+            <div className="relative aspect-[4/3] w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E5E0] bg-[#F5F5F0] sm:w-28">
+              <Image
+                src={thumbnailUrl}
+                alt=""
+                fill
+                sizes="7rem"
+                className="object-cover"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
+                Chương trình
+              </p>
+              <h3 className="font-heading mt-1 text-base font-bold leading-snug text-[#2D2D2D] sm:text-lg">
+                {resolvedName}
+              </h3>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="px-6 py-2 sm:px-8">
         <dl>
           <InvoiceRow label="Mã hóa đơn" value={payment.code} mono />
@@ -105,17 +134,6 @@ export function PaymentInvoiceCard({
             value={shortenPaymentId(payment.id)}
             mono
           />
-          <InvoiceRow
-            label="Phương thức"
-            value={PAYMENT_GATEWAY_LABELS[payment.gateway]}
-          />
-          {payment.transactionId ? (
-            <InvoiceRow
-              label="Mã Stripe"
-              value={payment.transactionId}
-              mono
-            />
-          ) : null}
           <InvoiceRow
             label="Ngày tạo"
             value={formatPaymentDateTime(payment.createdAt)}
@@ -128,22 +146,12 @@ export function PaymentInvoiceCard({
       </div>
 
       <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] px-6 py-5 sm:px-8">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
-              Tổng thanh toán
-            </p>
-            <p className="font-heading mt-1 text-3xl font-extrabold tabular-nums text-[#E94B3C]">
-              {formatPaymentAmount(payment)}
-            </p>
-          </div>
-          <p className="text-xs text-[#6B6B6B]">
-            Mã đăng ký{" "}
-            <span className="font-mono">
-              {shortenPaymentId(payment.programEnrollmentId)}
-            </span>
-          </p>
-        </div>
+        <p className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
+          Tổng thanh toán
+        </p>
+        <p className="font-heading mt-1 text-3xl font-extrabold tabular-nums text-[#E94B3C]">
+          {formatPaymentAmount(payment)}
+        </p>
       </div>
 
       {footer ? (

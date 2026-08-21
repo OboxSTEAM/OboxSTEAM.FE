@@ -19,7 +19,7 @@ import {
   type SessionCheckinToken,
 } from "@/lib/api/class-sessions";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { showAppErrorFromUnknown, translateApiMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 const REFRESH_BEFORE_EXPIRY_MS = 1_500;
@@ -151,7 +151,7 @@ export function SessionCheckinQrDialog({
         <DialogScrollHeader>
           <DialogTitle className="flex items-center gap-2">
             <QrCode className="size-5 text-primary" aria-hidden />
-            Check-in QR
+            Mã QR check-in
           </DialogTitle>
           <DialogDescription>
             {sessionTitle?.trim()
@@ -225,11 +225,11 @@ export function SessionCheckinQrDialog({
 
 function extractCheckinTokenErrorMessage(error: unknown): string | null {
   if (error instanceof ApiResponseError) {
-    return error.message?.trim() || null;
+    return translateApiMessage(error.message);
   }
   if (error instanceof ApiRequestError) {
     const body = error.body as { error?: { message?: string } } | null;
-    return body?.error?.message?.trim() || null;
+    return translateApiMessage(body?.error?.message);
   }
   return null;
 }

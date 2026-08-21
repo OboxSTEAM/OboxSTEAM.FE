@@ -13,7 +13,11 @@ import {
   showAppErrorFromUnknown,
   showAppSuccess,
 } from "@/lib/errors";
-import { getProgramPriceParts } from "@/lib/programs/constants";
+import {
+  getProgramEnrollmentClosedMessage,
+  getProgramPriceParts,
+  isProgramOpenForEnrollment,
+} from "@/lib/programs/constants";
 import {
   getProgramLearnHref,
   resolveProgramDetailEnrollmentCta,
@@ -26,6 +30,8 @@ import { ProgramEnrollPaymentDialog } from "./program-enroll-payment-dialog";
 type ProgramEnrollCtaProps = {
   programId: string;
   price: number;
+  /** Program lifecycle status (`Active` | `Draft` | `Inactive`). */
+  programStatus?: string | null;
   variant?: "hero" | "sidebar";
   className?: string;
 };
@@ -33,6 +39,7 @@ type ProgramEnrollCtaProps = {
 export function ProgramEnrollCta({
   programId,
   price,
+  programStatus,
   variant = "sidebar",
   className,
 }: ProgramEnrollCtaProps) {
@@ -46,6 +53,7 @@ export function ProgramEnrollCta({
   const isFree = priceParts.isFree;
   const isParent = profile ? isParentRole(profile.role) : false;
   const isStudent = profile ? isStudentRole(profile.role) : false;
+  const isOpenForEnrollment = isProgramOpenForEnrollment(programStatus);
 
   const { enrollment, isLoading: isEnrollmentLoading } =
     useProgramEnrollmentLookup();
@@ -55,7 +63,14 @@ export function ProgramEnrollCta({
     [enrollment],
   );
 
+  const blocksNewEnrollment =
+    !isOpenForEnrollment &&
+    (enrollmentCta.kind === "enroll" ||
+      enrollmentCta.kind === "complete-payment");
+
   const handleFreeEnroll = async () => {
+    if (!isOpenForEnrollment) return;
+
     setIsEnrollingFree(true);
     try {
       const result = await checkoutPayment({
@@ -81,7 +96,7 @@ export function ProgramEnrollCta({
   };
 
   const handleEnrollClick = () => {
-    if (!isHydrated || isEnrollingFree) return;
+    if (!isHydrated || isEnrollingFree || !isOpenForEnrollment) return;
 
     if (!isAuthenticated) {
       router.push(
@@ -101,6 +116,9 @@ export function ProgramEnrollCta({
   };
 
   const getEnrollSubtext = (): string => {
+    if (blocksNewEnrollment) {
+      return getProgramEnrollmentClosedMessage(programStatus);
+    }
     if (isAuthenticated && isParent) {
       return "Chỉ học viên mới có thể đăng ký trực tiếp";
     }
@@ -116,7 +134,9 @@ export function ProgramEnrollCta({
   };
 
   const isEnrollDisabled =
-    isEnrollingFree || (isAuthenticated && !isStudent);
+    isEnrollingFree ||
+    blocksNewEnrollment ||
+    (isAuthenticated && !isStudent);
   const canFetchEnrollment =
     isHydrated && !isLoading && isAuthenticated && isStudent;
   const isCheckingEnrollment = canFetchEnrollment && isEnrollmentLoading;
@@ -162,6 +182,14 @@ export function ProgramEnrollCta({
     }
 
     if (enrollmentCta.kind === "complete-payment") {
+      if (blocksNewEnrollment) {
+        return (
+          <Button type="button" className={buttonClassName} disabled>
+            Không thể thanh toán
+          </Button>
+        );
+      }
+
       return (
         <Button
           type="button"
@@ -177,6 +205,14 @@ export function ProgramEnrollCta({
       return (
         <Button type="button" className={buttonClassName} disabled>
           {enrollmentCta.label}
+        </Button>
+      );
+    }
+
+    if (blocksNewEnrollment) {
+      return (
+        <Button type="button" className={buttonClassName} disabled>
+          Không mở đăng ký
         </Button>
       );
     }

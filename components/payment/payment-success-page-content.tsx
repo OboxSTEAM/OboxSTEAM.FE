@@ -8,9 +8,12 @@ import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
+  getInvoiceByPaymentId,
   getMyProgramEnrollments,
   getPaymentById,
+  getProgramById,
   getProgramEnrollmentClass,
+  getProgramEnrollmentsByStudentId,
 } from "@/lib/api";
 import type { Payment } from "@/lib/api/entities/payment";
 import { isParentRole } from "@/lib/auth/roles";
@@ -106,6 +109,9 @@ export function PaymentSuccessPageContent() {
   const [payment, setPayment] = useState<Payment | null>(null);
   const [programId, setProgramId] = useState<string | null>(null);
   const [programName, setProgramName] = useState<string | null>(null);
+  const [programThumbnailUrl, setProgramThumbnailUrl] = useState<string | null>(
+    null,
+  );
   const [isClassPickerOpen, setIsClassPickerOpen] = useState(false);
   const [hasCheckedClass, setHasCheckedClass] = useState(false);
 
@@ -146,12 +152,51 @@ export function PaymentSuccessPageContent() {
   }, [paymentId]);
 
   useEffect(() => {
-    if (loadState !== "ready" || !payment || isParent || hasCheckedClass) return;
+    if (loadState !== "ready" || !payment || hasCheckedClass) return;
+    if (!isHydrated) return;
 
     let cancelled = false;
 
     (async () => {
       try {
+        if (isParent) {
+          const [enrollmentsResult, invoiceResult] = await Promise.all([
+            getProgramEnrollmentsByStudentId(payment.studentId, {
+              page: 1,
+              pageSize: 50,
+            }),
+            getInvoiceByPaymentId(payment.id),
+          ]);
+
+          if (cancelled) return;
+
+          const enrollment = enrollmentsResult?.data?.items.find(
+            (item) => item.id === payment.programEnrollmentId,
+          );
+
+          if (enrollment) {
+            setProgramId(enrollment.programId);
+            setProgramName(enrollment.name);
+            setProgramThumbnailUrl(enrollment.thumbnailUrl);
+          } else {
+            const invoiceProgramId = invoiceResult?.data?.programId;
+            if (invoiceProgramId) {
+              const programResult = await getProgramById(invoiceProgramId);
+              if (cancelled) return;
+              const program = programResult?.data;
+              if (program) {
+                setProgramId(program.id);
+                setProgramName(program.name || invoiceResult?.data?.itemDescription);
+                setProgramThumbnailUrl(program.thumbnailUrl);
+              } else if (invoiceResult?.data?.itemDescription) {
+                setProgramId(invoiceProgramId);
+                setProgramName(invoiceResult.data.itemDescription);
+              }
+            }
+          }
+          return;
+        }
+
         const [enrollmentClassResult, enrollmentsResult] = await Promise.all([
           getProgramEnrollmentClass(payment.programEnrollmentId),
           getMyProgramEnrollments({ page: 1, pageSize: 50 }),
@@ -166,6 +211,7 @@ export function PaymentSuccessPageContent() {
         if (enrollment) {
           setProgramId(enrollment.programId);
           setProgramName(enrollment.name);
+          setProgramThumbnailUrl(enrollment.thumbnailUrl);
         }
 
         const classId = enrollmentClassResult?.data?.classId ?? null;
@@ -186,7 +232,7 @@ export function PaymentSuccessPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [hasCheckedClass, isParent, loadState, payment]);
+  }, [hasCheckedClass, isHydrated, isParent, loadState, payment]);
 
   if (loadState === "loading") {
     return (
@@ -260,6 +306,8 @@ export function PaymentSuccessPageContent() {
       >
         <PaymentInvoiceCard
           payment={payment}
+          programName={programName}
+          programThumbnailUrl={programThumbnailUrl}
           footer={
             <PaymentSuccessFooter
               isParent={isParent}

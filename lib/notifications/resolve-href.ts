@@ -1,5 +1,9 @@
 import type { NotificationType } from "@/lib/api/entities/notification";
-import { canAccessManagerArea, isParentRole } from "@/lib/auth/roles";
+import {
+  canAccessManagerArea,
+  isMentorRole,
+  isParentRole,
+} from "@/lib/auth/roles";
 import { assignmentEditHref } from "@/lib/manager/curriculum-catalog";
 import {
   parseNotificationPayload,
@@ -66,6 +70,7 @@ export function resolveNotificationHref(
   const { type, payload, accountRole } = input;
   const isManager = canAccessManagerArea(accountRole);
   const isParent = isParentRole(accountRole);
+  const isMentor = isMentorRole(accountRole);
 
   const programId = payloadString(payload, "programId");
   const assignmentId = payloadString(payload, "assignmentId");
@@ -191,11 +196,23 @@ export function resolveNotificationHref(
     case "MediaVideoReady":
     case "MediaProcessingFailed":
     case "MediaAiTaggingFailed":
-    case "MediaTagsProcessed":
+    case "MediaTagsProcessed": {
+      const mediaAssetId = payloadString(payload, "mediaAssetId");
+      if (isManager) return "/manager/classes";
+      if (isParent) return "/parent/children";
+      if (isMentor) {
+        return mediaAssetId
+          ? `/mentor/classes?mediaId=${encodeURIComponent(mediaAssetId)}`
+          : "/mentor/classes";
+      }
+      // Student uploader — class gallery lives under learn; fall back to my courses.
+      return "/courses";
+    }
+
     case "HighlightVideoGenerationQueued":
     case "HighlightVideoReady":
     case "HighlightVideoGenerationFailed":
-      return null;
+      return "/portfolio";
 
     default:
       return null;

@@ -27,7 +27,7 @@ import {
   type ParentModuleProgress,
 } from "@/lib/api";
 import { isParentRole } from "@/lib/auth/roles";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { showAppErrorFromUnknown, localizeUserFacingMessage } from "@/lib/errors";
 import {
   clampProgressPercent,
   formatParentDate,
@@ -199,7 +199,10 @@ function ModuleTimelineCard({ module }: { module: ParentModuleProgress }) {
         />
         {module.isLocked && module.lockReason?.trim() ? (
           <p className="mt-3 rounded-lg border border-[#FDD835]/40 bg-[#FFF8E1] px-3 py-2 text-xs text-[#8A7200]">
-            {module.lockReason}
+            {localizeUserFacingMessage(
+              module.lockReason,
+              "Module chưa mở khóa. Hoàn thành điều kiện tiên quyết trước.",
+            )}
           </p>
         ) : null}
       </CardHeader>

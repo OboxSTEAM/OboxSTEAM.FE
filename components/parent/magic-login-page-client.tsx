@@ -12,7 +12,7 @@ import { ApiResponseError } from "@/lib/api/errors";
 import { setParentProfilePending } from "@/lib/auth/parent-profile";
 import { isParentRole } from "@/lib/auth/roles";
 import { persistAuthSession } from "@/lib/auth/session";
-import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { showAppError, showAppErrorFromUnknown, showAppSuccess, localizeUserFacingMessage } from "@/lib/errors";
 import { isExistingParentAccountError } from "@/lib/parent/magic-login-errors";
 import {
   buildParentLinkUrl,
@@ -104,7 +104,10 @@ export function MagicLoginPageClient({
         const result = await approveParentLink({ token: parsed.token });
         showAppSuccess({
           title: "Liên kết thành công",
-          description: result.message,
+          description: localizeUserFacingMessage(
+            result.message,
+            "Bạn đã liên kết thành công với học viên.",
+          ),
         });
         router.replace("/parent/children");
         return;
@@ -121,7 +124,10 @@ export function MagicLoginPageClient({
 
       showAppSuccess({
         title: "Xác nhận liên kết thành công",
-        description: result.message,
+        description: localizeUserFacingMessage(
+          result.message,
+          "Bạn đã liên kết thành công với học viên.",
+        ),
       });
       router.replace("/parent/children");
     } catch (error) {
@@ -132,7 +138,12 @@ export function MagicLoginPageClient({
       }
 
       if (error instanceof ApiResponseError) {
-        setErrorMessage(error.message);
+        setErrorMessage(
+          localizeUserFacingMessage(
+            error.message,
+            "Không xác nhận được liên kết. Mở lại liên kết từ email hoặc đăng nhập.",
+          ),
+        );
       } else {
         showAppErrorFromUnknown(error, "parent.magic-login");
       }

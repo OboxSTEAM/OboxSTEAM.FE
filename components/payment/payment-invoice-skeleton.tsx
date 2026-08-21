@@ -15,8 +15,15 @@ export function PaymentInvoiceSkeleton() {
           <Skeleton className="h-6 w-24 rounded-full" />
         </div>
       </div>
+      <div className="flex items-center gap-4 border-b border-[#E5E5E0] px-8 py-5">
+        <Skeleton className="aspect-[4/3] w-28 shrink-0 rounded-xl" />
+        <div className="space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-5 w-48" />
+        </div>
+      </div>
       <div className="space-y-0 px-8 py-2">
-        {Array.from({ length: 6 }, (_, index) => (
+        {Array.from({ length: 4 }, (_, index) => (
           <div
             key={index}
             className="flex justify-between gap-4 border-b border-[#E5E5E0] py-4"

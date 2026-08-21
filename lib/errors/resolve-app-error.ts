@@ -3,6 +3,7 @@ import { ZodError } from "zod";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 
 import type { AppErrorContext, AppErrorState } from "./types";
+import { translateApiMessage } from "./translate-api-message";
 
 const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   generic: {
@@ -822,7 +823,8 @@ function sanitizeApiMessage(message: string | null | undefined): string | null {
   const trimmed = message.trim();
   if (!trimmed || CLIENT_PLACEHOLDER_MESSAGES.has(trimmed)) return null;
   if (/^Request failed with status \d+/i.test(trimmed)) return null;
-  return trimmed;
+  // Prefer Vietnamese; drop unmapped English so curated context reason wins.
+  return translateApiMessage(trimmed);
 }
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
@@ -970,8 +972,8 @@ function fromNetworkError(_context: AppErrorContext): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
- * Backend `error.message` is preferred as `reason` when present;
- * `action` then uses status-based copy instead of context-specific tips.
+ * Backend `error.message` is localized to Vietnamese when known; otherwise
+ * curated context/`status` copy is used for `reason`.
  */
 export function resolveAppError(
   error: unknown,
@@ -1005,7 +1007,7 @@ export function resolveAppError(
     return fromNetworkError(context);
   }
 
-  // Intentional client-side tips — keep if message looks user-facing (Vietnamese), not technical.
+  // Intentional client-side tips — localize English; keep Vietnamese as-is.
   if (error instanceof Error && error.message) {
     const looksTechnical =
       /[A-Z][a-z]+Exception|\bDTO\b|\bUUID\b|\bHttpStatus\b|at\s+\w+\.|System\.|Request failed|NullReference|SqlException/i.test(
@@ -1015,7 +1017,7 @@ export function resolveAppError(
       const fallback = CONTEXT_FALLBACKS[context];
       return {
         title: fallback.title,
-        reason: error.message,
+        reason: translateApiMessage(error.message) ?? fallback.reason,
         action: fallback.action,
       };
     }

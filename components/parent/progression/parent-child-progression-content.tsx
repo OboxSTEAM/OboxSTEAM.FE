@@ -31,7 +31,7 @@ import {
   type ParentProgressEvent,
 } from "@/lib/api";
 import { isParentRole } from "@/lib/auth/roles";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { showAppErrorFromUnknown, localizeUserFacingMessage } from "@/lib/errors";
 import {
   clampProgressPercent,
   formatParentDate,
@@ -94,8 +94,10 @@ function BlockerList({ blockers }: { blockers: ParentBlocker[] }) {
         >
           <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
           <span>
-            {blocker.message?.trim() ||
-              PARENT_BLOCKER_FALLBACK_LABELS[blocker.code]}
+            {localizeUserFacingMessage(
+              blocker.message,
+              PARENT_BLOCKER_FALLBACK_LABELS[blocker.code],
+            )}
           </span>
         </li>
       ))}

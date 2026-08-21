@@ -73,7 +73,7 @@ import {
   hasAttemptsRemaining,
 } from "@/lib/curriculum/recovery-decision";
 import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
-import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { showAppErrorFromUnknown, showAppSuccess, localizeUserFacingMessage } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 import {
@@ -646,7 +646,13 @@ export function ResearchSubmissionPanel({
   const blockReasons =
     milestoneProgress?.submitBlockReasons
       ?.filter(Boolean)
-      .filter((reason) => reason !== MENTOR_OPEN_BLOCK_REASON) ?? [];
+      .filter((reason) => reason !== MENTOR_OPEN_BLOCK_REASON)
+      .map((reason) =>
+        localizeUserFacingMessage(
+          reason,
+          "Chưa đủ điều kiện để nộp mốc này.",
+        ),
+      ) ?? [];
   const requiredActivities = milestoneProgress?.requiredActivities ?? [];
 
   const validateFile = useCallback((file: File): boolean => {
@@ -1131,8 +1137,10 @@ export function ResearchSubmissionPanel({
               Mốc chưa mở khóa
             </p>
             <p className="mt-0.5 text-xs text-learn-muted">
-              {milestoneProgress.unlockReason?.trim() ||
-                "Hoàn thành điều kiện trước để nộp bài nghiên cứu."}
+              {localizeUserFacingMessage(
+                milestoneProgress.unlockReason,
+                "Hoàn thành điều kiện trước để nộp bài nghiên cứu.",
+              )}
             </p>
           </div>
         ) : null}
