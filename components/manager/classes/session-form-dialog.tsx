@@ -134,7 +134,7 @@ export type ClassSessionFormSubmitPayload = {
   moduleId: string;
   activityId?: string | null;
   assignmentId?: string | null;
-  sessionKind?: ClassSessionFormValues["sessionKind"];
+  /** Never send — BE derives SessionKind from the curriculum item. */
   title: string;
   description?: string | null;
   startTime: string;
@@ -391,7 +391,6 @@ export function SessionFormDialog({
       moduleId: values.moduleId,
       activityId,
       assignmentId,
-      sessionKind: values.sessionKind,
       title: values.title.trim(),
       description: values.description?.trim() || null,
       startTime,

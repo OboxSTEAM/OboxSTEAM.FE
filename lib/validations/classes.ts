@@ -343,7 +343,6 @@ const classSessionBodySchema = z.object({
   moduleId: z.string().uuid("ID module không hợp lệ."),
   activityId: z.string().uuid().nullable().optional(),
   assignmentId: z.string().uuid().nullable().optional(),
-  sessionKind: classSessionKindSchema.optional(),
   title: z
     .string()
     .min(1, "Tiêu đề buổi học không được để trống.")
