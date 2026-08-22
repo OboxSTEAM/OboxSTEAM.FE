@@ -53,12 +53,56 @@ jest.mock("@/lib/errors", () => {
   };
 });
 
+jest.mock("@/lib/api/account", () => ({
+  updateProfile: jest.fn(async (input: { fullName: string; phone: string }) => {
+    const { mockUserProfile } = require("./tests/helpers/profile-api.mock");
+    return {
+      code: "OK",
+      message: "Cap nhat ho so thanh cong",
+      data: {
+        ...mockUserProfile,
+        fullName: input.fullName,
+        phone: input.phone,
+      },
+    };
+  }),
+}));
+
+jest.mock("@/lib/api/portfolios", () => ({
+  createPortfolioItem: jest.fn(async (input: { title: string }) => {
+    const { mockPortfolioItem } = require("./tests/helpers/profile-api.mock");
+    return {
+      code: "OK",
+      message: "Da them muc",
+      data: {
+        ...mockPortfolioItem,
+        title: input.title,
+      },
+    };
+  }),
+  updatePortfolioItem: jest.fn(async (_id: string, input: { title?: string | null }) => {
+    const { mockPortfolioItem } = require("./tests/helpers/profile-api.mock");
+    return {
+      code: "OK",
+      message: "Da cap nhat muc",
+      data: {
+        ...mockPortfolioItem,
+        title: input.title ?? mockPortfolioItem.title,
+      },
+    };
+  }),
+}));
+
 jest.mock("@/lib/api", () => {
   const { ApiResponseError } = jest.requireActual("@/lib/api/errors");
   const {
     mockRegisteredUser,
     mockStudentAccessToken,
   } = require("./tests/helpers/auth-api.mock");
+  const {
+    mockParentProfile,
+    mockUserProfile,
+  } = require("./tests/helpers/profile-api.mock");
 
   return {
     login: jest.fn(async (input: { email: string; password: string }) => {
@@ -91,6 +135,28 @@ jest.mock("@/lib/api", () => {
     forgotPassword: jest.fn(async () => ({
       code: "OK",
       message: "Dat lai mat khau thanh cong",
+    })),
+    getParentLinks: jest.fn(async () => ({
+      code: "OK",
+      message: "OK",
+      data: [],
+    })),
+    requestParentLink: jest.fn(async () => ({
+      code: "OK",
+      message: "Da gui lien ket xac nhan",
+    })),
+    completeParentProfile: jest.fn(async (input: {
+      fullName: string;
+      phone: string;
+      password: string;
+    }) => ({
+      code: "OK",
+      message: "Hoan tat ho so thanh cong",
+      data: {
+        ...mockParentProfile,
+        fullName: input.fullName,
+        phone: input.phone,
+      },
     })),
   };
 });
