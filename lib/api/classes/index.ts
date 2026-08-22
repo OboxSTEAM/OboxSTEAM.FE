@@ -432,10 +432,15 @@ function omitEndTimeForActivitySession<
 }
 
 /** BE derives SessionKind from the curriculum item — never send it. */
-function omitClientSessionKind<T extends { sessionKind?: unknown }>(
+function omitClientSessionKind<T extends object>(
   body: T,
 ): Omit<T, "sessionKind"> {
-  const { sessionKind: _omit, ...rest } = body;
+  if (!("sessionKind" in body)) {
+    return body as Omit<T, "sessionKind">;
+  }
+  const { sessionKind: _omit, ...rest } = body as T & {
+    sessionKind?: unknown;
+  };
   return rest;
 }
 
