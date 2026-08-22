@@ -1,4 +1,4 @@
-name: Obox Frontend Build, Push and Deploy
+﻿name: Obox Frontend Build, Push and Deploy
 
 on:
   push:
@@ -7,7 +7,47 @@ on:
   workflow_dispatch:
 
 jobs:
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9.6.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests
+        run: pnpm test
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Smoke E2E tests
+        run: pnpm test:e2e:smoke
+        env:
+          CI: true
+          NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://oboxsteam.com' }}
+          NEXT_PUBLIC_ROOT_DOMAIN: ${{ vars.NEXT_PUBLIC_ROOT_DOMAIN || 'oboxsteam.website' }}
+
   build-push-and-deploy:
+    needs: quality
     runs-on: ubuntu-latest
 
     steps:
@@ -64,3 +104,4 @@ jobs:
             docker compose up -d --force-recreate --pull always obox-frontend
             docker image prune -af
             docker logs --tail 20 obox-frontend
+
