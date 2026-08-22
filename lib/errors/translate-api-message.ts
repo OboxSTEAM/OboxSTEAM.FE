@@ -27,6 +27,11 @@ const EXACT_VI: Record<string, string> = {
   "You already have an active class enrollment for this program.":
     "Bạn đã có lớp đang học trong chương trình này.",
   "Class is at maximum capacity.": "Lớp đã đủ sĩ số.",
+  "Class has reached maximum capacity.": "Lớp đã đủ sĩ số.",
+  "Student has reached the maximum of 2 in-progress programs (Active or PendingPayment). Complete or drop a program before starting another.":
+    "Bạn đang học tối đa 2 chương trình (đang học hoặc chờ thanh toán). Hoàn thành hoặc hủy một chương trình trước khi đăng ký thêm.",
+  "Student has reached the maximum of 2 active classes. Leave or complete a class before joining another.":
+    "Bạn đang tham gia tối đa 2 lớp Active. Rời hoặc hoàn thành một lớp trước khi ghi danh lớp khác.",
   "Student is not enrolled in this class.":
     "Học viên chưa ghi danh vào lớp này.",
   "Enrollment not found.": "Không tìm thấy ghi danh.",
@@ -162,7 +167,27 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
     vi: "Email đã được sử dụng.",
   },
   {
-    pattern: /not (open|available) for enrollment|cannot enroll/i,
+    pattern: /Class '.+' is not open for enrollment/i,
+    vi: "Lớp không còn mở tuyển sinh. Chỉ lớp đang mở (Open) mới nhận ghi danh.",
+  },
+  {
+    pattern: /Class '.+' must be Open and not yet started/i,
+    vi: "Lớp phải đang mở tuyển sinh và chưa bắt đầu học.",
+  },
+  {
+    pattern: /maximum of \d+ in-progress programs|Active or PendingPayment/i,
+    vi: "Bạn đang học tối đa 2 chương trình (đang học hoặc chờ thanh toán). Hoàn thành hoặc hủy một chương trình trước khi đăng ký thêm.",
+  },
+  {
+    pattern: /maximum of \d+ active classes/i,
+    vi: "Bạn đang tham gia tối đa 2 lớp Active. Rời hoặc hoàn thành một lớp trước khi ghi danh lớp khác.",
+  },
+  {
+    pattern: /StartDate must be at least \d+ days in the future/i,
+    vi: "Ngày bắt đầu lớp phải cách hôm nay ít nhất 14 ngày.",
+  },
+  {
+    pattern: /Program .+ is not (open|available) for enrollment|Program is not available for enrollment|Only Active programs can be enrolled/i,
     vi: "Chương trình hiện không nhận đăng ký.",
   },
   {

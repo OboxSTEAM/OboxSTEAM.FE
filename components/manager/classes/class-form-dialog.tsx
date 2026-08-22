@@ -36,7 +36,7 @@ import {
   buildClassFormSchema,
   type ClassFormValues,
 } from "@/lib/validations/classes";
-import { CLASS_CREATE_LEAD_DAYS, getMinClassStartLocalInput } from "@/lib/classes/lifecycle";
+import { CLASS_CREATE_LEAD_DAYS, classStatusRequiresStartDateLeadTime, getMinClassStartLocalInput } from "@/lib/classes/lifecycle";
 import {
   LIGHT_SELECT_CONTENT,
   LIGHT_SELECT_ITEM,
@@ -102,9 +102,12 @@ export function ClassFormDialog({
   onSubmit,
 }: ClassFormDialogProps) {
   const isCreate = !classItem;
+  /** BE enforces lead time on Create and on Update while Draft / ReadyForMentor / Open. */
+  const requiresLeadTime =
+    isCreate || classStatusRequiresStartDateLeadTime(classItem?.status);
   const formSchema = useMemo(
-    () => buildClassFormSchema({ requireCreateLeadTime: isCreate }),
-    [isCreate],
+    () => buildClassFormSchema({ requireCreateLeadTime: requiresLeadTime }),
+    [requiresLeadTime],
   );
   const {
     control,
@@ -158,8 +161,10 @@ export function ClassFormDialog({
             </DialogTitle>
             <DialogDescription>
               {classItem
-                ? "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết (lớp Chờ mentor)."
-                : "Thứ tự: tạo lớp Bản nháp → xếp lịch → sẵn sàng tìm mentor → mentor xin nhận → mở tuyển sinh → học viên ghi danh → bắt đầu lớp."}
+                ? classStatusRequiresStartDateLeadTime(classItem.status)
+                  ? `Cập nhật thông tin lớp. Ngày bắt đầu phải cách hôm nay ít nhất ${CLASS_CREATE_LEAD_DAYS} ngày khi lớp còn Bản nháp / Chờ mentor / Đang tuyển sinh.`
+                  : "Cập nhật thông tin lớp. Mentor được gán qua duyệt yêu cầu tại trang chi tiết (lớp Chờ mentor)."
+                : `Thứ tự: tạo lớp Bản nháp → xếp lịch → sẵn sàng tìm mentor → mentor xin nhận → mở tuyển sinh → học viên ghi danh → bắt đầu lớp. Ngày bắt đầu ≥ hôm nay + ${CLASS_CREATE_LEAD_DAYS} ngày.`}
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />
@@ -327,7 +332,7 @@ export function ClassFormDialog({
                   <Input
                     id="startDate"
                     type="datetime-local"
-                    min={isCreate ? getMinClassStartLocalInput() : undefined}
+                    min={requiresLeadTime ? getMinClassStartLocalInput() : undefined}
                     {...register("startDate")}
                     className={INPUT_CLASS}
                   />

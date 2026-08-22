@@ -171,7 +171,7 @@ export function buildClassFormSchema(options?: { requireCreateLeadTime?: boolean
   });
 }
 
-/** Update-class form (no 14-day lead time). Prefer `buildClassFormSchema` for create. */
+/** Update-class form. Prefer `buildClassFormSchema({ requireCreateLeadTime })` — lead time applies on create and while Draft/ReadyForMentor/Open. */
 export const classFormSchema = buildClassFormSchema();
 
 /** Manager session form fields (datetime-local). */

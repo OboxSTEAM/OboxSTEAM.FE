@@ -58,6 +58,7 @@ import {
 } from "@/lib/validations/curriculum";
 import { updateMaterialSchema, type UpdateMaterialInput } from "@/lib/validations/materials";
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
+import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
@@ -741,10 +742,19 @@ export function ActivityFormDialog({
       };
 
       if (isEdit && activityToEdit) {
+        const previousDuration = activityToEdit.durationMinutes ?? null;
         await updateActivity(activityToEdit.id, payload);
+        const durationChanged =
+          isOnlineOrOffline &&
+          previousDuration !== (payload.durationMinutes ?? null);
+        if (durationChanged) {
+          invalidateClassSessions();
+        }
         showAppSuccess({
           title: "Cập nhật thành công",
-          description: `Đã cập nhật thông tin hoạt động ${data.name}.`,
+          description: durationChanged
+            ? `Đã cập nhật hoạt động ${data.name}. EndTime các buổi gắn activity đã được máy chủ tính lại.`
+            : `Đã cập nhật thông tin hoạt động ${data.name}.`,
         });
       } else {
         await createActivity(payload);

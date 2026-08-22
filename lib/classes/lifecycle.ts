@@ -5,6 +5,17 @@ import type { ClassSession } from "@/lib/api/entities/class-session";
 /** Manager create-class lead time: `StartDate ≥ UtcNow.Date + 14 days`. */
 export const CLASS_CREATE_LEAD_DAYS = 14;
 
+/** Statuses where StartDate lead time is enforced on create/update (BE). */
+export function classStatusRequiresStartDateLeadTime(
+  status: Class["status"] | null | undefined,
+): boolean {
+  return (
+    status === "Draft" ||
+    status === "ReadyForMentor" ||
+    status === "Open"
+  );
+}
+
 /** Default duration for LiveOnline/Offline activity templates. */
 export const DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES = 90;
 

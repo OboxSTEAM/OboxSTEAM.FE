@@ -486,8 +486,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "payments.checkout": {
     title: "Không thể bắt đầu thanh toán",
-    reason: "Yêu cầu thanh toán bị từ chối hoặc chương trình chưa sẵn sàng.",
-    action: "Thử lại sau vài giây hoặc liên hệ hỗ trợ OboxSTEAM.",
+    reason:
+      "Yêu cầu bị từ chối — có thể bạn đã đủ 2 chương trình đang học/chờ thanh toán, hoặc chương trình chưa sẵn sàng.",
+    action:
+      "Hoàn thành hoặc hủy một chương trình đang học rồi thử lại, hoặc liên hệ hỗ trợ.",
   },
   "payments.detail": {
     title: "Không tải được thông tin thanh toán",
@@ -563,6 +565,13 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không tải được khóa học",
     reason: "Phiên đăng nhập có thể đã hết hạn hoặc máy chủ từ chối yêu cầu.",
     action: "Đăng nhập lại hoặc thử tải trang sau vài giây.",
+  },
+  "classEnrollments.create": {
+    title: "Không ghi danh được vào lớp",
+    reason:
+      "Lớp không còn mở tuyển sinh, đã đủ chỗ, bạn đã đủ 2 lớp Active, hoặc đã có lớp trong chương trình này.",
+    action:
+      "Chọn lớp Open khác, rời một lớp Active nếu đã đủ hạn mức, hoặc tải lại danh sách.",
   },
   "dashboard.load": {
     title: "Không tải được dashboard",
@@ -923,6 +932,51 @@ function mapHttpStatusToError(
         status,
         apiMessage,
         "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
+      ),
+    };
+  }
+
+  if (status === 409 && context === "payments.checkout") {
+    return {
+      title: "Không đăng ký thêm chương trình được",
+      reason:
+        apiMessage ??
+        "Bạn đang học tối đa 2 chương trình (đang học hoặc chờ thanh toán).",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Hoàn thành hoặc hủy một chương trình rồi thử đăng ký lại.",
+      ),
+    };
+  }
+
+  if (status === 409 && context === "classEnrollments.create") {
+    return {
+      title: "Không ghi danh thêm lớp được",
+      reason:
+        apiMessage ??
+        "Bạn đang tham gia tối đa 2 lớp Active, hoặc đã có lớp trong chương trình này.",
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Rời hoặc hoàn thành một lớp Active trước, rồi chọn lớp Open khác.",
+      ),
+    };
+  }
+
+  if (
+    (status === 400 || status === 422) &&
+    (context === "classes.create" || context === "classes.update") &&
+    apiMessage &&
+    /14 ngày|14 days|StartDate must be at least/i.test(apiMessage)
+  ) {
+    return {
+      title: "Ngày bắt đầu chưa đủ khoảng cách",
+      reason: apiMessage,
+      action: resolveAction(
+        status,
+        apiMessage,
+        "Chọn ngày bắt đầu cách hôm nay ít nhất 14 ngày rồi lưu lại.",
       ),
     };
   }

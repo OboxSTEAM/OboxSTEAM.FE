@@ -25,7 +25,13 @@ import {
   type ClassWithSessions,
   type StudentScheduleInterval,
 } from "@/lib/api";
-import { OPEN_CLASSES_QUERY, CLASS_SESSION_KIND_LABELS, isStudentJoinableClass } from "@/lib/classes/constants";
+import { ApiRequestError } from "@/lib/api/errors";
+import {
+  CLASS_SESSION_KIND_LABELS,
+  CLASS_STATUS_LABELS,
+  OPEN_CLASSES_QUERY,
+  isStudentJoinableClass,
+} from "@/lib/classes/constants";
 import {
   findScheduleConflict,
   pickUpcomingSessions,
@@ -48,8 +54,24 @@ type ClassPickerOption = {
   withSessions: ClassWithSessions | null;
   upcoming: ClassSession[];
   conflictLabel: string | null;
+  /** True when not Open or schedule conflicts — cannot enroll. */
   isDisabled: boolean;
+  disabledReason: string | null;
 };
+
+function isClassClosedForEnrollmentError(error: unknown): boolean {
+  let message = "";
+  if (error instanceof ApiRequestError) {
+    const body = error.body as {
+      error?: { message?: string };
+      message?: string;
+    } | null;
+    message = body?.error?.message ?? body?.message ?? error.message;
+  } else if (error instanceof Error) {
+    message = error.message;
+  }
+  return /is not open for enrollment/i.test(message);
+}
 
 function formatClassDateRange(startDate: string, endDate: string): string {
   const formatter = new Intl.DateTimeFormat("vi-VN", {
@@ -113,11 +135,14 @@ function ClassOptionCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { classItem, upcoming, conflictLabel, isDisabled } = option;
+  const { classItem, upcoming, conflictLabel, isDisabled, disabledReason } =
+    option;
   const seatsLabel =
     classItem.maxCapacity > 0
       ? `${classItem.seatsTaken}/${classItem.maxCapacity} chỗ`
       : null;
+  const statusLabel = CLASS_STATUS_LABELS[classItem.status];
+  const isOpen = isStudentJoinableClass(classItem.status);
 
   return (
     <button
@@ -144,12 +169,24 @@ function ClassOptionCard({
             {classItem.name}
           </p>
         </div>
-        {seatsLabel ? (
-          <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2.5 py-1 text-xs font-medium text-[#2D2D2D]">
-            <Users className="size-3.5" aria-hidden />
-            {seatsLabel}
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <span
+            className={cn(
+              "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
+              isOpen
+                ? "border-[#7CB342]/35 bg-[#F1F8E9] text-[#558B2F]"
+                : "border-[#E5E5E0] bg-[#FAFAF5] text-[#6B6B6B]",
+            )}
+          >
+            {statusLabel}
           </span>
-        ) : null}
+          {seatsLabel ? (
+            <span className="inline-flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2.5 py-1 text-xs font-medium text-[#2D2D2D]">
+              <Users className="size-3.5" aria-hidden />
+              {seatsLabel}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-3 space-y-2 text-sm text-[#6B6B6B]">
@@ -162,6 +199,12 @@ function ClassOptionCard({
           <p className="inline-flex items-start gap-1.5 rounded-lg border border-[#E94B3C]/25 bg-[#FFF0EE] px-2.5 py-1.5 text-xs font-medium text-[#a82a1e]">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {conflictLabel}
+          </p>
+        ) : null}
+        {!conflictLabel && disabledReason ? (
+          <p className="inline-flex items-start gap-1.5 rounded-lg border border-[#E5E5E0] bg-[#FAFAF5] px-2.5 py-1.5 text-xs font-medium text-[#6B6B6B]">
+            <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+            {disabledReason}
           </p>
         ) : null}
       </div>
@@ -215,17 +258,27 @@ export function ClassPickerDialog({
         const conflict = findScheduleConflict(sessions, busy, {
           excludeClassId: classItem.id,
         });
+        const isOpen = isStudentJoinableClass(classItem.status);
+        const conflictLabel = conflict?.label ?? null;
+        let disabledReason: string | null = null;
+        if (!isOpen) {
+          disabledReason = `Lớp ${CLASS_STATUS_LABELS[classItem.status].toLowerCase()} — chỉ lớp đang tuyển sinh mới nhận ghi danh.`;
+        } else if (conflictLabel) {
+          disabledReason = conflictLabel;
+        }
+
         return {
           classItem,
           withSessions,
           upcoming: pickUpcomingSessions(sessions),
-          conflictLabel: conflict?.label ?? null,
-          isDisabled: conflict != null,
+          conflictLabel,
+          isDisabled: !isOpen || conflict != null,
+          disabledReason,
         };
       });
     },
     deps: [open, programId],
-    onError: (error) => showAppErrorFromUnknown(error, "generic"),
+    onError: (error) => showAppErrorFromUnknown(error, "classes.list"),
   });
 
   const options = data ?? [];
@@ -242,13 +295,16 @@ export function ClassPickerDialog({
   }, [open]);
 
   useEffect(() => {
-    if (!open || selectableOptions.length === 0) return;
-    setSelectedClassId(
-      (current) =>
-        current ??
-        selectableOptions[0]?.classItem.id ??
-        null,
-    );
+    if (!open) return;
+    setSelectedClassId((current) => {
+      if (
+        current &&
+        selectableOptions.some((option) => option.classItem.id === current)
+      ) {
+        return current;
+      }
+      return selectableOptions[0]?.classItem.id ?? null;
+    });
   }, [open, selectableOptions]);
 
   const selectedOption = options.find(
@@ -256,12 +312,20 @@ export function ClassPickerDialog({
   );
   const canConfirm =
     selectedOption != null &&
+    isStudentJoinableClass(selectedOption.classItem.status) &&
     !selectedOption.isDisabled &&
     !isSubmitting &&
     options.length > 0;
 
   const handleConfirm = useCallback(async () => {
-    if (!selectedClassId || selectedOption?.isDisabled) return;
+    if (
+      !selectedClassId ||
+      !selectedOption ||
+      selectedOption.isDisabled ||
+      !isStudentJoinableClass(selectedOption.classItem.status)
+    ) {
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -278,7 +342,15 @@ export function ClassPickerDialog({
       onEnrolled?.(selectedClassId);
       onOpenChange(false);
     } catch (error) {
-      showAppErrorFromUnknown(error, "generic");
+      showAppErrorFromUnknown(error, "classEnrollments.create");
+      // Class may have moved Open → InProgress, or student hit active-class cap (409).
+      if (
+        isClassClosedForEnrollmentError(error) ||
+        (error instanceof ApiRequestError && error.status === 409)
+      ) {
+        setSelectedClassId(null);
+        retry();
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -286,8 +358,9 @@ export function ClassPickerDialog({
     onEnrolled,
     onOpenChange,
     programEnrollmentId,
+    retry,
     selectedClassId,
-    selectedOption?.isDisabled,
+    selectedOption,
   ]);
 
   return (
@@ -298,8 +371,8 @@ export function ClassPickerDialog({
           <DialogTitle>Chọn lớp học</DialogTitle>
           <DialogDescription>
             {programName
-              ? `Chọn lớp đang mở cho chương trình "${programName}" trước khi bắt đầu học.`
-              : "Chọn lớp đang mở trước khi bắt đầu học. Bạn có thể đóng hộp thoại này nếu chưa quyết định."}
+              ? `Chỉ lớp đang tuyển sinh (Open) của chương trình "${programName}" mới ghi danh được. Lớp đã bắt đầu học (InProgress) không nhận thêm học viên.`
+              : "Chỉ lớp đang tuyển sinh (Open) mới ghi danh được. Lớp đã bắt đầu học không nhận thêm học viên."}
           </DialogDescription>
         </DialogHeader>
 

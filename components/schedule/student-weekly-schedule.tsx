@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SessionLocationMap } from "@/components/maps/session-location-map";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -555,6 +556,13 @@ function SessionDetailSheet({
     session.meetingUrl?.trim() || classSession?.meetingUrl?.trim() || null;
   const location =
     session.location?.trim() || classSession?.location?.trim() || null;
+  const latitude = classSession?.latitude ?? null;
+  const longitude = classSession?.longitude ?? null;
+  const hasCoordinates =
+    latitude != null &&
+    longitude != null &&
+    Number.isFinite(latitude) &&
+    Number.isFinite(longitude);
 
   /**
    * Prefer activityType from curriculum. While enrichment runs, show skeleton.
@@ -678,6 +686,16 @@ function SessionDetailSheet({
               />
             ) : null}
           </div>
+
+          {!isVenueLoading && isOfflineSession && hasCoordinates ? (
+            <SessionLocationMap
+              latitude={latitude as number}
+              longitude={longitude as number}
+              locationLabel={location}
+              variant="learn"
+              className="rounded-2xl"
+            />
+          ) : null}
 
           <div className="mt-auto flex flex-col gap-2.5 pt-2">
             {isOnlineSession && meetingUrl ? (

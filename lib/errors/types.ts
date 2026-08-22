@@ -124,6 +124,7 @@ export type AppErrorContext =
   | "class-redelivery.list"
   | "class-redelivery.decide"
   | "enrollments.list"
+  | "classEnrollments.create"
   | "dashboard.load"
   | "research.upload"
   | "research.submit"

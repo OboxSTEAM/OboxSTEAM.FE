@@ -81,6 +81,7 @@ import {
   updateActivitySchema,
 } from "@/lib/validations/curriculum";
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
+import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
@@ -721,11 +722,22 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       if (isEdit && activityToEdit) {
         // Omit activityOrder when unchanged so BE keeps the current slot without a no-op reorder.
         const orderUnchanged = orderNum === activityToEdit.activityOrder;
+        const previousDuration = activityToEdit.durationMinutes ?? null;
         await updateActivity(activityToEdit.id, {
           ...payload,
           activityOrder: orderUnchanged ? undefined : orderNum,
         });
-        showAppSuccess({ title: "Cập nhật thành công", description: `Hoạt động ${data.name} đã được cập nhật.` });
+        const durationChanged =
+          live && previousDuration !== (payload.durationMinutes ?? null);
+        if (durationChanged) {
+          invalidateClassSessions();
+        }
+        showAppSuccess({
+          title: "Cập nhật thành công",
+          description: durationChanged
+            ? `Hoạt động ${data.name} đã được cập nhật. EndTime các buổi gắn activity đã được máy chủ tính lại.`
+            : `Hoạt động ${data.name} đã được cập nhật.`,
+        });
       } else {
         await createActivity(payload);
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo hoạt động ${data.name}.` });
