@@ -80,6 +80,7 @@ export type AppErrorContext =
   | "classSessions.checkin"
   | "attendance.list"
   | "attendance.update"
+  | "schedule.weekly"
   | "activityProgress.forceComplete"
   | "activityProgress.mentorCompleteBulk"
   | "classQuizSet.get"

@@ -1074,6 +1074,17 @@ export {
 } from "./me";
 
 export {
+  getWeeklySchedule,
+  type ScheduleDay,
+  type ScheduleDayOfWeek,
+  type ScheduleSession,
+  type WeeklySchedule,
+  type WeeklyScheduleQuery,
+  type WeeklyScheduleResponse,
+  type WeeklyScheduleResult,
+} from "./schedules";
+
+export {
   addHighlightSegment,
   cancelHighlightVideoItem,
   createHighlightStack,

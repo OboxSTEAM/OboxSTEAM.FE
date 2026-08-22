@@ -343,6 +343,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Trạng thái không hợp lệ hoặc bạn không có quyền thao tác.",
     action: "Tải lại roster và thử cập nhật lại.",
   },
+  "schedule.weekly": {
+    title: "Không tải được lịch học",
+    reason: "Không lấy được thời khóa biểu tuần này.",
+    action: "Chọn Thứ Hai làm đầu tuần, hoặc thử lại.",
+  },
   "activityProgress.forceComplete": {
     title: "Không force-complete được hoạt động",
     reason: "Học viên hoặc hoạt động không hợp lệ, hoặc bạn không có quyền.",

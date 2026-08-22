@@ -50,7 +50,6 @@ import type { AssignmentType } from "@/lib/api/entities/assignment";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import type { Module } from "@/lib/api/entities/module";
 import {
-  CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
 import {
@@ -79,8 +78,24 @@ const INPUT_CLASS =
 
 const SELECT_TRIGGER_CLASS = "h-10 w-full rounded-lg";
 
+/** Manager form copy — derived from activity/assignment, not free-picked. */
+const SESSION_KIND_DERIVED_LABELS: Record<
+  NonNullable<ClassSessionFormValues["sessionKind"]>,
+  string
+> = {
+  Lesson: "Buổi học (Online)",
+  FieldTrip: "Ngoại khóa (Offline)",
+  AssignmentWindow: "Cửa sổ nộp bài",
+};
+
 const ACTIVITY_LINK_PREFIX = "activity:";
 const ASSIGNMENT_LINK_PREFIX = "assignment:";
+
+function sessionKindFromActivityType(
+  activityType: ActivityType,
+): NonNullable<ClassSessionFormValues["sessionKind"]> {
+  return activityType === "Offline" ? "FieldTrip" : "Lesson";
+}
 
 function encodeCurriculumLink(
   kind: "activity" | "assignment",
@@ -436,60 +451,12 @@ export function SessionFormDialog({
                 />
               </FormField>
 
-              <FormField
-                id="sessionKind"
-                label="Loại buổi"
-                error={errors.sessionKind?.message}
-              >
-                <Controller
-                  control={control}
-                  name="sessionKind"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || "Lesson"}
-                      onValueChange={(value) =>
-                        field.onChange(value ?? "Lesson")
-                      }
-                    >
-                      <SelectTrigger
-                        id="sessionKind"
-                        className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
-                      >
-                        <span className="truncate">
-                          {CLASS_SESSION_KIND_LABELS[
-                            (field.value ||
-                              "Lesson") as keyof typeof CLASS_SESSION_KIND_LABELS
-                          ] ?? "Chọn loại"}
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent
-                        align="start"
-                        alignItemWithTrigger={false}
-                        sideOffset={8}
-                        className={LIGHT_SELECT_CONTENT}
-                      >
-                        {Object.entries(CLASS_SESSION_KIND_LABELS).map(
-                          ([value, label]) => (
-                            <SelectItem
-                              key={value}
-                              value={value}
-                              className={LIGHT_SELECT_ITEM}
-                            >
-                              {label}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-
               {session ? (
                 <FormField
                   id="status"
                   label="Trạng thái"
                   error={errors.status?.message}
+                  className="sm:col-span-2"
                 >
                   <Controller
                     control={control}
@@ -642,6 +609,9 @@ export function SessionFormDialog({
                             setValue("assignmentId", "", {
                               shouldValidate: true,
                             });
+                            setValue("sessionKind", "Lesson", {
+                              shouldValidate: true,
+                            });
                             return;
                           }
 
@@ -656,11 +626,13 @@ export function SessionFormDialog({
                               (item) => item.id === parsed.id,
                             );
                             if (activity) {
-                              if (activity.activityType === "Offline") {
-                                setValue("sessionKind", "FieldTrip");
-                              } else {
-                                setValue("sessionKind", "Lesson");
-                              }
+                              setValue(
+                                "sessionKind",
+                                sessionKindFromActivityType(
+                                  activity.activityType,
+                                ),
+                                { shouldValidate: true },
+                              );
                               if (!getValues("title")?.trim()) {
                                 setValue("title", activity.name);
                               }
@@ -676,7 +648,9 @@ export function SessionFormDialog({
                             shouldValidate: true,
                           });
                           setValue("activityId", "", { shouldValidate: true });
-                          setValue("sessionKind", "AssignmentWindow");
+                          setValue("sessionKind", "AssignmentWindow", {
+                            shouldValidate: true,
+                          });
                           const assignment = assignmentOptions.find(
                             (item) => item.id === parsed.id,
                           );
@@ -789,6 +763,29 @@ export function SessionFormDialog({
                   nộp bài tập. Thiếu mục cần thêm trên khung chương trình trước.
                 </p>
               </FormField>
+
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="sessionKindDerived">Loại buổi</Label>
+                <div
+                  id="sessionKindDerived"
+                  className={cn(
+                    INPUT_CLASS,
+                    "flex items-center px-3 text-sm",
+                    isActivitySession || isAssignmentSession
+                      ? "text-foreground"
+                      : "text-muted-foreground",
+                  )}
+                  aria-live="polite"
+                >
+                  {isActivitySession || isAssignmentSession
+                    ? SESSION_KIND_DERIVED_LABELS[sessionKind]
+                    : "Chọn nội dung buổi học trước"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tự xác định theo nội dung: Online → buổi học, Offline → ngoại
+                  khóa, bài tập → cửa sổ nộp bài.
+                </p>
+              </div>
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="startTime">

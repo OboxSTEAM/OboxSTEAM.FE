@@ -25,7 +25,6 @@ import {
   Save,
   FolderPlus,
   ChevronRight,
-  ChevronDown,
   AlertTriangle,
   GripVertical,
   type LucideIcon,
@@ -34,11 +33,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Select,
   SelectTrigger,
@@ -158,42 +152,6 @@ function STitle({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: W.faint }}>{children}</p>;
 }
 
-function AdvancedSection({
-  open,
-  onOpenChange,
-  summary,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  summary: string;
-  children: ReactNode;
-}) {
-  return (
-    <Collapsible open={open} onOpenChange={onOpenChange}>
-      <div className="rounded-xl border bg-card" style={{ borderColor: W.border }}>
-        <CollapsibleTrigger className="group flex min-h-12 w-full items-center justify-between gap-4 px-4 py-3 text-left">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: W.textStrong }}>
-              Thiết lập nâng cao
-            </p>
-            <p className="mt-1 text-xs" style={{ color: W.muted }}>{summary}</p>
-          </div>
-          <ChevronDown
-            className={cn(
-              "size-4 shrink-0 transition-transform duration-200",
-              open && "rotate-180",
-            )}
-            style={{ color: W.faint }}
-          />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="border-t px-4 py-4" style={{ borderColor: W.border }}>
-          {children}
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
-}
 function FErr({ msg }: { msg?: string }) {
   return msg ? <p className="text-xs font-semibold mt-1" style={{ color: W.primary }}>{msg}</p> : null;
 }
@@ -405,7 +363,6 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 }) {
   const isEdit = !!moduleToEdit;
   const [busy, setBusy] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
   const { register, handleSubmit, control, getValues, formState: { errors } } = useForm<MFV>({
@@ -461,7 +418,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   const others = modulesInProgram.filter((m) => !isEdit || m.id !== moduleToEdit?.id);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr icon={FolderOpen} color={W.success}
         title={isEdit ? `Chỉnh sửa: ${moduleToEdit!.name}` : "Tạo Module mới"}
         sub="Học phần trong chương trình học" />
@@ -479,15 +436,10 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             <FErr msg={errors.code?.message} />
           </div>
         </div>
-        <AdvancedSection
-          open={advancedOpen}
-          onOpenChange={setAdvancedOpen}
-          summary="Loại module, tiên quyết, kiến thức và học phí"
-        >
-          <div className="space-y-6">
-            <div>
-              <STitle>Cấu hình học tập</STitle>
-              <div className="grid grid-cols-2 gap-4">
+
+        <div>
+          <STitle>Cấu hình học tập</STitle>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
@@ -542,11 +494,12 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
               <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
-              </div>
-            </div>
-            <div>
-              <STitle>Học phí</STitle>
-              <div className="grid grid-cols-2 gap-4">
+          </div>
+        </div>
+
+        <div>
+          <STitle>Học phí</STitle>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Học phí (VND) <span style={{ color: W.primary }}>*</span></Label>
               <input type="number" placeholder="0" {...register("price", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
@@ -557,10 +510,8 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <input type="number" placeholder="0" {...register("retakeFee", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
               <FErr msg={errors.retakeFee?.message} />
             </div>
-              </div>
-            </div>
           </div>
-        </AdvancedSection>
+        </div>
       </div>
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Module"} />
