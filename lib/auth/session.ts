@@ -1,4 +1,5 @@
 import { clearParentProfilePending } from "@/lib/auth/parent-profile";
+import { resetAppThemeToLight } from "@/lib/theme/reset-theme";
 
 const AUTH_STORAGE_KEY = "oboxsteam.auth";
 const REMEMBER_EMAIL_KEY = "oboxsteam.rememberEmail";
@@ -52,6 +53,7 @@ export function clearAuthSession(): void {
   if (typeof window === "undefined") return;
   sessionStorage.removeItem(AUTH_STORAGE_KEY);
   clearParentProfilePending();
+  resetAppThemeToLight();
   notifyAuthSessionChanged();
 }
 
