@@ -1,5 +1,6 @@
 import type { NotificationType } from "@/lib/api/entities/notification";
-import { parseNotificationPayload, payloadString } from "@/lib/notifications/parse-payload";
+import type { NotificationPayload } from "@/lib/notifications/parse-payload";
+import { resolveNotificationPayload, payloadString } from "@/lib/notifications/parse-payload";
 import { requestCurriculumSync } from "@/lib/realtime/curriculum-sync-bus";
 import { dispatchMediaSyncEvent } from "@/lib/realtime/media-sync-bus";
 
@@ -33,10 +34,11 @@ const MEDIA_SYNC_TYPES = new Set<NotificationType>([
  */
 export function dispatchNotificationSideEffects(notification: {
   type: NotificationType;
-  payloadJson: string | null;
+  payload?: NotificationPayload | null;
+  payloadJson?: string | null;
   entityId: string | null;
 }): void {
-  const payload = parseNotificationPayload(notification.payloadJson);
+  const payload = resolveNotificationPayload(notification);
 
   if (CURRICULUM_SOFT_SYNC_TYPES.has(notification.type)) {
     const programId = payloadString(payload, "programId");

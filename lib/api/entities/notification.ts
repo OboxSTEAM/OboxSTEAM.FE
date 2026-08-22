@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { notificationPayloadSchema } from "@/lib/notifications/parse-payload";
+
 export const notificationTypeSchema = z.enum([
   "AccountRegistered",
   "EmailVerified",
@@ -74,6 +76,9 @@ export const notificationSchema = z.object({
   type: notificationTypeSchema,
   title: z.string().nullable(),
   body: z.string().nullable(),
+  /** Typed deeplink bag — prefer this over `payloadJson`. */
+  payload: notificationPayloadSchema.nullish(),
+  /** Legacy JSON string of the same bag; prefer `payload`. */
   payloadJson: z.string().nullable(),
   readAt: z.string().nullable(),
   actorUserId: z.string().uuid().nullable(),
