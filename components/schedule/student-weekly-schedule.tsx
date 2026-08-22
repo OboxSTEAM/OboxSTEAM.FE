@@ -452,7 +452,10 @@ function SessionDetailSheet({
   const resolvedActivityId =
     scheduleActivityId ?? classSession?.activityId ?? null;
 
-  const { data: enrollmentId } = useClientFetch({
+  const {
+    data: enrollmentId,
+    isLoading: isEnrollmentLoading,
+  } = useClientFetch({
     enabled:
       open &&
       Boolean(programId) &&
@@ -553,14 +556,30 @@ function SessionDetailSheet({
   const location =
     session.location?.trim() || classSession?.location?.trim() || null;
 
-  /** Source of truth: activityType (BE). AssignmentWindow venue = later. */
+  /**
+   * Prefer activityType from curriculum. While enrichment runs, show skeleton.
+   * If enrichment never resolves (no enrollment / 403), fall back to sessionKind
+   * so Meet/location from the schedule/session DTO still render.
+   */
   const activityType = activity?.activityType ?? null;
   const isVenueLoading =
     !isAssignmentWindow &&
     Boolean(resolvedActivityId) &&
-    (isClassSessionLoading || isActivityLoading || !activityType);
-  const isOnlineSession = !isAssignmentWindow && activityType === "LiveOnline";
-  const isOfflineSession = !isAssignmentWindow && activityType === "Offline";
+    (isClassSessionLoading ||
+      isEnrollmentLoading ||
+      (Boolean(enrollmentId) && isActivityLoading));
+  const isOnlineSession =
+    !isAssignmentWindow &&
+    (activityType === "LiveOnline" ||
+      (!isVenueLoading &&
+        activityType == null &&
+        session.sessionKind === "Lesson"));
+  const isOfflineSession =
+    !isAssignmentWindow &&
+    (activityType === "Offline" ||
+      (!isVenueLoading &&
+        activityType == null &&
+        session.sessionKind === "FieldTrip"));
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
