@@ -343,7 +343,7 @@ function DetailInfoRow({
   href?: string | null;
 }) {
   return (
-    <div className="flex items-start gap-3 border-b border-[#E5E5E0] px-4 py-3.5 last:border-b-0">
+    <div className="flex items-start gap-3 px-4 py-3.5 first:pt-4 last:pb-4">
       <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-[#2D2D2D] shadow-sm ring-1 ring-[#E5E5E0]">
         <Icon className="size-4" aria-hidden />
       </span>
@@ -363,9 +363,9 @@ function DetailInfoRow({
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-0.5 inline-flex max-w-full items-center gap-1.5 text-sm font-semibold leading-snug text-[#0288D1] underline-offset-2 hover:underline"
+                className="mt-0.5 flex max-w-full items-center gap-1.5 text-sm font-semibold leading-snug text-[#0288D1] underline-offset-2 hover:underline"
               >
-                <span className="truncate">{value.trim()}</span>
+                <span className="min-w-0 truncate">{value.trim()}</span>
                 <ExternalLink className="size-3.5 shrink-0 opacity-70" />
               </a>
             ) : (
@@ -623,7 +623,7 @@ function SessionDetailSheet({
             ) : null}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-[#FAFAF5]">
+          <div className="divide-y divide-[#E5E5E0] rounded-2xl border border-[#E5E5E0] bg-[#FAFAF5]">
             <DetailInfoRow
               icon={UserRound}
               label="Giảng viên"
