@@ -5,6 +5,7 @@ import { PartnerStripSection } from "@/components/landing/sections/partner-strip
 import { SteamCategoriesSection } from "@/components/landing/sections/steam-categories-section";
 import { UniverseSection } from "@/components/landing/sections/universe-section";
 import { ProgramsSection } from "@/components/landing/sections/programs-section";
+import { CtaDeskSection } from "@/components/landing/sections/cta-desk-section";
 
 export default function Home() {
   return (
@@ -16,6 +17,7 @@ export default function Home() {
         <SteamCategoriesSection />
         <UniverseSection />
         <ProgramsSection />
+        <CtaDeskSection />
       </main>
       <SiteFooter />
     </>

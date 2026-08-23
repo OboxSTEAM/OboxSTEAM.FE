@@ -20,7 +20,7 @@ export const HERO = {
   headlineLine1: "Con cứ sáng tạo,",
   headlineLine2: "OboxSTEAM dựng hành trình.",
   subheadline:
-    "Học qua dự án thực tế, tự động dựng Portfolio cho hành trình du học.",
+    "Học qua dự án thực tế, xây dựng Portfolio cho hành trình du học.",
   primaryCta: { label: "Đăng ký miễn phí", href: "/register" },
   secondaryCta: { label: "Xem chương trình", href: "#programs" },
   deskTextureSrc: "/images/hero/desk-texture.jpg",
@@ -172,6 +172,15 @@ export const UNIVERSE_SECTION = {
   ctaLabel: "Xem Portfolio mẫu",
   ctaHref: "/portfolio/demo",
 };
+
+export const CTA_DESK_SECTION = {
+  /** Single-line caps lockup + italic serif support. */
+  headline: "ĐÃ ĐẾN LÚC BẮT ĐẦU",
+  headlineSupport: "hành trình STEAM cùng con",
+  primaryCta: { label: "Đăng ký miễn phí", href: "/register" },
+  secondaryCta: { label: "Xem chương trình", href: "#programs" },
+  deskTextureSrc: "/images/hero/desk-texture.jpg",
+} as const;
 
 export const FEATURED_PROGRAMS = [
   {
