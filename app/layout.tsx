@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, Nunito } from "next/font/google";
+import { Inter, JetBrains_Mono, Lora, Nunito } from "next/font/google";
 import { AppProviders } from "@/components/providers/app-providers";
 import { SITE } from "@/lib/landing/content";
 import "./globals.css";
@@ -18,6 +18,13 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
+});
+
+const lora = Lora({
+  variable: "--font-display-serif",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500"],
+  style: ["italic"],
 });
 
 export const metadata: Metadata = {
@@ -64,7 +71,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${nunito.variable} ${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${nunito.variable} ${inter.variable} ${jetbrainsMono.variable} ${lora.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppProviders>{children}</AppProviders>

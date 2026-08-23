@@ -16,13 +16,65 @@ export const NAV_LINKS = [
 ] as const;
 
 export const HERO = {
-  eyebrow: "OBOX STEAM × INTRODUCTION 2026",
-  headlineStatic: "Khám phá.",
-  rotatingWords: ["Sáng tạo.", "Tỏa sáng.", "Bứt phá."],
+  /** Two-line lockup — bold sans then italic serif, like the reference. */
+  headlineLine1: "Con cứ sáng tạo,",
+  headlineLine2: "OboxSTEAM dựng hành trình.",
   subheadline:
-    "Nền tảng STEAM trải nghiệm cho trẻ em Việt — mỗi bài học tạo ra một tác phẩm, mỗi tác phẩm dựng nên một hành trình du học.",
-  imageSrc: "https://images.unsplash.com/photo-1577896851231-70ef18881754?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+    "Học qua dự án thực tế, tự động dựng Portfolio cho hành trình du học.",
+  primaryCta: { label: "Đăng ký miễn phí", href: "/register" },
+  secondaryCta: { label: "Xem chương trình", href: "#programs" },
+  deskTextureSrc: "/images/hero/desk-texture.jpg",
 } as const;
+
+export const STEAM_SECTION = {
+  heading: "Khám phá 5 lĩnh vực STEAM",
+} as const;
+
+/** Placeholder partner strip — STEAM / edtech brands for layout testing only. */
+export const PARTNER_BRANDS = [
+  {
+    id: "mit",
+    name: "MIT",
+    href: "https://www.mit.edu",
+    ariaLabel: "MIT Open Learning",
+    className: "font-serif font-bold tracking-tight",
+  },
+  {
+    id: "lego",
+    name: "LEGO",
+    href: "https://education.lego.com",
+    ariaLabel: "LEGO Education",
+    className: "font-heading font-black tracking-[0.2em]",
+  },
+  {
+    id: "nasa",
+    name: "NASA",
+    href: "https://www.nasa.gov/stem",
+    ariaLabel: "NASA STEM",
+    className: "font-heading font-bold tracking-[0.35em]",
+  },
+  {
+    id: "arduino",
+    name: "Arduino",
+    href: "https://www.arduino.cc/education",
+    ariaLabel: "Arduino Education",
+    className: "font-mono font-semibold tracking-tight",
+  },
+  {
+    id: "scratch",
+    name: "Scratch",
+    href: "https://scratch.mit.edu",
+    ariaLabel: "Scratch",
+    className: "font-heading font-bold italic",
+  },
+  {
+    id: "khan",
+    name: "Khan Academy",
+    href: "https://www.khanacademy.org",
+    ariaLabel: "Khan Academy",
+    className: "font-heading font-semibold tracking-tight",
+  },
+] as const;
 
 export type SteamCategory = "science" | "technology" | "engineering" | "arts" | "mathematics";
 
