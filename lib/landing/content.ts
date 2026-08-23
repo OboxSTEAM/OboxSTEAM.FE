@@ -26,11 +26,7 @@ export const HERO = {
   deskTextureSrc: "/images/hero/desk-texture.jpg",
 } as const;
 
-export const STEAM_SECTION = {
-  heading: "Khám phá 5 lĩnh vực STEAM",
-} as const;
 
-/** Placeholder partner strip — STEAM / edtech brands for layout testing only. */
 export const PARTNER_BRANDS = [
   {
     id: "mit",
@@ -141,26 +137,38 @@ export const UNIVERSE_SECTION = {
     "AI của OboxSTEAM tự động thu thập bằng chứng học tập — ảnh, video, đánh giá Mentor — và tạo ra microsite Portfolio cá nhân cho hồ sơ du học.",
   features: [
     {
+      id: "face-detection",
       iconName: "ScanFace",
       label: "Nhận dạng khuôn mặt AI",
       desc: "Tự động gắn thẻ học viên trong ảnh lớp học",
+      imageSrc: "/images/universe/face-detection.png",
+      accent: "#E94B3C",
     },
     {
+      id: "highlight-video",
       iconName: "Video",
       label: "Video highlight AI",
       desc: "Cắt ghép video 9:16 cá nhân từ footage lớp học",
+      imageSrc: "/images/universe/highlight-video.png",
+      accent: "#7CB342",
     },
     {
+      id: "reflection-summary",
       iconName: "PenLine",
       label: "Tóm tắt phản ánh AI",
       desc: "Biến nhật ký học tập thành văn viết trau chuốt",
+      imageSrc: "/images/universe/portfolio1.png",
+      accent: "#7E57C2",
     },
     {
+      id: "personal-subdomain",
       iconName: "Globe",
       label: "Subdomain cá nhân",
       desc: "Portfolio tại tên.obox.id — chia sẻ mọi lúc",
+      imageSrc: "/images/universe/portfolio-2.png",
+      accent: "#4FC3F7",
     },
-  ],
+  ] as const,
   ctaLabel: "Xem Portfolio mẫu",
   ctaHref: "/portfolio/demo",
 };

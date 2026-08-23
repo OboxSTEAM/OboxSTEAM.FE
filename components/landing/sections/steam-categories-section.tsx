@@ -1,23 +1,13 @@
 import { ImageSlot } from "@/components/common/image-slot";
-import { STEAM_CATEGORIES, STEAM_SECTION } from "@/lib/landing/content";
+import { STEAM_CATEGORIES } from "@/lib/landing/content";
 
 export function SteamCategoriesSection() {
   return (
     <section
       id="steam"
-      aria-labelledby="steam-heading"
+      aria-label="Khám phá 5 lĩnh vực STEAM"
       className="bg-[#FAFAF5]"
     >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-7">
-        <h2
-          id="steam-heading"
-          className="font-heading font-extrabold text-[#2D2D2D] text-center text-balance tracking-tight"
-          style={{ fontSize: "clamp(1.35rem, 3vw, 1.75rem)" }}
-        >
-          {STEAM_SECTION.heading}
-        </h2>
-      </div>
-
       <div className="hidden md:flex group/strip overflow-hidden">
         {STEAM_CATEGORIES.map((cat) => (
           <div
