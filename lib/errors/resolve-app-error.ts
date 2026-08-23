@@ -108,13 +108,17 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "programs.update": {
     title: "Không cập nhật được chương trình",
-    reason: "Thông tin chưa hợp lệ hoặc chương trình không còn tồn tại.",
-    action: "Kiểm tra lại thông tin, tải lại trang rồi thử lưu.",
+    reason:
+      "Chương trình có lớp đang học, lớp Open đã có học viên, thông tin chưa hợp lệ, hoặc không còn tồn tại.",
+    action:
+      "Chờ lớp InProgress hoàn thành, hoặc chỉ sửa khi lớp Open chưa có học viên — rồi thử lại.",
   },
   "programs.delete": {
     title: "Không xóa được chương trình",
-    reason: "Chương trình có thể đang được sử dụng hoặc không còn tồn tại.",
-    action: "Tải lại danh sách và thử lại. Nếu vẫn lỗi, liên hệ hỗ trợ.",
+    reason:
+      "Chương trình có lớp đang học, lớp Open đã có học viên, đang được sử dụng, hoặc không còn tồn tại.",
+    action:
+      "Chờ lớp InProgress hoàn thành / lớp Open hết học viên Active, tải lại danh sách rồi thử lại.",
   },
   "programs.reviews": {
     title: "Không tải được đánh giá",
@@ -133,8 +137,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "programs.upload-thumbnail": {
     title: "Không tải lên được ảnh chương trình",
-    reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
-    action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
+    reason:
+      "Chương trình đang bị khóa do lớp đang học / Open có học viên, tệp không hợp lệ, hoặc máy chủ từ chối tải lên.",
+    action:
+      "Chờ cohort hiện tại ổn định, chọn ảnh JPG/PNG dưới 5 MB rồi thử lại.",
   },
   "experts.list": {
     title: "Không tải được danh sách chuyên gia",
@@ -487,9 +493,9 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   "payments.checkout": {
     title: "Không thể bắt đầu thanh toán",
     reason:
-      "Yêu cầu bị từ chối — có thể bạn đã đủ 2 chương trình đang học/chờ thanh toán, hoặc chương trình chưa sẵn sàng.",
+      "Yêu cầu bị từ chối — chương trình phải đang mở (Active), hoặc bạn đã đủ 2 chương trình đang học/chờ thanh toán.",
     action:
-      "Hoàn thành hoặc hủy một chương trình đang học rồi thử lại, hoặc liên hệ hỗ trợ.",
+      "Chỉ thanh toán khi chương trình Active; hoàn thành hoặc hủy một chương trình đang học rồi thử lại.",
   },
   "payments.detail": {
     title: "Không tải được thông tin thanh toán",
@@ -503,13 +509,15 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "payments.request-parent": {
     title: "Không gửi được yêu cầu thanh toán",
-    reason: "Phụ huynh chưa liên kết, chưa xác nhận, hoặc yêu cầu bị từ chối.",
-    action: "Kiểm tra liên kết phụ huynh trong hồ sơ và thử lại.",
+    reason:
+      "Chương trình phải đang mở (Active), phụ huynh chưa liên kết/xác nhận, hoặc yêu cầu bị từ chối.",
+    action: "Kiểm tra trạng thái chương trình và liên kết phụ huynh rồi thử lại.",
   },
   "payments.parent-checkout": {
     title: "Không thể bắt đầu thanh toán",
-    reason: "Liên kết thanh toán không hợp lệ hoặc đã hết hạn (24 giờ).",
-    action: "Nhờ học viên gửi lại yêu cầu thanh toán từ trang chương trình.",
+    reason:
+      "Chương trình phải đang mở (Active), hoặc liên kết thanh toán không hợp lệ / đã hết hạn (24 giờ).",
+    action: "Nhờ học viên gửi lại yêu cầu khi chương trình đang mở.",
   },
   "payments.checkout-retake": {
     title: "Không thể thanh toán học lại",
@@ -792,8 +800,15 @@ function reasonForHttpStatus(
     return "Không tìm thấy dữ liệu yêu cầu.";
   }
   if (status === 409) {
-    if (context === "programs.create" || context === "programs.update") {
+    if (context === "programs.create") {
       return "Mã hoặc tên chương trình đã tồn tại.";
+    }
+    if (
+      context === "programs.update" ||
+      context === "programs.delete" ||
+      context === "programs.upload-thumbnail"
+    ) {
+      return "Không sửa/xóa chương trình khi có lớp đang học hoặc lớp Open đã có học viên ghi danh.";
     }
     if (context === "classes.create" || context === "classes.update") {
       return "Mã lớp đã tồn tại hoặc xung đột dữ liệu lớp.";
@@ -936,6 +951,45 @@ function mapHttpStatusToError(
     };
   }
 
+  if (
+    status === 409 &&
+    (context === "programs.update" ||
+      context === "programs.delete" ||
+      context === "programs.upload-thumbnail")
+  ) {
+    const fallback = CONTEXT_FALLBACKS[context];
+    const isCohortLock =
+      Boolean(apiMessage) &&
+      /lớp đang học|InProgress|Open|học viên ghi danh|in progress|enrolled students|cannot be updated or deleted|curriculum cannot be changed/i.test(
+        apiMessage ?? "",
+      );
+    return {
+      title: fallback.title,
+      reason: apiMessage ?? fallback.reason,
+      action: isCohortLock
+        ? "Chờ lớp InProgress hoàn thành, hoặc chỉ thao tác khi lớp Open chưa có học viên Active."
+        : resolveAction(status, apiMessage, fallback.action),
+    };
+  }
+
+  if (
+    (status === 400 || status === 422) &&
+    (context === "payments.checkout" ||
+      context === "payments.request-parent" ||
+      context === "payments.parent-checkout") &&
+    apiMessage &&
+    /draft and cannot be purchased|inactive and is not accepting/i.test(apiMessage)
+  ) {
+    const isDraft = /draft/i.test(apiMessage);
+    return {
+      title: "Không thể thanh toán",
+      reason: apiMessage,
+      action: isDraft
+        ? "Chờ quản lý mở chương trình (Active) rồi thử lại."
+        : "Chọn chương trình đang mở khác hoặc liên hệ hỗ trợ.",
+    };
+  }
+
   if (status === 409 && context === "payments.checkout") {
     return {
       title: "Không đăng ký thêm chương trình được",
@@ -1014,9 +1068,15 @@ function mapHttpStatusToError(
 
 function fromZodError(error: ZodError): AppErrorState {
   const first = error.issues[0];
+  const path = first?.path?.length ? first.path.join(".") : null;
+  const rawMessage = first?.message?.trim() || "Một số trường chưa đúng định dạng.";
+  const reason = path
+    ? `${path}: ${translateApiMessage(rawMessage) ?? rawMessage}`
+    : (translateApiMessage(rawMessage) ?? rawMessage);
+
   return {
     title: "Dữ liệu chưa hợp lệ",
-    reason: first?.message ?? "Một số trường chưa đúng định dạng.",
+    reason,
     action: "Sửa các trường được đánh dấu và gửi lại.",
   };
 }

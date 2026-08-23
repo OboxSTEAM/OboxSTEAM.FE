@@ -2,8 +2,15 @@ import { z } from "zod";
 
 export const apiErrorSchema = z
   .object({
-    code: z.string().optional(),
-    message: z.string().optional(),
+    /** OpenAPI marks these nullable — tolerate null from BE serializers. */
+    code: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined),
+    message: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? undefined),
   })
   .passthrough();
 
@@ -11,15 +18,27 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 export function createApiValueSchema<T extends z.ZodType>(dataSchema: T) {
   return z.object({
-    code: z.string(),
-    message: z.string(),
+    code: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? "OK"),
+    message: z
+      .string()
+      .nullish()
+      .transform((value) => value ?? ""),
     data: dataSchema,
   });
 }
 
 export const apiValueMessageOnlySchema = z.object({
-  code: z.string(),
-  message: z.string(),
+  code: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? "OK"),
+  message: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
 });
 
 export type ApiEnvelope<TValue> = {

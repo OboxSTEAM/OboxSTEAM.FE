@@ -385,7 +385,7 @@ export function MyCoursesPageContent() {
       ) : (
         <>
           <div className="grid items-start gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {enrollments.map((enrollment) => {
+            {enrollments.map((enrollment, index) => {
               const certificate = certificatesByProgramId.get(
                 enrollment.programId,
               );
@@ -393,12 +393,14 @@ export function MyCoursesPageContent() {
                 invoicesByProgramId.get(enrollment.programId) ?? [];
               const hasExtras =
                 certificate != null || programInvoices.length > 0;
+              const priority = index < 3;
 
               if (!hasExtras) {
                 return (
                   <EnrollmentCard
                     key={enrollment.id}
                     enrollment={enrollment}
+                    priority={priority}
                   />
                 );
               }
@@ -411,8 +413,13 @@ export function MyCoursesPageContent() {
                   <EnrollmentCard
                     enrollment={enrollment}
                     className="h-auto rounded-none border-0 shadow-none"
+                    priority={priority}
                   />
-                  <EnrollmentInvoicesSection invoices={programInvoices} />
+                  <EnrollmentInvoicesSection
+                    invoices={programInvoices}
+                    programName={enrollment.name}
+                    programThumbnailUrl={enrollment.thumbnailUrl}
+                  />
                   {certificate ? (
                     <CertificateCongratsBox certificate={certificate} />
                   ) : null}

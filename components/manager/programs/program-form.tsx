@@ -47,6 +47,8 @@ export type ProgramFormProps = {
   onSubmit: (values: ProgramFormValues) => Promise<void>;
   onThumbnailUploaded?: (program: ProgramWithModules) => void;
   isLoading?: boolean;
+  /** Cohort lock / read-only — disables fields and thumbnail upload. */
+  disabled?: boolean;
   /** Extra buttons rendered in the sticky action bar */
   actionSlot?: React.ReactNode;
 };
@@ -68,7 +70,7 @@ const LEVELS = [
 ] as const;
 
 const STATUSES = [
-  { value: "Active",   label: "Hoạt động",      dot: "#7CB342" },
+  { value: "Active",   label: "Đang mở",         dot: "#7CB342" },
   { value: "Draft",    label: "Bản nháp",        dot: "#9e9e9e" },
   { value: "Inactive", label: "Ngừng hoạt động", dot: "#E94B3C" },
 ] as const;
@@ -105,9 +107,10 @@ export function ProgramForm({
   onSubmit,
   onThumbnailUploaded,
   isLoading = false,
+  disabled = false,
 }: ProgramFormProps) {
-  const isEdit = Boolean(initialValues?.name);
-  const canUploadThumbnail = Boolean(programId);
+  const isEdit = Boolean(programId);
+  const canUploadThumbnail = Boolean(programId) && !disabled;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImageOpen, setIsImageOpen] = useState(!isEdit);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!isEdit);
@@ -190,6 +193,7 @@ export function ProgramForm({
 
   return (
     <form onSubmit={onFormSubmit} className="flex flex-col gap-6">
+      <fieldset disabled={disabled || isLoading} className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0 disabled:opacity-70">
 
       {/* ── Top: Image panel (Hero Banner) ─────────────────────────── */}
       <Collapsible open={isImageOpen} onOpenChange={setIsImageOpen}>
@@ -538,6 +542,7 @@ export function ProgramForm({
                 <FieldError message={errors.level?.message} />
               </div>
 
+              {isEdit ? (
               <div>
                 <label className={LBL}>
                   Trạng thái <span className="text-primary">*</span>
@@ -578,6 +583,11 @@ export function ProgramForm({
                 />
                 <FieldError message={errors.status?.message} />
               </div>
+              ) : (
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                  Chương trình mới mặc định <span className="font-semibold text-foreground">Bản nháp</span>. Đổi trạng thái sau khi tạo.
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -668,9 +678,10 @@ export function ProgramForm({
         </Collapsible>
 
       </div>
+      </fieldset>
 
       {/* Hidden submit – triggered by outer action bar */}
-      <button type="submit" id="__program-form-submit" className="hidden" aria-hidden disabled={isLoading} />
+      <button type="submit" id="__program-form-submit" className="hidden" aria-hidden disabled={isLoading || disabled} />
     </form>
   );
 }

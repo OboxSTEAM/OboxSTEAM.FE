@@ -176,7 +176,7 @@ export function GenerateSessionsDialog({
           <DialogScrollBody className="space-y-5">
             <div className="rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground">
               <p>• Bỏ qua hoạt động SelfPaced. 1 mục curriculum = 1 buổi.</p>
-              <p>• LiveOnline → Lesson · Offline → FieldTrip · Assignment → AssignmentWindow.</p>
+              <p>• LiveOnline → LiveOnline · Offline → Offline · Assignment → AssignmentWindow.</p>
               <p>• Activity: End = Start + DurationMinutes (không dùng SessionEndTime).</p>
               <p>• Assignment window: độ dài = SessionEndTime − SessionStartTime (End khung giờ chỉ áp dụng cho bài tập).</p>
               <p>• Không cần mentor. Chặn nếu lớp đã có học viên, hoặc còn buổi active (xóa/hủy trước).</p>

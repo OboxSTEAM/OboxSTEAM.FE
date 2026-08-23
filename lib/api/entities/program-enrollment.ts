@@ -1,6 +1,9 @@
 import { z } from "zod";
 
-import { programLevelSchema } from "@/lib/api/entities/program";
+import {
+  programLevelSchema,
+  programStatusSchema,
+} from "@/lib/api/entities/program";
 
 /** Matches `ProgramEnrollmentResponseDto.status` (OpenAPI). */
 export const programEnrollmentStatusSchema = z.enum([
@@ -33,7 +36,7 @@ export const programEnrollmentSchema = z.object({
   rating: z.number().nullable(),
   totalReviews: z.number(),
   thumbnailUrl: z.string().nullable(),
-  programStatus: z.string().nullable(),
+  programStatus: programStatusSchema.nullable(),
   price: z.number().nullable(),
 });
 

@@ -87,7 +87,16 @@ const EXACT_VI: Record<string, string> = {
   "Program is not active.": "Chương trình hiện không hoạt động.",
   "Only Active programs can be enrolled.":
     "Chỉ chương trình đang mở mới có thể đăng ký.",
+  "Program cannot be updated or deleted while a class is in progress. Wait for in-progress classes to complete.":
+    "Không cập nhật hoặc xóa chương trình khi còn lớp đang học. Chờ các lớp InProgress hoàn thành.",
+  "Program cannot be updated or deleted while an open class has enrolled students.":
+    "Không cập nhật hoặc xóa chương trình khi lớp đang tuyển sinh đã có học viên ghi danh.",
+  "Program curriculum cannot be changed while a class is in progress. Wait for in-progress classes to complete — curriculum changes apply to new cohorts.":
+    "Không sửa khung chương trình khi còn lớp đang học. Chờ lớp InProgress hoàn thành — thay đổi áp dụng cho cohort mới.",
+  "Program curriculum cannot be changed while an open class has enrolled students.":
+    "Không sửa khung chương trình khi lớp đang tuyển sinh đã có học viên ghi danh.",
   "Video ready": "Video đã sẵn sàng",
+
   "Your video has finished processing and is ready.":
     "Video của bạn đã xử lý xong và sẵn sàng xem.",
   "Video processing failed": "Xử lý video thất bại",
@@ -167,6 +176,22 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
     vi: "Email đã được sử dụng.",
   },
   {
+    pattern: /Program cannot be updated or deleted while a class is in progress/i,
+    vi: "Không cập nhật hoặc xóa chương trình khi còn lớp đang học. Chờ các lớp InProgress hoàn thành.",
+  },
+  {
+    pattern: /Program cannot be updated or deleted while an open class has enrolled students/i,
+    vi: "Không cập nhật hoặc xóa chương trình khi lớp đang tuyển sinh đã có học viên ghi danh.",
+  },
+  {
+    pattern: /Program curriculum cannot be changed while a class is in progress/i,
+    vi: "Không sửa khung chương trình khi còn lớp đang học. Chờ lớp InProgress hoàn thành — thay đổi áp dụng cho cohort mới.",
+  },
+  {
+    pattern: /Program curriculum cannot be changed while an open class has enrolled students/i,
+    vi: "Không sửa khung chương trình khi lớp đang tuyển sinh đã có học viên ghi danh.",
+  },
+  {
     pattern: /Class '.+' is not open for enrollment/i,
     vi: "Lớp không còn mở tuyển sinh. Chỉ lớp đang mở (Open) mới nhận ghi danh.",
   },
@@ -187,8 +212,24 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
     vi: "Ngày bắt đầu lớp phải cách hôm nay ít nhất 14 ngày.",
   },
   {
+    pattern: /Program .+ is a draft and cannot be purchased/i,
+    vi: "Chương trình đang ở bản nháp — chưa thể đăng ký hoặc thanh toán.",
+  },
+  {
+    pattern: /Program .+ is inactive and is not accepting registrations/i,
+    vi: "Chương trình đã ngừng hoạt động — không nhận đăng ký hoặc thanh toán.",
+  },
+  {
     pattern: /Program .+ is not (open|available) for enrollment|Program is not available for enrollment|Only Active programs can be enrolled/i,
     vi: "Chương trình hiện không nhận đăng ký.",
+  },
+  {
+    pattern: /expected string, received null/i,
+    vi: "Thiếu dữ liệu (null) ở trường bắt buộc phải là chuỗi.",
+  },
+  {
+    pattern: /Máy chủ không trả (access|refresh) token/i,
+    vi: "Máy chủ không trả token đăng nhập. Thử lại hoặc liên hệ hỗ trợ.",
   },
   {
     pattern: /past due|deadline.*(pass|expired)|overdue/i,

@@ -83,8 +83,8 @@ const SESSION_KIND_DERIVED_LABELS: Record<
   NonNullable<ClassSessionFormValues["sessionKind"]>,
   string
 > = {
-  Lesson: "Buổi học (Online)",
-  FieldTrip: "Ngoại khóa (Offline)",
+  LiveOnline: "Buổi học (Online)",
+  Offline: "Ngoại khóa (Offline)",
   AssignmentWindow: "Cửa sổ nộp bài",
 };
 
@@ -94,7 +94,7 @@ const ASSIGNMENT_LINK_PREFIX = "assignment:";
 function sessionKindFromActivityType(
   activityType: ActivityType,
 ): NonNullable<ClassSessionFormValues["sessionKind"]> {
-  return activityType === "Offline" ? "FieldTrip" : "Lesson";
+  return activityType === "Offline" ? "Offline" : "LiveOnline";
 }
 
 function encodeCurriculumLink(
@@ -196,7 +196,7 @@ function toDefaultValues(
     moduleId: session?.moduleId ?? "",
     activityId: session?.activityId ?? "",
     assignmentId: session?.assignmentId ?? "",
-    sessionKind: session?.sessionKind ?? "Lesson",
+    sessionKind: session?.sessionKind ?? "LiveOnline",
     title: session?.title ?? "",
     description: session?.description ?? "",
     startTime: session ? fromApiDateTimeToLocalInput(session.startTime) : slotStart,
@@ -245,11 +245,11 @@ export function SessionFormDialog({
   const selectedModuleId = watch("moduleId");
   const selectedActivityId = watch("activityId") ?? "";
   const selectedAssignmentId = watch("assignmentId") ?? "";
-  const sessionKind = watch("sessionKind") ?? "Lesson";
+  const sessionKind = watch("sessionKind") ?? "LiveOnline";
   const isActivitySession = Boolean(selectedActivityId.trim());
   const isAssignmentSession = Boolean(selectedAssignmentId.trim());
   /** Soft preference only — both venue modes stay available. */
-  const prefersPlace = sessionKind === "FieldTrip";
+  const prefersPlace = sessionKind === "Offline";
   const [extraVenueOpen, setExtraVenueOpen] = useState(false);
   const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
   const [assignmentOptions, setAssignmentOptions] = useState<AssignmentOption[]>(
@@ -608,7 +608,7 @@ export function SessionFormDialog({
                             setValue("assignmentId", "", {
                               shouldValidate: true,
                             });
-                            setValue("sessionKind", "Lesson", {
+                            setValue("sessionKind", "LiveOnline", {
                               shouldValidate: true,
                             });
                             return;
@@ -871,8 +871,8 @@ export function SessionFormDialog({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {prefersPlace
-                    ? "Field Trip ưu tiên tìm địa chỉ / tọa độ. Bạn vẫn có thể thêm link họp nếu cần."
-                    : "Lesson ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
+                    ? "Offline ưu tiên tìm địa chỉ / tọa độ. Bạn vẫn có thể thêm link họp nếu cần."
+                    : "LiveOnline ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
                 </p>
 
                 {prefersPlace ? (

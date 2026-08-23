@@ -31,6 +31,7 @@ import { SessionLocationMap } from "@/components/maps/session-location-map";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLiveJoinState } from "@/hooks/use-live-join-state";
 import {
   getActivityById,
   getClassSessionById,
@@ -48,6 +49,10 @@ import {
   ATTENDANCE_STATUS_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
+import {
+  canRevealSessionJoinUrl,
+  formatJoinCountdown,
+} from "@/lib/classes/session-helpers";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { getProgramLearnHref } from "@/lib/programs/enrollments";
@@ -63,8 +68,8 @@ import {
 import { cn } from "@/lib/utils";
 
 const SESSION_KIND_LABELS = {
-  Lesson: "Buổi học",
-  FieldTrip: "Ngoại khóa",
+  LiveOnline: "Buổi học",
+  Offline: "Ngoại khóa",
   AssignmentWindow: "Nộp bài",
 } as const;
 
@@ -502,6 +507,21 @@ function SessionDetailSheet({
     },
   });
 
+  const liveJoinInput = useMemo(() => {
+    if (!session) return null;
+    return {
+      status: classSession?.status ?? session.status,
+      startTime: classSession?.startTime ?? session.startTime,
+      endTime: classSession?.endTime ?? session.endTime,
+      meetingUrl:
+        session.meetingUrl?.trim() || classSession?.meetingUrl?.trim() || null,
+      location:
+        session.location?.trim() || classSession?.location?.trim() || null,
+    };
+  }, [session, classSession]);
+
+  const liveJoin = useLiveJoinState(open ? liveJoinInput : null);
+
   if (!session) return null;
 
   const resolvedAssignmentId = classSession?.assignmentId ?? null;
@@ -552,10 +572,7 @@ function SessionDetailSheet({
     assignmentId: resolvedAssignmentId,
   });
 
-  const meetingUrl =
-    session.meetingUrl?.trim() || classSession?.meetingUrl?.trim() || null;
-  const location =
-    session.location?.trim() || classSession?.location?.trim() || null;
+  const location = liveJoinInput?.location ?? null;
   const latitude = classSession?.latitude ?? null;
   const longitude = classSession?.longitude ?? null;
   const hasCoordinates =
@@ -581,13 +598,27 @@ function SessionDetailSheet({
     (activityType === "LiveOnline" ||
       (!isVenueLoading &&
         activityType == null &&
-        session.sessionKind === "Lesson"));
+        session.sessionKind === "LiveOnline"));
   const isOfflineSession =
     !isAssignmentWindow &&
     (activityType === "Offline" ||
       (!isVenueLoading &&
         activityType == null &&
-        session.sessionKind === "FieldTrip"));
+        session.sessionKind === "Offline"));
+
+  const canRevealMeet =
+    liveJoin != null && canRevealSessionJoinUrl(liveJoin.phase);
+  const revealedMeetUrl = canRevealMeet ? liveJoin.joinUrl : null;
+  const isMeetLocked = liveJoin?.phase === "locked";
+  const isMeetCancelled = liveJoin?.phase === "cancelled";
+  const isMeetEnded =
+    liveJoin?.phase === "ended" ||
+    (liveJoin?.phase === "recording" && !liveJoin.joinUrl);
+  const canJoinMeet =
+    revealedMeetUrl != null &&
+    (liveJoin?.phase === "countdown" || liveJoin?.phase === "live");
+  const canOpenRecording =
+    revealedMeetUrl != null && liveJoin?.phase === "recording";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -665,15 +696,25 @@ function SessionDetailSheet({
                 icon={Video}
                 label="Link tham gia (Google Meet)"
                 value={
-                  meetingUrl
-                    ? meetingUrl.replace(/^https?:\/\//, "")
-                    : "Online — chờ link"
+                  isMeetCancelled
+                    ? "Buổi học đã bị hủy"
+                    : isMeetEnded
+                      ? "Buổi học đã kết thúc"
+                      : isMeetLocked
+                        ? "Chưa mở"
+                        : revealedMeetUrl
+                          ? revealedMeetUrl.replace(/^https?:\/\//, "")
+                          : "Online — chờ link"
                 }
-                href={meetingUrl}
+                href={revealedMeetUrl}
                 hint={
-                  meetingUrl
+                  isMeetCancelled || isMeetEnded
                     ? null
-                    : "Buổi online đã lên lịch; link Meet sẽ cập nhật sau."
+                    : isMeetLocked && liveJoin
+                      ? `Link Meet mở 15 phút trước giờ bắt đầu · còn ${formatJoinCountdown(liveJoin.msUntilOpen)}`
+                      : revealedMeetUrl
+                        ? null
+                        : "Buổi online đã lên lịch; link Meet sẽ cập nhật sau."
                 }
                 hintMono={false}
               />
@@ -698,9 +739,9 @@ function SessionDetailSheet({
           ) : null}
 
           <div className="mt-auto flex flex-col gap-2.5 pt-2">
-            {isOnlineSession && meetingUrl ? (
+            {isOnlineSession && canJoinMeet ? (
               <a
-                href={meetingUrl}
+                href={revealedMeetUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className={cn(
@@ -713,13 +754,35 @@ function SessionDetailSheet({
                 <ExternalLink className="size-3.5 opacity-80" />
               </a>
             ) : null}
+            {isOnlineSession && canOpenRecording ? (
+              <a
+                href={revealedMeetUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "h-11 w-full gap-2 rounded-xl border-[#E5E5E0] text-sm font-semibold",
+                )}
+              >
+                Xem ghi hình
+                <ExternalLink className="size-3.5 opacity-80" />
+              </a>
+            ) : null}
+            {isOnlineSession && isMeetLocked && liveJoin ? (
+              <p className="rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] px-3.5 py-3 text-center text-xs text-[#6B6B6B]">
+                Nút tham gia mở 15 phút trước giờ bắt đầu
+                <span className="mt-1 block font-mono font-semibold tabular-nums text-[#2D2D2D]">
+                  {formatJoinCountdown(liveJoin.msUntilOpen)}
+                </span>
+              </p>
+            ) : null}
             {isLearnHrefReady ? (
               <Link
                 href={learnHref}
                 className={cn(
                   buttonVariants({
                     variant:
-                      isOnlineSession && meetingUrl ? "outline" : "default",
+                      canJoinMeet || canOpenRecording ? "outline" : "default",
                   }),
                   "h-11 w-full rounded-xl text-sm font-semibold",
                 )}
@@ -730,7 +793,7 @@ function SessionDetailSheet({
               <Button
                 type="button"
                 variant={
-                  isOnlineSession && meetingUrl ? "outline" : "default"
+                  canJoinMeet || canOpenRecording ? "outline" : "default"
                 }
                 className="h-11 w-full rounded-xl text-sm font-semibold"
                 disabled

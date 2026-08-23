@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Calendar,
   CheckCircle2,
@@ -13,6 +12,7 @@ import {
 
 import { StudentSessionCheckinPanel } from "@/components/curriculum/student-session-checkin-panel";
 import { SessionLocationMap } from "@/components/maps/session-location-map";
+import { useLiveJoinState } from "@/hooks/use-live-join-state";
 import type { Activity, SessionAttendanceStatus } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import {
@@ -25,7 +25,6 @@ import {
   formatClassSessionSchedule,
   formatJoinCountdown,
   getJoinCountdownParts,
-  getLiveJoinState,
   type ClassSessionSchedule,
   type LiveJoinState,
 } from "@/lib/classes/session-helpers";
@@ -51,19 +50,6 @@ type SessionLayoutShared = {
   myAttendanceStatus: SessionAttendanceStatus | null;
   onAttendanceChange?: (status: SessionAttendanceStatus) => void;
 };
-
-function useLiveJoinState(session: ClassSession | null): LiveJoinState | null {
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    if (!session) return;
-    const timer = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(timer);
-  }, [session]);
-
-  if (!session) return null;
-  return getLiveJoinState(session, now);
-}
 
 function ModeChip({
   icon: Icon,

@@ -71,6 +71,7 @@ export type {
   Program,
   ProgramCategory,
   ProgramLevel,
+  ProgramStatus,
   ProgramWithModules,
 } from "@/lib/api/entities/program";
 

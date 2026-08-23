@@ -7,11 +7,11 @@ const ACTIVE_SESSION_STATUSES = new Set<ClassSessionStatus>([
 ]);
 
 /**
- * QR check-in tokens are Field Trip only (geo / on-site attendance).
- * Lesson and AssignmentWindow use manual roster updates instead.
+ * QR check-in tokens are Offline (on-site) only.
+ * LiveOnline and AssignmentWindow use manual roster updates instead.
  */
 export function canGenerateSessionCheckinQr(session: ClassSession): boolean {
-  if (session.sessionKind !== "FieldTrip") return false;
+  if (session.sessionKind !== "Offline") return false;
   if (!session.requiresAttendance) return false;
   return (
     session.status !== "Completed" && session.status !== "Cancelled"
@@ -162,7 +162,14 @@ function isHttpUrl(value: string | null | undefined): boolean {
 }
 
 /** Prefer `meetingUrl`; fall back to a Location that is already a URL. */
-export function resolveSessionJoinUrl(session: ClassSession): string | null {
+export type LiveJoinSessionInput = Pick<
+  ClassSession,
+  "status" | "startTime" | "endTime" | "meetingUrl" | "location"
+>;
+
+export function resolveSessionJoinUrl(
+  session: LiveJoinSessionInput,
+): string | null {
   if (isHttpUrl(session.meetingUrl)) return session.meetingUrl;
   if (isHttpUrl(session.location)) return session.location;
   return null;
@@ -195,7 +202,7 @@ export function formatJoinCountdown(ms: number): string {
 }
 
 export function getLiveJoinState(
-  session: ClassSession,
+  session: LiveJoinSessionInput,
   now = new Date(),
 ): LiveJoinState {
   const joinUrl = resolveSessionJoinUrl(session);
@@ -243,9 +250,14 @@ export function getLiveJoinState(
  * (`countdown` + `live` phases from {@link getLiveJoinState}).
  */
 export function isSessionAttendanceWindowOpen(
-  session: ClassSession,
+  session: LiveJoinSessionInput,
   now = new Date(),
 ): boolean {
   const phase = getLiveJoinState(session, now).phase;
   return phase === "countdown" || phase === "live";
+}
+
+/** True when the Meet / join URL may be shown to students. */
+export function canRevealSessionJoinUrl(phase: LiveJoinPhase): boolean {
+  return phase === "countdown" || phase === "live" || phase === "recording";
 }

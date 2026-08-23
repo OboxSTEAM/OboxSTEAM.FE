@@ -18,6 +18,9 @@ export const programCategorySchema = z.enum([
   "Art",
 ]);
 
+/** Catalog lifecycle — OpenAPI `ProgramStatus`. Legacy free strings / Published are rejected. */
+export const programStatusSchema = z.enum(["Draft", "Active", "Inactive"]);
+
 export const programSchema = z.object({
   id: z.string(),
   code: z
@@ -49,10 +52,7 @@ export const programSchema = z.object({
   rating: z.number().nullable(),
   totalReviews: z.number(),
   thumbnailUrl: z.string().nullable(),
-  status: z
-    .string()
-    .nullish()
-    .transform((value) => value ?? ""),
+  status: programStatusSchema,
   price: z
     .number()
     .nullish()
@@ -74,5 +74,6 @@ export const programWithModulesSchema = programSchema.extend({
 
 export type ProgramLevel = z.infer<typeof programLevelSchema>;
 export type ProgramCategory = z.infer<typeof programCategorySchema>;
+export type ProgramStatus = z.infer<typeof programStatusSchema>;
 export type Program = z.infer<typeof programSchema>;
 export type ProgramWithModules = z.infer<typeof programWithModulesSchema>;

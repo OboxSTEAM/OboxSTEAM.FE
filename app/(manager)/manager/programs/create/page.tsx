@@ -18,7 +18,9 @@ export default function CreateProgramPage() {
   const handleSubmit = async (values: any) => {
     setIsSubmitting(true);
     try {
-      const response = await createProgram(values);
+      // Omit status — BE defaults new programs to Draft.
+      const { status: _omitStatus, ...body } = values;
+      const response = await createProgram(body);
       showAppSuccess({
         title: "Tạo thành công",
         description: response.message || `Chương trình ${values.name} đã được tạo thành công.`,
@@ -32,7 +34,7 @@ export default function CreateProgramPage() {
   };
 
   const handleSaveDraft = async () => {
-    // Trigger form submit with status = Draft via hidden button
+    // Same create path — status omitted; BE stores Draft.
     const btn = document.getElementById("__program-form-submit");
     if (btn) (btn as HTMLButtonElement).click();
   };

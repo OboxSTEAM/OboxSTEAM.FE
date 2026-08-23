@@ -181,7 +181,7 @@ export const classSessionFormSchema = z
     activityId: z.string().optional(),
     assignmentId: z.string().optional(),
     sessionKind: z
-      .enum(["Lesson", "FieldTrip", "AssignmentWindow"])
+      .enum(["LiveOnline", "Offline", "AssignmentWindow"])
       .optional(),
     title: z
       .string()

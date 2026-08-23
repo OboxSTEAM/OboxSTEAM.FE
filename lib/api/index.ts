@@ -158,6 +158,7 @@ export {
   type ProgramCurriculum,
   type ProgramIdParam,
   type ProgramLevel,
+  type ProgramStatus,
   type ProgramListQuery,
   type ProgramReview,
   type ProgramReviewsQuery,

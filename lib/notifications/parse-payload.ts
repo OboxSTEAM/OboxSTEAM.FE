@@ -1,7 +1,20 @@
 import { z } from "zod";
 
-/** Non-empty id string; unused keys are omitted by BE. */
-const optionalIdSchema = z.string().trim().min(1).optional();
+/**
+ * Optional deeplink id — OpenAPI marks these nullable; BE may send `null`
+ * for unused keys instead of omitting them.
+ */
+const optionalIdSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .nullish()
+  .transform((value) => value ?? undefined);
+
+const optionalExtraSchema = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? undefined);
 
 /**
  * Typed deeplink bag — mirrors OpenAPI `NotificationPayload`.
@@ -33,13 +46,13 @@ export const notificationPayloadSchema = z
     highlightVideoId: optionalIdSchema,
     parentStudentId: optionalIdSchema,
     studentId: optionalIdSchema,
-    extra: z.string().optional(),
+    extra: optionalExtraSchema,
   })
   .passthrough();
 
 export type NotificationPayload = z.infer<typeof notificationPayloadSchema>;
 
-const EMPTY_PAYLOAD: NotificationPayload = {};
+const EMPTY_PAYLOAD = {} as NotificationPayload;
 
 /** Safe parse of legacy `payloadJson` string → typed bag (empty on null/invalid). */
 export function parseNotificationPayload(
