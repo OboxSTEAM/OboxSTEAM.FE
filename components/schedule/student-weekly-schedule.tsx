@@ -40,6 +40,7 @@ import {
 } from "@/lib/api";
 import {
   getWeeklySchedule,
+  getMonthlyScheduleDays,
   type ScheduleDay,
   type ScheduleSession,
   type WeeklySchedule,
@@ -58,14 +59,26 @@ import { showAppErrorFromUnknown } from "@/lib/errors";
 import { getProgramLearnHref } from "@/lib/programs/enrollments";
 import {
   addDaysToDateOnly,
+  addMonthsToYearMonth,
   formatDayColumnLabel,
+  formatMonthLabel,
   formatVietnamTimeRange,
   formatWeekRangeLabel,
+  getMonthGridCells,
   getVietnamMondayOf,
+  getVietnamYearMonth,
   isMondayDateOnly,
+  isSameMonthDateOnly,
   isTodayDateOnly,
+  mondayOnOrBefore,
+  toDateOnlyString,
 } from "@/lib/schedules/week";
 import { cn } from "@/lib/utils";
+
+type ScheduleViewMode = "week" | "month";
+
+const WEEKDAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
+const MONTH_MAX_CHIPS = 3;
 
 const SESSION_KIND_LABELS = {
   LiveOnline: "Buổi học",
@@ -841,17 +854,166 @@ function ScheduleSkeleton({ mobile }: { mobile: boolean }) {
   );
 }
 
+function MonthScheduleSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border">
+      <div className="grid grid-cols-7 border-b border-border">
+        {WEEKDAY_SHORT.map((label) => (
+          <div
+            key={label}
+            className="py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs"
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {Array.from({ length: 42 }).map((_, index) => (
+          <Skeleton
+            key={index}
+            className="min-h-[4.5rem] rounded-none border-b border-l border-border sm:min-h-[6rem]"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MonthScheduleGrid({
+  year,
+  month,
+  daysByDate,
+  selectedDay,
+  onSelectDay,
+  onOpen,
+}: {
+  year: number;
+  month: number;
+  daysByDate: Map<string, ScheduleDay>;
+  selectedDay: string | null;
+  onSelectDay: (date: string) => void;
+  onOpen: (session: ScheduleSession) => void;
+}) {
+  const cells = useMemo(
+    () => getMonthGridCells(year, month),
+    [year, month],
+  );
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="grid grid-cols-7 border-b border-border bg-[#FAFAF5]">
+        {WEEKDAY_SHORT.map((label) => (
+          <div
+            key={label}
+            className="py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:py-2.5 sm:text-xs"
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-7">
+        {cells.map((date) => {
+          const day = daysByDate.get(date);
+          const sessions = day?.sessions ?? [];
+          const inMonth = isSameMonthDateOnly(date, year, month);
+          const today = isTodayDateOnly(date);
+          const selected = selectedDay === date;
+          const dayNum = Number(date.slice(8, 10));
+          const visible = sessions.slice(0, MONTH_MAX_CHIPS);
+          const overflow = sessions.length - visible.length;
+
+          return (
+            <div
+              key={date}
+              role="button"
+              tabIndex={0}
+              onClick={() => onSelectDay(date)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelectDay(date);
+                }
+              }}
+              className={cn(
+                "flex min-h-[4.75rem] flex-col border-b border-l border-border p-1 text-left transition-colors sm:min-h-[6.5rem] sm:p-1.5",
+                !inMonth && "bg-[#FAFAF5]/70",
+                inMonth && "cursor-pointer bg-white hover:bg-[#FFF8F7]",
+                selected && "bg-[#FFF5F4] ring-1 ring-inset ring-[#E94B3C]/35",
+                today && inMonth && !selected && "bg-[#FFF8F7]",
+              )}
+            >
+              <span
+                className={cn(
+                  "mb-1 ml-auto flex size-6 items-center justify-center rounded-full text-[11px] font-bold tabular-nums sm:size-7 sm:text-xs",
+                  today
+                    ? "bg-[#E94B3C] text-white"
+                    : selected
+                      ? "bg-[#E94B3C]/15 text-[#E94B3C]"
+                      : inMonth
+                        ? "text-[#2D2D2D]"
+                        : "text-muted-foreground",
+                )}
+              >
+                {dayNum}
+              </span>
+              <div className="flex min-h-0 flex-1 flex-col gap-0.5">
+                {visible.map((session) => {
+                  const time = formatVietnamTimeRange(
+                    session.startTime,
+                    session.endTime,
+                  ).split(" – ")[0];
+                  return (
+                    <button
+                      key={session.id}
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onOpen(session);
+                      }}
+                      title={`${session.className} · ${formatVietnamTimeRange(session.startTime, session.endTime)}`}
+                      className={cn(
+                        "block w-full truncate rounded-md px-1 py-0.5 text-left text-[9px] font-semibold leading-tight sm:text-[10px]",
+                        "bg-[#2D2D2D]/6 text-[#2D2D2D] hover:bg-[#E94B3C]/12 hover:text-[#E94B3C]",
+                        session.status === "Cancelled" &&
+                          "opacity-50 line-through",
+                      )}
+                    >
+                      <span className="font-mono tabular-nums">{time}</span>
+                      <span className="hidden sm:inline">
+                        {" "}
+                        · {session.classCode || session.className}
+                      </span>
+                    </button>
+                  );
+                })}
+                {overflow > 0 ? (
+                  <span className="px-1 text-[9px] font-semibold text-muted-foreground sm:text-[10px]">
+                    +{overflow} buổi
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function StudentWeeklySchedule() {
   const router = useRouter();
   const isMobile = useIsMobile();
   const { profile, isAuthenticated, isHydrated, isLoading } = useCurrentUser();
 
+  const [viewMode, setViewMode] = useState<ScheduleViewMode>("week");
   /** `null` = omit weekStart so BE uses current VN Monday. */
   const [weekStart, setWeekStart] = useState<string | null>(null);
+  const [monthCursor, setMonthCursor] = useState(getVietnamYearMonth);
   const [selectedSession, setSelectedSession] =
     useState<ScheduleSession | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [mobileDay, setMobileDay] = useState<string | null>(null);
+  const [monthSelectedDay, setMonthSelectedDay] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isHydrated || isLoading) return;
@@ -868,13 +1030,13 @@ export function StudentWeeklySchedule() {
     isHydrated && isAuthenticated && isStudentRole(profile?.role);
 
   const {
-    data,
-    isLoading: isScheduleLoading,
-    markLoading,
-    retry,
-    hasError,
+    data: weekData,
+    isLoading: isWeekLoading,
+    markLoading: markWeekLoading,
+    retry: retryWeek,
+    hasError: hasWeekError,
   } = useClientFetch({
-    enabled: canFetch,
+    enabled: canFetch && viewMode === "week",
     fetcher: async (): Promise<WeeklySchedule> => {
       if (weekStart && !isMondayDateOnly(weekStart)) {
         throw new Error("Chọn ngày bắt đầu tuần (Thứ Hai)");
@@ -888,39 +1050,147 @@ export function StudentWeeklySchedule() {
     onError: (error) => showAppErrorFromUnknown(error, "schedule.weekly"),
   });
 
-  const days = data?.days ?? [];
-  const resolvedWeekStart = data?.weekStart ?? weekStart ?? getVietnamMondayOf();
+  const {
+    data: monthDays,
+    isLoading: isMonthLoading,
+    markLoading: markMonthLoading,
+    retry: retryMonth,
+    hasError: hasMonthError,
+  } = useClientFetch({
+    enabled: canFetch && viewMode === "month",
+    fetcher: async (): Promise<Map<string, ScheduleDay>> =>
+      getMonthlyScheduleDays({
+        year: monthCursor.year,
+        month: monthCursor.month,
+      }),
+    deps: [monthCursor.year, monthCursor.month],
+    onError: (error) => showAppErrorFromUnknown(error, "schedule.weekly"),
+  });
+
+  const days = weekData?.days ?? [];
+  const resolvedWeekStart =
+    weekData?.weekStart ?? weekStart ?? getVietnamMondayOf();
   const resolvedWeekEnd =
-    data?.weekEnd ?? addDaysToDateOnly(resolvedWeekStart, 6);
+    weekData?.weekEnd ?? addDaysToDateOnly(resolvedWeekStart, 6);
   const weekHasSessions = days.some((day) => day.sessions.length > 0);
 
+  const monthDaysByDate = monthDays ?? new Map<string, ScheduleDay>();
+  const monthHasSessions = useMemo(() => {
+    for (const day of monthDaysByDate.values()) {
+      if (
+        isSameMonthDateOnly(day.date, monthCursor.year, monthCursor.month) &&
+        day.sessions.length > 0
+      ) {
+        return true;
+      }
+    }
+    return false;
+  }, [monthDaysByDate, monthCursor.year, monthCursor.month]);
+
+  const isScheduleLoading =
+    viewMode === "week" ? isWeekLoading : isMonthLoading;
+  const hasError = viewMode === "week" ? hasWeekError : hasMonthError;
+
   useEffect(() => {
-    if (!days.length) return;
+    if (viewMode !== "week" || !days.length) return;
     const today = days.find((day) => isTodayDateOnly(day.date));
     setMobileDay((prev) => {
       if (prev && days.some((day) => day.date === prev)) return prev;
       return today?.date ?? days[0]?.date ?? null;
     });
-  }, [days]);
+  }, [days, viewMode]);
+
+  useEffect(() => {
+    if (viewMode !== "month" || !monthDays) return;
+    setMonthSelectedDay((prev) => {
+      if (
+        prev &&
+        isSameMonthDateOnly(prev, monthCursor.year, monthCursor.month)
+      ) {
+        return prev;
+      }
+      const cells = getMonthGridCells(monthCursor.year, monthCursor.month);
+      const todayCell = cells.find(
+        (date) =>
+          isTodayDateOnly(date) &&
+          isSameMonthDateOnly(date, monthCursor.year, monthCursor.month),
+      );
+      if (todayCell) return todayCell;
+      return (
+        cells.find((date) =>
+          isSameMonthDateOnly(date, monthCursor.year, monthCursor.month),
+        ) ?? null
+      );
+    });
+  }, [monthDays, monthCursor.year, monthCursor.month, viewMode]);
 
   const activeMobileDay = useMemo(
     () => days.find((day) => day.date === mobileDay) ?? days[0] ?? null,
     [days, mobileDay],
   );
 
-  function goPrevWeek() {
-    markLoading();
-    setWeekStart(addDaysToDateOnly(resolvedWeekStart, -7));
+  const monthDaySessions = useMemo(() => {
+    if (!monthSelectedDay) return [];
+    return monthDaysByDate.get(monthSelectedDay)?.sessions ?? [];
+  }, [monthDaysByDate, monthSelectedDay]);
+
+  function markLoading() {
+    if (viewMode === "week") markWeekLoading();
+    else markMonthLoading();
   }
 
-  function goNextWeek() {
+  function goPrev() {
     markLoading();
-    setWeekStart(addDaysToDateOnly(resolvedWeekStart, 7));
+    if (viewMode === "week") {
+      setWeekStart(addDaysToDateOnly(resolvedWeekStart, -7));
+      return;
+    }
+    setMonthCursor((prev) => addMonthsToYearMonth(prev.year, prev.month, -1));
+  }
+
+  function goNext() {
+    markLoading();
+    if (viewMode === "week") {
+      setWeekStart(addDaysToDateOnly(resolvedWeekStart, 7));
+      return;
+    }
+    setMonthCursor((prev) => addMonthsToYearMonth(prev.year, prev.month, 1));
   }
 
   function goToday() {
     markLoading();
-    setWeekStart(null);
+    if (viewMode === "week") {
+      setWeekStart(null);
+      return;
+    }
+    setMonthCursor(getVietnamYearMonth());
+  }
+
+  function switchView(next: ScheduleViewMode) {
+    if (next === viewMode) return;
+    markLoading();
+    if (next === "month") {
+      // Align month cursor with the week currently on screen.
+      const monday = resolvedWeekStart;
+      const [y, m] = monday.split("-").map(Number);
+      if (y && m) setMonthCursor({ year: y, month: m });
+    } else {
+      // Jump week to Monday of current month cursor (or today if same month).
+      const today = getVietnamYearMonth();
+      if (
+        monthCursor.year === today.year &&
+        monthCursor.month === today.month
+      ) {
+        setWeekStart(null);
+      } else {
+        setWeekStart(
+          mondayOnOrBefore(
+            toDateOnlyString(monthCursor.year, monthCursor.month, 1),
+          ),
+        );
+      }
+    }
+    setViewMode(next);
   }
 
   function openSession(session: ScheduleSession) {
@@ -936,6 +1206,18 @@ export function StudentWeeklySchedule() {
     );
   }
 
+  const rangeLabel =
+    viewMode === "week"
+      ? formatWeekRangeLabel(resolvedWeekStart, resolvedWeekEnd)
+      : formatMonthLabel(monthCursor.year, monthCursor.month);
+
+  const emptyTitle =
+    viewMode === "week" ? "Tuần này chưa có lịch" : "Tháng này chưa có lịch";
+  const emptyHint =
+    viewMode === "week"
+      ? "Kiểm tra lớp đã enroll chưa, hoặc chuyển sang tuần khác."
+      : "Kiểm tra lớp đã enroll chưa, hoặc chuyển sang tháng khác.";
+
   return (
     <div className="mx-auto w-full max-w-[96rem] px-3 py-8 sm:px-5 sm:py-10 lg:px-6">
       <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-end sm:justify-between">
@@ -947,49 +1229,87 @@ export function StudentWeeklySchedule() {
             Lịch học
           </h1>
           <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-            Thời khóa biểu theo tuần của mọi lớp đang học — không gồm bài tự học.
+            Thời khóa biểu theo tuần hoặc tháng của mọi lớp đang học — không gồm
+            bài tự học.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-xl"
-            onClick={goPrevWeek}
-            aria-label="Tuần trước"
+        <div className="flex flex-col items-stretch gap-2 sm:items-end">
+          <div
+            className="inline-flex h-9 self-start rounded-xl border border-border bg-card p-0.5 sm:self-end"
+            role="group"
+            aria-label="Chế độ xem lịch"
           >
-            <ChevronLeft className="size-4" />
-          </Button>
-          <div className="min-w-[10.5rem] rounded-xl border border-border bg-card px-3 py-2 text-center">
-            <p className="font-heading text-sm font-semibold text-foreground">
-              {formatWeekRangeLabel(resolvedWeekStart, resolvedWeekEnd)}
-            </p>
+            <button
+              type="button"
+              onClick={() => switchView("week")}
+              className={cn(
+                "rounded-[10px] px-3.5 text-sm font-semibold transition-colors",
+                viewMode === "week"
+                  ? "bg-[#2D2D2D] text-white"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Tuần
+            </button>
+            <button
+              type="button"
+              onClick={() => switchView("month")}
+              className={cn(
+                "rounded-[10px] px-3.5 text-sm font-semibold transition-colors",
+                viewMode === "month"
+                  ? "bg-[#2D2D2D] text-white"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              Tháng
+            </button>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="size-9 rounded-xl"
-            onClick={goNextWeek}
-            aria-label="Tuần sau"
-          >
-            <ChevronRight className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="secondary"
-            className="h-9 rounded-xl px-3 text-sm font-semibold"
-            onClick={goToday}
-          >
-            Hôm nay
-          </Button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 rounded-xl"
+              onClick={goPrev}
+              aria-label={viewMode === "week" ? "Tuần trước" : "Tháng trước"}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <div className="min-w-[10.5rem] rounded-xl border border-border bg-card px-3 py-2 text-center">
+              <p className="font-heading text-sm font-semibold text-foreground">
+                {rangeLabel}
+              </p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="size-9 rounded-xl"
+              onClick={goNext}
+              aria-label={viewMode === "week" ? "Tuần sau" : "Tháng sau"}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              className="h-9 rounded-xl px-3 text-sm font-semibold"
+              onClick={goToday}
+            >
+              Hôm nay
+            </Button>
+          </div>
         </div>
       </div>
 
       {isScheduleLoading ? (
-        <ScheduleSkeleton mobile={Boolean(isMobile)} />
+        viewMode === "month" ? (
+          <MonthScheduleSkeleton />
+        ) : (
+          <ScheduleSkeleton mobile={Boolean(isMobile)} />
+        )
       ) : hasError ? (
         <div className="rounded-2xl border border-border bg-card px-6 py-12 text-center">
           <CalendarDays className="mx-auto size-8 text-muted-foreground" />
@@ -997,27 +1317,89 @@ export function StudentWeeklySchedule() {
             Không tải được lịch học
           </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Kiểm tra kết nối rồi thử lại — tuần đang xem vẫn được giữ.
+            Kiểm tra kết nối rồi thử lại — khoảng thời gian đang xem vẫn được
+            giữ.
           </p>
           <Button
             type="button"
             className="mt-4 rounded-xl"
             onClick={() => {
               markLoading();
-              retry();
+              if (viewMode === "week") retryWeek();
+              else retryMonth();
             }}
           >
             Thử lại
           </Button>
         </div>
+      ) : viewMode === "month" ? (
+        !monthHasSessions ? (
+          <div className="rounded-2xl border border-dashed border-border bg-card/60 px-6 py-16 text-center">
+            <CalendarDays className="mx-auto size-9 text-muted-foreground" />
+            <p className="mt-3 font-heading text-lg font-semibold text-foreground">
+              {emptyTitle}
+            </p>
+            <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
+              {emptyHint}
+            </p>
+            <Link
+              href="/courses"
+              className={cn(
+                buttonVariants({ variant: "outline" }),
+                "mt-5 rounded-xl",
+              )}
+            >
+              Xem khóa học của tôi
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <MonthScheduleGrid
+              year={monthCursor.year}
+              month={monthCursor.month}
+              daysByDate={monthDaysByDate}
+              selectedDay={monthSelectedDay}
+              onSelectDay={setMonthSelectedDay}
+              onOpen={openSession}
+            />
+            {monthSelectedDay ? (
+              <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+                <div className="mb-3 flex items-baseline justify-between gap-3">
+                  <h2 className="font-heading text-base font-bold text-foreground">
+                    {formatDayColumnLabel(monthSelectedDay).weekday}{" "}
+                    {formatDayColumnLabel(monthSelectedDay).dayMonth}
+                  </h2>
+                  <p className="text-xs text-muted-foreground">
+                    {monthDaySessions.length} buổi
+                  </p>
+                </div>
+                {monthDaySessions.length === 0 ? (
+                  <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+                    Không có buổi học ngày này
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {monthDaySessions.map((session) => (
+                      <SessionCard
+                        key={session.id}
+                        session={session}
+                        onOpen={openSession}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
+        )
       ) : !weekHasSessions ? (
         <div className="rounded-2xl border border-dashed border-border bg-card/60 px-6 py-16 text-center">
           <CalendarDays className="mx-auto size-9 text-muted-foreground" />
           <p className="mt-3 font-heading text-lg font-semibold text-foreground">
-            Tuần này chưa có lịch
+            {emptyTitle}
           </p>
           <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">
-            Kiểm tra lớp đã enroll chưa, hoặc chuyển sang tuần khác.
+            {emptyHint}
           </p>
           <Link
             href="/courses"

@@ -1,8 +1,13 @@
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
+import {
+  getMonthGridMondays,
+  isMondayDateOnly,
+} from "@/lib/schedules/week";
 
 import {
   weeklyScheduleResponseSchema,
+  type ScheduleDay,
   type WeeklyScheduleResult,
 } from "./schemas";
 
@@ -48,4 +53,36 @@ export async function getWeeklySchedule(
   });
   assertApiSuccess(response);
   return requireApiValue(response.value);
+}
+
+/**
+ * Fan-out weekly API for every Monday covering a civil month.
+ * Returns a map keyed by `yyyy-MM-dd`.
+ */
+export async function getMonthlyScheduleDays(input: {
+  year: number;
+  month: number;
+  studentId?: string | null;
+}): Promise<Map<string, ScheduleDay>> {
+  const mondays = getMonthGridMondays(input.year, input.month);
+  const weeks = await Promise.all(
+    mondays.map(async (weekStart) => {
+      if (!isMondayDateOnly(weekStart)) {
+        throw new Error("Chọn ngày bắt đầu tuần (Thứ Hai)");
+      }
+      const result = await getWeeklySchedule({
+        weekStart,
+        studentId: input.studentId,
+      });
+      return result.data;
+    }),
+  );
+
+  const byDate = new Map<string, ScheduleDay>();
+  for (const week of weeks) {
+    for (const day of week.days) {
+      byDate.set(day.date, day);
+    }
+  }
+  return byDate;
 }

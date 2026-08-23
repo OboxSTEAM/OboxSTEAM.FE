@@ -151,3 +151,73 @@ export function isTodayDateOnly(dateOnly: string): boolean {
   const today = getZonedDateParts(new Date());
   return dateOnly === toDateOnlyString(today.year, today.month, today.day);
 }
+
+/** Monday on or before a civil `yyyy-MM-dd` (UTC date math). */
+export function mondayOnOrBefore(dateOnly: string): string {
+  const base = parseDateOnlyUtc(dateOnly);
+  if (!base) return dateOnly;
+  const utcDay = base.getUTCDay(); // 0 Sun … 1 Mon
+  const offset = utcDay === 0 ? 6 : utcDay - 1;
+  return addDaysToDateOnly(dateOnly, -offset);
+}
+
+export function daysInMonth(year: number, month: number): number {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+export function addMonthsToYearMonth(
+  year: number,
+  month: number,
+  delta: number,
+): { year: number; month: number } {
+  const anchor = new Date(Date.UTC(year, month - 1 + delta, 1));
+  return {
+    year: anchor.getUTCFullYear(),
+    month: anchor.getUTCMonth() + 1,
+  };
+}
+
+/** Mondays covering every day of the civil month (for weekly API fan-out). */
+export function getMonthGridMondays(year: number, month: number): string[] {
+  const first = toDateOnlyString(year, month, 1);
+  const last = toDateOnlyString(year, month, daysInMonth(year, month));
+  let cursor = mondayOnOrBefore(first);
+  const endMonday = mondayOnOrBefore(last);
+  const mondays: string[] = [];
+  while (cursor <= endMonday) {
+    mondays.push(cursor);
+    cursor = addDaysToDateOnly(cursor, 7);
+  }
+  return mondays;
+}
+
+/** 42 date-only cells (6 weeks × Mon–Sun) starting at the Monday of week 1. */
+export function getMonthGridCells(year: number, month: number): string[] {
+  const first = toDateOnlyString(year, month, 1);
+  const gridStart = mondayOnOrBefore(first);
+  return Array.from({ length: 42 }, (_, index) =>
+    addDaysToDateOnly(gridStart, index),
+  );
+}
+
+export function formatMonthLabel(year: number, month: number): string {
+  return `Thg ${month} ${year}`;
+}
+
+export function isSameMonthDateOnly(
+  dateOnly: string,
+  year: number,
+  month: number,
+): boolean {
+  if (!isDateOnly(dateOnly)) return false;
+  const [y, m] = dateOnly.split("-").map(Number);
+  return y === year && m === month;
+}
+
+export function getVietnamYearMonth(date: Date = new Date()): {
+  year: number;
+  month: number;
+} {
+  const parts = getZonedDateParts(date);
+  return { year: parts.year, month: parts.month };
+}

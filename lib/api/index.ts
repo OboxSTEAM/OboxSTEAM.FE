@@ -1076,6 +1076,7 @@ export {
 
 export {
   getWeeklySchedule,
+  getMonthlyScheduleDays,
   type ScheduleDay,
   type ScheduleDayOfWeek,
   type ScheduleSession,
