@@ -85,8 +85,8 @@ export function PortfolioToolbar({
   return (
     <div
       className={cn(
-        // Sit just under the fixed SiteHeader (h-[4.5rem] / sm:h-20), above canvas.
-        "sticky top-[4.5rem] z-40 border-b border-border bg-card sm:top-20",
+        // Sit just under the fixed SiteHeader (h-14 / sm:h-16), above canvas.
+        "sticky top-14 z-40 border-b border-border bg-card sm:top-16",
         "shadow-[0_1px_0_rgba(45,45,45,0.04)]",
       )}
     >

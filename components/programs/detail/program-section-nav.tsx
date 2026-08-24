@@ -104,7 +104,7 @@ export function ProgramSectionNav({ className }: ProgramSectionNavProps) {
     <nav
       aria-label="Mục nội dung chương trình"
       className={cn(
-        "sticky top-[4.5rem] z-20 -mx-4 border-b border-[#E5E5E0] bg-[#FAFAF5]/95 px-4 backdrop-blur-sm sm:-mx-6 sm:top-20 sm:px-6",
+        "sticky top-14 z-20 -mx-4 border-b border-[#E5E5E0] bg-[#FAFAF5]/95 px-4 backdrop-blur-sm sm:-mx-6 sm:top-16 sm:px-6",
         className,
       )}
     >

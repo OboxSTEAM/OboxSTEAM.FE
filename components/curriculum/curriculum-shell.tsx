@@ -96,7 +96,7 @@ export function CurriculumShell({
     : { duration: 0.28, ease: [0.16, 1, 0.3, 1] as const };
 
   return (
-    <div className="learn-shell flex h-dvh flex-col overflow-hidden bg-learn-bg pt-[4.5rem] sm:pt-20">
+    <div className="learn-shell flex h-dvh flex-col overflow-hidden bg-learn-bg pt-14 sm:pt-16">
       <SiteHeader defaultScrolled showThemeToggle />
 
       <div className="flex min-h-0 flex-1">

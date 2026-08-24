@@ -38,8 +38,8 @@ type CurriculumLearnContentProps = {
 
 function LearnSkeleton() {
   return (
-    <div className="learn-shell min-h-dvh animate-pulse bg-learn-bg pt-[4.5rem] sm:pt-20">
-      <div className="h-[4.5rem] border-b border-learn-border bg-learn-surface sm:h-20" />
+    <div className="learn-shell min-h-dvh animate-pulse bg-learn-bg pt-14 sm:pt-16">
+      <div className="h-14 border-b border-learn-border bg-learn-surface sm:h-16" />
       <div className="grid lg:grid-cols-[20rem_minmax(0,1fr)]">
         <div className="hidden h-[calc(100dvh-4.5rem)] bg-learn-surface-2/60 sm:h-[calc(100dvh-5rem)] lg:block" />
         <div className="m-4 h-[70vh] rounded-2xl bg-learn-surface-2/60" />
@@ -301,7 +301,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
 
   if (loadError) {
     return (
-      <div className="learn-shell flex min-h-dvh items-center justify-center bg-learn-bg px-4 pt-[4.5rem] sm:pt-20">
+      <div className="learn-shell flex min-h-dvh items-center justify-center bg-learn-bg px-4 pt-14 sm:pt-16">
         <div className="max-w-md rounded-2xl border border-learn-border bg-learn-surface p-6 text-center shadow-sm">
           <p className="font-heading text-lg font-semibold text-learn-text-strong">
             Không mở được trang học
@@ -319,7 +319,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
   if (!curriculum || !classContext) {
     return (
       <>
-        <div className="learn-shell flex min-h-dvh items-center justify-center bg-learn-bg px-4 pt-[4.5rem] sm:pt-20">
+        <div className="learn-shell flex min-h-dvh items-center justify-center bg-learn-bg px-4 pt-14 sm:pt-16">
           <div className="max-w-lg rounded-2xl border border-learn-border bg-learn-surface p-6 text-center shadow-sm">
             <p className="font-heading text-lg font-semibold text-learn-text-strong">
               Chọn lớp để bắt đầu học
