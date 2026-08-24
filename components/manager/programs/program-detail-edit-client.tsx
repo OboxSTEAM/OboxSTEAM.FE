@@ -96,6 +96,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
     locked: false,
     reason: null,
+    blockingClasses: [],
   });
 
   const handleSilentSync = useCallback(() => {
@@ -144,6 +145,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
               }}
               cohortLocked={cohortLock.locked}
               lockReason={cohortLock.reason}
+              blockingClasses={cohortLock.blockingClasses}
             />
           </Suspense>
         )}

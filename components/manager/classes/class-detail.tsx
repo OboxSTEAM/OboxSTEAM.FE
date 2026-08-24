@@ -33,7 +33,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
-  completeClass,
   getClassSessions,
   getClassWithStudents,
   getPrograms,
@@ -169,10 +168,8 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
         await markClassReadyForMentor(classItem.id);
       } else if (nextLifecycle.action === "open") {
         await openClass(classItem.id);
-      } else if (nextLifecycle.action === "start") {
-        await startClass(classItem.id);
       } else {
-        await completeClass(classItem.id);
+        await startClass(classItem.id);
       }
 
       showAppSuccess({

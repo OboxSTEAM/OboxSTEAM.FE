@@ -1362,7 +1362,7 @@ export function StudentWeeklySchedule() {
               onSelectDay={setMonthSelectedDay}
               onOpen={openSession}
             />
-            {monthSelectedDay ? (
+            {monthSelectedDay && monthDaySessions.length > 0 ? (
               <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
                 <div className="mb-3 flex items-baseline justify-between gap-3">
                   <h2 className="font-heading text-base font-bold text-foreground">
@@ -1373,21 +1373,15 @@ export function StudentWeeklySchedule() {
                     {monthDaySessions.length} buổi
                   </p>
                 </div>
-                {monthDaySessions.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
-                    Không có buổi học ngày này
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {monthDaySessions.map((session) => (
-                      <SessionCard
-                        key={session.id}
-                        session={session}
-                        onOpen={openSession}
-                      />
-                    ))}
-                  </div>
-                )}
+                <div className="space-y-2">
+                  {monthDaySessions.map((session) => (
+                    <SessionCard
+                      key={session.id}
+                      session={session}
+                      onOpen={openSession}
+                    />
+                  ))}
+                </div>
               </div>
             ) : null}
           </div>

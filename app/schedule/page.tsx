@@ -13,7 +13,7 @@ export default function StudentSchedulePage() {
   return (
     <>
       <SiteHeader defaultScrolled />
-      <main className="min-h-screen bg-[#FAFAF5] pt-14 sm:pt-16">
+      <main className="bg-background pt-14 sm:pt-16">
         <StudentWeeklySchedule />
       </main>
       <SiteFooter />

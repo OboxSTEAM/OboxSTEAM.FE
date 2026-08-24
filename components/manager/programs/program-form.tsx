@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -59,6 +60,11 @@ export type ProgramFormProps = {
   disabled?: boolean;
   /** Extra buttons rendered in the sticky action bar */
   actionSlot?: React.ReactNode;
+  /**
+   * Host element for the status control (e.g. panel header).
+   * When set in edit mode, status renders here instead of the section title.
+   */
+  statusPortalHost?: HTMLElement | null;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -100,11 +106,20 @@ function FieldError({ message }: { message?: string }) {
 }
 
 // ── Section Title ─────────────────────────────────────────────────────────
-function FormSectionTitle({ children }: { children: React.ReactNode }) {
+function FormSectionTitle({
+  children,
+  action,
+}: {
+  children: React.ReactNode;
+  action?: React.ReactNode;
+}) {
   return (
-    <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-4">
-      {children}
-    </h3>
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+        {children}
+      </h3>
+      {action}
+    </div>
   );
 }
 
@@ -116,8 +131,10 @@ export function ProgramForm({
   onThumbnailUploaded,
   isLoading = false,
   disabled = false,
+  statusPortalHost = null,
 }: ProgramFormProps) {
   const isEdit = Boolean(programId);
+  const statusInPortal = isEdit && statusPortalHost != null;
   /** Create: pick file for create multipart. Edit: upload via thumbnail endpoint. */
   const canPickThumbnail = !disabled;
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -240,8 +257,70 @@ export function ProgramForm({
     fileInputRef.current?.click();
   }
 
+  const statusControl = isEdit ? (
+    <Controller
+      name="status"
+      control={control}
+      render={({ field }) => (
+        <Select
+          value={field.value}
+          onValueChange={field.onChange}
+          disabled={disabled || isLoading}
+        >
+          <SelectTrigger
+            className={cn(
+              LIGHT_SELECT_TRIGGER,
+              "h-8 w-[10.5rem] rounded-lg border-input text-xs",
+              errors.status && "border-primary",
+            )}
+            aria-label="Trạng thái chương trình"
+          >
+            <span className="flex min-w-0 items-center gap-2 truncate">
+              {(() => {
+                const stat = STATUSES.find((s) => s.value === field.value);
+                if (stat) {
+                  return (
+                    <>
+                      <span
+                        className="size-2 shrink-0 rounded-full"
+                        style={{ background: stat.dot }}
+                      />
+                      {stat.label}
+                    </>
+                  );
+                }
+                return field.value;
+              })()}
+            </span>
+          </SelectTrigger>
+          <SelectContent className={LIGHT_SELECT_CONTENT}>
+            {STATUSES.map((s) => (
+              <SelectItem key={s.value} value={s.value} className={LIGHT_SELECT_ITEM}>
+                <span className="flex items-center gap-2">
+                  <span
+                    className="size-2 shrink-0 rounded-full"
+                    style={{ background: s.dot }}
+                  />
+                  {s.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+    />
+  ) : (
+    <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+      <span className="size-1.5 rounded-full bg-[#9e9e9e]" />
+      Bản nháp
+    </span>
+  );
+
   return (
     <form onSubmit={onFormSubmit} className="flex flex-col gap-6">
+      {statusInPortal && statusPortalHost
+        ? createPortal(statusControl, statusPortalHost)
+        : null}
       <fieldset disabled={disabled || isLoading} className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0 disabled:opacity-70">
 
       {/* ── Top: Image panel (Hero Banner) ─────────────────────────── */}
@@ -415,7 +494,12 @@ export function ProgramForm({
 
         {/* Section 1: General info */}
         <div>
-          <FormSectionTitle>Thông tin chung</FormSectionTitle>
+          <FormSectionTitle
+            action={statusInPortal ? undefined : statusControl}
+          >
+            Thông tin chung
+          </FormSectionTitle>
+          {isEdit && !statusInPortal && <FieldError message={errors.status?.message} />}
           <div className="space-y-4">
             <div>
               <label className={LBL}>
@@ -590,55 +674,6 @@ export function ProgramForm({
                 <FieldError message={errors.level?.message} />
               </div>
 
-              {isEdit ? (
-              <div>
-                <label className={LBL}>
-                  Trạng thái <span className="text-primary">*</span>
-                </label>
-                <Controller
-                  name="status"
-                  control={control}
-                  render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
-                      <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg border-input text-sm w-full")}>
-                        <span className="truncate flex items-center gap-2">
-                          {(() => {
-                            const stat = STATUSES.find((s) => s.value === field.value);
-                            if (stat) {
-                              return (
-                                <>
-                                  <span className="size-2 rounded-full shrink-0" style={{ background: stat.dot }} />
-                                  {stat.label}
-                                </>
-                              );
-                            }
-                            return field.value;
-                          })()}
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent className={LIGHT_SELECT_CONTENT}>
-                        {STATUSES.map((s) => (
-                          <SelectItem key={s.value} value={s.value} className={LIGHT_SELECT_ITEM}>
-                            <span className="flex items-center gap-2">
-                              <span className="size-2 rounded-full shrink-0" style={{ background: s.dot }} />
-                              {s.label}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-                <FieldError message={errors.status?.message} />
-              </div>
-              ) : (
-                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
-                  Chương trình mới mặc định <span className="font-semibold text-foreground">Bản nháp</span>. Đổi trạng thái sau khi tạo.
-                </div>
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className={LBL}>Thời lượng dự kiến <span className="text-primary">*</span></label>
                 <Input

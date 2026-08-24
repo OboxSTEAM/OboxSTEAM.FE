@@ -576,36 +576,38 @@ export function CourseFormDialog({
               )}
             </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="course-code" className="text-sm font-semibold text-foreground">
-                Mã Khóa học <span className="text-primary">*</span>
-              </Label>
-              <Input
-                id="course-code"
-                type="text"
-                placeholder="Ví dụ: CRS-SCRATCH1"
-                {...register("code")}
-                className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
-              />
-              {errors.code && (
-                <p className="text-xs font-semibold text-primary mt-1">{errors.code.message}</p>
-              )}
-            </div>
+            <div className="grid grid-cols-[1fr_6.5rem] gap-4">
+              <div className="space-y-1.5 min-w-0">
+                <Label htmlFor="course-code" className="text-sm font-semibold text-foreground">
+                  Mã Khóa học <span className="text-primary">*</span>
+                </Label>
+                <Input
+                  id="course-code"
+                  type="text"
+                  placeholder="Ví dụ: CRS-SCRATCH1"
+                  {...register("code")}
+                  className="h-10 rounded-lg border-border font-mono focus-visible:ring-ring/50"
+                />
+                {errors.code && (
+                  <p className="text-xs font-semibold text-primary mt-1">{errors.code.message}</p>
+                )}
+              </div>
 
-            <div className="space-y-1.5">
-              <Label htmlFor="courseOrder" className="text-sm font-semibold text-foreground">
-                Thứ tự khóa học <span className="text-primary">*</span>
-              </Label>
-              <Input
-                id="courseOrder"
-                type="number"
-                min={1}
-                {...register("courseOrder", { valueAsNumber: true })}
-                className="h-10 rounded-lg border-border focus-visible:ring-ring/50"
-              />
-              {errors.courseOrder && (
-                <p className="text-xs font-semibold text-primary mt-1">{errors.courseOrder.message}</p>
-              )}
+              <div className="space-y-1.5">
+                <Label htmlFor="courseOrder" className="text-sm font-semibold text-foreground">
+                  Thứ tự <span className="text-primary">*</span>
+                </Label>
+                <Input
+                  id="courseOrder"
+                  type="number"
+                  min={1}
+                  {...register("courseOrder", { valueAsNumber: true })}
+                  className="h-10 rounded-lg border-border font-mono focus-visible:ring-ring/50"
+                />
+                {errors.courseOrder && (
+                  <p className="text-xs font-semibold text-primary mt-1">{errors.courseOrder.message}</p>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -737,8 +739,8 @@ export function ActivityFormDialog({
         durationMinutes: isOnlineOrOffline
           ? Number(data.durationMinutes) || DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES
           : null,
-        requireQrCheckin: data.requireQrCheckin,
-        requireMediaEvidence: data.requireMediaEvidence,
+        requireQrCheckin: data.activityType === "Offline" ? data.requireQrCheckin : false,
+        requireMediaEvidence: data.activityType === "Offline" ? data.requireMediaEvidence : false,
       };
 
       if (isEdit && activityToEdit) {
@@ -833,6 +835,10 @@ export function ActivityFormDialog({
                     value={field.value}
                     onValueChange={(value) => {
                       field.onChange(value ?? "");
+                      if (value !== "Offline") {
+                        setValue("requireQrCheckin", false);
+                        setValue("requireMediaEvidence", false);
+                      }
                       if (value && value !== "SelfPaced" && !getValues("durationMinutes")) {
                         setValue(
                           "durationMinutes",
@@ -896,43 +902,45 @@ export function ActivityFormDialog({
               </>
             )}
 
-            <div className="col-span-2 grid grid-cols-2 gap-4 pt-2">
-              <div className="flex items-center gap-2">
-                <Controller
-                  name="requireQrCheckin"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id="requireQrCheckin"
-                      checked={field.value}
-                      onCheckedChange={(val) => field.onChange(val === true)}
-                      className="border-input bg-background data-checked:border-primary"
-                    />
-                  )}
-                />
-                <Label htmlFor="requireQrCheckin" className="text-sm font-semibold text-foreground cursor-pointer">
-                  Yêu cầu Check-in QR
-                </Label>
-              </div>
+            {activityType === "Offline" && (
+              <div className="col-span-2 grid grid-cols-2 gap-4 pt-2">
+                <div className="flex items-center gap-2">
+                  <Controller
+                    name="requireQrCheckin"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        id="requireQrCheckin"
+                        checked={field.value}
+                        onCheckedChange={(val) => field.onChange(val === true)}
+                        className="border-input bg-background data-checked:border-primary"
+                      />
+                    )}
+                  />
+                  <Label htmlFor="requireQrCheckin" className="text-sm font-semibold text-foreground cursor-pointer">
+                    Yêu cầu Check-in QR
+                  </Label>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <Controller
-                  name="requireMediaEvidence"
-                  control={control}
-                  render={({ field }) => (
-                    <Checkbox
-                      id="requireMediaEvidence"
-                      checked={field.value}
-                      onCheckedChange={(val) => field.onChange(val === true)}
-                      className="border-input bg-background data-checked:border-primary"
-                    />
-                  )}
-                />
-                <Label htmlFor="requireMediaEvidence" className="text-sm font-semibold text-foreground cursor-pointer">
-                  Yêu cầu minh chứng hình ảnh
-                </Label>
+                <div className="flex items-center gap-2">
+                  <Controller
+                    name="requireMediaEvidence"
+                    control={control}
+                    render={({ field }) => (
+                      <Checkbox
+                        id="requireMediaEvidence"
+                        checked={field.value}
+                        onCheckedChange={(val) => field.onChange(val === true)}
+                        className="border-input bg-background data-checked:border-primary"
+                      />
+                    )}
+                  />
+                  <Label htmlFor="requireMediaEvidence" className="text-sm font-semibold text-foreground cursor-pointer">
+                    Yêu cầu minh chứng hình ảnh
+                  </Label>
+                </div>
               </div>
-            </div>
+            )}
 
             <div className="space-y-1.5 col-span-2">
               <Label htmlFor="act-desc" className="text-sm font-semibold text-foreground">
