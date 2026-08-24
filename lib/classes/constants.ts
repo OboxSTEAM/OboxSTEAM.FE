@@ -97,7 +97,7 @@ export const CLASS_SESSIONS_QUERY = {
   isDescending: false,
 };
 
-export type ClassLifecycleAction = "ready" | "open" | "start" | "complete";
+export type ClassLifecycleAction = "ready" | "open" | "start";
 
 /** Next lifecycle action available for a class status, if any. */
 export function getNextClassLifecycleAction(
@@ -110,8 +110,6 @@ export function getNextClassLifecycleAction(
     return { action: "open", label: "Mở tuyển sinh" };
   }
   if (status === "Open") return { action: "start", label: "Bắt đầu lớp" };
-  if (status === "InProgress") {
-    return { action: "complete", label: "Hoàn thành lớp" };
-  }
+  // InProgress → Completed is not offered to managers while the class is teaching.
   return null;
 }

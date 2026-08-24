@@ -922,7 +922,7 @@ export function MentorScheduleOverview() {
                 onSelectDay={setMonthSelectedDay}
                 onOpen={openSession}
               />
-              {monthSelectedDay ? (
+              {monthSelectedDay && monthDaySessions.length > 0 ? (
                 <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                   <div className="mb-3 flex items-baseline justify-between gap-2">
                     <p className="font-heading text-sm font-bold text-foreground">
@@ -933,21 +933,15 @@ export function MentorScheduleOverview() {
                       {monthDaySessions.length} buổi
                     </p>
                   </div>
-                  {monthDaySessions.length === 0 ? (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
-                      Không có buổi dạy
-                    </p>
-                  ) : (
-                    <div className="space-y-2.5">
-                      {monthDaySessions.map((session) => (
-                        <SessionCard
-                          key={session.id}
-                          session={session}
-                          onOpen={openSession}
-                        />
-                      ))}
-                    </div>
-                  )}
+                  <div className="space-y-2.5">
+                    {monthDaySessions.map((session) => (
+                      <SessionCard
+                        key={session.id}
+                        session={session}
+                        onOpen={openSession}
+                      />
+                    ))}
+                  </div>
                 </div>
               ) : null}
             </div>

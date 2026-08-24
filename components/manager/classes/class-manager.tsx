@@ -27,7 +27,6 @@ import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { Button } from "@/components/ui/button";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
-  completeClass,
   createClass,
   getClasses,
   getPrograms,
@@ -216,8 +215,7 @@ export function ClassManager({
     try {
       if (action === "ready") await markClassReadyForMentor(classItem.id);
       else if (action === "open") await openClass(classItem.id);
-      else if (action === "start") await startClass(classItem.id);
-      else await completeClass(classItem.id);
+      else await startClass(classItem.id);
 
       showAppSuccess({
         title: "Đã cập nhật trạng thái",
