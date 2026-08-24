@@ -45,14 +45,14 @@ const LOGO_URL =
 
 const NAV_ITEMS = [
   {
-    title: "Lớp của tôi",
-    url: "/mentor/classes",
-    icon: Users,
-  },
-  {
     title: "Lịch dạy",
     url: "/mentor/schedule",
     icon: CalendarDays,
+  },
+  {
+    title: "Lớp của tôi",
+    url: "/mentor/classes",
+    icon: Users,
   },
   {
     title: "Đơn đăng ký lớp",

@@ -48,6 +48,11 @@ import { MilestoneFormPanel } from "@/components/manager/programs/milestone-form
 import { QuestionBankSection } from "@/components/manager/programs/question-bank-section";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
+  formatCohortLockClassLabel,
+  type ProgramCohortLockClass,
+} from "@/lib/programs/editability";
+import { CLASS_STATUS_LABELS } from "@/lib/classes/constants";
+import {
   createModule,
   updateModule,
   deleteModule,
@@ -174,16 +179,29 @@ function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã l
   );
 }
 
-function PHdr({ icon: Icon, color, title, sub }: { icon: React.ElementType; color: string; title: string; sub?: string }) {
+function PHdr({
+  icon: Icon,
+  color,
+  title,
+  sub,
+  action,
+}: {
+  icon: React.ElementType;
+  color: string;
+  title: string;
+  sub?: string;
+  action?: React.ReactNode;
+}) {
   return (
     <div className="flex items-center gap-3 px-5 py-4 border-b shrink-0" style={{ background: W.surface, borderColor: W.border }}>
       <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border" style={{ background: "var(--card)", borderColor: W.border }}>
         <Icon className="size-4" style={{ color }} />
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-sm font-bold leading-snug truncate" style={{ color: W.textStrong }}>{title}</p>
         {sub && <p className="text-xs mt-0.5 truncate" style={{ color: W.muted }}>{sub}</p>}
       </div>
+      {action}
     </div>
   );
 }
@@ -592,15 +610,17 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }:
           <input type="text" placeholder="Ví dụ: Nhập môn lập trình với Scratch" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
           <FErr msg={errors.name?.message} />
         </div>
-        <div className="space-y-1.5">
-          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học <span style={{ color: W.primary }}>*</span></Label>
-          <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-          <FErr msg={errors.code?.message} />
-        </div>
-        <div className="space-y-1.5">
-          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự khóa học <span style={{ color: W.primary }}>*</span></Label>
-          <input type="number" min={1} {...register("courseOrder", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: errors.courseOrder ? W.primary : W.border }} />
-          <FErr msg={errors.courseOrder?.message} />
+        <div className="grid grid-cols-[1fr_6.5rem] gap-4">
+          <div className="min-w-0 space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học <span style={{ color: W.primary }}>*</span></Label>
+            <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+            <FErr msg={errors.code?.message} />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
+            <input type="number" min={1} {...register("courseOrder", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: errors.courseOrder ? W.primary : W.border }} />
+            <FErr msg={errors.courseOrder?.message} />
+          </div>
         </div>
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
@@ -718,8 +738,8 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
         durationMinutes: live
           ? Number(data.durationMinutes) || DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES
           : null,
-        requireQrCheckin: live ? data.requireQrCheckin : false,
-        requireMediaEvidence: live ? data.requireMediaEvidence : false,
+        requireQrCheckin: data.activityType === "Offline" ? data.requireQrCheckin : false,
+        requireMediaEvidence: data.activityType === "Offline" ? data.requireMediaEvidence : false,
       };
       if (isEdit && activityToEdit) {
         // Omit activityOrder when unchanged so BE keeps the current slot without a no-op reorder.
@@ -772,9 +792,11 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 <Controller name="activityType" control={control} render={({ field }) => (
                   <Select value={field.value} onValueChange={(v) => {
                     field.onChange(v);
-                    if (v === "SelfPaced") {
+                    if (v !== "Offline") {
                       setValue("requireQrCheckin", false);
                       setValue("requireMediaEvidence", false);
+                    }
+                    if (v === "SelfPaced") {
                       setValue("durationMinutes", null);
                     } else if (!activityToEdit?.durationMinutes) {
                       setValue("durationMinutes", DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES);
@@ -824,30 +846,32 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 <span className="font-semibold" style={{ color: W.textStrong }}>Lịch học</span>
                 {" "}của từng lớp.
               </div>
-              <div className="col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <div className="flex min-h-10 items-center gap-2">
-                  <Controller name="requireQrCheckin" control={control} render={({ field }) => (
-                    <Checkbox
-                      id="qr"
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                      className="border-input bg-background data-checked:border-primary"
-                    />
-                  )} />
-                  <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
+              {actType === "Offline" && (
+                <div className="col-span-2 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="flex min-h-10 items-center gap-2">
+                    <Controller name="requireQrCheckin" control={control} render={({ field }) => (
+                      <Checkbox
+                        id="qr"
+                        checked={field.value}
+                        onCheckedChange={(v) => field.onChange(v === true)}
+                        className="border-input bg-background data-checked:border-primary"
+                      />
+                    )} />
+                    <Label htmlFor="qr" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu Check-in QR</Label>
+                  </div>
+                  <div className="flex min-h-10 items-center gap-2">
+                    <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
+                      <Checkbox
+                        id="med"
+                        checked={field.value}
+                        onCheckedChange={(v) => field.onChange(v === true)}
+                        className="border-input bg-background data-checked:border-primary"
+                      />
+                    )} />
+                    <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
+                  </div>
                 </div>
-                <div className="flex min-h-10 items-center gap-2">
-                  <Controller name="requireMediaEvidence" control={control} render={({ field }) => (
-                    <Checkbox
-                      id="med"
-                      checked={field.value}
-                      onCheckedChange={(v) => field.onChange(v === true)}
-                      className="border-input bg-background data-checked:border-primary"
-                    />
-                  )} />
-                  <Label htmlFor="med" className="cursor-pointer text-sm font-semibold" style={{ color: W.textStrong }}>Yêu cầu minh chứng</Label>
-                </div>
-              </div>
+              )}
             </>
           )}
 
@@ -908,6 +932,7 @@ function ProgramInfoPanel({
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
+  const [statusHost, setStatusHost] = useState<HTMLDivElement | null>(null);
   const { ok, flash } = useSuccessFlash();
 
   const handleUpdate = async (values: any) => {
@@ -925,7 +950,13 @@ function ProgramInfoPanel({
 
   return (
     <div className="flex flex-col">
-      <PHdr icon={LayoutGrid} color={W.primary} title={program.name} sub={`Mã: ${program.code} · Thông tin chung`} />
+      <PHdr
+        icon={LayoutGrid}
+        color={W.primary}
+        title={program.name}
+        sub={`Mã: ${program.code} · Thông tin chung`}
+        action={<div ref={setStatusHost} className="shrink-0" />}
+      />
       {disabled && disabledReason ? (
         <div className="mx-5 mt-4 rounded-lg border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-3 py-2.5 text-xs text-[#a82a1e]">
           {disabledReason}
@@ -935,6 +966,7 @@ function ProgramInfoPanel({
         <ProgramForm
           programId={program.id}
           disabled={disabled}
+          statusPortalHost={statusHost}
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",
@@ -1438,6 +1470,7 @@ type CurriculumSplitPanelProps = {
   /** When true, program metadata + curriculum mutations are blocked (cohort lock). */
   cohortLocked?: boolean;
   lockReason?: string | null;
+  blockingClasses?: ProgramCohortLockClass[];
 };
 
 const CurriculumMutateContext = createContext(true);
@@ -1549,6 +1582,7 @@ export function CurriculumSplitPanel({
   onRefresh,
   cohortLocked = false,
   lockReason = null,
+  blockingClasses = [],
 }: CurriculumSplitPanelProps) {
   const canMutate = !cohortLocked;
   const router = useRouter();
@@ -2444,7 +2478,27 @@ export function CurriculumSplitPanel({
       {cohortLocked && lockReason ? (
         <div className="rounded-xl border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-4 py-3 text-sm text-[#a82a1e]">
           <p className="font-semibold">Chương trình đang bị khóa chỉnh sửa</p>
-          <p className="mt-0.5 text-xs opacity-90">{lockReason}</p>
+          <p className="mt-0.5 text-xs opacity-90">
+            {blockingClasses.length > 0
+              ? blockingClasses[0]?.status === "InProgress"
+                ? `Có ${blockingClasses.length} lớp đang học. Chờ lớp hoàn thành rồi mới sửa/xóa.`
+                : `Có ${blockingClasses.length} lớp đang tuyển sinh đã có học viên ghi danh.`
+              : lockReason}
+          </p>
+          {blockingClasses.length > 0 ? (
+            <ul className="mt-2 space-y-1 border-t border-[#E94B3C]/20 pt-2">
+              {blockingClasses.map((item) => (
+                <li key={item.id} className="flex items-baseline gap-2 text-xs">
+                  <span className="shrink-0 font-semibold opacity-80">
+                    {CLASS_STATUS_LABELS[item.status]}
+                  </span>
+                  <span className="min-w-0 truncate opacity-90">
+                    {formatCohortLockClassLabel(item)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
         </div>
       ) : null}
     <div
