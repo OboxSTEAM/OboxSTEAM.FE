@@ -9,6 +9,8 @@ import { cn } from "@/lib/utils";
 
 type EnrollmentInvoicesSectionProps = {
   invoices: Invoice[];
+  programName?: string | null;
+  programThumbnailUrl?: string | null;
   className?: string;
 };
 
@@ -18,6 +20,8 @@ type EnrollmentInvoicesSectionProps = {
  */
 export function EnrollmentInvoicesSection({
   invoices,
+  programName,
+  programThumbnailUrl,
   className,
 }: EnrollmentInvoicesSectionProps) {
   const [open, setOpen] = useState(false);
@@ -71,6 +75,8 @@ export function EnrollmentInvoicesSection({
         invoices={sortedInvoices}
         open={open}
         onOpenChange={setOpen}
+        programName={programName}
+        programThumbnailUrl={programThumbnailUrl}
       />
     </>
   );

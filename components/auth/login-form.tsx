@@ -9,7 +9,10 @@ import { z } from "zod";
 
 import { login } from "@/lib/api";
 import { decodeJwtPayload, readJwtRoles } from "@/lib/auth/jwt-payload";
-import { getPreferredRoleHomePath } from "@/lib/auth/roles";
+import {
+  canRolesAccessPath,
+  getPreferredRoleHomePath,
+} from "@/lib/auth/roles";
 import {
   clearRememberedEmail,
   getRememberedEmail,
@@ -55,8 +58,14 @@ function resolvePostLoginPath(
   });
   if (parentDestination) return parentDestination;
 
-  // Deep links (e.g. /manager/classes/…) win; bare landing does not.
-  if (isSafeRelativeUrl(returnUrl) && returnUrl !== "/") {
+  // Deep links win only when this role can actually open them. A sticky
+  // `returnUrl=/manager` from a prior visit must not send a mentor/parent
+  // into ManagerShell (which would bounce them to `/`).
+  if (
+    isSafeRelativeUrl(returnUrl) &&
+    returnUrl !== "/" &&
+    canRolesAccessPath(roles, returnUrl)
+  ) {
     return returnUrl;
   }
 

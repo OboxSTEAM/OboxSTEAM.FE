@@ -32,7 +32,7 @@ import { startNotificationHub } from "@/lib/realtime/notification-hub";
 import { getMediaById } from "@/lib/api/media";
 import { isMentorRole } from "@/lib/auth/roles";
 import { localizeUserFacingMessage } from "@/lib/errors";
-import { parseNotificationPayload, payloadString } from "@/lib/notifications/parse-payload";
+import { resolveNotificationPayload, payloadString } from "@/lib/notifications/parse-payload";
 
 const INBOX_PAGE_SIZE = 10;
 const STALE_MS = 30_000;
@@ -234,11 +234,18 @@ export function NotificationProvider({
         mediaTypes.has(notification.type) &&
         isMentorRole(accountRole)
       ) {
-        const payload = parseNotificationPayload(notification.payloadJson);
+        const payload = resolveNotificationPayload(notification);
         const mediaId =
           payloadString(payload, "mediaAssetId") ??
           notification.entityId?.trim() ??
           null;
+        const payloadClassId = payloadString(payload, "classId");
+        if (mediaId && payloadClassId) {
+          router.push(
+            `/mentor/classes/${payloadClassId}?tab=media&mediaId=${encodeURIComponent(mediaId)}`,
+          );
+          return;
+        }
         if (mediaId) {
           try {
             const result = await getMediaById(mediaId);
@@ -257,6 +264,7 @@ export function NotificationProvider({
 
       const href = resolveNotificationHrefFromNotification({
         type: notification.type,
+        payload: notification.payload,
         payloadJson: notification.payloadJson,
         accountRole,
       });

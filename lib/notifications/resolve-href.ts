@@ -6,10 +6,14 @@ import {
 } from "@/lib/auth/roles";
 import { assignmentEditHref } from "@/lib/manager/curriculum-catalog";
 import {
-  parseNotificationPayload,
   payloadString,
+  resolveNotificationPayload,
   type NotificationPayload,
 } from "@/lib/notifications/parse-payload";
+import {
+  getParentChildProgressionHref,
+  getParentEnrollmentProgressionHref,
+} from "@/lib/parent/progression";
 import { getProgramLearnHref } from "@/lib/programs/enrollments";
 
 export type ResolveNotificationHrefInput = {
@@ -30,6 +34,40 @@ function learnWithAssignment(
 function learnWithActivity(programId: string, activityId: string): string {
   const params = new URLSearchParams({ activityId });
   return `${getProgramLearnHref(programId)}?${params.toString()}`;
+}
+
+/**
+ * Prefer next actionable node: nextActivityId → assignmentId → activityId → learn overview.
+ */
+function studentLearnHref(
+  programId: string,
+  payload: NotificationPayload,
+): string {
+  const nextActivityId = payloadString(payload, "nextActivityId");
+  const assignmentId = payloadString(payload, "assignmentId");
+  const activityId = payloadString(payload, "activityId");
+
+  if (nextActivityId) return learnWithActivity(programId, nextActivityId);
+  if (assignmentId) return learnWithAssignment(programId, assignmentId);
+  if (activityId) return learnWithActivity(programId, activityId);
+  return getProgramLearnHref(programId);
+}
+
+function parentProgressHref(payload: NotificationPayload): string {
+  const studentId =
+    payloadString(payload, "studentId") ??
+    payloadString(payload, "parentStudentId") ??
+    payloadString(payload, "childUserId") ??
+    payloadString(payload, "childId");
+  const enrollmentId =
+    payloadString(payload, "enrollmentId") ??
+    payloadString(payload, "programEnrollmentId");
+
+  if (studentId && enrollmentId) {
+    return getParentEnrollmentProgressionHref(studentId, enrollmentId);
+  }
+  if (studentId) return getParentChildProgressionHref(studentId);
+  return "/parent/children";
 }
 
 function managerAssignmentHref(
@@ -60,9 +98,41 @@ function managerActivityHref(
   return `/manager/programs/${programId}?${params.toString()}`;
 }
 
+/** Relative in-app path only — reject absolute URLs / protocol-relative. */
+function isSafeAppPath(path: string): boolean {
+  return path.startsWith("/") && !path.startsWith("//") && !path.includes("://");
+}
+
+function resolveDeeplinkPathOverride(
+  payload: NotificationPayload,
+  accountRole: string | null | undefined,
+): string | null {
+  const deeplinkPath =
+    payloadString(payload, "deeplinkPath") ??
+    payloadString(payload, "deepLinkPath");
+  if (!deeplinkPath || !isSafeAppPath(deeplinkPath)) return null;
+
+  const isManager = canAccessManagerArea(accountRole);
+  const isParent = isParentRole(accountRole);
+  const isMentor = isMentorRole(accountRole);
+
+  if (deeplinkPath === "/manager" || deeplinkPath.startsWith("/manager/")) {
+    return isManager ? deeplinkPath : null;
+  }
+  if (deeplinkPath === "/mentor" || deeplinkPath.startsWith("/mentor/")) {
+    return isMentor || isManager ? deeplinkPath : null;
+  }
+  if (deeplinkPath === "/parent" || deeplinkPath.startsWith("/parent/")) {
+    return isParent ? deeplinkPath : null;
+  }
+  return deeplinkPath;
+}
+
 /**
- * Map notification `type` + parsed `payloadJson` → in-app href.
+ * Map notification `type` + resolved payload → in-app href.
  * Returns `null` when the payload cannot resolve a known route (caller marks read only).
+ *
+ * Prefer typed `Notification.payload`. Legacy `payloadJson` is only for older rows.
  */
 export function resolveNotificationHref(
   input: ResolveNotificationHrefInput,
@@ -71,6 +141,9 @@ export function resolveNotificationHref(
   const isManager = canAccessManagerArea(accountRole);
   const isParent = isParentRole(accountRole);
   const isMentor = isMentorRole(accountRole);
+
+  const override = resolveDeeplinkPathOverride(payload, accountRole);
+  if (override) return override;
 
   const programId = payloadString(payload, "programId");
   const assignmentId = payloadString(payload, "assignmentId");
@@ -83,7 +156,7 @@ export function resolveNotificationHref(
   switch (type) {
     case "ParentPaymentRequested":
     case "ParentModuleRetakeRequested":
-      return "/parent/children";
+      return parentProgressHref(payload);
 
     case "QuizPassed":
     case "QuizFailed":
@@ -92,12 +165,14 @@ export function resolveNotificationHref(
     case "ResearchReturnedForRevision":
     case "ResearchSubmissionOpened":
     case "ResearchWorkSubmitted":
+      if (isParent) return parentProgressHref(payload);
       if (!programId || !assignmentId) return null;
       return learnWithAssignment(programId, assignmentId);
 
     case "AssignmentPublished":
     case "AssignmentEditedByMentor":
     case "ClassQuizSetEditedByMentor":
+      if (isParent) return parentProgressHref(payload);
       if (!programId || !assignmentId) return null;
       if (isManager) {
         return managerAssignmentHref(programId, assignmentId, moduleId);
@@ -105,6 +180,7 @@ export function resolveNotificationHref(
       return learnWithAssignment(programId, assignmentId);
 
     case "MaterialUpdated":
+      if (isParent) return parentProgressHref(payload);
       if (!programId || !activityId) return null;
       if (isManager) {
         return managerActivityHref(programId, activityId, courseId);
@@ -116,6 +192,7 @@ export function resolveNotificationHref(
     case "ModuleRetakePendingPayment":
     case "PaymentFailed":
     case "PaymentCancelled":
+      if (isParent) return parentProgressHref(payload);
       return programId ? `/programs/${programId}` : null;
 
     case "ProgramActivated":
@@ -127,13 +204,15 @@ export function resolveNotificationHref(
     case "ActivityCompleted":
     case "ClassEnrolled":
     case "ClassTransferred":
-      return programId ? getProgramLearnHref(programId) : null;
+      if (isParent) return parentProgressHref(payload);
+      return programId ? studentLearnHref(programId, payload) : null;
 
     case "ClassSessionScheduled":
     case "ClassSessionRescheduled":
     case "ClassSessionStarted":
     case "ClassSessionCompleted":
     case "ClassSessionCancelled":
+      if (isParent) return parentProgressHref(payload);
       if (isManager) {
         if (!classId) return null;
         if (classSessionId) {
@@ -145,7 +224,7 @@ export function resolveNotificationHref(
         }
         return `/manager/sessions?classId=${encodeURIComponent(classId)}`;
       }
-      return programId ? getProgramLearnHref(programId) : null;
+      return programId ? studentLearnHref(programId, payload) : null;
 
     case "ClassCreated":
     case "ClassUpdated":
@@ -160,20 +239,22 @@ export function resolveNotificationHref(
     case "AttendanceMarkedLate":
     case "AttendanceMarkedAbsent":
     case "AttendanceMarkedExcused":
+      if (isParent) return parentProgressHref(payload);
       if (isManager) {
         return classId ? `/manager/classes/${classId}` : null;
       }
-      return programId ? getProgramLearnHref(programId) : null;
+      return programId ? studentLearnHref(programId, payload) : null;
 
     case "AssessmentRecoveryRequested":
       return "/mentor/recovery";
 
     case "AssessmentRecoveryApproved":
     case "AssessmentRecoveryRejected":
+      if (isParent) return parentProgressHref(payload);
       if (!programId) return null;
       return assignmentId
         ? learnWithAssignment(programId, assignmentId)
-        : getProgramLearnHref(programId);
+        : studentLearnHref(programId, payload);
 
     case "ClassRedeliveryPendingManager":
       return "/manager/redelivery";
@@ -181,12 +262,13 @@ export function resolveNotificationHref(
     case "ClassRedeliveryMatchedPendingPayment":
     case "ClassRedeliveryRejected":
     case "ClassRedeliveryCompleted":
-      return programId ? getProgramLearnHref(programId) : "/courses";
+      if (isParent) return parentProgressHref(payload);
+      return programId ? studentLearnHref(programId, payload) : "/courses";
 
     case "ParentLinkRequested":
     case "ParentLinkVerified":
     case "ParentLinkApproved":
-      return isParent ? "/parent/children" : "/profile";
+      return isParent ? parentProgressHref(payload) : "/profile";
 
     case "AccountRegistered":
     case "EmailVerified":
@@ -198,15 +280,20 @@ export function resolveNotificationHref(
     case "MediaAiTaggingFailed":
     case "MediaTagsProcessed": {
       const mediaAssetId = payloadString(payload, "mediaAssetId");
-      if (isManager) return "/manager/classes";
-      if (isParent) return "/parent/children";
+      if (isManager) {
+        return classId ? `/manager/classes/${classId}` : "/manager/classes";
+      }
+      if (isParent) return parentProgressHref(payload);
       if (isMentor) {
+        if (classId && mediaAssetId) {
+          return `/mentor/classes/${classId}?tab=media&mediaId=${encodeURIComponent(mediaAssetId)}`;
+        }
         return mediaAssetId
           ? `/mentor/classes?mediaId=${encodeURIComponent(mediaAssetId)}`
           : "/mentor/classes";
       }
       // Student uploader — class gallery lives under learn; fall back to my courses.
-      return "/courses";
+      return programId ? studentLearnHref(programId, payload) : "/courses";
     }
 
     case "HighlightVideoGenerationQueued":
@@ -219,15 +306,19 @@ export function resolveNotificationHref(
   }
 }
 
-/** Convenience: parse `payloadJson` then resolve. */
+/** Prefer typed `payload`; fall back to legacy `payloadJson` for older rows. */
 export function resolveNotificationHrefFromNotification(input: {
   type: NotificationType;
-  payloadJson: string | null;
+  payload?: NotificationPayload | null;
+  payloadJson?: string | null;
   accountRole?: string | null;
 }): string | null {
   return resolveNotificationHref({
     type: input.type,
-    payload: parseNotificationPayload(input.payloadJson),
+    payload: resolveNotificationPayload({
+      payload: input.payload,
+      payloadJson: input.payloadJson,
+    }),
     accountRole: input.accountRole,
   });
 }

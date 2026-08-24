@@ -25,15 +25,19 @@ import {
   type Program,
   type ProgramCategory,
   type ProgramLevel,
+  type ProgramStatus,
 } from "@/lib/api";
-import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 import {
   PROGRAM_CATEGORY_META,
   PROGRAM_CATEGORY_ORDER,
   PROGRAM_LEVEL_LABELS,
   PROGRAM_LEVEL_ORDER,
+  PROGRAM_STATUS_LABELS,
+  PROGRAM_STATUS_ORDER,
 } from "@/lib/programs/constants";
+import { fetchProgramCohortLock } from "@/lib/programs/editability";
 import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
@@ -95,8 +99,10 @@ export default function ManagerProgramsPage() {
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
   const [level, setLevel] = useState("all");
+  const [status, setStatus] = useState("all");
   const [page, setPage] = useState(1);
   const [deleteTarget, setDeleteTarget] = useState<Program | null>(null);
+  const [isCheckingDelete, setIsCheckingDelete] = useState(false);
 
   // Client side fetch with debouncing/deps
   const { data, isLoading, markLoading, retry } = useClientFetch({
@@ -105,12 +111,13 @@ export default function ManagerProgramsPage() {
         search: search.trim() || undefined,
         category: category === "all" ? undefined : (category as ProgramCategory),
         level: level === "all" ? undefined : (level as ProgramLevel),
+        status: status === "all" ? undefined : (status as ProgramStatus),
         page,
         pageSize: 10,
       });
       return result;
     },
-    deps: [search, category, level, page],
+    deps: [search, category, level, status, page],
     onError: (err) => {
       showAppErrorFromUnknown(err, "programs.list");
     },
@@ -118,6 +125,27 @@ export default function ManagerProgramsPage() {
 
   const programs = data?.data?.items ?? [];
   const totalPages = data?.data?.totalPages ?? 1;
+
+  async function handleDeleteRequest(program: Program) {
+    setIsCheckingDelete(true);
+    try {
+      const lock = await fetchProgramCohortLock(program.id);
+      if (lock.locked) {
+        showAppError({
+          title: "Không xóa được chương trình",
+          reason:
+            lock.reason ??
+            "Chương trình có lớp đang học hoặc lớp Open đã có học viên ghi danh.",
+          action:
+            "Chờ lớp InProgress hoàn thành, hoặc chỉ xóa khi lớp Open chưa có học viên Active.",
+        });
+        return;
+      }
+      setDeleteTarget(program);
+    } finally {
+      setIsCheckingDelete(false);
+    }
+  }
 
   async function handleDeleteConfirm() {
     if (!deleteTarget) return;
@@ -168,7 +196,12 @@ export default function ManagerProgramsPage() {
     },
     {
       header: "Trạng thái",
-      render: (row) => <ManagerStatusBadge status={row.status} />,
+      render: (row) => (
+        <ManagerStatusBadge
+          status={row.status}
+          label={PROGRAM_STATUS_LABELS[row.status] ?? row.status}
+        />
+      ),
     },
     {
       header: "Thao tác",
@@ -187,7 +220,8 @@ export default function ManagerProgramsPage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setDeleteTarget(row)}
+            disabled={isCheckingDelete}
+            onClick={() => void handleDeleteRequest(row)}
             className="size-8 text-[#E94B3C] hover:bg-[#E94B3C]/10 rounded-lg"
           >
             <Trash2 className="size-4" />
@@ -317,8 +351,9 @@ export default function ManagerProgramsPage() {
               </div>
             </div>
 
-            {/* 3. Bottom Row: Level Select & Clear Filter Button */}
+            {/* 3. Bottom Row: Level / Status & Clear Filter */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+              <div className="flex flex-wrap items-center gap-2">
               <Select
                 value={level}
                 onValueChange={(val) => {
@@ -348,7 +383,39 @@ export default function ManagerProgramsPage() {
                 </SelectContent>
               </Select>
 
-              {search !== "" || category !== "all" || level !== "all" ? (
+              <Select
+                value={status}
+                onValueChange={(val) => {
+                  markLoading();
+                  setStatus(val ?? "all");
+                  setPage(1);
+                }}
+              >
+                <SelectTrigger className={THEME_SELECT_TRIGGER}>
+                  <span className="truncate">
+                    {status === "all"
+                      ? "Tất cả trạng thái"
+                      : (PROGRAM_STATUS_LABELS[status as ProgramStatus] ?? status)}
+                  </span>
+                </SelectTrigger>
+                <SelectContent className={THEME_SELECT_CONTENT} align="start" sideOffset={8}>
+                  <SelectItem value="all" className={THEME_SELECT_ITEM}>
+                    Tất cả trạng thái
+                  </SelectItem>
+                  {PROGRAM_STATUS_ORDER.map((item) => (
+                    <SelectItem
+                      key={item}
+                      value={item}
+                      className={THEME_SELECT_ITEM}
+                    >
+                      {PROGRAM_STATUS_LABELS[item]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              </div>
+
+              {search !== "" || category !== "all" || level !== "all" || status !== "all" ? (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -357,6 +424,7 @@ export default function ManagerProgramsPage() {
                     setSearch("");
                     setCategory("all");
                     setLevel("all");
+                    setStatus("all");
                     setPage(1);
                   }}
                   className="h-9 gap-1.5 px-3 rounded-lg text-xs font-semibold text-muted-foreground hover:bg-muted hover:text-foreground"

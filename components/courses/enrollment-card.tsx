@@ -28,6 +28,8 @@ import { cn } from "@/lib/utils";
 type EnrollmentCardProps = {
   enrollment: ProgramEnrollment;
   className?: string;
+  /** Set for above-the-fold thumbnails (LCP). */
+  priority?: boolean;
 };
 
 function formatEnrollmentDate(iso: string | null): string {
@@ -79,7 +81,11 @@ function EnrollmentStatusPill({
   );
 }
 
-export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
+export function EnrollmentCard({
+  enrollment,
+  className,
+  priority = false,
+}: EnrollmentCardProps) {
   const priceParts = getProgramPriceParts(enrollment.price ?? 0);
   const isPendingPayment = enrollment.status === "PendingPayment";
   const detailHref = `/programs/${enrollment.programId}`;
@@ -103,6 +109,7 @@ export function EnrollmentCard({ enrollment, className }: EnrollmentCardProps) {
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
             className="object-cover"
+            priority={priority}
           />
         </div>
       </div>

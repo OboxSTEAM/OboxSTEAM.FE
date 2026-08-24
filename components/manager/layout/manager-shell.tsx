@@ -7,7 +7,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ManagerHeader } from "@/components/manager/layout/manager-header";
 import { ManagerSidebar } from "@/components/manager/layout/manager-sidebar";
 import { ManagerCommandPalette } from "@/components/manager/command-palette/manager-command-palette";
-import { canAccessManagerArea } from "@/lib/auth/roles";
+import { canAccessManagerArea, getRoleHomePath } from "@/lib/auth/roles";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Suspense } from "react";
@@ -81,9 +81,10 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
       router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
       return;
     }
-    // Wait until profile is loaded before checking role
+    // Wait until profile is loaded before checking role. Wrong-role users go
+    // to their own home (e.g. mentor → /mentor/classes), not always landing.
     if (profile && !canAccessManagerArea(profile.role)) {
-      router.replace("/");
+      router.replace(getRoleHomePath(profile.role));
     }
   }, [isAuthenticated, isHydrated, isLoading, profile, pathname, router]);
 

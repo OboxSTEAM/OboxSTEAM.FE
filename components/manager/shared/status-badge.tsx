@@ -6,7 +6,6 @@ type StatusType =
   | "success"
   | "verified"
   | "approved"
-  | "published"
   | "pending"
   | "draft"
   | "waiting"
@@ -41,7 +40,6 @@ export function ManagerStatusBadge({
       "success",
       "verified",
       "approved",
-      "published",
       "hoạt động",
       "đã duyệt",
       "thành công",

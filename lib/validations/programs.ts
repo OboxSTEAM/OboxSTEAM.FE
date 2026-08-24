@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   programCategorySchema,
   programLevelSchema,
+  programStatusSchema,
 } from "@/lib/api/entities/program";
 
 export const programSortBySchema = z.enum([
@@ -26,7 +27,7 @@ export const programListQuerySchema = z.object({
   level: programLevelSchema.optional(),
   rating: z.number().optional(),
   skillsGained: z.string().optional(),
-  status: z.string().optional(),
+  status: programStatusSchema.optional(),
 });
 
 export const programIdParamSchema = z.object({
@@ -58,11 +59,29 @@ export const programUpsertSchema = z.object({
   estimatedDuration: z.string().min(1, "Thời lượng dự kiến là bắt buộc."),
   skillsGained: z.string().min(1, "Kỹ năng đạt được là bắt buộc."),
   thumbnailUrl: z.string().url("URL ảnh thumbnail không hợp lệ.").or(z.literal("")).nullable().optional(),
-  status: z.string().min(1, "Trạng thái là bắt buộc."),
+  status: programStatusSchema,
   price: z.number().min(0, "Giá không được âm."),
 });
 
-export const createProgramSchema = programUpsertSchema;
+/** Create omits status — BE defaults to Draft. Optional `file` for create-time thumbnail. */
+export const createProgramSchema = programUpsertSchema.omit({ status: true });
+
+export const createProgramRequestSchema = createProgramSchema.extend({
+  file: z
+    .instanceof(File, { message: "Vui lòng chọn ảnh thumbnail." })
+    .refine((file) => file.size > 0, "Tệp ảnh không hợp lệ.")
+    .refine(
+      (file) => file.type.startsWith("image/"),
+      "Chỉ chấp nhận tệp hình ảnh (JPG, PNG, …).",
+    )
+    .refine(
+      (file) => file.size <= 5 * 1024 * 1024,
+      "Ảnh thumbnail không được vượt quá 5 MB.",
+    )
+    .optional()
+    .nullable(),
+});
+
 export const updateProgramSchema = programUpsertSchema;
 
 export const uploadProgramThumbnailSchema = z.object({

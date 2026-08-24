@@ -158,6 +158,7 @@ export {
   type ProgramCurriculum,
   type ProgramIdParam,
   type ProgramLevel,
+  type ProgramStatus,
   type ProgramListQuery,
   type ProgramReview,
   type ProgramReviewsQuery,
@@ -1072,6 +1073,18 @@ export {
   type GetMyScheduleResult,
   type StudentScheduleInterval,
 } from "./me";
+
+export {
+  getWeeklySchedule,
+  getMonthlyScheduleDays,
+  type ScheduleDay,
+  type ScheduleDayOfWeek,
+  type ScheduleSession,
+  type WeeklySchedule,
+  type WeeklyScheduleQuery,
+  type WeeklyScheduleResponse,
+  type WeeklyScheduleResult,
+} from "./schedules";
 
 export {
   addHighlightSegment,

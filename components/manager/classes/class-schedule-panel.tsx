@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
   Pencil,
@@ -48,6 +48,7 @@ import {
   CLASS_SESSION_STATUS_LABELS,
   CLASS_SESSIONS_QUERY,
 } from "@/lib/classes/constants";
+import { subscribeClassSessionsInvalidate } from "@/lib/classes/session-invalidate-bus";
 import {
   canGenerateClassSessions,
   countActiveClassSessions,
@@ -168,6 +169,8 @@ export function ClassSchedulePanel({
     deps: [classId, kindFilter, statusFilter],
     onError: (error) => showAppErrorFromUnknown(error, "classSessions.list"),
   });
+
+  useEffect(() => subscribeClassSessionsInvalidate(retry), [retry]);
 
   const { data: modulesData, isLoading: isModulesLoading } = useClientFetch({
     enabled: !!programId,

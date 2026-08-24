@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
+  CalendarDays,
   ClipboardList,
   LayoutDashboard,
   LogOut,
@@ -36,7 +37,13 @@ export const STUDENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
     label: "Khóa học của tôi",
     href: "/courses",
     icon: BookOpen,
-    description: "Tiến độ & lịch học",
+    description: "Tiến độ học tập",
+  },
+  {
+    label: "Lịch học",
+    href: "/schedule",
+    icon: CalendarDays,
+    description: "Thời khóa biểu theo tuần",
   },
   {
     label: "Portfolio",

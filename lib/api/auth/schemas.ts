@@ -11,8 +11,14 @@ import {
 export const registeredUserSchema = userProfileSchema;
 
 export const authTokensSchema = z.object({
-  accessToken: z.string(),
-  refreshToken: z.string(),
+  accessToken: z.preprocess(
+    (value) => (value == null ? "" : value),
+    z.string().min(1, "Máy chủ không trả access token."),
+  ),
+  refreshToken: z.preprocess(
+    (value) => (value == null ? "" : value),
+    z.string().min(1, "Máy chủ không trả refresh token."),
+  ),
 });
 
 export const registerValueSchema = createApiValueSchema(registeredUserSchema);

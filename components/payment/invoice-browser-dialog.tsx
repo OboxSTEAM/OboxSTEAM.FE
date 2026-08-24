@@ -22,14 +22,20 @@ import {
 } from "@/lib/api";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { SITE } from "@/lib/landing/content";
-import { formatPaymentDateTime } from "@/lib/payment/format";
+import {
+  formatPaymentDateTime,
+  shortenPaymentId,
+} from "@/lib/payment/format";
 import { formatProgramPrice } from "@/lib/programs/constants";
+import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 type InvoiceBrowserDialogProps = {
   invoices: Invoice[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  programName?: string | null;
+  programThumbnailUrl?: string | null;
 };
 
 function formatInvoiceAmount(invoice: Invoice): string {
@@ -48,7 +54,54 @@ function invoiceTitle(invoice: Invoice): string {
   return "Đăng ký chương trình";
 }
 
-function InvoiceFallbackCard({ invoice }: { invoice: Invoice }) {
+function invoiceNumberLabel(invoice: Invoice): string {
+  return invoice.invoiceNumber ?? invoice.id.slice(0, 8);
+}
+
+function invoiceTransactionLabel(invoice: Invoice): string {
+  return shortenPaymentId(invoice.paymentId);
+}
+
+function FallbackInvoiceRow({
+  label,
+  value,
+  mono,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+}) {
+  return (
+    <div className="grid gap-1 border-b border-[#E5E5E0] py-3.5 sm:grid-cols-[9rem_1fr] sm:gap-4">
+      <dt className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
+        {label}
+      </dt>
+      <dd
+        className={cn(
+          "text-sm font-medium text-[#2D2D2D] break-all",
+          mono && "font-mono text-xs sm:text-sm",
+        )}
+      >
+        {value}
+      </dd>
+    </div>
+  );
+}
+
+function InvoiceFallbackCard({
+  invoice,
+  programName,
+  programThumbnailUrl,
+}: {
+  invoice: Invoice;
+  programName?: string | null;
+  programThumbnailUrl?: string | null;
+}) {
+  const resolvedName =
+    programName?.trim() || invoice.itemDescription?.trim() || null;
+  const thumbnailUrl = getProgramThumbnailUrl(programThumbnailUrl);
+  const createdAtLabel = formatPaymentDateTime(invoice.createdAt);
+
   return (
     <article className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_8px_32px_rgba(45,45,45,0.06)]">
       <header className="border-b border-[#E5E5E0] bg-[#FAFAF5] px-5 py-4 sm:px-6">
@@ -70,19 +123,44 @@ function InvoiceFallbackCard({ invoice }: { invoice: Invoice }) {
           </div>
         </div>
       </header>
-      <div className="space-y-3 px-5 py-4 sm:px-6">
-        <p className="text-sm text-[#2D2D2D]">
-          <span className="text-xs uppercase text-[#6B6B6B]">Mã hóa đơn · </span>
-          <span className="font-mono">
-            {invoice.invoiceNumber ?? invoice.id.slice(0, 8)}
-          </span>
-        </p>
-        {invoice.itemDescription ? (
-          <p className="text-sm text-[#6B6B6B]">{invoice.itemDescription}</p>
-        ) : null}
-        <p className="text-xs text-[#6B6B6B]">
-          Ngày tạo {formatPaymentDateTime(invoice.createdAt)}
-        </p>
+      {resolvedName ? (
+        <div className="border-b border-[#E5E5E0] px-5 py-4 sm:px-6">
+          <div className="flex items-center gap-4">
+            <div className="relative aspect-[4/3] w-24 shrink-0 overflow-hidden rounded-xl border border-[#E5E5E0] bg-[#F5F5F0] sm:w-28">
+              <Image
+                src={thumbnailUrl}
+                alt=""
+                fill
+                sizes="7rem"
+                className="object-cover"
+              />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
+                Chương trình
+              </p>
+              <h3 className="font-heading mt-1 text-base font-bold leading-snug text-[#2D2D2D] sm:text-lg">
+                {resolvedName}
+              </h3>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      <div className="px-5 py-2 sm:px-6">
+        <dl>
+          <FallbackInvoiceRow
+            label="Mã hóa đơn"
+            value={invoiceNumberLabel(invoice)}
+            mono
+          />
+          <FallbackInvoiceRow
+            label="Mã giao dịch"
+            value={invoiceTransactionLabel(invoice)}
+            mono
+          />
+          <FallbackInvoiceRow label="Ngày tạo" value={createdAtLabel} />
+          <FallbackInvoiceRow label="Ngày thanh toán" value={createdAtLabel} />
+        </dl>
       </div>
       <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] px-5 py-4 sm:px-6">
         <p className="text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
@@ -100,11 +178,14 @@ function InvoiceListPanel({
   invoices,
   selectedId,
   onSelect,
+  programThumbnailUrl,
 }: {
   invoices: Invoice[];
   selectedId: string | null;
   onSelect: (id: string) => void;
+  programThumbnailUrl?: string | null;
 }) {
+  const thumbnailUrl = getProgramThumbnailUrl(programThumbnailUrl);
   const { programInvoices, retakeInvoices } = useMemo(() => {
     return {
       programInvoices: invoices.filter((invoice) => invoice.moduleId == null),
@@ -128,22 +209,36 @@ function InvoiceListPanel({
                   type="button"
                   onClick={() => onSelect(invoice.id)}
                   className={cn(
-                    "flex w-full flex-col gap-0.5 rounded-xl border px-3 py-2.5 text-left transition",
+                    "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition",
                     isSelected
                       ? "border-[#4FC3F7] bg-[#E8F7FD] shadow-sm"
                       : "border-[#E5E5E0] bg-white hover:border-[#C9C9C2] hover:bg-[#FAFAF5]",
                   )}
                 >
-                  <span className="line-clamp-2 text-xs font-semibold text-[#2D2D2D]">
-                    {invoiceTitle(invoice)}
-                  </span>
-                  <span className="truncate text-[11px] text-[#6B6B6B]">
-                    {invoice.invoiceNumber ?? invoice.id.slice(0, 8)}
-                    {" · "}
-                    {formatPaymentDateTime(invoice.createdAt)}
-                  </span>
-                  <span className="text-xs font-semibold tabular-nums text-[#E94B3C]">
-                    {formatInvoiceAmount(invoice)}
+                  <div className="relative aspect-[4/3] w-14 shrink-0 overflow-hidden rounded-lg border border-[#E5E5E0] bg-[#F5F5F0]">
+                    <Image
+                      src={thumbnailUrl}
+                      alt=""
+                      fill
+                      sizes="3.5rem"
+                      className="object-cover"
+                    />
+                  </div>
+                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                    <span className="line-clamp-2 text-xs font-semibold text-[#2D2D2D]">
+                      {invoiceTitle(invoice)}
+                    </span>
+                    <span className="truncate text-[11px] text-[#6B6B6B]">
+                      {invoiceNumberLabel(invoice)}
+                      {" · "}
+                      {invoiceTransactionLabel(invoice)}
+                    </span>
+                    <span className="truncate text-[11px] text-[#6B6B6B]">
+                      Thanh toán {formatPaymentDateTime(invoice.createdAt)}
+                    </span>
+                    <span className="text-xs font-semibold tabular-nums text-[#E94B3C]">
+                      {formatInvoiceAmount(invoice)}
+                    </span>
                   </span>
                 </button>
               </li>
@@ -162,7 +257,15 @@ function InvoiceListPanel({
   );
 }
 
-function InvoiceDetailPanel({ invoiceId }: { invoiceId: string | null }) {
+function InvoiceDetailPanel({
+  invoiceId,
+  programName,
+  programThumbnailUrl,
+}: {
+  invoiceId: string | null;
+  programName?: string | null;
+  programThumbnailUrl?: string | null;
+}) {
   const [invoice, setInvoice] = useState<Invoice | null>(null);
   const [payment, setPayment] = useState<Payment | null>(null);
   const [loadState, setLoadState] = useState<
@@ -240,10 +343,22 @@ function InvoiceDetailPanel({ invoiceId }: { invoiceId: string | null }) {
   }
 
   if (payment) {
-    return <PaymentInvoiceCard payment={payment} />;
+    return (
+      <PaymentInvoiceCard
+        payment={payment}
+        programName={programName ?? invoice.itemDescription}
+        programThumbnailUrl={programThumbnailUrl}
+      />
+    );
   }
 
-  return <InvoiceFallbackCard invoice={invoice} />;
+  return (
+    <InvoiceFallbackCard
+      invoice={invoice}
+      programName={programName}
+      programThumbnailUrl={programThumbnailUrl}
+    />
+  );
 }
 
 /** Split dialog: left invoice list, right receipt detail. */
@@ -251,6 +366,8 @@ export function InvoiceBrowserDialog({
   invoices,
   open,
   onOpenChange,
+  programName,
+  programThumbnailUrl,
 }: InvoiceBrowserDialogProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -281,11 +398,16 @@ export function InvoiceBrowserDialog({
               invoices={invoices}
               selectedId={selectedId}
               onSelect={setSelectedId}
+              programThumbnailUrl={programThumbnailUrl}
             />
           </aside>
 
           <div className="min-h-0 overflow-y-auto p-4 sm:p-5">
-            <InvoiceDetailPanel invoiceId={selectedId} />
+            <InvoiceDetailPanel
+              invoiceId={selectedId}
+              programName={programName}
+              programThumbnailUrl={programThumbnailUrl}
+            />
           </div>
         </div>
 

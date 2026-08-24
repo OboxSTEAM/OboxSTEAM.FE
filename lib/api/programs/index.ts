@@ -1,10 +1,9 @@
 import { z } from "zod";
 
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
-import { createApiPost } from "@/lib/api/create-endpoint";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
-  createProgramSchema,
+  createProgramRequestSchema,
   programIdParamSchema,
   programListQuerySchema,
   programReviewsQuerySchema,
@@ -21,7 +20,7 @@ import {
   getProgramReviewsResponseSchema,
   getProgramsResponseSchema,
   getProgramsWithModulesResponseSchema,
-  programMutationValueSchema,
+  createProgramResponseSchema,
   updateProgramResponseSchema,
   uploadProgramThumbnailResponseSchema,
   type CreateProgramResult,
@@ -71,6 +70,7 @@ export type {
   Program,
   ProgramCategory,
   ProgramLevel,
+  ProgramStatus,
   ProgramWithModules,
 } from "@/lib/api/entities/program";
 
@@ -86,7 +86,7 @@ export type { Paginated } from "@/lib/api/entities/pagination";
 export type ProgramListQuery = z.infer<typeof programListQuerySchema>;
 export type ProgramReviewsQuery = z.infer<typeof programReviewsQuerySchema>;
 export type ProgramIdParam = z.infer<typeof programIdParamSchema>;
-export type CreateProgramInput = z.infer<typeof createProgramSchema>;
+export type CreateProgramInput = z.infer<typeof createProgramRequestSchema>;
 export type UpdateProgramInput = z.infer<typeof updateProgramSchema>;
 
 const PROGRAMS_BASE = "/api/programs";
@@ -210,11 +210,54 @@ export async function deleteProgramReview(
   return requireApiValue(response.value);
 }
 
-export const createProgram = createApiPost({
-  path: PROGRAMS_BASE,
-  input: createProgramSchema,
-  value: programMutationValueSchema,
-});
+/**
+ * `POST /api/programs` — multipart form-data.
+ * Fields bind as `data.<Property>` (+ optional `file` thumbnail).
+ * Status omitted → BE defaults to Draft.
+ */
+export async function createProgram(
+  input: CreateProgramInput,
+): Promise<CreateProgramResult> {
+  const parsed = createProgramRequestSchema.parse(input);
+  const { file, ...fields } = parsed;
+
+  const formData = new FormData();
+  const entries: Array<[string, string | number]> = [
+    ["Code", fields.code],
+    ["Name", fields.name],
+    ["SeriesName", fields.seriesName],
+    ["Description", fields.description],
+    ["Category", fields.category],
+    ["Level", fields.level],
+    ["EstimatedDuration", fields.estimatedDuration],
+    ["SkillsGained", fields.skillsGained],
+    ["Price", fields.price],
+  ];
+
+  if (fields.thumbnailUrl && !fields.thumbnailUrl.startsWith("blob:")) {
+    entries.push(["ThumbnailUrl", fields.thumbnailUrl]);
+  }
+
+  for (const [key, value] of entries) {
+    const text = String(value);
+    // Controller binds `[FromForm] CreateProgramRequestDto data` → `data.Code`.
+    // Swagger documents flat `Code` as well — send both for binder/Swagger parity.
+    formData.append(`data.${key}`, text);
+    formData.append(key, text);
+  }
+
+  if (file) {
+    formData.append("file", file);
+  }
+
+  const response = await apiFetchParsed(
+    PROGRAMS_BASE,
+    createProgramResponseSchema,
+    { method: "POST", body: formData },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
 
 export async function updateProgram(
   id: string,

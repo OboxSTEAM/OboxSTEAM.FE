@@ -11,6 +11,10 @@ import { ProgramExpertsManager } from "@/components/manager/programs/program-exp
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { type ProgramWithModules } from "@/lib/api";
+import {
+  fetchProgramCohortLock,
+  type ProgramCohortLock,
+} from "@/lib/programs/editability";
 import { cn } from "@/lib/utils";
 
 // ─── Stepper tab config ────────────────────────────────────────────────────────
@@ -89,12 +93,26 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
+  const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
+    locked: false,
+    reason: null,
+  });
 
   const handleSilentSync = useCallback(() => {
     router.refresh();
   }, [router]);
 
   useCurriculumSync(program.id, handleSilentSync);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchProgramCohortLock(program.id).then((lock) => {
+      if (!cancelled) setCohortLock(lock);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [program.id]);
 
   if (initialProgram !== prevInitial) {
     setPrevInitial(initialProgram);
@@ -124,6 +142,8 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
               onRefresh={() => {
                 router.refresh();
               }}
+              cohortLocked={cohortLock.locked}
+              lockReason={cohortLock.reason}
             />
           </Suspense>
         )}

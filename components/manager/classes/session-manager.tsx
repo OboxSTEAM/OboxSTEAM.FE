@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
@@ -56,6 +56,7 @@ import {
   CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
+import { subscribeClassSessionsInvalidate } from "@/lib/classes/session-invalidate-bus";
 import {
   canGenerateClassSessions,
   countActiveClassSessions,
@@ -128,6 +129,8 @@ function SessionManagerInner() {
     deps: [classId, page, sessionKind, status, viewMode],
     onError: (error) => showAppErrorFromUnknown(error, "classSessions.list"),
   });
+
+  useEffect(() => subscribeClassSessionsInvalidate(retry), [retry]);
 
   const selectedClass = classesData?.data?.items.find(
     (item) => item.id === classId,

@@ -16,7 +16,7 @@ import { getAccountRoleLabel } from "@/lib/auth/account-nav";
 import { getProfileDisplayName } from "@/lib/auth/profile-display";
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { clearAuthSession } from "@/lib/auth/session";
-import { SITE } from "@/lib/landing/content";
+import { SITE, NAV_LINKS } from "@/lib/landing/content";
 import {
   buildSiteHeaderStaggeredMenuItems,
   STAGGERED_MENU_WARM_COLORS,
@@ -26,6 +26,8 @@ import { cn } from "@/lib/utils";
 type SiteHeaderProps = {
   /** Use on inner pages (no dark hero) so nav text stays readable. */
   defaultScrolled?: boolean;
+  /** Light hero (cream desk flat-lay) — dark nav text from the top. */
+  heroTone?: "dark" | "light";
   /** Show dark/light toggle — opt-in for learn/portfolio; landing stays off. */
   showThemeToggle?: boolean;
 };
@@ -41,6 +43,7 @@ function getInitials(displayName: string, email: string): string {
 
 export function SiteHeader({
   defaultScrolled = false,
+  heroTone = "dark",
   showThemeToggle = false,
 }: SiteHeaderProps) {
   const router = useRouter();
@@ -50,7 +53,8 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuToggleRef = useRef<HTMLButtonElement>(null);
 
-  const isSolid = defaultScrolled || scrolled;
+  const isLightHero = heroTone === "light";
+  const isSolid = defaultScrolled || scrolled || isLightHero;
   const accountRole = normalizeAccountRole(profile?.role ?? session?.user?.role);
   const email = profile?.email ?? session?.user?.email ?? "";
   const displayName = profile
@@ -76,7 +80,7 @@ export function SiteHeader({
   );
 
   useEffect(() => {
-    if (defaultScrolled) return;
+    if (defaultScrolled || isLightHero) return;
 
     const handler = () => {
       setScrolled(window.scrollY > window.innerHeight * 0.8);
@@ -84,7 +88,7 @@ export function SiteHeader({
     window.addEventListener("scroll", handler, { passive: true });
     handler();
     return () => window.removeEventListener("scroll", handler);
-  }, [defaultScrolled]);
+  }, [defaultScrolled, isLightHero]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -132,40 +136,82 @@ export function SiteHeader({
       <header
         className={cn(
           "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-          isSolid
-            ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0] dark:bg-[#1A1A1A]/95 dark:border-border"
-            : "bg-transparent",
+          isLightHero
+            ? "pointer-events-none pt-3 px-3 sm:px-5"
+            : isSolid
+              ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0] dark:bg-[#1A1A1A]/95 dark:border-border"
+              : "bg-transparent",
         )}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="flex h-[4.5rem] items-center justify-between gap-6 sm:h-20">
+        <div
+          className={cn(
+            isLightHero
+              ? "pointer-events-auto mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 rounded-full border border-[#E5E5E0]/90 bg-white/92 px-3 sm:px-5 shadow-[0_4px_24px_rgba(45,45,45,0.08)] backdrop-blur-md"
+              : "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
+          )}
+        >
+          <div
+            className={cn(
+              "relative flex w-full items-center justify-between gap-4",
+              !isLightHero && "h-[4.5rem] sm:h-20",
+            )}
+          >
             <Link
               href="/"
-              className="flex items-center gap-2.5 shrink-0"
+              className="flex items-center gap-2 shrink-0"
               aria-label="OboxSTEAM trang chủ"
             >
               <Image
                 src={SITE.logoUrl}
                 alt="OboxSTEAM logo"
-                width={44}
-                height={44}
+                width={36}
+                height={36}
                 className={cn(
-                  "size-10 object-contain transition-[filter] duration-200 sm:size-11",
-                  isSolid ? "dark:brightness-0 dark:invert" : "brightness-0 invert",
+                  "object-contain transition-[filter] duration-200",
+                  isLightHero
+                    ? "size-8"
+                    : "size-10 sm:size-11",
+                  isLightHero
+                    ? undefined
+                    : isSolid
+                      ? "dark:brightness-0 dark:invert"
+                      : "brightness-0 invert",
                 )}
                 priority
               />
               <span
                 className={cn(
-                  "font-heading hidden text-lg font-bold leading-none tracking-tight transition-colors duration-200 sm:block sm:text-xl",
-                  isSolid ? "text-[#2D2D2D] dark:text-foreground" : "text-white",
+                  "font-heading font-bold leading-none tracking-tight transition-colors duration-200",
+                  isLightHero
+                    ? "text-base text-[#2D2D2D]"
+                    : cn(
+                        "hidden text-lg sm:block sm:text-xl",
+                        isSolid ? "text-[#2D2D2D] dark:text-foreground" : "text-white",
+                      ),
                 )}
               >
                 OboxSTEAM
               </span>
             </Link>
 
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            {isLightHero ? (
+              <nav
+                className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2"
+                aria-label="Điều hướng chính"
+              >
+                {NAV_LINKS.map((link) => (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    className="px-3 py-2 text-sm font-medium text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors rounded-full hover:bg-[#F5F5F0]"
+                  >
+                    {link.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
+
+            <div className="flex items-center gap-1 sm:gap-1.5">
               {showThemeToggle ? (
                 <ThemeToggle
                   className={cn(
@@ -250,12 +296,12 @@ export function SiteHeader({
               </button>
               ) : (
                 <>
-                  <div className="hidden items-center gap-4 md:flex">
+                  <div className="hidden items-center gap-2 md:flex">
                     <Link
                       href="/login"
                       className={cn(
-                        "flex min-h-[48px] items-center px-3.5 py-2 text-base font-medium transition-colors duration-150",
-                        isSolid
+                        "flex min-h-[44px] items-center px-3 py-2 text-sm font-medium transition-colors duration-150",
+                        isSolid || isLightHero
                           ? "text-[#6B6B6B] hover:text-[#2D2D2D]"
                           : "text-white/85 hover:text-white",
                       )}
@@ -265,11 +311,14 @@ export function SiteHeader({
                     <Link
                       href="/register"
                       className={cn(
-                        buttonVariants({ size: "lg" }),
-                        "min-h-[48px] rounded-lg bg-[#E94B3C] px-6 text-base text-white shadow-md shadow-[#E94B3C]/25 hover:bg-[#d43e30]",
+                        buttonVariants({ size: "default" }),
+                        "min-h-[44px] rounded-full px-5 text-sm text-white",
+                        isLightHero
+                          ? "bg-[#2D2D2D] hover:bg-[#1a1a1a] shadow-none"
+                          : "rounded-lg bg-[#E94B3C] px-6 text-base shadow-md shadow-[#E94B3C]/25 hover:bg-[#d43e30]",
                       )}
                     >
-                      Đăng ký miễn phí
+                      {isLightHero ? "Đăng ký" : "Đăng ký miễn phí"}
                     </Link>
                   </div>
 
@@ -294,7 +343,12 @@ export function SiteHeader({
         </div>
 
         {mobileOpen && !isAuthenticated ? (
-          <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden">
+          <div
+            className={cn(
+              "border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden",
+              isLightHero && "pointer-events-auto mx-3 mt-2 rounded-2xl border",
+            )}
+          >
             <nav className="flex flex-col gap-1 p-4" aria-label="Menu di động">
               <div className="mt-1 flex flex-col gap-2">
                 <Link

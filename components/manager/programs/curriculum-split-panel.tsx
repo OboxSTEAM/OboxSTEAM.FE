@@ -5,6 +5,8 @@ import {
   useCallback,
   useMemo,
   useEffect,
+  createContext,
+  useContext,
   type MouseEvent,
   type ReactNode,
 } from "react";
@@ -25,7 +27,6 @@ import {
   Save,
   FolderPlus,
   ChevronRight,
-  ChevronDown,
   AlertTriangle,
   GripVertical,
   type LucideIcon,
@@ -34,11 +35,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
 import {
   Select,
   SelectTrigger,
@@ -87,6 +83,7 @@ import {
   updateActivitySchema,
 } from "@/lib/validations/curriculum";
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
+import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
@@ -158,42 +155,6 @@ function STitle({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: W.faint }}>{children}</p>;
 }
 
-function AdvancedSection({
-  open,
-  onOpenChange,
-  summary,
-  children,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  summary: string;
-  children: ReactNode;
-}) {
-  return (
-    <Collapsible open={open} onOpenChange={onOpenChange}>
-      <div className="rounded-xl border bg-card" style={{ borderColor: W.border }}>
-        <CollapsibleTrigger className="group flex min-h-12 w-full items-center justify-between gap-4 px-4 py-3 text-left">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: W.textStrong }}>
-              Thiết lập nâng cao
-            </p>
-            <p className="mt-1 text-xs" style={{ color: W.muted }}>{summary}</p>
-          </div>
-          <ChevronDown
-            className={cn(
-              "size-4 shrink-0 transition-transform duration-200",
-              open && "rotate-180",
-            )}
-            style={{ color: W.faint }}
-          />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="border-t px-4 py-4" style={{ borderColor: W.border }}>
-          {children}
-        </CollapsibleContent>
-      </div>
-    </Collapsible>
-  );
-}
 function FErr({ msg }: { msg?: string }) {
   return msg ? <p className="text-xs font-semibold mt-1" style={{ color: W.primary }}>{msg}</p> : null;
 }
@@ -405,7 +366,6 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 }) {
   const isEdit = !!moduleToEdit;
   const [busy, setBusy] = useState(false);
-  const [advancedOpen, setAdvancedOpen] = useState(!isEdit);
   const { ok, flash } = useSuccessFlash();
 
   const { register, handleSubmit, control, getValues, formState: { errors } } = useForm<MFV>({
@@ -461,7 +421,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   const others = modulesInProgram.filter((m) => !isEdit || m.id !== moduleToEdit?.id);
 
   return (
-    <form onSubmit={handleSubmit(onSubmit, () => setAdvancedOpen(true))} className="flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr icon={FolderOpen} color={W.success}
         title={isEdit ? `Chỉnh sửa: ${moduleToEdit!.name}` : "Tạo Module mới"}
         sub="Học phần trong chương trình học" />
@@ -479,15 +439,10 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             <FErr msg={errors.code?.message} />
           </div>
         </div>
-        <AdvancedSection
-          open={advancedOpen}
-          onOpenChange={setAdvancedOpen}
-          summary="Loại module, tiên quyết, kiến thức và học phí"
-        >
-          <div className="space-y-6">
-            <div>
-              <STitle>Cấu hình học tập</STitle>
-              <div className="grid grid-cols-2 gap-4">
+
+        <div>
+          <STitle>Cấu hình học tập</STitle>
+          <div className="grid grid-cols-2 gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
@@ -542,11 +497,12 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
               <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
             </div>
-              </div>
-            </div>
-            <div>
-              <STitle>Học phí</STitle>
-              <div className="grid grid-cols-2 gap-4">
+          </div>
+        </div>
+
+        <div>
+          <STitle>Học phí</STitle>
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Học phí (VND) <span style={{ color: W.primary }}>*</span></Label>
               <input type="number" placeholder="0" {...register("price", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
@@ -557,10 +513,8 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
               <input type="number" placeholder="0" {...register("retakeFee", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
               <FErr msg={errors.retakeFee?.message} />
             </div>
-              </div>
-            </div>
           </div>
-        </AdvancedSection>
+        </div>
       </div>
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Module"} />
@@ -770,11 +724,22 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       if (isEdit && activityToEdit) {
         // Omit activityOrder when unchanged so BE keeps the current slot without a no-op reorder.
         const orderUnchanged = orderNum === activityToEdit.activityOrder;
+        const previousDuration = activityToEdit.durationMinutes ?? null;
         await updateActivity(activityToEdit.id, {
           ...payload,
           activityOrder: orderUnchanged ? undefined : orderNum,
         });
-        showAppSuccess({ title: "Cập nhật thành công", description: `Hoạt động ${data.name} đã được cập nhật.` });
+        const durationChanged =
+          live && previousDuration !== (payload.durationMinutes ?? null);
+        if (durationChanged) {
+          invalidateClassSessions();
+        }
+        showAppSuccess({
+          title: "Cập nhật thành công",
+          description: durationChanged
+            ? `Hoạt động ${data.name} đã được cập nhật. EndTime các buổi gắn activity đã được máy chủ tính lại.`
+            : `Hoạt động ${data.name} đã được cập nhật.`,
+        });
       } else {
         await createActivity(payload);
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo hoạt động ${data.name}.` });
@@ -930,13 +895,23 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 /* ══════════════════════════════════════════════════════════════════════════════
    PROGRAM INFO PANEL
 ══════════════════════════════════════════════════════════════════════════════ */
-function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules; onSuccess: () => void }) {
+function ProgramInfoPanel({
+  program,
+  onSuccess,
+  disabled = false,
+  disabledReason = null,
+}: {
+  program: ProgramWithModules;
+  onSuccess: () => void;
+  disabled?: boolean;
+  disabledReason?: string | null;
+}) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdate = async (values: any) => {
+    if (disabled) return;
     setBusy(true);
     try {
       const res = await updateProgram(program.id, values);
@@ -951,9 +926,15 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
   return (
     <div className="flex flex-col">
       <PHdr icon={LayoutGrid} color={W.primary} title={program.name} sub={`Mã: ${program.code} · Thông tin chung`} />
+      {disabled && disabledReason ? (
+        <div className="mx-5 mt-4 rounded-lg border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-3 py-2.5 text-xs text-[#a82a1e]">
+          {disabledReason}
+        </div>
+      ) : null}
       <div className="p-5">
         <ProgramForm
           programId={program.id}
+          disabled={disabled}
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",
@@ -972,7 +953,7 @@ function ProgramInfoPanel({ program, onSuccess }: { program: ProgramWithModules;
       <div className="flex justify-end px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <Button
           type="button"
-          disabled={busy || ok}
+          disabled={busy || ok || disabled}
           onClick={() => { const b = document.getElementById("__program-form-submit"); if (b) (b as HTMLButtonElement).click(); }}
           className={cn("h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
             ok ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90")}
@@ -1080,11 +1061,15 @@ function StructureTreeRow({
   onReorderDragEnd?: () => void;
   children?: ReactNode;
 }) {
+  const canMutate = useContext(CurriculumMutateContext);
   const dragControls = useDragControls();
   const childItems = useMemo(
     () => (Array.isArray(children) ? children : [children]).filter(Boolean),
     [children],
   );
+  const effectiveOnDelete = canMutate ? onDelete : undefined;
+  const effectiveOnAdd = canMutate ? onAdd : undefined;
+  const effectiveReorderable = canMutate && reorderable;
   const hasBranch = childItems.length > 0;
   const [open, setOpen] = useState(defaultOpen || forceOpen);
   const { Icon: NodeIcon, color: iconColor, bg: iconBg } = STRUCTURE_NODE_ICON[kind];
@@ -1100,7 +1085,7 @@ function StructureTreeRow({
 
   const handleAdd = () => {
     if (hasBranch) setOpen(true);
-    onAdd?.();
+    effectiveOnAdd?.();
   };
 
   const rowInner = (
@@ -1113,7 +1098,7 @@ function StructureTreeRow({
           : "1px solid transparent",
       }}
     >
-      {reorderable ? (
+      {effectiveReorderable ? (
         <button
           type="button"
           aria-label={`Kéo sắp xếp ${label}`}
@@ -1149,7 +1134,7 @@ function StructureTreeRow({
         <span className="size-6 shrink-0" aria-hidden />
       )}
 
-      {reorderable && hasBranch ? (
+      {effectiveReorderable && hasBranch ? (
         <button
           type="button"
           title={open ? "Thu gọn" : "Mở rộng"}
@@ -1208,7 +1193,7 @@ function StructureTreeRow({
       </button>
 
       <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100">
-        {onAdd && (
+        {effectiveOnAdd && (
           <button
             type="button"
             title={addLabel || "Thêm"}
@@ -1218,11 +1203,11 @@ function StructureTreeRow({
             <Plus className="size-3" />
           </button>
         )}
-        {onDelete && (
+        {effectiveOnDelete && (
           <button
             type="button"
             title="Xóa"
-            onClick={onDelete}
+            onClick={effectiveOnDelete}
             className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
           >
             <Trash className="size-3" />
@@ -1268,7 +1253,7 @@ function StructureTreeRow({
     </>
   );
 
-  if (reorderable && reorderValue) {
+  if (effectiveReorderable && reorderValue) {
     return (
       <Reorder.Item
         as="li"
@@ -1447,7 +1432,15 @@ function CourseActivityRows({
 /* ══════════════════════════════════════════════════════════════════════════════
    MAIN: CurriculumSplitPanel
 ══════════════════════════════════════════════════════════════════════════════ */
-type CurriculumSplitPanelProps = { program: ProgramWithModules; onRefresh: () => void };
+type CurriculumSplitPanelProps = {
+  program: ProgramWithModules;
+  onRefresh: () => void;
+  /** When true, program metadata + curriculum mutations are blocked (cohort lock). */
+  cohortLocked?: boolean;
+  lockReason?: string | null;
+};
+
+const CurriculumMutateContext = createContext(true);
 
 function parseSelFromSearch(
   searchParams: URLSearchParams,
@@ -1551,7 +1544,13 @@ function parseSelFromSearch(
   return null;
 }
 
-export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPanelProps) {
+export function CurriculumSplitPanel({
+  program,
+  onRefresh,
+  cohortLocked = false,
+  lockReason = null,
+}: CurriculumSplitPanelProps) {
+  const canMutate = !cohortLocked;
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -1854,7 +1853,7 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
   }, [program.name, context, sel, select]);
 
   const handleDel = async () => {
-    if (!delTarget) return;
+    if (!delTarget || cohortLocked) return;
     try {
       if (delTarget.type === "module") {
         await deleteModule(delTarget.id);
@@ -1895,7 +1894,31 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
 
   const detail = useCallback((): React.ReactNode => {
     if (!sel) return <EmptyPanel />;
-    if (sel.kind === "program") return <ProgramInfoPanel program={program} onSuccess={onRefresh} />;
+    if (sel.kind === "program") {
+      return (
+        <ProgramInfoPanel
+          program={program}
+          onSuccess={onRefresh}
+          disabled={cohortLocked}
+          disabledReason={lockReason}
+        />
+      );
+    }
+
+    if (cohortLocked) {
+      return (
+        <div className="flex flex-col gap-3 p-5">
+          <div className="rounded-lg border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-3 py-2.5 text-xs text-[#a82a1e]">
+            {lockReason ??
+              "Không sửa khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên ghi danh."}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Chọn mục chương trình trên cây cấu trúc để xem thông tin chung (đã khóa chỉnh sửa).
+          </p>
+        </div>
+      );
+    }
+
     if (sel.kind === "module-new") {
       return (
         <ModuleFormPanel
@@ -2055,6 +2078,8 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
     upsertSessionAssignment,
     milestonesByModule,
     upsertMilestone,
+    cohortLocked,
+    lockReason,
   ]);
 
   const structureTree = (
@@ -2399,19 +2424,29 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
               />
             </>
           )}
-          <StructureAddLeafButton
-            className={cn(modules.length > 0 && "ml-4")}
-            label="Thêm module"
-            icon={FolderPlus}
-            selected={sel?.kind === "module-new"}
-            onClick={() => select({ kind: "module-new" })}
-          />
+          {canMutate ? (
+            <StructureAddLeafButton
+              className={cn(modules.length > 0 && "ml-4")}
+              label="Thêm module"
+              icon={FolderPlus}
+              selected={sel?.kind === "module-new"}
+              onClick={() => select({ kind: "module-new" })}
+            />
+          ) : null}
         </li>
       </StructureTreeRow>
     </ul>
   );
 
   return (
+    <CurriculumMutateContext.Provider value={canMutate}>
+    <div className="flex flex-col gap-3">
+      {cohortLocked && lockReason ? (
+        <div className="rounded-xl border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-4 py-3 text-sm text-[#a82a1e]">
+          <p className="font-semibold">Chương trình đang bị khóa chỉnh sửa</p>
+          <p className="mt-0.5 text-xs opacity-90">{lockReason}</p>
+        </div>
+      ) : null}
     <div
       className="flex min-h-[520px] items-start rounded-xl border"
       style={{ background: W.bg, borderColor: W.border }}
@@ -2464,6 +2499,8 @@ export function CurriculumSplitPanel({ program, onRefresh }: CurriculumSplitPane
         variant="destructive"
       />
     </div>
+    </div>
+    </CurriculumMutateContext.Provider>
   );
 }
 

@@ -1,5 +1,9 @@
 import type { ModuleType } from "@/lib/api/entities/module";
-import type { ProgramCategory, ProgramLevel } from "@/lib/api/entities/program";
+import type {
+  ProgramCategory,
+  ProgramLevel,
+  ProgramStatus,
+} from "@/lib/api/entities/program";
 import type { ProgramListQuery, ProgramReviewsQuery } from "@/lib/api/programs";
 import type { SteamCategory } from "@/lib/landing/content";
 
@@ -103,10 +107,16 @@ export const PROGRAM_SORT_OPTIONS: ProgramSortOption[] = [
 /** Public catalog / enrollment: only programs currently open. */
 export const PUBLIC_PROGRAM_STATUS = "Active" as const;
 
-export const PROGRAM_STATUS_LABELS: Record<string, string> = {
-  Active: "Đang mở",
+export const PROGRAM_STATUS_ORDER: ProgramStatus[] = [
+  "Draft",
+  "Active",
+  "Inactive",
+];
+
+export const PROGRAM_STATUS_LABELS: Record<ProgramStatus, string> = {
   Draft: "Bản nháp",
-  Inactive: "Đã ngừng",
+  Active: "Đang mở",
+  Inactive: "Ngừng hoạt động",
 };
 
 export function isProgramOpenForEnrollment(
@@ -119,10 +129,10 @@ export function getProgramEnrollmentClosedMessage(
   status: string | null | undefined,
 ): string {
   if (status === "Draft") {
-    return "Chương trình chưa mở đăng ký.";
+    return "Chương trình đang ở bản nháp — chưa thể đăng ký hoặc thanh toán.";
   }
   if (status === "Inactive") {
-    return "Chương trình đã ngừng nhận đăng ký.";
+    return "Chương trình đã ngừng hoạt động — không nhận đăng ký hoặc thanh toán.";
   }
   return "Chương trình hiện không nhận đăng ký.";
 }

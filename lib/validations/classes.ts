@@ -171,7 +171,7 @@ export function buildClassFormSchema(options?: { requireCreateLeadTime?: boolean
   });
 }
 
-/** Update-class form (no 14-day lead time). Prefer `buildClassFormSchema` for create. */
+/** Update-class form. Prefer `buildClassFormSchema({ requireCreateLeadTime })` — lead time applies on create and while Draft/ReadyForMentor/Open. */
 export const classFormSchema = buildClassFormSchema();
 
 /** Manager session form fields (datetime-local). */
@@ -181,7 +181,7 @@ export const classSessionFormSchema = z
     activityId: z.string().optional(),
     assignmentId: z.string().optional(),
     sessionKind: z
-      .enum(["Lesson", "FieldTrip", "AssignmentWindow"])
+      .enum(["LiveOnline", "Offline", "AssignmentWindow"])
       .optional(),
     title: z
       .string()
@@ -343,7 +343,6 @@ const classSessionBodySchema = z.object({
   moduleId: z.string().uuid("ID module không hợp lệ."),
   activityId: z.string().uuid().nullable().optional(),
   assignmentId: z.string().uuid().nullable().optional(),
-  sessionKind: classSessionKindSchema.optional(),
   title: z
     .string()
     .min(1, "Tiêu đề buổi học không được để trống.")

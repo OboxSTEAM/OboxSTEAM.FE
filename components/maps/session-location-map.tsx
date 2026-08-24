@@ -1,7 +1,9 @@
 "use client";
 
-import { ExternalLink, MapPin } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, MapPin, Maximize2, Minimize2 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 type SessionLocationMapProps = {
@@ -19,6 +21,7 @@ export function SessionLocationMap({
   className,
   variant = "manager",
 }: SessionLocationMapProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
   const mapsLink = `https://www.google.com/maps?q=${latitude},${longitude}`;
   const embedSrc = `https://maps.google.com/maps?q=${latitude},${longitude}&z=15&output=embed`;
   const isLearn = variant === "learn";
@@ -44,7 +47,7 @@ export function SessionLocationMap({
           )}
           aria-hidden
         />
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="font-medium">Vị trí trên bản đồ</p>
           {locationLabel?.trim() ? (
             <p
@@ -57,11 +60,37 @@ export function SessionLocationMap({
             </p>
           ) : null}
         </div>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "size-8 shrink-0 rounded-lg",
+            isLearn
+              ? "text-learn-muted hover:bg-learn-surface-2 hover:text-learn-accent"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+          aria-expanded={isExpanded}
+          aria-controls="session-location-map-frame"
+          aria-label={isExpanded ? "Thu gọn bản đồ" : "Phóng to bản đồ"}
+          onClick={() => setIsExpanded((prev) => !prev)}
+        >
+          {isExpanded ? (
+            <Minimize2 className="size-4" aria-hidden />
+          ) : (
+            <Maximize2 className="size-4" aria-hidden />
+          )}
+        </Button>
       </div>
       <iframe
+        id="session-location-map-frame"
         title="Bản đồ địa điểm buổi học"
         src={embedSrc}
-        className="h-52 w-full border-0 border-t border-border"
+        className={cn(
+          "w-full border-0 border-t transition-[height] duration-300 ease-out motion-reduce:transition-none",
+          isLearn ? "border-learn-border" : "border-border",
+          isExpanded ? "h-[min(70vh,28rem)]" : "h-52",
+        )}
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
       />

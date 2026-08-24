@@ -431,11 +431,24 @@ function omitEndTimeForActivitySession<
   return body;
 }
 
+/** BE derives SessionKind from the curriculum item — never send it. */
+function omitClientSessionKind<T extends object>(
+  body: T,
+): Omit<T, "sessionKind"> {
+  if (!("sessionKind" in body)) {
+    return body as Omit<T, "sessionKind">;
+  }
+  const { sessionKind: _omit, ...rest } = body as T & {
+    sessionKind?: unknown;
+  };
+  return rest;
+}
+
 export async function createClassSession(
   input: CreateClassSessionInput,
 ): Promise<ClassSessionResult> {
   const parsed = createClassSessionSchema.parse(input);
-  const body = omitEndTimeForActivitySession(parsed);
+  const body = omitClientSessionKind(omitEndTimeForActivitySession(parsed));
 
   const response = await apiFetchParsed(
     `${CLASSES_BASE}/${parsed.classId}/sessions`,
@@ -453,7 +466,7 @@ export async function updateClassSession(
 ): Promise<ClassSessionResult> {
   const parsedParams = classSessionParamsSchema.parse({ classId, sessionId });
   const parsed = updateClassSessionSchema.parse(input);
-  const body = omitEndTimeForActivitySession(parsed);
+  const body = omitClientSessionKind(omitEndTimeForActivitySession(parsed));
 
   const response = await apiFetchParsed(
     `${CLASSES_BASE}/${parsedParams.classId}/sessions/${parsedParams.sessionId}`,

@@ -64638,7 +64638,6 @@
               "schema": {
                 "required": [
                   "classId",
-                  "endTime",
                   "moduleId",
                   "startTime",
                   "title"
@@ -64669,7 +64668,8 @@
                       "FieldTrip",
                       "AssignmentWindow"
                     ],
-                    "type": "string"
+                    "type": "string",
+                    "nullable": true
                   },
                   "title": {
                     "maxLength": 255,
@@ -64686,6 +64686,7 @@
                   },
                   "endTime": {
                     "type": "string",
+                    "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
                   "location": {
@@ -64726,7 +64727,6 @@
               "schema": {
                 "required": [
                   "classId",
-                  "endTime",
                   "moduleId",
                   "startTime",
                   "title"
@@ -64757,7 +64757,8 @@
                       "FieldTrip",
                       "AssignmentWindow"
                     ],
-                    "type": "string"
+                    "type": "string",
+                    "nullable": true
                   },
                   "title": {
                     "maxLength": 255,
@@ -64774,6 +64775,7 @@
                   },
                   "endTime": {
                     "type": "string",
+                    "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
                   "location": {
@@ -64814,7 +64816,6 @@
               "schema": {
                 "required": [
                   "classId",
-                  "endTime",
                   "moduleId",
                   "startTime",
                   "title"
@@ -64845,7 +64846,8 @@
                       "FieldTrip",
                       "AssignmentWindow"
                     ],
-                    "type": "string"
+                    "type": "string",
+                    "nullable": true
                   },
                   "title": {
                     "maxLength": 255,
@@ -64862,6 +64864,7 @@
                   },
                   "endTime": {
                     "type": "string",
+                    "nullable": true,
                     "example": "15/06/2026 14:30:00"
                   },
                   "location": {
@@ -140997,9 +141000,164 @@
                                     "type": "string",
                                     "nullable": true
                                   },
+                                  "payload": {
+                                    "title": "NotificationPayload",
+                                    "type": "object",
+                                    "properties": {
+                                      "programId": {
+                                        "type": "string",
+                                        "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "programEnrollmentId": {
+                                        "type": "string",
+                                        "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "enrollmentId": {
+                                        "type": "string",
+                                        "description": "Program enrollment id for parent progression and student learn context.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "moduleId": {
+                                        "type": "string",
+                                        "description": "Module id (manager curriculum editor / progression context).",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "moduleEnrollmentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "courseId": {
+                                        "type": "string",
+                                        "description": "Course id for manager activity editor deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "activityId": {
+                                        "type": "string",
+                                        "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "nextActivityId": {
+                                        "type": "string",
+                                        "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classId": {
+                                        "type": "string",
+                                        "description": "Class entity id for manager/mentor class routes.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classEnrollmentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classSessionId": {
+                                        "type": "string",
+                                        "description": "Class session id for manager attendance deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classMentorRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "assessmentRecoveryRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classRedeliveryRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "paymentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "paymentRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "assignmentId": {
+                                        "type": "string",
+                                        "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "submissionId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "materialId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "mediaAssetId": {
+                                        "type": "string",
+                                        "description": "Media asset id for mentor/manager media deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "highlightVideoId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "parentStudentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "studentId": {
+                                        "type": "string",
+                                        "description": "Subject student user id (required for parent child-scoped routing).",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "extra": {
+                                        "type": "string",
+                                        "nullable": true
+                                      }
+                                    },
+                                    "additionalProperties": false,
+                                    "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+                                    "example": {
+                                      "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                    }
+                                  },
                                   "payloadJson": {
                                     "type": "string",
-                                    "nullable": true
+                                    "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+                                    "nullable": true,
+                                    "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
                                   },
                                   "readAt": {
                                     "type": "string",
@@ -141189,9 +141347,164 @@
                                     "type": "string",
                                     "nullable": true
                                   },
+                                  "payload": {
+                                    "title": "NotificationPayload",
+                                    "type": "object",
+                                    "properties": {
+                                      "programId": {
+                                        "type": "string",
+                                        "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "programEnrollmentId": {
+                                        "type": "string",
+                                        "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "enrollmentId": {
+                                        "type": "string",
+                                        "description": "Program enrollment id for parent progression and student learn context.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "moduleId": {
+                                        "type": "string",
+                                        "description": "Module id (manager curriculum editor / progression context).",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "moduleEnrollmentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "courseId": {
+                                        "type": "string",
+                                        "description": "Course id for manager activity editor deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "activityId": {
+                                        "type": "string",
+                                        "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "nextActivityId": {
+                                        "type": "string",
+                                        "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classId": {
+                                        "type": "string",
+                                        "description": "Class entity id for manager/mentor class routes.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classEnrollmentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classSessionId": {
+                                        "type": "string",
+                                        "description": "Class session id for manager attendance deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classMentorRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "assessmentRecoveryRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classRedeliveryRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "paymentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "paymentRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "assignmentId": {
+                                        "type": "string",
+                                        "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "submissionId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "materialId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "mediaAssetId": {
+                                        "type": "string",
+                                        "description": "Media asset id for mentor/manager media deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "highlightVideoId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "parentStudentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "studentId": {
+                                        "type": "string",
+                                        "description": "Subject student user id (required for parent child-scoped routing).",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "extra": {
+                                        "type": "string",
+                                        "nullable": true
+                                      }
+                                    },
+                                    "additionalProperties": false,
+                                    "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+                                    "example": {
+                                      "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                    }
+                                  },
                                   "payloadJson": {
                                     "type": "string",
-                                    "nullable": true
+                                    "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+                                    "nullable": true,
+                                    "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
                                   },
                                   "readAt": {
                                     "type": "string",
@@ -141381,9 +141694,164 @@
                                     "type": "string",
                                     "nullable": true
                                   },
+                                  "payload": {
+                                    "title": "NotificationPayload",
+                                    "type": "object",
+                                    "properties": {
+                                      "programId": {
+                                        "type": "string",
+                                        "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "programEnrollmentId": {
+                                        "type": "string",
+                                        "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "enrollmentId": {
+                                        "type": "string",
+                                        "description": "Program enrollment id for parent progression and student learn context.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "moduleId": {
+                                        "type": "string",
+                                        "description": "Module id (manager curriculum editor / progression context).",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "moduleEnrollmentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "courseId": {
+                                        "type": "string",
+                                        "description": "Course id for manager activity editor deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "activityId": {
+                                        "type": "string",
+                                        "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "nextActivityId": {
+                                        "type": "string",
+                                        "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classId": {
+                                        "type": "string",
+                                        "description": "Class entity id for manager/mentor class routes.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classEnrollmentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classSessionId": {
+                                        "type": "string",
+                                        "description": "Class session id for manager attendance deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classMentorRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "assessmentRecoveryRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "classRedeliveryRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "paymentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "paymentRequestId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "assignmentId": {
+                                        "type": "string",
+                                        "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "submissionId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "materialId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "mediaAssetId": {
+                                        "type": "string",
+                                        "description": "Media asset id for mentor/manager media deep-links.",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "highlightVideoId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "parentStudentId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "studentId": {
+                                        "type": "string",
+                                        "description": "Subject student user id (required for parent child-scoped routing).",
+                                        "format": "uuid",
+                                        "nullable": true
+                                      },
+                                      "extra": {
+                                        "type": "string",
+                                        "nullable": true
+                                      }
+                                    },
+                                    "additionalProperties": false,
+                                    "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+                                    "example": {
+                                      "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                                      "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                                    }
+                                  },
                                   "payloadJson": {
                                     "type": "string",
-                                    "nullable": true
+                                    "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+                                    "nullable": true,
+                                    "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
                                   },
                                   "readAt": {
                                     "type": "string",
@@ -238172,6 +238640,967 @@
         }
       }
     },
+    "/api/schedules/weekly": {
+      "get": {
+        "tags": [
+          "Schedule"
+        ],
+        "summary": "Get weekly class timetable",
+        "description": "Returns one Monday–Sunday week of class sessions in Asia/Ho_Chi_Minh, grouped by local date. Students see their own schedule. Parents must pass studentId of a verified linked child. Omit weekStart to use the current Monday. Cancelled sessions are omitted.",
+        "parameters": [
+          {
+            "name": "weekStart",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "studentId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "studentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "weekStart": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "weekEnd": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "timezone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "days": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date"
+                                  },
+                                  "dayOfWeek": {
+                                    "enum": [
+                                      "Sunday",
+                                      "Monday",
+                                      "Tuesday",
+                                      "Wednesday",
+                                      "Thursday",
+                                      "Friday",
+                                      "Saturday"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "sessions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "classId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "classCode": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "className": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "programId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "mentorId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "moduleId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "activityId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "sessionKind": {
+                                          "enum": [
+                                            "Lesson",
+                                            "FieldTrip",
+                                            "AssignmentWindow"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "startTime": {
+                                          "type": "string",
+                                          "example": "15/06/2026 14:30:00"
+                                        },
+                                        "endTime": {
+                                          "type": "string",
+                                          "example": "15/06/2026 14:30:00"
+                                        },
+                                        "location": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "meetingUrl": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "status": {
+                                          "enum": [
+                                            "Scheduled",
+                                            "InProgress",
+                                            "Completed",
+                                            "Cancelled"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "isCompleted": {
+                                          "type": "boolean"
+                                        },
+                                        "attendanceStatus": {
+                                          "enum": [
+                                            "Expected",
+                                            "Present",
+                                            "Absent",
+                                            "Excused",
+                                            "Late"
+                                          ],
+                                          "type": "string",
+                                          "nullable": true
+                                        }
+                                      },
+                                      "additionalProperties": false
+                                    },
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "studentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "weekStart": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "weekEnd": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "timezone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "days": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date"
+                                  },
+                                  "dayOfWeek": {
+                                    "enum": [
+                                      "Sunday",
+                                      "Monday",
+                                      "Tuesday",
+                                      "Wednesday",
+                                      "Thursday",
+                                      "Friday",
+                                      "Saturday"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "sessions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "classId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "classCode": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "className": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "programId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "mentorId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "moduleId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "activityId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "sessionKind": {
+                                          "enum": [
+                                            "Lesson",
+                                            "FieldTrip",
+                                            "AssignmentWindow"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "startTime": {
+                                          "type": "string",
+                                          "example": "15/06/2026 14:30:00"
+                                        },
+                                        "endTime": {
+                                          "type": "string",
+                                          "example": "15/06/2026 14:30:00"
+                                        },
+                                        "location": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "meetingUrl": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "status": {
+                                          "enum": [
+                                            "Scheduled",
+                                            "InProgress",
+                                            "Completed",
+                                            "Cancelled"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "isCompleted": {
+                                          "type": "boolean"
+                                        },
+                                        "attendanceStatus": {
+                                          "enum": [
+                                            "Expected",
+                                            "Present",
+                                            "Absent",
+                                            "Excused",
+                                            "Late"
+                                          ],
+                                          "type": "string",
+                                          "nullable": true
+                                        }
+                                      },
+                                      "additionalProperties": false
+                                    },
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "studentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "weekStart": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "weekEnd": {
+                              "type": "string",
+                              "format": "date"
+                            },
+                            "timezone": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "days": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "date": {
+                                    "type": "string",
+                                    "format": "date"
+                                  },
+                                  "dayOfWeek": {
+                                    "enum": [
+                                      "Sunday",
+                                      "Monday",
+                                      "Tuesday",
+                                      "Wednesday",
+                                      "Thursday",
+                                      "Friday",
+                                      "Saturday"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "sessions": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "classId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "classCode": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "className": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "programId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "mentorId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "moduleId": {
+                                          "type": "string",
+                                          "format": "uuid"
+                                        },
+                                        "activityId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "sessionKind": {
+                                          "enum": [
+                                            "Lesson",
+                                            "FieldTrip",
+                                            "AssignmentWindow"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "startTime": {
+                                          "type": "string",
+                                          "example": "15/06/2026 14:30:00"
+                                        },
+                                        "endTime": {
+                                          "type": "string",
+                                          "example": "15/06/2026 14:30:00"
+                                        },
+                                        "location": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "meetingUrl": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "status": {
+                                          "enum": [
+                                            "Scheduled",
+                                            "InProgress",
+                                            "Completed",
+                                            "Cancelled"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "isCompleted": {
+                                          "type": "boolean"
+                                        },
+                                        "attendanceStatus": {
+                                          "enum": [
+                                            "Expected",
+                                            "Present",
+                                            "Absent",
+                                            "Excused",
+                                            "Late"
+                                          ],
+                                          "type": "string",
+                                          "nullable": true
+                                        }
+                                      },
+                                      "additionalProperties": false
+                                    },
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/seed/all": {
       "post": {
         "tags": [
@@ -256920,7 +258349,6 @@
       "CreateClassSessionRequestDto": {
         "required": [
           "classId",
-          "endTime",
           "moduleId",
           "startTime",
           "title"
@@ -256951,7 +258379,8 @@
               "FieldTrip",
               "AssignmentWindow"
             ],
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "title": {
             "maxLength": 255,
@@ -256968,6 +258397,7 @@
           },
           "endTime": {
             "type": "string",
+            "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
           "location": {
@@ -281814,9 +283244,164 @@
             "type": "string",
             "nullable": true
           },
+          "payload": {
+            "title": "NotificationPayload",
+            "type": "object",
+            "properties": {
+              "programId": {
+                "type": "string",
+                "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "programEnrollmentId": {
+                "type": "string",
+                "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "enrollmentId": {
+                "type": "string",
+                "description": "Program enrollment id for parent progression and student learn context.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "moduleId": {
+                "type": "string",
+                "description": "Module id (manager curriculum editor / progression context).",
+                "format": "uuid",
+                "nullable": true
+              },
+              "moduleEnrollmentId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "courseId": {
+                "type": "string",
+                "description": "Course id for manager activity editor deep-links.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "activityId": {
+                "type": "string",
+                "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "nextActivityId": {
+                "type": "string",
+                "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "classId": {
+                "type": "string",
+                "description": "Class entity id for manager/mentor class routes.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "classEnrollmentId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "classSessionId": {
+                "type": "string",
+                "description": "Class session id for manager attendance deep-links.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "classMentorRequestId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "assessmentRecoveryRequestId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "classRedeliveryRequestId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "paymentId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "paymentRequestId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "assignmentId": {
+                "type": "string",
+                "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "submissionId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "materialId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "mediaAssetId": {
+                "type": "string",
+                "description": "Media asset id for mentor/manager media deep-links.",
+                "format": "uuid",
+                "nullable": true
+              },
+              "highlightVideoId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "parentStudentId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "studentId": {
+                "type": "string",
+                "description": "Subject student user id (required for parent child-scoped routing).",
+                "format": "uuid",
+                "nullable": true
+              },
+              "extra": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false,
+            "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+            "example": {
+              "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+              "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+            }
+          },
           "payloadJson": {
             "type": "string",
-            "nullable": true
+            "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+            "nullable": true,
+            "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
           },
           "readAt": {
             "type": "string",
@@ -281938,9 +283523,164 @@
                   "type": "string",
                   "nullable": true
                 },
+                "payload": {
+                  "title": "NotificationPayload",
+                  "type": "object",
+                  "properties": {
+                    "programId": {
+                      "type": "string",
+                      "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "programEnrollmentId": {
+                      "type": "string",
+                      "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "enrollmentId": {
+                      "type": "string",
+                      "description": "Program enrollment id for parent progression and student learn context.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "moduleId": {
+                      "type": "string",
+                      "description": "Module id (manager curriculum editor / progression context).",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "moduleEnrollmentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "courseId": {
+                      "type": "string",
+                      "description": "Course id for manager activity editor deep-links.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "activityId": {
+                      "type": "string",
+                      "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "nextActivityId": {
+                      "type": "string",
+                      "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "classId": {
+                      "type": "string",
+                      "description": "Class entity id for manager/mentor class routes.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "classEnrollmentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "classSessionId": {
+                      "type": "string",
+                      "description": "Class session id for manager attendance deep-links.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "classMentorRequestId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "assessmentRecoveryRequestId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "classRedeliveryRequestId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "paymentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "paymentRequestId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "assignmentId": {
+                      "type": "string",
+                      "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "submissionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "materialId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "mediaAssetId": {
+                      "type": "string",
+                      "description": "Media asset id for mentor/manager media deep-links.",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "highlightVideoId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "parentStudentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "studentId": {
+                      "type": "string",
+                      "description": "Subject student user id (required for parent child-scoped routing).",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "extra": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+                  "example": {
+                    "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                    "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                  }
+                },
                 "payloadJson": {
                   "type": "string",
-                  "nullable": true
+                  "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+                  "nullable": true,
+                  "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
                 },
                 "readAt": {
                   "type": "string",
@@ -282108,9 +283848,164 @@
                           "type": "string",
                           "nullable": true
                         },
+                        "payload": {
+                          "title": "NotificationPayload",
+                          "type": "object",
+                          "properties": {
+                            "programId": {
+                              "type": "string",
+                              "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "programEnrollmentId": {
+                              "type": "string",
+                              "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "enrollmentId": {
+                              "type": "string",
+                              "description": "Program enrollment id for parent progression and student learn context.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "moduleId": {
+                              "type": "string",
+                              "description": "Module id (manager curriculum editor / progression context).",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "moduleEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "courseId": {
+                              "type": "string",
+                              "description": "Course id for manager activity editor deep-links.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "activityId": {
+                              "type": "string",
+                              "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "nextActivityId": {
+                              "type": "string",
+                              "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "classId": {
+                              "type": "string",
+                              "description": "Class entity id for manager/mentor class routes.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "classEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "description": "Class session id for manager attendance deep-links.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "classMentorRequestId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "assessmentRecoveryRequestId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "classRedeliveryRequestId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "paymentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "paymentRequestId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "assignmentId": {
+                              "type": "string",
+                              "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "submissionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "materialId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "mediaAssetId": {
+                              "type": "string",
+                              "description": "Media asset id for mentor/manager media deep-links.",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "highlightVideoId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "parentStudentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "studentId": {
+                              "type": "string",
+                              "description": "Subject student user id (required for parent child-scoped routing).",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "extra": {
+                              "type": "string",
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false,
+                          "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+                          "example": {
+                            "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                            "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                          }
+                        },
                         "payloadJson": {
                           "type": "string",
-                          "nullable": true
+                          "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+                          "nullable": true,
+                          "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
                         },
                         "readAt": {
                           "type": "string",
@@ -282292,9 +284187,164 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "payload": {
+                      "title": "NotificationPayload",
+                      "type": "object",
+                      "properties": {
+                        "programId": {
+                          "type": "string",
+                          "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "programEnrollmentId": {
+                          "type": "string",
+                          "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "enrollmentId": {
+                          "type": "string",
+                          "description": "Program enrollment id for parent progression and student learn context.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "moduleId": {
+                          "type": "string",
+                          "description": "Module id (manager curriculum editor / progression context).",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "moduleEnrollmentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "courseId": {
+                          "type": "string",
+                          "description": "Course id for manager activity editor deep-links.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "activityId": {
+                          "type": "string",
+                          "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "nextActivityId": {
+                          "type": "string",
+                          "description": "Next actionable activity id for learn ?activityId= deep-links.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "classId": {
+                          "type": "string",
+                          "description": "Class entity id for manager/mentor class routes.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "classEnrollmentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "classSessionId": {
+                          "type": "string",
+                          "description": "Class session id for manager attendance deep-links.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "classMentorRequestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "assessmentRecoveryRequestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "classRedeliveryRequestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "paymentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "paymentRequestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "assignmentId": {
+                          "type": "string",
+                          "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "submissionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "materialId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "mediaAssetId": {
+                          "type": "string",
+                          "description": "Media asset id for mentor/manager media deep-links.",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "highlightVideoId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "parentStudentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "studentId": {
+                          "type": "string",
+                          "description": "Subject student user id (required for parent child-scoped routing).",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "extra": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false,
+                      "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+                      "example": {
+                        "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                        "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+                      }
+                    },
                     "payloadJson": {
                       "type": "string",
-                      "nullable": true
+                      "description": "Legacy camelCase JSON string of NotificationPayload (same content as payload). Prefer payload.",
+                      "nullable": true,
+                      "example": "{\"programId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"enrollmentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"nextActivityId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\",\"studentId\":\"3fa85f64-5717-4562-b3fc-2c963f66afa6\"}"
                     },
                     "readAt": {
                       "type": "string",
@@ -282353,6 +284403,159 @@
           }
         },
         "additionalProperties": false
+      },
+      "NotificationPayload": {
+        "title": "NotificationPayload",
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "description": "Program catalog id used in /programs/{programId} and manager curriculum routes.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "programEnrollmentId": {
+            "type": "string",
+            "description": "Same as enrollmentId (legacy key). Prefer enrollmentId on FE.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "enrollmentId": {
+            "type": "string",
+            "description": "Program enrollment id for parent progression and student learn context.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "moduleId": {
+            "type": "string",
+            "description": "Module id (manager curriculum editor / progression context).",
+            "format": "uuid",
+            "nullable": true
+          },
+          "moduleEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "description": "Course id for manager activity editor deep-links.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "activityId": {
+            "type": "string",
+            "description": "Activity node id (completed or target). Prefer nextActivityId for progression.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "nextActivityId": {
+            "type": "string",
+            "description": "Next actionable activity id for learn ?activityId= deep-links.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classId": {
+            "type": "string",
+            "description": "Class entity id for manager/mentor class routes.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classSessionId": {
+            "type": "string",
+            "description": "Class session id for manager attendance deep-links.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classMentorRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assessmentRecoveryRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "classRedeliveryRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "paymentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "paymentRequestId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignmentId": {
+            "type": "string",
+            "description": "Assignment node id for learn ?assignmentId= or manager assignment editor.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "materialId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mediaAssetId": {
+            "type": "string",
+            "description": "Media asset id for mentor/manager media deep-links.",
+            "format": "uuid",
+            "nullable": true
+          },
+          "highlightVideoId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "parentStudentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "studentId": {
+            "type": "string",
+            "description": "Subject student user id (required for parent child-scoped routing).",
+            "format": "uuid",
+            "nullable": true
+          },
+          "extra": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false,
+        "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson.",
+        "example": {
+          "programId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "enrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "programEnrollmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "studentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "moduleId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "courseId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "activityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "nextActivityId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+        }
       },
       "NotificationUnreadCountDto": {
         "type": "object",
@@ -300483,6 +302686,206 @@
         },
         "additionalProperties": false
       },
+      "ScheduleDayResponseDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "dayOfWeek": {
+            "enum": [
+              "Sunday",
+              "Monday",
+              "Tuesday",
+              "Wednesday",
+              "Thursday",
+              "Friday",
+              "Saturday"
+            ],
+            "type": "string"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "classId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "classCode": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "className": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "programId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "mentorId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "moduleId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "activityId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "sessionKind": {
+                  "enum": [
+                    "Lesson",
+                    "FieldTrip",
+                    "AssignmentWindow"
+                  ],
+                  "type": "string"
+                },
+                "startTime": {
+                  "type": "string",
+                  "example": "15/06/2026 14:30:00"
+                },
+                "endTime": {
+                  "type": "string",
+                  "example": "15/06/2026 14:30:00"
+                },
+                "location": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "meetingUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "status": {
+                  "enum": [
+                    "Scheduled",
+                    "InProgress",
+                    "Completed",
+                    "Cancelled"
+                  ],
+                  "type": "string"
+                },
+                "isCompleted": {
+                  "type": "boolean"
+                },
+                "attendanceStatus": {
+                  "enum": [
+                    "Expected",
+                    "Present",
+                    "Absent",
+                    "Excused",
+                    "Late"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                }
+              },
+              "additionalProperties": false
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ScheduleSessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mentorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sessionKind": {
+            "enum": [
+              "Lesson",
+              "FieldTrip",
+              "AssignmentWindow"
+            ],
+            "type": "string"
+          },
+          "startTime": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "location": {
+            "type": "string",
+            "nullable": true
+          },
+          "meetingUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Scheduled",
+              "InProgress",
+              "Completed",
+              "Cancelled"
+            ],
+            "type": "string"
+          },
+          "isCompleted": {
+            "type": "boolean"
+          },
+          "attendanceStatus": {
+            "enum": [
+              "Expected",
+              "Present",
+              "Absent",
+              "Excused",
+              "Late"
+            ],
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "SessionAttendanceResponseDto": {
         "type": "object",
         "properties": {
@@ -304268,6 +306671,474 @@
             "maxLength": 6,
             "minLength": 6,
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "WeeklyScheduleResponseDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "weekStart": {
+            "type": "string",
+            "format": "date"
+          },
+          "weekEnd": {
+            "type": "string",
+            "format": "date"
+          },
+          "timezone": {
+            "type": "string",
+            "nullable": true
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "dayOfWeek": {
+                  "enum": [
+                    "Sunday",
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday"
+                  ],
+                  "type": "string"
+                },
+                "sessions": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "classId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "classCode": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "className": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "programId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "mentorId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "moduleId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "activityId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "sessionKind": {
+                        "enum": [
+                          "Lesson",
+                          "FieldTrip",
+                          "AssignmentWindow"
+                        ],
+                        "type": "string"
+                      },
+                      "startTime": {
+                        "type": "string",
+                        "example": "15/06/2026 14:30:00"
+                      },
+                      "endTime": {
+                        "type": "string",
+                        "example": "15/06/2026 14:30:00"
+                      },
+                      "location": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "meetingUrl": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "status": {
+                        "enum": [
+                          "Scheduled",
+                          "InProgress",
+                          "Completed",
+                          "Cancelled"
+                        ],
+                        "type": "string"
+                      },
+                      "isCompleted": {
+                        "type": "boolean"
+                      },
+                      "attendanceStatus": {
+                        "enum": [
+                          "Expected",
+                          "Present",
+                          "Absent",
+                          "Excused",
+                          "Late"
+                        ],
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": false
+                  },
+                  "nullable": true
+                }
+              },
+              "additionalProperties": false
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "WeeklyScheduleResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "studentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "weekStart": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "weekEnd": {
+                    "type": "string",
+                    "format": "date"
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "days": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "date": {
+                          "type": "string",
+                          "format": "date"
+                        },
+                        "dayOfWeek": {
+                          "enum": [
+                            "Sunday",
+                            "Monday",
+                            "Tuesday",
+                            "Wednesday",
+                            "Thursday",
+                            "Friday",
+                            "Saturday"
+                          ],
+                          "type": "string"
+                        },
+                        "sessions": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "classId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "classCode": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "className": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "programId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "mentorId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "moduleId": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "activityId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "sessionKind": {
+                                "enum": [
+                                  "Lesson",
+                                  "FieldTrip",
+                                  "AssignmentWindow"
+                                ],
+                                "type": "string"
+                              },
+                              "startTime": {
+                                "type": "string",
+                                "example": "15/06/2026 14:30:00"
+                              },
+                              "endTime": {
+                                "type": "string",
+                                "example": "15/06/2026 14:30:00"
+                              },
+                              "location": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "meetingUrl": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "status": {
+                                "enum": [
+                                  "Scheduled",
+                                  "InProgress",
+                                  "Completed",
+                                  "Cancelled"
+                                ],
+                                "type": "string"
+                              },
+                              "isCompleted": {
+                                "type": "boolean"
+                              },
+                              "attendanceStatus": {
+                                "enum": [
+                                  "Expected",
+                                  "Present",
+                                  "Absent",
+                                  "Excused",
+                                  "Late"
+                                ],
+                                "type": "string",
+                                "nullable": true
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "WeeklyScheduleResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "studentId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "weekStart": {
+                "type": "string",
+                "format": "date"
+              },
+              "weekEnd": {
+                "type": "string",
+                "format": "date"
+              },
+              "timezone": {
+                "type": "string",
+                "nullable": true
+              },
+              "days": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "date": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "dayOfWeek": {
+                      "enum": [
+                        "Sunday",
+                        "Monday",
+                        "Tuesday",
+                        "Wednesday",
+                        "Thursday",
+                        "Friday",
+                        "Saturday"
+                      ],
+                      "type": "string"
+                    },
+                    "sessions": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "classId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "classCode": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "className": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "programId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "mentorId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "moduleId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "activityId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "sessionKind": {
+                            "enum": [
+                              "Lesson",
+                              "FieldTrip",
+                              "AssignmentWindow"
+                            ],
+                            "type": "string"
+                          },
+                          "startTime": {
+                            "type": "string",
+                            "example": "15/06/2026 14:30:00"
+                          },
+                          "endTime": {
+                            "type": "string",
+                            "example": "15/06/2026 14:30:00"
+                          },
+                          "location": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "meetingUrl": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "status": {
+                            "enum": [
+                              "Scheduled",
+                              "InProgress",
+                              "Completed",
+                              "Cancelled"
+                            ],
+                            "type": "string"
+                          },
+                          "isCompleted": {
+                            "type": "boolean"
+                          },
+                          "attendanceStatus": {
+                            "enum": [
+                              "Expected",
+                              "Present",
+                              "Absent",
+                              "Excused",
+                              "Late"
+                            ],
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": false
+                      },
+                      "nullable": true
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           }
         },
         "additionalProperties": false

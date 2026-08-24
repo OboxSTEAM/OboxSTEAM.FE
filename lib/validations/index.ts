@@ -69,6 +69,7 @@ export {
 } from "./curriculum";
 export {
   createProgramSchema,
+  createProgramRequestSchema,
   programIdParamSchema,
   programListQuerySchema,
   programReviewsQuerySchema,

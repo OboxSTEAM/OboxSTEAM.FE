@@ -8,7 +8,7 @@ import { MentorHeader } from "@/components/mentor/layout/mentor-header";
 import { MentorSidebar } from "@/components/mentor/layout/mentor-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { useCurrentUser } from "@/hooks/use-current-user";
-import { isMentorRole } from "@/lib/auth/roles";
+import { getRoleHomePath, isMentorRole } from "@/lib/auth/roles";
 
 function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/mentor/classes")) return "Lớp của tôi";
@@ -55,7 +55,7 @@ export function MentorShell({ children }: { children: React.ReactNode }) {
     }
 
     if (profile && !isMentorRole(profile.role)) {
-      router.replace("/");
+      router.replace(getRoleHomePath(profile.role));
     }
   }, [isAuthenticated, isHydrated, isLoading, profile, pathname, router]);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -40,13 +40,23 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────
 export type ProgramFormValues = z.infer<typeof programUpsertSchema>;
 
+export type ProgramFormSubmitOptions = {
+  /** Local file for `POST /api/programs` create-time thumbnail (ignored on edit). */
+  thumbnailFile?: File | null;
+};
+
 export type ProgramFormProps = {
-  /** When set, enables multipart thumbnail upload via `POST /api/programs/{id}/thumbnail`. */
+  /** When set, enables multipart thumbnail update via `POST /api/programs/{id}/thumbnail`. */
   programId?: string;
   initialValues?: Partial<ProgramFormValues>;
-  onSubmit: (values: ProgramFormValues) => Promise<void>;
+  onSubmit: (
+    values: ProgramFormValues,
+    options?: ProgramFormSubmitOptions,
+  ) => Promise<void>;
   onThumbnailUploaded?: (program: ProgramWithModules) => void;
   isLoading?: boolean;
+  /** Cohort lock / read-only — disables fields and thumbnail upload. */
+  disabled?: boolean;
   /** Extra buttons rendered in the sticky action bar */
   actionSlot?: React.ReactNode;
 };
@@ -68,7 +78,7 @@ const LEVELS = [
 ] as const;
 
 const STATUSES = [
-  { value: "Active",   label: "Hoạt động",      dot: "#7CB342" },
+  { value: "Active",   label: "Đang mở",         dot: "#7CB342" },
   { value: "Draft",    label: "Bản nháp",        dot: "#9e9e9e" },
   { value: "Inactive", label: "Ngừng hoạt động", dot: "#E94B3C" },
 ] as const;
@@ -105,13 +115,30 @@ export function ProgramForm({
   onSubmit,
   onThumbnailUploaded,
   isLoading = false,
+  disabled = false,
 }: ProgramFormProps) {
-  const isEdit = Boolean(initialValues?.name);
-  const canUploadThumbnail = Boolean(programId);
+  const isEdit = Boolean(programId);
+  /** Create: pick file for create multipart. Edit: upload via thumbnail endpoint. */
+  const canPickThumbnail = !disabled;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImageOpen, setIsImageOpen] = useState(!isEdit);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!isEdit);
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [pendingThumbnailFile, setPendingThumbnailFile] = useState<File | null>(
+    null,
+  );
+  const [pendingThumbnailPreview, setPendingThumbnailPreview] = useState<
+    string | null
+  >(null);
+
+  useEffect(() => {
+    return () => {
+      if (pendingThumbnailPreview) {
+        URL.revokeObjectURL(pendingThumbnailPreview);
+      }
+    };
+  }, [pendingThumbnailPreview]);
+
   const {
     register,
     handleSubmit,
@@ -141,10 +168,13 @@ export function ProgramForm({
     name: ["thumbnailUrl", "category"],
   });
   const catColor = CATEGORIES.find((item) => item.value === category)?.color ?? "#4FC3F7";
+  const displayThumbUrl = pendingThumbnailPreview || thumbUrl;
 
   const onFormSubmit = handleSubmit(
     async (data) => {
-      await onSubmit(data);
+      await onSubmit(data, {
+        thumbnailFile: isEdit ? null : pendingThumbnailFile,
+      });
     },
     (validationErrors) => {
       if (validationErrors.thumbnailUrl) setIsImageOpen(true);
@@ -155,11 +185,24 @@ export function ProgramForm({
   );
 
   async function handleThumbnailFile(file: File) {
-    if (!programId) return;
-
     const parsed = uploadProgramThumbnailSchema.safeParse({ file });
     if (!parsed.success) {
       showAppErrorFromUnknown(parsed.error, "programs.upload-thumbnail");
+      return;
+    }
+
+    // Create flow: keep file locally; sent with POST /api/programs.
+    if (!programId) {
+      if (pendingThumbnailPreview) {
+        URL.revokeObjectURL(pendingThumbnailPreview);
+      }
+      const previewUrl = URL.createObjectURL(parsed.data.file);
+      setPendingThumbnailFile(parsed.data.file);
+      setPendingThumbnailPreview(previewUrl);
+      setValue("thumbnailUrl", previewUrl, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
       return;
     }
 
@@ -183,13 +226,23 @@ export function ProgramForm({
     }
   }
 
+  function clearPendingThumbnail() {
+    if (pendingThumbnailPreview) {
+      URL.revokeObjectURL(pendingThumbnailPreview);
+    }
+    setPendingThumbnailFile(null);
+    setPendingThumbnailPreview(null);
+    setValue("thumbnailUrl", "", { shouldDirty: true, shouldValidate: true });
+  }
+
   function openThumbnailPicker() {
-    if (!canUploadThumbnail || isUploadingThumbnail || isLoading) return;
+    if (!canPickThumbnail || isUploadingThumbnail || isLoading) return;
     fileInputRef.current?.click();
   }
 
   return (
     <form onSubmit={onFormSubmit} className="flex flex-col gap-6">
+      <fieldset disabled={disabled || isLoading} className="flex flex-col gap-6 border-0 p-0 m-0 min-w-0 disabled:opacity-70">
 
       {/* ── Top: Image panel (Hero Banner) ─────────────────────────── */}
       <Collapsible open={isImageOpen} onOpenChange={setIsImageOpen}>
@@ -201,7 +254,7 @@ export function ProgramForm({
               </p>
               {!isImageOpen ? (
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {thumbUrl ? "Đã có ảnh đại diện" : "Chưa có ảnh đại diện"}
+                  {displayThumbUrl ? "Đã có ảnh đại diện" : "Chưa có ảnh đại diện"}
                 </p>
               ) : null}
             </div>
@@ -220,10 +273,10 @@ export function ProgramForm({
             className="relative w-full md:w-2/3 overflow-hidden rounded-xl border border-border bg-muted"
             style={{ aspectRatio: "21/9" }}
           >
-            {thumbUrl ? (
+            {displayThumbUrl ? (
               <>
                 <img
-                  src={thumbUrl}
+                  src={displayThumbUrl}
                   alt="thumbnail"
                   className="h-full w-full object-cover"
                   onError={(e) => { (e.target as HTMLImageElement).style.opacity = "0"; }}
@@ -232,7 +285,7 @@ export function ProgramForm({
                 <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/30 opacity-0 hover:opacity-100 transition-opacity">
                   <button
                     type="button"
-                    disabled={!canUploadThumbnail || isUploadingThumbnail || isLoading}
+                    disabled={!canPickThumbnail || isUploadingThumbnail || isLoading}
                     onClick={openThumbnailPicker}
                     className="flex items-center gap-1.5 rounded-lg bg-card px-3 py-1.5 text-xs font-semibold text-foreground shadow hover:bg-muted disabled:opacity-50"
                   >
@@ -246,12 +299,16 @@ export function ProgramForm({
                   <button
                     type="button"
                     disabled={isUploadingThumbnail || isLoading}
-                    onClick={() =>
+                    onClick={() => {
+                      if (!isEdit) {
+                        clearPendingThumbnail();
+                        return;
+                      }
                       setValue("thumbnailUrl", "", {
                         shouldDirty: true,
                         shouldValidate: true,
-                      })
-                    }
+                      });
+                    }}
                     className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary/90 disabled:opacity-50"
                   >
                     <Trash2 className="size-3.5" />
@@ -262,7 +319,7 @@ export function ProgramForm({
             ) : (
               <button
                 type="button"
-                disabled={!canUploadThumbnail || isUploadingThumbnail || isLoading}
+                disabled={!canPickThumbnail || isUploadingThumbnail || isLoading}
                 onClick={openThumbnailPicker}
                 className="flex h-full w-full flex-col items-center justify-center gap-3 p-4 disabled:cursor-not-allowed"
               >
@@ -277,9 +334,7 @@ export function ProgramForm({
                   )}
                 </div>
                 <p className="text-center text-[11px] text-muted-foreground leading-relaxed">
-                  {canUploadThumbnail
-                    ? "Chọn ảnh JPG/PNG (tối đa 5 MB) để tải lên"
-                    : "Tạo chương trình trước, rồi tải ảnh lên — hoặc dán URL bên phải"}
+                  Chọn ảnh JPG/PNG/WebP (tối đa 5 MB) để tải lên
                 </p>
               </button>
             )}
@@ -288,24 +343,22 @@ export function ProgramForm({
           {/* URL input and info */}
           <div className="flex-1 w-full space-y-4">
             <div>
-              <label className={LBL}>
-                {canUploadThumbnail ? "Ảnh thumbnail" : "URL ảnh thumbnail"}
-              </label>
-              {canUploadThumbnail ? (
-                <div className="flex flex-col gap-2">
-                  <button
-                    type="button"
-                    disabled={isUploadingThumbnail || isLoading}
-                    onClick={openThumbnailPicker}
-                    className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
-                  >
-                    {isUploadingThumbnail ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : (
-                      <Upload className="size-3.5" />
-                    )}
-                    {thumbUrl ? "Tải ảnh mới" : "Tải ảnh lên"}
-                  </button>
+              <label className={LBL}>Ảnh thumbnail</label>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  disabled={!canPickThumbnail || isUploadingThumbnail || isLoading}
+                  onClick={openThumbnailPicker}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-lg border border-input bg-card px-3 text-sm font-semibold text-foreground hover:bg-muted disabled:opacity-50"
+                >
+                  {isUploadingThumbnail ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="size-3.5" />
+                  )}
+                  {displayThumbUrl ? "Tải ảnh mới" : "Tải ảnh lên"}
+                </button>
+                {isEdit ? (
                   <Input
                     id="thumbnailUrl"
                     readOnly
@@ -313,22 +366,21 @@ export function ProgramForm({
                     placeholder="Ảnh sẽ hiện URL sau khi tải lên"
                     className={cn(INPUT_CLS, "text-xs font-mono w-full bg-muted")}
                   />
-                </div>
-              ) : (
-                <Input
-                  id="thumbnailUrl"
-                  placeholder="https://example.com/image.jpg"
-                  {...register("thumbnailUrl")}
-                  className={cn(INPUT_CLS, "text-xs font-mono w-full")}
-                />
-              )}
+                ) : (
+                  <p className="text-[11px] text-muted-foreground">
+                    {pendingThumbnailFile
+                      ? `Đã chọn: ${pendingThumbnailFile.name}`
+                      : "Ảnh sẽ được gửi kèm khi tạo chương trình."}
+                  </p>
+                )}
+              </div>
               <FieldError message={errors.thumbnailUrl?.message} />
             </div>
 
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {canUploadThumbnail
-                ? "Ảnh được tải lên máy chủ và gắn trực tiếp vào chương trình. JPG/PNG · tối đa 5 MB."
-                : "Sau khi tạo chương trình, bạn có thể tải ảnh lên bằng endpoint thumbnail. Khi tạo mới vẫn có thể dán URL tạm thời."}
+              {isEdit
+                ? "Ảnh mới được tải qua endpoint thumbnail và thay thế ảnh hiện tại. JPG/PNG/WebP · tối đa 5 MB."
+                : "Ảnh đính kèm khi tạo chương trình (multipart). Sau khi tạo có thể đổi ảnh bằng nút tải lên trên trang chỉnh sửa."}
             </p>
 
             <input
@@ -538,6 +590,7 @@ export function ProgramForm({
                 <FieldError message={errors.level?.message} />
               </div>
 
+              {isEdit ? (
               <div>
                 <label className={LBL}>
                   Trạng thái <span className="text-primary">*</span>
@@ -578,6 +631,11 @@ export function ProgramForm({
                 />
                 <FieldError message={errors.status?.message} />
               </div>
+              ) : (
+                <div className="rounded-lg border border-border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+                  Chương trình mới mặc định <span className="font-semibold text-foreground">Bản nháp</span>. Đổi trạng thái sau khi tạo.
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -668,9 +726,10 @@ export function ProgramForm({
         </Collapsible>
 
       </div>
+      </fieldset>
 
       {/* Hidden submit – triggered by outer action bar */}
-      <button type="submit" id="__program-form-submit" className="hidden" aria-hidden disabled={isLoading} />
+      <button type="submit" id="__program-form-submit" className="hidden" aria-hidden disabled={isLoading || disabled} />
     </form>
   );
 }

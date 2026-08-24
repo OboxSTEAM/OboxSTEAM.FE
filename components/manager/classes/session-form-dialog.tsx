@@ -38,7 +38,10 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
 } from "@/components/ui/select";
 import { getCourseById, getModuleById, getAssignments } from "@/lib/api";
@@ -47,7 +50,6 @@ import type { AssignmentType } from "@/lib/api/entities/assignment";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import type { Module } from "@/lib/api/entities/module";
 import {
-  CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
 import {
@@ -76,6 +78,49 @@ const INPUT_CLASS =
 
 const SELECT_TRIGGER_CLASS = "h-10 w-full rounded-lg";
 
+/** Manager form copy — derived from activity/assignment, not free-picked. */
+const SESSION_KIND_DERIVED_LABELS: Record<
+  NonNullable<ClassSessionFormValues["sessionKind"]>,
+  string
+> = {
+  LiveOnline: "Buổi học (Online)",
+  Offline: "Ngoại khóa (Offline)",
+  AssignmentWindow: "Cửa sổ nộp bài",
+};
+
+const ACTIVITY_LINK_PREFIX = "activity:";
+const ASSIGNMENT_LINK_PREFIX = "assignment:";
+
+function sessionKindFromActivityType(
+  activityType: ActivityType,
+): NonNullable<ClassSessionFormValues["sessionKind"]> {
+  return activityType === "Offline" ? "Offline" : "LiveOnline";
+}
+
+function encodeCurriculumLink(
+  kind: "activity" | "assignment",
+  id: string,
+): string {
+  return kind === "activity"
+    ? `${ACTIVITY_LINK_PREFIX}${id}`
+    : `${ASSIGNMENT_LINK_PREFIX}${id}`;
+}
+
+function parseCurriculumLink(
+  value: string | null | undefined,
+): { kind: "activity" | "assignment"; id: string } | null {
+  if (!value) return null;
+  if (value.startsWith(ACTIVITY_LINK_PREFIX)) {
+    const id = value.slice(ACTIVITY_LINK_PREFIX.length);
+    return id ? { kind: "activity", id } : null;
+  }
+  if (value.startsWith(ASSIGNMENT_LINK_PREFIX)) {
+    const id = value.slice(ASSIGNMENT_LINK_PREFIX.length);
+    return id ? { kind: "assignment", id } : null;
+  }
+  return null;
+}
+
 /** "YYYY-MM-DDTHH:mm" + minutes, or "" when the input is unparseable. */
 function addMinutes(localInput: string, minutes: number): string {
   const parsed = new Date(localInput);
@@ -89,7 +134,7 @@ export type ClassSessionFormSubmitPayload = {
   moduleId: string;
   activityId?: string | null;
   assignmentId?: string | null;
-  sessionKind?: ClassSessionFormValues["sessionKind"];
+  /** Never send — BE derives SessionKind from the curriculum item. */
   title: string;
   description?: string | null;
   startTime: string;
@@ -151,7 +196,7 @@ function toDefaultValues(
     moduleId: session?.moduleId ?? "",
     activityId: session?.activityId ?? "",
     assignmentId: session?.assignmentId ?? "",
-    sessionKind: session?.sessionKind ?? "Lesson",
+    sessionKind: session?.sessionKind ?? "LiveOnline",
     title: session?.title ?? "",
     description: session?.description ?? "",
     startTime: session ? fromApiDateTimeToLocalInput(session.startTime) : slotStart,
@@ -200,11 +245,11 @@ export function SessionFormDialog({
   const selectedModuleId = watch("moduleId");
   const selectedActivityId = watch("activityId") ?? "";
   const selectedAssignmentId = watch("assignmentId") ?? "";
-  const sessionKind = watch("sessionKind") ?? "Lesson";
+  const sessionKind = watch("sessionKind") ?? "LiveOnline";
   const isActivitySession = Boolean(selectedActivityId.trim());
   const isAssignmentSession = Boolean(selectedAssignmentId.trim());
   /** Soft preference only — both venue modes stay available. */
-  const prefersPlace = sessionKind === "FieldTrip";
+  const prefersPlace = sessionKind === "Offline";
   const [extraVenueOpen, setExtraVenueOpen] = useState(false);
   const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
   const [assignmentOptions, setAssignmentOptions] = useState<AssignmentOption[]>(
@@ -346,7 +391,6 @@ export function SessionFormDialog({
       moduleId: values.moduleId,
       activityId,
       assignmentId,
-      sessionKind: values.sessionKind,
       title: values.title.trim(),
       description: values.description?.trim() || null,
       startTime,
@@ -406,60 +450,12 @@ export function SessionFormDialog({
                 />
               </FormField>
 
-              <FormField
-                id="sessionKind"
-                label="Loại buổi"
-                error={errors.sessionKind?.message}
-              >
-                <Controller
-                  control={control}
-                  name="sessionKind"
-                  render={({ field }) => (
-                    <Select
-                      value={field.value || "Lesson"}
-                      onValueChange={(value) =>
-                        field.onChange(value ?? "Lesson")
-                      }
-                    >
-                      <SelectTrigger
-                        id="sessionKind"
-                        className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
-                      >
-                        <span className="truncate">
-                          {CLASS_SESSION_KIND_LABELS[
-                            (field.value ||
-                              "Lesson") as keyof typeof CLASS_SESSION_KIND_LABELS
-                          ] ?? "Chọn loại"}
-                        </span>
-                      </SelectTrigger>
-                      <SelectContent
-                        align="start"
-                        alignItemWithTrigger={false}
-                        sideOffset={8}
-                        className={LIGHT_SELECT_CONTENT}
-                      >
-                        {Object.entries(CLASS_SESSION_KIND_LABELS).map(
-                          ([value, label]) => (
-                            <SelectItem
-                              key={value}
-                              value={value}
-                              className={LIGHT_SELECT_ITEM}
-                            >
-                              {label}
-                            </SelectItem>
-                          ),
-                        )}
-                      </SelectContent>
-                    </Select>
-                  )}
-                />
-              </FormField>
-
               {session ? (
                 <FormField
                   id="status"
                   label="Trạng thái"
                   error={errors.status?.message}
+                  className="sm:col-span-2"
                 >
                   <Controller
                     control={control}
@@ -563,55 +559,114 @@ export function SessionFormDialog({
               </FormField>
 
               <FormField
-                id="activityId"
-                label="Hoạt động (XOR bài tập)"
-                error={errors.activityId?.message}
+                id="curriculumLink"
+                label="Nội dung buổi học"
+                required
+                error={
+                  errors.activityId?.message || errors.assignmentId?.message
+                }
+                className="sm:col-span-2"
               >
                 <Controller
                   control={control}
                   name="activityId"
-                  render={({ field }) => {
-                    const selectedActivity = activityOptions.find(
-                      (item) => item.id === field.value,
-                    );
+                  render={() => {
                     const hasModule = !!selectedModuleId;
+                    const isLoading =
+                      isActivitiesLoading || isAssignmentsLoading;
+                    const linkValue = selectedActivityId
+                      ? encodeCurriculumLink("activity", selectedActivityId)
+                      : selectedAssignmentId
+                        ? encodeCurriculumLink(
+                            "assignment",
+                            selectedAssignmentId,
+                          )
+                        : null;
+                    const selectedActivity = activityOptions.find(
+                      (item) => item.id === selectedActivityId,
+                    );
+                    const selectedAssignment = assignmentOptions.find(
+                      (item) => item.id === selectedAssignmentId,
+                    );
+                    const triggerLabel = !hasModule
+                      ? "Chọn module trước"
+                      : isLoading
+                        ? "Đang tải nội dung..."
+                        : selectedActivity
+                          ? `Hoạt động · ${selectedActivity.name}`
+                          : selectedAssignment
+                            ? `Bài tập · ${selectedAssignment.title}`
+                            : "Chọn hoạt động hoặc bài tập";
+
                     return (
                       <Select
-                        value={field.value || "none"}
+                        value={linkValue}
                         onValueChange={(value) => {
-                          const next = value === "none" ? "" : (value ?? "");
-                          field.onChange(next);
-                          if (next) {
-                            setValue("assignmentId", "", { shouldValidate: true });
-                            const activity = activityOptions.find((item) => item.id === next);
+                          const parsed = parseCurriculumLink(value);
+                          if (!parsed) {
+                            setValue("activityId", "", { shouldValidate: true });
+                            setValue("assignmentId", "", {
+                              shouldValidate: true,
+                            });
+                            setValue("sessionKind", "LiveOnline", {
+                              shouldValidate: true,
+                            });
+                            return;
+                          }
+
+                          if (parsed.kind === "activity") {
+                            setValue("activityId", parsed.id, {
+                              shouldValidate: true,
+                            });
+                            setValue("assignmentId", "", {
+                              shouldValidate: true,
+                            });
+                            const activity = activityOptions.find(
+                              (item) => item.id === parsed.id,
+                            );
                             if (activity) {
-                              if (activity.activityType === "Offline") {
-                                setValue("sessionKind", "FieldTrip");
-                              } else {
-                                setValue("sessionKind", "Lesson");
-                              }
+                              setValue(
+                                "sessionKind",
+                                sessionKindFromActivityType(
+                                  activity.activityType,
+                                ),
+                                { shouldValidate: true },
+                              );
                               if (!getValues("title")?.trim()) {
                                 setValue("title", activity.name);
                               }
-                              applyActivityDuration(activity, getValues("startTime"));
+                              applyActivityDuration(
+                                activity,
+                                getValues("startTime"),
+                              );
                             }
+                            return;
+                          }
+
+                          setValue("assignmentId", parsed.id, {
+                            shouldValidate: true,
+                          });
+                          setValue("activityId", "", { shouldValidate: true });
+                          setValue("sessionKind", "AssignmentWindow", {
+                            shouldValidate: true,
+                          });
+                          const assignment = assignmentOptions.find(
+                            (item) => item.id === parsed.id,
+                          );
+                          if (assignment && !getValues("title")?.trim()) {
+                            setValue("title", assignment.title);
                           }
                         }}
-                        disabled={!hasModule || isActivitiesLoading}
+                        disabled={!hasModule || isLoading}
                       >
                         <SelectTrigger
-                          id="activityId"
-                          className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
+                          id="curriculumLink"
+                          className={cn(
+                            LIGHT_SELECT_TRIGGER,
+                            SELECT_TRIGGER_CLASS,
+                          )}
                         >
-                          <span className="truncate">
-                            {!hasModule
-                              ? "Chọn module trước"
-                              : isActivitiesLoading
-                                ? "Đang tải hoạt động..."
-                                : selectedActivity
-                                  ? selectedActivity.name
-                                  : "Không chọn hoạt động"}
-                          </span>
+                          <span className="truncate">{triggerLabel}</span>
                         </SelectTrigger>
                         <SelectContent
                           align="start"
@@ -619,118 +674,117 @@ export function SessionFormDialog({
                           sideOffset={8}
                           className={LIGHT_SELECT_CONTENT}
                         >
-                          <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
-                            Không chọn hoạt động
-                          </SelectItem>
-                          {activityOptions.map((activity) => {
-                            const occupied = occupiedActivityIds?.has(activity.id) ?? false;
-                            return (
+                          <SelectGroup>
+                            <SelectLabel>Hoạt động trên lớp</SelectLabel>
+                            {activityOptions.length === 0 ? (
                               <SelectItem
-                                key={activity.id}
-                                value={activity.id}
-                                disabled={occupied}
+                                value="__empty_activity"
+                                disabled
                                 className={LIGHT_SELECT_ITEM}
                               >
-                                {activity.name}
-                                <span className="ml-2 text-[11px] text-muted-foreground">
-                                  {ACTIVITY_TYPE_LABELS[activity.activityType]} ·{" "}
-                                  {activity.courseName}
-                                  {occupied ? " · đã có buổi" : ""}
-                                </span>
+                                Chưa có hoạt động Live/Offline trong module
                               </SelectItem>
-                            );
-                          })}
+                            ) : (
+                              activityOptions.map((activity) => {
+                                const occupied =
+                                  occupiedActivityIds?.has(activity.id) ??
+                                  false;
+                                return (
+                                  <SelectItem
+                                    key={activity.id}
+                                    value={encodeCurriculumLink(
+                                      "activity",
+                                      activity.id,
+                                    )}
+                                    disabled={occupied}
+                                    className={LIGHT_SELECT_ITEM}
+                                  >
+                                    {activity.name}
+                                    <span className="ml-2 text-[11px] text-muted-foreground">
+                                      {ACTIVITY_TYPE_LABELS[
+                                        activity.activityType
+                                      ]}{" "}
+                                      · {activity.courseName}
+                                      {occupied ? " · đã có buổi" : ""}
+                                    </span>
+                                  </SelectItem>
+                                );
+                              })
+                            )}
+                          </SelectGroup>
+                          <SelectSeparator />
+                          <SelectGroup>
+                            <SelectLabel>Cửa sổ nộp bài tập</SelectLabel>
+                            {assignmentOptions.length === 0 ? (
+                              <SelectItem
+                                value="__empty_assignment"
+                                disabled
+                                className={LIGHT_SELECT_ITEM}
+                              >
+                                Chưa có bài tập trong module
+                              </SelectItem>
+                            ) : (
+                              assignmentOptions.map((assignment) => {
+                                const occupied =
+                                  occupiedAssignmentIds?.has(assignment.id) ??
+                                  false;
+                                return (
+                                  <SelectItem
+                                    key={assignment.id}
+                                    value={encodeCurriculumLink(
+                                      "assignment",
+                                      assignment.id,
+                                    )}
+                                    disabled={occupied}
+                                    className={LIGHT_SELECT_ITEM}
+                                  >
+                                    {assignment.title}
+                                    <span className="ml-2 text-[11px] text-muted-foreground">
+                                      {
+                                        ASSIGNMENT_TYPE_LABELS[
+                                          assignment.assignmentType
+                                        ]
+                                      }
+                                      {occupied ? " · đã có buổi" : ""}
+                                    </span>
+                                  </SelectItem>
+                                );
+                              })
+                            )}
+                          </SelectGroup>
                         </SelectContent>
                       </Select>
                     );
                   }}
                 />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Chỉ chọn một mục: buổi học gắn hoạt động, hoặc cửa sổ thời gian
+                  nộp bài tập. Thiếu mục cần thêm trên khung chương trình trước.
+                </p>
               </FormField>
 
-              <FormField
-                id="assignmentId"
-                label="Bài tập (XOR hoạt động)"
-                error={errors.assignmentId?.message}
-              >
-                <Controller
-                  control={control}
-                  name="assignmentId"
-                  render={({ field }) => {
-                    const selectedAssignment = assignmentOptions.find(
-                      (item) => item.id === field.value,
-                    );
-                    const hasModule = !!selectedModuleId;
-                    return (
-                      <Select
-                        value={field.value || "none"}
-                        onValueChange={(value) => {
-                          const next = value === "none" ? "" : (value ?? "");
-                          field.onChange(next);
-                          if (next) {
-                            setValue("activityId", "", { shouldValidate: true });
-                            setValue("sessionKind", "AssignmentWindow");
-                            const assignment = assignmentOptions.find(
-                              (item) => item.id === next,
-                            );
-                            if (assignment && !getValues("title")?.trim()) {
-                              setValue("title", assignment.title);
-                            }
-                          }
-                        }}
-                        disabled={!hasModule || isAssignmentsLoading}
-                      >
-                        <SelectTrigger
-                          id="assignmentId"
-                          className={cn(LIGHT_SELECT_TRIGGER, SELECT_TRIGGER_CLASS)}
-                        >
-                          <span className="truncate">
-                            {!hasModule
-                              ? "Chọn module trước"
-                              : isAssignmentsLoading
-                                ? "Đang tải bài tập..."
-                                : selectedAssignment
-                                  ? selectedAssignment.title
-                                  : "Không chọn bài tập"}
-                          </span>
-                        </SelectTrigger>
-                        <SelectContent
-                          align="start"
-                          alignItemWithTrigger={false}
-                          sideOffset={8}
-                          className={LIGHT_SELECT_CONTENT}
-                        >
-                          <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
-                            Không chọn bài tập
-                          </SelectItem>
-                          {assignmentOptions.map((assignment) => {
-                            const occupied =
-                              occupiedAssignmentIds?.has(assignment.id) ?? false;
-                            return (
-                              <SelectItem
-                                key={assignment.id}
-                                value={assignment.id}
-                                disabled={occupied}
-                                className={LIGHT_SELECT_ITEM}
-                              >
-                                {assignment.title}
-                                <span className="ml-2 text-[11px] text-muted-foreground">
-                                  {ASSIGNMENT_TYPE_LABELS[assignment.assignmentType]}
-                                  {occupied ? " · đã có buổi" : ""}
-                                </span>
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    );
-                  }}
-                />
-              </FormField>
-
-              <p className="sm:col-span-2 text-xs text-muted-foreground">
-                Chọn đúng một mục. Muốn thêm buổi — thêm item trên khung chương trình trước.
-                Buổi đã hủy được tạo lại (học bù).
-              </p>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="sessionKindDerived">Loại buổi</Label>
+                <div
+                  id="sessionKindDerived"
+                  className={cn(
+                    INPUT_CLASS,
+                    "flex items-center px-3 text-sm",
+                    isActivitySession || isAssignmentSession
+                      ? "text-foreground"
+                      : "text-muted-foreground",
+                  )}
+                  aria-live="polite"
+                >
+                  {isActivitySession || isAssignmentSession
+                    ? SESSION_KIND_DERIVED_LABELS[sessionKind]
+                    : "Chọn nội dung buổi học trước"}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Tự xác định theo nội dung: Online → buổi học, Offline → ngoại
+                  khóa, bài tập → cửa sổ nộp bài.
+                </p>
+              </div>
 
               <div className="space-y-1.5 sm:col-span-2">
                 <Label htmlFor="startTime">
@@ -817,8 +871,8 @@ export function SessionFormDialog({
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {prefersPlace
-                    ? "Field Trip ưu tiên tìm địa chỉ / tọa độ. Bạn vẫn có thể thêm link họp nếu cần."
-                    : "Lesson ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
+                    ? "Offline ưu tiên tìm địa chỉ / tọa độ. Bạn vẫn có thể thêm link họp nếu cần."
+                    : "LiveOnline ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
                 </p>
 
                 {prefersPlace ? (

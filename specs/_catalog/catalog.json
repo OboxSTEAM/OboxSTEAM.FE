@@ -1252,6 +1252,11 @@
         "description": "Final submit: merges optional request text with the saved draft, requires non-empty plain text, and sets submission to TurnedIn for mentor grading."
       },
       {
+        "path": "/api/schedules/weekly",
+        "method": "get",
+        "description": "Returns one Monday–Sunday week of class sessions in Asia/Ho_Chi_Minh, grouped by local date. Students see their own schedule. Parents must pass studentId of a verified linked child. Omit weekStart to use the current Monday. Cancelled sessions are omitted."
+      },
+      {
         "path": "/api/seed/all",
         "method": "post",
         "description": "Seeds all database tables with sample data. Run DELETE /api/seed/clear first when resetting dev data."
@@ -2230,6 +2235,10 @@
         "name": "NotificationDtoPaginationResponseDataContent"
       },
       {
+        "name": "NotificationPayload",
+        "description": "Typed deeplink bag for notification routing. Null/unused keys are omitted at write time. Prefer NotificationDto.payload over payloadJson."
+      },
+      {
         "name": "NotificationUnreadCountDto"
       },
       {
@@ -2662,6 +2671,12 @@
         "name": "SaveRetrospectiveDraftResponseDtoResponseDataContent"
       },
       {
+        "name": "ScheduleDayResponseDto"
+      },
+      {
+        "name": "ScheduleSessionResponseDto"
+      },
+      {
         "name": "SessionAttendanceResponseDto"
       },
       {
@@ -2882,6 +2897,15 @@
       },
       {
         "name": "VerifyOtpDto"
+      },
+      {
+        "name": "WeeklyScheduleResponseDto"
+      },
+      {
+        "name": "WeeklyScheduleResponseDtoApiResult"
+      },
+      {
+        "name": "WeeklyScheduleResponseDtoResponseDataContent"
       }
     ]
   }

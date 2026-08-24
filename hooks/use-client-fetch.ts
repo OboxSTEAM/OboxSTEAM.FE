@@ -75,9 +75,9 @@ export function useClientFetch<T>({
     if (!enabled) {
       if (initialData != null) {
         setData(initialData);
-        setHasError(false);
-        setIsLoading(false);
       }
+      setHasError(false);
+      setIsLoading(false);
       return;
     }
 
