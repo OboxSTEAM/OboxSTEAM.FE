@@ -910,7 +910,6 @@ function ProgramInfoPanel({
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleUpdate = async (values: any) => {
     if (disabled) return;
     setBusy(true);
