@@ -1,12 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { ChevronDown, Menu, X } from "lucide-react";
 
-import StaggeredMenu from "@/components/StaggeredMenu";
+import {
+  AccountNavSheet,
+  ACCOUNT_NAV_SHEET_ID,
+} from "@/components/landing/account-nav-sheet";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,17 +20,12 @@ import { getProfileDisplayName } from "@/lib/auth/profile-display";
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { clearAuthSession } from "@/lib/auth/session";
 import { SITE, NAV_LINKS } from "@/lib/landing/content";
-import {
-  buildSiteHeaderStaggeredMenuItems,
-  STAGGERED_MENU_WARM_COLORS,
-} from "@/lib/navigation/staggered-menu-items";
+import { buildSiteHeaderAccountNavItems } from "@/lib/navigation/account-nav-items";
 import { cn } from "@/lib/utils";
 
 type SiteHeaderProps = {
   /** Use on inner pages (no dark hero) so nav text stays readable. */
   defaultScrolled?: boolean;
-  /** Light hero (cream desk flat-lay) — dark nav text from the top. */
-  heroTone?: "dark" | "light";
   /** Show dark/light toggle — opt-in for learn/portfolio; landing stays off. */
   showThemeToggle?: boolean;
 };
@@ -43,18 +41,17 @@ function getInitials(displayName: string, email: string): string {
 
 export function SiteHeader({
   defaultScrolled = false,
-  heroTone = "dark",
   showThemeToggle = false,
 }: SiteHeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { session, profile, isAuthenticated } = useCurrentUser();
   const [scrolled, setScrolled] = useState(defaultScrolled);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuToggleRef = useRef<HTMLButtonElement>(null);
 
-  const isLightHero = heroTone === "light";
-  const isSolid = defaultScrolled || scrolled || isLightHero;
+  const isSolid = defaultScrolled || scrolled;
+  const showLandingNav = pathname === "/";
   const accountRole = normalizeAccountRole(profile?.role ?? session?.user?.role);
   const email = profile?.email ?? session?.user?.email ?? "";
   const displayName = profile
@@ -67,9 +64,9 @@ export function SiteHeader({
   const avatarUrl = profile?.avatarUrl ?? session?.user?.avatarUrl;
   const initials = getInitials(displayName, email);
 
-  const staggeredMenuItems = useMemo(
+  const accountNavItems = useMemo(
     () =>
-      buildSiteHeaderStaggeredMenuItems({
+      buildSiteHeaderAccountNavItems({
         accountRole,
         onLogout: () => {
           clearAuthSession();
@@ -80,7 +77,7 @@ export function SiteHeader({
   );
 
   useEffect(() => {
-    if (defaultScrolled || isLightHero) return;
+    if (defaultScrolled) return;
 
     const handler = () => {
       setScrolled(window.scrollY > window.innerHeight * 0.8);
@@ -88,45 +85,30 @@ export function SiteHeader({
     window.addEventListener("scroll", handler, { passive: true });
     handler();
     return () => window.removeEventListener("scroll", handler);
-  }, [defaultScrolled, isLightHero]);
+  }, [defaultScrolled]);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [menuOpen]);
-
-  const handleMenuToggle = () => {
-    setMenuOpen((value) => !value);
-    setMobileOpen(false);
+  const handleMenuOpenChange = (open: boolean) => {
+    setMenuOpen(open);
+    if (open) setMobileOpen(false);
   };
 
   const panelHeader = (
-    <div className="border-b border-[#E5E5E0] pb-5">
-      <div className="flex items-center gap-3">
-        <Avatar size="lg" className="ring-2 ring-[#E5E5E0]">
-          {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
-          <AvatarFallback className="bg-[#E94B3C] text-base font-semibold text-white">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-        <div className="min-w-0">
-          <p className="truncate text-base font-semibold text-[#2D2D2D]">
-            {displayName}
-          </p>
-          {userCode ? (
-            <p className="truncate text-sm font-medium text-[#6B6B6B]">
-              {userCode}
-            </p>
-          ) : roleLabel ? (
-            <p className="truncate text-sm font-medium text-[#6B6B6B]">
-              {roleLabel}
-            </p>
-          ) : null}
-        </div>
+    <div className="flex items-center gap-3 pr-8">
+      <Avatar size="lg" className="ring-2 ring-[#E5E5E0]">
+        {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName} /> : null}
+        <AvatarFallback className="bg-[#E94B3C] text-base font-semibold text-white">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="min-w-0">
+        <p className="truncate text-base font-semibold text-[#2D2D2D]">
+          {displayName}
+        </p>
+        {userCode ? (
+          <p className="truncate text-sm font-medium text-[#6B6B6B]">{userCode}</p>
+        ) : roleLabel ? (
+          <p className="truncate text-sm font-medium text-[#6B6B6B]">{roleLabel}</p>
+        ) : null}
       </div>
     </div>
   );
@@ -136,26 +118,13 @@ export function SiteHeader({
       <header
         className={cn(
           "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-          isLightHero
-            ? "pointer-events-none pt-3 px-3 sm:px-5"
-            : isSolid
-              ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0] dark:bg-[#1A1A1A]/95 dark:border-border"
-              : "bg-transparent",
+          isSolid
+            ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0] dark:bg-[#1A1A1A]/95 dark:border-border"
+            : "bg-transparent",
         )}
       >
-        <div
-          className={cn(
-            isLightHero
-              ? "pointer-events-auto mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 rounded-full border border-[#E5E5E0]/90 bg-white/92 px-3 sm:px-5 shadow-[0_4px_24px_rgba(45,45,45,0.08)] backdrop-blur-md"
-              : "mx-auto max-w-7xl px-4 sm:px-6 lg:px-8",
-          )}
-        >
-          <div
-            className={cn(
-              "relative flex w-full items-center justify-between gap-4",
-              !isLightHero && "h-[4.5rem] sm:h-20",
-            )}
-          >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="relative flex h-14 w-full items-center justify-between gap-4 sm:h-16">
             <Link
               href="/"
               className="flex items-center gap-2 shrink-0"
@@ -167,34 +136,24 @@ export function SiteHeader({
                 width={36}
                 height={36}
                 className={cn(
-                  "object-contain transition-[filter] duration-200",
-                  isLightHero
-                    ? "size-8"
-                    : "size-10 sm:size-11",
-                  isLightHero
-                    ? undefined
-                    : isSolid
-                      ? "dark:brightness-0 dark:invert"
-                      : "brightness-0 invert",
+                  "size-8 object-contain transition-[filter] duration-200 sm:size-9",
+                  isSolid
+                    ? "dark:brightness-0 dark:invert"
+                    : "brightness-0 invert",
                 )}
                 priority
               />
               <span
                 className={cn(
-                  "font-heading font-bold leading-none tracking-tight transition-colors duration-200",
-                  isLightHero
-                    ? "text-base text-[#2D2D2D]"
-                    : cn(
-                        "hidden text-lg sm:block sm:text-xl",
-                        isSolid ? "text-[#2D2D2D] dark:text-foreground" : "text-white",
-                      ),
+                  "font-heading hidden text-lg font-bold leading-none tracking-tight transition-colors duration-200 sm:block",
+                  isSolid ? "text-[#2D2D2D] dark:text-foreground" : "text-white",
                 )}
               >
                 OboxSTEAM
               </span>
             </Link>
 
-            {isLightHero ? (
+            {showLandingNav ? (
               <nav
                 className="hidden md:flex items-center gap-1 absolute left-1/2 -translate-x-1/2"
                 aria-label="Điều hướng chính"
@@ -203,7 +162,12 @@ export function SiteHeader({
                   <Link
                     key={link.href}
                     href={link.href}
-                    className="px-3 py-2 text-sm font-medium text-[#6B6B6B] hover:text-[#2D2D2D] transition-colors rounded-full hover:bg-[#F5F5F0]"
+                    className={cn(
+                      "rounded-full px-3 py-2 text-sm font-medium transition-colors",
+                      isSolid
+                        ? "text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                        : "text-white/80 hover:bg-white/10 hover:text-white",
+                    )}
                   >
                     {link.label}
                   </Link>
@@ -233,67 +197,67 @@ export function SiteHeader({
               ) : null}
 
               {isAuthenticated && session ? (
-              <button
-                ref={menuToggleRef}
-                type="button"
-                onClick={handleMenuToggle}
-                aria-expanded={menuOpen}
-                aria-controls="staggered-menu-panel"
-                aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
-                className={cn(
-                  "flex min-h-[48px] items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-2 transition-colors duration-150 sm:pr-3",
-                  isSolid
-                    ? "hover:bg-[#F5F5F0] dark:hover:bg-muted"
-                    : "hover:bg-white/10",
-                )}
-              >
-                <Avatar className="size-9 sm:size-10">
-                  {avatarUrl ? (
-                    <AvatarImage src={avatarUrl} alt={displayName} />
-                  ) : null}
-                  <AvatarFallback
-                    className={cn(
-                      "text-sm font-semibold",
-                      isSolid
-                        ? "bg-[#E94B3C] text-white"
-                        : "bg-white/15 text-white backdrop-blur-sm",
-                    )}
-                  >
-                    {initials}
-                  </AvatarFallback>
-                </Avatar>
-                <span
+                <button
+                  type="button"
+                  onClick={() => handleMenuOpenChange(!menuOpen)}
+                  aria-expanded={menuOpen}
+                  aria-controls={ACCOUNT_NAV_SHEET_ID}
+                  aria-haspopup="dialog"
+                  aria-label={menuOpen ? "Đóng menu" : "Mở menu"}
                   className={cn(
-                    "hidden max-w-[10rem] truncate text-sm font-semibold lg:block",
+                    "flex min-h-[48px] items-center gap-2.5 rounded-full py-1.5 pl-1.5 pr-2 transition-colors duration-150 sm:pr-3",
                     isSolid
-                      ? "text-[#2D2D2D] dark:text-foreground"
-                      : "text-white",
+                      ? "hover:bg-[#F5F5F0] dark:hover:bg-muted"
+                      : "hover:bg-white/10",
                   )}
                 >
-                  {displayName}
-                </span>
-                {menuOpen ? (
-                  <X
-                    size={20}
+                  <Avatar className="size-9 sm:size-10">
+                    {avatarUrl ? (
+                      <AvatarImage src={avatarUrl} alt={displayName} />
+                    ) : null}
+                    <AvatarFallback
+                      className={cn(
+                        "text-sm font-semibold",
+                        isSolid
+                          ? "bg-[#E94B3C] text-white"
+                          : "bg-white/15 text-white backdrop-blur-sm",
+                      )}
+                    >
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span
                     className={cn(
+                      "hidden max-w-[10rem] truncate text-sm font-semibold lg:block",
                       isSolid
                         ? "text-[#2D2D2D] dark:text-foreground"
                         : "text-white",
                     )}
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <ChevronDown
-                    size={20}
-                    className={cn(
-                      isSolid
-                        ? "text-[#6B6B6B] dark:text-muted-foreground"
-                        : "text-white/80",
-                    )}
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
+                  >
+                    {displayName}
+                  </span>
+                  {menuOpen ? (
+                    <X
+                      size={20}
+                      className={cn(
+                        isSolid
+                          ? "text-[#2D2D2D] dark:text-foreground"
+                          : "text-white",
+                      )}
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    <ChevronDown
+                      size={20}
+                      className={cn(
+                        isSolid
+                          ? "text-[#6B6B6B] dark:text-muted-foreground"
+                          : "text-white/80",
+                      )}
+                      aria-hidden="true"
+                    />
+                  )}
+                </button>
               ) : (
                 <>
                   <div className="hidden items-center gap-2 md:flex">
@@ -301,7 +265,7 @@ export function SiteHeader({
                       href="/login"
                       className={cn(
                         "flex min-h-[44px] items-center px-3 py-2 text-sm font-medium transition-colors duration-150",
-                        isSolid || isLightHero
+                        isSolid
                           ? "text-[#6B6B6B] hover:text-[#2D2D2D]"
                           : "text-white/85 hover:text-white",
                       )}
@@ -312,13 +276,10 @@ export function SiteHeader({
                       href="/register"
                       className={cn(
                         buttonVariants({ size: "default" }),
-                        "min-h-[44px] rounded-full px-5 text-sm text-white",
-                        isLightHero
-                          ? "bg-[#2D2D2D] hover:bg-[#1a1a1a] shadow-none"
-                          : "rounded-lg bg-[#E94B3C] px-6 text-base shadow-md shadow-[#E94B3C]/25 hover:bg-[#d43e30]",
+                        "min-h-[44px] rounded-full bg-[#E94B3C] px-5 text-sm text-white shadow-md shadow-[#E94B3C]/25 hover:bg-[#d43e30]",
                       )}
                     >
-                      {isLightHero ? "Đăng ký" : "Đăng ký miễn phí"}
+                      Đăng ký miễn phí
                     </Link>
                   </div>
 
@@ -343,13 +304,20 @@ export function SiteHeader({
         </div>
 
         {mobileOpen && !isAuthenticated ? (
-          <div
-            className={cn(
-              "border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden",
-              isLightHero && "pointer-events-auto mx-3 mt-2 rounded-2xl border",
-            )}
-          >
+          <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden">
             <nav className="flex flex-col gap-1 p-4" aria-label="Menu di động">
+              {showLandingNav
+                ? NAV_LINKS.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      className="flex min-h-[48px] items-center rounded-lg px-4 py-3 text-base font-medium text-[#6B6B6B] transition-colors hover:bg-[#F5F5F0] hover:text-[#2D2D2D]"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {link.label}
+                    </Link>
+                  ))
+                : null}
               <div className="mt-1 flex flex-col gap-2">
                 <Link
                   href="/login"
@@ -375,19 +343,11 @@ export function SiteHeader({
       </header>
 
       {isAuthenticated && session ? (
-        <StaggeredMenu
-          isFixed
-          showHeader={false}
+        <AccountNavSheet
           open={menuOpen}
-          onToggle={handleMenuToggle}
-          externalToggleRef={menuToggleRef}
-          items={staggeredMenuItems}
-          panelHeader={panelHeader}
-          colors={[...STAGGERED_MENU_WARM_COLORS]}
-          accentColor="#E94B3C"
-          displaySocials={false}
-          displayItemNumbering={false}
-          closeOnClickAway
+          onOpenChange={handleMenuOpenChange}
+          header={panelHeader}
+          items={accountNavItems}
         />
       ) : null}
     </>

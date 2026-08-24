@@ -29,7 +29,7 @@ export default function PaymentSuccessPage() {
   return (
     <>
       <SiteHeader defaultScrolled />
-      <main className="min-h-screen bg-[#FAFAF5] pt-[4.5rem] sm:pt-20">
+      <main className="min-h-screen bg-[#FAFAF5] pt-14 sm:pt-16">
         <Suspense fallback={<PaymentSuccessFallback />}>
           <PaymentSuccessPageContent />
         </Suspense>

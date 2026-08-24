@@ -10,7 +10,7 @@ import { CtaDeskSection } from "@/components/landing/sections/cta-desk-section";
 export default function Home() {
   return (
     <>
-      <SiteHeader heroTone="light" />
+      <SiteHeader />
       <main className="flex flex-col">
         <HeroSection />
         <PartnerStripSection />
