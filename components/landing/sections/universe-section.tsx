@@ -18,6 +18,7 @@ import { UNIVERSE_SECTION } from "@/lib/landing/content";
 import { cn } from "@/lib/utils";
 
 type LucideIcon = React.ComponentType<LucideProps>;
+type UniverseFeature = (typeof UNIVERSE_SECTION.features)[number];
 
 const FEATURE_ICONS: Record<string, LucideIcon> = {
   ScanFace,
@@ -26,15 +27,43 @@ const FEATURE_ICONS: Record<string, LucideIcon> = {
   Globe,
 };
 
-/** Soft pill fill tints — progress sweeps left → right over base beige. */
-const FEATURE_TAB_FILLS: Record<string, { base: string; fill: string }> = {
-  ScanFace: { base: "#F3EEEA", fill: "#E8D8D5" },
-  Video: { base: "#F3EEEA", fill: "#DCE8D4" },
-  PenLine: { base: "#F3EEEA", fill: "#DFDBED" },
-  Globe: { base: "#F3EEEA", fill: "#D4E8F2" },
+/** Muted paper stocks — distinct enough to separate, not loud STEAM fills. */
+const FEATURE_SHEETS: Record<
+  string,
+  { paper: string; tab: string; fill: string; rear: string; border: string }
+> = {
+  ScanFace: {
+    paper: "#F7F2EA",
+    tab: "#EDE6DA",
+    fill: "#E2D8C8",
+    rear: "#E8E0D4",
+    border: "rgba(45, 45, 45, 0.12)",
+  },
+  Video: {
+    paper: "#F4F2EC",
+    tab: "#DED9CE",
+    fill: "#D0CABD",
+    rear: "#D8D3C8",
+    border: "rgba(45, 45, 45, 0.12)",
+  },
+  PenLine: {
+    paper: "#F3F1EB",
+    tab: "#D2CEC4",
+    fill: "#C3BEB3",
+    rear: "#CBC7BC",
+    border: "rgba(45, 45, 45, 0.14)",
+  },
+  Globe: {
+    paper: "#F2F3EE",
+    tab: "#C5CBC0",
+    fill: "#B4BBAE",
+    rear: "#BDC4B7",
+    border: "rgba(45, 45, 45, 0.16)",
+  },
 };
 
 const TAB_DURATION_MS = 5500;
+const FEATURE_COUNT = UNIVERSE_SECTION.features.length;
 
 function useReducedMotion() {
   const [reduce, setReduce] = useState(() => {
@@ -110,19 +139,45 @@ function GridBackground() {
   );
 }
 
+function PaperGrain({
+  className,
+  opacity = 0.18,
+}: {
+  className?: string;
+  opacity?: number;
+}) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "pointer-events-none absolute inset-0 mix-blend-multiply",
+        className,
+      )}
+      style={{
+        opacity,
+        backgroundImage:
+          "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E\")",
+        backgroundSize: "160px 160px",
+      }}
+    />
+  );
+}
+
 function UniverseFeatureTab({
   feature,
+  index,
   isActive,
   progress,
   onSelect,
 }: {
-  feature: (typeof UNIVERSE_SECTION.features)[number];
+  feature: UniverseFeature;
+  index: number;
   isActive: boolean;
   progress: number;
   onSelect: () => void;
 }) {
   const Icon = FEATURE_ICONS[feature.iconName];
-  const tabColors = FEATURE_TAB_FILLS[feature.iconName] ?? FEATURE_TAB_FILLS.ScanFace;
+  const sheet = FEATURE_SHEETS[feature.iconName] ?? FEATURE_SHEETS.ScanFace;
   const tabId = `universe-tab-${feature.id}`;
   const panelId = `universe-panel-${feature.id}`;
 
@@ -135,15 +190,22 @@ function UniverseFeatureTab({
       aria-controls={panelId}
       onClick={onSelect}
       className={cn(
-        "relative min-w-[11.5rem] shrink-0 overflow-hidden rounded-full text-left transition-shadow duration-300 sm:min-w-0 sm:flex-1",
-        isActive && "shadow-[0_2px_12px_rgba(45,45,45,0.06)]",
+        "absolute bottom-0 flex min-h-[44px] items-center gap-2 overflow-hidden rounded-t-2xl px-3 text-left outline-none sm:px-4",
+        "border border-b-0 transition-[height,box-shadow,filter] duration-200",
+        "focus-visible:ring-2 focus-visible:ring-[#4FC3F7] focus-visible:ring-offset-2",
+        isActive ? "z-40 h-12" : "z-30 h-11 hover:brightness-[0.98]",
       )}
+      style={{
+        left: `calc(${index} * (100% / ${FEATURE_COUNT}) + 0.2rem)`,
+        width: `calc(100% / ${FEATURE_COUNT} - 0.4rem)`,
+        backgroundColor: isActive ? sheet.paper : sheet.tab,
+        borderColor: sheet.border,
+        boxShadow: isActive
+          ? "0 -3px 12px rgba(45,45,45,0.07), inset 0 1px 0 rgba(255,255,255,0.55)"
+          : "0 -2px 8px rgba(45,45,45,0.05)",
+      }}
     >
-      <span
-        aria-hidden="true"
-        className="absolute inset-0"
-        style={{ backgroundColor: tabColors.base }}
-      />
+      <PaperGrain opacity={isActive ? 0.22 : 0.32} />
 
       {isActive ? (
         <span
@@ -151,74 +213,159 @@ function UniverseFeatureTab({
           className="absolute inset-y-0 left-0"
           style={{
             width: `${progress * 100}%`,
-            backgroundColor: tabColors.fill,
+            backgroundColor: sheet.fill,
           }}
         />
       ) : null}
 
-      <span className="relative flex items-center gap-2.5 px-4 py-3 sm:gap-3 sm:px-5 sm:py-3.5">
+      <span className="relative flex min-w-0 items-center gap-2">
         {Icon ? (
-          <span
-            className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-white/80 sm:size-9 sm:rounded-xl"
-            style={{ color: feature.accent }}
-          >
-            <Icon size={18} strokeWidth={2} aria-hidden="true" />
-          </span>
+          <Icon
+            size={16}
+            strokeWidth={2}
+            className="hidden shrink-0 sm:block"
+            style={{ color: isActive ? feature.accent : "#5A5A5A" }}
+            aria-hidden="true"
+          />
         ) : null}
-
         <span
           className={cn(
-            "min-w-0 truncate font-heading text-sm font-semibold leading-tight sm:text-[0.9375rem]",
-            isActive ? "text-[#2D2D2D]" : "text-[#6B6B6B]",
+            "truncate font-heading text-xs font-bold sm:text-sm",
+            isActive ? "text-[#2D2D2D]" : "text-[#4A4A4A]",
           )}
         >
-          {feature.label}
+          {feature.tabLabel}
         </span>
       </span>
     </button>
   );
 }
 
-function UniverseFeatureStage({
+function UniverseFeatureSheet({
   feature,
   isActive,
+  depth,
+  reduceMotion,
 }: {
-  feature: (typeof UNIVERSE_SECTION.features)[number];
+  feature: UniverseFeature;
   isActive: boolean;
+  depth: number;
+  reduceMotion: boolean;
 }) {
+  const sheet = FEATURE_SHEETS[feature.iconName] ?? FEATURE_SHEETS.ScanFace;
+  const fill = isActive ? sheet.paper : sheet.rear;
+
   return (
     <div
-      id={`universe-panel-${feature.id}`}
-      role="tabpanel"
-      aria-labelledby={`universe-tab-${feature.id}`}
+      id={isActive ? `universe-panel-${feature.id}` : undefined}
+      role={isActive ? "tabpanel" : undefined}
+      aria-labelledby={isActive ? `universe-tab-${feature.id}` : undefined}
       aria-hidden={!isActive}
       className={cn(
-        "absolute inset-0 flex items-center justify-center transition-all duration-500 ease-out",
-        isActive
-          ? "pointer-events-auto opacity-100"
-          : "pointer-events-none opacity-0",
+        isActive ? "relative" : "absolute inset-0",
+        !reduceMotion && "transition-[transform,box-shadow] duration-300 ease-out",
       )}
+      style={{
+        zIndex: 20 - depth,
+        transform:
+          depth === 0 ? "none" : `translate(${depth * 8}px, ${depth * 10}px)`,
+      }}
     >
       <div
-        className="relative w-full max-w-6xl px-2 sm:px-4"
-        style={{ perspective: "1600px" }}
+        className={cn(
+          "relative overflow-hidden rounded-t-none rounded-b-2xl sm:rounded-b-[1.75rem]",
+          isActive
+            ? "shadow-[0_20px_48px_rgba(45,45,45,0.12)]"
+            : "h-full shadow-[0_12px_28px_rgba(45,45,45,0.08)]",
+        )}
+        style={{ backgroundColor: fill }}
       >
-        <div
-          className="relative origin-center overflow-hidden rounded-2xl bg-white shadow-[0_32px_80px_rgba(45,45,45,0.16)] sm:rounded-[1.75rem]"
-          style={{
-            transform: "rotateY(-14deg) rotateX(5deg) translateZ(0)",
-          }}
-        >
-          <div className="relative aspect-[16/10] w-full sm:aspect-[16/9] lg:aspect-[16/9] lg:max-h-[520px]">
-            <Image
-              src={feature.imageSrc}
-              alt={feature.label}
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 1152px"
-              className="object-cover object-top"
-              priority={feature.id === "face-detection"}
-            />
+        <PaperGrain opacity={0.24} />
+
+        {isActive ? (
+          <div className="relative grid grid-cols-1 gap-6 p-5 sm:gap-8 sm:p-7 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center lg:p-8">
+            <div className="relative mx-auto w-full max-w-md lg:mx-0 lg:max-w-none">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-white shadow-[0_8px_24px_rgba(45,45,45,0.10)] ring-1 ring-[#E5E5E0]">
+                <Image
+                  src={feature.imageSrc}
+                  alt={feature.label}
+                  fill
+                  sizes="(max-width: 1024px) 90vw, 480px"
+                  className="object-cover object-top"
+                  priority={feature.id === "face-detection"}
+                />
+              </div>
+            </div>
+
+            <div
+              className="relative min-h-[12rem] px-1 py-2 sm:px-2"
+              style={{
+                backgroundImage:
+                  "repeating-linear-gradient(transparent, transparent 27px, #E5E5E0 27px, #E5E5E0 28px)",
+                backgroundPosition: "0 8px",
+              }}
+            >
+              <p
+                className="font-mono text-[10px] font-semibold uppercase tracking-[0.16em]"
+                style={{ color: feature.accent }}
+              >
+                {feature.tabLabel}
+              </p>
+              <h3 className="mt-3 font-heading text-xl font-extrabold tracking-tight text-[#2D2D2D] sm:text-2xl">
+                {feature.label}
+              </h3>
+              <p className="mt-4 max-w-[42ch] font-display-serif text-base leading-relaxed text-[#2D2D2D] sm:text-lg">
+                {feature.body}
+              </p>
+            </div>
           </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function UniverseFolderStack({
+  activeIndex,
+  progress,
+  reduceMotion,
+  onSelect,
+}: {
+  activeIndex: number;
+  progress: number;
+  reduceMotion: boolean;
+  onSelect: (index: number) => void;
+}) {
+  return (
+    <div role="tablist" aria-label="Tính năng AI Portfolio">
+      <div className="relative pb-16 pr-8 sm:pb-20 sm:pr-10">
+        <div className="relative h-11 sm:h-12">
+          {UNIVERSE_SECTION.features.map((feature, index) => (
+            <UniverseFeatureTab
+              key={feature.id}
+              feature={feature}
+              index={index}
+              isActive={index === activeIndex}
+              progress={index === activeIndex ? progress : 0}
+              onSelect={() => onSelect(index)}
+            />
+          ))}
+        </div>
+
+        <div className="relative -mt-px">
+          {UNIVERSE_SECTION.features.map((feature, index) => {
+            const depth =
+              (index - activeIndex + FEATURE_COUNT) % FEATURE_COUNT;
+            return (
+              <UniverseFeatureSheet
+                key={feature.id}
+                feature={feature}
+                isActive={index === activeIndex}
+                depth={depth}
+                reduceMotion={reduceMotion}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
@@ -228,7 +375,7 @@ function UniverseFeatureStage({
 export function UniverseSection() {
   const reduceMotion = useReducedMotion();
   const { activeIndex, progress, selectTab } = useAutoTabs(
-    UNIVERSE_SECTION.features.length,
+    FEATURE_COUNT,
     reduceMotion,
   );
 
@@ -275,29 +422,12 @@ export function UniverseSection() {
         </AnimatedContent>
 
         <AnimatedContent distance={24} duration={0.65} delay={0.08}>
-          <div role="tablist" aria-label="Tính năng AI Portfolio">
-            <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:gap-2.5 sm:overflow-visible sm:px-0">
-              {UNIVERSE_SECTION.features.map((feature, index) => (
-                <UniverseFeatureTab
-                  key={feature.id}
-                  feature={feature}
-                  isActive={index === activeIndex}
-                  progress={index === activeIndex ? progress : 0}
-                  onSelect={() => selectTab(index)}
-                />
-              ))}
-            </div>
-
-            <div className="relative mt-10 min-h-[240px] sm:mt-12 sm:min-h-[320px] lg:mt-14 lg:min-h-[460px]">
-              {UNIVERSE_SECTION.features.map((feature, index) => (
-                <UniverseFeatureStage
-                  key={feature.id}
-                  feature={feature}
-                  isActive={index === activeIndex}
-                />
-              ))}
-            </div>
-          </div>
+          <UniverseFolderStack
+            activeIndex={activeIndex}
+            progress={progress}
+            reduceMotion={reduceMotion}
+            onSelect={selectTab}
+          />
         </AnimatedContent>
       </div>
     </section>
