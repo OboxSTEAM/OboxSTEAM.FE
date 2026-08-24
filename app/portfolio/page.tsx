@@ -13,7 +13,7 @@ export default function PortfolioPage() {
   return (
     <>
       <SiteHeader defaultScrolled />
-      <main className="min-h-screen bg-background pt-[4.5rem] sm:pt-20">
+      <main className="min-h-screen bg-background pt-14 sm:pt-16">
         <PortfolioSettingsPageContent />
       </main>
       <SiteFooter />

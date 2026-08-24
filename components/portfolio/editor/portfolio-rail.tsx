@@ -57,7 +57,7 @@ export function PortfolioRail({ active, onSelect }: PortfolioRailProps) {
         aria-label="Công cụ portfolio"
         className="hidden w-[4.5rem] shrink-0 border-r border-border bg-background lg:block"
       >
-        <div className="sticky top-[8.5rem] flex flex-col gap-1 px-1.5 py-3">
+        <div className="sticky top-[7.5rem] flex flex-col gap-1 px-1.5 py-3">
           {buttons}
         </div>
       </nav>
@@ -91,12 +91,12 @@ export function PortfolioPanelHost({
     <aside
       className={cn(
         "z-30 bg-background",
-        "fixed inset-x-0 top-[8rem] overflow-y-auto overscroll-contain sm:top-[8.5rem]",
+        "fixed inset-x-0 top-[7rem] overflow-y-auto overscroll-contain sm:top-[7.5rem]",
         "bottom-[calc(3.75rem+env(safe-area-inset-bottom))]",
         "lg:static lg:inset-auto lg:bottom-auto lg:w-[22.5rem] lg:shrink-0 lg:overflow-visible lg:border-r lg:border-border",
       )}
     >
-      <div className="lg:sticky lg:top-[8.5rem] lg:max-h-[calc(100dvh-9.5rem)] lg:overflow-y-auto">
+      <div className="lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm sm:px-5">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#0f7cad]">

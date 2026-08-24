@@ -108,7 +108,7 @@ export function ProgramsSection() {
     <section
       ref={sectionRef}
       id="programs"
-      className="relative scroll-mt-[4.5rem] overflow-hidden bg-[#262320] py-20 sm:scroll-mt-20 lg:py-28"
+      className="relative scroll-mt-14 overflow-hidden bg-[#262320] py-20 sm:scroll-mt-16 lg:py-28"
       aria-labelledby="programs-heading"
     >
       <div
