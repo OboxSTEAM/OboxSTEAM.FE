@@ -4,8 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
+  Award,
   Globe,
-  PenLine,
   ScanFace,
   Video,
   type LucideProps,
@@ -23,7 +23,7 @@ type UniverseFeature = (typeof UNIVERSE_SECTION.features)[number];
 const FEATURE_ICONS: Record<string, LucideIcon> = {
   ScanFace,
   Video,
-  PenLine,
+  Award,
   Globe,
 };
 
@@ -46,7 +46,7 @@ const FEATURE_SHEETS: Record<
     rear: "#D8D3C8",
     border: "rgba(45, 45, 45, 0.12)",
   },
-  PenLine: {
+  Award: {
     paper: "#F3F1EB",
     tab: "#D2CEC4",
     fill: "#C3BEB3",

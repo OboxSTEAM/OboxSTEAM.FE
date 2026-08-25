@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { HeroPhotoPrint } from "@/components/landing/hero-photo-print";
 import { buttonVariants } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { CTA_DESK_SECTION } from "@/lib/landing/content";
 import { CTA_PRINTS } from "@/lib/landing/cta-print-layout";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ function useReducedMotion() {
 
 export function CtaDeskSection() {
   const reduce = useReducedMotion();
+  const { isAuthenticated } = useCurrentUser();
   const sectionRef = useRef<HTMLElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -177,26 +179,28 @@ export function CtaDeskSection() {
               </span>
             </h2>
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10">
-              <Link
-                href={CTA_DESK_SECTION.primaryCta.href}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "min-h-[44px] rounded-full bg-white px-7 text-sm sm:text-base text-[#2D2D2D] hover:bg-white/90",
-                )}
-              >
-                {CTA_DESK_SECTION.primaryCta.label}
-              </Link>
-              <Link
-                href={CTA_DESK_SECTION.secondaryCta.href}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "min-h-[44px] rounded-full border-white/60 bg-transparent px-7 text-sm sm:text-base text-white hover:bg-white/10 hover:text-white",
-                )}
-              >
-                {CTA_DESK_SECTION.secondaryCta.label}
-              </Link>
-            </div>
+            {!isAuthenticated ? (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 sm:mt-10">
+                <Link
+                  href={CTA_DESK_SECTION.primaryCta.href}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "min-h-[44px] rounded-full bg-white px-7 text-sm sm:text-base text-[#2D2D2D] hover:bg-white/90",
+                  )}
+                >
+                  {CTA_DESK_SECTION.primaryCta.label}
+                </Link>
+                <Link
+                  href={CTA_DESK_SECTION.secondaryCta.href}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "min-h-[44px] rounded-full border-white/60 bg-transparent px-7 text-sm sm:text-base text-white hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  {CTA_DESK_SECTION.secondaryCta.label}
+                </Link>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
