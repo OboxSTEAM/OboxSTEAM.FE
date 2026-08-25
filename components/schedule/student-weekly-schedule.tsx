@@ -78,7 +78,7 @@ import { cn } from "@/lib/utils";
 type ScheduleViewMode = "week" | "month";
 
 const WEEKDAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
-const MONTH_MAX_CHIPS = 3;
+const MONTH_MAX_CHIPS = 2;
 
 const SESSION_KIND_LABELS = {
   LiveOnline: "Buổi học",
@@ -281,17 +281,21 @@ function DayColumn({
   return (
     <div
       className={cn(
-        "flex min-h-0 min-w-0 flex-col",
-        !isLast && "border-r border-[#E5E5E0]",
-        isToday ? "bg-[#FFF8F7]" : hasSessions ? "bg-white" : "bg-[#FAFAF5]/80",
+        "flex h-full min-h-0 min-w-0 flex-col",
+        !isLast && "border-r border-border",
+        isToday
+          ? "bg-primary/5 dark:bg-primary/10"
+          : hasSessions
+            ? "bg-card"
+            : "bg-muted/40",
       )}
     >
       <div
         className={cn(
           "border-b px-2 py-3 text-center xl:px-3",
           isToday
-            ? "border-[#E94B3C]/25 bg-[#E94B3C] text-white"
-            : "border-[#E5E5E0] bg-[#F5F5F0]",
+            ? "border-primary/25 bg-primary text-primary-foreground"
+            : "border-border bg-muted",
           isFirst && "rounded-tl-2xl",
           isLast && "rounded-tr-2xl",
         )}
@@ -299,7 +303,7 @@ function DayColumn({
         <p
           className={cn(
             "text-[10px] font-bold uppercase tracking-[0.14em]",
-            isToday ? "text-white/90" : "text-[#6B6B6B]",
+            isToday ? "text-primary-foreground/90" : "text-muted-foreground",
           )}
         >
           {weekday}
@@ -307,26 +311,26 @@ function DayColumn({
         <p
           className={cn(
             "mt-0.5 font-heading text-base font-bold tabular-nums",
-            isToday ? "text-white" : "text-[#2D2D2D]",
+            isToday ? "text-primary-foreground" : "text-foreground",
           )}
         >
           {dayMonth}
         </p>
         {isToday ? (
-          <span className="mt-1 inline-flex rounded-full bg-white/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+          <span className="mt-1 inline-flex rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
             Hôm nay
           </span>
         ) : hasSessions ? (
-          <span className="mt-1 inline-flex rounded-full bg-[#2D2D2D]/8 px-2 py-0.5 font-mono text-[9px] font-bold text-[#2D2D2D]">
+          <span className="mt-1 inline-flex rounded-full bg-foreground/8 px-2 py-0.5 font-mono text-[9px] font-bold text-foreground">
             {sessionCount} buổi
           </span>
         ) : (
           <span className="mt-1 block h-[18px]" aria-hidden />
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2.5 p-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-2">
         {!hasSessions ? (
-          <p className="px-1 py-8 text-center text-[11px] font-medium text-[#6B6B6B]/70">
+          <p className="m-auto px-1 py-8 text-center text-[11px] font-medium text-muted-foreground/80">
             Không có buổi học
           </p>
         ) : (
@@ -901,11 +905,11 @@ function MonthScheduleGrid({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="grid grid-cols-7 border-b border-border bg-[#FAFAF5]">
+      <div className="grid grid-cols-7 border-b border-border bg-muted/60">
         {WEEKDAY_SHORT.map((label) => (
           <div
             key={label}
-            className="py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:py-2.5 sm:text-xs"
+            className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:py-2"
           >
             {label}
           </div>
@@ -935,28 +939,28 @@ function MonthScheduleGrid({
                 }
               }}
               className={cn(
-                "flex min-h-[4.75rem] flex-col border-b border-l border-border p-1 text-left transition-colors sm:min-h-[6.5rem] sm:p-1.5",
-                !inMonth && "bg-[#FAFAF5]/70",
-                inMonth && "cursor-pointer bg-white hover:bg-[#FFF8F7]",
-                selected && "bg-[#FFF5F4] ring-1 ring-inset ring-[#E94B3C]/35",
-                today && inMonth && !selected && "bg-[#FFF8F7]",
+                "flex min-h-[3.25rem] flex-col border-b border-l border-border p-0.5 text-left transition-colors sm:min-h-[4.25rem] sm:p-1",
+                !inMonth && "bg-muted/40",
+                inMonth && "cursor-pointer bg-card hover:bg-primary/5",
+                selected && "bg-primary/10 ring-1 ring-inset ring-primary/35",
+                today && inMonth && !selected && "bg-primary/5",
               )}
             >
               <span
                 className={cn(
-                  "mb-1 ml-auto flex size-6 items-center justify-center rounded-full text-[11px] font-bold tabular-nums sm:size-7 sm:text-xs",
+                  "mb-0.5 ml-auto flex size-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums sm:size-6 sm:text-[11px]",
                   today
-                    ? "bg-[#E94B3C] text-white"
+                    ? "bg-primary text-primary-foreground"
                     : selected
-                      ? "bg-[#E94B3C]/15 text-[#E94B3C]"
+                      ? "bg-primary/15 text-primary"
                       : inMonth
-                        ? "text-[#2D2D2D]"
+                        ? "text-foreground"
                         : "text-muted-foreground",
                 )}
               >
                 {dayNum}
               </span>
-              <div className="flex min-h-0 flex-1 flex-col gap-0.5">
+              <div className="flex min-h-0 flex-1 flex-col gap-px">
                 {visible.map((session) => {
                   const time = formatVietnamTimeRange(
                     session.startTime,
@@ -972,8 +976,8 @@ function MonthScheduleGrid({
                       }}
                       title={`${session.className} · ${formatVietnamTimeRange(session.startTime, session.endTime)}`}
                       className={cn(
-                        "block w-full truncate rounded-md px-1 py-0.5 text-left text-[9px] font-semibold leading-tight sm:text-[10px]",
-                        "bg-[#2D2D2D]/6 text-[#2D2D2D] hover:bg-[#E94B3C]/12 hover:text-[#E94B3C]",
+                        "block w-full truncate rounded px-1 py-px text-left text-[8px] font-semibold leading-tight sm:text-[9px]",
+                        "bg-foreground/6 text-foreground hover:bg-primary/15 hover:text-primary",
                         session.status === "Cancelled" &&
                           "opacity-50 line-through",
                       )}
@@ -987,7 +991,7 @@ function MonthScheduleGrid({
                   );
                 })}
                 {overflow > 0 ? (
-                  <span className="px-1 text-[9px] font-semibold text-muted-foreground sm:text-[10px]">
+                  <span className="px-1 text-[8px] font-semibold text-muted-foreground sm:text-[9px]">
                     +{overflow} buổi
                   </span>
                 ) : null}
@@ -1128,11 +1132,6 @@ export function StudentWeeklySchedule() {
     () => days.find((day) => day.date === mobileDay) ?? days[0] ?? null,
     [days, mobileDay],
   );
-
-  const monthDaySessions = useMemo(() => {
-    if (!monthSelectedDay) return [];
-    return monthDaysByDate.get(monthSelectedDay)?.sessions ?? [];
-  }, [monthDaysByDate, monthSelectedDay]);
 
   function markLoading() {
     if (viewMode === "week") markWeekLoading();
@@ -1362,28 +1361,6 @@ export function StudentWeeklySchedule() {
               onSelectDay={setMonthSelectedDay}
               onOpen={openSession}
             />
-            {monthSelectedDay && monthDaySessions.length > 0 ? (
-              <div className="rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
-                <div className="mb-3 flex items-baseline justify-between gap-3">
-                  <h2 className="font-heading text-base font-bold text-foreground">
-                    {formatDayColumnLabel(monthSelectedDay).weekday}{" "}
-                    {formatDayColumnLabel(monthSelectedDay).dayMonth}
-                  </h2>
-                  <p className="text-xs text-muted-foreground">
-                    {monthDaySessions.length} buổi
-                  </p>
-                </div>
-                <div className="space-y-2">
-                  {monthDaySessions.map((session) => (
-                    <SessionCard
-                      key={session.id}
-                      session={session}
-                      onOpen={openSession}
-                    />
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
         )
       ) : !weekHasSessions ? (
@@ -1469,7 +1446,7 @@ export function StudentWeeklySchedule() {
         </Tabs>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="grid grid-cols-7">
+          <div className="grid min-h-[calc(100dvh-15rem)] grid-cols-7 sm:min-h-[calc(100dvh-17rem)]">
             {days.map((day, index) => (
               <DayColumn
                 key={day.date}

@@ -91,7 +91,7 @@ type MentorScheduleDay = {
 };
 
 const WEEKDAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
-const MONTH_MAX_CHIPS = 3;
+const MONTH_MAX_CHIPS = 2;
 
 const SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
   LiveOnline: "Buổi học",
@@ -303,7 +303,7 @@ function DayColumn({
   return (
     <div
       className={cn(
-        "flex min-h-0 min-w-0 flex-col",
+        "flex h-full min-h-0 min-w-0 flex-col",
         !isLast && "border-r border-border",
         isToday
           ? "bg-primary/5 dark:bg-primary/10"
@@ -350,9 +350,9 @@ function DayColumn({
           <span className="mt-1 block h-[18px]" aria-hidden />
         )}
       </div>
-      <div className="flex flex-1 flex-col gap-2.5 p-2">
+      <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-2">
         {!hasSessions ? (
-          <p className="px-1 py-8 text-center text-[11px] font-medium text-muted-foreground/80">
+          <p className="m-auto px-1 py-8 text-center text-[11px] font-medium text-muted-foreground/80">
             Không có buổi dạy
           </p>
         ) : (
@@ -396,7 +396,7 @@ function MonthScheduleGrid({
         {WEEKDAY_SHORT.map((label) => (
           <div
             key={label}
-            className="py-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:py-2.5 sm:text-xs"
+            className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:py-2"
           >
             {label}
           </div>
@@ -426,7 +426,7 @@ function MonthScheduleGrid({
                 }
               }}
               className={cn(
-                "flex min-h-[4.75rem] flex-col border-b border-l border-border p-1 text-left transition-colors sm:min-h-[6.5rem] sm:p-1.5",
+                "flex min-h-[3.25rem] flex-col border-b border-l border-border p-0.5 text-left transition-colors sm:min-h-[4.25rem] sm:p-1",
                 !inMonth && "bg-muted/40",
                 inMonth && "cursor-pointer bg-card hover:bg-primary/5",
                 selected && "bg-primary/10 ring-1 ring-inset ring-primary/35",
@@ -435,7 +435,7 @@ function MonthScheduleGrid({
             >
               <span
                 className={cn(
-                  "mb-1 ml-auto flex size-6 items-center justify-center rounded-full text-[11px] font-bold tabular-nums sm:size-7 sm:text-xs",
+                  "mb-0.5 ml-auto flex size-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums sm:size-6 sm:text-[11px]",
                   today
                     ? "bg-primary text-primary-foreground"
                     : selected
@@ -447,7 +447,7 @@ function MonthScheduleGrid({
               >
                 {dayNum}
               </span>
-              <div className="flex min-h-0 flex-1 flex-col gap-0.5">
+              <div className="flex min-h-0 flex-1 flex-col gap-px">
                 {visible.map((session) => {
                   const time = formatSessionTimeRange(
                     session.startTime,
@@ -463,7 +463,7 @@ function MonthScheduleGrid({
                       }}
                       title={`${session.className} · ${formatSessionTimeRange(session.startTime, session.endTime)}`}
                       className={cn(
-                        "block w-full truncate rounded-md px-1 py-0.5 text-left text-[9px] font-semibold leading-tight sm:text-[10px]",
+                        "block w-full truncate rounded px-1 py-px text-left text-[8px] font-semibold leading-tight sm:text-[9px]",
                         "bg-foreground/6 text-foreground hover:bg-primary/15 hover:text-primary",
                         session.status === "Cancelled" &&
                           "opacity-50 line-through",
@@ -478,7 +478,7 @@ function MonthScheduleGrid({
                   );
                 })}
                 {overflow > 0 ? (
-                  <span className="px-1 text-[9px] font-semibold text-muted-foreground sm:text-[10px]">
+                  <span className="px-1 text-[8px] font-semibold text-muted-foreground sm:text-[9px]">
                     +{overflow} buổi
                   </span>
                 ) : null}
@@ -636,11 +636,6 @@ export function MentorScheduleOverview() {
     }
     return false;
   }, [monthDaysByDate, monthCursor.year, monthCursor.month]);
-
-  const monthDaySessions = useMemo(() => {
-    if (!monthSelectedDay) return [];
-    return monthDaysByDate.get(monthSelectedDay)?.sessions ?? [];
-  }, [monthDaysByDate, monthSelectedDay]);
 
   useEffect(() => {
     if (viewMode !== "week" || !weekDays.length) return;
@@ -922,28 +917,6 @@ export function MentorScheduleOverview() {
                 onSelectDay={setMonthSelectedDay}
                 onOpen={openSession}
               />
-              {monthSelectedDay && monthDaySessions.length > 0 ? (
-                <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-                  <div className="mb-3 flex items-baseline justify-between gap-2">
-                    <p className="font-heading text-sm font-bold text-foreground">
-                      {formatDayColumnLabel(monthSelectedDay).weekday}{" "}
-                      {formatDayColumnLabel(monthSelectedDay).dayMonth}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {monthDaySessions.length} buổi
-                    </p>
-                  </div>
-                  <div className="space-y-2.5">
-                    {monthDaySessions.map((session) => (
-                      <SessionCard
-                        key={session.id}
-                        session={session}
-                        onOpen={openSession}
-                      />
-                    ))}
-                  </div>
-                </div>
-              ) : null}
             </div>
           )
         ) : !weekHasSessions ? (
@@ -1019,7 +992,7 @@ export function MentorScheduleOverview() {
           </Tabs>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-            <div className="grid grid-cols-7">
+            <div className="grid min-h-[calc(100dvh-18rem)] grid-cols-7 sm:min-h-[calc(100dvh-20rem)]">
               {weekDays.map((day, index) => (
                 <DayColumn
                   key={day.date}
