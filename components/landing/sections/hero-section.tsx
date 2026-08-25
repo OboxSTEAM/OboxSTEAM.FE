@@ -9,6 +9,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { HeroPhotoPrint } from "@/components/landing/hero-photo-print";
 import { buttonVariants } from "@/components/ui/button";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { HERO } from "@/lib/landing/content";
 import { HERO_PRINTS } from "@/lib/landing/hero-print-layout";
 import { cn } from "@/lib/utils";
@@ -33,6 +34,7 @@ function useReducedMotion() {
 
 export function HeroSection() {
   const reduce = useReducedMotion();
+  const { isAuthenticated } = useCurrentUser();
   const sectionRef = useRef<HTMLElement>(null);
   const stickyRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -88,6 +90,7 @@ export function HeroSection() {
 
   return (
     <section
+      id="hero"
       ref={sectionRef}
       className="relative bg-[#1A1410]"
       aria-labelledby="hero-headline"
@@ -164,30 +167,37 @@ export function HeroSection() {
               </span>
             </h1>
 
-            <p className="text-white/80 text-sm sm:text-[0.95rem] leading-relaxed max-w-[40ch] mx-auto mb-8 drop-shadow-[0_1px_12px_rgba(0,0,0,0.5)]">
+            <p
+              className={cn(
+                "text-white/80 text-sm sm:text-[0.95rem] leading-relaxed max-w-[40ch] mx-auto drop-shadow-[0_1px_12px_rgba(0,0,0,0.5)]",
+                !isAuthenticated && "mb-8",
+              )}
+            >
               {HERO.subheadline}
             </p>
 
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href={HERO.primaryCta.href}
-                className={cn(
-                  buttonVariants({ size: "lg" }),
-                  "min-h-[44px] rounded-full bg-white px-7 text-sm sm:text-base text-[#2D2D2D] hover:bg-white/90",
-                )}
-              >
-                {HERO.primaryCta.label}
-              </Link>
-              <Link
-                href={HERO.secondaryCta.href}
-                className={cn(
-                  buttonVariants({ variant: "outline", size: "lg" }),
-                  "min-h-[44px] rounded-full border-white/60 bg-transparent px-7 text-sm sm:text-base text-white hover:bg-white/10 hover:text-white",
-                )}
-              >
-                {HERO.secondaryCta.label}
-              </Link>
-            </div>
+            {!isAuthenticated ? (
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <Link
+                  href={HERO.primaryCta.href}
+                  className={cn(
+                    buttonVariants({ size: "lg" }),
+                    "min-h-[44px] rounded-full bg-white px-7 text-sm sm:text-base text-[#2D2D2D] hover:bg-white/90",
+                  )}
+                >
+                  {HERO.primaryCta.label}
+                </Link>
+                <Link
+                  href={HERO.secondaryCta.href}
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                    "min-h-[44px] rounded-full border-white/60 bg-transparent px-7 text-sm sm:text-base text-white hover:bg-white/10 hover:text-white",
+                  )}
+                >
+                  {HERO.secondaryCta.label}
+                </Link>
+              </div>
+            ) : null}
           </div>
         </div>
 

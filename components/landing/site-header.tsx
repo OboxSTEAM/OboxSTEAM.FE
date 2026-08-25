@@ -50,8 +50,13 @@ export function SiteHeader({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const isSolid = defaultScrolled || scrolled;
   const showLandingNav = pathname === "/";
+  /** Floating pill over the landing hero — normal (non-inverted) chrome. */
+  const isPill = showLandingNav && !defaultScrolled && !scrolled;
+  /** Full-bleed solid bar after hero (or on app pages). */
+  const isBar = defaultScrolled || scrolled;
+  /** Dark text / natural logo — pill and bar both use readable chrome. */
+  const isSolid = isPill || isBar;
   const accountRole = normalizeAccountRole(profile?.role ?? session?.user?.role);
   const email = profile?.email ?? session?.user?.email ?? "";
   const displayName = profile
@@ -80,11 +85,21 @@ export function SiteHeader({
     if (defaultScrolled) return;
 
     const handler = () => {
-      setScrolled(window.scrollY > window.innerHeight * 0.8);
+      const hero = document.getElementById("hero");
+      // Morph only after the hero (incl. pinned scroll range) fully leaves the viewport.
+      const pastHero = hero
+        ? hero.getBoundingClientRect().bottom <= 0
+        : window.scrollY > window.innerHeight;
+      setScrolled(pastHero);
+      if (pastHero) setMobileOpen(false);
     };
     window.addEventListener("scroll", handler, { passive: true });
+    window.addEventListener("resize", handler, { passive: true });
     handler();
-    return () => window.removeEventListener("scroll", handler);
+    return () => {
+      window.removeEventListener("scroll", handler);
+      window.removeEventListener("resize", handler);
+    };
   }, [defaultScrolled]);
 
   const handleMenuOpenChange = (open: boolean) => {
@@ -117,14 +132,28 @@ export function SiteHeader({
     <>
       <header
         className={cn(
-          "fixed top-0 inset-x-0 z-50 transition-all duration-300",
-          isSolid
-            ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0] dark:bg-[#1A1A1A]/95 dark:border-border"
-            : "bg-transparent",
+          "fixed top-0 inset-x-0 z-50 transition-[background-color,box-shadow,border-color,padding,backdrop-filter] duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150",
+          isPill
+            ? "pointer-events-none bg-transparent pt-3 px-3 sm:px-5"
+            : isBar
+              ? "bg-[#FAFAF5]/95 backdrop-blur-md shadow-sm border-b border-[#E5E5E0] dark:bg-[#1A1A1A]/95 dark:border-border"
+              : "bg-transparent",
         )}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="relative flex h-14 w-full items-center justify-between gap-4 sm:h-16">
+        <div
+          className={cn(
+            "transition-[max-width,border-radius,background-color,box-shadow,border-color,padding,backdrop-filter,height] duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:duration-150",
+            isPill
+              ? "pointer-events-auto mx-auto flex h-14 max-w-4xl items-center justify-between gap-3 rounded-full border border-[#E5E5E0]/90 bg-white/92 px-3 sm:px-5 shadow-[0_4px_24px_rgba(45,45,45,0.08)] backdrop-blur-md"
+              : "mx-auto max-w-7xl rounded-none border-transparent bg-transparent px-4 shadow-none sm:px-6 lg:px-8",
+          )}
+        >
+          <div
+            className={cn(
+              "relative flex w-full items-center justify-between gap-4",
+              isPill ? "h-14" : "h-14 sm:h-16",
+            )}
+          >
             <Link
               href="/"
               className="flex items-center gap-2 shrink-0"
@@ -145,8 +174,15 @@ export function SiteHeader({
               />
               <span
                 className={cn(
-                  "font-heading hidden text-lg font-bold leading-none tracking-tight transition-colors duration-200 sm:block",
-                  isSolid ? "text-[#2D2D2D] dark:text-foreground" : "text-white",
+                  "font-heading font-bold leading-none tracking-tight transition-colors duration-200",
+                  isPill
+                    ? "text-base text-[#2D2D2D]"
+                    : cn(
+                        "hidden text-lg sm:block",
+                        isSolid
+                          ? "text-[#2D2D2D] dark:text-foreground"
+                          : "text-white",
+                      ),
                 )}
               >
                 OboxSTEAM
@@ -304,7 +340,13 @@ export function SiteHeader({
         </div>
 
         {mobileOpen && !isAuthenticated ? (
-          <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden">
+          <div
+            className={cn(
+              "border-t border-[#E5E5E0] bg-[#FAFAF5] shadow-lg md:hidden",
+              isPill &&
+                "pointer-events-auto mx-3 mt-2 rounded-2xl border shadow-[0_8px_28px_rgba(45,45,45,0.12)]",
+            )}
+          >
             <nav className="flex flex-col gap-1 p-4" aria-label="Menu di động">
               {showLandingNav
                 ? NAV_LINKS.map((link) => (
