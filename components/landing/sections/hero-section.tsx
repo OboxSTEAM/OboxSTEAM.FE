@@ -88,6 +88,7 @@ export function HeroSection() {
 
   return (
     <section
+      id="hero"
       ref={sectionRef}
       className="relative bg-[#1A1410]"
       aria-labelledby="hero-headline"
