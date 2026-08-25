@@ -75,6 +75,12 @@ export const PARENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
 
 export const MENTOR_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   {
+    label: "Lịch dạy",
+    href: "/mentor/schedule",
+    icon: CalendarDays,
+    description: "Thời khóa biểu các lớp phụ trách",
+  },
+  {
     label: "Lớp của tôi",
     href: "/mentor/classes",
     icon: Users,
