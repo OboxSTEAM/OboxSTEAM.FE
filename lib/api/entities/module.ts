@@ -15,8 +15,6 @@ export const moduleSchema = z.object({
   moduleOrder: z.number(),
   prerequisiteModuleId: z.string().nullable().optional(),
   isMandatory: z.boolean(),
-  price: z.number(),
-  retakeFee: z.number(),
   learningOutcomes: z.preprocess(
     (val) => val ?? [],
     z.array(z.string())

@@ -7420,6 +7420,189 @@
         }
       }
     },
+    "/api/class-redelivery-requests/{id}/candidates": {
+      "get": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Eligible classes the student can pick for re-delivery (tier 1)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/select-class": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Student picks a class for re-delivery (then pays the program price)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectClassRedeliveryRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectClassRedeliveryRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectClassRedeliveryRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/accept-intensive": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Student accepts the intensive remedial-class schedule (tier 2)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/decline-intensive": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Student declines the remedial-class offer (progress is kept)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/class-redelivery-requests/pending-manager": {
       "get": {
         "tags": [
@@ -7496,7 +7679,7 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Manager assigns a target class (then student pays RetakeFee)",
+        "summary": "Manager assigns a target class (then student pays program price for re-delivery)",
         "parameters": [
           {
             "name": "id",
@@ -7680,8 +7863,8 @@
             "description": "Filter by session kind (optional)",
             "schema": {
               "enum": [
-                "Lesson",
-                "FieldTrip",
+                "LiveOnline",
+                "Offline",
                 "AssignmentWindow"
               ],
               "type": "string"
@@ -14235,6 +14418,85 @@
         }
       }
     },
+    "/api/manager/redelivery/waitlist": {
+      "get": {
+        "tags": [
+          "ManagerRedelivery"
+        ],
+        "summary": "Re-delivery waitlist grouped by program then module",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/manager/redelivery/open-remedial-class": {
+      "post": {
+        "tags": [
+          "ManagerRedelivery"
+        ],
+        "summary": "Open an intensive remedial class and offer it to the module waitlist",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenRemedialClassRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenRemedialClassRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenRemedialClassRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenRemedialClassResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenRemedialClassResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OpenRemedialClassResponseDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/materials": {
       "get": {
         "tags": [
@@ -17316,156 +17578,6 @@
           },
           "404": {
             "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/module-enrollments/retake": {
-      "post": {
-        "tags": [
-          "ModuleEnrollment"
-        ],
-        "summary": "Retake a module",
-        "description": "Creates a new module enrollment attempt after failing the module (two failed assignments). Requires Student role.",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateModuleEnrollmentRequestDto"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateModuleEnrollmentRequestDto"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateModuleEnrollmentRequestDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ModuleEnrollmentResponseDtoApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ModuleEnrollmentResponseDtoApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ModuleEnrollmentResponseDtoApiResult"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Not Found",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ObjectApiResult"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
             "content": {
               "text/plain": {
                 "schema": {
@@ -21588,8 +21700,13 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by program status (optional)",
+            "description": "Filter by program status: Draft, Active, Inactive (optional)",
             "schema": {
+              "enum": [
+                "Draft",
+                "Active",
+                "Inactive"
+              ],
               "type": "string"
             }
           },
@@ -21725,6 +21842,11 @@
                     "type": "string"
                   },
                   "Status": {
+                    "enum": [
+                      "Draft",
+                      "Active",
+                      "Inactive"
+                    ],
                     "type": "string"
                   },
                   "Price": {
@@ -21959,8 +22081,13 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by program status (optional)",
+            "description": "Filter by program status: Draft, Active, Inactive (optional)",
             "schema": {
+              "enum": [
+                "Draft",
+                "Active",
+                "Inactive"
+              ],
               "type": "string"
             }
           },
@@ -31339,6 +31466,122 @@
         },
         "additionalProperties": false
       },
+      "ClassRedeliveryCandidateDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "startDate": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "mentorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mentorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seatsTaken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seatsRemaining": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "moduleSessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassRedeliveryCandidateSessionDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryCandidateDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryCandidateDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassRedeliveryCandidateDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassRedeliveryCandidateSessionDto": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "endTime": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "sessionKind": {
+            "enum": [
+              "LiveOnline",
+              "Offline",
+              "AssignmentWindow"
+            ],
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ClassRedeliveryRequestResponseDto": {
         "type": "object",
         "properties": {
@@ -31374,7 +31617,9 @@
               "Approved",
               "Rejected",
               "Completed",
-              "Withdrawn"
+              "Withdrawn",
+              "AwaitingClassSelection",
+              "AwaitingIntensiveConsent"
             ],
             "type": "string"
           },
@@ -31391,6 +31636,19 @@
           "retakeModuleEnrollmentId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "intensivePaceAcceptedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "resolutionType": {
+            "enum": [
+              "StudentSelectedCohort",
+              "RemedialClass"
+            ],
+            "type": "string",
             "nullable": true
           },
           "requestMessage": {
@@ -31776,8 +32034,8 @@
           },
           "sessionKind": {
             "enum": [
-              "Lesson",
-              "FieldTrip",
+              "LiveOnline",
+              "Offline",
               "AssignmentWindow"
             ],
             "type": "string"
@@ -32065,8 +32323,8 @@
           },
           "sessionKind": {
             "enum": [
-              "Lesson",
-              "FieldTrip",
+              "LiveOnline",
+              "Offline",
               "AssignmentWindow"
             ],
             "type": "string"
@@ -32882,8 +33140,8 @@
           },
           "sessionKind": {
             "enum": [
-              "Lesson",
-              "FieldTrip",
+              "LiveOnline",
+              "Offline",
               "AssignmentWindow"
             ],
             "type": "string",
@@ -33065,14 +33323,6 @@
           },
           "isMandatory": {
             "type": "boolean"
-          },
-          "price": {
-            "type": "number",
-            "format": "double"
-          },
-          "retakeFee": {
-            "type": "number",
-            "format": "double"
           },
           "learningOutcomes": {
             "type": "array",
@@ -37254,10 +37504,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "assignmentFailureCount": {
-            "type": "integer",
-            "format": "int32"
-          },
           "enrolledAt": {
             "type": "string",
             "nullable": true,
@@ -37313,14 +37559,6 @@
           },
           "isMandatory": {
             "type": "boolean"
-          },
-          "price": {
-            "type": "number",
-            "format": "double"
-          },
-          "retakeFee": {
-            "type": "number",
-            "format": "double"
           }
         },
         "additionalProperties": false
@@ -37449,14 +37687,6 @@
           },
           "isMandatory": {
             "type": "boolean"
-          },
-          "price": {
-            "type": "number",
-            "format": "double"
-          },
-          "retakeFee": {
-            "type": "number",
-            "format": "double"
           },
           "learningOutcomes": {
             "type": "array",
@@ -37634,6 +37864,10 @@
               "ClassRedeliveryMatchedPendingPayment",
               "ClassRedeliveryRejected",
               "ClassRedeliveryCompleted",
+              "ClassRedeliveryWithdrawn",
+              "ClassRedeliveryAwaitingSelection",
+              "ClassRedeliveryIntensiveOffered",
+              "ClassRedeliveryCandidatesAvailable",
               "ClassEnrolled",
               "ClassTransferred",
               "ClassSessionScheduled",
@@ -38001,6 +38235,83 @@
           },
           "data": {
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OpenRemedialClassRequestDto": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mentorId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OpenRemedialClassResponseDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "offeredRequestCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OpenRemedialClassResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/OpenRemedialClassResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OpenRemedialClassResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/OpenRemedialClassResponseDto"
           }
         },
         "additionalProperties": false
@@ -39923,8 +40234,12 @@
             "nullable": true
           },
           "programStatus": {
-            "type": "string",
-            "nullable": true
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
           },
           "price": {
             "type": "number",
@@ -40137,8 +40452,12 @@
             "nullable": true
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
           },
           "price": {
             "type": "number",
@@ -40441,8 +40760,12 @@
             "nullable": true
           },
           "status": {
-            "type": "string",
-            "nullable": true
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive"
+            ],
+            "type": "string"
           },
           "price": {
             "type": "number",
@@ -41105,6 +41428,93 @@
           },
           "data": {
             "$ref": "#/components/schemas/QuizResultResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RedeliveryWaitlistModuleGroupDto": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "moduleCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "moduleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "waitingCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "oldestWaitingDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RedeliveryWaitlistProgramGroupDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RedeliveryWaitlistModuleGroupDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RedeliveryWaitlistProgramGroupDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RedeliveryWaitlistProgramGroupDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -42067,8 +42477,8 @@
           },
           "sessionKind": {
             "enum": [
-              "Lesson",
-              "FieldTrip",
+              "LiveOnline",
+              "Offline",
               "AssignmentWindow"
             ],
             "type": "string"
@@ -42111,6 +42521,16 @@
             ],
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SelectClassRedeliveryRequestDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -42607,8 +43027,8 @@
           },
           "sessionKind": {
             "enum": [
-              "Lesson",
-              "FieldTrip",
+              "LiveOnline",
+              "Offline",
               "AssignmentWindow"
             ],
             "type": "string"
@@ -43436,8 +43856,8 @@
           },
           "sessionKind": {
             "enum": [
-              "Lesson",
-              "FieldTrip",
+              "LiveOnline",
+              "Offline",
               "AssignmentWindow"
             ],
             "type": "string",
@@ -43657,24 +44077,6 @@
         },
         "additionalProperties": false
       },
-      "UpdateModuleEnrollmentRequestDto": {
-        "required": [
-          "moduleId",
-          "programEnrollmentId"
-        ],
-        "type": "object",
-        "properties": {
-          "programEnrollmentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "moduleId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        },
-        "additionalProperties": false
-      },
       "UpdateModuleRequestDto": {
         "type": "object",
         "properties": {
@@ -43712,16 +44114,6 @@
           },
           "isMandatory": {
             "type": "boolean",
-            "nullable": true
-          },
-          "price": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "retakeFee": {
-            "type": "number",
-            "format": "double",
             "nullable": true
           },
           "learningOutcomes": {
@@ -43979,6 +44371,11 @@
             "nullable": true
           },
           "status": {
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive"
+            ],
             "type": "string",
             "nullable": true
           },

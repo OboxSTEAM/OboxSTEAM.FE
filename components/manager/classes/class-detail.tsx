@@ -322,7 +322,14 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
       <div className="space-y-6 px-6 pb-12">
         <section className="grid gap-4 rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)] md:grid-cols-2 xl:grid-cols-4">
           <MetaCard label="Trạng thái">
-            <ClassStatusBadge status={classItem.status} />
+            <div className="flex flex-wrap items-center gap-2">
+              <ClassStatusBadge status={classItem.status} />
+              {classItem.kind === "Remedial" ? (
+                <span className="rounded-md bg-[#4FC3F7]/20 px-2 py-0.5 text-xs font-semibold text-[#0288D1]">
+                  Lớp học lại
+                </span>
+              ) : null}
+            </div>
           </MetaCard>
           <MetaCard label="Sĩ số">
             <p className="font-mono text-lg font-bold tabular-nums text-foreground">
@@ -416,6 +423,8 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
               cohortName={classItem.name}
               programId={classItem.programId}
               seatsTaken={classItem.seatsTaken}
+              classKind={classItem.kind}
+              remedialModuleId={classItem.remedialModuleId}
               onSessionsChanged={retrySessions}
             />
           </TabsContent>

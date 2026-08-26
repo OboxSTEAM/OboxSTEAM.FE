@@ -68,6 +68,8 @@ type ClassSchedulePanelProps = {
   cohortName?: string | null;
   programId?: string | null;
   seatsTaken?: number;
+  classKind?: "Standard" | "Remedial";
+  remedialModuleId?: string | null;
   onSessionsChanged?: () => void;
 };
 
@@ -127,6 +129,8 @@ export function ClassSchedulePanel({
   cohortName,
   programId,
   seatsTaken = 0,
+  classKind = "Standard",
+  remedialModuleId = null,
   onSessionsChanged,
 }: ClassSchedulePanelProps) {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
@@ -577,6 +581,8 @@ export function ClassSchedulePanel({
         isSubmitting={isSubmitting}
         occupiedActivityIds={occupiedItems.activityIds}
         occupiedAssignmentIds={occupiedItems.assignmentIds}
+        classKind={classKind}
+        remedialModuleId={remedialModuleId}
         onSubmit={handleSubmit}
       />
 

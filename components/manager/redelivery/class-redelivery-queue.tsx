@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import { Check, Inbox, RotateCcw, X } from "lucide-react";
 
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
-import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +23,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  LIGHT_SELECT_CONTENT,
+  LIGHT_SELECT_ITEM,
+  LIGHT_SELECT_TRIGGER,
+} from "@/components/programs/program-select-styles";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   assignTargetClassRedeliveryRequest,
@@ -34,14 +38,17 @@ import {
 } from "@/lib/api";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import {
-  LIGHT_SELECT_CONTENT,
-  LIGHT_SELECT_ITEM,
-  LIGHT_SELECT_TRIGGER,
-} from "@/components/programs/program-select-styles";
 import { cn } from "@/lib/utils";
 
-export function ClassRedeliveryQueue() {
+type ClassRedeliveryQueueProps = {
+  /** When true, hide the reload toolbar (parent owns refresh). */
+  embedded?: boolean;
+};
+
+/** Flat PendingManager assign/reject queue — secondary fallback for WS7. */
+export function ClassRedeliveryQueue({
+  embedded = false,
+}: ClassRedeliveryQueueProps) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [assignTarget, setAssignTarget] =
     useState<ClassRedeliveryRequest | null>(null);
@@ -121,120 +128,116 @@ export function ClassRedeliveryQueue() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <ManagerPageHeader
-        title="Học lại lớp"
-        description="Chỉ định lớp đích hoặc từ chối yêu cầu học lại module của học viên."
-        breadcrumbs={[{ label: "Học lại lớp" }]}
-      >
-        <Button
-          type="button"
-          variant="outline"
-          className="h-11 gap-2 rounded-xl border-border"
-          onClick={() => {
-            markLoading();
-            retry();
-          }}
-        >
-          <RotateCcw className="size-4" aria-hidden />
-          Tải lại
-        </Button>
-      </ManagerPageHeader>
-
-      <div className="px-6 pb-12">
-        <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
-          {isLoading ? (
-            <div className="space-y-3 p-6">
-              <Skeleton className="h-16 w-full rounded-xl" />
-              <Skeleton className="h-16 w-full rounded-xl" />
-            </div>
-          ) : requests.length === 0 ? (
-            <div className="p-6">
-              <ManagerEmptyState
-                icon={Inbox}
-                title="Không có yêu cầu chờ xử lý"
-                description="Khi hệ thống không tự khớp lớp, yêu cầu PendingManager sẽ hiện ở đây."
-              />
-            </div>
-          ) : (
-            <ul className="divide-y divide-border">
-              {requests.map((request) => {
-                const isBusy = busyId === request.id;
-                return (
-                  <li
-                    key={request.id}
-                    className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6"
-                  >
-                    <div className="min-w-0 space-y-1.5">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge
-                          variant="outline"
-                          className="border-[#FDD835]/35 bg-[#FDD835]/20 text-[#8A7200]"
-                        >
-                          {request.status}
-                        </Badge>
-                        <span className="font-mono text-xs text-muted-foreground">
-                          {request.id.slice(0, 8)}…
-                        </span>
-                      </div>
-                      <p className="text-sm text-foreground">
-                        Module{" "}
-                        <span className="font-mono text-xs">
-                          {request.moduleId.slice(0, 8)}…
-                        </span>
-                        {" · "}Lớp nguồn{" "}
-                        <span className="font-mono text-xs">
-                          {request.sourceClassId.slice(0, 8)}…
-                        </span>
-                      </p>
-                      {request.requestMessage?.trim() ? (
-                        <p className="rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs">
-                          {request.requestMessage.trim()}
-                        </p>
-                      ) : null}
-                      <p className="text-xs text-muted-foreground">
-                        Gửi lúc {formatApiDateTimeDisplay(request.createdAt)}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 gap-1.5">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isBusy}
-                        aria-label="Từ chối"
-                        className="size-9 rounded-lg text-primary hover:bg-primary/10"
-                        onClick={() => {
-                          setDecisionNote("");
-                          setRejectTarget(request);
-                        }}
-                      >
-                        <X className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={isBusy}
-                        aria-label="Chỉ định lớp"
-                        className={cn(
-                          "size-9 rounded-lg text-[#3d5c22] hover:bg-[#7CB342]/15",
-                        )}
-                        onClick={() => {
-                          setTargetClassId(null);
-                          setDecisionNote("");
-                          setAssignTarget(request);
-                        }}
-                      >
-                        <Check className="size-4" />
-                      </Button>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+    <div className="flex flex-col gap-4">
+      {!embedded ? (
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="h-11 gap-2 rounded-xl border-border"
+            onClick={() => {
+              markLoading();
+              retry();
+            }}
+          >
+            <RotateCcw className="size-4" aria-hidden />
+            Tải lại
+          </Button>
         </div>
+      ) : null}
+
+      <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+        {isLoading ? (
+          <div className="space-y-3 p-6">
+            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="h-16 w-full rounded-xl" />
+          </div>
+        ) : requests.length === 0 ? (
+          <div className="p-6">
+            <ManagerEmptyState
+              icon={Inbox}
+              title="Không có yêu cầu chờ xử lý"
+              description="Khi hệ thống không tự khớp lớp, yêu cầu PendingManager sẽ hiện ở đây."
+            />
+          </div>
+        ) : (
+          <ul className="divide-y divide-border">
+            {requests.map((request) => {
+              const isBusy = busyId === request.id;
+              return (
+                <li
+                  key={request.id}
+                  className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-start sm:justify-between sm:px-6"
+                >
+                  <div className="min-w-0 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className="border-[#FDD835]/35 bg-[#FDD835]/20 text-[#8A7200]"
+                      >
+                        {request.status}
+                      </Badge>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {request.id.slice(0, 8)}…
+                      </span>
+                    </div>
+                    <p className="text-sm text-foreground">
+                      Module{" "}
+                      <span className="font-mono text-xs">
+                        {request.moduleId.slice(0, 8)}…
+                      </span>
+                      {" · "}Lớp nguồn{" "}
+                      <span className="font-mono text-xs">
+                        {request.sourceClassId.slice(0, 8)}…
+                      </span>
+                    </p>
+                    {request.requestMessage?.trim() ? (
+                      <p className="rounded-lg border border-border bg-muted/40 px-2.5 py-1.5 text-xs">
+                        {request.requestMessage.trim()}
+                      </p>
+                    ) : null}
+                    <p className="text-xs text-muted-foreground">
+                      Gửi lúc {formatApiDateTimeDisplay(request.createdAt)}
+                    </p>
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={isBusy}
+                      aria-label="Từ chối"
+                      className="size-9 rounded-lg text-primary hover:bg-primary/10"
+                      onClick={() => {
+                        setDecisionNote("");
+                        setRejectTarget(request);
+                      }}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={isBusy}
+                      aria-label="Chỉ định lớp"
+                      className={cn(
+                        "size-9 rounded-lg text-[#3d5c22] hover:bg-[#7CB342]/15",
+                      )}
+                      onClick={() => {
+                        setTargetClassId(null);
+                        setDecisionNote("");
+                        setAssignTarget(request);
+                      }}
+                    >
+                      <Check className="size-4" />
+                    </Button>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
 
       <Dialog

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 
-import { ClassRedeliveryQueue } from "@/components/manager/redelivery/class-redelivery-queue";
+import { RedeliveryWaitlist } from "@/components/manager/redelivery/redelivery-waitlist";
 
 export const metadata: Metadata = {
   title: "Học lại lớp",
 };
 
 export default function ManagerRedeliveryPage() {
-  return <ClassRedeliveryQueue />;
+  return <RedeliveryWaitlist />;
 }

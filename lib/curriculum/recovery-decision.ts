@@ -11,6 +11,8 @@ export type RecoveryAction =
   | "wait-recovery"
   | "wait-redelivery-payment"
   | "wait-manager"
+  | "select-class"
+  | "intensive-consent"
   | "none";
 
 export type RecoveryDecisionInput = {
@@ -32,6 +34,8 @@ const OPEN_REDELIVERY_STATUSES = new Set([
   "MatchedPendingPayment",
   "PendingManager",
   "Approved",
+  "AwaitingClassSelection",
+  "AwaitingIntensiveConsent",
 ]);
 
 export function countDecidedRecoveries(
@@ -163,6 +167,12 @@ export function resolveRecoveryAction(
     moduleEnrollmentId,
   );
   if (openRedelivery) {
+    if (openRedelivery.status === "AwaitingClassSelection") {
+      return "select-class";
+    }
+    if (openRedelivery.status === "AwaitingIntensiveConsent") {
+      return "intensive-consent";
+    }
     if (
       openRedelivery.status === "MatchedPendingPayment" ||
       (openRedelivery.status === "Approved" &&

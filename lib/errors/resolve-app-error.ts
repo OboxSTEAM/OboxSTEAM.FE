@@ -556,8 +556,9 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "class-redelivery.create": {
     title: "Không gửi được yêu cầu học lại lớp",
-    reason: "Module chưa đủ điều kiện học lại hoặc yêu cầu đang chờ xử lý.",
-    action: "Kiểm tra trạng thái ghi danh module rồi thử lại.",
+    reason:
+      "Module chưa đủ điều kiện, là Theory, hoặc bạn đã vượt giới hạn tải học (program/class/retake).",
+    action: "Kiểm tra tiến độ module và số lớp đang học rồi thử lại.",
   },
   "class-redelivery.list": {
     title: "Không tải được yêu cầu học lại lớp",
@@ -566,8 +567,18 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "class-redelivery.decide": {
     title: "Không xử lý được yêu cầu học lại lớp",
-    reason: "Yêu cầu có thể đã được xử lý hoặc lớp đích không hợp lệ.",
-    action: "Tải lại hàng đợi quản lý và chọn lớp khác nếu cần.",
+    reason: "Yêu cầu có thể đã được xử lý, lớp hết ghế, hoặc trùng lịch / vượt tải.",
+    action: "Tải lại hàng đợi và chọn lớp khác nếu cần.",
+  },
+  "class-redelivery.select": {
+    title: "Không chọn được lớp học lại",
+    reason: "Lớp có thể hết ghế, trùng lịch, hoặc bạn đã đủ tải học.",
+    action: "Chọn lớp khác còn ghế hoặc thử lại sau.",
+  },
+  "class-redelivery.intensive": {
+    title: "Không xác nhận được lịch học nén",
+    reason: "Ưu đãi lịch nén có thể đã hết hạn hoặc trùng lịch / vượt tải.",
+    action: "Tải lại yêu cầu hoặc từ chối và xin học lại sau.",
   },
   "enrollments.list": {
     title: "Không tải được khóa học",

@@ -114,6 +114,14 @@ export function CurriculumClassBar({ classContext }: CurriculumClassBarProps) {
             <span className="text-[10px] font-semibold tracking-[0.14em] text-learn-success uppercase">
               Lớp của bạn
             </span>
+            {classContext.kind === "Remedial" ||
+            classContext.classEnrollmentKind === "Retake" ? (
+              <span className="ml-2 inline-flex rounded-md bg-[#4FC3F7]/20 px-1.5 py-0.5 text-[10px] font-semibold text-[#0288D1]">
+                {classContext.kind === "Remedial"
+                  ? "Lớp học lại"
+                  : "Ghế học lại"}
+              </span>
+            ) : null}
             <span className="mt-1 block font-heading text-[15px] leading-snug font-semibold text-learn-text-strong">
               {classContext.className}
             </span>

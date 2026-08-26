@@ -25,8 +25,6 @@ export const createModuleSchema = z.object({
   moduleOrder: z.number().int().min(1, "Thứ tự học phải là số nguyên lớn hơn 0."),
   prerequisiteModuleId: z.string().uuid("ID module tiên quyết không hợp lệ.").nullable().optional(),
   isMandatory: z.boolean().default(true),
-  price: z.number().min(0, "Học phí không được âm."),
-  retakeFee: z.number().min(0, "Học phí học lại không được âm."),
   learningOutcomes: z.array(z.string()).nullable().optional(),
 });
 

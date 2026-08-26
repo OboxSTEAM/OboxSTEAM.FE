@@ -16,7 +16,7 @@ export const requestParentPaymentSchema = z.object({
 
 /**
  * Body for `POST /api/payments/checkout/retake`.
- * Pass `retakeModuleEnrollmentId` from the class-redelivery request — not the failed enrollment.
+ * Pass `retakeModuleEnrollmentId` from the class-redelivery request — amount is Program.Price.
  */
 export const checkoutRetakePaymentSchema = z.object({
   moduleEnrollmentId: z.string().uuid("ID ghi danh module không hợp lệ."),

@@ -80,6 +80,7 @@ export type {
 
 export type {
   Class,
+  ClassKind,
   ClassStatus,
   ClassWithSessions,
 } from "@/lib/api/entities/class";

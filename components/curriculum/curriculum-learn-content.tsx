@@ -62,6 +62,8 @@ function buildClassContext(
     className: classWithStudents.name,
     seatsTaken: classWithStudents.seatsTaken,
     maxCapacity: classWithStudents.maxCapacity,
+    kind: classWithStudents.kind,
+    remedialModuleId: classWithStudents.remedialModuleId ?? null,
     mentor,
     roster: classWithStudents.students,
     sessions: sessionsResult?.data?.items ?? [],

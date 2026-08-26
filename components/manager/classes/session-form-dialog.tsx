@@ -159,6 +159,9 @@ type SessionFormDialogProps = {
   isSubmitting: boolean;
   occupiedActivityIds?: Set<string>;
   occupiedAssignmentIds?: Set<string>;
+  /** When Remedial, module picker locks to remedialModuleId. */
+  classKind?: "Standard" | "Remedial";
+  remedialModuleId?: string | null;
   onSubmit: (values: ClassSessionFormSubmitPayload) => Promise<void>;
 };
 
@@ -222,6 +225,8 @@ export function SessionFormDialog({
   isSubmitting,
   occupiedActivityIds,
   occupiedAssignmentIds,
+  classKind = "Standard",
+  remedialModuleId = null,
   onSubmit,
 }: SessionFormDialogProps) {
   const {
@@ -241,6 +246,14 @@ export function SessionFormDialog({
   useEffect(() => {
     if (open) reset(toDefaultValues(session, defaultStart));
   }, [open, reset, session, defaultStart]);
+
+  const isRemedialLocked =
+    classKind === "Remedial" && Boolean(remedialModuleId);
+
+  useEffect(() => {
+    if (!open || !isRemedialLocked || !remedialModuleId) return;
+    setValue("moduleId", remedialModuleId, { shouldValidate: true });
+  }, [open, isRemedialLocked, remedialModuleId, setValue]);
 
   const selectedModuleId = watch("moduleId");
   const selectedActivityId = watch("activityId") ?? "";
@@ -522,7 +535,7 @@ export function SessionFormDialog({
                       <Select
                         value={field.value || null}
                         onValueChange={(value) => field.onChange(value ?? "")}
-                        disabled={isModulesLoading}
+                        disabled={isModulesLoading || isRemedialLocked}
                       >
                         <SelectTrigger
                           id="moduleId"
@@ -531,6 +544,10 @@ export function SessionFormDialog({
                           <span className="truncate">
                             {isModulesLoading
                               ? "Đang tải module..."
+                              : isRemedialLocked
+                                ? selectedModule
+                                  ? `${selectedModule.name}${selectedModule.code ? ` (${selectedModule.code})` : ""} · Lớp học lại`
+                                  : "Module khóa (Remedial)"
                               : selectedModule
                                 ? `${selectedModule.name}${selectedModule.code ? ` (${selectedModule.code})` : ""}`
                                 : "Chọn module"}

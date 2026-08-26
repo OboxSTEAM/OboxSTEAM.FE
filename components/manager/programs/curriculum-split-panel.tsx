@@ -370,7 +370,7 @@ type MFV = {
   code: string; programId: string; name: string;
   moduleType: "Theory" | "Experiential" | "Research";
   moduleOrder: number; prerequisiteModuleId: string | null;
-  isMandatory: boolean; price: number; retakeFee: number; learningOutcomesText: string;
+  isMandatory: boolean; learningOutcomesText: string;
 };
 
 function useSuccessFlash() {
@@ -398,14 +398,12 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
       moduleOrder: moduleToEdit.moduleOrder,
       prerequisiteModuleId: moduleToEdit.prerequisiteModuleId || null,
       isMandatory: moduleToEdit.isMandatory,
-      price: moduleToEdit.price,
-      retakeFee: moduleToEdit.retakeFee,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       learningOutcomesText: (moduleToEdit as any).learningOutcomes?.join("\n") || "",
     } : {
       code: "", programId, name: "", moduleType: "Theory" as const,
       moduleOrder: modulesInProgram.reduce((max, module) => Math.max(max, module.moduleOrder), 0) + 1,
-      prerequisiteModuleId: null, isMandatory: true, price: 0, retakeFee: 0, learningOutcomesText: "",
+      prerequisiteModuleId: null, isMandatory: true, learningOutcomesText: "",
     },
   });
 
@@ -422,7 +420,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
       const payload = {
         code: data.code, programId: data.programId, name: data.name, moduleType: data.moduleType,
         moduleOrder: Number(data.moduleOrder), prerequisiteModuleId: data.prerequisiteModuleId || null,
-        isMandatory: data.isMandatory, price: Number(data.price), retakeFee: Number(data.retakeFee), learningOutcomes: outcomes,
+        isMandatory: data.isMandatory, learningOutcomes: outcomes,
       };
       if (isEdit && moduleToEdit) {
         await updateModule(moduleToEdit.id, payload);
@@ -514,22 +512,6 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
               <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <STitle>Học phí</STitle>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Học phí (VND) <span style={{ color: W.primary }}>*</span></Label>
-              <input type="number" placeholder="0" {...register("price", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <FErr msg={errors.price?.message} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Học lại (VND) <span style={{ color: W.primary }}>*</span></Label>
-              <input type="number" placeholder="0" {...register("retakeFee", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <FErr msg={errors.retakeFee?.message} />
             </div>
           </div>
         </div>

@@ -14,6 +14,9 @@ export const classStatusSchema = z.enum([
   "Cancelled",
 ]);
 
+/** Handoff WS7 — optional until OpenAPI surfaces `kind` on ClassResponseDto. */
+export const classKindSchema = z.enum(["Standard", "Remedial"]);
+
 export const classSchema = z.object({
   id: z.string().uuid(),
   code: z
@@ -32,6 +35,8 @@ export const classSchema = z.object({
   maxCapacity: z.number().int(),
   seatsTaken: z.number().int(),
   status: classStatusSchema,
+  kind: classKindSchema.nullish().transform((value) => value ?? "Standard"),
+  remedialModuleId: z.string().uuid().nullish(),
   minHoursBeforeAssignmentJoin: z.number().int(),
   scheduleSummary: z.string().nullable(),
   requiredSkills: z
@@ -68,6 +73,8 @@ export const classWithSessionsSchema = z.object({
   maxCapacity: z.number().int(),
   seatsTaken: z.number().int(),
   status: classStatusSchema,
+  kind: classKindSchema.nullish().transform((value) => value ?? "Standard"),
+  remedialModuleId: z.string().uuid().nullish(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   sessions: z
@@ -77,5 +84,6 @@ export const classWithSessionsSchema = z.object({
 });
 
 export type ClassStatus = z.infer<typeof classStatusSchema>;
+export type ClassKind = z.infer<typeof classKindSchema>;
 export type Class = z.infer<typeof classSchema>;
 export type ClassWithSessions = z.infer<typeof classWithSessionsSchema>;
