@@ -3,6 +3,8 @@
  * Edit text here without touching JSX. All copy is in Vietnamese.
  */
 
+import { landingImage } from "./assets";
+
 export const SITE = {
   name: "OboxSTEAM",
   tagline: "Khám phá. Sáng tạo. Tỏa sáng.",
@@ -23,7 +25,7 @@ export const HERO = {
     "Học qua dự án thực tế, xây dựng Portfolio cho hành trình du học.",
   primaryCta: { label: "Đăng ký miễn phí", href: "/register" },
   secondaryCta: { label: "Xem chương trình", href: "#programs" },
-  deskTextureSrc: "/images/hero/desk-texture.jpg",
+  deskTextureSrc: landingImage("hero/desk-texture.jpg"),
 } as const;
 
 
@@ -143,7 +145,7 @@ export const UNIVERSE_SECTION = {
       label: "AI nhận diện khuôn mặt",
       desc: "Ảnh buổi học tự gắn đúng từng bạn",
       body: "Mentor chụp ảnh lớp xong là xong. AI nhận ra từng học viên và đưa ảnh vào portfolio của đúng người — không cần phụ huynh hay thầy cô cắt dán tay.",
-      imageSrc: "/images/universe/face-detection.png",
+      imageSrc: landingImage("universe/face-detection.png"),
       accent: "#E94B3C",
     },
     {
@@ -153,7 +155,7 @@ export const UNIVERSE_SECTION = {
       label: "Clip highlight cá nhân",
       desc: "Tách clip ngắn của từng bạn từ footage lớp",
       body: "Buổi lab dài được cắt thành clip ngắn của từng em. Xem nhanh trên điện thoại, hoặc gắn vào portfolio khi cần kể câu chuyện học tập.",
-      imageSrc: "/images/universe/highlight-video.png",
+      imageSrc: landingImage("universe/highlight-video.png"),
       accent: "#7CB342",
     },
     {
@@ -163,7 +165,7 @@ export const UNIVERSE_SECTION = {
       label: "Chứng chỉ điện tử",
       desc: "Hoàn thành là có chứng chỉ để xác minh",
       body: "Xong chương trình, con nhận chứng chỉ điện tử kèm mã kiểm tra. Phụ huynh, trường hay hội đồng tuyển sinh đều mở link xác minh được — rồi đưa thẳng vào portfolio.",
-      imageSrc: "/images/universe/certificate.png",
+      imageSrc: landingImage("universe/certificate.png"),
       accent: "#7E57C2",
     },
     {
@@ -173,7 +175,7 @@ export const UNIVERSE_SECTION = {
       label: "Trang portfolio riêng",
       desc: "Một đường link tên.obox.id để chia sẻ",
       body: "Mỗi học viên có một trang mang tên mình trên obox.id. Gửi một link là đủ — không phải xuất PDF mới mỗi lần nộp hồ sơ.",
-      imageSrc: "/images/universe/portfolio.png",
+      imageSrc: landingImage("universe/portfolio.png"),
       accent: "#4FC3F7",
     },
   ] as const,
@@ -187,7 +189,7 @@ export const CTA_DESK_SECTION = {
   headlineSupport: "hành trình STEAM cùng con",
   primaryCta: { label: "Đăng ký miễn phí", href: "/register" },
   secondaryCta: { label: "Xem chương trình", href: "#programs" },
-  deskTextureSrc: "/images/hero/desk-texture.jpg",
+  deskTextureSrc: landingImage("hero/desk-texture.jpg"),
 } as const;
 
 export const FEATURED_PROGRAMS = [
