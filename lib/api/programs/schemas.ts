@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import { programCurriculumSchema } from "@/lib/api/entities/curriculum";
+import { openEnrollmentClassSchema } from "@/lib/api/entities/open-enrollment-class";
 import {
   programSchema,
   programWithModulesSchema,
@@ -61,6 +62,13 @@ export const getProgramCurriculumResponseSchema = createApiResponseSchema(
   programCurriculumValueSchema,
 );
 
+export const openEnrollmentClassesValueSchema = createApiValueSchema(
+  z.array(openEnrollmentClassSchema).nullable(),
+);
+export const getProgramOpenClassesResponseSchema = createApiResponseSchema(
+  openEnrollmentClassesValueSchema,
+);
+
 export type GetProgramsResponse = z.infer<typeof getProgramsResponseSchema>;
 export type GetProgramsWithModulesResponse = z.infer<typeof getProgramsWithModulesResponseSchema>;
 export type GetProgramByIdResponse = z.infer<typeof getProgramByIdResponseSchema>;
@@ -90,3 +98,7 @@ export type GetProgramCurriculumResponse = z.infer<
   typeof getProgramCurriculumResponseSchema
 >;
 export type GetProgramCurriculumResult = GetProgramCurriculumResponse["value"];
+export type GetProgramOpenClassesResponse = z.infer<
+  typeof getProgramOpenClassesResponseSchema
+>;
+export type GetProgramOpenClassesResult = GetProgramOpenClassesResponse["value"];

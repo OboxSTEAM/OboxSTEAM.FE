@@ -17,6 +17,7 @@ import {
   deleteProgramReviewResponseSchema,
   getProgramByIdResponseSchema,
   getProgramCurriculumResponseSchema,
+  getProgramOpenClassesResponseSchema,
   getProgramReviewsResponseSchema,
   getProgramsResponseSchema,
   getProgramsWithModulesResponseSchema,
@@ -28,6 +29,7 @@ import {
   type DeleteProgramReviewResult,
   type GetProgramByIdResult,
   type GetProgramCurriculumResult,
+  type GetProgramOpenClassesResult,
   type GetProgramReviewsResult,
   type GetProgramsResult,
   type GetProgramsWithModulesResult,
@@ -46,6 +48,8 @@ export type {
   GetProgramByIdResult,
   GetProgramCurriculumResponse,
   GetProgramCurriculumResult,
+  GetProgramOpenClassesResponse,
+  GetProgramOpenClassesResult,
   GetProgramReviewsResponse,
   GetProgramReviewsResult,
   GetProgramsResponse,
@@ -63,6 +67,11 @@ export type {
   ModuleCourse,
   ModuleType,
 } from "@/lib/api/entities/module";
+
+export type {
+  OpenEnrollmentClass,
+  OpenEnrollmentClassSession,
+} from "@/lib/api/entities/open-enrollment-class";
 
 export type { ProgramExpert } from "@/lib/api/entities/expert";
 
@@ -158,6 +167,30 @@ export async function getProgramById(id: string): Promise<GetProgramByIdResult> 
     `${PROGRAMS_BASE}/${programId}`,
     getProgramByIdResponseSchema,
     { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/programs/{id}/open-classes` — public recruiting-class preview.
+ * Empty list means checkout must be blocked.
+ */
+export async function getProgramOpenClasses(
+  id: string,
+  params?: { preferredClassId?: string | null },
+): Promise<GetProgramOpenClassesResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+  const preferred = params?.preferredClassId?.trim();
+  const query =
+    preferred && z.string().uuid().safeParse(preferred).success
+      ? `?preferredClassId=${encodeURIComponent(preferred)}`
+      : "";
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/open-classes${query}`,
+    getProgramOpenClassesResponseSchema,
+    { method: "GET", skipAuth: true, skipRefresh: true },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

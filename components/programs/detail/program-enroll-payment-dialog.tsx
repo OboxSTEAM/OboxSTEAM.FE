@@ -38,6 +38,8 @@ type ProgramEnrollPaymentDialogProps = {
   onOpenChange: (open: boolean) => void;
   programId: string;
   price: number;
+  /** When true, checkout / request-parent actions stay disabled. */
+  payBlocked?: boolean;
 };
 
 const STEP_EASE = "motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)]";
@@ -186,6 +188,7 @@ export function ProgramEnrollPaymentDialog({
   onOpenChange,
   programId,
   price,
+  payBlocked = false,
 }: ProgramEnrollPaymentDialogProps) {
   const priceParts = getProgramPriceParts(price);
   const priceLabel = priceParts.isFree
@@ -249,6 +252,7 @@ export function ProgramEnrollPaymentDialog({
   }, [open, step, parentsLoadState, loadParents]);
 
   const handleDirectCheckout = async () => {
+    if (payBlocked) return;
     setIsCheckingOut(true);
     try {
       const result = await checkoutPayment({
@@ -267,6 +271,7 @@ export function ProgramEnrollPaymentDialog({
   };
 
   const handleSendToParent = async (parent: ParentLinkedStudent) => {
+    if (payBlocked) return;
     setSendingParentId(parent.linkedUserId);
     try {
       const result = await requestParentPayment({
@@ -319,9 +324,11 @@ export function ProgramEnrollPaymentDialog({
                 ) : null}
               </div>
               <DialogDescription className="mt-1.5 text-sm leading-relaxed">
-                {step === "choose"
-                  ? "Chọn cách thanh toán phù hợp."
-                  : "Email có hiệu lực 24 giờ."}
+                {payBlocked
+                  ? "Chưa có lớp đang tuyển còn ghế — tạm khóa thanh toán."
+                  : step === "choose"
+                    ? "Chọn cách thanh toán phù hợp."
+                    : "Email có hiệu lực 24 giờ."}
               </DialogDescription>
             </div>
           </div>
@@ -334,14 +341,14 @@ export function ProgramEnrollPaymentDialog({
                 title="Tự thanh toán"
                 hint="Stripe · ngay lập tức"
                 icon={CreditCard}
-                disabled={isCheckingOut}
+                disabled={isCheckingOut || payBlocked}
                 onClick={() => void handleDirectCheckout()}
               />
               <PaymentOptionTile
                 title="Nhờ phụ huynh"
                 hint="Gửi email yêu cầu"
                 icon={Users}
-                disabled={isCheckingOut}
+                disabled={isCheckingOut || payBlocked}
                 onClick={goToParent}
               />
             </div>

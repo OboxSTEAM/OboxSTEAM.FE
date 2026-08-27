@@ -493,9 +493,9 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   "payments.checkout": {
     title: "Không thể bắt đầu thanh toán",
     reason:
-      "Yêu cầu bị từ chối — chương trình phải đang mở (Active), hoặc bạn đã đủ 2 chương trình đang học/chờ thanh toán.",
+      "Yêu cầu bị từ chối — chương trình phải Active, còn lớp tuyển sinh có ghế, và bạn chưa vượt giới hạn 2 chương trình đang học/chờ thanh toán.",
     action:
-      "Chỉ thanh toán khi chương trình Active; hoàn thành hoặc hủy một chương trình đang học rồi thử lại.",
+      "Chỉ thanh toán khi chương trình Active và còn lớp Open còn ghế; hoàn thành hoặc hủy một chương trình đang học rồi thử lại.",
   },
   "payments.detail": {
     title: "Không tải được thông tin thanh toán",
@@ -510,13 +510,13 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   "payments.request-parent": {
     title: "Không gửi được yêu cầu thanh toán",
     reason:
-      "Chương trình phải đang mở (Active), phụ huynh chưa liên kết/xác nhận, hoặc yêu cầu bị từ chối.",
-    action: "Kiểm tra trạng thái chương trình và liên kết phụ huynh rồi thử lại.",
+      "Chương trình phải Active, còn lớp tuyển sinh có ghế, phụ huynh đã liên kết/xác nhận, và yêu cầu không bị từ chối.",
+    action: "Kiểm tra trạng thái chương trình, lớp tuyển sinh và liên kết phụ huynh rồi thử lại.",
   },
   "payments.parent-checkout": {
     title: "Không thể bắt đầu thanh toán",
     reason:
-      "Chương trình phải đang mở (Active), hoặc liên kết thanh toán không hợp lệ / đã hết hạn (24 giờ).",
+      "Chương trình phải Active và còn lớp tuyển sinh có ghế, hoặc liên kết thanh toán không hợp lệ / đã hết hạn (24 giờ).",
     action: "Nhờ học viên gửi lại yêu cầu khi chương trình đang mở.",
   },
   "payments.checkout-retake": {
@@ -980,6 +980,23 @@ function mapHttpStatusToError(
       action: isCohortLock
         ? "Chờ lớp InProgress hoàn thành, hoặc chỉ thao tác khi lớp Open chưa có học viên Active."
         : resolveAction(status, apiMessage, fallback.action),
+    };
+  }
+
+  if (
+    (status === 400 || status === 422) &&
+    (context === "payments.checkout" ||
+      context === "payments.request-parent" ||
+      context === "payments.parent-checkout") &&
+    apiMessage &&
+    /no open classes with available seats|Checkout is blocked until a recruiting class/i.test(
+      apiMessage,
+    )
+  ) {
+    return {
+      title: "Không thể thanh toán",
+      reason: apiMessage,
+      action: "Chờ quản lý mở lớp Standard còn ghế rồi thử lại.",
     };
   }
 

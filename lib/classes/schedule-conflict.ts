@@ -9,7 +9,15 @@ export type ScheduleConflictHit = {
   label: string;
 };
 
-function overlaps(
+/** Minimal session shape for open-enrollment / timetable conflict checks. */
+export type ScheduleTimedSession = {
+  startTime: string;
+  endTime: string;
+  /** When present, Cancelled sessions are ignored. */
+  status?: string | null;
+};
+
+export function overlaps(
   aStart: Date,
   aEnd: Date,
   bStart: Date,
@@ -20,15 +28,98 @@ function overlaps(
 
 function formatConflictLabel(
   busy: StudentScheduleInterval,
-  candidate: ClassSession,
+  candidateStartTime: string,
 ): string {
   const classLabel =
     busy.className?.trim() || busy.classCode?.trim() || "lớp khác";
   const when =
-    formatApiDateTimeDisplay(candidate.startTime) ||
+    formatApiDateTimeDisplay(candidateStartTime) ||
     formatApiDateTimeDisplay(busy.startTime) ||
     "khung giờ trùng";
   return `Trùng lịch với ${classLabel} (${when})`;
+}
+
+function isCancelledStatus(status: string | null | undefined): boolean {
+  return status === "Cancelled";
+}
+
+/**
+ * First overlap between candidate sessions and the student's busy schedule.
+ * Cancelled intervals/sessions are ignored.
+ */
+export function findBusyScheduleConflict(
+  candidateSessions: ScheduleTimedSession[],
+  busyIntervals: StudentScheduleInterval[],
+  options?: { excludeClassId?: string },
+): { busy: StudentScheduleInterval; candidate: ScheduleTimedSession; label: string } | null {
+  const excludeClassId = options?.excludeClassId;
+
+  for (const candidate of candidateSessions) {
+    if (isCancelledStatus(candidate.status)) continue;
+    const cStart = parseApiDateTime(candidate.startTime);
+    const cEnd = parseApiDateTime(candidate.endTime);
+    if (!cStart || !cEnd) continue;
+
+    for (const busy of busyIntervals) {
+      if (isCancelledStatus(busy.status)) continue;
+      if (excludeClassId && busy.classId === excludeClassId) continue;
+      const bStart = parseApiDateTime(busy.startTime);
+      const bEnd = parseApiDateTime(busy.endTime);
+      if (!bStart || !bEnd) continue;
+      if (!overlaps(cStart, cEnd, bStart, bEnd)) continue;
+
+      return {
+        busy,
+        candidate,
+        label: formatConflictLabel(busy, candidate.startTime),
+      };
+    }
+  }
+
+  return null;
+}
+
+/** First conflict label, or null. */
+export function findBusyConflictLabel(
+  candidateSessions: ScheduleTimedSession[],
+  busyIntervals: StudentScheduleInterval[],
+  options?: { excludeClassId?: string },
+): string | null {
+  return findBusyScheduleConflict(candidateSessions, busyIntervals, options)
+    ?.label ?? null;
+}
+
+/**
+ * Session ids (when present) that overlap any busy interval.
+ * Sessions without `sessionId` are skipped in the set (label still works via findBusy*).
+ */
+export function getConflictingSessionIds(
+  candidateSessions: Array<ScheduleTimedSession & { sessionId?: string }>,
+  busyIntervals: StudentScheduleInterval[],
+  options?: { excludeClassId?: string },
+): Set<string> {
+  const excludeClassId = options?.excludeClassId;
+  const ids = new Set<string>();
+
+  for (const candidate of candidateSessions) {
+    if (!candidate.sessionId || isCancelledStatus(candidate.status)) continue;
+    const cStart = parseApiDateTime(candidate.startTime);
+    const cEnd = parseApiDateTime(candidate.endTime);
+    if (!cStart || !cEnd) continue;
+
+    for (const busy of busyIntervals) {
+      if (isCancelledStatus(busy.status)) continue;
+      if (excludeClassId && busy.classId === excludeClassId) continue;
+      const bStart = parseApiDateTime(busy.startTime);
+      const bEnd = parseApiDateTime(busy.endTime);
+      if (!bStart || !bEnd) continue;
+      if (!overlaps(cStart, cEnd, bStart, bEnd)) continue;
+      ids.add(candidate.sessionId);
+      break;
+    }
+  }
+
+  return ids;
 }
 
 /**
@@ -40,31 +131,17 @@ export function findScheduleConflict(
   busyIntervals: StudentScheduleInterval[],
   options?: { excludeClassId?: string },
 ): ScheduleConflictHit | null {
-  const excludeClassId = options?.excludeClassId;
-
-  for (const candidate of candidateSessions) {
-    if (candidate.status === "Cancelled") continue;
-    const cStart = parseApiDateTime(candidate.startTime);
-    const cEnd = parseApiDateTime(candidate.endTime);
-    if (!cStart || !cEnd) continue;
-
-    for (const busy of busyIntervals) {
-      if (busy.status === "Cancelled") continue;
-      if (excludeClassId && busy.classId === excludeClassId) continue;
-      const bStart = parseApiDateTime(busy.startTime);
-      const bEnd = parseApiDateTime(busy.endTime);
-      if (!bStart || !bEnd) continue;
-      if (!overlaps(cStart, cEnd, bStart, bEnd)) continue;
-
-      return {
-        busy,
-        candidate,
-        label: formatConflictLabel(busy, candidate),
-      };
-    }
-  }
-
-  return null;
+  const hit = findBusyScheduleConflict(
+    candidateSessions,
+    busyIntervals,
+    options,
+  );
+  if (!hit) return null;
+  return {
+    busy: hit.busy,
+    candidate: hit.candidate as ClassSession,
+    label: hit.label,
+  };
 }
 
 /** Upcoming non-cancelled sessions, soonest first (max `limit`). */
