@@ -5,6 +5,8 @@
  * Avoid CSS translate on the motion node — GSAP owns transform.
  */
 
+import { landingImage } from "./assets";
+
 export type CtaPrintLayout = {
   id: string;
   src: string;
@@ -22,7 +24,7 @@ export type CtaPrintLayout = {
 export const CTA_PRINTS: CtaPrintLayout[] = [
   {
     id: "class2",
-    src: "/images/cta/class2.jpg",
+    src: landingImage("cta/class2.jpg"),
     alt: "Hoạt động lớp học sáng tạo",
     width: 800,
     height: 1200,
@@ -35,7 +37,7 @@ export const CTA_PRINTS: CtaPrintLayout[] = [
   },
   {
     id: "class1",
-    src: "/images/cta/class1.jpg",
+    src: landingImage("cta/class1.jpg"),
     alt: "Học sinh thực hành STEAM",
     width: 1200,
     height: 800,
@@ -49,7 +51,7 @@ export const CTA_PRINTS: CtaPrintLayout[] = [
   },
   {
     id: "class3",
-    src: "/images/cta/class3.jpg",
+    src: landingImage("cta/class3.jpg"),
     alt: "Dự án STEAM của học viên",
     width: 1200,
     height: 800,
