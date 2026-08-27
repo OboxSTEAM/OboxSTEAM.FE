@@ -43,7 +43,7 @@ export function KpiStatCard({
     <Link
       href={href}
       className={cn(
-        "group rounded-2xl border border-border/70 bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-background",
+        "group @container min-w-0 rounded-2xl border border-border/70 bg-card p-3 transition-colors hover:border-foreground/20 hover:bg-background sm:p-4",
         tintClassName,
       )}
     >
@@ -86,7 +86,8 @@ export function KpiStatCard({
             <TrendingDown className="size-3" />
           )}
           {delta >= 0 ? "+" : ""}
-          {delta.toFixed(1)}% so với kỳ trước
+          {delta.toFixed(1)}%
+          <span className="hidden @min-[380px]:inline"> so với kỳ trước</span>
         </p>
       ) : null}
 

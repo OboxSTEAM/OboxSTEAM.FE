@@ -23,7 +23,7 @@ import {
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
-import { deltaPercent, STEAM_FILL, toPercentValue } from "./chart-data";
+import { deltaPercent, toPercentValue } from "./chart-data";
 import { DashboardActionQueue } from "./dashboard-action-queue";
 import { DashboardGroupHeading } from "./dashboard-panel";
 import { DashboardRangeTabs } from "./dashboard-range-tabs";
@@ -144,7 +144,7 @@ export function ManagerDashboard() {
       const result = await getDashboardLanding({
         range,
         page: 1,
-        pageSize: 5,
+        pageSize: 20,
       });
       return result!.data;
     },
@@ -209,7 +209,7 @@ export function ManagerDashboard() {
   const hasPendingPayments = revenue.pendingPaymentRequestsCount > 0;
 
   return (
-    <div className="mx-auto w-full max-w-[1400px] space-y-6 bg-background px-5 py-5 lg:px-6 lg:py-6">
+    <div className="mx-auto w-full min-w-0 max-w-[1400px] space-y-5 bg-background px-4 py-4 sm:space-y-6 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
       <header className="flex flex-col gap-3 border-b border-border/70 pb-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="min-w-0 space-y-0.5">
           <p className="text-[11px] font-medium text-muted-foreground">
@@ -232,12 +232,12 @@ export function ManagerDashboard() {
 
       <DashboardActionQueue items={actionItems} />
 
-      <section className="space-y-3" aria-labelledby="business-group-heading">
+      <section className="min-w-0 space-y-3" aria-labelledby="business-group-heading">
         <div id="business-group-heading">
           <DashboardGroupHeading title="Kinh doanh và tuyển sinh" />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
           <KpiStatCard
             label={revenueTitleForRange(range)}
             hint="So với kỳ trước"
@@ -310,15 +310,15 @@ export function ManagerDashboard() {
           operations={operations}
         />
 
-        <div className="grid gap-3 lg:grid-cols-5">
-          <div className="lg:col-span-2">
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-5">
+          <div className="min-w-0 xl:col-span-2">
             <RevenueMixPanel
               revenue={revenue}
               isLoading={isLoading}
               revealSignature={range}
             />
           </div>
-          <div className="lg:col-span-3">
+          <div className="min-w-0 xl:col-span-3">
             <TopProgramsPanel
               enrollment={enrollment}
               revenue={revenue}
@@ -329,12 +329,12 @@ export function ManagerDashboard() {
         </div>
       </section>
 
-      <section className="space-y-3" aria-labelledby="quality-group-heading">
+      <section className="min-w-0 space-y-3" aria-labelledby="quality-group-heading">
         <div id="quality-group-heading">
           <DashboardGroupHeading title="Chất lượng giảng dạy" />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
           <KpiStatCard
             label="Điểm danh"
             hint="Tỷ lệ có mặt trung bình"
@@ -369,7 +369,7 @@ export function ManagerDashboard() {
           />
         </div>
 
-        <div className="grid gap-3 lg:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
           <MentorLoadPanel operations={operations} />
           <StatusBreakdownPanel
             datasets={[
@@ -377,23 +377,21 @@ export function ManagerDashboard() {
                 key: "enrollment",
                 label: "Tuyển sinh",
                 title: "Tuyển sinh theo trạng thái",
-                description: "Phân bổ đăng ký chương trình trong hệ thống",
+                description: "Tỷ trọng đăng ký chương trình trong hệ thống",
                 items: enrollment.programEnrollmentsByStatus,
                 kind: "enrollment",
                 href: "/manager/programs",
                 linkLabel: "Quản lý chương trình",
-                fill: STEAM_FILL.science,
               },
               {
                 key: "class",
                 label: "Lớp học",
                 title: "Tình trạng vận hành lớp học",
-                description: "Phân bổ lớp trong hệ thống",
+                description: "Tỷ trọng lớp theo trạng thái vận hành",
                 items: operations.classesByStatus,
                 kind: "class",
                 href: "/manager/classes",
                 linkLabel: "Quản lý lớp học",
-                fill: STEAM_FILL.mathematics,
               },
             ]}
             isLoading={isLoading}

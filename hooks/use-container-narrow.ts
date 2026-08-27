@@ -34,3 +34,30 @@ export function useContainerNarrow(
 
   return isNarrow;
 }
+
+/** Live content-box width of an element (0 until measured). */
+export function useContainerWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const update = (next: number) => {
+      setWidth(next);
+    };
+
+    update(el.getBoundingClientRect().width);
+
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry) return;
+      update(entry.contentRect.width);
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return width;
+}

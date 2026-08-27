@@ -172,6 +172,39 @@ export function gatewayFill(gateway: string): string {
   return GATEWAY_FILL[gateway] ?? STEAM_FILL.science;
 }
 
+/** Semantic fills for enrollment status composition (donut / legend). */
+export const ENROLLMENT_STATUS_FILL: Record<string, string> = {
+  PendingPayment: STEAM_FILL.arts,
+  Active: STEAM_FILL.technology,
+  Deferred: STEAM_FILL.engineering,
+  Completed: STEAM_FILL.mathematics,
+  Failed: STEAM_FILL.science,
+  Dropped: "var(--chart-label)",
+};
+
+/** Semantic fills for class status composition (donut / legend). */
+export const CLASS_STATUS_FILL: Record<string, string> = {
+  Draft: "var(--chart-label)",
+  ReadyForMentor: STEAM_FILL.arts,
+  Open: STEAM_FILL.engineering,
+  InProgress: STEAM_FILL.technology,
+  Completed: STEAM_FILL.mathematics,
+  Cancelled: STEAM_FILL.science,
+};
+
+export function statusFill(
+  status: string,
+  kind: "class" | "enrollment" | "submission" = "class",
+): string {
+  if (kind === "enrollment") {
+    return ENROLLMENT_STATUS_FILL[status] ?? STEAM_FILL.science;
+  }
+  if (kind === "class") {
+    return CLASS_STATUS_FILL[status] ?? STEAM_FILL.mathematics;
+  }
+  return STEAM_FILL.science;
+}
+
 /** Compact share line for the revenue KPI — replaces a dedicated mix chart. */
 export function paymentMixFootnote(
   items: Array<{ gateway: string; amount: number }>,
