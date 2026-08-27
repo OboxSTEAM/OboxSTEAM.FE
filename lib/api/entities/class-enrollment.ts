@@ -9,11 +9,17 @@ export const classEnrollmentStatusSchema = z.enum([
   "Completed",
 ]);
 
+/** Handoff WS7 — optional until OpenAPI surfaces `kind` on ClassEnrollmentResponseDto. */
+export const classEnrollmentKindSchema = z.enum(["Primary", "Retake"]);
+
 export const classEnrollmentSchema = z.object({
   id: z.string().uuid(),
   studentId: z.string().uuid(),
   programEnrollmentId: z.string().uuid(),
   status: classEnrollmentStatusSchema,
+  kind: classEnrollmentKindSchema
+    .nullish()
+    .transform((value) => value ?? "Primary"),
   enrolledAt: z.string().nullable(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
@@ -21,4 +27,5 @@ export const classEnrollmentSchema = z.object({
 });
 
 export type ClassEnrollmentStatus = z.infer<typeof classEnrollmentStatusSchema>;
+export type ClassEnrollmentKind = z.infer<typeof classEnrollmentKindSchema>;
 export type ClassEnrollment = z.infer<typeof classEnrollmentSchema>;

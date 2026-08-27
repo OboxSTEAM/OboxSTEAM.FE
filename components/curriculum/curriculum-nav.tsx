@@ -14,11 +14,13 @@ import type { EnrollmentCurriculum, EnrollmentCurriculumAssignment } from "@/lib
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 import { localizeUserFacingMessage } from "@/lib/errors";
+import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
 import { cn } from "@/lib/utils";
 
 import { CurriculumClassBar } from "./curriculum-class-bar";
 import { CurriculumNavAssignmentItem } from "./curriculum-nav-assignment-item";
 import { CurriculumNavItem } from "./curriculum-nav-item";
+import { VoluntaryRetakeCta } from "./recovery/voluntary-retake-cta";
 
 const TREE_LINE = "bg-learn-faint/35";
 
@@ -154,6 +156,8 @@ export function CurriculumNav({
 }: CurriculumNavProps) {
   const reduceMotion = useReducedMotion();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
+  const { redeliveryRequests, refresh: refreshRedelivery } =
+    useMyRecoveryRequests(true);
 
   const modules = [...curriculum.modules].sort(
     (left, right) => left.moduleOrder - right.moduleOrder,
@@ -386,6 +390,13 @@ export function CurriculumNav({
                       </div>
                     ) : null}
                   </NavTreeBranch>
+                  <VoluntaryRetakeCta
+                    module={module}
+                    redeliveryRequests={redeliveryRequests}
+                    onCreated={() => {
+                      void refreshRedelivery();
+                    }}
+                  />
                 </AccordionContent>
               </AccordionItem>
             );

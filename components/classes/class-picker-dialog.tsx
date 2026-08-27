@@ -17,27 +17,20 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   createClassEnrollment,
-  getClasses,
-  getClassWithSessions,
   getMySchedule,
-  type Class,
-  type ClassSession,
-  type ClassWithSessions,
+  getProgramOpenClasses,
+  type OpenEnrollmentClass,
   type StudentScheduleInterval,
 } from "@/lib/api";
 import { ApiRequestError } from "@/lib/api/errors";
-import {
-  CLASS_SESSION_KIND_LABELS,
-  CLASS_STATUS_LABELS,
-  OPEN_CLASSES_QUERY,
-  isStudentJoinableClass,
-} from "@/lib/classes/constants";
-import {
-  findScheduleConflict,
-  pickUpcomingSessions,
-} from "@/lib/classes/schedule-conflict";
+import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
+import { findBusyConflictLabel } from "@/lib/classes/schedule-conflict";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  clearPreferredClassId,
+  getPreferredClassId,
+} from "@/lib/programs/preferred-class";
 import { cn } from "@/lib/utils";
 
 type ClassPickerDialogProps = {
@@ -50,11 +43,8 @@ type ClassPickerDialogProps = {
 };
 
 type ClassPickerOption = {
-  classItem: Class;
-  withSessions: ClassWithSessions | null;
-  upcoming: ClassSession[];
+  item: OpenEnrollmentClass;
   conflictLabel: string | null;
-  /** True when not Open or schedule conflicts — cannot enroll. */
   isDisabled: boolean;
   disabledReason: string | null;
 };
@@ -70,7 +60,9 @@ function isClassClosedForEnrollmentError(error: unknown): boolean {
   } else if (error instanceof Error) {
     message = error.message;
   }
-  return /is not open for enrollment/i.test(message);
+  return /is not open for enrollment|maximum capacity|no available seats/i.test(
+    message,
+  );
 }
 
 function formatClassDateRange(startDate: string, endDate: string): string {
@@ -97,20 +89,23 @@ function ClassOptionSkeleton() {
   );
 }
 
-function SessionPreviewList({ sessions }: { sessions: ClassSession[] }) {
-  if (sessions.length === 0) {
+function SessionPreviewList({
+  sessions,
+}: {
+  sessions: OpenEnrollmentClass["sessions"];
+}) {
+  const upcoming = sessions.slice(0, 4);
+  if (upcoming.length === 0) {
     return (
-      <p className="text-xs text-[#6B6B6B]">
-        Chưa có buổi học thật trên lịch lớp.
-      </p>
+      <p className="text-xs text-[#6B6B6B]">Chưa có buổi học trên lịch lớp.</p>
     );
   }
 
   return (
     <ul className="space-y-1">
-      {sessions.map((session) => (
+      {upcoming.map((session) => (
         <li
-          key={session.id}
+          key={session.sessionId}
           className="flex items-start justify-between gap-2 text-xs text-[#6B6B6B]"
         >
           <span className="min-w-0 truncate font-medium text-[#2D2D2D]">
@@ -135,14 +130,8 @@ function ClassOptionCard({
   isSelected: boolean;
   onSelect: () => void;
 }) {
-  const { classItem, upcoming, conflictLabel, isDisabled, disabledReason } =
-    option;
-  const seatsLabel =
-    classItem.maxCapacity > 0
-      ? `${classItem.seatsTaken}/${classItem.maxCapacity} chỗ`
-      : null;
-  const statusLabel = CLASS_STATUS_LABELS[classItem.status];
-  const isOpen = isStudentJoinableClass(classItem.status);
+  const { item, conflictLabel, isDisabled, disabledReason } = option;
+  const seatsLabel = `${item.seatsTaken}/${item.maxCapacity} chỗ`;
 
   return (
     <button
@@ -163,38 +152,35 @@ function ClassOptionCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="font-mono text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
-            {classItem.code}
+            {item.code?.trim() || item.classId.slice(0, 8)}
+            {item.isPreferred ? " · Ưu tiên" : ""}
           </p>
           <p className="font-heading mt-1 text-base font-semibold text-[#2D2D2D]">
-            {classItem.name}
+            {item.name?.trim() || "Lớp tuyển sinh"}
           </p>
+          {item.mentorName?.trim() ? (
+            <p className="mt-1 text-xs text-[#6B6B6B]">
+              Mentor · {item.mentorName.trim()}
+            </p>
+          ) : null}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
-          <span
-            className={cn(
-              "rounded-full border px-2.5 py-1 text-[11px] font-semibold",
-              isOpen
-                ? "border-[#7CB342]/35 bg-[#F1F8E9] text-[#558B2F]"
-                : "border-[#E5E5E0] bg-[#FAFAF5] text-[#6B6B6B]",
-            )}
-          >
-            {statusLabel}
+          <span className="rounded-full border border-[#7CB342]/35 bg-[#F1F8E9] px-2.5 py-1 text-[11px] font-semibold text-[#558B2F]">
+            Đang tuyển
           </span>
-          {seatsLabel ? (
-            <span className="inline-flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2.5 py-1 text-xs font-medium text-[#2D2D2D]">
-              <Users className="size-3.5" aria-hidden />
-              {seatsLabel}
-            </span>
-          ) : null}
+          <span className="inline-flex items-center gap-1 rounded-full border border-[#E5E5E0] bg-white px-2.5 py-1 text-xs font-medium text-[#2D2D2D]">
+            <Users className="size-3.5" aria-hidden />
+            {seatsLabel}
+          </span>
         </div>
       </div>
 
       <div className="mt-3 space-y-2 text-sm text-[#6B6B6B]">
         <p className="inline-flex items-center gap-1.5">
           <CalendarDays className="size-3.5 shrink-0" aria-hidden />
-          {formatClassDateRange(classItem.startDate, classItem.endDate)}
+          {formatClassDateRange(item.startDate, item.endDate)}
         </p>
-        <SessionPreviewList sessions={upcoming} />
+        <SessionPreviewList sessions={item.sessions} />
         {conflictLabel ? (
           <p className="inline-flex items-start gap-1.5 rounded-lg border border-[#E94B3C]/25 bg-[#FFF0EE] px-2.5 py-1.5 text-xs font-medium text-[#a82a1e]">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
@@ -222,62 +208,43 @@ export function ClassPickerDialog({
 }: ClassPickerDialogProps) {
   const [selectedClassId, setSelectedClassId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [preferredMissingToastShown, setPreferredMissingToastShown] =
+    useState(false);
+
+  const preferredClassId = open ? getPreferredClassId(programId) : null;
 
   const { data, isLoading, hasError, retry } = useClientFetch({
     enabled: open,
     fetcher: async () => {
-      const [classesResult, scheduleResult] = await Promise.all([
-        getClasses(
-          {
-            ...OPEN_CLASSES_QUERY,
-            programId,
-          },
-          { includeSeatsTaken: true },
-        ),
+      const [openClassesResult, scheduleResult] = await Promise.all([
+        getProgramOpenClasses(programId, { preferredClassId }),
         getMySchedule().catch(() => null),
       ]);
 
-      const classes = (classesResult?.data?.items ?? []).filter((classItem) =>
-        isStudentJoinableClass(classItem.status),
-      );      const busy: StudentScheduleInterval[] = scheduleResult?.data ?? [];
+      const classes = openClassesResult?.data ?? [];
+      const busy: StudentScheduleInterval[] = scheduleResult?.data ?? [];
 
-      const withSessionsList = await Promise.all(
-        classes.map(async (classItem) => {
-          try {
-            const result = await getClassWithSessions(classItem.id);
-            return result?.data ?? null;
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      return classes.map((classItem, index): ClassPickerOption => {
-        const withSessions = withSessionsList[index];
-        const sessions = withSessions?.sessions ?? [];
-        const conflict = findScheduleConflict(sessions, busy, {
-          excludeClassId: classItem.id,
+      return classes.map((item): ClassPickerOption => {
+        const conflictLabel = findBusyConflictLabel(item.sessions, busy, {
+          excludeClassId: item.classId,
         });
-        const isOpen = isStudentJoinableClass(classItem.status);
-        const conflictLabel = conflict?.label ?? null;
+        const noSeats = item.seatsRemaining <= 0;
         let disabledReason: string | null = null;
-        if (!isOpen) {
-          disabledReason = `Lớp ${CLASS_STATUS_LABELS[classItem.status].toLowerCase()} — chỉ lớp đang tuyển sinh mới nhận ghi danh.`;
+        if (noSeats) {
+          disabledReason = "Lớp đã hết ghế.";
         } else if (conflictLabel) {
           disabledReason = conflictLabel;
         }
 
         return {
-          classItem,
-          withSessions,
-          upcoming: pickUpcomingSessions(sessions),
+          item,
           conflictLabel,
-          isDisabled: !isOpen || conflict != null,
+          isDisabled: noSeats || conflictLabel != null,
           disabledReason,
         };
       });
     },
-    deps: [open, programId],
+    deps: [open, programId, preferredClassId],
     onError: (error) => showAppErrorFromUnknown(error, "classes.list"),
   });
 
@@ -291,39 +258,63 @@ export function ClassPickerDialog({
     if (!open) {
       setSelectedClassId(null);
       setIsSubmitting(false);
+      setPreferredMissingToastShown(false);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (!open || isLoading || hasError) return;
+    if (!preferredClassId || preferredMissingToastShown) return;
+
+    const preferredStillAvailable = options.some(
+      (option) =>
+        option.item.classId === preferredClassId && !option.isDisabled,
+    );
+    if (!preferredStillAvailable) {
+      setPreferredMissingToastShown(true);
+      showAppSuccess({
+        title: "Lớp bạn xem trước đã hết chỗ",
+        description: "Hãy chọn một lớp khác còn ghế trong danh sách.",
+      });
+      clearPreferredClassId(programId);
+    }
+  }, [
+    hasError,
+    isLoading,
+    open,
+    options,
+    preferredClassId,
+    preferredMissingToastShown,
+    programId,
+  ]);
 
   useEffect(() => {
     if (!open) return;
     setSelectedClassId((current) => {
       if (
         current &&
-        selectableOptions.some((option) => option.classItem.id === current)
+        selectableOptions.some((option) => option.item.classId === current)
       ) {
         return current;
       }
-      return selectableOptions[0]?.classItem.id ?? null;
+      const preferred = selectableOptions.find(
+        (option) => option.item.isPreferred || option.item.classId === preferredClassId,
+      );
+      return preferred?.item.classId ?? selectableOptions[0]?.item.classId ?? null;
     });
-  }, [open, selectableOptions]);
+  }, [open, preferredClassId, selectableOptions]);
 
   const selectedOption = options.find(
-    (option) => option.classItem.id === selectedClassId,
+    (option) => option.item.classId === selectedClassId,
   );
   const canConfirm =
     selectedOption != null &&
-    isStudentJoinableClass(selectedOption.classItem.status) &&
     !selectedOption.isDisabled &&
     !isSubmitting &&
     options.length > 0;
 
   const handleConfirm = useCallback(async () => {
-    if (
-      !selectedClassId ||
-      !selectedOption ||
-      selectedOption.isDisabled ||
-      !isStudentJoinableClass(selectedOption.classItem.status)
-    ) {
+    if (!selectedClassId || !selectedOption || selectedOption.isDisabled) {
       return;
     }
 
@@ -334,6 +325,7 @@ export function ClassPickerDialog({
         classId: selectedClassId,
       });
 
+      clearPreferredClassId(programId);
       showAppSuccess({
         title: "Đã chọn lớp học",
         description: "Bạn có thể bắt đầu học cùng lớp ngay bây giờ.",
@@ -343,7 +335,6 @@ export function ClassPickerDialog({
       onOpenChange(false);
     } catch (error) {
       showAppErrorFromUnknown(error, "classEnrollments.create");
-      // Class may have moved Open → InProgress, or student hit active-class cap (409).
       if (
         isClassClosedForEnrollmentError(error) ||
         (error instanceof ApiRequestError && error.status === 409)
@@ -358,6 +349,7 @@ export function ClassPickerDialog({
     onEnrolled,
     onOpenChange,
     programEnrollmentId,
+    programId,
     retry,
     selectedClassId,
     selectedOption,
@@ -371,8 +363,8 @@ export function ClassPickerDialog({
           <DialogTitle>Chọn lớp học</DialogTitle>
           <DialogDescription>
             {programName
-              ? `Chỉ lớp đang tuyển sinh (Open) của chương trình "${programName}" mới ghi danh được. Lớp đã bắt đầu học (InProgress) không nhận thêm học viên.`
-              : "Chỉ lớp đang tuyển sinh (Open) mới ghi danh được. Lớp đã bắt đầu học không nhận thêm học viên."}
+              ? `Chỉ lớp Standard đang tuyển (Open) còn ghế của "${programName}". Máy chủ sẽ kiểm tra lại sĩ số khi bạn xác nhận.`
+              : "Chỉ lớp Standard đang tuyển còn ghế. Máy chủ sẽ kiểm tra lại sĩ số khi bạn xác nhận."}
           </DialogDescription>
         </DialogHeader>
 
@@ -394,18 +386,19 @@ export function ClassPickerDialog({
           ) : options.length === 0 ? (
             <div className="rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] px-4 py-6 text-center">
               <p className="text-sm text-[#6B6B6B]">
-                Chưa có lớp đang mở cho chương trình này. Vui lòng quay lại sau.
+                Chưa có lớp đang mở còn ghế cho chương trình này. Vui lòng quay lại
+                sau.
               </p>
             </div>
           ) : (
             options.map((option) => (
               <ClassOptionCard
-                key={option.classItem.id}
+                key={option.item.classId}
                 option={option}
-                isSelected={selectedClassId === option.classItem.id}
+                isSelected={selectedClassId === option.item.classId}
                 onSelect={() => {
                   if (option.isDisabled) return;
-                  setSelectedClassId(option.classItem.id);
+                  setSelectedClassId(option.item.classId);
                 }}
               />
             ))

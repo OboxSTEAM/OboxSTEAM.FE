@@ -11,6 +11,9 @@ export type CurriculumClassContext = {
   className: string;
   seatsTaken: number;
   maxCapacity: number;
+  kind?: "Standard" | "Remedial";
+  remedialModuleId?: string | null;
+  classEnrollmentKind?: "Primary" | "Retake";
   mentor: Mentor | null;
   roster: ClassStudentRoster[];
   sessions: ClassSession[];

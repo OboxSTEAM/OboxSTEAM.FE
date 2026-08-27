@@ -259,9 +259,13 @@ export function resolveNotificationHref(
     case "ClassRedeliveryPendingManager":
       return "/manager/redelivery";
 
+    case "ClassRedeliveryAwaitingSelection":
+    case "ClassRedeliveryCandidatesAvailable":
+    case "ClassRedeliveryIntensiveOffered":
     case "ClassRedeliveryMatchedPendingPayment":
     case "ClassRedeliveryRejected":
     case "ClassRedeliveryCompleted":
+    case "ClassRedeliveryWithdrawn":
       if (isParent) return parentProgressHref(payload);
       return programId ? studentLearnHref(programId, payload) : "/courses";
 

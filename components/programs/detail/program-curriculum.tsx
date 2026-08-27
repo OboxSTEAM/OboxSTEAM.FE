@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { ImageSlot } from "@/components/common/image-slot";
 import type { Module, ProgramWithModules } from "@/lib/api/programs";
 import {
-  formatProgramPrice,
   MODULE_TYPE_LABELS,
   PROGRAM_CATEGORY_META,
 } from "@/lib/programs/constants";
@@ -175,14 +174,6 @@ export function ProgramCurriculum({
                   )}
 
                   <dl className="space-y-2 rounded-lg border border-[#E5E5E0] bg-[#FAFAF5] px-4 py-3">
-                    <ModuleDetailItem
-                      label="Học phí mô-đun"
-                      value={formatProgramPrice(module.price)}
-                    />
-                    <ModuleDetailItem
-                      label="Phí học lại"
-                      value={formatProgramPrice(module.retakeFee)}
-                    />
                     {prerequisiteName ? (
                       <ModuleDetailItem
                         label="Yêu cầu tiên quyết"

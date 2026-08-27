@@ -41,7 +41,7 @@ export function ClassRedeliveryRequestDialog({
       showAppSuccess({
         title: "Đã gửi yêu cầu học lại lớp",
         description:
-          "Hệ thống sẽ tìm lớp phù hợp hoặc quản lý sẽ chỉ định lớp mới.",
+          "Nếu còn lớp Standard phù hợp bạn sẽ chọn lớp; nếu không, quản lý sẽ mở lớp hoặc lịch nén.",
       });
       setMessage("");
       onOpenChange(false);
@@ -59,8 +59,9 @@ export function ClassRedeliveryRequestDialog({
         <DialogHeader>
           <DialogTitle>Xin học lại lớp</DialogTitle>
           <DialogDescription>
-            Yêu cầu trải nghiệm lại module trên lớp khác (có thể cần thanh toán
-            phí học lại).
+            Bạn sẽ chọn lớp Standard còn ghế hoặc chờ quản lý mở lớp học lại.
+            Thanh toán bằng giá chương trình; tiến độ module đã hoàn thành được
+            giữ.
           </DialogDescription>
         </DialogHeader>
         <Textarea

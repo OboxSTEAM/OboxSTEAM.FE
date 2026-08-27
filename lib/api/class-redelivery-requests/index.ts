@@ -7,51 +7,90 @@ import {
   assignTargetClassRedeliveryRequestSchema,
   classRedeliveryRequestIdParamSchema,
   createClassRedeliveryRequestSchema,
+  openRemedialClassSchema,
   rejectClassRedeliveryRequestSchema,
+  selectClassRedeliveryRequestSchema,
 } from "@/lib/validations/class-redelivery-requests";
 
 import {
+  acceptIntensiveClassRedeliveryRequestResponseSchema,
   assignTargetClassRedeliveryRequestResponseSchema,
   classRedeliveryRequestValueSchema,
+  declineIntensiveClassRedeliveryRequestResponseSchema,
+  getClassRedeliveryCandidatesResponseSchema,
+  getManagerRedeliveryWaitlistResponseSchema,
   getMyClassRedeliveryRequestsResponseSchema,
   getPendingManagerClassRedeliveryRequestsResponseSchema,
+  openRemedialClassResponseSchema,
+  openRemedialClassValueSchema,
   rejectClassRedeliveryRequestResponseSchema,
+  selectClassRedeliveryRequestResponseSchema,
   withdrawClassRedeliveryRequestResponseSchema,
+  type AcceptIntensiveClassRedeliveryRequestResult,
   type AssignTargetClassRedeliveryRequestResult,
+  type DeclineIntensiveClassRedeliveryRequestResult,
+  type GetClassRedeliveryCandidatesResult,
+  type GetManagerRedeliveryWaitlistResult,
   type GetMyClassRedeliveryRequestsResult,
   type GetPendingManagerClassRedeliveryRequestsResult,
+  type OpenRemedialClassResultValue,
   type RejectClassRedeliveryRequestResult,
+  type SelectClassRedeliveryRequestResult,
   type WithdrawClassRedeliveryRequestResult,
 } from "./schemas";
 
 export type {
+  AcceptIntensiveClassRedeliveryRequestResponse,
+  AcceptIntensiveClassRedeliveryRequestResult,
   AssignTargetClassRedeliveryRequestResponse,
   AssignTargetClassRedeliveryRequestResult,
   CreateClassRedeliveryRequestResponse,
   CreateClassRedeliveryRequestResult,
+  DeclineIntensiveClassRedeliveryRequestResponse,
+  DeclineIntensiveClassRedeliveryRequestResult,
+  GetClassRedeliveryCandidatesResponse,
+  GetClassRedeliveryCandidatesResult,
+  GetManagerRedeliveryWaitlistResponse,
+  GetManagerRedeliveryWaitlistResult,
   GetMyClassRedeliveryRequestsResponse,
   GetMyClassRedeliveryRequestsResult,
   GetPendingManagerClassRedeliveryRequestsResponse,
   GetPendingManagerClassRedeliveryRequestsResult,
+  OpenRemedialClassResponse,
+  OpenRemedialClassResultValue,
   RejectClassRedeliveryRequestResponse,
   RejectClassRedeliveryRequestResult,
+  SelectClassRedeliveryRequestResponse,
+  SelectClassRedeliveryRequestResult,
   WithdrawClassRedeliveryRequestResponse,
   WithdrawClassRedeliveryRequestResult,
 } from "./schemas";
 
 export type {
+  ClassRedeliveryCandidate,
+  ClassRedeliveryCandidateSession,
   ClassRedeliveryRequest,
   ClassRedeliveryRequestStatus,
+  ClassRedeliveryResolutionType,
 } from "@/lib/api/entities/class-redelivery-request";
+
+export type {
+  OpenRemedialClassResult,
+  RedeliveryWaitlistModuleGroup,
+  RedeliveryWaitlistProgramGroup,
+} from "@/lib/api/entities/redelivery-waitlist";
 
 export type {
   AssignTargetClassRedeliveryRequestInput,
   ClassRedeliveryRequestIdParam,
   CreateClassRedeliveryRequestInput,
+  OpenRemedialClassInput,
   RejectClassRedeliveryRequestInput,
+  SelectClassRedeliveryRequestInput,
 } from "@/lib/validations/class-redelivery-requests";
 
 const REDELIVERY_BASE = "/api/class-redelivery-requests";
+const MANAGER_REDELIVERY_BASE = "/api/manager/redelivery";
 
 function requireApiValue<T>(value: T | null): T {
   if (value == null) {
@@ -84,6 +123,68 @@ export async function getPendingManagerClassRedeliveryRequests(): Promise<GetPen
     `${REDELIVERY_BASE}/pending-manager`,
     getPendingManagerClassRedeliveryRequestsResponseSchema,
     { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `GET /api/class-redelivery-requests/{id}/candidates` */
+export async function getClassRedeliveryCandidates(
+  id: string,
+): Promise<GetClassRedeliveryCandidatesResult> {
+  const { id: requestId } = classRedeliveryRequestIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${REDELIVERY_BASE}/${requestId}/candidates`,
+    getClassRedeliveryCandidatesResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/class-redelivery-requests/{id}/select-class` */
+export async function selectClassRedeliveryRequest(
+  id: string,
+  input: z.infer<typeof selectClassRedeliveryRequestSchema>,
+): Promise<SelectClassRedeliveryRequestResult> {
+  const { id: requestId } = classRedeliveryRequestIdParamSchema.parse({ id });
+  const body = selectClassRedeliveryRequestSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${REDELIVERY_BASE}/${requestId}/select-class`,
+    selectClassRedeliveryRequestResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/class-redelivery-requests/{id}/accept-intensive` */
+export async function acceptIntensiveClassRedeliveryRequest(
+  id: string,
+): Promise<AcceptIntensiveClassRedeliveryRequestResult> {
+  const { id: requestId } = classRedeliveryRequestIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${REDELIVERY_BASE}/${requestId}/accept-intensive`,
+    acceptIntensiveClassRedeliveryRequestResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/class-redelivery-requests/{id}/decline-intensive` */
+export async function declineIntensiveClassRedeliveryRequest(
+  id: string,
+): Promise<DeclineIntensiveClassRedeliveryRequestResult> {
+  const { id: requestId } = classRedeliveryRequestIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${REDELIVERY_BASE}/${requestId}/decline-intensive`,
+    declineIntensiveClassRedeliveryRequestResponseSchema,
+    { method: "POST" },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
@@ -137,3 +238,21 @@ export async function rejectClassRedeliveryRequest(
   assertApiSuccess(response);
   return requireApiValue(response.value);
 }
+
+/** `GET /api/manager/redelivery/waitlist` */
+export async function getManagerRedeliveryWaitlist(): Promise<GetManagerRedeliveryWaitlistResult> {
+  const response = await apiFetchParsed(
+    `${MANAGER_REDELIVERY_BASE}/waitlist`,
+    getManagerRedeliveryWaitlistResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `POST /api/manager/redelivery/open-remedial-class` */
+export const openRemedialClass = createApiPost({
+  path: `${MANAGER_REDELIVERY_BASE}/open-remedial-class`,
+  input: openRemedialClassSchema,
+  value: openRemedialClassValueSchema,
+});

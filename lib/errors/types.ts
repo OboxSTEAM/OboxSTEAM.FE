@@ -123,6 +123,8 @@ export type AppErrorContext =
   | "class-redelivery.create"
   | "class-redelivery.list"
   | "class-redelivery.decide"
+  | "class-redelivery.select"
+  | "class-redelivery.intensive"
   | "enrollments.list"
   | "classEnrollments.create"
   | "dashboard.load"

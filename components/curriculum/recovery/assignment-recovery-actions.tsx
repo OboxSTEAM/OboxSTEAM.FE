@@ -21,6 +21,8 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 import { AssessmentRecoveryRequestDialog } from "./assessment-recovery-request-dialog";
+import { ClassRedeliveryCandidatesDialog } from "./class-redelivery-candidates-dialog";
+import { ClassRedeliveryIntensiveConsentDialog } from "./class-redelivery-intensive-consent-dialog";
 import { ClassRedeliveryRequestDialog } from "./class-redelivery-request-dialog";
 import { RetakeCheckoutDialog } from "./retake-checkout-dialog";
 
@@ -42,6 +44,9 @@ type AssignmentRecoveryActionsProps = {
   onRetry?: () => void;
   isRetrying?: boolean;
   onRequestsChanged: () => void;
+  programName?: string | null;
+  programPrice?: number | null;
+  completedModuleCount?: number | null;
   className?: string;
 };
 
@@ -53,6 +58,8 @@ const STATUS_COPY: Record<
     | "wait-redelivery-payment"
     | "request-recovery"
     | "request-redelivery"
+    | "select-class"
+    | "intensive-consent"
   >,
   { title: string; description: string }
 > = {
@@ -63,11 +70,12 @@ const STATUS_COPY: Record<
   "wait-manager": {
     title: "Đang chờ xếp lớp",
     description:
-      "Yêu cầu học lại lớp đang được xử lý. Bạn sẽ thanh toán khi có lớp phù hợp.",
+      "Chưa có lớp Standard phù hợp. Quản lý sẽ mở lớp hoặc lịch học nén — bạn sẽ được thông báo.",
   },
   "wait-redelivery-payment": {
     title: "Sẵn sàng thanh toán học lại",
-    description: "Lớp đích đã khớp. Thanh toán phí học lại để hoàn tất chuyển lớp.",
+    description:
+      "Lớp đích đã khớp. Thanh toán giá chương trình để hoàn tất (giữ tiến độ module đã xong).",
   },
   "request-recovery": {
     title: "Hết lượt làm bài",
@@ -77,6 +85,15 @@ const STATUS_COPY: Record<
     title: "Cần học lại lớp",
     description:
       "Bạn đã dùng hết yêu cầu làm thêm. Xin học lại module trên lớp khác.",
+  },
+  "select-class": {
+    title: "Chọn lớp học lại",
+    description: "Có lớp Standard còn ghế. Hãy chọn lịch phù hợp rồi thanh toán.",
+  },
+  "intensive-consent": {
+    title: "Xác nhận lịch học nén",
+    description:
+      "Quản lý đã mở lớp học lại (Remedial). Nhận lịch để thanh toán, hoặc từ chối (tiến độ giữ).",
   },
 };
 
@@ -93,10 +110,15 @@ export function AssignmentRecoveryActions({
   onRetry,
   isRetrying = false,
   onRequestsChanged,
+  programName,
+  programPrice,
+  completedModuleCount,
   className,
 }: AssignmentRecoveryActionsProps) {
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [redeliveryOpen, setRedeliveryOpen] = useState(false);
+  const [candidatesOpen, setCandidatesOpen] = useState(false);
+  const [intensiveOpen, setIntensiveOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [isWithdrawing, setIsWithdrawing] = useState(false);
 
@@ -155,11 +177,12 @@ export function AssignmentRecoveryActions({
    */
   const effectiveAction: RecoveryAction = (() => {
     if (attemptsRemaining > 0 && !needsDeadlineGrant) {
-      // Keep in-flight wait states visible; otherwise force retry.
       if (
         action === "wait-recovery" ||
         action === "wait-manager" ||
-        action === "wait-redelivery-payment"
+        action === "wait-redelivery-payment" ||
+        action === "select-class" ||
+        action === "intensive-consent"
       ) {
         return action;
       }
@@ -268,6 +291,26 @@ export function AssignmentRecoveryActions({
             </Button>
           ) : null}
 
+          {effectiveAction === "select-class" && openRedelivery ? (
+            <Button
+              type="button"
+              className="bg-learn-primary text-white hover:bg-learn-primary/90"
+              onClick={() => setCandidatesOpen(true)}
+            >
+              Chọn lớp
+            </Button>
+          ) : null}
+
+          {effectiveAction === "intensive-consent" && openRedelivery ? (
+            <Button
+              type="button"
+              className="bg-learn-primary text-white hover:bg-learn-primary/90"
+              onClick={() => setIntensiveOpen(true)}
+            >
+              Xem lịch nén
+            </Button>
+          ) : null}
+
           {effectiveAction === "wait-recovery" ? (
             <Button
               type="button"
@@ -280,7 +323,10 @@ export function AssignmentRecoveryActions({
             </Button>
           ) : null}
 
-          {effectiveAction === "wait-manager" && openRedelivery ? (
+          {(effectiveAction === "wait-manager" ||
+            effectiveAction === "select-class" ||
+            effectiveAction === "intensive-consent") &&
+          openRedelivery ? (
             <Button
               type="button"
               variant="outline"
@@ -318,11 +364,30 @@ export function AssignmentRecoveryActions({
         moduleEnrollmentId={moduleEnrollmentId}
         onCreated={onRequestsChanged}
       />
+      {openRedelivery ? (
+        <ClassRedeliveryCandidatesDialog
+          open={candidatesOpen}
+          onOpenChange={setCandidatesOpen}
+          requestId={openRedelivery.id}
+          onSelected={onRequestsChanged}
+        />
+      ) : null}
+      {openRedelivery ? (
+        <ClassRedeliveryIntensiveConsentDialog
+          open={intensiveOpen}
+          onOpenChange={setIntensiveOpen}
+          requestId={openRedelivery.id}
+          onResolved={onRequestsChanged}
+        />
+      ) : null}
       {openRedelivery?.retakeModuleEnrollmentId ? (
         <RetakeCheckoutDialog
           open={checkoutOpen}
           onOpenChange={setCheckoutOpen}
           retakeModuleEnrollmentId={openRedelivery.retakeModuleEnrollmentId}
+          programName={programName}
+          programPrice={programPrice}
+          completedModuleCount={completedModuleCount}
         />
       ) : null}
     </>

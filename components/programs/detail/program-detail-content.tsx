@@ -9,12 +9,14 @@ import {
 } from "@/components/experts/expert-profile-dialog";
 import type { Paginated, ProgramReview, ProgramWithModules } from "@/lib/api/programs";
 import { PROGRAM_DETAIL_SCROLL_MARGIN } from "@/lib/programs/detail-sections";
+import { isProgramOpenForEnrollment } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
 import { ProgramEnrollmentLookupProvider } from "./program-enrollment-lookup";
 import { ProgramCurriculum } from "./program-curriculum";
 import { ProgramDetailHero } from "./program-detail-hero";
 import { ProgramExpertsPanel } from "./program-experts-panel";
+import { ProgramOpenClassesPreview } from "./program-open-classes-preview";
 import { ProgramOverview } from "./program-overview";
 import { ProgramReviewsSection } from "./program-reviews-section";
 import { ProgramSectionNav } from "./program-section-nav";
@@ -70,6 +72,23 @@ export function ProgramDetailContent({
                 <ProgramOverview program={program} />
               </section>
             </AnimatedContent>
+
+            {isProgramOpenForEnrollment(program.status) ? (
+              <AnimatedContent distance={40} duration={0.6} threshold={0.08}>
+                <section
+                  id="open-classes"
+                  aria-labelledby="program-open-classes-heading"
+                  className={PROGRAM_DETAIL_SCROLL_MARGIN}
+                >
+                  <h2 id="program-open-classes-heading" className="sr-only">
+                    Lớp đang tuyển sinh
+                  </h2>
+                  <div className="rounded-xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+                    <ProgramOpenClassesPreview programId={program.id} />
+                  </div>
+                </section>
+              </AnimatedContent>
+            ) : null}
 
             {program.experts.length > 0 ? (
               <div className="lg:hidden">

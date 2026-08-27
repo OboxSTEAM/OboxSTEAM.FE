@@ -646,6 +646,8 @@ function SessionManagerInner() {
         isSubmitting={isSubmitting}
         occupiedActivityIds={occupiedItems.activityIds}
         occupiedAssignmentIds={occupiedItems.assignmentIds}
+        classKind={selectedClass?.kind}
+        remedialModuleId={selectedClass?.remedialModuleId}
         onSubmit={handleSubmit}
       />
 

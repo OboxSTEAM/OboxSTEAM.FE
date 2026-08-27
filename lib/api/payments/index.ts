@@ -76,14 +76,14 @@ export const requestParentPayment = createApiPost({
   value: requestParentPaymentValueSchema,
 });
 
-/** `POST /api/payments/checkout/retake` — student pays module retake fee. */
+/** `POST /api/payments/checkout/retake` — student pays Program.Price for class redelivery. */
 export const checkoutRetakePayment = createApiPost({
   path: `${PAYMENTS_BASE}/checkout/retake`,
   input: checkoutRetakePaymentSchema,
   value: checkoutPaymentValueSchema,
 });
 
-/** `POST /api/payments/request-parent/retake` — email parent a retake payment link. */
+/** `POST /api/payments/request-parent/retake` — email parent a Program.Price retake link. */
 export const requestParentRetakePayment = createApiPost({
   path: `${PAYMENTS_BASE}/request-parent/retake`,
   input: requestParentRetakePaymentSchema,

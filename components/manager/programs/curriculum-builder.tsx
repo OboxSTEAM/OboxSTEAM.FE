@@ -24,7 +24,7 @@ import {
 } from "./curriculum-dialogs";
 import { deleteModule, deleteCourse, deleteActivity, type ProgramWithModules } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { formatProgramPrice, MODULE_TYPE_LABELS } from "@/lib/programs/constants";
+import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 import { formatDurationMinutes } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
@@ -278,8 +278,6 @@ export function CurriculumBuilder({ program, onRefresh }: CurriculumBuilderProps
                         >
                           {MODULE_TYPE_LABELS[module.moduleType] || module.moduleType}
                         </span>
-                        <span>·</span>
-                        <span>{formatProgramPrice(module.price)}</span>
                         {prerequisite && (
                           <>
                             <span>·</span>

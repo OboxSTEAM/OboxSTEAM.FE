@@ -30,10 +30,11 @@ export type {
 
 export type {
   ClassEnrollment,
+  ClassEnrollmentKind,
   ClassEnrollmentStatus,
 } from "@/lib/api/entities/class-enrollment";
 
-export type { Class, ClassStatus } from "@/lib/api/entities/class";
+export type { Class, ClassKind, ClassStatus } from "@/lib/api/entities/class";
 
 export type { TransferClassEnrollmentInput } from "@/lib/validations/classes";
 

@@ -28,6 +28,8 @@ const EXACT_VI: Record<string, string> = {
     "Bạn đã có lớp đang học trong chương trình này.",
   "Class is at maximum capacity.": "Lớp đã đủ sĩ số.",
   "Class has reached maximum capacity.": "Lớp đã đủ sĩ số.",
+  "This program has no open classes with available seats. Checkout is blocked until a recruiting class has capacity.":
+    "Chương trình chưa có lớp đang tuyển còn ghế. Thanh toán tạm khóa cho đến khi có lớp tuyển sinh còn chỗ.",
   "Student has reached the maximum of 2 in-progress programs (Active or PendingPayment). Complete or drop a program before starting another.":
     "Bạn đang học tối đa 2 chương trình (đang học hoặc chờ thanh toán). Hoàn thành hoặc hủy một chương trình trước khi đăng ký thêm.",
   "Student has reached the maximum of 2 active classes. Leave or complete a class before joining another.":

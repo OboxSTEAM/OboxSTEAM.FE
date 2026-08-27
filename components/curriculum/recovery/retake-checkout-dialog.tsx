@@ -21,12 +21,16 @@ import {
   type ParentLinkedStudent,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { formatProgramPrice } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
 type RetakeCheckoutDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   retakeModuleEnrollmentId: string;
+  programName?: string | null;
+  programPrice?: number | null;
+  completedModuleCount?: number | null;
 };
 
 type Step = "choose" | "parent";
@@ -39,6 +43,9 @@ export function RetakeCheckoutDialog({
   open,
   onOpenChange,
   retakeModuleEnrollmentId,
+  programName,
+  programPrice,
+  completedModuleCount,
 }: RetakeCheckoutDialogProps) {
   const [step, setStep] = useState<Step>("choose");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
@@ -113,6 +120,13 @@ export function RetakeCheckoutDialog({
   }
 
   const verifiedParents = parents.filter((parent) => parent.isVerified);
+  const displayName = programName?.trim() || "chương trình";
+  const priceLabel =
+    programPrice != null ? formatProgramPrice(programPrice) : "giá chương trình";
+  const progressCopy =
+    completedModuleCount != null && completedModuleCount > 0
+      ? ` Giữ nguyên tiến độ: ${completedModuleCount} module đã hoàn thành không phải học lại.`
+      : " Giữ nguyên tiến độ các module đã hoàn thành.";
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -136,9 +150,9 @@ export function RetakeCheckoutDialog({
               <DialogTitle className="text-lg font-semibold">
                 {step === "choose" ? "Thanh toán học lại" : "Gửi phụ huynh"}
               </DialogTitle>
-              <DialogDescription className="mt-1.5 text-sm">
+              <DialogDescription className="mt-1.5 text-sm leading-relaxed">
                 {step === "choose"
-                  ? "Thanh toán phí học lại module để chuyển sang lớp mới."
+                  ? `Mua lại chương trình ${displayName} — ${priceLabel}.${progressCopy}`
                   : "Email có hiệu lực 24 giờ."}
               </DialogDescription>
             </div>

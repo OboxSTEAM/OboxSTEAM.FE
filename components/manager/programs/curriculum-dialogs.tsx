@@ -88,8 +88,6 @@ type ModuleFormValues = {
   moduleOrder: number;
   prerequisiteModuleId: string | null;
   isMandatory: boolean;
-  price: number;
-  retakeFee: number;
   learningOutcomesText: string;
 };
 
@@ -120,8 +118,6 @@ export function ModuleFormDialog({
       moduleOrder: 1,
       prerequisiteModuleId: null as string | null,
       isMandatory: true,
-      price: 0,
-      retakeFee: 0,
       learningOutcomesText: "",
     },
   });
@@ -137,8 +133,6 @@ export function ModuleFormDialog({
           moduleOrder: moduleToEdit.moduleOrder,
           prerequisiteModuleId: moduleToEdit.prerequisiteModuleId || null,
           isMandatory: moduleToEdit.isMandatory,
-          price: moduleToEdit.price,
-          retakeFee: moduleToEdit.retakeFee,
           // @ts-ignore
           learningOutcomesText: moduleToEdit.learningOutcomes?.join("\n") || "",
         });
@@ -151,8 +145,6 @@ export function ModuleFormDialog({
           moduleOrder: (modulesInProgram.length || 0) + 1,
           prerequisiteModuleId: null,
           isMandatory: true,
-          price: 0,
-          retakeFee: 0,
           learningOutcomesText: "",
         });
       }
@@ -177,8 +169,6 @@ export function ModuleFormDialog({
         moduleOrder: Number(data.moduleOrder),
         prerequisiteModuleId: data.prerequisiteModuleId || null,
         isMandatory: data.isMandatory,
-        price: Number(data.price),
-        retakeFee: Number(data.retakeFee),
         learningOutcomes: outcomes,
       };
 
@@ -381,45 +371,7 @@ export function ModuleFormDialog({
             </div>
           </div>
 
-          {/* Section 3: Học phí */}
-          <div className="px-6 py-5 space-y-4">
-            <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-              Học phí
-            </p>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="price" className="text-sm font-semibold text-foreground">
-                  Học phí Module (VND) <span className="text-primary">*</span>
-                </Label>
-                <Input
-                  id="price"
-                  type="number"
-                  placeholder="0"
-                  {...register("price", { valueAsNumber: true })}
-                  className="h-10 rounded-lg border-border font-mono focus-visible:ring-ring/50"
-                />
-                {errors.price && (
-                  <p className="text-xs font-semibold text-primary">{errors.price.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="retakeFee" className="text-sm font-semibold text-foreground">
-                  Học phí học lại (VND) <span className="text-primary">*</span>
-                </Label>
-                <Input
-                  id="retakeFee"
-                  type="number"
-                  placeholder="0"
-                  {...register("retakeFee", { valueAsNumber: true })}
-                  className="h-10 rounded-lg border-border font-mono focus-visible:ring-ring/50"
-                />
-                {errors.retakeFee && (
-                  <p className="text-xs font-semibold text-primary">{errors.retakeFee.message}</p>
-                )}
-              </div>
-            </div>
-          </div>
+          {/* Section 3 removed: module price — only Program.Price applies */}
           </DialogScrollBody>
 
           <DialogScrollFooter>

@@ -357,6 +357,22 @@
         "method": "get"
       },
       {
+        "path": "/api/class-redelivery-requests/{id}/candidates",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-redelivery-requests/{id}/select-class",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-redelivery-requests/{id}/accept-intensive",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-redelivery-requests/{id}/decline-intensive",
+        "method": "post"
+      },
+      {
         "path": "/api/class-redelivery-requests/pending-manager",
         "method": "get"
       },
@@ -633,6 +649,14 @@
         "description": "Returns the invoice created automatically after a successful payment. Returns 404 if the payment has not been confirmed."
       },
       {
+        "path": "/api/manager/redelivery/waitlist",
+        "method": "get"
+      },
+      {
+        "path": "/api/manager/redelivery/open-remedial-class",
+        "method": "post"
+      },
+      {
         "path": "/api/materials",
         "method": "get",
         "description": "Retrieve a paginated list of materials, each carrying program/course/activity context for the Edit deep-link. Supports search, filter, and sort options."
@@ -795,11 +819,6 @@
         "path": "/api/modules/name/{name}",
         "method": "get",
         "description": "Retrieve a single module by its exact name (case-insensitive)."
-      },
-      {
-        "path": "/api/module-enrollments/retake",
-        "method": "post",
-        "description": "Creates a new module enrollment attempt after failing the module (two failed assignments). Requires Student role."
       },
       {
         "path": "/api/module-enrollments/{id}",
@@ -1548,6 +1567,18 @@
         "name": "ClassQuizQuestionSetResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassRedeliveryCandidateDto"
+      },
+      {
+        "name": "ClassRedeliveryCandidateDtoListApiResult"
+      },
+      {
+        "name": "ClassRedeliveryCandidateDtoListResponseDataContent"
+      },
+      {
+        "name": "ClassRedeliveryCandidateSessionDto"
+      },
+      {
         "name": "ClassRedeliveryRequestResponseDto"
       },
       {
@@ -2254,6 +2285,18 @@
         "name": "ObjectResponseDataContent"
       },
       {
+        "name": "OpenRemedialClassRequestDto"
+      },
+      {
+        "name": "OpenRemedialClassResponseDto"
+      },
+      {
+        "name": "OpenRemedialClassResponseDtoApiResult"
+      },
+      {
+        "name": "OpenRemedialClassResponseDtoResponseDataContent"
+      },
+      {
         "name": "OperationsKpiSummaryDto"
       },
       {
@@ -2554,6 +2597,18 @@
         "name": "QuizResultResponseDtoResponseDataContent"
       },
       {
+        "name": "RedeliveryWaitlistModuleGroupDto"
+      },
+      {
+        "name": "RedeliveryWaitlistProgramGroupDto"
+      },
+      {
+        "name": "RedeliveryWaitlistProgramGroupDtoListApiResult"
+      },
+      {
+        "name": "RedeliveryWaitlistProgramGroupDtoListResponseDataContent"
+      },
+      {
         "name": "ReorderPortfolioItemEntryDto"
       },
       {
@@ -2675,6 +2730,9 @@
       },
       {
         "name": "ScheduleSessionResponseDto"
+      },
+      {
+        "name": "SelectClassRedeliveryRequestDto"
       },
       {
         "name": "SessionAttendanceResponseDto"
@@ -2837,9 +2895,6 @@
       },
       {
         "name": "UpdateMilestoneActivityLinkRequestDto"
-      },
-      {
-        "name": "UpdateModuleEnrollmentRequestDto"
       },
       {
         "name": "UpdateModuleRequestDto"

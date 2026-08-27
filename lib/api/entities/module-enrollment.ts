@@ -20,7 +20,6 @@ export const moduleEnrollmentSchema = z.object({
   progressPercent: z.number(),
   finalGrade: z.number().nullable(),
   attemptNumber: z.number(),
-  assignmentFailureCount: z.number(),
   enrolledAt: z.string().nullable(),
   startedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
@@ -33,8 +32,6 @@ export const moduleEnrollmentSchema = z.object({
   moduleOrder: z.number(),
   prerequisiteModuleId: z.string().nullable(),
   isMandatory: z.boolean(),
-  price: z.number(),
-  retakeFee: z.number(),
 });
 
 export type ModuleEnrollmentStatus = z.infer<typeof moduleEnrollmentStatusSchema>;

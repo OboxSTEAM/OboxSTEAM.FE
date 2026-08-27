@@ -7,6 +7,7 @@ import { Loader2 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { useProgramOpenClasses } from "@/hooks/use-program-open-classes";
 import { checkoutPayment } from "@/lib/api/payments";
 import { isParentRole, isStudentRole } from "@/lib/auth/roles";
 import {
@@ -63,13 +64,31 @@ export function ProgramEnrollCta({
     [enrollment],
   );
 
+  const needsOpenClassGate =
+    enrollmentCta.kind === "enroll" ||
+    enrollmentCta.kind === "complete-payment" ||
+    !isAuthenticated;
+
+  const {
+    hasOpenSeats,
+    isLoading: isOpenClassesLoading,
+  } = useProgramOpenClasses(programId, {
+    enabled: needsOpenClassGate && isOpenForEnrollment,
+  });
+
   const blocksNewEnrollment =
     !isOpenForEnrollment &&
     (enrollmentCta.kind === "enroll" ||
       enrollmentCta.kind === "complete-payment");
 
+  const blocksForNoOpenClass =
+    needsOpenClassGate &&
+    isOpenForEnrollment &&
+    !isOpenClassesLoading &&
+    !hasOpenSeats;
+
   const handleFreeEnroll = async () => {
-    if (!isOpenForEnrollment) return;
+    if (!isOpenForEnrollment || blocksForNoOpenClass) return;
 
     setIsEnrollingFree(true);
     try {
@@ -96,7 +115,14 @@ export function ProgramEnrollCta({
   };
 
   const handleEnrollClick = () => {
-    if (!isHydrated || isEnrollingFree || !isOpenForEnrollment) return;
+    if (
+      !isHydrated ||
+      isEnrollingFree ||
+      !isOpenForEnrollment ||
+      blocksForNoOpenClass
+    ) {
+      return;
+    }
 
     if (!isAuthenticated) {
       router.push(
@@ -119,6 +145,9 @@ export function ProgramEnrollCta({
     if (blocksNewEnrollment) {
       return getProgramEnrollmentClosedMessage(programStatus);
     }
+    if (blocksForNoOpenClass) {
+      return "Chưa có lớp đang tuyển còn ghế — tạm khóa thanh toán.";
+    }
     if (isAuthenticated && isParent) {
       return "Chỉ học viên mới có thể đăng ký trực tiếp";
     }
@@ -136,6 +165,8 @@ export function ProgramEnrollCta({
   const isEnrollDisabled =
     isEnrollingFree ||
     blocksNewEnrollment ||
+    blocksForNoOpenClass ||
+    isOpenClassesLoading ||
     (isAuthenticated && !isStudent);
   const canFetchEnrollment =
     isHydrated && !isLoading && isAuthenticated && isStudent;
@@ -156,7 +187,7 @@ export function ProgramEnrollCta({
   );
 
   const renderPrimaryAction = () => {
-    if (isCheckingEnrollment) {
+    if (isCheckingEnrollment || (needsOpenClassGate && isOpenClassesLoading)) {
       return (
         <Button
           type="button"
@@ -182,7 +213,7 @@ export function ProgramEnrollCta({
     }
 
     if (enrollmentCta.kind === "complete-payment") {
-      if (blocksNewEnrollment) {
+      if (blocksNewEnrollment || blocksForNoOpenClass) {
         return (
           <Button type="button" className={buttonClassName} disabled>
             Không thể thanh toán
@@ -217,6 +248,14 @@ export function ProgramEnrollCta({
       );
     }
 
+    if (blocksForNoOpenClass) {
+      return (
+        <Button type="button" className={buttonClassName} disabled>
+          Chưa có lớp tuyển sinh
+        </Button>
+      );
+    }
+
     return (
       <Button
         type="button"
@@ -241,7 +280,7 @@ export function ProgramEnrollCta({
   };
 
   const getSubtext = (): string => {
-    if (showEnrollFlow) return getEnrollSubtext();
+    if (showEnrollFlow || blocksForNoOpenClass) return getEnrollSubtext();
     return enrollmentCta.subtext;
   };
 
@@ -249,7 +288,6 @@ export function ProgramEnrollCta({
     <>
       <div className={cn("space-y-2", className)}>
         {renderPrimaryAction()}
-
         <p className={subtextClassName}>{getSubtext()}</p>
       </div>
 
@@ -258,6 +296,7 @@ export function ProgramEnrollCta({
         onOpenChange={setDialogOpen}
         programId={programId}
         price={price}
+        payBlocked={!hasOpenSeats}
       />
     </>
   );
