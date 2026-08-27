@@ -2,7 +2,15 @@
 
 import * as React from "react";
 import dynamic from "next/dynamic";
-import { CheckSquare, Clock, Target, Users, Wallet } from "lucide-react";
+import {
+  Banknote,
+  CheckSquare,
+  Clock,
+  RotateCcw,
+  Target,
+  Users,
+  Wallet,
+} from "lucide-react";
 
 import { buttonVariants } from "@/components/ui/button";
 import { useClientFetch } from "@/hooks/use-client-fetch";
@@ -51,19 +59,19 @@ const StatusBreakdownPanel = dynamic(
     import("./panels/status-breakdown-panel").then(
       (m) => m.StatusBreakdownPanel,
     ),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
+  { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
 );
 
 const RevenueMixPanel = dynamic(
   () =>
     import("./panels/revenue-mix-panel").then((m) => m.RevenueMixPanel),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
+  { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
 );
 
 const MentorLoadPanel = dynamic(
   () =>
     import("./panels/mentor-load-panel").then((m) => m.MentorLoadPanel),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[280px]" /> },
+  { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
 );
 
 function buildActionItems(landing: DashboardLanding): AttentionItem[] {
@@ -114,15 +122,15 @@ function DashboardSkeleton() {
     <div className="mx-auto w-full max-w-[1400px] space-y-4 px-5 py-5 lg:px-6 lg:py-6">
       <div className="h-14 animate-pulse rounded-2xl bg-border/70" />
       <div className="h-24 animate-pulse rounded-2xl bg-border/70" />
-      <div className="grid gap-3 sm:grid-cols-2">
-        {Array.from({ length: 2 }).map((_, i) => (
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
             className="h-28 animate-pulse rounded-2xl bg-border/70"
           />
         ))}
       </div>
-      <div className="h-[280px] animate-pulse rounded-2xl bg-border/70" />
+      <div className="h-[320px] animate-pulse rounded-2xl bg-border/70" />
     </div>
   );
 }
@@ -198,6 +206,7 @@ export function ManagerDashboard() {
     operations.rateUnit,
   );
   const passRate = toPercentValue(assessment.passRate, assessment.rateUnit);
+  const hasPendingPayments = revenue.pendingPaymentRequestsCount > 0;
 
   return (
     <div className="mx-auto w-full max-w-[1400px] space-y-6 bg-background px-5 py-5 lg:px-6 lg:py-6">
@@ -228,7 +237,7 @@ export function ManagerDashboard() {
           <DashboardGroupHeading title="Kinh doanh và tuyển sinh" />
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <KpiStatCard
             label={revenueTitleForRange(range)}
             hint="So với kỳ trước"
@@ -245,6 +254,29 @@ export function ManagerDashboard() {
             }}
           />
           <KpiStatCard
+            label="Thanh toán chờ"
+            hint={`${formatCount(revenue.pendingPaymentRequestsCount)} yêu cầu`}
+            value={revenue.pendingPaymentRequestsAmount}
+            href="/manager/programs"
+            icon={Banknote}
+            accentClassName="text-steam-arts"
+            tintClassName={
+              hasPendingPayments ? "bg-steam-arts/8" : undefined
+            }
+            alert={hasPendingPayments}
+            footnote={
+              hasPendingPayments
+                ? "Cần theo dõi để hoàn tất đăng ký"
+                : "Không có khoản chờ"
+            }
+            format={{
+              style: "currency",
+              currency: "VND",
+              maximumFractionDigits: 0,
+              notation: "compact",
+            }}
+          />
+          <KpiStatCard
             label="Đăng ký mới"
             hint="Trong kỳ đã chọn"
             value={enrollment.newEnrollmentsInRange}
@@ -252,6 +284,20 @@ export function ManagerDashboard() {
             icon={Users}
             accentClassName="text-steam-science"
             delta={enrollmentDelta}
+          />
+          <KpiStatCard
+            label="Hoàn tiền"
+            hint="Trong kỳ đã chọn"
+            value={revenue.refundedAmount}
+            href="/manager/programs"
+            icon={RotateCcw}
+            accentClassName="text-steam-engineering"
+            format={{
+              style: "currency",
+              currency: "VND",
+              maximumFractionDigits: 0,
+              notation: "compact",
+            }}
           />
         </div>
 
@@ -264,31 +310,23 @@ export function ManagerDashboard() {
           operations={operations}
         />
 
-        <div className="grid gap-3 lg:grid-cols-2">
-          <RevenueMixPanel
-            revenue={revenue}
-            isLoading={isLoading}
-            revealSignature={range}
-          />
-          <StatusBreakdownPanel
-            title="Tuyển sinh theo trạng thái"
-            description="Phân bổ đăng ký chương trình trong hệ thống"
-            items={enrollment.programEnrollmentsByStatus}
-            kind="enrollment"
-            href="/manager/programs"
-            linkLabel="Quản lý chương trình"
-            fill={STEAM_FILL.science}
-            isLoading={isLoading}
-            revealSignature={range}
-          />
+        <div className="grid gap-3 lg:grid-cols-5">
+          <div className="lg:col-span-2">
+            <RevenueMixPanel
+              revenue={revenue}
+              isLoading={isLoading}
+              revealSignature={range}
+            />
+          </div>
+          <div className="lg:col-span-3">
+            <TopProgramsPanel
+              enrollment={enrollment}
+              revenue={revenue}
+              isLoading={isLoading}
+              revealSignature={range}
+            />
+          </div>
         </div>
-
-        <TopProgramsPanel
-          enrollment={enrollment}
-          revenue={revenue}
-          isLoading={isLoading}
-          revealSignature={range}
-        />
       </section>
 
       <section className="space-y-3" aria-labelledby="quality-group-heading">
@@ -334,13 +372,30 @@ export function ManagerDashboard() {
         <div className="grid gap-3 lg:grid-cols-2">
           <MentorLoadPanel operations={operations} />
           <StatusBreakdownPanel
-            title="Tình trạng vận hành lớp học"
-            description="Phân bổ lớp trong hệ thống"
-            items={operations.classesByStatus}
-            kind="class"
-            href="/manager/classes"
-            linkLabel="Quản lý lớp học"
-            fill={STEAM_FILL.mathematics}
+            datasets={[
+              {
+                key: "enrollment",
+                label: "Tuyển sinh",
+                title: "Tuyển sinh theo trạng thái",
+                description: "Phân bổ đăng ký chương trình trong hệ thống",
+                items: enrollment.programEnrollmentsByStatus,
+                kind: "enrollment",
+                href: "/manager/programs",
+                linkLabel: "Quản lý chương trình",
+                fill: STEAM_FILL.science,
+              },
+              {
+                key: "class",
+                label: "Lớp học",
+                title: "Tình trạng vận hành lớp học",
+                description: "Phân bổ lớp trong hệ thống",
+                items: operations.classesByStatus,
+                kind: "class",
+                href: "/manager/classes",
+                linkLabel: "Quản lý lớp học",
+                fill: STEAM_FILL.mathematics,
+              },
+            ]}
             isLoading={isLoading}
             revealSignature={range}
           />

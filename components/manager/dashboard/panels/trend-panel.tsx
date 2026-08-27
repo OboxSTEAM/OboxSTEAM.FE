@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import NumberFlow from "@number-flow/react";
+import { TrendingDown, TrendingUp } from "lucide-react";
 
 import { Area } from "@/components/charts/area";
 import { AreaChart } from "@/components/charts/area-chart";
@@ -21,8 +23,10 @@ import { cn } from "@/lib/utils";
 
 import {
   axisFormatterFor,
+  deltaPercent,
   formatterFor,
   STEAM_FILL,
+  toPercentValue,
   trendSeriesToChartData,
 } from "../chart-data";
 import {
@@ -70,6 +74,54 @@ function seriesFor(
   }
 }
 
+function summaryFor(
+  key: TrendKey,
+  props: Omit<TrendPanelProps, "range" | "isLoading">,
+): { value: number; delta: number | null; suffix?: string } {
+  switch (key) {
+    case "revenue":
+      return {
+        value: props.revenue.revenueInRange,
+        delta: deltaPercent(
+          props.revenue.revenueInRange,
+          props.revenue.revenueInPreviousRange,
+        ),
+      };
+    case "submissions":
+      return {
+        value: props.assessment.submissionsInRange,
+        delta: deltaPercent(
+          props.assessment.submissionsInRange,
+          props.assessment.submissionsInPreviousRange,
+        ),
+      };
+    case "attendance": {
+      const current = toPercentValue(
+        props.operations.averageAttendanceRate,
+        props.operations.rateUnit,
+      );
+      const previous = toPercentValue(
+        props.operations.averageAttendanceRateInPreviousRange,
+        props.operations.rateUnit,
+      );
+      return {
+        value: current,
+        delta: deltaPercent(current, previous),
+        suffix: "%",
+      };
+    }
+    case "enrollment":
+    default:
+      return {
+        value: props.enrollment.newEnrollmentsInRange,
+        delta: deltaPercent(
+          props.enrollment.newEnrollmentsInRange,
+          props.enrollment.newEnrollmentsInPreviousRange,
+        ),
+      };
+  }
+}
+
 export function TrendPanel({
   range,
   isLoading,
@@ -80,22 +132,66 @@ export function TrendPanel({
 }: TrendPanelProps) {
   const [active, setActive] = React.useState<TrendKey>("enrollment");
   const reducedMotion = prefersReducedMotion();
-  const series = seriesFor(active, {
-    enrollment,
-    revenue,
-    assessment,
-    operations,
-  });
+  const overview = { enrollment, revenue, assessment, operations };
+  const series = seriesFor(active, overview);
+  const summary = summaryFor(active, overview);
   const data = trendSeriesToChartData(series);
   const formatValue = formatterFor(series.valueKind);
   const formatAxis = axisFormatterFor(series.valueKind);
   const seriesColor =
     TREND_OPTIONS.find((o) => o.key === active)?.fill ?? STEAM_FILL.engineering;
 
+  const numberFormat =
+    series.valueKind === "Currency"
+      ? ({
+          style: "currency",
+          currency: "VND",
+          maximumFractionDigits: 0,
+          notation: "compact",
+        } as const)
+      : series.valueKind === "Percent"
+        ? ({ maximumFractionDigits: 1 } as const)
+        : ({ maximumFractionDigits: 0 } as const);
+
   return (
     <DashboardPanel className="h-full">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-        <DashboardSectionTitle title="Xu hướng tăng trưởng" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 space-y-1.5">
+          <DashboardSectionTitle title="Xu hướng tăng trưởng" />
+          <div className="flex flex-wrap items-baseline gap-2">
+            <p
+              className="font-heading text-2xl font-black tabular-nums tracking-tight text-foreground sm:text-3xl"
+              style={{ color: seriesColor }}
+            >
+              <NumberFlow
+                value={summary.value}
+                format={numberFormat}
+                locales="vi-VN"
+                className="tabular-nums"
+              />
+              {summary.suffix}
+            </p>
+            {summary.delta != null ? (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+                  summary.delta >= 0
+                    ? "bg-steam-technology/15 text-steam-technology"
+                    : "bg-steam-science/15 text-steam-science",
+                )}
+              >
+                {summary.delta >= 0 ? (
+                  <TrendingUp className="size-3" />
+                ) : (
+                  <TrendingDown className="size-3" />
+                )}
+                {summary.delta >= 0 ? "+" : ""}
+                {summary.delta.toFixed(1)}%
+              </span>
+            ) : null}
+          </div>
+        </div>
+
         <div
           role="group"
           aria-label="Chọn chuỗi xu hướng"
@@ -110,12 +206,17 @@ export function TrendPanel({
                 aria-pressed={selected}
                 onClick={() => setActive(option.key)}
                 className={cn(
-                  "rounded-lg px-2 py-1 text-center text-[11px] font-semibold transition-colors",
+                  "inline-flex items-center justify-center gap-1.5 rounded-lg px-2 py-1 text-center text-[11px] font-semibold transition-colors",
                   selected
                     ? "bg-foreground text-background"
                     : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                 )}
               >
+                <span
+                  className="size-1.5 shrink-0 rounded-full"
+                  style={{ backgroundColor: option.fill }}
+                  aria-hidden
+                />
                 {option.label}
               </button>
             );

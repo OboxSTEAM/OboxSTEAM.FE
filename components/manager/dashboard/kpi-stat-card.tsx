@@ -15,6 +15,7 @@ type KpiStatCardProps = {
   href: string;
   icon: LucideIcon;
   accentClassName: string;
+  tintClassName?: string;
   footnote?: string;
   alert?: boolean;
   delta?: number | null;
@@ -30,6 +31,7 @@ export function KpiStatCard({
   href,
   icon: Icon,
   accentClassName,
+  tintClassName,
   footnote,
   alert,
   delta,
@@ -40,7 +42,10 @@ export function KpiStatCard({
   return (
     <Link
       href={href}
-      className="group rounded-2xl border border-border/70 bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-background"
+      className={cn(
+        "group rounded-2xl border border-border/70 bg-card p-4 transition-colors hover:border-foreground/20 hover:bg-background",
+        tintClassName,
+      )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
@@ -69,8 +74,10 @@ export function KpiStatCard({
       {delta != null ? (
         <p
           className={cn(
-            "mt-1.5 inline-flex items-center gap-1 text-[11px] font-semibold",
-            delta >= 0 ? "text-steam-technology" : "text-steam-science",
+            "mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold",
+            delta >= 0
+              ? "bg-steam-technology/15 text-steam-technology"
+              : "bg-steam-science/15 text-steam-science",
           )}
         >
           {delta >= 0 ? (

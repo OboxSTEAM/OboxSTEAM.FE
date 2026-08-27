@@ -161,6 +161,17 @@ export function gatewayLabel(gateway: string): string {
   return PAYMENT_GATEWAY_VI[gateway] ?? gateway;
 }
 
+/** Stable STEAM series colors per payment gateway for donut + legend. */
+export const GATEWAY_FILL: Record<string, string> = {
+  VnPay: STEAM_FILL.engineering,
+  Stripe: STEAM_FILL.mathematics,
+  BankTransfer: STEAM_FILL.technology,
+};
+
+export function gatewayFill(gateway: string): string {
+  return GATEWAY_FILL[gateway] ?? STEAM_FILL.science;
+}
+
 /** Compact share line for the revenue KPI — replaces a dedicated mix chart. */
 export function paymentMixFootnote(
   items: Array<{ gateway: string; amount: number }>,

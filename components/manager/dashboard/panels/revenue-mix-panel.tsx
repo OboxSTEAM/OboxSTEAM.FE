@@ -1,17 +1,23 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
-import { Bar } from "@/components/charts/bar";
-import { BarChart } from "@/components/charts/bar-chart";
-import { BarXAxis } from "@/components/charts/bar-x-axis";
-import { ChartTooltip } from "@/components/charts/tooltip";
-import { Grid } from "@/components/charts/grid";
-import { YAxis } from "@/components/charts/y-axis";
+import { PieCenter } from "@/components/charts/pie-center";
+import { PieChart } from "@/components/charts/pie-chart";
+import { PieSlice } from "@/components/charts/pie-slice";
+import {
+  Legend,
+  LegendItem,
+  LegendLabel,
+  LegendMarker,
+  LegendValue,
+} from "@/components/charts/legend";
 import type { RevenueOverview } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
-import { gatewayLabel, STEAM_FILL } from "../chart-data";
+import { gatewayFill, gatewayLabel } from "../chart-data";
 import {
   DashboardPanel,
   DashboardSectionTitle,
@@ -30,67 +36,102 @@ export function RevenueMixPanel({
   revealSignature,
 }: RevenueMixPanelProps) {
   const reducedMotion = prefersReducedMotion();
-  const total = revenue.revenueByGateway.reduce(
-    (sum, item) => sum + item.amount,
-    0,
-  );
-  const data = revenue.revenueByGateway.map((item) => ({
-    name: gatewayLabel(item.gateway),
-    value: total > 0 ? (item.amount / total) * 100 : 0,
-    amount: item.amount,
+  const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
+
+  const data = revenue.revenueByGateway
+    .filter((item) => item.amount > 0)
+    .map((item) => ({
+      label: gatewayLabel(item.gateway),
+      value: item.amount,
+      color: gatewayFill(item.gateway),
+    }));
+
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  const legendItems = data.map((item) => ({
+    label: item.label,
+    value: item.value,
+    maxValue: total > 0 ? total : undefined,
+    color: item.color,
   }));
-  const formatAxis = (value: number) => `${value.toFixed(0)}%`;
 
   return (
-    <DashboardPanel>
+    <DashboardPanel className="h-full">
       <DashboardSectionTitle
         title="Tỷ trọng kênh thanh toán"
-        description="Phần trăm doanh thu theo cổng, không lặp số tiền KPI"
+        description="Doanh thu theo cổng thanh toán trong kỳ"
       />
 
-      <div className="mt-3 h-[220px]">
+      <div className="mt-3 min-h-[220px]">
         {data.length === 0 && !isLoading ? (
-          <div className="flex h-full items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
+          <div className="flex h-[220px] items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
             Chưa có giao dịch trong kỳ
           </div>
         ) : (
-          <BarChart
-            data={data}
-            xDataKey="name"
-            status={isLoading ? "loading" : "ready"}
-            revealSignature={`${revealSignature}-gateway`}
-            animationDuration={reducedMotion ? 0 : 1100}
-            aspectRatio="auto"
-            className="h-full"
-            barGap={0.45}
-            margin={{ top: 8, right: 12, bottom: 28, left: 40 }}
+          <div
+            key={revealSignature}
+            className="flex flex-col items-center gap-4 sm:flex-row sm:items-center sm:gap-5"
           >
-            <Grid horizontal hideHorizontalEdgeLines numTicksRows={3} />
-            <Bar dataKey="value" fill={STEAM_FILL.technology} lineCap="round" />
-            <YAxis formatValue={formatAxis} numTicks={3} />
-            <BarXAxis />
-            <ChartTooltip
-              content={({ point }) => (
-                <div className="rounded-lg bg-popover px-3 py-2 text-popover-foreground shadow-md">
-                  <p className="text-[11px] text-muted-foreground">
-                    {String(point.name ?? "—")}
-                  </p>
-                  <p className="mt-0.5 text-sm font-semibold tabular-nums">
-                    {Number(point.value ?? 0).toFixed(1)}%
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      {formatMoney(Number(point.amount ?? 0))}
-                    </span>
-                  </p>
-                </div>
-              )}
-            />
-          </BarChart>
+            <div className="aspect-square w-[180px] shrink-0 sm:w-[200px]">
+              <PieChart
+                data={data}
+                innerRadius={58}
+                padAngle={0.04}
+                cornerRadius={4}
+                hoveredIndex={hoveredIndex}
+                onHoverChange={setHoveredIndex}
+                className="h-full w-full"
+              >
+                {data.map((_, index) => (
+                  <PieSlice
+                    key={data[index]?.label ?? index}
+                    index={index}
+                    animate={!reducedMotion}
+                    hoverEffect={reducedMotion ? "none" : "translate"}
+                    hoverOffset={6}
+                    showGlow={!reducedMotion}
+                  />
+                ))}
+                <PieCenter
+                  defaultLabel="Tổng"
+                  formatOptions={{
+                    style: "currency",
+                    currency: "VND",
+                    maximumFractionDigits: 0,
+                    notation: "compact",
+                  }}
+                />
+              </PieChart>
+            </div>
+
+            <Legend
+              items={legendItems}
+              hoveredIndex={hoveredIndex}
+              onHoverChange={setHoveredIndex}
+              className="w-full min-w-0 flex-1"
+            >
+              <LegendItem className="flex items-center justify-between gap-2">
+                <span className="flex min-w-0 items-center gap-2">
+                  <LegendMarker className="size-2.5" />
+                  <LegendLabel className="truncate text-xs font-medium" />
+                </span>
+                <LegendValue
+                  className="shrink-0 text-xs tabular-nums"
+                  showPercentage
+                  percentageClassName="text-[10px] text-muted-foreground"
+                  formatValue={formatMoney}
+                  formatPercentage={(p) => `${p.toFixed(0)}%`}
+                />
+              </LegendItem>
+            </Legend>
+          </div>
         )}
       </div>
 
       <Link
         href="/manager/programs"
-        className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-steam-technology hover:underline"
+        className={cn(
+          "mt-3 inline-flex items-center gap-1 text-xs font-semibold text-steam-technology hover:underline",
+        )}
       >
         Chương trình và thanh toán
         <ArrowUpRight className="size-3.5" />

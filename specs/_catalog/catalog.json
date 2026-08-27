@@ -1056,6 +1056,11 @@
         "description": "Soft-deletes a program by its ID. Requires Admin or Manager role."
       },
       {
+        "path": "/api/programs/{id}/open-classes",
+        "method": "get",
+        "description": "Public preview of Standard classes that are Open and still have seats, including schedule sessions and seat counts. Use before checkout to show recruiting cohorts. After payment, pass preferredClassId to soft-prioritize a class the learner viewed (no seat hold). Checkout is blocked when this list is empty."
+      },
+      {
         "path": "/api/programs/name/{name}",
         "method": "get",
         "description": "Retrieve a single program by its exact name (case-insensitive)."
@@ -2283,6 +2288,18 @@
       },
       {
         "name": "ObjectResponseDataContent"
+      },
+      {
+        "name": "OpenEnrollmentClassDto"
+      },
+      {
+        "name": "OpenEnrollmentClassDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "OpenEnrollmentClassDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "OpenEnrollmentClassSessionDto"
       },
       {
         "name": "OpenRemedialClassRequestDto"

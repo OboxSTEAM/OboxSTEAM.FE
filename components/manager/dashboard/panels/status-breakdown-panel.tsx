@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
@@ -10,6 +11,7 @@ import { ChartTooltip } from "@/components/charts/tooltip";
 import { Grid } from "@/components/charts/grid";
 import { YAxis } from "@/components/charts/y-axis";
 import type { StatusCount } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 import {
   axisFormatterFor,
@@ -24,7 +26,9 @@ import { formatCount, prefersReducedMotion } from "../dashboard-utils";
 
 type StatusBreakdownKind = "class" | "enrollment";
 
-type StatusBreakdownPanelProps = {
+export type StatusDataset = {
+  key: string;
+  label: string;
   title: string;
   description: string;
   items: StatusCount[];
@@ -32,35 +36,73 @@ type StatusBreakdownPanelProps = {
   href: string;
   linkLabel: string;
   fill?: string;
+};
+
+type StatusBreakdownPanelProps = {
+  datasets: StatusDataset[];
   isLoading?: boolean;
   revealSignature: string;
 };
 
 export function StatusBreakdownPanel({
-  title,
-  description,
-  items,
-  kind,
-  href,
-  linkLabel,
-  fill = STEAM_FILL.mathematics,
+  datasets,
   isLoading,
   revealSignature,
 }: StatusBreakdownPanelProps) {
+  const [activeKey, setActiveKey] = React.useState(datasets[0]?.key ?? "");
   const reducedMotion = prefersReducedMotion();
-  const data = statusCountsToChartData(items, kind);
+
+  const active =
+    datasets.find((dataset) => dataset.key === activeKey) ?? datasets[0];
+
+  if (!active) return null;
+
+  const data = statusCountsToChartData(active.items, active.kind);
   const formatAxis = axisFormatterFor("Count");
+  const fill = active.fill ?? STEAM_FILL.mathematics;
 
   return (
-    <DashboardPanel>
-      <DashboardSectionTitle title={title} description={description} />
+    <DashboardPanel className="h-full">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <DashboardSectionTitle
+          title={active.title}
+          description={active.description}
+        />
+        {datasets.length > 1 ? (
+          <div
+            role="group"
+            aria-label="Chọn phân bổ trạng thái"
+            className="grid shrink-0 grid-cols-2 gap-1 rounded-xl border border-border bg-background p-1"
+          >
+            {datasets.map((dataset) => {
+              const selected = dataset.key === active.key;
+              return (
+                <button
+                  key={dataset.key}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setActiveKey(dataset.key)}
+                  className={cn(
+                    "rounded-lg px-2 py-1 text-center text-[11px] font-semibold transition-colors",
+                    selected
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground",
+                  )}
+                >
+                  {dataset.label}
+                </button>
+              );
+            })}
+          </div>
+        ) : null}
+      </div>
 
       <div className="mt-3 h-[220px]">
         <BarChart
           data={data}
           xDataKey="name"
           status={isLoading ? "loading" : "ready"}
-          revealSignature={`${revealSignature}-${kind}`}
+          revealSignature={`${revealSignature}-${active.kind}`}
           animationDuration={reducedMotion ? 0 : 1100}
           aspectRatio="auto"
           className="h-full"
@@ -87,10 +129,10 @@ export function StatusBreakdownPanel({
       </div>
 
       <Link
-        href={href}
+        href={active.href}
         className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-steam-mathematics hover:underline"
       >
-        {linkLabel}
+        {active.linkLabel}
         <ArrowUpRight className="size-3.5" />
       </Link>
     </DashboardPanel>
