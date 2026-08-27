@@ -29,12 +29,37 @@ export interface YAxisProps {
   formatLargeNumbers?: boolean;
   /** Custom formatter for tick labels (e.g. USD). Overrides formatLargeNumbers when set. */
   formatValue?: (value: number) => string;
+  /** When true, use whole-number ticks for small numeric domains (e.g. counts 0–5). */
+  integerTicks?: boolean;
+}
+
+function resolveIntegerTickValues(
+  domain: [number, number],
+  numTicks: number,
+): number[] {
+  const max = Math.max(0, Math.ceil(domain[1]));
+  if (max <= 0) {
+    return [0];
+  }
+  const cap = Math.min(max, resolveYAxisTickCount(numTicks));
+  if (max <= cap) {
+    return Array.from({ length: max + 1 }, (_, index) => index);
+  }
+  const step = Math.max(1, Math.ceil(max / cap));
+  const values: number[] = [];
+  for (let value = 0; value <= max; value += step) {
+    values.push(value);
+  }
+  if (values.at(-1) !== max) {
+    values.push(max);
+  }
+  return values;
 }
 
 function formatLabel(
   value: number,
   formatLargeNumbers: boolean,
-  formatValue?: (value: number) => string
+  formatValue?: (value: number) => string,
 ): string {
   if (formatValue) {
     return formatValue(value);
@@ -96,6 +121,7 @@ const YAxisInner = memo(function YAxisInner({
   numTicks = Y_AXIS_DEFAULT_TICK_COUNT,
   formatLargeNumbers = true,
   formatValue,
+  integerTicks = false,
   container,
 }: YAxisProps & { container: HTMLDivElement }) {
   const { margin, referenceAreas } = useChartStable();
@@ -104,7 +130,10 @@ const YAxisInner = memo(function YAxisInner({
   const axisId = normalizeYAxisId(yAxisId);
 
   const ticks = useMemo(() => {
-    const tickValues = yScale.ticks(resolveYAxisTickCount(numTicks));
+    const domain = yScale.domain() as [number, number];
+    const tickValues = integerTicks
+      ? resolveIntegerTickValues(domain, numTicks)
+      : yScale.ticks(resolveYAxisTickCount(numTicks));
     return tickValues.map((value) => {
       const y = (yScale(value) ?? 0) + margin.top;
       return {
@@ -125,6 +154,7 @@ const YAxisInner = memo(function YAxisInner({
     numTicks,
     formatLargeNumbers,
     formatValue,
+    integerTicks,
     axisId,
     referenceAreas,
   ]);

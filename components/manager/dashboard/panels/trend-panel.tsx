@@ -6,7 +6,7 @@ import { TrendingDown, TrendingUp } from "lucide-react";
 
 import { Area } from "@/components/charts/area";
 import { AreaChart } from "@/components/charts/area-chart";
-import { chartCssVars } from "@/components/charts/chart-context";
+import { trendTooltipDateFmt } from "@/components/charts/chart-formatters";
 import { Grid } from "@/components/charts/grid";
 import { ChartTooltip } from "@/components/charts/tooltip";
 import { XAxis } from "@/components/charts/x-axis";
@@ -28,6 +28,7 @@ import {
   formatterFor,
   STEAM_FILL,
   toPercentValue,
+  trendGranularityLabel,
   trendSeriesToChartData,
 } from "../chart-data";
 import {
@@ -123,15 +124,25 @@ function summaryFor(
   }
 }
 
-function chartLayout(width: number) {
+function chartLayout(width: number, pointCount: number) {
+  const xTicks =
+    width > 0 && width < 420
+      ? 3
+      : width > 0 && width < 720
+        ? 4
+        : pointCount > 20
+          ? 4
+          : 5;
+
   if (width > 0 && width < 420) {
     return {
       height: 200,
       left: 36,
       right: 8,
-      bottom: 24,
+      bottom: 36,
       yTicks: 3,
-      xTicks: 3,
+      xTicks,
+      tickerHalfWidth: 28,
     };
   }
   if (width > 0 && width < 640) {
@@ -139,18 +150,20 @@ function chartLayout(width: number) {
       height: 230,
       left: 44,
       right: 12,
-      bottom: 26,
+      bottom: 38,
       yTicks: 4,
-      xTicks: 4,
+      xTicks,
+      tickerHalfWidth: 32,
     };
   }
   return {
     height: 260,
     left: 52,
     right: 16,
-    bottom: 28,
+    bottom: 40,
     yTicks: 4,
-    xTicks: 5,
+    xTicks,
+    tickerHalfWidth: 36,
   };
 }
 
@@ -166,15 +179,17 @@ export function TrendPanel({
   const reducedMotion = prefersReducedMotion();
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const width = useContainerWidth(bodyRef);
-  const layout = chartLayout(width);
   const overview = { enrollment, revenue, assessment, operations };
   const series = seriesFor(active, overview);
   const summary = summaryFor(active, overview);
   const data = trendSeriesToChartData(series);
+  const layout = chartLayout(width, data.length);
   const formatValue = formatterFor(series.valueKind);
   const formatAxis = axisFormatterFor(series.valueKind);
-  const seriesColor =
-    TREND_OPTIONS.find((o) => o.key === active)?.fill ?? STEAM_FILL.engineering;
+  const activeOption =
+    TREND_OPTIONS.find((option) => option.key === active) ?? TREND_OPTIONS[0];
+  const seriesColor = activeOption.fill;
+  const useIntegerYTicks = series.valueKind === "Count";
 
   const numberFormat =
     series.valueKind === "Currency"
@@ -294,24 +309,61 @@ export function TrendPanel({
                 stroke={seriesColor}
                 strokeWidth={2}
               />
-              <YAxis formatValue={formatAxis} numTicks={layout.yTicks} />
-              <XAxis numTicks={layout.xTicks} />
+              <YAxis
+                formatValue={formatAxis}
+                integerTicks={useIntegerYTicks}
+                numTicks={layout.yTicks}
+              />
+              <XAxis
+                numTicks={layout.xTicks}
+                tickerHalfWidth={layout.tickerHalfWidth}
+              />
               <ChartTooltip
-                content={({ point }) => (
-                  <div className="rounded-lg bg-popover px-3 py-2 text-popover-foreground shadow-md">
-                    <p className="text-[11px] text-muted-foreground">
-                      {typeof point.label === "string"
-                        ? point.label
-                        : point.date instanceof Date
-                          ? point.date.toLocaleDateString("vi-VN")
-                          : "—"}
-                    </p>
-                    <p className="mt-0.5 text-sm font-semibold tabular-nums">
-                      {formatValue(Number(point.value ?? 0))}
-                    </p>
-                  </div>
-                )}
-                indicatorColor={chartCssVars.linePrimary}
+                showDatePill={false}
+                content={({ point }) => {
+                  const date =
+                    point.date instanceof Date ? point.date : null;
+                  const bucketLabel =
+                    typeof point.label === "string" && point.label.trim()
+                      ? point.label
+                      : null;
+
+                  return (
+                    <div className="overflow-hidden">
+                      <div className="space-y-1 px-3 py-2.5">
+                        {date ? (
+                          <p className="text-left font-medium text-chart-tooltip-foreground text-xs capitalize leading-snug">
+                            {trendTooltipDateFmt.format(date)}
+                          </p>
+                        ) : null}
+                        {bucketLabel ? (
+                          <p className="text-left text-[11px] leading-snug text-chart-tooltip-muted">
+                            {bucketLabel}
+                          </p>
+                        ) : null}
+                        <p className="text-left text-[11px] leading-snug text-chart-tooltip-muted">
+                          {trendGranularityLabel(series.granularity)}
+                        </p>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 border-t border-border/40 px-3 py-2">
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="size-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: seriesColor }}
+                            aria-hidden
+                          />
+                          <span className="truncate text-chart-tooltip-muted text-sm">
+                            {activeOption.label}
+                          </span>
+                        </div>
+                        <span className="shrink-0 font-medium text-chart-tooltip-foreground text-sm tabular-nums">
+                          {formatValue(Number(point.value ?? 0))}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                }}
+                indicatorColor={seriesColor}
               />
             </AreaChart>
           )}

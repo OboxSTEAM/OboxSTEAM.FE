@@ -89,6 +89,18 @@ export function trendSeriesToChartData(series: TrendSeries): ChartPoint[] {
   return rows;
 }
 
+const TREND_GRANULARITY_VI: Record<TrendSeries["granularity"], string> = {
+  Daily: "Theo ngày",
+  Weekly: "Theo tuần",
+  Monthly: "Theo tháng",
+};
+
+export function trendGranularityLabel(
+  granularity: TrendSeries["granularity"],
+): string {
+  return TREND_GRANULARITY_VI[granularity];
+}
+
 export function formatterFor(
   valueKind: TrendValueKind,
 ): (value: number) => string {
@@ -126,7 +138,7 @@ export function axisFormatterFor(
       return (value) => `${value.toFixed(0)}%`;
     case "Count":
     default:
-      return (value) => compactNumberFormatter.format(value);
+      return (value) => formatCount(Math.round(value));
   }
 }
 
