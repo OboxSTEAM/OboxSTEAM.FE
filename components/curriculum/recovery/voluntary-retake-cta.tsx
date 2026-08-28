@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { ClassRedeliveryRequest } from "@/lib/api/entities/class-redelivery-request";
 import type { EnrollmentCurriculumModule } from "@/lib/api/entities/enrollment-curriculum";
 import { findOpenRedelivery } from "@/lib/curriculum/recovery-decision";
+import { isModuleLikelyCompleted } from "@/lib/curriculum/module-completion";
 
 import { ClassRedeliveryRequestDialog } from "./class-redelivery-request-dialog";
 
@@ -14,21 +15,6 @@ type VoluntaryRetakeCtaProps = {
   redeliveryRequests: ClassRedeliveryRequest[];
   onCreated: () => void;
 };
-
-function isModuleLikelyCompleted(module: EnrollmentCurriculumModule): boolean {
-  const required = [
-    ...module.assignments,
-    ...module.courses.flatMap((course) => course.assignments),
-    ...module.milestones
-      .map((milestone) => milestone.assignment)
-      .filter((assignment): assignment is NonNullable<typeof assignment> =>
-        Boolean(assignment),
-      ),
-  ].filter((assignment) => assignment.isRequiredForModulePass);
-
-  if (required.length === 0) return false;
-  return required.every((assignment) => assignment.status === "completed");
-}
 
 /** CTA “Học lại để trải nghiệm” for Completed Experiential/Research modules. */
 export function VoluntaryRetakeCta({

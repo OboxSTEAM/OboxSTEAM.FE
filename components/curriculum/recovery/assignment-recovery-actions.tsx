@@ -377,6 +377,8 @@ export function AssignmentRecoveryActions({
           open={intensiveOpen}
           onOpenChange={setIntensiveOpen}
           requestId={openRedelivery.id}
+          targetClassId={openRedelivery.targetClassId}
+          moduleId={openRedelivery.moduleId}
           onResolved={onRequestsChanged}
         />
       ) : null}

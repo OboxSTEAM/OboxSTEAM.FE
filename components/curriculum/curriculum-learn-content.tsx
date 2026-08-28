@@ -362,6 +362,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         onCurriculumRefresh={handleCurriculumRefresh}
         classContext={classContext}
         initialView={initialView}
+        programPrice={enrollment.price}
       />
 
       <ClassPickerDialog

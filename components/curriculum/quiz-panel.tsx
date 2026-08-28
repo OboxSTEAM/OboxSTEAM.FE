@@ -56,6 +56,9 @@ type QuizPanelProps = {
   assignmentId: string;
   flatAssignment: FlatCurriculumAssignment;
   onCurriculumRefresh: () => Promise<void>;
+  programName?: string | null;
+  programPrice?: number | null;
+  completedModuleCount?: number;
 };
 
 type QuizPhase = "intro" | "attempt" | "result";
@@ -145,6 +148,9 @@ export function QuizPanel({
   assignmentId,
   flatAssignment,
   onCurriculumRefresh,
+  programName,
+  programPrice,
+  completedModuleCount,
 }: QuizPanelProps) {
   const [phase, setPhase] = useState<QuizPhase>("intro");
   const [attempt, setAttempt] = useState<QuizAttempt | null>(null);
@@ -590,6 +596,9 @@ export function QuizPanel({
             void refreshRecoveryRequests();
             void onCurriculumRefresh();
           }}
+          programName={programName}
+          programPrice={programPrice}
+          completedModuleCount={completedModuleCount}
         />
       ) : null}
 

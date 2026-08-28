@@ -34,9 +34,11 @@ import {
   getClasses,
   getPendingManagerClassRedeliveryRequests,
   rejectClassRedeliveryRequest,
+  type Class,
   type ClassRedeliveryRequest,
 } from "@/lib/api";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
+import { isClassAtCapacity } from "@/lib/classes/lifecycle";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -69,11 +71,14 @@ export function ClassRedeliveryQueue({
   const { data: classesData, isLoading: isClassesLoading } = useClientFetch({
     enabled: assignTarget != null,
     fetcher: async () => {
-      const result = await getClasses({
-        page: 1,
-        pageSize: 100,
-        status: "Open",
-      });
+      const result = await getClasses(
+        {
+          page: 1,
+          pageSize: 100,
+          status: "Open",
+        },
+        { includeSeatsTaken: true },
+      );
       return result?.data?.items ?? [];
     },
     deps: [assignTarget?.id, assignTarget?.moduleId],
@@ -87,8 +92,23 @@ export function ClassRedeliveryQueue({
     return items.filter((item) => item.programId);
   }, [assignTarget, classesData]);
 
+  const selectedClass = useMemo(
+    () => classes.find((item) => item.id === targetClassId) ?? null,
+    [classes, targetClassId],
+  );
+
+  const isSelectedClassFull = selectedClass
+    ? isClassAtCapacity(selectedClass)
+    : false;
+
+  function formatClassOptionLabel(item: Class): string {
+    const name = item.name || item.code || item.id;
+    return `${name} · ${item.seatsTaken}/${item.maxCapacity} ghế`;
+  }
+
   async function handleAssign() {
     if (!assignTarget || !targetClassId) return;
+    if (selectedClass && isClassAtCapacity(selectedClass)) return;
     setBusyId(assignTarget.id);
     try {
       await assignTargetClassRedeliveryRequest(assignTarget.id, {
@@ -262,22 +282,26 @@ export function ClassRedeliveryQueue({
                   <span className="truncate">
                     {isClassesLoading
                       ? "Đang tải lớp…"
-                      : targetClassId
-                        ? classes.find((item) => item.id === targetClassId)
-                            ?.name || targetClassId
+                      : targetClassId && selectedClass
+                        ? formatClassOptionLabel(selectedClass)
                         : "Chọn lớp"}
                   </span>
                 </SelectTrigger>
                 <SelectContent className={LIGHT_SELECT_CONTENT}>
-                  {classes.map((item) => (
-                    <SelectItem
-                      key={item.id}
-                      value={item.id}
-                      className={LIGHT_SELECT_ITEM}
-                    >
-                      {item.name || item.code || item.id}
-                    </SelectItem>
-                  ))}
+                  {classes.map((item) => {
+                    const isFull = isClassAtCapacity(item);
+                    return (
+                      <SelectItem
+                        key={item.id}
+                        value={item.id}
+                        disabled={isFull}
+                        className={LIGHT_SELECT_ITEM}
+                      >
+                        {formatClassOptionLabel(item)}
+                        {isFull ? " · đã đầy" : ""}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectContent>
               </Select>
             </div>
@@ -301,7 +325,7 @@ export function ClassRedeliveryQueue({
             </Button>
             <Button
               type="button"
-              disabled={!targetClassId || busyId != null}
+              disabled={!targetClassId || busyId != null || isSelectedClassFull}
               onClick={() => void handleAssign()}
             >
               Chỉ định

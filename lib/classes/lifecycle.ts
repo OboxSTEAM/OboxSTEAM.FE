@@ -79,6 +79,13 @@ export function getOccupiedCurriculumItemIds(
   return { activityIds, assignmentIds };
 }
 
+export function isClassAtCapacity(input: {
+  seatsTaken: number;
+  maxCapacity: number;
+}): boolean {
+  return input.seatsTaken >= input.maxCapacity;
+}
+
 export function canGenerateClassSessions(input: {
   seatsTaken: number;
   activeSessionCount: number;

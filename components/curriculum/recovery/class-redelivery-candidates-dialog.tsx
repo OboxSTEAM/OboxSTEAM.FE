@@ -139,7 +139,10 @@ export function ClassRedeliveryCandidatesDialog({
                         variant="outline"
                         className="border-learn-border text-learn-muted"
                       >
-                        Còn {candidate.seatsRemaining}/{candidate.maxCapacity} ghế
+                        {candidate.seatsTaken}/{candidate.maxCapacity} ghế
+                        {candidate.seatsRemaining > 0
+                          ? ` · còn ${candidate.seatsRemaining}`
+                          : " · đã đầy"}
                       </Badge>
                     </div>
 

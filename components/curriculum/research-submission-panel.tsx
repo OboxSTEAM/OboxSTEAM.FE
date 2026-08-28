@@ -88,6 +88,9 @@ type ResearchSubmissionPanelProps = {
   assignmentId: string;
   flatAssignment: FlatCurriculumAssignment;
   onCurriculumRefresh: () => Promise<void>;
+  programName?: string | null;
+  programPrice?: number | null;
+  completedModuleCount?: number;
 };
 
 type UploadTarget = "primary" | "evidence";
@@ -457,6 +460,9 @@ export function ResearchSubmissionPanel({
   assignmentId,
   flatAssignment,
   onCurriculumRefresh,
+  programName,
+  programPrice,
+  completedModuleCount,
 }: ResearchSubmissionPanelProps) {
   const primaryInputRef = useRef<HTMLInputElement>(null);
   const evidenceInputRef = useRef<HTMLInputElement>(null);
@@ -1389,6 +1395,9 @@ export function ResearchSubmissionPanel({
             void refreshRecoveryRequests();
             void onCurriculumRefresh();
           }}
+          programName={programName}
+          programPrice={programPrice}
+          completedModuleCount={completedModuleCount}
         />
       ) : null}
 

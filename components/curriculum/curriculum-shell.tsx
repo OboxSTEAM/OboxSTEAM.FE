@@ -39,6 +39,7 @@ type CurriculumShellProps = {
   onCurriculumRefresh: () => Promise<void>;
   classContext?: CurriculumClassContext | null;
   initialView?: CurriculumMainView;
+  programPrice?: number | null;
 };
 
 export function CurriculumShell({
@@ -50,6 +51,7 @@ export function CurriculumShell({
   onCurriculumRefresh,
   classContext = null,
   initialView = "content",
+  programPrice = null,
 }: CurriculumShellProps) {
   const reduceMotion = useReducedMotion();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -162,6 +164,7 @@ export function CurriculumShell({
                 assignmentId={selectedAssignmentId}
                 flatAssignment={flatAssignment}
                 onCurriculumRefresh={onCurriculumRefresh}
+                programPrice={programPrice}
               />
             ) : (
               <ActivityPanel

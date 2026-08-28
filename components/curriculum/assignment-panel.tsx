@@ -2,6 +2,7 @@
 
 import type { EnrollmentCurriculum } from "@/lib/api";
 import type { FlatCurriculumAssignment } from "@/lib/curriculum/assignment-helpers";
+import { buildRecoveryCheckoutContext } from "@/lib/curriculum/recovery-checkout";
 
 import { QuizPanel } from "./quiz-panel";
 import { ResearchSubmissionPanel } from "./research-submission-panel";
@@ -12,6 +13,7 @@ type AssignmentPanelProps = {
   assignmentId: string;
   flatAssignment: FlatCurriculumAssignment;
   onCurriculumRefresh: () => Promise<void>;
+  programPrice?: number | null;
 };
 
 export function AssignmentPanel({
@@ -19,7 +21,12 @@ export function AssignmentPanel({
   assignmentId,
   flatAssignment,
   onCurriculumRefresh,
+  programPrice = null,
 }: AssignmentPanelProps) {
+  const recoveryCheckoutProps = buildRecoveryCheckoutContext(
+    curriculum,
+    programPrice,
+  );
   if (flatAssignment.assignmentType === "Quiz") {
     return (
       <QuizPanel
@@ -27,6 +34,9 @@ export function AssignmentPanel({
         assignmentId={assignmentId}
         flatAssignment={flatAssignment}
         onCurriculumRefresh={onCurriculumRefresh}
+        programName={recoveryCheckoutProps.programName}
+        programPrice={recoveryCheckoutProps.programPrice}
+        completedModuleCount={recoveryCheckoutProps.completedModuleCount}
       />
     );
   }
@@ -38,6 +48,9 @@ export function AssignmentPanel({
         assignmentId={assignmentId}
         flatAssignment={flatAssignment}
         onCurriculumRefresh={onCurriculumRefresh}
+        programName={recoveryCheckoutProps.programName}
+        programPrice={recoveryCheckoutProps.programPrice}
+        completedModuleCount={recoveryCheckoutProps.completedModuleCount}
       />
     );
   }
@@ -49,6 +62,9 @@ export function AssignmentPanel({
         assignmentId={assignmentId}
         flatAssignment={flatAssignment}
         onCurriculumRefresh={onCurriculumRefresh}
+        programName={recoveryCheckoutProps.programName}
+        programPrice={recoveryCheckoutProps.programPrice}
+        completedModuleCount={recoveryCheckoutProps.completedModuleCount}
       />
     );
   }
