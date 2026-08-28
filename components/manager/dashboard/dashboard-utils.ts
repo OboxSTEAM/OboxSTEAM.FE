@@ -57,3 +57,10 @@ export function prefersReducedMotion(): boolean {
   if (typeof window === "undefined") return false;
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
+
+/** Truncate chart category labels so axis ticks stay readable in narrow panels. */
+export function truncateChartLabel(label: string, maxChars: number): string {
+  const trimmed = label.trim();
+  if (maxChars < 4 || trimmed.length <= maxChars) return trimmed;
+  return `${trimmed.slice(0, Math.max(1, maxChars - 1))}…`;
+}

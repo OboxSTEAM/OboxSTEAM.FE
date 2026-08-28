@@ -89,6 +89,18 @@ export function trendSeriesToChartData(series: TrendSeries): ChartPoint[] {
   return rows;
 }
 
+const TREND_GRANULARITY_VI: Record<TrendSeries["granularity"], string> = {
+  Daily: "Theo ngày",
+  Weekly: "Theo tuần",
+  Monthly: "Theo tháng",
+};
+
+export function trendGranularityLabel(
+  granularity: TrendSeries["granularity"],
+): string {
+  return TREND_GRANULARITY_VI[granularity];
+}
+
 export function formatterFor(
   valueKind: TrendValueKind,
 ): (value: number) => string {
@@ -126,7 +138,7 @@ export function axisFormatterFor(
       return (value) => `${value.toFixed(0)}%`;
     case "Count":
     default:
-      return (value) => compactNumberFormatter.format(value);
+      return (value) => formatCount(Math.round(value));
   }
 }
 
@@ -159,6 +171,50 @@ export function deltaPercent(
 
 export function gatewayLabel(gateway: string): string {
   return PAYMENT_GATEWAY_VI[gateway] ?? gateway;
+}
+
+/** Stable STEAM series colors per payment gateway for donut + legend. */
+export const GATEWAY_FILL: Record<string, string> = {
+  VnPay: STEAM_FILL.engineering,
+  Stripe: STEAM_FILL.mathematics,
+  BankTransfer: STEAM_FILL.technology,
+};
+
+export function gatewayFill(gateway: string): string {
+  return GATEWAY_FILL[gateway] ?? STEAM_FILL.science;
+}
+
+/** Semantic fills for enrollment status composition (donut / legend). */
+export const ENROLLMENT_STATUS_FILL: Record<string, string> = {
+  PendingPayment: STEAM_FILL.arts,
+  Active: STEAM_FILL.technology,
+  Deferred: STEAM_FILL.engineering,
+  Completed: STEAM_FILL.mathematics,
+  Failed: STEAM_FILL.science,
+  Dropped: "var(--chart-label)",
+};
+
+/** Semantic fills for class status composition (donut / legend). */
+export const CLASS_STATUS_FILL: Record<string, string> = {
+  Draft: "var(--chart-label)",
+  ReadyForMentor: STEAM_FILL.arts,
+  Open: STEAM_FILL.engineering,
+  InProgress: STEAM_FILL.technology,
+  Completed: STEAM_FILL.mathematics,
+  Cancelled: STEAM_FILL.science,
+};
+
+export function statusFill(
+  status: string,
+  kind: "class" | "enrollment" | "submission" = "class",
+): string {
+  if (kind === "enrollment") {
+    return ENROLLMENT_STATUS_FILL[status] ?? STEAM_FILL.science;
+  }
+  if (kind === "class") {
+    return CLASS_STATUS_FILL[status] ?? STEAM_FILL.mathematics;
+  }
+  return STEAM_FILL.science;
 }
 
 /** Compact share line for the revenue KPI — replaces a dedicated mix chart. */

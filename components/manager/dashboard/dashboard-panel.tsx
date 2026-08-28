@@ -12,7 +12,7 @@ export function DashboardPanel({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-2xl border border-border/70 bg-card p-4",
+        "@container/dash min-w-0 overflow-hidden rounded-2xl border border-border/70 bg-card p-3 sm:p-4",
         className,
       )}
     >
