@@ -7,8 +7,8 @@ export const SYNC_EVENT = "syncEvent";
 export const syncEventSchema = z.object({
   scope: z.string(),
   entityType: z.string(),
-  entityId: z.string().uuid(),
-  at: z.string(),
+  entityId: z.string().min(1),
+  at: z.string().optional(),
 });
 
 export type SyncEvent = z.infer<typeof syncEventSchema>;
@@ -23,4 +23,8 @@ export function isCurriculumStructureChanged(event: SyncEvent): boolean {
     event.scope === "curriculum.structureChanged" &&
     event.entityType === "Program"
   );
+}
+
+export function isSeatsChanged(event: SyncEvent): boolean {
+  return event.scope === "seats.changed";
 }

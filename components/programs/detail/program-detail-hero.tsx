@@ -295,6 +295,7 @@ export function ProgramDetailHero({
             <div className="pt-1 lg:hidden">
               <ProgramHeroEnrollmentHead price={program.price} />
               <ProgramEnrollCta
+                key={program.id}
                 programId={program.id}
                 price={program.price}
                 programStatus={program.status}

@@ -102,3 +102,10 @@ export type UploadProgramThumbnailInput = z.infer<
   typeof uploadProgramThumbnailSchema
 >;
 
+/** Body for `POST /api/programs/{programId}/select-class`. */
+export const selectProgramClassSchema = z.object({
+  classId: z.string().uuid("ID lớp không hợp lệ."),
+});
+
+export type SelectProgramClassInput = z.infer<typeof selectProgramClassSchema>;
+

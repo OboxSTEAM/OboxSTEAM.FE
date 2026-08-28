@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
@@ -14,6 +14,8 @@ import {
   showAppErrorFromUnknown,
   showAppSuccess,
 } from "@/lib/errors";
+import { isSeatHoldCheckoutError } from "@/lib/payment/checkout-hold-error";
+import { markCheckoutRedirect } from "@/lib/payment/seat-hold";
 import {
   getProgramEnrollmentClosedMessage,
   getProgramPriceParts,
@@ -27,6 +29,7 @@ import { cn } from "@/lib/utils";
 
 import { useProgramEnrollmentLookup } from "./program-enrollment-lookup";
 import { ProgramEnrollPaymentDialog } from "./program-enroll-payment-dialog";
+import { useOptionalProgramSelectedClass } from "./program-selected-class-context";
 
 type ProgramEnrollCtaProps = {
   programId: string;
@@ -46,6 +49,7 @@ export function ProgramEnrollCta({
 }: ProgramEnrollCtaProps) {
   const router = useRouter();
   const { isAuthenticated, isHydrated, isLoading, profile } = useCurrentUser();
+  const selectedClassContext = useOptionalProgramSelectedClass();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isEnrollingFree, setIsEnrollingFree] = useState(false);
 
@@ -59,10 +63,7 @@ export function ProgramEnrollCta({
   const { enrollment, isLoading: isEnrollmentLoading } =
     useProgramEnrollmentLookup();
 
-  const enrollmentCta = useMemo(
-    () => resolveProgramDetailEnrollmentCta(enrollment),
-    [enrollment],
-  );
+  const enrollmentCta = resolveProgramDetailEnrollmentCta(enrollment);
 
   const needsOpenClassGate =
     enrollmentCta.kind === "enroll" ||
@@ -72,9 +73,30 @@ export function ProgramEnrollCta({
   const {
     hasOpenSeats,
     isLoading: isOpenClassesLoading,
+    classes: openClasses,
   } = useProgramOpenClasses(programId, {
     enabled: needsOpenClassGate && isOpenForEnrollment,
   });
+
+  const selectedClassId = selectedClassContext?.selectedClassId ?? null;
+  const holdBelongsToProgram =
+    selectedClassId != null &&
+    (isOpenClassesLoading ||
+      openClasses.some((item) => item.classId === selectedClassId));
+
+  const hasValidHold =
+    (selectedClassContext?.hasValidHold ?? false) && holdBelongsToProgram;
+  const checkoutClassId = hasValidHold
+    ? (selectedClassContext?.selectedClassId ?? null)
+    : null;
+  const holdExpiresAt = selectedClassContext?.holdExpiresAt ?? null;
+  const isSelectingClass = selectedClassContext?.selectingClassId != null;
+  const isHoldExpired =
+    (selectedClassContext?.isHoldExpired ?? false) && holdBelongsToProgram;
+
+  useEffect(() => {
+    setDialogOpen(false);
+  }, [programId]);
 
   const blocksNewEnrollment =
     !isOpenForEnrollment &&
@@ -87,17 +109,35 @@ export function ProgramEnrollCta({
     !isOpenClassesLoading &&
     !hasOpenSeats;
 
+  const blocksForNoValidHold =
+    needsOpenClassGate &&
+    isOpenForEnrollment &&
+    hasOpenSeats &&
+    !isOpenClassesLoading &&
+    isAuthenticated &&
+    isStudent &&
+    !hasValidHold;
+
   const handleFreeEnroll = async () => {
-    if (!isOpenForEnrollment || blocksForNoOpenClass) return;
+    if (
+      !isOpenForEnrollment ||
+      blocksForNoOpenClass ||
+      blocksForNoValidHold ||
+      !checkoutClassId
+    ) {
+      return;
+    }
 
     setIsEnrollingFree(true);
     try {
       const result = await checkoutPayment({
         programId,
+        classId: checkoutClassId,
         gateway: "Stripe",
       });
       const checkoutUrl = result?.data?.checkoutUrl;
       if (checkoutUrl) {
+        markCheckoutRedirect(programId);
         window.location.href = checkoutUrl;
         return;
       }
@@ -109,7 +149,24 @@ export function ProgramEnrollCta({
       router.push(getProgramLearnHref(programId));
       router.refresh();
     } catch (error) {
-      showAppErrorFromUnknown(error, "payments.checkout");
+      const renewed =
+        isSeatHoldCheckoutError(error) &&
+        selectedClassContext?.selectClass &&
+        checkoutClassId
+          ? await selectedClassContext
+              .selectClass(checkoutClassId)
+              .then(() => true)
+              .catch(() => false)
+          : false;
+
+      if (renewed) {
+        showAppSuccess({
+          title: "Đã giữ ghế lại",
+          description: "Bấm đăng ký một lần nữa trong thời gian countdown.",
+        });
+      } else {
+        showAppErrorFromUnknown(error, "payments.checkout");
+      }
       setIsEnrollingFree(false);
     }
   };
@@ -118,8 +175,10 @@ export function ProgramEnrollCta({
     if (
       !isHydrated ||
       isEnrollingFree ||
+      isSelectingClass ||
       !isOpenForEnrollment ||
-      blocksForNoOpenClass
+      blocksForNoOpenClass ||
+      blocksForNoValidHold
     ) {
       return;
     }
@@ -146,7 +205,13 @@ export function ProgramEnrollCta({
       return getProgramEnrollmentClosedMessage(programStatus);
     }
     if (blocksForNoOpenClass) {
-      return "Chưa có lớp đang tuyển còn ghế — tạm khóa thanh toán.";
+      return "Chưa có lớp đang tuyển còn ghế — tạm khóa đăng ký.";
+    }
+    if (isHoldExpired) {
+      return "Ghế đã hết hạn — chọn lại lớp ở mục bên dưới.";
+    }
+    if (blocksForNoValidHold) {
+      return "Chọn lớp ở mục Lớp đang tuyển sinh để giữ ghế trước khi thanh toán.";
     }
     if (isAuthenticated && isParent) {
       return "Chỉ học viên mới có thể đăng ký trực tiếp";
@@ -158,14 +223,16 @@ export function ProgramEnrollCta({
       if (!isAuthenticated) return "Đăng nhập để đăng ký miễn phí";
       return "Không cần thanh toán · bắt đầu học ngay";
     }
-    if (!isAuthenticated) return "Đăng nhập để đăng ký và thanh toán";
-    return "Thanh toán trực tiếp hoặc nhờ phụ huynh";
+    if (!isAuthenticated) return "Đăng nhập để chọn lớp và thanh toán";
+    return "Ghế/link hết hạn sau 5 phút";
   };
 
   const isEnrollDisabled =
     isEnrollingFree ||
+    isSelectingClass ||
     blocksNewEnrollment ||
     blocksForNoOpenClass ||
+    blocksForNoValidHold ||
     isOpenClassesLoading ||
     (isAuthenticated && !isStudent);
   const canFetchEnrollment =
@@ -187,7 +254,11 @@ export function ProgramEnrollCta({
   );
 
   const renderPrimaryAction = () => {
-    if (isCheckingEnrollment || (needsOpenClassGate && isOpenClassesLoading)) {
+    if (
+      isCheckingEnrollment ||
+      isSelectingClass ||
+      (needsOpenClassGate && isOpenClassesLoading)
+    ) {
       return (
         <Button
           type="button"
@@ -196,7 +267,7 @@ export function ProgramEnrollCta({
           aria-busy="true"
         >
           <Loader2 className="size-4 animate-spin" aria-hidden />
-          Đang kiểm tra…
+          {isSelectingClass ? "Đang giữ ghế…" : "Đang kiểm tra…"}
         </Button>
       );
     }
@@ -217,6 +288,14 @@ export function ProgramEnrollCta({
         return (
           <Button type="button" className={buttonClassName} disabled>
             Không thể thanh toán
+          </Button>
+        );
+      }
+
+      if (blocksForNoValidHold) {
+        return (
+          <Button type="button" className={buttonClassName} disabled>
+            {isHoldExpired ? "Ghế đã hết hạn" : "Chọn lớp trước"}
           </Button>
         );
       }
@@ -256,6 +335,14 @@ export function ProgramEnrollCta({
       );
     }
 
+    if (blocksForNoValidHold) {
+      return (
+        <Button type="button" className={buttonClassName} disabled>
+          {isHoldExpired ? "Ghế đã hết hạn" : "Chọn lớp trước"}
+        </Button>
+      );
+    }
+
     return (
       <Button
         type="button"
@@ -280,7 +367,14 @@ export function ProgramEnrollCta({
   };
 
   const getSubtext = (): string => {
-    if (showEnrollFlow || blocksForNoOpenClass) return getEnrollSubtext();
+    if (
+      showEnrollFlow ||
+      blocksForNoOpenClass ||
+      blocksForNoValidHold ||
+      isHoldExpired
+    ) {
+      return getEnrollSubtext();
+    }
     return enrollmentCta.subtext;
   };
 
@@ -291,13 +385,17 @@ export function ProgramEnrollCta({
         <p className={subtextClassName}>{getSubtext()}</p>
       </div>
 
-      <ProgramEnrollPaymentDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        programId={programId}
-        price={price}
-        payBlocked={!hasOpenSeats}
-      />
+      {checkoutClassId ? (
+        <ProgramEnrollPaymentDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          programId={programId}
+          classId={checkoutClassId}
+          price={price}
+          payBlocked={!hasOpenSeats}
+          holdExpiresAt={holdExpiresAt}
+        />
+      ) : null}
     </>
   );
 }

@@ -33,6 +33,7 @@ export type AppErrorContext =
   | "student.links"
   | "programs.list"
   | "programs.detail"
+  | "programs.selectClass"
   | "programs.create"
   | "programs.update"
   | "programs.delete"

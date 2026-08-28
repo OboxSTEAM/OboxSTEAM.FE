@@ -30,6 +30,10 @@ const EXACT_VI: Record<string, string> = {
   "Class has reached maximum capacity.": "Lớp đã đủ sĩ số.",
   "This program has no open classes with available seats. Checkout is blocked until a recruiting class has capacity.":
     "Chương trình chưa có lớp đang tuyển còn ghế. Thanh toán tạm khóa cho đến khi có lớp tuyển sinh còn chỗ.",
+  "Select this class before checkout or your seat hold has expired.":
+    "Chưa giữ ghế hoặc ghế đã hết hạn. Chọn lại lớp trước khi thanh toán.",
+  "The class seat hold has expired. Select the class again before checkout.":
+    "Ghế đã hết hạn. Chọn lại lớp trước khi thanh toán.",
   "Student has reached the maximum of 2 in-progress programs (Active or PendingPayment). Complete or drop a program before starting another.":
     "Bạn đang học tối đa 2 chương trình (đang học hoặc chờ thanh toán). Hoàn thành hoặc hủy một chương trình trước khi đăng ký thêm.",
   "Student has reached the maximum of 2 active classes. Leave or complete a class before joining another.":

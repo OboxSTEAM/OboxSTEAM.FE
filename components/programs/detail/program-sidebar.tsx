@@ -46,6 +46,7 @@ export function ProgramSidebar({ program, className }: ProgramSidebarProps) {
       <ProgramSidebarHead price={program.price} />
 
       <ProgramEnrollCta
+        key={program.id}
         programId={program.id}
         price={program.price}
         programStatus={program.status}

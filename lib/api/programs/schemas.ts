@@ -3,12 +3,13 @@ import { z } from "zod";
 import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import { programCurriculumSchema } from "@/lib/api/entities/curriculum";
 import { openEnrollmentClassSchema } from "@/lib/api/entities/open-enrollment-class";
+import { programClassSelectionSchema } from "@/lib/api/entities/program-class-selection";
 import {
   programSchema,
   programWithModulesSchema,
 } from "@/lib/api/entities/program";
 import { programReviewSchema } from "@/lib/api/entities/review";
-import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
+import { createApiResponseSchema, createApiValueSchema, apiValueMessageOnlySchema } from "@/lib/api/schemas";
 
 export const paginatedProgramsSchema = createPaginatedSchema(programSchema);
 export const paginatedProgramsWithModulesSchema = createPaginatedSchema(
@@ -69,6 +70,17 @@ export const getProgramOpenClassesResponseSchema = createApiResponseSchema(
   openEnrollmentClassesValueSchema,
 );
 
+export const selectProgramClassValueSchema = createApiValueSchema(
+  programClassSelectionSchema,
+);
+export const selectProgramClassResponseSchema = createApiResponseSchema(
+  selectProgramClassValueSchema,
+);
+
+export const releaseProgramClassHoldResponseSchema = createApiResponseSchema(
+  apiValueMessageOnlySchema,
+);
+
 export type GetProgramsResponse = z.infer<typeof getProgramsResponseSchema>;
 export type GetProgramsWithModulesResponse = z.infer<typeof getProgramsWithModulesResponseSchema>;
 export type GetProgramByIdResponse = z.infer<typeof getProgramByIdResponseSchema>;
@@ -102,3 +114,11 @@ export type GetProgramOpenClassesResponse = z.infer<
   typeof getProgramOpenClassesResponseSchema
 >;
 export type GetProgramOpenClassesResult = GetProgramOpenClassesResponse["value"];
+export type SelectProgramClassResponse = z.infer<
+  typeof selectProgramClassResponseSchema
+>;
+export type SelectProgramClassResult = SelectProgramClassResponse["value"];
+export type ReleaseProgramClassHoldResponse = z.infer<
+  typeof releaseProgramClassHoldResponseSchema
+>;
+export type ReleaseProgramClassHoldResult = ReleaseProgramClassHoldResponse["value"];

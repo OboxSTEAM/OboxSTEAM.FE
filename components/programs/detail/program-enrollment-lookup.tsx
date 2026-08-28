@@ -22,6 +22,7 @@ import {
 type ProgramEnrollmentLookupContextValue = {
   enrollment: ProgramEnrollment | null;
   isLoading: boolean;
+  refresh: () => void;
 };
 
 const ProgramEnrollmentLookupContext =
@@ -41,7 +42,11 @@ export function ProgramEnrollmentLookupProvider({
   const canFetch =
     isHydrated && !isLoading && isAuthenticated && isStudentRole(profile?.role);
 
-  const { data: enrollment, isLoading: isEnrollmentLoading } = useClientFetch({
+  const {
+    data: enrollment,
+    isLoading: isEnrollmentLoading,
+    retry: refresh,
+  } = useClientFetch({
     enabled: canFetch,
     minSkeletonMs: 0,
     fetcher: async () => {
@@ -57,8 +62,9 @@ export function ProgramEnrollmentLookupProvider({
     (): ProgramEnrollmentLookupContextValue => ({
       enrollment: canFetch ? (enrollment ?? null) : null,
       isLoading: canFetch && isEnrollmentLoading,
+      refresh,
     }),
-    [canFetch, enrollment, isEnrollmentLoading],
+    [canFetch, enrollment, isEnrollmentLoading, refresh],
   );
 
   return (

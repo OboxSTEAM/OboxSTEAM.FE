@@ -130,6 +130,8 @@ export {
   getProgramReviews,
   getPrograms,
   getProgramsWithModules,
+  releaseProgramClassHold,
+  selectProgramClass,
   updateProgram,
   uploadProgramThumbnail,
   type CreateProgramInput,

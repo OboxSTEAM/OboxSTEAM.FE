@@ -6,10 +6,12 @@ import {
   CalendarDays,
   ChevronLeft,
   ChevronRight,
+  Loader2,
   MapPin,
   Users,
 } from "lucide-react";
 
+import { SeatHoldCountdown } from "@/components/payment/seat-hold-countdown";
 import { Badge } from "@/components/ui/badge";
 import {
   Popover,
@@ -34,10 +36,6 @@ import {
   overlaps,
 } from "@/lib/classes/schedule-conflict";
 import {
-  getPreferredClassId,
-  setPreferredClassId,
-} from "@/lib/programs/preferred-class";
-import {
   addDaysToDateOnly,
   formatDayColumnLabel,
   formatVietnamTimeRange,
@@ -46,7 +44,10 @@ import {
   getZonedDateParts,
   toDateOnlyString,
 } from "@/lib/schedules/week";
+import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
+
+import { useProgramSelectedClass } from "./program-selected-class-context";
 
 type ProgramOpenClassesPreviewProps = {
   programId: string;
@@ -92,117 +93,129 @@ function weekMondaysFromSessions(
 function OpenClassCard({
   item,
   isSelected,
+  isSelecting,
+  hasValidHold,
   conflictLabel,
   busyIntervals,
   onSelect,
 }: {
   item: OpenEnrollmentClass;
   isSelected: boolean;
+  isSelecting: boolean;
+  hasValidHold: boolean;
   conflictLabel: string | null;
   busyIntervals: StudentScheduleInterval[];
   onSelect: () => void;
 }) {
   const [scheduleOpen, setScheduleOpen] = useState(false);
+  const noSeats = item.seatsRemaining <= 0;
+  const isDisabled = noSeats || isSelecting || conflictLabel != null;
 
   return (
-    <Popover
-      open={scheduleOpen}
-      onOpenChange={(next) => {
-        if (next) onSelect();
-        setScheduleOpen(next);
-      }}
+    <div
+      className={cn(
+        "rounded-xl border p-4 transition-colors",
+        conflictLabel
+          ? "border-[#E94B3C]/45 bg-[#FFF8F7]"
+          : isSelected
+            ? "border-[#4FC3F7] bg-[#E8F7FD] ring-2 ring-[#4FC3F7]/25"
+            : "border-[#E5E5E0] bg-white hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
+        isSelected && conflictLabel && "ring-2 ring-[#E94B3C]/20",
+      )}
     >
-      <div
+      <button
+        type="button"
         className={cn(
-          "rounded-xl border p-4 transition-colors",
-          conflictLabel
-            ? "border-[#E94B3C]/45 bg-[#FFF8F7]"
-            : isSelected
-              ? "border-[#4FC3F7] bg-[#E8F7FD] ring-2 ring-[#4FC3F7]/25"
-              : "border-[#E5E5E0] bg-white hover:border-[#D4D4CF] hover:bg-[#FAFAF5]",
-          isSelected &&
-            conflictLabel &&
-            "ring-2 ring-[#E94B3C]/20",
+          "w-full text-left",
+          isDisabled && "cursor-not-allowed opacity-70",
         )}
+        aria-pressed={isSelected}
+        disabled={isDisabled}
+        onClick={onSelect}
       >
-        <PopoverTrigger
-          render={
-            <button
-              type="button"
-              className="w-full text-left"
-              aria-pressed={isSelected}
-              aria-label={`Xem thời khóa biểu lớp ${item.name?.trim() || item.code || ""}`}
-            />
-          }
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="font-mono text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
-                {item.code?.trim() || item.classId.slice(0, 8)}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="font-mono text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
+              {item.code?.trim() || item.classId.slice(0, 8)}
+            </p>
+            <p className="mt-1 font-heading text-base font-semibold text-[#2D2D2D]">
+              {item.name?.trim() || "Lớp tuyển sinh"}
+            </p>
+            {item.mentorName?.trim() ? (
+              <p className="mt-1 text-xs text-[#6B6B6B]">
+                Mentor · {item.mentorName.trim()}
               </p>
-              <p className="mt-1 font-heading text-base font-semibold text-[#2D2D2D]">
-                {item.name?.trim() || "Lớp tuyển sinh"}
-              </p>
-              {item.mentorName?.trim() ? (
-                <p className="mt-1 text-xs text-[#6B6B6B]">
-                  Mentor · {item.mentorName.trim()}
-                </p>
-              ) : null}
-            </div>
-            <Badge
-              variant="outline"
-              className="shrink-0 border-[#7CB342]/35 bg-[#F1F8E9] text-[#558B2F]"
-            >
-              <Users className="mr-1 size-3" aria-hidden />
-              Còn {item.seatsRemaining}/{item.maxCapacity}
-            </Badge>
+            ) : null}
           </div>
+          <Badge
+            variant="outline"
+            className="shrink-0 border-[#7CB342]/35 bg-[#F1F8E9] text-[#558B2F]"
+          >
+            <Users className="mr-1 size-3" aria-hidden />
+            Còn {item.seatsRemaining}/{item.maxCapacity}
+          </Badge>
+        </div>
 
-          <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#6B6B6B]">
-            <span className="inline-flex min-w-0 items-center gap-1.5">
-              <CalendarDays className="size-3.5 shrink-0" aria-hidden />
-              <span className="truncate">
-                {item.scheduleSummary?.trim() ||
-                  formatClassDateRange(item.startDate, item.endDate)}
-              </span>
+        <div className="mt-3 flex items-center justify-between gap-2 text-xs text-[#6B6B6B]">
+          <span className="inline-flex min-w-0 items-center gap-1.5">
+            <CalendarDays className="size-3.5 shrink-0" aria-hidden />
+            <span className="truncate">
+              {item.scheduleSummary?.trim() ||
+                formatClassDateRange(item.startDate, item.endDate)}
             </span>
-            <span
-              className={cn(
-                "inline-flex shrink-0 items-center gap-0.5 font-semibold",
-                conflictLabel ? "text-[#a82a1e]" : "text-[#0288D1]",
-              )}
-            >
-              TKB
-              <ChevronRight className="size-3.5" aria-hidden />
-            </span>
-          </div>
-        </PopoverTrigger>
+          </span>
+        </div>
+      </button>
 
+      <div className="mt-2 flex items-center justify-between gap-2">
         {conflictLabel ? (
-          <p className="mt-2 inline-flex items-start gap-1.5 rounded-lg border border-[#E94B3C]/25 bg-[#FFF0EE] px-2.5 py-1.5 text-[11px] font-medium text-[#a82a1e]">
+          <p className="inline-flex flex-1 items-start gap-1.5 rounded-lg border border-[#E94B3C]/25 bg-[#FFF0EE] px-2.5 py-1.5 text-[11px] font-medium text-[#a82a1e]">
             <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
             {conflictLabel}
           </p>
+        ) : isSelecting ? (
+          <p className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#0288D1]">
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            Đang giữ ghế…
+          </p>
+        ) : isSelected && hasValidHold ? (
+          <p className="text-[11px] font-medium text-[#0288D1]">
+            Đã chọn · ghế đang giữ
+          </p>
         ) : isSelected ? (
-          <p className="mt-2 text-[11px] font-medium text-[#0288D1]">
-            Đã chọn ưu tiên · không giữ chỗ
+          <p className="text-[11px] font-medium text-[#6B6B6B]">
+            Đã chọn · đăng nhập để giữ ghế
           </p>
         ) : null}
-      </div>
 
-      <PopoverContent
-        align="start"
-        side="bottom"
-        sideOffset={8}
-        className="w-[min(40rem,calc(100vw-1.25rem))] gap-0 overflow-hidden rounded-xl border border-[#E5E5E0] bg-white p-0 text-[#2D2D2D] shadow-[0_8px_28px_rgba(45,45,45,0.12)] ring-0"
-      >
-        <ClassTimetablePanel
-          item={item}
-          busyIntervals={busyIntervals}
-          conflictLabel={conflictLabel}
-        />
-      </PopoverContent>
-    </Popover>
+        <Popover open={scheduleOpen} onOpenChange={setScheduleOpen}>
+          <PopoverTrigger
+            render={
+              <button
+                type="button"
+                className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#0288D1] hover:underline"
+                aria-label={`Xem thời khóa biểu lớp ${item.name?.trim() || item.code || ""}`}
+              >
+                TKB
+                <ChevronRight className="size-3.5" aria-hidden />
+              </button>
+            }
+          />
+          <PopoverContent
+            align="end"
+            side="bottom"
+            sideOffset={8}
+            className="w-[min(40rem,calc(100vw-1.25rem))] gap-0 overflow-hidden rounded-xl border border-[#E5E5E0] bg-white p-0 text-[#2D2D2D] shadow-[0_8px_28px_rgba(45,45,45,0.12)] ring-0"
+          >
+            <ClassTimetablePanel
+              item={item}
+              busyIntervals={busyIntervals}
+              conflictLabel={conflictLabel}
+            />
+          </PopoverContent>
+        </Popover>
+      </div>
+    </div>
   );
 }
 
@@ -445,7 +458,7 @@ function TimetableSessionChip({
   );
 }
 
-/** Pre-pay recruiting class list. Selecting saves preferredClassId locally (no hold). */
+/** Pre-pay recruiting class list — select-class holds seat immediately. */
 export function ProgramOpenClassesPreview({
   programId,
   onAvailabilityChange,
@@ -453,11 +466,18 @@ export function ProgramOpenClassesPreview({
 }: ProgramOpenClassesPreviewProps) {
   const { classes, isLoading, hasError, hasOpenSeats, refresh } =
     useProgramOpenClasses(programId);
+  const {
+    selectedClassId,
+    holdExpiresAt,
+    hasValidHold,
+    isHoldExpired,
+    selectingClassId,
+    selectClass,
+  } = useProgramSelectedClass();
   const { isAuthenticated, isHydrated, profile } = useCurrentUser();
   const isStudent =
     isHydrated && isAuthenticated && isStudentRole(profile?.role);
 
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [busyIntervals, setBusyIntervals] = useState<StudentScheduleInterval[]>(
     [],
   );
@@ -465,15 +485,6 @@ export function ProgramOpenClassesPreview({
   useEffect(() => {
     onAvailabilityChange?.(hasOpenSeats, isLoading);
   }, [hasOpenSeats, isLoading, onAvailabilityChange]);
-
-  useEffect(() => {
-    const stored = getPreferredClassId(programId);
-    if (stored && classes.some((item) => item.classId === stored)) {
-      setSelectedId(stored);
-      return;
-    }
-    setSelectedId(classes[0]?.classId ?? null);
-  }, [classes, programId]);
 
   useEffect(() => {
     if (!isStudent) {
@@ -506,9 +517,25 @@ export function ProgramOpenClassesPreview({
     return map;
   }, [busyIntervals, classes]);
 
-  function handleSelect(classId: string) {
-    setSelectedId(classId);
-    setPreferredClassId(programId, classId);
+  async function handleSelect(classId: string) {
+    if (selectingClassId) return;
+    if (hasValidHold && selectedClassId === classId) return;
+
+    const item = classes.find((entry) => entry.classId === classId);
+    if (!item || item.seatsRemaining <= 0) return;
+
+    const conflict = conflictByClassId.get(classId);
+    if (conflict) {
+      showAppErrorFromUnknown(new Error(conflict), "programs.selectClass");
+      return;
+    }
+
+    try {
+      await selectClass(classId);
+      await refresh(classId);
+    } catch {
+      await refresh(selectedClassId);
+    }
   }
 
   return (
@@ -521,10 +548,16 @@ export function ProgramOpenClassesPreview({
           Lớp đang tuyển sinh
         </h3>
         <p className="mt-1 text-xs leading-relaxed text-[#6B6B6B]">
-          Chọn lớp bạn muốn học trước. Bấm vào từng lớp để xem lịch học theo
-          tuần. Nếu trùng giờ với lớp bạn đang học, hệ thống sẽ báo ngay — chọn
-          lớp chỉ là ghi nhớ ưu tiên, chưa giữ chỗ.
+          Bấm chọn lớp để giữ ghế ngay (5 phút). Xem TKB từng lớp trước khi quyết
+          định. Ghế/link hết hạn sau 5 phút — chọn lại nếu cần.
         </p>
+        {hasValidHold && holdExpiresAt ? (
+          <SeatHoldCountdown holdExpiresAt={holdExpiresAt} className="mt-2" />
+        ) : isHoldExpired ? (
+          <p className="mt-2 text-xs font-medium text-[#a82a1e]">
+            Ghế đã hết hạn — chọn lại lớp để giữ ghế mới.
+          </p>
+        ) : null}
       </div>
 
       {isLoading ? (
@@ -551,7 +584,7 @@ export function ProgramOpenClassesPreview({
             Hiện chưa có lớp Standard đang mở còn ghế.
           </p>
           <p className="mt-1 text-xs text-[#6B6B6B]">
-            Thanh toán tạm khóa cho đến khi có lớp tuyển sinh còn chỗ.
+            Đăng ký tạm khóa cho đến khi có lớp tuyển sinh còn chỗ.
           </p>
         </div>
       ) : (
@@ -560,10 +593,14 @@ export function ProgramOpenClassesPreview({
             <li key={item.classId}>
               <OpenClassCard
                 item={item}
-                isSelected={selectedId === item.classId}
+                isSelected={selectedClassId === item.classId}
+                isSelecting={selectingClassId === item.classId}
+                hasValidHold={
+                  hasValidHold && selectedClassId === item.classId
+                }
                 conflictLabel={conflictByClassId.get(item.classId) ?? null}
                 busyIntervals={busyIntervals}
-                onSelect={() => handleSelect(item.classId)}
+                onSelect={() => void handleSelect(item.classId)}
               />
             </li>
           ))}

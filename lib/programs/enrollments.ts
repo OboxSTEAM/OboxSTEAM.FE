@@ -72,7 +72,7 @@ export function resolveProgramDetailEnrollmentCta(
       return {
         kind: "complete-payment",
         label: "Hoàn tất thanh toán",
-        subtext: "Đăng ký của bạn đang chờ thanh toán.",
+        subtext: "Ghế/link hết hạn sau 5 phút.",
       };
     case "Deferred":
       return {

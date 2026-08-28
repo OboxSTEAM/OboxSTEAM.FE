@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 
+import { SeatHoldCountdown } from "@/components/payment/seat-hold-countdown";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -28,8 +29,12 @@ import {
   type ParentLinkedStudent,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { isSeatHoldCheckoutError } from "@/lib/payment/checkout-hold-error";
+import { isHoldValid, markCheckoutRedirect } from "@/lib/payment/seat-hold";
 import { getProgramPriceParts } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
+
+import { useOptionalProgramSelectedClass } from "./program-selected-class-context";
 
 type PaymentStep = "choose" | "parent";
 
@@ -37,9 +42,12 @@ type ProgramEnrollPaymentDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   programId: string;
+  classId: string;
   price: number;
   /** When true, checkout / request-parent actions stay disabled. */
   payBlocked?: boolean;
+  /** Active hold from select-class (required before checkout). */
+  holdExpiresAt?: string | null;
 };
 
 const STEP_EASE = "motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)]";
@@ -187,9 +195,12 @@ export function ProgramEnrollPaymentDialog({
   open,
   onOpenChange,
   programId,
+  classId,
   price,
   payBlocked = false,
+  holdExpiresAt = null,
 }: ProgramEnrollPaymentDialogProps) {
+  const selectedClassContext = useOptionalProgramSelectedClass();
   const priceParts = getProgramPriceParts(price);
   const priceLabel = priceParts.isFree
     ? priceParts.label
@@ -251,42 +262,74 @@ export function ProgramEnrollPaymentDialog({
     }
   }, [open, step, parentsLoadState, loadParents]);
 
+  const handleHoldExpiredAtCheckout = useCallback(
+    async (error: unknown) => {
+      if (!isSeatHoldCheckoutError(error) || !selectedClassContext?.selectClass) {
+        return false;
+      }
+
+      try {
+        await selectedClassContext.selectClass(classId);
+        showAppSuccess({
+          title: "Đã giữ ghế lại",
+          description: "Bấm thanh toán một lần nữa trong thời gian countdown.",
+        });
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [classId, selectedClassContext],
+  );
+
+  const isPayBlocked =
+    payBlocked || !isHoldValid(holdExpiresAt ?? selectedClassContext?.holdExpiresAt);
+
   const handleDirectCheckout = async () => {
-    if (payBlocked) return;
+    if (isPayBlocked) return;
     setIsCheckingOut(true);
     try {
       const result = await checkoutPayment({
         programId,
+        classId,
         gateway: "Stripe",
       });
       const checkoutUrl = result?.data?.checkoutUrl;
       if (!checkoutUrl) {
         throw new Error("Không nhận được liên kết thanh toán.");
       }
+      markCheckoutRedirect(programId);
       window.location.href = checkoutUrl;
     } catch (error) {
       setIsCheckingOut(false);
-      showAppErrorFromUnknown(error, "payments.checkout");
+      const renewed = await handleHoldExpiredAtCheckout(error);
+      if (!renewed) {
+        showAppErrorFromUnknown(error, "payments.checkout");
+      }
     }
   };
 
   const handleSendToParent = async (parent: ParentLinkedStudent) => {
-    if (payBlocked) return;
+    if (isPayBlocked) return;
     setSendingParentId(parent.linkedUserId);
     try {
       const result = await requestParentPayment({
         programId,
+        classId,
         parentId: parent.linkedUserId,
       });
       showAppSuccess({
         title: "Đã gửi yêu cầu thanh toán",
         description:
           result?.message?.trim() ||
-          `Email thanh toán đã gửi tới ${parent.email}. Phụ huynh có 24 giờ để hoàn tất.`,
+          `Email thanh toán đã gửi tới ${parent.email}. Ghế/link hết hạn sau 5 phút.`,
       });
       handleOpenChange(false);
     } catch (error) {
-      showAppErrorFromUnknown(error, "payments.request-parent");
+      const renewed = await handleHoldExpiredAtCheckout(error);
+      if (!renewed) {
+        showAppErrorFromUnknown(error, "payments.request-parent");
+      }
     } finally {
       setSendingParentId(null);
     }
@@ -326,10 +369,16 @@ export function ProgramEnrollPaymentDialog({
               <DialogDescription className="mt-1.5 text-sm leading-relaxed">
                 {payBlocked
                   ? "Chưa có lớp đang tuyển còn ghế — tạm khóa thanh toán."
-                  : step === "choose"
-                    ? "Chọn cách thanh toán phù hợp."
-                    : "Email có hiệu lực 24 giờ."}
+                  : !isHoldValid(holdExpiresAt)
+                    ? "Ghế chưa được giữ hoặc đã hết hạn — đóng và chọn lại lớp."
+                    : "Ghế/link hết hạn sau 5 phút."}
               </DialogDescription>
+              {!payBlocked && isHoldValid(holdExpiresAt) ? (
+                <SeatHoldCountdown
+                  holdExpiresAt={holdExpiresAt}
+                  className="mt-2"
+                />
+              ) : null}
             </div>
           </div>
         </div>
@@ -341,14 +390,14 @@ export function ProgramEnrollPaymentDialog({
                 title="Tự thanh toán"
                 hint="Stripe · ngay lập tức"
                 icon={CreditCard}
-                disabled={isCheckingOut || payBlocked}
+                disabled={isCheckingOut || isPayBlocked}
                 onClick={() => void handleDirectCheckout()}
               />
               <PaymentOptionTile
                 title="Nhờ phụ huynh"
                 hint="Gửi email yêu cầu"
                 icon={Users}
-                disabled={isCheckingOut || payBlocked}
+                disabled={isCheckingOut || isPayBlocked}
                 onClick={goToParent}
               />
             </div>

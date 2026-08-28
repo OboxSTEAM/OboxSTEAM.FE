@@ -5,12 +5,14 @@ import { paymentGatewaySchema } from "@/lib/api/entities/payment";
 /** Body for `POST /api/payments/checkout`. */
 export const checkoutPaymentSchema = z.object({
   programId: z.string().uuid("ID chương trình không hợp lệ."),
+  classId: z.string().uuid("ID lớp không hợp lệ."),
   gateway: paymentGatewaySchema,
 });
 
 /** Body for `POST /api/payments/request-parent`. */
 export const requestParentPaymentSchema = z.object({
   programId: z.string().uuid("ID chương trình không hợp lệ."),
+  classId: z.string().uuid("ID lớp không hợp lệ."),
   parentId: z.string().uuid("ID phụ huynh không hợp lệ."),
 });
 

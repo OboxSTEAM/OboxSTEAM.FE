@@ -8,6 +8,7 @@ import {
   programListQuerySchema,
   programReviewsQuerySchema,
   reviewIdParamSchema,
+  selectProgramClassSchema,
   updateProgramSchema,
   uploadProgramThumbnailSchema,
 } from "@/lib/validations/programs";
@@ -22,6 +23,8 @@ import {
   getProgramsResponseSchema,
   getProgramsWithModulesResponseSchema,
   createProgramResponseSchema,
+  selectProgramClassResponseSchema,
+  releaseProgramClassHoldResponseSchema,
   updateProgramResponseSchema,
   uploadProgramThumbnailResponseSchema,
   type CreateProgramResult,
@@ -33,6 +36,8 @@ import {
   type GetProgramReviewsResult,
   type GetProgramsResult,
   type GetProgramsWithModulesResult,
+  type SelectProgramClassResult,
+  type ReleaseProgramClassHoldResult,
   type UpdateProgramResult,
   type UploadProgramThumbnailResult,
 } from "./schemas";
@@ -56,6 +61,10 @@ export type {
   GetProgramsResult,
   GetProgramsWithModulesResponse,
   GetProgramsWithModulesResult,
+  SelectProgramClassResponse,
+  SelectProgramClassResult,
+  ReleaseProgramClassHoldResponse,
+  ReleaseProgramClassHoldResult,
   UpdateProgramResponse,
   UpdateProgramResult,
   UploadProgramThumbnailResponse,
@@ -97,6 +106,7 @@ export type ProgramReviewsQuery = z.infer<typeof programReviewsQuerySchema>;
 export type ProgramIdParam = z.infer<typeof programIdParamSchema>;
 export type CreateProgramInput = z.infer<typeof createProgramRequestSchema>;
 export type UpdateProgramInput = z.infer<typeof updateProgramSchema>;
+export type SelectProgramClassInput = z.infer<typeof selectProgramClassSchema>;
 
 const PROGRAMS_BASE = "/api/programs";
 
@@ -191,6 +201,44 @@ export async function getProgramOpenClasses(
     `${PROGRAMS_BASE}/${programId}/open-classes${query}`,
     getProgramOpenClassesResponseSchema,
     { method: "GET", skipAuth: true, skipRefresh: true },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/programs/{id}/select-class` — hold seat for 5 minutes (student only).
+ * Must be called before checkout / request-parent.
+ */
+export async function selectProgramClass(
+  id: string,
+  input: SelectProgramClassInput,
+): Promise<SelectProgramClassResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+  const body = selectProgramClassSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/select-class`,
+    selectProgramClassResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/programs/{id}/release-class-hold` — release seat hold when leaving checkout.
+ * Idempotent; clears PendingPayment enrollment server-side.
+ */
+export async function releaseProgramClassHold(
+  id: string,
+): Promise<ReleaseProgramClassHoldResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/release-class-hold`,
+    releaseProgramClassHoldResponseSchema,
+    { method: "POST", body: {} },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

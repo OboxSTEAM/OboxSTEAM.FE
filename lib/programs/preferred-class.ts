@@ -4,7 +4,7 @@ function storageKey(programId: string): string {
   return `${STORAGE_PREFIX}${programId}`;
 }
 
-/** Soft preference only — no seat hold. Survives checkout redirect. */
+/** Selected class before checkout — persisted locally for Stripe redirect. */
 export function getPreferredClassId(programId: string): string | null {
   if (typeof window === "undefined") return null;
   try {

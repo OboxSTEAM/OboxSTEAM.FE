@@ -20,6 +20,7 @@ import { ProgramOpenClassesPreview } from "./program-open-classes-preview";
 import { ProgramOverview } from "./program-overview";
 import { ProgramReviewsSection } from "./program-reviews-section";
 import { ProgramSectionNav } from "./program-section-nav";
+import { ProgramSelectedClassProvider } from "./program-selected-class-context";
 import { ProgramSidebar } from "./program-sidebar";
 import { ProgramStatsBar } from "./program-stats-bar";
 
@@ -43,8 +44,9 @@ export function ProgramDetailContent({
   );
 
   return (
-    <ProgramEnrollmentLookupProvider programId={program.id}>
-      <ProgramDetailHero program={program} onExpertClick={openExpert} />
+    <ProgramEnrollmentLookupProvider key={program.id} programId={program.id}>
+      <ProgramSelectedClassProvider key={program.id} programId={program.id}>
+        <ProgramDetailHero program={program} onExpertClick={openExpert} />
 
       <div className="mx-auto max-w-6xl px-4 pb-12 sm:px-6 lg:pb-16">
         <ProgramStatsBar program={program} />
@@ -148,6 +150,7 @@ export function ProgramDetailContent({
         currentProgramId={program.id}
         preview={selection?.preview ?? null}
       />
+      </ProgramSelectedClassProvider>
     </ProgramEnrollmentLookupProvider>
   );
 }

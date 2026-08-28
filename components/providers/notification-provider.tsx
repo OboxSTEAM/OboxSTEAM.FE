@@ -22,13 +22,12 @@ import {
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { resolveNotificationHrefFromNotification } from "@/lib/notifications/resolve-href";
-import {
-  dispatchCurriculumSyncEvent,
-  flushAllCurriculumSyncHandlers,
-} from "@/lib/realtime/curriculum-sync-bus";
-import { flushAllMediaSyncHandlers } from "@/lib/realtime/media-sync-bus";
 import { dispatchNotificationSideEffects } from "@/lib/realtime/notification-side-effects";
-import { startNotificationHub } from "@/lib/realtime/notification-hub";
+import {
+  acquireSyncHub,
+  ensureSyncHubStarted,
+  setSyncHubNotificationListener,
+} from "@/lib/realtime/sync-hub-connection";
 import { getMediaById } from "@/lib/api/media";
 import { isMentorRole } from "@/lib/auth/roles";
 import { localizeUserFacingMessage } from "@/lib/errors";
@@ -319,63 +318,29 @@ export function NotificationProvider({
     void refreshInbox();
   }, [isActive, refreshInbox]);
 
-  const handleSyncEvent = useCallback((event: Parameters<typeof dispatchCurriculumSyncEvent>[0]) => {
-    dispatchCurriculumSyncEvent(event);
-  }, []);
-
-  const handleHubReconnected = useCallback(() => {
-    flushAllCurriculumSyncHandlers();
-    flushAllMediaSyncHandlers();
-  }, []);
-
   useEffect(() => {
-    if (!isActive) return;
+    if (!isActive) {
+      setSyncHubNotificationListener(null);
+      return;
+    }
 
-    let disposed = false;
-    let stopHub: (() => Promise<void>) | null = null;
+    setSyncHubNotificationListener(handleNotificationReceived);
+    const releaseHub = acquireSyncHub();
 
-    void (async () => {
-      try {
-        stopHub = await startNotificationHub({
-          onReceived: handleNotificationReceived,
-          onSyncEvent: handleSyncEvent,
-          onReconnected: handleHubReconnected,
-        });
-        if (disposed) {
-          await stopHub();
-          return;
-        }
-        if (isMountedRef.current) {
-          setIsHubConnected(true);
-        }
-      } catch {
-        // Hub is best-effort; REST inbox still works without SignalR.
-        if (!disposed && isMountedRef.current) {
-          setIsHubConnected(false);
-        }
+    void ensureSyncHubStarted().then((conn) => {
+      if (isMountedRef.current) {
+        setIsHubConnected(conn != null);
       }
-    })();
+    });
 
     return () => {
-      disposed = true;
-      if (stopHub) {
-        void stopHub()
-          .catch(() => {
-            /* ignore disconnect errors on teardown */
-          })
-          .finally(() => {
-            if (isMountedRef.current) {
-              setIsHubConnected(false);
-            }
-          });
+      setSyncHubNotificationListener(null);
+      releaseHub();
+      if (isMountedRef.current) {
+        setIsHubConnected(false);
       }
     };
-  }, [
-    handleHubReconnected,
-    handleNotificationReceived,
-    handleSyncEvent,
-    isActive,
-  ]);
+  }, [handleNotificationReceived, isActive]);
 
   const value = useMemo<NotificationContextValue>(
     () => ({

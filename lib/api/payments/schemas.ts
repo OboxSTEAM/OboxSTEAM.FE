@@ -4,6 +4,7 @@ import {
   checkoutSessionSchema,
   parentCheckoutSessionSchema,
   paymentSchema,
+  requestParentPaymentSessionSchema,
 } from "@/lib/api/entities/payment";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
@@ -12,7 +13,9 @@ export const parentCheckoutPaymentValueSchema = createApiValueSchema(
   parentCheckoutSessionSchema,
 );
 export const paymentDetailValueSchema = createApiValueSchema(paymentSchema);
-export const requestParentPaymentValueSchema = createApiValueSchema(z.null());
+export const requestParentPaymentValueSchema = createApiValueSchema(
+  requestParentPaymentSessionSchema,
+);
 
 export const checkoutPaymentResponseSchema = createApiResponseSchema(
   checkoutPaymentValueSchema,

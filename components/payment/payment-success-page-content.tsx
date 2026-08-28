@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -12,12 +11,12 @@ import {
   getMyProgramEnrollments,
   getPaymentById,
   getProgramById,
-  getProgramEnrollmentClass,
   getProgramEnrollmentsByStudentId,
 } from "@/lib/api";
 import type { Payment } from "@/lib/api/entities/payment";
 import { isParentRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { clearProgramCheckoutHold } from "@/lib/payment/seat-hold";
 import { getProgramLearnHref } from "@/lib/programs/enrollments";
 import { PAYMENT_SUCCESS_ILLUSTRATION_URL } from "@/lib/payment/constants";
 import { cn } from "@/lib/utils";
@@ -31,13 +30,11 @@ type LoadState = "loading" | "ready" | "error";
 type PaymentSuccessFooterProps = {
   isParent: boolean;
   programId?: string | null;
-  onChooseClass?: () => void;
 };
 
 function PaymentSuccessFooter({
   isParent,
   programId,
-  onChooseClass,
 }: PaymentSuccessFooterProps) {
   if (isParent) {
     return (
@@ -75,18 +72,6 @@ function PaymentSuccessFooter({
           Vào Khóa học của tôi
         </Link>
       )}
-      {onChooseClass ? (
-        <button
-          type="button"
-          className={cn(
-            buttonVariants({ variant: "outline" }),
-            "border-[#E5E5E0]",
-          )}
-          onClick={onChooseClass}
-        >
-          Chọn lớp học
-        </button>
-      ) : null}
       <Link
         href="/#programs"
         className={cn(
@@ -112,8 +97,6 @@ export function PaymentSuccessPageContent() {
   const [programThumbnailUrl, setProgramThumbnailUrl] = useState<string | null>(
     null,
   );
-  const [isClassPickerOpen, setIsClassPickerOpen] = useState(false);
-  const [hasCheckedClass, setHasCheckedClass] = useState(false);
 
   const cachedRole = session?.user?.role;
   const isParent =
@@ -152,8 +135,7 @@ export function PaymentSuccessPageContent() {
   }, [paymentId]);
 
   useEffect(() => {
-    if (loadState !== "ready" || !payment || hasCheckedClass) return;
-    if (!isHydrated) return;
+    if (loadState !== "ready" || !payment || !isHydrated) return;
 
     let cancelled = false;
 
@@ -178,6 +160,7 @@ export function PaymentSuccessPageContent() {
             setProgramId(enrollment.programId);
             setProgramName(enrollment.name);
             setProgramThumbnailUrl(enrollment.thumbnailUrl);
+            clearProgramCheckoutHold(enrollment.programId);
           } else {
             const invoiceProgramId = invoiceResult?.data?.programId;
             if (invoiceProgramId) {
@@ -188,19 +171,21 @@ export function PaymentSuccessPageContent() {
                 setProgramId(program.id);
                 setProgramName(program.name || invoiceResult?.data?.itemDescription);
                 setProgramThumbnailUrl(program.thumbnailUrl);
+                clearProgramCheckoutHold(program.id);
               } else if (invoiceResult?.data?.itemDescription) {
                 setProgramId(invoiceProgramId);
                 setProgramName(invoiceResult.data.itemDescription);
+                clearProgramCheckoutHold(invoiceProgramId);
               }
             }
           }
           return;
         }
 
-        const [enrollmentClassResult, enrollmentsResult] = await Promise.all([
-          getProgramEnrollmentClass(payment.programEnrollmentId),
-          getMyProgramEnrollments({ page: 1, pageSize: 50 }),
-        ]);
+        const enrollmentsResult = await getMyProgramEnrollments({
+          page: 1,
+          pageSize: 50,
+        });
 
         if (cancelled) return;
 
@@ -212,19 +197,11 @@ export function PaymentSuccessPageContent() {
           setProgramId(enrollment.programId);
           setProgramName(enrollment.name);
           setProgramThumbnailUrl(enrollment.thumbnailUrl);
-        }
-
-        const classId = enrollmentClassResult?.data?.classId ?? null;
-        if (!classId && enrollment) {
-          setIsClassPickerOpen(true);
+          clearProgramCheckoutHold(enrollment.programId);
         }
       } catch (error) {
         if (!cancelled) {
           showAppErrorFromUnknown(error, "generic");
-        }
-      } finally {
-        if (!cancelled) {
-          setHasCheckedClass(true);
         }
       }
     })();
@@ -232,7 +209,12 @@ export function PaymentSuccessPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [hasCheckedClass, isHydrated, isParent, loadState, payment]);
+  }, [isHydrated, isParent, loadState, payment]);
+
+  useEffect(() => {
+    if (loadState !== "ready" || isParent || !programId) return;
+    router.prefetch(getProgramLearnHref(programId));
+  }, [isParent, loadState, programId, router]);
 
   if (loadState === "loading") {
     return (
@@ -292,50 +274,25 @@ export function PaymentSuccessPageContent() {
   }
 
   return (
-    <>
-      <PaymentPageShell
-        eyebrow="Thanh toán thành công"
-        title={isParent ? "Thanh toán hoàn tất!" : "Cảm ơn bạn đã đăng ký!"}
-        description={
-          isParent
-            ? "Giao dịch đã được ghi nhận. Học viên có thể bắt đầu học trong Khóa học của tôi."
-            : "Giao dịch đã được ghi nhận. Hãy chọn lớp học để bắt đầu cùng lớp, hoặc quay lại sau."
+    <PaymentPageShell
+      eyebrow="Thanh toán thành công"
+      title={isParent ? "Thanh toán hoàn tất!" : "Cảm ơn bạn đã đăng ký!"}
+      description={
+        isParent
+          ? "Giao dịch đã được ghi nhận. Học viên có thể bắt đầu học trong Khóa học của tôi."
+          : "Giao dịch đã được ghi nhận. Bạn đã được xếp vào lớp — bắt đầu học ngay."
+      }
+      illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
+      illustrationAlt="Minh họa thanh toán thành công"
+    >
+      <PaymentInvoiceCard
+        payment={payment}
+        programName={programName}
+        programThumbnailUrl={programThumbnailUrl}
+        footer={
+          <PaymentSuccessFooter isParent={isParent} programId={programId} />
         }
-        illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
-        illustrationAlt="Minh họa thanh toán thành công"
-      >
-        <PaymentInvoiceCard
-          payment={payment}
-          programName={programName}
-          programThumbnailUrl={programThumbnailUrl}
-          footer={
-            <PaymentSuccessFooter
-              isParent={isParent}
-              programId={programId}
-              onChooseClass={
-                !isParent && programId
-                  ? () => setIsClassPickerOpen(true)
-                  : undefined
-              }
-            />
-          }
-        />
-      </PaymentPageShell>
-
-      {!isParent && programId ? (
-        <ClassPickerDialog
-          open={isClassPickerOpen}
-          onOpenChange={setIsClassPickerOpen}
-          programId={programId}
-          programEnrollmentId={payment.programEnrollmentId}
-          programName={programName ?? undefined}
-          onEnrolled={() => {
-            if (programId) {
-              router.push(getProgramLearnHref(programId));
-            }
-          }}
-        />
-      ) : null}
-    </>
+      />
+    </PaymentPageShell>
   );
 }

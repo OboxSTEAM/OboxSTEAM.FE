@@ -101,6 +101,13 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Chương trình không tồn tại hoặc máy chủ tạm thời không phản hồi.",
     action: "Quay lại danh sách chương trình hoặc thử lại sau vài giây.",
   },
+  "programs.selectClass": {
+    title: "Không giữ được ghế",
+    reason:
+      "Lớp có thể vừa hết chỗ, trùng lịch học, hoặc bạn có đăng ký chờ thanh toán cũ chưa gắn lớp.",
+    action:
+      "Chọn lớp khác còn ghế, kiểm tra lịch học, hoặc liên hệ hỗ trợ nếu lỗi lặp lại.",
+  },
   "programs.create": {
     title: "Không tạo được chương trình",
     reason: "Thông tin chương trình chưa hợp lệ hoặc đã trùng mã/tên.",
@@ -980,6 +987,21 @@ function mapHttpStatusToError(
       action: isCohortLock
         ? "Chờ lớp InProgress hoàn thành, hoặc chỉ thao tác khi lớp Open chưa có học viên Active."
         : resolveAction(status, apiMessage, fallback.action),
+    };
+  }
+
+  if (
+    (status === 400 || status === 422) &&
+    (context === "payments.checkout" ||
+      context === "payments.request-parent" ||
+      context === "payments.parent-checkout") &&
+    apiMessage &&
+    /select this class before checkout|seat hold has expired/i.test(apiMessage)
+  ) {
+    return {
+      title: "Ghế chưa được giữ hoặc đã hết hạn",
+      reason: apiMessage,
+      action: "Chọn lại lớp ở mục Lớp đang tuyển sinh để giữ ghế mới, rồi thử thanh toán.",
     };
   }
 

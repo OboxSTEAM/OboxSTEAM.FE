@@ -9,13 +9,22 @@ export const paymentStatusSchema = z.enum([
   "Failed",
 ]);
 
+/** Seat hold metadata returned by checkout / request-parent (5-minute window). */
+export const paymentSeatHoldSchema = z.object({
+  classId: z.string().uuid(),
+  holdExpiresAt: z.string(),
+});
+
 /** Student checkout — `checkoutUrl` is null when the program is free (enrolled immediately). */
-export const checkoutSessionSchema = z.object({
+export const checkoutSessionSchema = paymentSeatHoldSchema.extend({
   paymentId: z.string().uuid(),
   enrollmentId: z.string().uuid(),
   checkoutUrl: z.string().url().nullable(),
   accessToken: z.string().nullable().optional(),
 });
+
+/** Parent payment request — email link holds the selected class seat. */
+export const requestParentPaymentSessionSchema = paymentSeatHoldSchema;
 
 /** Parent email-link checkout — includes short-lived access for post-Stripe receipt. */
 export const parentCheckoutSessionSchema = z.object({
@@ -44,6 +53,10 @@ export const paymentSchema = z.object({
 
 export type PaymentGateway = z.infer<typeof paymentGatewaySchema>;
 export type PaymentStatus = z.infer<typeof paymentStatusSchema>;
+export type PaymentSeatHold = z.infer<typeof paymentSeatHoldSchema>;
 export type CheckoutSession = z.infer<typeof checkoutSessionSchema>;
+export type RequestParentPaymentSession = z.infer<
+  typeof requestParentPaymentSessionSchema
+>;
 export type ParentCheckoutSession = z.infer<typeof parentCheckoutSessionSchema>;
 export type Payment = z.infer<typeof paymentSchema>;

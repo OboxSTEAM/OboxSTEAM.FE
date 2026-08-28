@@ -12,6 +12,11 @@ import {
 } from "@/lib/api/entities/notification";
 import { getAuthSession } from "@/lib/auth/session";
 import {
+  bindProgramSyncHub,
+  rejoinAllProgramSyncGroups,
+  unbindProgramSyncHub,
+} from "@/lib/realtime/program-sync-membership";
+import {
   NOTIFICATION_HUB_PATH,
   NOTIFICATION_RECEIVED_EVENT,
   SYNC_EVENT,
@@ -87,6 +92,7 @@ export async function startNotificationHub(
 
   if (handlers.onReconnected) {
     connection.onreconnected(() => {
+      void rejoinAllProgramSyncGroups();
       handlers.onReconnected?.();
     });
   }
@@ -95,9 +101,13 @@ export async function startNotificationHub(
     await connection.start();
   }
 
+  bindProgramSyncHub(connection);
+  await rejoinAllProgramSyncGroups();
+
   return async () => {
     connection.off(NOTIFICATION_RECEIVED_EVENT);
     connection.off(SYNC_EVENT);
+    unbindProgramSyncHub(connection);
     if (connection.state !== HubConnectionState.Disconnected) {
       await connection.stop();
     }
