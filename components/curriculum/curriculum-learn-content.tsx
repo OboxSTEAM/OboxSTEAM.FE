@@ -7,11 +7,13 @@ import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
 import { Button } from "@/components/ui/button";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import {
+  getClassEnrollmentsByProgramEnrollment,
   getClassSessions,
   getClassWithStudents,
   getEnrollmentCurriculum,
   getMentorById,
   getProgramEnrollmentClass,
+  type ClassEnrollmentKind,
   type EnrollmentCurriculum,
   type Mentor,
   type ProgramEnrollment,
@@ -52,6 +54,7 @@ function buildClassContext(
   classWithStudentsResult: Awaited<ReturnType<typeof getClassWithStudents>>,
   sessionsResult: Awaited<ReturnType<typeof getClassSessions>>,
   mentor: Mentor | null,
+  classEnrollmentKind?: ClassEnrollmentKind,
 ): CurriculumClassContext | null {
   const classWithStudents = classWithStudentsResult?.data;
   if (!classWithStudents) return null;
@@ -64,10 +67,35 @@ function buildClassContext(
     maxCapacity: classWithStudents.maxCapacity,
     kind: classWithStudents.kind,
     remedialModuleId: classWithStudents.remedialModuleId ?? null,
+    classEnrollmentKind,
     mentor,
     roster: classWithStudents.students,
     sessions: sessionsResult?.data?.items ?? [],
   };
+}
+
+async function resolveClassEnrollmentKind(
+  programEnrollmentId: string,
+  classId: string,
+  classEnrollmentId?: string | null,
+): Promise<ClassEnrollmentKind | undefined> {
+  try {
+    const result = await getClassEnrollmentsByProgramEnrollment(
+      programEnrollmentId,
+      { page: 1, pageSize: 100 },
+    );
+    const items = result?.data?.items ?? [];
+    const match =
+      (classEnrollmentId
+        ? items.find((item) => item.id === classEnrollmentId)
+        : null) ??
+      items.find(
+        (item) => item.class.id === classId && item.status === "Active",
+      );
+    return match?.kind;
+  } catch {
+    return undefined;
+  }
 }
 
 async function loadMentorProfile(mentorId: string): Promise<Mentor | null> {
@@ -143,35 +171,53 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
     [],
   );
 
-  const loadClassContext = useCallback(async (classId: string) => {
-    const [classWithStudentsResult, sessionsResult] = await Promise.all([
-      getClassWithStudents(classId),
-      getClassSessions(classId, CLASS_SESSIONS_QUERY),
-    ]);
+  const loadClassContext = useCallback(
+    async (
+      classId: string,
+      programEnrollmentId: string,
+      classEnrollmentId?: string | null,
+    ) => {
+      const [classWithStudentsResult, sessionsResult, classEnrollmentKind] =
+        await Promise.all([
+          getClassWithStudents(classId),
+          getClassSessions(classId, CLASS_SESSIONS_QUERY),
+          resolveClassEnrollmentKind(
+            programEnrollmentId,
+            classId,
+            classEnrollmentId,
+          ),
+        ]);
 
-    const classData = classWithStudentsResult?.data;
-    const mentorId = classData?.mentorId ?? classData?.mentor?.id ?? null;
-    const embeddedMentor = classData?.mentor
-      ? mentorFromClassSummary(classData.mentor)
-      : null;
-    const fetchedMentor = mentorId ? await loadMentorProfile(mentorId) : null;
+      const classData = classWithStudentsResult?.data;
+      const mentorId = classData?.mentorId ?? classData?.mentor?.id ?? null;
+      const embeddedMentor = classData?.mentor
+        ? mentorFromClassSummary(classData.mentor)
+        : null;
+      const fetchedMentor = mentorId ? await loadMentorProfile(mentorId) : null;
 
-    const nextClassContext = buildClassContext(
-      classWithStudentsResult,
-      sessionsResult,
-      fetchedMentor ?? embeddedMentor,
-    );
-    setClassContext(nextClassContext);
-    return nextClassContext;
-  }, []);
+      const nextClassContext = buildClassContext(
+        classWithStudentsResult,
+        sessionsResult,
+        fetchedMentor ?? embeddedMentor,
+        classEnrollmentKind,
+      );
+      setClassContext(nextClassContext);
+      return nextClassContext;
+    },
+    [],
+  );
 
   const loadLearningState = useCallback(
     async (
       activeEnrollment: ProgramEnrollment,
       seed?: { activityId?: string | null; assignmentId?: string | null },
     ) => {
-      const enrollmentClassResult = await getProgramEnrollmentClass(activeEnrollment.id);
+      const enrollmentClassResult = await getProgramEnrollmentClass(
+        activeEnrollment.id,
+      );
       const classId = enrollmentClassResult?.data?.classId ?? null;
+      const classEnrollmentId =
+        enrollmentClassResult?.data?.classEnrollmentId ?? null;
 
       if (!classId) {
         setCurriculum(null);
@@ -182,7 +228,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
 
       await Promise.all([
         loadCurriculum(activeEnrollment.id, seed),
-        loadClassContext(classId),
+        loadClassContext(classId, activeEnrollment.id, classEnrollmentId),
       ]);
     },
     [loadClassContext, loadCurriculum],
@@ -274,12 +320,19 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       if (!enrollment) return;
       setIsBootstrapping(true);
       try {
+        const enrollmentClassResult = await getProgramEnrollmentClass(
+          enrollment.id,
+        );
         await Promise.all([
           loadCurriculum(enrollment.id, {
             activityId: seedActivityId,
             assignmentId: seedAssignmentId,
           }),
-          loadClassContext(classId),
+          loadClassContext(
+            classId,
+            enrollment.id,
+            enrollmentClassResult?.data?.classEnrollmentId ?? null,
+          ),
         ]);
       } catch (error) {
         showAppErrorFromUnknown(error, "generic");
@@ -362,6 +415,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         onCurriculumRefresh={handleCurriculumRefresh}
         classContext={classContext}
         initialView={initialView}
+        programPrice={enrollment.price}
       />
 
       <ClassPickerDialog

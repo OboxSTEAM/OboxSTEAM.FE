@@ -65,6 +65,9 @@ type RetrospectivePanelProps = {
   assignmentId: string;
   flatAssignment: FlatCurriculumAssignment;
   onCurriculumRefresh: () => Promise<void>;
+  programName?: string | null;
+  programPrice?: number | null;
+  completedModuleCount?: number;
 };
 
 function isEditableStatus(status: RetrospectiveSubmissionStatus): boolean {
@@ -191,6 +194,9 @@ export function RetrospectivePanel({
   assignmentId,
   flatAssignment,
   onCurriculumRefresh,
+  programName,
+  programPrice,
+  completedModuleCount,
 }: RetrospectivePanelProps) {
   const [attempt, setAttempt] = useState<RetrospectiveAttempt | null>(null);
   const [contentText, setContentText] = useState("");
@@ -700,6 +706,9 @@ export function RetrospectivePanel({
             void refreshRecoveryRequests();
             void onCurriculumRefresh();
           }}
+          programName={programName}
+          programPrice={programPrice}
+          completedModuleCount={completedModuleCount}
         />
       ) : null}
 
