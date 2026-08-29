@@ -93,6 +93,27 @@ export function clearCheckoutRedirectPreserved(programId: string): void {
   }
 }
 
+/**
+ * Direct student checkout returned from Stripe — read and clear redirect flag.
+ * Parent-pay never sets this flag.
+ */
+export function consumeDirectCheckoutRedirectProgramId(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (!key?.startsWith(CHECKOUT_REDIRECT_PREFIX)) continue;
+      if (sessionStorage.getItem(key) !== "1") continue;
+      const programId = key.slice(CHECKOUT_REDIRECT_PREFIX.length);
+      clearCheckoutRedirectPreserved(programId);
+      return programId;
+    }
+  } catch {
+    // Ignore.
+  }
+  return null;
+}
+
 export function clearProgramCheckoutHold(programId: string): void {
   clearClassHold(programId);
   clearCheckoutRedirectPreserved(programId);

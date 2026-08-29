@@ -21,6 +21,17 @@ function clearLocalHoldState(programId: string): void {
   clearCheckoutRedirectPreserved(programId);
 }
 
+/**
+ * Direct Stripe cancel/fail — BE already releases seat + PendingPayment.
+ * FE only clears stale localStorage so program detail does not show an old hold.
+ * Do not call `releaseProgramClassHold` here.
+ */
+export function clearLocalHoldAfterDirectCheckoutCancel(
+  programId: string,
+): void {
+  clearLocalHoldState(programId);
+}
+
 /** Best-effort release during tab close / reload (`fetch` keepalive). */
 export function releaseProgramClassHoldKeepalive(programId: string): void {
   if (typeof window === "undefined" || !hasReleasableHold(programId)) return;
@@ -49,6 +60,7 @@ export async function releaseProgramClassHoldOnExit(
   programId: string,
   options?: { keepalive?: boolean },
 ): Promise<void> {
+  // Skip while redirecting to Stripe — hold must survive until checkout completes or BE cancel webhook.
   if (!hasReleasableHold(programId)) return;
 
   if (options?.keepalive) {

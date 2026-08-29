@@ -9,6 +9,10 @@ import { cancelPayment, getPaymentById } from "@/lib/api";
 import type { Payment } from "@/lib/api/entities/payment";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { PAYMENT_CANCEL_ILLUSTRATION_URL } from "@/lib/payment/constants";
+import {
+  clearLocalHoldAfterDirectCheckoutCancel,
+} from "@/lib/payment/release-class-hold";
+import { consumeDirectCheckoutRedirectProgramId } from "@/lib/payment/seat-hold";
 import { cn } from "@/lib/utils";
 
 import { PaymentInvoiceCard } from "./payment-invoice-card";
@@ -33,6 +37,12 @@ export function PaymentCancelPageContent() {
     (async () => {
       try {
         await cancelPayment(paymentId);
+
+        const directProgramId = consumeDirectCheckoutRedirectProgramId();
+        if (directProgramId) {
+          // BE already released seat + PendingPayment for direct checkout cancel/fail.
+          clearLocalHoldAfterDirectCheckoutCancel(directProgramId);
+        }
 
         const result = await getPaymentById(paymentId);
         if (!cancelled) {
@@ -127,7 +137,7 @@ export function PaymentCancelPageContent() {
     <PaymentPageShell
       eyebrow="Thanh toán đã hủy"
       title="Giao dịch chưa hoàn tất"
-      description="Bạn đã rời khỏi trang thanh toán Stripe. Không có khoản phí nào được trừ — đăng ký lại bất cứ lúc nào."
+      description="Bạn đã rời khỏi trang thanh toán Stripe. Không có khoản phí nào được trừ — bạn có thể đăng ký lại hoặc chọn chương trình khác."
       illustrationSrc={PAYMENT_CANCEL_ILLUSTRATION_URL}
       illustrationAlt="Minh họa thanh toán bị từ chối"
     >
