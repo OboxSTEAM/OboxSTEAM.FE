@@ -1,4 +1,5 @@
 import { ParentProfileGate } from "@/components/parent/parent-profile-gate";
+import { AuthSessionLifecycle } from "@/components/providers/auth-session-lifecycle";
 import { CurrentUserProvider } from "@/components/providers/current-user-provider";
 import { NotificationProvider } from "@/components/providers/notification-provider";
 import { StoreProvider } from "@/components/providers/store-provider";
@@ -22,13 +23,15 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
       >
         <ThemeAuthSync />
         <CurrentUserProvider>
-          <NotificationProvider>
-            <TooltipProvider>
-              {children}
-              <ParentProfileGate />
-              <Toaster />
-            </TooltipProvider>
-          </NotificationProvider>
+          <AuthSessionLifecycle>
+            <NotificationProvider>
+              <TooltipProvider>
+                {children}
+                <ParentProfileGate />
+                <Toaster />
+              </TooltipProvider>
+            </NotificationProvider>
+          </AuthSessionLifecycle>
         </CurrentUserProvider>
       </ThemeProvider>
     </StoreProvider>

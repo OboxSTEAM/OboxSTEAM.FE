@@ -11,6 +11,10 @@ const AUTH_API_PREFIX = "/api/auth/";
 
 let refreshInFlight: Promise<string | null> | null = null;
 
+function isDefinitiveRefreshFailure(status: number): boolean {
+  return status === 400 || status === 401;
+}
+
 /** Bearer token from browser session (client-only). */
 export function resolveBearerAuthHeaders(): Record<string, string> {
   const session = getAuthSession();
@@ -37,7 +41,7 @@ export function shouldRetryWithRefresh(
 
 /**
  * Exchanges the stored refresh token. Uses raw fetch (not apiFetch) to avoid
- * interceptor recursion. Concurrent 401s share one in-flight refresh.
+ * interceptor recursion. Concurrent refresh attempts share one in-flight call.
  */
 export async function refreshAuthTokens(): Promise<string | null> {
   if (refreshInFlight) return refreshInFlight;
@@ -62,7 +66,9 @@ export async function refreshAuthTokens(): Promise<string | null> {
       }
 
       if (!response.ok) {
-        clearAuthSession();
+        if (isDefinitiveRefreshFailure(response.status)) {
+          clearAuthSession();
+        }
         return null;
       }
 
@@ -75,7 +81,7 @@ export async function refreshAuthTokens(): Promise<string | null> {
       const nextSession = persistAuthSession(parsed.value.data, session.user);
       return nextSession.accessToken;
     } catch {
-      clearAuthSession();
+      /* Transient network failure — keep session so a later retry can succeed. */
       return null;
     } finally {
       refreshInFlight = null;

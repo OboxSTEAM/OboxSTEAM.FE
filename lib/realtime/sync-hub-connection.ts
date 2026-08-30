@@ -4,6 +4,7 @@ import {
 } from "@microsoft/signalr";
 
 import type { Notification } from "@/lib/api/entities/notification";
+import { AUTH_SESSION_CHANGED } from "@/lib/auth/session";
 import {
   flushAllCurriculumSyncHandlers,
   dispatchCurriculumSyncEvent,
@@ -49,6 +50,21 @@ function handleSyncPayload(payload: unknown): void {
   dispatchSeatsSyncEvent(event);
 }
 
+function detachConnection(conn: HubConnection): void {
+  conn.off(SYNC_EVENT);
+  conn.off(NOTIFICATION_RECEIVED_EVENT);
+  unbindProgramSyncHub(conn);
+}
+
+function stopActiveConnection(): void {
+  if (!connection) return;
+  detachConnection(connection);
+  void connection.stop().catch(() => {
+    /* ignore teardown errors */
+  });
+  connection = null;
+}
+
 async function startHubInternal(): Promise<HubConnection | null> {
   const conn = createNotificationHubConnection();
 
@@ -70,6 +86,7 @@ async function startHubInternal(): Promise<HubConnection | null> {
   try {
     await conn.start();
   } catch {
+    detachConnection(conn);
     return null;
   }
 
@@ -94,6 +111,15 @@ export async function ensureSyncHubStarted(): Promise<HubConnection | null> {
   return startTask;
 }
 
+/** Restart the hub when tokens change while consumers are still active. */
+export async function restartSyncHubIfActive(): Promise<HubConnection | null> {
+  if (consumerCount === 0) return null;
+
+  stopActiveConnection();
+  startTask = null;
+  return ensureSyncHubStarted();
+}
+
 /** Reference-counted hub consumer — call release on cleanup. */
 export function acquireSyncHub(): () => void {
   consumerCount += 1;
@@ -102,19 +128,16 @@ export function acquireSyncHub(): () => void {
   return () => {
     consumerCount = Math.max(0, consumerCount - 1);
     if (consumerCount > 0) return;
-
-    if (connection) {
-      connection.off(SYNC_EVENT);
-      connection.off(NOTIFICATION_RECEIVED_EVENT);
-      unbindProgramSyncHub(connection);
-      void connection.stop().catch(() => {
-        /* ignore teardown errors */
-      });
-      connection = null;
-    }
+    stopActiveConnection();
   };
 }
 
 export function getSyncHubConnection(): HubConnection | null {
   return connection;
+}
+
+if (typeof window !== "undefined") {
+  window.addEventListener(AUTH_SESSION_CHANGED, () => {
+    void restartSyncHubIfActive();
+  });
 }

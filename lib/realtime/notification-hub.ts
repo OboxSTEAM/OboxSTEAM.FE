@@ -10,7 +10,7 @@ import {
   notificationSchema,
   type Notification,
 } from "@/lib/api/entities/notification";
-import { getAuthSession } from "@/lib/auth/session";
+import { resolveHubAccessToken } from "@/lib/auth/access-token";
 import {
   bindProgramSyncHub,
   rejoinAllProgramSyncGroups,
@@ -47,10 +47,10 @@ export type NotificationHubHandlers = {
 export function createNotificationHubConnection(): HubConnection {
   return new HubConnectionBuilder()
     .withUrl(`${getApiBaseUrl()}${NOTIFICATION_HUB_PATH}`, {
-      accessTokenFactory: () => getAuthSession()?.accessToken ?? "",
+      accessTokenFactory: () => resolveHubAccessToken(),
     })
     .withAutomaticReconnect()
-    .configureLogging(LogLevel.Warning)
+    .configureLogging(LogLevel.None)
     .build();
 }
 

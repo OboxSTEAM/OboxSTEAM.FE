@@ -40,6 +40,28 @@ export function readJwtRole(payload: JwtPayloadRecord): string | undefined {
   return readJwtRoles(payload)[0];
 }
 
+/** JWT `exp` claim in seconds since epoch, or null when missing/invalid. */
+export function readJwtExpSeconds(token: string): number | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) return null;
+  const exp = payload.exp;
+  if (typeof exp !== "number" || !Number.isFinite(exp)) return null;
+  return exp;
+}
+
+/** JWT `exp` as milliseconds since epoch. */
+export function readJwtExpMs(token: string): number | null {
+  const expSeconds = readJwtExpSeconds(token);
+  return expSeconds == null ? null : expSeconds * 1000;
+}
+
+/** True when the token is within `skewMs` of expiry (default 60s). */
+export function isAccessTokenExpired(token: string, skewMs = 60_000): boolean {
+  const expMs = readJwtExpMs(token);
+  if (expMs == null) return false;
+  return Date.now() >= expMs - skewMs;
+}
+
 /** All role claims from a JWT (ASP.NET may emit a string or string[]). */
 export function readJwtRoles(payload: JwtPayloadRecord): string[] {
   const keys = [

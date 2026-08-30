@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ensureFreshAccessToken } from "@/lib/auth/access-token";
+
 import { getApiBaseUrl } from "./config";
 import { ApiRequestError, ApiResponseError } from "./errors";
 import {
@@ -60,6 +62,10 @@ export async function apiFetch<T>(
   path: string,
   options: ApiFetchOptions = {},
 ): Promise<T> {
+  if (!options.skipAuth) {
+    await ensureFreshAccessToken();
+  }
+
   let { response, json } = await executeRequest(path, options);
 
   if (shouldRetryWithRefresh(response.status, path, options)) {
