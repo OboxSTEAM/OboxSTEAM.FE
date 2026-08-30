@@ -9693,7 +9693,8 @@
                 "Active",
                 "Transferred",
                 "Withdrawn",
-                "Completed"
+                "Completed",
+                "Pending"
               ],
               "type": "string"
             }
@@ -9903,7 +9904,8 @@
                 "Active",
                 "Transferred",
                 "Withdrawn",
-                "Completed"
+                "Completed",
+                "Pending"
               ],
               "type": "string"
             }
@@ -10113,7 +10115,8 @@
                 "Active",
                 "Transferred",
                 "Withdrawn",
-                "Completed"
+                "Completed",
+                "Pending"
               ],
               "type": "string"
             }
@@ -10323,7 +10326,8 @@
                 "Active",
                 "Transferred",
                 "Withdrawn",
-                "Completed"
+                "Completed",
+                "Pending"
               ],
               "type": "string"
             }
@@ -10533,7 +10537,8 @@
                 "Active",
                 "Transferred",
                 "Withdrawn",
-                "Completed"
+                "Completed",
+                "Pending"
               ],
               "type": "string"
             }
@@ -10743,7 +10748,8 @@
                 "Active",
                 "Transferred",
                 "Withdrawn",
-                "Completed"
+                "Completed",
+                "Pending"
               ],
               "type": "string"
             }
@@ -18318,7 +18324,7 @@
           "Payment"
         ],
         "summary": "Initiate direct checkout (student pays)",
-        "description": "Student initiates checkout for a paid program. Returns a hosted payment URL (Stripe or MoMo).",
+        "description": "Student initiates checkout for a paid program. Requires a valid seat hold from select-class and matching classId. Returns a hosted payment URL.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -18598,7 +18604,7 @@
           "Payment"
         ],
         "summary": "Request parent to pay for enrollment",
-        "description": "Student sends a payment request email to a linked, verified parent. The parent receives a 24h payment link.",
+        "description": "Student sends a payment request email to a linked, verified parent. Requires a valid seat hold from select-class and matching classId. Parent token expires in 5 minutes.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -22640,7 +22646,7 @@
           "Program"
         ],
         "summary": "List open classes available for enrollment",
-        "description": "Public preview of Standard classes that are Open and still have seats, including schedule sessions and seat counts. Use before checkout to show recruiting cohorts. After payment, pass preferredClassId to soft-prioritize a class the learner viewed (no seat hold). Checkout is blocked when this list is empty.",
+        "description": "Public preview of Standard classes that are Open and still have seats, including schedule sessions and seat counts. Use before checkout to show recruiting cohorts. Call select-class when the learner picks a class to soft-hold a seat for 5 minutes.",
         "parameters": [
           {
             "name": "id",
@@ -22654,7 +22660,7 @@
           {
             "name": "preferredClassId",
             "in": "query",
-            "description": "Optional class the learner viewed before pay — soft-sorted first when still enrollable",
+            "description": "Optional class the learner viewed — soft-sorted first when still enrollable",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -22704,6 +22710,391 @@
           },
           "404": {
             "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/rebuy-classes": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "List classes eligible for a program rebuy",
+        "description": "For the current student with a Failed/Dropped/Completed purchase on this program, returns Open and InProgress Standard classes that still have seats, each with per-module session progress (NotStarted/InProgress/Completed) and isEligible. Join is allowed when the class has not started the stop module or any later module. First-time checkout still uses open-classes (Open only).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/select-class": {
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Select a class and hold a seat",
+        "description": "Starts a 5-minute soft seat hold when the student selects a class. Checkout and parent-pay require this step first. Publishes seats.changed over SignalR.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectProgramClassRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectProgramClassRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SelectProgramClassRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectProgramClassResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectProgramClassResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SelectProgramClassResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/release-class-hold": {
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Release checkout seat hold",
+        "description": "Releases the student's soft seat hold and abandons the PendingPayment program enrollment for this program. Call when the learner leaves the checkout page or reloads. Idempotent.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
             "content": {
               "text/plain": {
                 "schema": {
@@ -22979,6 +23370,128 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProgramEnrollmentResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/program-enrollments/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "ProgramEnrollment"
+        ],
+        "summary": "Withdraw from a program",
+        "description": "Closes the student's Active program enrollment as Dropped (EndReason = Withdraw) and withdraws all class seats immediately. Continuing the program later requires a rebuy.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramEnrollmentResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramEnrollmentResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramEnrollmentResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -30629,6 +31142,10 @@
             "type": "string",
             "format": "uuid"
           },
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "gateway": {
             "enum": [
               "VnPay",
@@ -30650,6 +31167,14 @@
           "enrollmentId": {
             "type": "string",
             "format": "uuid"
+          },
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "holdExpiresAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "checkoutUrl": {
             "type": "string",
@@ -30827,12 +31352,20 @@
             "type": "string",
             "format": "uuid"
           },
+          "kind": {
+            "enum": [
+              "Primary",
+              "Retake"
+            ],
+            "type": "string"
+          },
           "status": {
             "enum": [
               "Active",
               "Transferred",
               "Withdrawn",
-              "Completed"
+              "Completed",
+              "Pending"
             ],
             "type": "string"
           },
@@ -31878,6 +32411,18 @@
             "type": "integer",
             "format": "int32"
           },
+          "kind": {
+            "enum": [
+              "Standard",
+              "Remedial"
+            ],
+            "type": "string"
+          },
+          "remedialModuleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "status": {
             "enum": [
               "Draft",
@@ -32556,7 +33101,8 @@
               "Active",
               "Transferred",
               "Withdrawn",
-              "Completed"
+              "Completed",
+              "Pending"
             ],
             "type": "string"
           },
@@ -38234,6 +38780,26 @@
             "format": "uuid",
             "nullable": true
           },
+          "studentName": {
+            "type": "string",
+            "description": "Subject student display name (FullName, else email).",
+            "nullable": true
+          },
+          "actorName": {
+            "type": "string",
+            "description": "Actor display name (FullName, else email) for ActorUserId.",
+            "nullable": true
+          },
+          "className": {
+            "type": "string",
+            "description": "Class display name for client context.",
+            "nullable": true
+          },
+          "programName": {
+            "type": "string",
+            "description": "Program display name for client context.",
+            "nullable": true
+          },
           "extra": {
             "type": "string",
             "nullable": true
@@ -38253,7 +38819,11 @@
           "assignmentId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
           "classId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
           "classSessionId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-          "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6"
+          "mediaAssetId": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+          "studentName": "An Nguyen",
+          "actorName": "Mentor Name",
+          "className": "Cohort A",
+          "programName": "Robotics 1"
         }
       },
       "NotificationUnreadCountDto": {
@@ -39283,6 +39853,10 @@
         "type": "object",
         "properties": {
           "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classId": {
             "type": "string",
             "format": "uuid"
           },
@@ -40319,6 +40893,13 @@
             "type": "string",
             "format": "uuid",
             "nullable": true
+          },
+          "kind": {
+            "enum": [
+              "Primary",
+              "Retake"
+            ],
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -40399,6 +40980,30 @@
             "type": "string",
             "nullable": true,
             "example": "15/06/2026 14:30:00"
+          },
+          "endReason": {
+            "enum": [
+              "AcademicFail",
+              "Withdraw",
+              "Attendance"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "endedModuleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "endedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "sourceProgramEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           },
           "createdAt": {
             "type": "string",
@@ -41654,6 +42259,221 @@
         },
         "additionalProperties": false
       },
+      "RebuyClassCatalogDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceProgramEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceStatus": {
+            "enum": [
+              "PendingPayment",
+              "Active",
+              "Deferred",
+              "Completed",
+              "Failed",
+              "Dropped"
+            ],
+            "type": "string"
+          },
+          "sourceEndReason": {
+            "enum": [
+              "AcademicFail",
+              "Withdraw",
+              "Attendance"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "stopModuleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "stopModuleCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "stopModuleName": {
+            "type": "string",
+            "nullable": true
+          },
+          "stopModuleOrder": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "withinRebuyWindow": {
+            "type": "boolean"
+          },
+          "checkoutAmount": {
+            "type": "number",
+            "format": "double"
+          },
+          "classes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RebuyClassDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RebuyClassCatalogDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/RebuyClassCatalogDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RebuyClassCatalogDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/RebuyClassCatalogDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "RebuyClassDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Draft",
+              "Open",
+              "InProgress",
+              "Completed",
+              "Cancelled",
+              "ReadyForMentor"
+            ],
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "endDate": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "mentorId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "mentorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxCapacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seatsTaken": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "seatsRemaining": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "scheduleSummary": {
+            "type": "string",
+            "nullable": true
+          },
+          "isEligible": {
+            "type": "boolean"
+          },
+          "ineligibleReason": {
+            "type": "string",
+            "nullable": true
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RebuyClassModuleProgressDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "RebuyClassModuleProgressDto": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "moduleOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "moduleType": {
+            "enum": [
+              "Theory",
+              "Experiential",
+              "Research"
+            ],
+            "type": "string"
+          },
+          "progress": {
+            "enum": [
+              "NotStarted",
+              "InProgress",
+              "Completed"
+            ],
+            "type": "string"
+          },
+          "blocksRebuy": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "RedeliveryWaitlistModuleGroupDto": {
         "type": "object",
         "properties": {
@@ -42753,6 +43573,66 @@
           "classId": {
             "type": "string",
             "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SelectProgramClassRequestDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SelectProgramClassResponseDto": {
+        "type": "object",
+        "properties": {
+          "programEnrollmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "holdExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SelectProgramClassResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/SelectProgramClassResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SelectProgramClassResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/SelectProgramClassResponseDto"
           }
         },
         "additionalProperties": false

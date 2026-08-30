@@ -155,8 +155,14 @@ export function resolveNotificationHref(
 
   switch (type) {
     case "ParentPaymentRequested":
-    case "ParentModuleRetakeRequested":
-      return parentProgressHref(payload);
+    case "ParentModuleRetakeRequested": {
+      const studentId =
+        payloadString(payload, "studentId") ??
+        payloadString(payload, "parentStudentId");
+      return studentId
+        ? getParentChildProgressionHref(studentId)
+        : "/parent/children";
+    }
 
     case "QuizPassed":
     case "QuizFailed":
@@ -166,6 +172,13 @@ export function resolveNotificationHref(
     case "ResearchSubmissionOpened":
     case "ResearchWorkSubmitted":
       if (isParent) return parentProgressHref(payload);
+      if (isManager) {
+        if (!programId || !assignmentId) return null;
+        return managerAssignmentHref(programId, assignmentId, moduleId);
+      }
+      if (isMentor) {
+        return classId ? `/mentor/classes/${classId}` : "/mentor/classes";
+      }
       if (!programId || !assignmentId) return null;
       return learnWithAssignment(programId, assignmentId);
 
@@ -173,6 +186,9 @@ export function resolveNotificationHref(
     case "AssignmentEditedByMentor":
     case "ClassQuizSetEditedByMentor":
       if (isParent) return parentProgressHref(payload);
+      if (isMentor) {
+        return classId ? `/mentor/classes/${classId}` : "/mentor/classes";
+      }
       if (!programId || !assignmentId) return null;
       if (isManager) {
         return managerAssignmentHref(programId, assignmentId, moduleId);
@@ -285,6 +301,9 @@ export function resolveNotificationHref(
     case "MediaTagsProcessed": {
       const mediaAssetId = payloadString(payload, "mediaAssetId");
       if (isManager) {
+        if (classId && mediaAssetId) {
+          return `/manager/classes/${classId}?mediaId=${encodeURIComponent(mediaAssetId)}`;
+        }
         return classId ? `/manager/classes/${classId}` : "/manager/classes";
       }
       if (isParent) return parentProgressHref(payload);
@@ -296,14 +315,24 @@ export function resolveNotificationHref(
           ? `/mentor/classes?mediaId=${encodeURIComponent(mediaAssetId)}`
           : "/mentor/classes";
       }
-      // Student uploader — class gallery lives under learn; fall back to my courses.
       return programId ? studentLearnHref(programId, payload) : "/courses";
     }
 
     case "HighlightVideoGenerationQueued":
     case "HighlightVideoReady":
-    case "HighlightVideoGenerationFailed":
-      return "/portfolio";
+    case "HighlightVideoGenerationFailed": {
+      if (isParent) return parentProgressHref(payload);
+      if (isManager) {
+        return classId ? `/manager/classes/${classId}` : "/manager/classes";
+      }
+      if (isMentor) {
+        return classId ? `/mentor/classes/${classId}` : "/mentor/classes";
+      }
+      const highlightVideoId = payloadString(payload, "highlightVideoId");
+      return highlightVideoId
+        ? `/portfolio?highlightVideoId=${encodeURIComponent(highlightVideoId)}`
+        : "/portfolio";
+    }
 
     default:
       return null;

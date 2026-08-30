@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  Bell,
   BookOpen,
   CalendarDays,
   ClipboardList,
@@ -34,6 +35,12 @@ export const STUDENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
     description: "Thông tin học viên & portfolio",
   },
   {
+    label: "Thông báo",
+    href: "/notifications",
+    icon: Bell,
+    description: "Hộp thư thông báo",
+  },
+  {
     label: "Khóa học của tôi",
     href: "/courses",
     icon: BookOpen,
@@ -64,6 +71,12 @@ export const PARENT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
     href: "/profile",
     icon: User,
     description: "Thông tin phụ huynh",
+  },
+  {
+    label: "Thông báo",
+    href: "/notifications",
+    icon: Bell,
+    description: "Hộp thư thông báo",
   },
   {
     label: "Thông tin con",
@@ -98,6 +111,12 @@ export const MENTOR_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
     icon: User,
     description: "Thông tin tài khoản & kỹ năng",
   },
+  {
+    label: "Thông báo",
+    href: "/notifications",
+    icon: Bell,
+    description: "Hộp thư thông báo",
+  },
 ];
 
 export const MANAGER_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
@@ -112,6 +131,12 @@ export const MANAGER_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
     href: "/profile",
     icon: User,
     description: "Thông tin tài khoản",
+  },
+  {
+    label: "Thông báo",
+    href: "/notifications",
+    icon: Bell,
+    description: "Hộp thư thông báo",
   },
 ];
 

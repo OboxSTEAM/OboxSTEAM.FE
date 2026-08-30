@@ -289,16 +289,17 @@ export function NotificationProvider({
 
       dispatchNotificationSideEffects(notification);
 
-      showAppSuccess({
-        title: localizeUserFacingMessage(
-          notification.title,
-          "Thông báo mới",
-        ),
-        description: localizeUserFacingMessage(
-          notification.body,
-          "",
-        ) || undefined,
-      });
+      showAppSuccess(
+        {
+          title: localizeUserFacingMessage(
+            notification.title,
+            "Thông báo mới",
+          ),
+          description:
+            localizeUserFacingMessage(notification.body, "") || undefined,
+        },
+        { id: `notification-${notification.id}` },
+      );
     },
     [],
   );

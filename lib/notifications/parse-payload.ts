@@ -47,6 +47,10 @@ export const notificationPayloadSchema = z
     parentStudentId: optionalIdSchema,
     studentId: optionalIdSchema,
     extra: optionalExtraSchema,
+    studentName: optionalExtraSchema,
+    actorName: optionalExtraSchema,
+    className: optionalExtraSchema,
+    programName: optionalExtraSchema,
   })
   .passthrough();
 

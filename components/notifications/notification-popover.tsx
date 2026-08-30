@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Link from "next/link";
 
 import { NotificationItem } from "@/components/notifications/notification-item";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,16 @@ export function NotificationPopoverPanel({
           )}
         </div>
       </ScrollArea>
+
+      <div className="border-t border-border px-3 py-2">
+        <Link
+          href="/notifications"
+          onClick={() => onNavigate?.()}
+          className="block rounded-md py-1.5 text-center text-xs font-semibold text-primary hover:underline"
+        >
+          Xem tất cả
+        </Link>
+      </div>
     </PopoverContent>
   );
 }
