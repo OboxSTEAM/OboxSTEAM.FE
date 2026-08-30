@@ -18,7 +18,6 @@ export type CtaPrintLayout = {
   className: string;
   frameClassName: string;
   slide: { x: number; y: number };
-  priority?: boolean;
 };
 
 export const CTA_PRINTS: CtaPrintLayout[] = [
@@ -47,7 +46,6 @@ export const CTA_PRINTS: CtaPrintLayout[] = [
     className: "top-[16%] right-[3%] hidden sm:block lg:right-[calc(50%-26rem)]",
     frameClassName: "w-[min(32vw,16.5rem)] aspect-[3/2]",
     slide: { x: 100, y: -50 },
-    priority: true,
   },
   {
     id: "class3",
@@ -61,6 +59,5 @@ export const CTA_PRINTS: CtaPrintLayout[] = [
     className: "bottom-[-5%] right-[-6%] sm:right-[-2%]",
     frameClassName: "w-[min(55vw,21rem)] sm:w-[min(38vw,23rem)] aspect-[3/2]",
     slide: { x: 110, y: 90 },
-    priority: true,
   },
 ];

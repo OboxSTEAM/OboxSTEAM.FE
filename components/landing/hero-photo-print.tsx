@@ -1,6 +1,10 @@
 import { forwardRef } from "react";
 import Image from "next/image";
 
+import {
+  LANDING_IMAGE_BLUR_DATA_URL,
+  LANDING_IMAGE_QUALITY,
+} from "@/lib/landing/assets";
 import { cn } from "@/lib/utils";
 
 export type HeroPhotoPrintProps = {
@@ -62,6 +66,9 @@ export const HeroPhotoPrint = forwardRef<HTMLDivElement, HeroPhotoPrintProps>(
               width={width}
               height={height}
               priority={priority}
+              quality={LANDING_IMAGE_QUALITY}
+              placeholder="blur"
+              blurDataURL={LANDING_IMAGE_BLUR_DATA_URL}
               sizes="(max-width: 768px) 40vw, 22vw"
               className="h-full w-full object-cover"
             />

@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { HeroPhotoPrint } from "@/components/landing/hero-photo-print";
+import { LandingDeskTexture } from "@/components/landing/landing-desk-texture";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CTA_DESK_SECTION } from "@/lib/landing/content";
@@ -114,14 +114,7 @@ export function CtaDeskSection() {
       aria-labelledby="cta-desk-headline"
     >
       <div ref={stickyRef} className="relative min-h-dvh overflow-hidden">
-        <Image
-          src={CTA_DESK_SECTION.deskTextureSrc}
-          alt=""
-          fill
-          sizes="100vw"
-          className="object-cover object-center"
-          aria-hidden="true"
-        />
+        <LandingDeskTexture src={CTA_DESK_SECTION.deskTextureSrc} />
 
         <div
           aria-hidden="true"
@@ -151,7 +144,6 @@ export function CtaDeskSection() {
             zIndex={print.zIndex}
             className={print.className}
             frameClassName={print.frameClassName}
-            priority={print.priority}
           />
         ))}
 

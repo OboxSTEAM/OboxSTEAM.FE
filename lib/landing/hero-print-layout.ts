@@ -20,7 +20,6 @@ export type HeroPrintLayout = {
   frameClassName: string;
   /** Scroll slide-out (px) — push away from center. */
   slide: { x: number; y: number };
-  priority?: boolean;
 };
 
 export const HERO_PRINTS: HeroPrintLayout[] = [
@@ -35,7 +34,6 @@ export const HERO_PRINTS: HeroPrintLayout[] = [
     className: "top-[6%] left-[-4%] sm:left-[-1%] sm:top-[8%]",
     frameClassName: "w-[min(52vw,20rem)] sm:w-[min(34vw,22rem)] aspect-[3/2]",
     slide: { x: -150, y: -95 },
-    priority: true,
   },
   {
     id: "robot",
@@ -48,7 +46,6 @@ export const HERO_PRINTS: HeroPrintLayout[] = [
     className: "top-[4%] right-[-5%] sm:right-[0%] sm:top-[6%] hidden sm:block",
     frameClassName: "w-[min(32vw,20rem)] aspect-[3/2]",
     slide: { x: 160, y: -75 },
-    priority: true,
   },
   {
     id: "iot",
@@ -85,7 +82,6 @@ export const HERO_PRINTS: HeroPrintLayout[] = [
     className: "bottom-[8%] left-[-4%] sm:left-[1%] sm:bottom-[10%]",
     frameClassName: "w-[min(54vw,21rem)] sm:w-[min(36vw,23rem)] aspect-[16/9]",
     slide: { x: -140, y: 120 },
-    priority: true,
   },
   {
     id: "playful",
@@ -98,7 +94,6 @@ export const HERO_PRINTS: HeroPrintLayout[] = [
     className: "bottom-[6%] right-[-4%] sm:right-[1%] sm:bottom-[8%]",
     frameClassName: "w-[min(50vw,19rem)] sm:w-[min(32vw,21rem)] aspect-[3/2]",
     slide: { x: 145, y: 115 },
-    priority: true,
   },
   {
     id: "pencil",

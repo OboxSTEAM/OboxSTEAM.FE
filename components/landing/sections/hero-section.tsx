@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { HeroPhotoPrint } from "@/components/landing/hero-photo-print";
+import { LandingDeskTexture } from "@/components/landing/landing-desk-texture";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { HERO } from "@/lib/landing/content";
@@ -96,15 +96,7 @@ export function HeroSection() {
       aria-labelledby="hero-headline"
     >
       <div ref={stickyRef} className="relative min-h-dvh overflow-hidden flex flex-col">
-        <Image
-          src={HERO.deskTextureSrc}
-          alt=""
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-center"
-          aria-hidden="true"
-        />
+        <LandingDeskTexture src={HERO.deskTextureSrc} priority />
 
         <div
           aria-hidden="true"
@@ -140,7 +132,6 @@ export function HeroSection() {
             zIndex={print.zIndex}
             className={print.className}
             frameClassName={print.frameClassName}
-            priority={print.priority}
           />
         ))}
 

@@ -3,6 +3,8 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",
   images: {
+    qualities: [70, 75],
+    minimumCacheTTL: 60 * 60 * 24 * 14,
     remotePatterns: [
       {
         protocol: "https",
