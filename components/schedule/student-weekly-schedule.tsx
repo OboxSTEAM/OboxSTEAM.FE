@@ -78,13 +78,41 @@ import { cn } from "@/lib/utils";
 type ScheduleViewMode = "week" | "month";
 
 const WEEKDAY_SHORT = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"] as const;
-const MONTH_MAX_CHIPS = 2;
+const MONTH_MAX_CHIPS = 3;
 
 const SESSION_KIND_LABELS = {
   LiveOnline: "Buổi học",
   Offline: "Ngoại khóa",
-  AssignmentWindow: "Nộp bài",
+  AssignmentWindow: "Kiểm tra",
 } as const;
+
+function sessionKindVisual(kind: ScheduleSession["sessionKind"]) {
+  if (kind === "LiveOnline") {
+    return {
+      Icon: Video,
+      well: "bg-[#4FC3F7]/15 text-[#0277BD]",
+      chip: "bg-[#4FC3F7]/18 text-[#0277BD]",
+      dot: "bg-[#4FC3F7]",
+      rail: "bg-[#4FC3F7]",
+    };
+  }
+  if (kind === "Offline") {
+    return {
+      Icon: MapPin,
+      well: "bg-[#7CB342]/15 text-[#558B2F]",
+      chip: "bg-[#7CB342]/18 text-[#33691E]",
+      dot: "bg-[#7CB342]",
+      rail: "bg-[#7CB342]",
+    };
+  }
+  return {
+    Icon: BookOpen,
+    well: "bg-[#FDD835]/30 text-[#F9A825]",
+    chip: "bg-[#FDD835]/35 text-[#F57F17]",
+    dot: "bg-[#FDD835]",
+    rail: "bg-[#FDD835]",
+  };
+}
 
 function SessionKindBadge({ kind }: { kind: ScheduleSession["sessionKind"] }) {
   return (
@@ -158,6 +186,7 @@ function SessionCard({
   const isAbsent = attendance === "Absent";
   const isPresent = attendance === "Present";
   const isLate = attendance === "Late";
+  const { Icon, well, rail } = sessionKindVisual(session.sessionKind);
 
   return (
     <button
@@ -165,80 +194,79 @@ function SessionCard({
       onClick={() => onOpen(session)}
       className={cn(
         "group relative w-full overflow-hidden rounded-xl border text-left",
-        "bg-white shadow-[0_1px_2px_rgba(45,45,45,0.06)]",
+        "shadow-[0_1px_2px_rgba(45,45,45,0.06)]",
         "transition-[transform,box-shadow,border-color] duration-200 ease-[cubic-bezier(0.32,0.72,0,1)]",
-        "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(45,45,45,0.1)]",
+        "hover:-translate-y-0.5 hover:shadow-[0_8px_20px_rgba(45,45,45,0.08)]",
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/50",
         "active:translate-y-0",
-        isAbsent && "border-[#E94B3C] bg-[#FFF5F4] shadow-[0_0_0_1px_rgba(233,75,60,0.25)]",
-        isPresent && "border-[#7CB342] bg-[#F4FAEC] shadow-[0_0_0_1px_rgba(124,179,66,0.25)]",
-        isLate && "border-amber-500 bg-amber-50 shadow-[0_0_0_1px_rgba(245,158,11,0.25)]",
-        !isAbsent &&
-          !isPresent &&
-          !isLate &&
-          live &&
-          "border-[#4FC3F7] bg-[#F0FAFE] shadow-[0_0_0_1px_rgba(79,195,247,0.35)]",
+        compact ? "p-2.5 pl-3.5" : "p-3 pl-4",
+        isAbsent && "border-[#E94B3C]/40 bg-[#FFF5F4]",
+        isPresent && "border-[#7CB342]/40 bg-[#F4FAEC]",
+        isLate && "border-amber-400/70 bg-amber-50",
+        !isAbsent && !isPresent && !isLate && live && "border-[#4FC3F7]/50 bg-[#F0FAFE]",
         !isAbsent &&
           !isPresent &&
           !isLate &&
           !live &&
           done &&
-          "border-emerald-200/90 bg-emerald-50/50",
+          "border-border bg-muted/40",
         !isAbsent &&
           !isPresent &&
           !isLate &&
           !live &&
           !done &&
-          "border-[#E5E5E0]",
-        compact ? "p-2.5 pl-3.5" : "p-3.5 pl-4",
+          "border-border bg-card",
       )}
     >
       <span
         aria-hidden
         className={cn(
-          "absolute inset-y-0 left-0 w-1.5",
+          "absolute inset-y-0 left-0 w-1",
           isAbsent && "bg-[#E94B3C]",
           isPresent && "bg-[#7CB342]",
           isLate && "bg-amber-500",
           !isAbsent && !isPresent && !isLate && live && "bg-[#4FC3F7]",
-          !isAbsent &&
-            !isPresent &&
-            !isLate &&
-            !live &&
-            done &&
-            "bg-emerald-400",
-          !isAbsent &&
-            !isPresent &&
-            !isLate &&
-            !live &&
-            !done &&
-            "bg-[#FDD835]",
+          !isAbsent && !isPresent && !isLate && !live && rail,
         )}
       />
+      <div className="flex gap-2.5">
+        <span
+          className={cn(
+            "flex shrink-0 items-center justify-center rounded-xl",
+            compact ? "size-8" : "size-9",
+            well,
+            live && "ring-2 ring-[#4FC3F7]/35",
+          )}
+          aria-hidden
+        >
+          <Icon className={compact ? "size-3.5" : "size-4"} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(
+              "font-mono font-bold tabular-nums tracking-tight text-foreground",
+              compact ? "text-[11px]" : "text-xs",
+            )}
+          >
+            {timeRange}
+          </p>
+          <p
+            className={cn(
+              "mt-0.5 font-heading font-bold leading-snug text-foreground",
+              compact ? "line-clamp-2 text-xs" : "text-sm",
+            )}
+          >
+            {session.className}
+          </p>
+          {session.classCode ? (
+            <p className="mt-0.5 font-mono text-[10px] font-medium text-muted-foreground">
+              {session.classCode}
+            </p>
+          ) : null}
+        </div>
+      </div>
 
-      <p
-        className={cn(
-          "font-mono font-bold tabular-nums tracking-tight text-[#2D2D2D]",
-          compact ? "text-xs" : "text-sm",
-        )}
-      >
-        {timeRange}
-      </p>
-      <p
-        className={cn(
-          "mt-1 font-heading font-bold leading-snug text-[#2D2D2D]",
-          compact ? "text-xs" : "text-sm",
-        )}
-      >
-        {session.className}
-      </p>
-      {session.classCode ? (
-        <p className="mt-0.5 font-mono text-[10px] font-medium text-[#6B6B6B]">
-          {session.classCode}
-        </p>
-      ) : null}
-
-      <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
         {attendance ? (
           <AttendanceChip status={attendance} />
         ) : (
@@ -248,14 +276,10 @@ function SessionCard({
       </div>
 
       {session.meetingUrl ? (
-        <p className="mt-2 flex items-center gap-1 text-[10px] font-semibold text-[#0288D1]">
-          <Video className="size-3 shrink-0" aria-hidden />
-          Online
-        </p>
+        <p className="mt-2 text-[10px] font-semibold text-[#0288D1]">Online</p>
       ) : session.location ? (
-        <p className="mt-2 flex items-start gap-1 text-[10px] font-medium text-[#6B6B6B]">
-          <MapPin className="mt-0.5 size-3 shrink-0" aria-hidden />
-          <span className="line-clamp-2">{session.location}</span>
+        <p className="mt-2 line-clamp-2 text-[10px] font-medium text-muted-foreground">
+          {session.location}
         </p>
       ) : null}
     </button>
@@ -292,32 +316,27 @@ function DayColumn({
     >
       <div
         className={cn(
-          "border-b px-2 py-3 text-center xl:px-3",
-          isToday
-            ? "border-primary/25 bg-primary text-primary-foreground"
-            : "border-border bg-muted",
+          "border-b border-border px-2 py-3 text-center xl:px-3",
+          isToday ? "bg-card" : "bg-muted/50",
           isFirst && "rounded-tl-2xl",
           isLast && "rounded-tr-2xl",
         )}
       >
-        <p
-          className={cn(
-            "text-[10px] font-bold uppercase tracking-[0.14em]",
-            isToday ? "text-primary-foreground/90" : "text-muted-foreground",
-          )}
-        >
+        <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
           {weekday}
         </p>
         <p
           className={cn(
-            "mt-0.5 font-heading text-base font-bold tabular-nums",
-            isToday ? "text-primary-foreground" : "text-foreground",
+            "mx-auto mt-1 flex size-8 items-center justify-center font-heading text-sm font-bold tabular-nums",
+            isToday
+              ? "rounded-full bg-primary text-primary-foreground"
+              : "text-foreground",
           )}
         >
-          {dayMonth}
+          {dayMonth.split("/")[0]}
         </p>
         {isToday ? (
-          <span className="mt-1 inline-flex rounded-full bg-primary-foreground/20 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+          <span className="mt-1 inline-flex rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary">
             Hôm nay
           </span>
         ) : hasSessions ? (
@@ -330,8 +349,8 @@ function DayColumn({
       </div>
       <div className="flex min-h-0 flex-1 flex-col gap-2.5 p-2">
         {!hasSessions ? (
-          <p className="m-auto px-1 py-8 text-center text-[11px] font-medium text-muted-foreground/80">
-            Không có buổi học
+          <p className="mt-3 px-1 text-center text-[11px] font-medium text-muted-foreground/70">
+            Trống
           </p>
         ) : (
           day.sessions.map((session) => (
@@ -443,6 +462,11 @@ function SessionDetailSheet({
   const sessionId = session?.id ?? null;
   const programId = session?.programId ?? null;
   const isAssignmentWindow = session?.sessionKind === "AssignmentWindow";
+  const [isMapExpanded, setIsMapExpanded] = useState(false);
+
+  useEffect(() => {
+    setIsMapExpanded(false);
+  }, [open, sessionId]);
 
   const { data: mentor, isLoading: isMentorLoading } = useClientFetch({
     enabled: open && Boolean(mentorId),
@@ -549,18 +573,6 @@ function SessionDetailSheet({
 
   const timeRange = formatVietnamTimeRange(session.startTime, session.endTime);
   const attendance = session.attendanceStatus;
-  const isAbsent = attendance === "Absent";
-  const isPresent = attendance === "Present";
-  const isLate = attendance === "Late";
-  const accentBar = isAbsent
-    ? "bg-[#E94B3C]"
-    : isPresent
-      ? "bg-[#7CB342]"
-      : isLate
-        ? "bg-amber-500"
-        : session.status === "InProgress"
-          ? "bg-[#4FC3F7]"
-          : "bg-[#FDD835]";
 
   const mentorName =
     mentor?.fullName?.trim() ||
@@ -634,8 +646,6 @@ function SessionDetailSheet({
   const canJoinMeet =
     revealedMeetUrl != null &&
     (liveJoin?.phase === "countdown" || liveJoin?.phase === "live");
-  const canOpenRecording =
-    revealedMeetUrl != null && liveJoin?.phase === "recording";
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -643,9 +653,7 @@ function SessionDetailSheet({
         side="right"
         className="flex w-[min(22rem,100vw)] flex-col sm:w-[min(26rem,100vw)]"
       >
-        <div className={cn("h-1.5 shrink-0", accentBar)} aria-hidden />
-
-        <SheetHeader className="relative shrink-0 gap-1 border-b border-[#E5E5E0] px-5 py-4 pr-12">
+        <SheetHeader className="relative shrink-0 gap-1 border-b border-border px-5 py-4 pr-12">
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#6B6B6B]">
             Chi tiết buổi học · {SESSION_KIND_LABELS[session.sessionKind]}
           </p>
@@ -660,8 +668,13 @@ function SessionDetailSheet({
           <SheetClose />
         </SheetHeader>
 
-        <SheetBody className="flex flex-1 flex-col gap-5 px-5 py-5">
-          <div className="flex flex-wrap gap-1.5">
+        <SheetBody
+          className={cn(
+            "flex flex-1 flex-col px-5 py-5",
+            isMapExpanded ? "gap-3" : "gap-5",
+          )}
+        >
+          <div className="flex shrink-0 flex-wrap gap-1.5">
             {attendance ? (
               <AttendanceChip status={attendance} />
             ) : (
@@ -679,7 +692,22 @@ function SessionDetailSheet({
             ) : null}
           </div>
 
-          <div className="divide-y divide-[#E5E5E0] rounded-2xl border border-[#E5E5E0] bg-[#FAFAF5]">
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows,opacity] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
+              isMapExpanded
+                ? "grid-rows-[0fr] opacity-0"
+                : "grid-rows-[1fr] opacity-100",
+            )}
+            aria-hidden={isMapExpanded}
+          >
+            <div
+              className={cn(
+                "min-h-0 overflow-hidden",
+                isMapExpanded && "pointer-events-none",
+              )}
+            >
+              <div className="divide-y divide-[#E5E5E0] rounded-2xl border border-[#E5E5E0] bg-[#FAFAF5]">
             <DetailInfoRow
               icon={UserRound}
               label="Giảng viên"
@@ -743,6 +771,8 @@ function SessionDetailSheet({
                 value={location || "Chưa có địa điểm"}
               />
             ) : null}
+              </div>
+            </div>
           </div>
 
           {!isVenueLoading && isOfflineSession && hasCoordinates ? (
@@ -750,12 +780,17 @@ function SessionDetailSheet({
               latitude={latitude as number}
               longitude={longitude as number}
               locationLabel={location}
-              variant="learn"
-              className="rounded-2xl"
+              density="compact"
+              expanded={isMapExpanded}
+              onExpandedChange={setIsMapExpanded}
+              className={cn(
+                "rounded-2xl",
+                isMapExpanded && "min-h-0 flex-1",
+              )}
             />
           ) : null}
 
-          <div className="mt-auto flex flex-col gap-2.5 pt-2">
+          <div className="mt-auto flex shrink-0 flex-col gap-2.5 pt-2">
             {isOnlineSession && canJoinMeet ? (
               <a
                 href={revealedMeetUrl}
@@ -768,20 +803,6 @@ function SessionDetailSheet({
               >
                 <Video className="size-4" />
                 Tham gia Google Meet
-                <ExternalLink className="size-3.5 opacity-80" />
-              </a>
-            ) : null}
-            {isOnlineSession && canOpenRecording ? (
-              <a
-                href={revealedMeetUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "h-11 w-full gap-2 rounded-xl border-[#E5E5E0] text-sm font-semibold",
-                )}
-              >
-                Xem ghi hình
                 <ExternalLink className="size-3.5 opacity-80" />
               </a>
             ) : null}
@@ -798,8 +819,7 @@ function SessionDetailSheet({
                 href={learnHref}
                 className={cn(
                   buttonVariants({
-                    variant:
-                      canJoinMeet || canOpenRecording ? "outline" : "default",
+                    variant: canJoinMeet ? "outline" : "default",
                   }),
                   "h-11 w-full rounded-xl text-sm font-semibold",
                 )}
@@ -809,9 +829,7 @@ function SessionDetailSheet({
             ) : (
               <Button
                 type="button"
-                variant={
-                  canJoinMeet || canOpenRecording ? "outline" : "default"
-                }
+                variant={canJoinMeet ? "outline" : "default"}
                 className="h-11 w-full rounded-xl text-sm font-semibold"
                 disabled
               >
@@ -889,14 +907,12 @@ function MonthScheduleGrid({
   daysByDate,
   selectedDay,
   onSelectDay,
-  onOpen,
 }: {
   year: number;
   month: number;
   daysByDate: Map<string, ScheduleDay>;
   selectedDay: string | null;
   onSelectDay: (date: string) => void;
-  onOpen: (session: ScheduleSession) => void;
 }) {
   const cells = useMemo(
     () => getMonthGridCells(year, month),
@@ -905,11 +921,11 @@ function MonthScheduleGrid({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="grid grid-cols-7 border-b border-border bg-muted/60">
+      <div className="grid grid-cols-7 border-b border-border bg-muted/50">
         {WEEKDAY_SHORT.map((label) => (
           <div
             key={label}
-            className="py-1.5 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:py-2"
+            className="py-2 text-center text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground"
           >
             {label}
           </div>
@@ -930,25 +946,31 @@ function MonthScheduleGrid({
             <div
               key={date}
               role="button"
-              tabIndex={0}
-              onClick={() => onSelectDay(date)}
+              tabIndex={inMonth ? 0 : -1}
+              onClick={() => {
+                if (inMonth) onSelectDay(date);
+              }}
               onKeyDown={(event) => {
+                if (!inMonth) return;
                 if (event.key === "Enter" || event.key === " ") {
                   event.preventDefault();
                   onSelectDay(date);
                 }
               }}
+              aria-pressed={selected}
+              aria-label={`${dayNum}${sessions.length ? `, ${sessions.length} buổi` : ""}`}
               className={cn(
-                "flex min-h-[3.25rem] flex-col border-b border-l border-border p-0.5 text-left transition-colors sm:min-h-[4.25rem] sm:p-1",
-                !inMonth && "bg-muted/40",
-                inMonth && "cursor-pointer bg-card hover:bg-primary/5",
-                selected && "bg-primary/10 ring-1 ring-inset ring-primary/35",
+                "flex min-h-[5.25rem] flex-col border-b border-l border-border p-1.5 sm:min-h-[7rem] sm:p-2",
+                !inMonth && "bg-muted/35",
+                inMonth &&
+                  "cursor-pointer bg-card hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#4FC3F7]/50",
+                selected && inMonth && "bg-primary/10",
                 today && inMonth && !selected && "bg-primary/5",
               )}
             >
               <span
                 className={cn(
-                  "mb-0.5 ml-auto flex size-5 items-center justify-center rounded-full text-[10px] font-bold tabular-nums sm:size-6 sm:text-[11px]",
+                  "mb-1 flex size-7 items-center justify-center rounded-full text-[12px] font-bold tabular-nums sm:size-8 sm:text-[13px]",
                   today
                     ? "bg-primary text-primary-foreground"
                     : selected
@@ -960,46 +982,142 @@ function MonthScheduleGrid({
               >
                 {dayNum}
               </span>
-              <div className="flex min-h-0 flex-1 flex-col gap-px">
-                {visible.map((session) => {
-                  const time = formatVietnamTimeRange(
-                    session.startTime,
-                    session.endTime,
-                  ).split(" – ")[0];
-                  return (
-                    <button
-                      key={session.id}
-                      type="button"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onOpen(session);
-                      }}
-                      title={`${session.className} · ${formatVietnamTimeRange(session.startTime, session.endTime)}`}
-                      className={cn(
-                        "block w-full truncate rounded px-1 py-px text-left text-[8px] font-semibold leading-tight sm:text-[9px]",
-                        "bg-foreground/6 text-foreground hover:bg-primary/15 hover:text-primary",
-                        session.status === "Cancelled" &&
-                          "opacity-50 line-through",
-                      )}
-                    >
-                      <span className="font-mono tabular-nums">{time}</span>
-                      <span className="hidden sm:inline">
-                        {" "}
-                        · {session.classCode || session.className}
+              {inMonth ? (
+                <div className="flex min-h-0 flex-1 flex-col gap-1">
+                  {visible.map((session) => {
+                    const time = formatVietnamTimeRange(
+                      session.startTime,
+                      session.endTime,
+                    ).split(" – ")[0];
+                    const { chip } = sessionKindVisual(session.sessionKind);
+                    return (
+                      <span
+                        key={session.id}
+                        title={`${session.className} · ${formatVietnamTimeRange(session.startTime, session.endTime)}`}
+                        className={cn(
+                          "hidden w-full truncate rounded-md px-1.5 py-0.5 text-left text-[10px] font-semibold leading-tight sm:block",
+                          chip,
+                          session.status === "Cancelled" &&
+                            "opacity-50 line-through",
+                        )}
+                      >
+                        <span className="font-mono tabular-nums">{time}</span>
+                        <span>
+                          {" "}
+                          · {session.classCode || session.className}
+                        </span>
                       </span>
-                    </button>
-                  );
-                })}
-                {overflow > 0 ? (
-                  <span className="px-1 text-[8px] font-semibold text-muted-foreground sm:text-[9px]">
-                    +{overflow} buổi
-                  </span>
-                ) : null}
-              </div>
+                    );
+                  })}
+                  <div className="flex flex-wrap items-center gap-1 sm:hidden">
+                    {sessions.slice(0, 4).map((session) => (
+                      <span
+                        key={session.id}
+                        className={cn(
+                          "size-1.5 rounded-full",
+                          sessionKindVisual(session.sessionKind).dot,
+                        )}
+                        aria-hidden
+                      />
+                    ))}
+                    {sessions.length > 4 ? (
+                      <span className="text-[9px] font-semibold text-muted-foreground">
+                        +{sessions.length - 4}
+                      </span>
+                    ) : null}
+                  </div>
+                  {overflow > 0 ? (
+                    <span className="hidden px-1 text-[10px] font-semibold text-muted-foreground sm:block">
+                      +{overflow} buổi
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
           );
         })}
       </div>
+      <div className="flex flex-wrap gap-x-4 gap-y-1.5 border-t border-border bg-muted/30 px-3 py-2.5 text-[11px] font-medium text-muted-foreground">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-[#4FC3F7]" aria-hidden />
+          Buổi học
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-[#7CB342]" aria-hidden />
+          Ngoại khóa
+        </span>
+        <span className="inline-flex items-center gap-1.5">
+          <span className="size-2 rounded-full bg-[#FDD835]" aria-hidden />
+          Kiểm tra
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function MonthDayAgenda({
+  date,
+  day,
+  onOpen,
+}: {
+  date: string | null;
+  day: ScheduleDay | undefined;
+  onOpen: (session: ScheduleSession) => void;
+}) {
+  const heading = date ? formatDayColumnLabel(date) : null;
+  const sessions = day?.sessions ?? [];
+
+  return (
+    <aside className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:sticky lg:top-20">
+      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+        Buổi trong ngày
+      </p>
+      <h2 className="mt-1 font-heading text-lg font-bold text-foreground">
+        {heading ? `${heading.weekday} · ${heading.dayMonth}` : "Chọn một ngày"}
+      </h2>
+      <div className="mt-3 space-y-2.5">
+        {sessions.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-3 py-8 text-center text-sm text-muted-foreground">
+            Không có buổi học
+          </p>
+        ) : (
+          sessions.map((session) => (
+            <SessionCard key={session.id} session={session} onOpen={onOpen} />
+          ))
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function ViewModeSwitch({
+  value,
+  onChange,
+}: {
+  value: ScheduleViewMode;
+  onChange: (next: ScheduleViewMode) => void;
+}) {
+  return (
+    <div
+      className="inline-flex h-10 self-start rounded-xl bg-muted p-1 sm:self-end"
+      role="group"
+      aria-label="Chế độ xem lịch"
+    >
+      {(["week", "month"] as const).map((mode) => (
+        <button
+          key={mode}
+          type="button"
+          onClick={() => onChange(mode)}
+          className={cn(
+            "h-full min-w-[4.25rem] rounded-lg px-3.5 text-sm font-semibold transition-colors",
+            value === mode
+              ? "bg-card text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {mode === "week" ? "Tuần" : "Tháng"}
+        </button>
+      ))}
     </div>
   );
 }
@@ -1234,36 +1352,7 @@ export function StudentWeeklySchedule() {
         </div>
 
         <div className="flex flex-col items-stretch gap-2 sm:items-end">
-          <div
-            className="inline-flex h-9 self-start rounded-xl border border-border bg-card p-0.5 sm:self-end"
-            role="group"
-            aria-label="Chế độ xem lịch"
-          >
-            <button
-              type="button"
-              onClick={() => switchView("week")}
-              className={cn(
-                "rounded-[10px] px-3.5 text-sm font-semibold transition-colors",
-                viewMode === "week"
-                  ? "bg-[#2D2D2D] text-white"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Tuần
-            </button>
-            <button
-              type="button"
-              onClick={() => switchView("month")}
-              className={cn(
-                "rounded-[10px] px-3.5 text-sm font-semibold transition-colors",
-                viewMode === "month"
-                  ? "bg-[#2D2D2D] text-white"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Tháng
-            </button>
-          </div>
+          <ViewModeSwitch value={viewMode} onChange={switchView} />
 
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -1352,13 +1441,21 @@ export function StudentWeeklySchedule() {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_24rem]">
             <MonthScheduleGrid
               year={monthCursor.year}
               month={monthCursor.month}
               daysByDate={monthDaysByDate}
               selectedDay={monthSelectedDay}
               onSelectDay={setMonthSelectedDay}
+            />
+            <MonthDayAgenda
+              date={monthSelectedDay}
+              day={
+                monthSelectedDay
+                  ? monthDaysByDate.get(monthSelectedDay)
+                  : undefined
+              }
               onOpen={openSession}
             />
           </div>
@@ -1446,7 +1543,7 @@ export function StudentWeeklySchedule() {
         </Tabs>
       ) : (
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-          <div className="grid min-h-[calc(100dvh-15rem)] grid-cols-7 sm:min-h-[calc(100dvh-17rem)]">
+          <div className="grid min-h-[28rem] grid-cols-7 lg:min-h-[32rem]">
             {days.map((day, index) => (
               <DayColumn
                 key={day.date}
