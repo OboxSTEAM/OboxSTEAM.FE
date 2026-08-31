@@ -15,6 +15,8 @@ export const sessionAttendanceSchema = z.object({
   moduleEnrollmentId: z.string().uuid(),
   status: sessionAttendanceStatusSchema,
   checkedInAt: z.string().nullable(),
+  leftAt: z.string().nullable(),
+  participationMinutes: z.number().int().nullable(),
   recordedBy: z.string().uuid().nullable(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),

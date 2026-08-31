@@ -334,6 +334,32 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Mã check-in không hợp lệ hoặc đã hết hạn.",
     action: "Nhờ mentor hiển thị mã QR mới và thử lại.",
   },
+  "classSessions.join": {
+    title: "Không vào được buổi học online",
+    reason:
+      "Buổi chưa mở cửa (trước 15 phút), đã kết thúc, hoặc bạn chưa đăng ký lớp.",
+    action: "Kiểm tra giờ buổi học và thử lại đúng khung giờ.",
+  },
+  "classSessions.leave": {
+    title: "Không ghi nhận được rời buổi học",
+    reason: "Phiên meeting đã đóng hoặc máy chủ tạm thời không phản hồi.",
+    action: "Thử tải lại trang nếu tiến độ điểm danh chưa cập nhật.",
+  },
+  "classSessions.evidence.list": {
+    title: "Không tải được minh chứng buổi học",
+    reason: "Buổi học không tồn tại hoặc bạn không có quyền xem.",
+    action: "Chọn lại buổi học hoặc thử tải lại sau vài giây.",
+  },
+  "classSessions.evidence.upload": {
+    title: "Không tải lên được ảnh minh chứng",
+    reason: "Tệp không hợp lệ (chỉ JPG/PNG) hoặc buổi học không cho phép.",
+    action: "Chọn ảnh nhỏ hơn 10 MB và thử lại.",
+  },
+  "classSessions.evidence.delete": {
+    title: "Không xóa được ảnh minh chứng",
+    reason: "Ảnh có thể đã bị xóa hoặc bạn không có quyền.",
+    action: "Tải lại danh sách minh chứng và thử lại.",
+  },
   "classSessions.update": {
     title: "Không cập nhật được buổi học",
     reason:
@@ -766,6 +792,11 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classSessions.generate",
   "classSessions.checkinToken",
   "classSessions.checkin",
+  "classSessions.join",
+  "classSessions.leave",
+  "classSessions.evidence.list",
+  "classSessions.evidence.upload",
+  "classSessions.evidence.delete",
   "attendance.update",
   "activityProgress.forceComplete",
   "activityProgress.mentorCompleteBulk",

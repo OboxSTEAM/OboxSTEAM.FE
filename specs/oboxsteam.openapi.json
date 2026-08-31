@@ -1519,7 +1519,7 @@
         "tags": [
           "AssessmentRecoveryRequest"
         ],
-        "summary": "Request extra attempts / personal deadline",
+        "summary": "Request extra attempts (same class window)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -2176,7 +2176,7 @@
           "Assignment"
         ],
         "summary": "Update an assignment",
-        "description": "Updates an assignment by its ID. Managers/Admins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach.",
+        "description": "Updates an assignment by its ID. Managers/Admins may update all catalog fields. Mentors may update Title and Description for assignments in programs they teach. Assignment windows are set on the class session.",
         "parameters": [
           {
             "name": "assignmentId",
@@ -8292,7 +8292,7 @@
           "ClassSession"
         ],
         "summary": "Update a class session",
-        "description": "Updates a scheduled class session. Requires Admin or Manager role.",
+        "description": "Updates a scheduled class session. Admin/Manager may update any session. Mentors may update StartTime, EndTime, and Description of AssignmentWindow sessions on their class.",
         "parameters": [
           {
             "name": "classId",
@@ -28521,7 +28521,7 @@
           "ResearchSubmission"
         ],
         "summary": "Submit research work",
-        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. Personal AvailableUntil from approved assessment recovery is honored. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL.",
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. New attempts must fall inside the class AssignmentWindow. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -30739,16 +30739,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "personalDueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "personalAvailableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
           "decidedAt": {
             "type": "string",
             "nullable": true,
@@ -30873,11 +30863,6 @@
           "passScore": {
             "type": "number",
             "format": "double"
-          },
-          "dueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
           },
           "questionBankId": {
             "type": "string",
@@ -31028,21 +31013,6 @@
           },
           "isRequiredForModulePass": {
             "type": "boolean"
-          },
-          "dueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableFrom": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
           },
           "allowShuffle": {
             "type": "boolean"
@@ -34259,21 +34229,6 @@
           "isRequiredForModulePass": {
             "type": "boolean"
           },
-          "dueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableFrom": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
           "allowShuffle": {
             "type": "boolean"
           },
@@ -34899,22 +34854,13 @@
             "type": "number",
             "format": "double"
           },
-          "dueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableFrom": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
           "maxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "timeLimitMinutes": {
+            "maximum": 2147483647,
+            "minimum": 1,
             "type": "integer",
             "format": "int32"
           }
@@ -35028,16 +34974,6 @@
             "type": "integer",
             "format": "int32"
           },
-          "personalDueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "personalAvailableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
           "mentorNote": {
             "type": "string",
             "nullable": true
@@ -35147,6 +35083,11 @@
             "type": "boolean"
           },
           "dueDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "availableFrom": {
             "type": "string",
             "nullable": true,
             "example": "15/06/2026 14:30:00"
@@ -35435,6 +35376,11 @@
             "type": "boolean"
           },
           "dueDate": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "availableFrom": {
             "type": "string",
             "nullable": true,
             "example": "15/06/2026 14:30:00"
@@ -43192,6 +43138,14 @@
           },
           "blocksRebuy": {
             "type": "boolean"
+          },
+          "creditHint": {
+            "enum": [
+              "Ahead",
+              "Copied",
+              "RedoWithClass"
+            ],
+            "type": "string"
           }
         },
         "additionalProperties": false
@@ -45473,21 +45427,6 @@
             "type": "boolean",
             "nullable": true
           },
-          "dueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableFrom": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
           "allowShuffle": {
             "type": "boolean",
             "nullable": true
@@ -46281,20 +46220,12 @@
             "format": "double",
             "nullable": true
           },
-          "dueDate": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableFrom": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
-          },
-          "availableUntil": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
+          "timeLimitMinutes": {
+            "maximum": 2147483647,
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -114,7 +114,7 @@
       {
         "path": "/api/assignments/{assignmentId}",
         "method": "put",
-        "description": "Updates an assignment by its ID. Managers/Admins may update all fields. Mentors may update Title, Description, DueDate, AvailableFrom, and AvailableUntil for assignments in programs they teach."
+        "description": "Updates an assignment by its ID. Managers/Admins may update all catalog fields. Mentors may update Title and Description for assignments in programs they teach. Assignment windows are set on the class session."
       },
       {
         "path": "/api/assignments/{assignmentId}",
@@ -411,7 +411,7 @@
       {
         "path": "/api/classes/{classId}/sessions/{id}",
         "method": "put",
-        "description": "Updates a scheduled class session. Requires Admin or Manager role."
+        "description": "Updates a scheduled class session. Admin/Manager may update any session. Mentors may update StartTime, EndTime, and Description of AssignmentWindow sessions on their class."
       },
       {
         "path": "/api/classes/{classId}/sessions/{id}",
@@ -432,6 +432,31 @@
         "path": "/api/class-sessions/{id}/checkin",
         "method": "post",
         "description": "Student self check-in using the QR token (mobile scan) or the 6-digit fallback code (web manual entry). Records attendance as Present."
+      },
+      {
+        "path": "/api/class-sessions/{id}/evidence",
+        "method": "post",
+        "description": "Uploads an image (.jpg/.jpeg/.png) as Offline field evidence for the session. Does not require student face recognition. Stored under session-evidence/{sessionId}/."
+      },
+      {
+        "path": "/api/class-sessions/{id}/evidence",
+        "method": "get",
+        "description": "Returns image evidence attached to the class session."
+      },
+      {
+        "path": "/api/class-sessions/{id}/evidence/{mediaId}",
+        "method": "delete",
+        "description": "Soft-deletes the evidence media and removes the S3 object."
+      },
+      {
+        "path": "/api/class-sessions/{id}/join",
+        "method": "post",
+        "description": "Records student attendance (Present within 10' grace, otherwise Late), and returns a JaaS JWT + room credentials. Mentors receive moderator:true. Join window opens 15 minutes before StartTime and closes at EndTime."
+      },
+      {
+        "path": "/api/class-sessions/{id}/leave",
+        "method": "post",
+        "description": "For students, sets LeftAt and ParticipationMinutes from CheckedInAt. Mentors/managers leave without attendance mutation."
       },
       {
         "path": "/api/courses",
@@ -878,7 +903,7 @@
       {
         "path": "/api/payments/checkout",
         "method": "post",
-        "description": "Student initiates checkout for a paid program. Returns a hosted payment URL (Stripe or MoMo)."
+        "description": "Student initiates checkout for a paid program. Requires a valid seat hold from select-class and matching classId. Returns a hosted payment URL."
       },
       {
         "path": "/api/payments/checkout/retake",
@@ -888,7 +913,7 @@
       {
         "path": "/api/payments/request-parent",
         "method": "post",
-        "description": "Student sends a payment request email to a linked, verified parent. The parent receives a 24h payment link."
+        "description": "Student sends a payment request email to a linked, verified parent. Requires a valid seat hold from select-class and matching classId. Parent token expires in 5 minutes."
       },
       {
         "path": "/api/payments/request-parent/retake",
@@ -1058,7 +1083,22 @@
       {
         "path": "/api/programs/{id}/open-classes",
         "method": "get",
-        "description": "Public preview of Standard classes that are Open and still have seats, including schedule sessions and seat counts. Use before checkout to show recruiting cohorts. After payment, pass preferredClassId to soft-prioritize a class the learner viewed (no seat hold). Checkout is blocked when this list is empty."
+        "description": "Public preview of Standard classes that are Open and still have seats, including schedule sessions and seat counts. Use before checkout to show recruiting cohorts. Call select-class when the learner picks a class to soft-hold a seat for 5 minutes."
+      },
+      {
+        "path": "/api/programs/{id}/rebuy-classes",
+        "method": "get",
+        "description": "Student picker for this program. First purchase and a Completed (100%) source return Open Standard classes with seats (same join rule as open-classes). Failed or Dropped sources return Open and InProgress Standard classes with per-module session progress and isEligible (stop-module / source-class rules). IsRebuy is true only for Failed/Dropped. Active enrollment returns 409. Public browse of recruiting cohorts still uses GET .../open-classes."
+      },
+      {
+        "path": "/api/programs/{id}/select-class",
+        "method": "post",
+        "description": "Starts a 5-minute soft seat hold when the student selects a class. Checkout and parent-pay require this step first. Publishes seats.changed over SignalR."
+      },
+      {
+        "path": "/api/programs/{id}/release-class-hold",
+        "method": "post",
+        "description": "Releases the student's soft seat hold and abandons the PendingPayment program enrollment for this program. Call when the learner leaves the checkout page or reloads. Idempotent."
       },
       {
         "path": "/api/programs/name/{name}",
@@ -1074,6 +1114,11 @@
         "path": "/api/program-enrollments/{id}",
         "method": "get",
         "description": "Retrieve a program enrollment. Students see their own; parents see linked students; admins see all."
+      },
+      {
+        "path": "/api/program-enrollments/{id}/withdraw",
+        "method": "post",
+        "description": "Closes the student's Active program enrollment as Dropped (EndReason = Withdraw) and withdraws all class seats immediately. Continuing the program later requires a rebuy."
       },
       {
         "path": "/api/program-enrollments/me",
@@ -1248,7 +1293,7 @@
       {
         "path": "/api/research-submissions/submit",
         "method": "post",
-        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. Personal AvailableUntil from approved assessment recovery is honored. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL."
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. New attempts must fall inside the class AssignmentWindow. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL."
       },
       {
         "path": "/api/research-submissions/{submissionId}/grade",
@@ -1627,6 +1672,24 @@
       },
       {
         "name": "ClassSessionCheckInTokenResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassSessionJoinResponseDto"
+      },
+      {
+        "name": "ClassSessionJoinResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionJoinResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassSessionLeaveResponseDto"
+      },
+      {
+        "name": "ClassSessionLeaveResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionLeaveResponseDtoResponseDataContent"
       },
       {
         "name": "ClassSessionResponseDto"
@@ -2124,6 +2187,12 @@
         "name": "MediaAssetDtoApiResult"
       },
       {
+        "name": "MediaAssetDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "MediaAssetDtoIReadOnlyListResponseDataContent"
+      },
+      {
         "name": "MediaAssetDtoListApiResult"
       },
       {
@@ -2614,6 +2683,21 @@
         "name": "QuizResultResponseDtoResponseDataContent"
       },
       {
+        "name": "RebuyClassCatalogDto"
+      },
+      {
+        "name": "RebuyClassCatalogDtoApiResult"
+      },
+      {
+        "name": "RebuyClassCatalogDtoResponseDataContent"
+      },
+      {
+        "name": "RebuyClassDto"
+      },
+      {
+        "name": "RebuyClassModuleProgressDto"
+      },
+      {
         "name": "RedeliveryWaitlistModuleGroupDto"
       },
       {
@@ -2750,6 +2834,18 @@
       },
       {
         "name": "SelectClassRedeliveryRequestDto"
+      },
+      {
+        "name": "SelectProgramClassRequestDto"
+      },
+      {
+        "name": "SelectProgramClassResponseDto"
+      },
+      {
+        "name": "SelectProgramClassResponseDtoApiResult"
+      },
+      {
+        "name": "SelectProgramClassResponseDtoResponseDataContent"
       },
       {
         "name": "SessionAttendanceResponseDto"

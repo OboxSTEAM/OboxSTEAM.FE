@@ -707,10 +707,22 @@ export {
 
 export {
   createSessionCheckinToken,
+  deleteSessionEvidence,
+  joinLiveSession,
+  leaveLiveSession,
+  listSessionEvidence,
   studentSessionCheckin,
+  uploadSessionEvidence,
+  type LiveSessionJoin,
+  type LiveSessionJoinResult,
+  type LiveSessionLeave,
+  type LiveSessionLeaveResult,
   type SessionCheckinToken,
   type SessionCheckinTokenResult,
   type SessionCheckinResult,
+  type SessionEvidenceDeleteResult,
+  type SessionEvidenceListResult,
+  type SessionEvidenceUploadResult,
 } from "./class-sessions";
 
 export {
