@@ -261,3 +261,14 @@ export function isSessionAttendanceWindowOpen(
 export function canRevealSessionJoinUrl(phase: LiveJoinPhase): boolean {
   return phase === "countdown" || phase === "live" || phase === "recording";
 }
+
+/** Roster / leave summary, e.g. "45 phút" or "1g 15p". */
+export function formatParticipationMinutes(
+  minutes: number | null | undefined,
+): string {
+  if (minutes == null || minutes < 0) return "—";
+  if (minutes < 60) return `${minutes} phút`;
+  const hours = Math.floor(minutes / 60);
+  const remainder = minutes % 60;
+  return remainder > 0 ? `${hours}g ${remainder}p` : `${hours}g`;
+}

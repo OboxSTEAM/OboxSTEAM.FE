@@ -72,6 +72,8 @@ export const classSessionStudentSchema = z.object({
   moduleEnrollmentId: z.string().uuid(),
   attendanceStatus: sessionAttendanceStatusSchema,
   checkedInAt: z.string().nullable(),
+  leftAt: z.string().nullable(),
+  participationMinutes: z.number().int().nullable(),
   recordedBy: z.string().uuid().nullable(),
 });
 

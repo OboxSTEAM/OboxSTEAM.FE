@@ -28,6 +28,7 @@ import {
   ATTENDANCE_STATUS_LABELS,
   MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES,
 } from "@/lib/classes/constants";
+import { formatParticipationMinutes } from "@/lib/classes/session-helpers";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,8 @@ type MentorActivityAttendancePanelProps = {
   isLoading?: boolean;
   updatingStudentId?: string | null;
   isCompletingActivity?: boolean;
+  requireMediaEvidence?: boolean;
+  evidenceCount?: number;
   onStatusChange: (
     student: ClassSessionStudent,
     status: SessionAttendanceStatus,
@@ -58,6 +61,8 @@ export function MentorActivityAttendancePanel({
   isLoading = false,
   updatingStudentId = null,
   isCompletingActivity = false,
+  requireMediaEvidence = false,
+  evidenceCount = 0,
   onStatusChange,
   onCompleteActivity,
 }: MentorActivityAttendancePanelProps) {
@@ -121,6 +126,11 @@ export function MentorActivityAttendancePanel({
         className: "w-40 text-xs text-muted-foreground",
         render: (student) =>
           formatApiDateTimeDisplay(student.checkedInAt) || "—",
+      },
+      {
+        header: "Thời lượng",
+        className: "w-28 text-xs tabular-nums text-muted-foreground",
+        render: (student) => formatParticipationMinutes(student.participationMinutes),
       },
       {
         header: "Cập nhật",
@@ -190,31 +200,38 @@ export function MentorActivityAttendancePanel({
       />
 
       {onCompleteActivity ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-muted/10 px-4 py-3 sm:px-6">
-          <p className="text-xs text-muted-foreground">
-            Hoàn thành hoạt động cho học viên{" "}
-            <span className="font-medium text-foreground">Có mặt / Đi muộn / Có phép</span>
-            {eligibleCount > 0 ? (
-              <>
-                {" "}
-                ·{" "}
-                <span className="font-semibold text-foreground tabular-nums">
-                  {eligibleCount}
-                </span>{" "}
-                đủ điều kiện
-              </>
-            ) : null}
-          </p>
-          <Button
-            type="button"
-            size="sm"
-            disabled={eligibleCount === 0 || isCompletingActivity || isLoading}
-            className="h-8 gap-1.5 rounded-md"
-            onClick={onCompleteActivity}
-          >
-            <CheckCircle2 className="size-3.5" />
-            {isCompletingActivity ? "Đang hoàn thành…" : "Hoàn thành hoạt động"}
-          </Button>
+        <div className="space-y-2 border-b border-border bg-muted/10 px-4 py-3 sm:px-6">
+          {requireMediaEvidence && evidenceCount === 0 ? (
+            <p className="text-xs text-amber-700 dark:text-amber-400">
+              Buổi yêu cầu minh chứng ảnh nhưng chưa có ảnh nào — BE có thể từ chối hoàn thành.
+            </p>
+          ) : null}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-muted-foreground">
+              Hoàn thành hoạt động cho học viên{" "}
+              <span className="font-medium text-foreground">Có mặt / Đi muộn / Có phép</span>
+              {eligibleCount > 0 ? (
+                <>
+                  {" "}
+                  ·{" "}
+                  <span className="font-semibold text-foreground tabular-nums">
+                    {eligibleCount}
+                  </span>{" "}
+                  đủ điều kiện
+                </>
+              ) : null}
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              disabled={eligibleCount === 0 || isCompletingActivity || isLoading}
+              className="h-8 gap-1.5 rounded-md"
+              onClick={onCompleteActivity}
+            >
+              <CheckCircle2 className="size-3.5" />
+              {isCompletingActivity ? "Đang hoàn thành…" : "Hoàn thành hoạt động"}
+            </Button>
+          </div>
         </div>
       ) : null}
 

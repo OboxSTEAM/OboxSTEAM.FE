@@ -68184,6 +68184,16 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
+                                  "leftAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "participationMinutes": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  },
                                   "recordedBy": {
                                     "type": "string",
                                     "format": "uuid",
@@ -68379,6 +68389,16 @@
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
                                   },
+                                  "leftAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "participationMinutes": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  },
                                   "recordedBy": {
                                     "type": "string",
                                     "format": "uuid",
@@ -68573,6 +68593,16 @@
                                     "type": "string",
                                     "nullable": true,
                                     "example": "15/06/2026 14:30:00"
+                                  },
+                                  "leftAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "participationMinutes": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
                                   },
                                   "recordedBy": {
                                     "type": "string",
@@ -266083,6 +266113,16 @@
             "nullable": true,
             "example": "15/06/2026 14:30:00"
           },
+          "leftAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "participationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
           "recordedBy": {
             "type": "string",
             "format": "uuid",
@@ -266233,6 +266273,16 @@
                   "type": "string",
                   "nullable": true,
                   "example": "15/06/2026 14:30:00"
+                },
+                "leftAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "15/06/2026 14:30:00"
+                },
+                "participationMinutes": {
+                  "type": "integer",
+                  "format": "int32",
+                  "nullable": true
                 },
                 "recordedBy": {
                   "type": "string",
@@ -266406,6 +266456,16 @@
                           "type": "string",
                           "nullable": true,
                           "example": "15/06/2026 14:30:00"
+                        },
+                        "leftAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "15/06/2026 14:30:00"
+                        },
+                        "participationMinutes": {
+                          "type": "integer",
+                          "format": "int32",
+                          "nullable": true
                         },
                         "recordedBy": {
                           "type": "string",
@@ -266593,6 +266653,16 @@
                       "type": "string",
                       "nullable": true,
                       "example": "15/06/2026 14:30:00"
+                    },
+                    "leftAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "15/06/2026 14:30:00"
+                    },
+                    "participationMinutes": {
+                      "type": "integer",
+                      "format": "int32",
+                      "nullable": true
                     },
                     "recordedBy": {
                       "type": "string",

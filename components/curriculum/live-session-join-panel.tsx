@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ExternalLink, Loader2, Video } from "lucide-react";
 
+import { JoinCountdownHero } from "@/components/curriculum/join-countdown-hero";
 import { LiveJaasMeeting } from "@/components/curriculum/live-jaas-meeting";
 import { Button } from "@/components/ui/button";
 import { useLiveJoinState } from "@/hooks/use-live-join-state";
@@ -14,13 +15,10 @@ import {
 } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import {
-  formatJoinCountdown,
-  getJoinCountdownParts,
   type LiveJoinState,
 } from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { resolveJaasAppId } from "@/lib/jaas/meeting-config";
-import { cn } from "@/lib/utils";
 
 type JoinPanelPhase = "idle" | "in-meeting" | "left";
 
@@ -31,53 +29,6 @@ type LiveSessionJoinPanelProps = {
   className?: string;
   meetingHeight?: string;
 };
-
-function JoinCountdownHero({
-  ms,
-  title,
-  hint,
-  tone,
-}: {
-  ms: number;
-  title: string;
-  hint: string;
-  tone: "locked" | "soon";
-}) {
-  const { days, hours, minutes, seconds } = getJoinCountdownParts(ms);
-  const pad = (value: number) => String(value).padStart(2, "0");
-
-  return (
-    <div
-      className={cn(
-        "rounded-2xl border px-4 py-4",
-        tone === "locked"
-          ? "border-learn-border bg-learn-surface-2"
-          : "border-learn-accent/25 bg-learn-accent/5",
-      )}
-    >
-      <p className="text-sm font-semibold text-learn-text-strong">{title}</p>
-      <p
-        className="mt-2 font-mono text-3xl font-bold tabular-nums tracking-tight text-learn-text-strong"
-        aria-live="polite"
-        aria-label={`Còn ${formatJoinCountdown(ms)}`}
-      >
-        {days > 0 ? (
-          <span className="mr-2 text-xl">{days} ngày</span>
-        ) : null}
-        {hours > 0 || days > 0 ? (
-          <span>
-            {pad(hours)}:{pad(minutes)}:{pad(seconds)}
-          </span>
-        ) : (
-          <span>
-            {pad(minutes)}:{pad(seconds)}
-          </span>
-        )}
-      </p>
-      <p className="mt-2 text-xs text-learn-muted">{hint}</p>
-    </div>
-  );
-}
 
 function RecordingLink({ joinUrl }: { joinUrl: string }) {
   return (

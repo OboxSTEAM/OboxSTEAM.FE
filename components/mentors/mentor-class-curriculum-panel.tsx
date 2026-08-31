@@ -23,6 +23,7 @@ import {
 } from "@/components/mentors/mentor-curriculum-tree";
 import { LiveSessionJoinPanel } from "@/components/curriculum/live-session-join-panel";
 import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
+import { SessionEvidencePanel } from "@/components/mentors/session-evidence-panel";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import {
   ManagerDataTable,
@@ -179,6 +180,7 @@ export function MentorClassCurriculumPanel({
   const [bulkForceBusy, setBulkForceBusy] = useState(false);
   const [isForceCompleteOpen, setIsForceCompleteOpen] = useState(false);
   const [isQrOpen, setIsQrOpen] = useState(false);
+  const [evidenceCount, setEvidenceCount] = useState(0);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -201,6 +203,7 @@ export function MentorClassCurriculumPanel({
   useEffect(() => {
     setIsForceCompleteOpen(false);
     setIsQrOpen(false);
+    setEvidenceCount(0);
   }, [selectedActivityId]);
 
   const { data: programResult, isLoading: isProgramLoading, retry: retryProgram } = useClientFetch({
@@ -361,6 +364,10 @@ export function MentorClassCurriculumPanel({
   const selectedSession =
     activitySessions.find((session) => session.id === effectiveSessionId) ??
     null;
+
+  useEffect(() => {
+    setEvidenceCount(0);
+  }, [effectiveSessionId]);
 
   const sessionSchedule = useMemo(() => {
     if (!selectedSession) return null;
@@ -735,16 +742,25 @@ export function MentorClassCurriculumPanel({
 
               {selectedActivity.activityType !== "SelfPaced" &&
               effectiveSessionId ? (
-                <MentorActivityAttendancePanel
-                  students={attendanceStudents}
-                  isLoading={isAttendanceLoading}
-                  updatingStudentId={updatingAttendanceId}
-                  isCompletingActivity={isMentorCompleting}
-                  onStatusChange={handleAttendanceChange}
-                  onCompleteActivity={() => {
-                    void handleMentorCompleteActivity();
-                  }}
-                />
+                <>
+                  <SessionEvidencePanel
+                    sessionId={effectiveSessionId}
+                    requireMediaEvidence={selectedActivity.requireMediaEvidence}
+                    onCountChange={setEvidenceCount}
+                  />
+                  <MentorActivityAttendancePanel
+                    students={attendanceStudents}
+                    isLoading={isAttendanceLoading}
+                    updatingStudentId={updatingAttendanceId}
+                    isCompletingActivity={isMentorCompleting}
+                    requireMediaEvidence={selectedActivity.requireMediaEvidence}
+                    evidenceCount={evidenceCount}
+                    onStatusChange={handleAttendanceChange}
+                    onCompleteActivity={() => {
+                      void handleMentorCompleteActivity();
+                    }}
+                  />
+                </>
               ) : selectedActivity.activityType !== "SelfPaced" ? (
                 <div className="p-6">
                   <ManagerEmptyState
