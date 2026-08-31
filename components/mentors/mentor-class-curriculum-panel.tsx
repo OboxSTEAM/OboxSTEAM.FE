@@ -21,6 +21,7 @@ import {
   type MentorCurriculumSelection,
   type MentorCurriculumTreeProgress,
 } from "@/components/mentors/mentor-curriculum-tree";
+import { LiveSessionJoinPanel } from "@/components/curriculum/live-session-join-panel";
 import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import {
@@ -684,6 +685,20 @@ export function MentorClassCurriculumPanel({
                           </p>
                         </div>
                       </div>
+                      {selectedActivity.activityType === "LiveOnline" &&
+                      selectedSession ? (
+                        <div className="border-t border-border px-3 py-3 sm:px-4">
+                          <p className="mb-2 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                            Phòng học online
+                          </p>
+                          <LiveSessionJoinPanel
+                            session={selectedSession}
+                            meetingHeight="min(360px, 40dvh)"
+                            onJoined={() => retryAttendance()}
+                            onLeft={() => retryAttendance()}
+                          />
+                        </div>
+                      ) : null}
                       {selectedSession?.location?.trim() ? (
                         <p className="flex items-center gap-1.5 border-t border-border px-4 py-2 text-xs text-muted-foreground">
                           <MapPin className="size-3.5 shrink-0" aria-hidden />

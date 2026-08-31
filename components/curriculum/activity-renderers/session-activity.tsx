@@ -3,13 +3,13 @@
 import {
   Calendar,
   CheckCircle2,
-  ClipboardCheck,
-  ExternalLink,
+  ClipboardCheck,
   MapPin,
   Video,
   type LucideIcon,
 } from "lucide-react";
 
+import { LiveSessionJoinPanel } from "@/components/curriculum/live-session-join-panel";
 import { StudentSessionCheckinPanel } from "@/components/curriculum/student-session-checkin-panel";
 import { SessionLocationMap } from "@/components/maps/session-location-map";
 import { useLiveJoinState } from "@/hooks/use-live-join-state";
@@ -145,102 +145,6 @@ function JoinCountdownHero({
       </div>
       <p className="mt-4 text-center text-sm text-learn-muted">{hint}</p>
     </div>
-  );
-}
-
-function LiveJoinButton({ session }: { session: ClassSession }) {
-  const join = useLiveJoinState(session);
-  if (!join) return null;
-
-  if (join.phase === "cancelled") {
-    return (
-      <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
-        Buổi học đã bị hủy.
-      </p>
-    );
-  }
-
-  if (join.phase === "locked") {
-    return (
-      <JoinCountdownHero
-        ms={join.msUntilOpen}
-        title="Cửa vào lớp chưa mở"
-        hint="Nút Vào lớp học sẽ mở 15 phút trước giờ bắt đầu."
-        tone="locked"
-      />
-    );
-  }
-
-  if (join.phase === "countdown") {
-    return (
-      <div className="space-y-3">
-        <JoinCountdownHero
-          ms={join.msUntilStart}
-          title="Sắp vào lớp"
-          hint="Bạn có thể tham gia từ bây giờ. Buổi học bắt đầu sau vài phút."
-          tone="soon"
-        />
-        <a
-          href={join.joinUrl ?? undefined}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-disabled={!join.joinUrl}
-          className={cn(
-            "inline-flex w-full items-center justify-center gap-2 rounded-2xl px-4 py-3.5 text-base font-semibold",
-            join.joinUrl
-              ? "bg-learn-accent text-white hover:opacity-90"
-              : "pointer-events-none bg-learn-surface-2 text-learn-muted",
-          )}
-        >
-          <Video className="size-5" aria-hidden />
-          Vào lớp học
-          {join.joinUrl ? <ExternalLink className="size-4" aria-hidden /> : null}
-        </a>
-      </div>
-    );
-  }
-
-  if (join.phase === "live") {
-    if (!join.joinUrl) {
-      return (
-        <p className="rounded-xl border border-dashed border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
-          Link buổi học chưa được cập nhật.
-        </p>
-      );
-    }
-
-    return (
-      <a
-        href={join.joinUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-learn-accent px-4 py-3.5 text-base font-semibold text-white hover:opacity-90"
-      >
-        <Video className="size-4" aria-hidden />
-        Đang diễn ra · Vào lớp học
-        <ExternalLink className="size-3.5" aria-hidden />
-      </a>
-    );
-  }
-
-  if (join.phase === "recording" && join.joinUrl) {
-    return (
-      <a
-        href={join.joinUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-learn-border bg-learn-surface px-4 py-3 text-sm font-semibold text-learn-text-strong hover:bg-learn-surface-2"
-      >
-        Xem ghi hình
-        <ExternalLink className="size-3.5" aria-hidden />
-      </a>
-    );
-  }
-
-  return (
-    <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
-      Buổi học đã kết thúc.
-    </p>
   );
 }
 
@@ -497,6 +401,7 @@ function OnlineSessionLayout({
   hasSchedule,
   isAlreadyComplete,
   myAttendanceStatus,
+  onAttendanceChange,
 }: SessionLayoutShared) {
   return (
     <div className="space-y-5">
@@ -507,7 +412,14 @@ function OnlineSessionLayout({
 
       {nextSession ? (
         <div className="space-y-3 rounded-2xl border border-learn-accent/25 bg-gradient-to-b from-learn-accent/8 to-transparent p-4 sm:p-5">
-          <LiveJoinButton session={nextSession} />
+          <LiveSessionJoinPanel
+            session={nextSession}
+            onJoined={(join) => {
+              if (join.attendanceStatus) {
+                onAttendanceChange?.(join.attendanceStatus);
+              }
+            }}
+          />
           <CompactOnlineScheduleStrip
             nextSession={nextSession}
             schedule={schedule}
