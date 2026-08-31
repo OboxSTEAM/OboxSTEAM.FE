@@ -5,6 +5,13 @@ import { ExternalLink, Loader2, Video } from "lucide-react";
 
 import { JoinCountdownHero } from "@/components/curriculum/join-countdown-hero";
 import { LiveJaasMeeting } from "@/components/curriculum/live-jaas-meeting";
+import {
+  idleJoinButtonClass,
+  joinPanelDashedMessageClass,
+  joinPanelMessageClass,
+  recordingLinkClass,
+  type SessionJoinVariant,
+} from "@/components/curriculum/session-join-styles";
 import { Button } from "@/components/ui/button";
 import { useLiveJoinState } from "@/hooks/use-live-join-state";
 import { useMeetingUserInfo } from "@/hooks/use-meeting-user-info";
@@ -14,9 +21,7 @@ import {
   type LiveSessionJoin,
 } from "@/lib/api";
 import type { ClassSession } from "@/lib/api/entities/class-session";
-import {
-  type LiveJoinState,
-} from "@/lib/classes/session-helpers";
+import { type LiveJoinState } from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { resolveJaasAppId } from "@/lib/jaas/meeting-config";
 
@@ -28,15 +33,23 @@ type LiveSessionJoinPanelProps = {
   onLeft?: () => void;
   className?: string;
   meetingHeight?: string;
+  /** `learn` = inside `.learn-shell`; `app` = mentor/manager surfaces */
+  variant?: SessionJoinVariant;
 };
 
-function RecordingLink({ joinUrl }: { joinUrl: string }) {
+function RecordingLink({
+  joinUrl,
+  variant,
+}: {
+  joinUrl: string;
+  variant: SessionJoinVariant;
+}) {
   return (
     <a
       href={joinUrl}
       target="_blank"
       rel="noopener noreferrer"
-      className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-learn-border bg-learn-surface px-4 py-3 text-sm font-semibold text-learn-text-strong hover:bg-learn-surface-2"
+      className={recordingLinkClass(variant)}
     >
       Xem ghi hình
       <ExternalLink className="size-3.5" aria-hidden />
@@ -48,11 +61,13 @@ function IdleJoinButton({
   label,
   disabled,
   busy,
+  variant,
   onJoin,
 }: {
   label: string;
   disabled?: boolean;
   busy?: boolean;
+  variant: SessionJoinVariant;
   onJoin: () => void;
 }) {
   return (
@@ -60,7 +75,7 @@ function IdleJoinButton({
       type="button"
       disabled={disabled || busy}
       onClick={onJoin}
-      className="inline-flex h-auto w-full items-center justify-center gap-2 rounded-2xl bg-learn-accent px-4 py-3.5 text-base font-semibold text-white hover:opacity-90"
+      className={idleJoinButtonClass(variant)}
     >
       {busy ? (
         <Loader2 className="size-5 animate-spin" aria-hidden />
@@ -75,6 +90,7 @@ function IdleJoinButton({
 function renderWindowState(
   join: LiveJoinState,
   panelPhase: JoinPanelPhase,
+  variant: SessionJoinVariant,
   handlers: {
     onJoin: () => void;
     joinBusy: boolean;
@@ -86,9 +102,7 @@ function renderWindowState(
 ) {
   if (join.phase === "cancelled") {
     return (
-      <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
-        Buổi học đã bị hủy.
-      </p>
+      <p className={joinPanelMessageClass(variant)}>Buổi học đã bị hủy.</p>
     );
   }
 
@@ -99,6 +113,7 @@ function renderWindowState(
         title="Cửa vào lớp chưa mở"
         hint="Nút Vào lớp học sẽ mở 15 phút trước giờ bắt đầu."
         tone="locked"
+        variant={variant}
       />
     );
   }
@@ -110,7 +125,7 @@ function renderWindowState(
 
     if (!appId || !roomName || !jwt) {
       return (
-        <p className="rounded-xl border border-dashed border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+        <p className={joinPanelDashedMessageClass(variant)}>
           Máy chủ chưa trả thông tin phòng học (JaaS). Thử lại sau vài giây.
         </p>
       );
@@ -131,7 +146,7 @@ function renderWindowState(
 
   if (panelPhase === "left") {
     return (
-      <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
+      <p className={joinPanelMessageClass(variant)}>
         Bạn đã rời buổi học. Có thể tham gia lại nếu buổi vẫn đang diễn ra.
       </p>
     );
@@ -145,10 +160,12 @@ function renderWindowState(
           title="Sắp vào lớp"
           hint="Bạn có thể tham gia từ bây giờ. Buổi học bắt đầu sau vài phút."
           tone="soon"
+          variant={variant}
         />
         <IdleJoinButton
           label="Vào lớp học"
           busy={handlers.joinBusy}
+          variant={variant}
           onJoin={handlers.onJoin}
         />
       </div>
@@ -160,19 +177,18 @@ function renderWindowState(
       <IdleJoinButton
         label="Đang diễn ra · Vào lớp học"
         busy={handlers.joinBusy}
+        variant={variant}
         onJoin={handlers.onJoin}
       />
     );
   }
 
   if (join.phase === "recording" && join.joinUrl) {
-    return <RecordingLink joinUrl={join.joinUrl} />;
+    return <RecordingLink joinUrl={join.joinUrl} variant={variant} />;
   }
 
   return (
-    <p className="rounded-xl border border-learn-border bg-learn-surface-2 px-4 py-3 text-sm text-learn-muted">
-      Buổi học đã kết thúc.
-    </p>
+    <p className={joinPanelMessageClass(variant)}>Buổi học đã kết thúc.</p>
   );
 }
 
@@ -182,6 +198,7 @@ export function LiveSessionJoinPanel({
   onLeft,
   className,
   meetingHeight,
+  variant = "learn",
 }: LiveSessionJoinPanelProps) {
   const join = useLiveJoinState(session);
   const userInfo = useMeetingUserInfo();
@@ -253,7 +270,7 @@ export function LiveSessionJoinPanel({
 
   return (
     <div className={className}>
-      {renderWindowState(join, panelPhase, {
+      {renderWindowState(join, panelPhase, variant, {
         onJoin: () => {
           void handleJoin();
         },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Beaker,
   ChevronRight,
@@ -44,6 +44,8 @@ type MentorCurriculumTreeProps = {
   milestonesByModule: Record<string, ResearchMilestone[]>;
   selection: MentorCurriculumSelection | null;
   onSelect: (next: MentorCurriculumSelection) => void;
+  /** Scroll to and reveal this activity in the tree (e.g. deep-link). */
+  focusActivityId?: string | null;
   /** Class-aggregate progress from `GET /api/classes/{classId}/curriculum-progress`. */
   progress?: MentorCurriculumTreeProgress | null;
   className?: string;
@@ -110,6 +112,20 @@ function collectActivityIds(
     }
   }
   return ids;
+}
+
+export function findActivityLocation(
+  modules: Module[],
+  activityId: string,
+): { moduleId: string; courseId: string } | null {
+  for (const module of modules) {
+    for (const course of module.courses ?? []) {
+      if ((course.activities ?? []).some((activity) => activity.id === activityId)) {
+        return { moduleId: module.id, courseId: course.id };
+      }
+    }
+  }
+  return null;
 }
 
 function clampPercent(value: number): number {
@@ -266,6 +282,7 @@ function ActivityRow({
   activity,
   ordinal,
   isSelected,
+  shouldScrollIntoView,
   onSelect,
   completedCount,
   totalStudents,
@@ -273,18 +290,30 @@ function ActivityRow({
   activity: Activity;
   ordinal: string;
   isSelected: boolean;
+  shouldScrollIntoView?: boolean;
   onSelect: () => void;
   completedCount?: number;
   totalStudents?: number;
 }) {
+  const rowRef = useRef<HTMLButtonElement>(null);
   const showProgress =
     typeof completedCount === "number" &&
     typeof totalStudents === "number" &&
     totalStudents > 0;
 
+  useEffect(() => {
+    if (!shouldScrollIntoView) return;
+    const timer = window.setTimeout(() => {
+      rowRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }, 280);
+    return () => window.clearTimeout(timer);
+  }, [shouldScrollIntoView, activity.id]);
+
   return (
     <button
+      ref={rowRef}
       type="button"
+      data-activity-id={activity.id}
       onClick={onSelect}
       className={cn(
         "flex min-h-11 w-full items-start gap-2 rounded-lg px-2 py-2 text-left text-sm transition-colors",
@@ -363,6 +392,7 @@ export function MentorCurriculumTree({
   milestonesByModule,
   selection,
   onSelect,
+  focusActivityId = null,
   progress = null,
   className,
 }: MentorCurriculumTreeProps) {
@@ -375,6 +405,19 @@ export function MentorCurriculumTree({
   );
 
   const defaultOpen = orderedModules[0]?.id ? [orderedModules[0].id] : [];
+  const [openModules, setOpenModules] = useState<string[]>(defaultOpen);
+
+  useEffect(() => {
+    if (!focusActivityId || orderedModules.length === 0) return;
+    const location = findActivityLocation(orderedModules, focusActivityId);
+    if (!location) return;
+    setOpenModules((prev) =>
+      prev.includes(location.moduleId)
+        ? prev
+        : [...prev, location.moduleId],
+    );
+    setOpenGroups((prev) => ({ ...prev, [location.courseId]: true }));
+  }, [focusActivityId, orderedModules]);
 
   const isGroupOpen = (key: string) => openGroups[key] ?? true;
 
@@ -400,7 +443,12 @@ export function MentorCurriculumTree({
 
   return (
     <div className={cn("space-y-2 p-2.5", className)}>
-      <Accordion multiple defaultValue={defaultOpen} className="space-y-2">
+      <Accordion
+        multiple
+        value={openModules}
+        onValueChange={setOpenModules}
+        className="space-y-2"
+      >
         {orderedModules.map((module, moduleIndex) => {
           const courses = [...(module.courses ?? [])];
           const assignments = assignmentsByModule[module.id] ?? [];
@@ -539,6 +587,9 @@ export function MentorCurriculumTree({
                                                 activityIndex,
                                               )}
                                               isSelected={isSelected}
+                                              shouldScrollIntoView={
+                                                focusActivityId === activity.id
+                                              }
                                               onSelect={() =>
                                                 onSelect({
                                                   kind: "activity",

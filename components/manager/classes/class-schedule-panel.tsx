@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   CalendarDays,
+  Images,
   Pencil,
   Plus,
   Sparkles,
@@ -13,6 +14,7 @@ import {
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
+import { SessionEvidenceGalleryDrawer } from "@/components/manager/classes/session-evidence-gallery-drawer";
 import {
   SessionFormDialog,
   type ClassSessionFormSubmitPayload,
@@ -142,6 +144,7 @@ export function ClassSchedulePanel({
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
+  const [evidenceSession, setEvidenceSession] = useState<ClassSession | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
@@ -228,6 +231,24 @@ export function ClassSchedulePanel({
     setFormOpen(true);
   }
 
+
+  function openEvidenceGallery(session: ClassSession) {
+    setEvidenceSession(session);
+  }
+
+  function openEditSession(session: ClassSession) {
+    setEditingSession(session);
+    setCreateDefaultStart(null);
+    setFormOpen(true);
+  }
+
+  function handleCalendarSelectSession(session: ClassSession) {
+    if (session.sessionKind === "Offline") {
+      openEvidenceGallery(session);
+      return;
+    }
+    openEditSession(session);
+  }
   async function handleSubmit(values: ClassSessionFormSubmitPayload) {
     setIsSubmitting(true);
     try {
@@ -332,14 +353,23 @@ export function ClassSchedulePanel({
       className: "w-24 text-right",
       render: (session) => (
         <div className="flex justify-end gap-1">
+          {session.sessionKind === "Offline" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => openEvidenceGallery(session)}
+              aria-label={`Xem minh chứng ${session.title}`}
+              className="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <Images className="size-4" />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => {
-              setEditingSession(session);
-              setFormOpen(true);
-            }}
+            onClick={() => openEditSession(session)}
             aria-label={`Sửa ${session.title}`}
             className="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
@@ -490,10 +520,7 @@ export function ClassSchedulePanel({
               mode="edit"
               focusSession={pendingFocus}
               onSelectDay={(day) => setSelectedDay(day)}
-              onSelectSession={(session) => {
-                setEditingSession(session);
-                setFormOpen(true);
-              }}
+              onSelectSession={handleCalendarSelectSession}
               onCreateAt={openCreateAt}
             />
           </section>
@@ -608,6 +635,14 @@ export function ClassSchedulePanel({
           retry();
           onSessionsChanged?.();
         }}
+      />
+      <SessionEvidenceGalleryDrawer
+        open={evidenceSession !== null}
+        onOpenChange={(open) => {
+          if (!open) setEvidenceSession(null);
+        }}
+        session={evidenceSession}
+        onEditSession={openEditSession}
       />
     </div>
   );

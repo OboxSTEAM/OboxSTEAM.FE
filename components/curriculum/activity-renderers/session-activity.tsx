@@ -3,7 +3,7 @@
 import {
   Calendar,
   CheckCircle2,
-  ClipboardCheck,
+  ClipboardCheck,
   MapPin,
   Video,
   type LucideIcon,
@@ -11,6 +11,7 @@ import {
 
 import { JoinCountdownHero } from "@/components/curriculum/join-countdown-hero";
 import { LiveSessionJoinPanel } from "@/components/curriculum/live-session-join-panel";
+import { SessionScheduleShell } from "@/components/curriculum/session-schedule-shell";
 import { StudentSessionCheckinPanel } from "@/components/curriculum/student-session-checkin-panel";
 import { SessionLocationMap } from "@/components/maps/session-location-map";
 import { useLiveJoinState } from "@/hooks/use-live-join-state";
@@ -337,7 +338,7 @@ function OnlineSessionLayout({
       </div>
 
       {nextSession ? (
-        <div className="space-y-3 rounded-2xl border border-learn-accent/25 bg-gradient-to-b from-learn-accent/8 to-transparent p-4 sm:p-5">
+        <SessionScheduleShell mode="online">
           <LiveSessionJoinPanel
             session={nextSession}
             onJoined={(join) => {
@@ -350,7 +351,7 @@ function OnlineSessionLayout({
             nextSession={nextSession}
             schedule={schedule}
           />
-        </div>
+        </SessionScheduleShell>
       ) : null}
 
       <CompletionOrMentorNote
@@ -403,7 +404,7 @@ function OfflineSessionLayout({
       </div>
 
       {hasSchedule && nextSession && joinState ? (
-        <div className="space-y-3 rounded-2xl border border-[#E8A87C]/35 bg-gradient-to-b from-[#E8A87C]/10 to-transparent p-4 sm:p-5">
+        <SessionScheduleShell mode="offline">
           <OfflineSessionWindow
             join={joinState}
             requireQrCheckin={Boolean(activity.requireQrCheckin) || canCheckin}
@@ -452,7 +453,7 @@ function OfflineSessionLayout({
               />
             ) : null}
           </div>
-        </div>
+        </SessionScheduleShell>
       ) : null}
 
       {showCheckinPanel && nextSession ? (

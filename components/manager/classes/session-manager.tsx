@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   CalendarDays,
+  Images,
   LayoutGrid,
   List,
   Pencil,
@@ -18,6 +19,7 @@ import {
 } from "@/components/manager/classes/session-form-dialog";
 import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
+import { SessionEvidenceGalleryDrawer } from "@/components/manager/classes/session-evidence-gallery-drawer";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
@@ -84,6 +86,7 @@ function SessionManagerInner() {
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
+  const [evidenceSession, setEvidenceSession] = useState<ClassSession | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
@@ -200,6 +203,24 @@ function SessionManagerInner() {
     setFormOpen(true);
   }
 
+
+  function openEvidenceGallery(session: ClassSession) {
+    setEvidenceSession(session);
+  }
+
+  function openEditSession(session: ClassSession) {
+    setCreateDefaultStart(null);
+    setEditingSession(session);
+    setFormOpen(true);
+  }
+
+  function handleCalendarSelectSession(session: ClassSession) {
+    if (session.sessionKind === "Offline") {
+      openEvidenceGallery(session);
+      return;
+    }
+    openEditSession(session);
+  }
   async function handleSubmit(values: ClassSessionFormSubmitPayload) {
     if (!classId) return;
     setIsSubmitting(true);
@@ -366,14 +387,23 @@ function SessionManagerInner() {
       className: "w-24 text-right",
       render: (session) => (
         <div className="flex justify-end gap-1">
+          {session.sessionKind === "Offline" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => openEvidenceGallery(session)}
+              aria-label={`Xem minh chứng ${session.title}`}
+              className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <Images className="size-4" />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
             size="icon"
-            onClick={() => {
-              setEditingSession(session);
-              setFormOpen(true);
-            }}
+            onClick={() => openEditSession(session)}
             aria-label={`Sửa ${session.title}`}
             className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
@@ -583,11 +613,7 @@ function SessionManagerInner() {
                     sessions={filteredSessions}
                     mode="edit"
                     focusSession={pendingFocus}
-                    onSelectSession={(session) => {
-                      setCreateDefaultStart(null);
-                      setEditingSession(session);
-                      setFormOpen(true);
-                    }}
+                    onSelectSession={handleCalendarSelectSession}
                     onCreateAt={openCreateAt}
                   />
                 )
@@ -672,6 +698,14 @@ function SessionManagerInner() {
           markLoading();
           retry();
         }}
+      />
+      <SessionEvidenceGalleryDrawer
+        open={evidenceSession !== null}
+        onOpenChange={(open) => {
+          if (!open) setEvidenceSession(null);
+        }}
+        session={evidenceSession}
+        onEditSession={openEditSession}
       />
     </div>
   );

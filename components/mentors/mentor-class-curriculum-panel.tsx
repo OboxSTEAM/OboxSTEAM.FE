@@ -194,6 +194,14 @@ export function MentorClassCurriculumPanel({
   }, [initialActivityId, initialAssignmentId]);
 
   useEffect(() => {
+    if (initialActivityId || !initialSessionId || sessions.length === 0) return;
+    const session = sessions.find((item) => item.id === initialSessionId);
+    if (session?.activityId) {
+      setSelection({ kind: "activity", activityId: session.activityId });
+    }
+  }, [initialActivityId, initialSessionId, sessions]);
+
+  useEffect(() => {
     if (initialSessionId) setSessionId(initialSessionId);
   }, [initialSessionId]);
 
@@ -595,6 +603,7 @@ export function MentorClassCurriculumPanel({
                 milestonesByModule={milestonesByModule ?? {}}
                 selection={selection}
                 onSelect={handleSelect}
+                focusActivityId={selectedActivityId}
                 progress={treeProgress}
               />
             )}
@@ -700,6 +709,7 @@ export function MentorClassCurriculumPanel({
                           </p>
                           <LiveSessionJoinPanel
                             session={selectedSession}
+                            variant="app"
                             meetingHeight="min(360px, 40dvh)"
                             onJoined={() => retryAttendance()}
                             onLeft={() => retryAttendance()}
