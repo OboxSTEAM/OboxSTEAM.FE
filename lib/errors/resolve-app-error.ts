@@ -1151,9 +1151,11 @@ function fromZodError(error: ZodError): AppErrorState {
   const first = error.issues[0];
   const path = first?.path?.length ? first.path.join(".") : null;
   const rawMessage = first?.message?.trim() || "Một số trường chưa đúng định dạng.";
-  const reason = path
-    ? `${path}: ${translateApiMessage(rawMessage) ?? rawMessage}`
+  const isEnumLikeMessage = /^Invalid (enum value|option)/i.test(rawMessage);
+  const reasonMessage = isEnumLikeMessage
+    ? "Dữ liệu phản hồi không khớp định dạng mong đợi."
     : (translateApiMessage(rawMessage) ?? rawMessage);
+  const reason = path ? `${path}: ${reasonMessage}` : reasonMessage;
 
   return {
     title: "Dữ liệu chưa hợp lệ",

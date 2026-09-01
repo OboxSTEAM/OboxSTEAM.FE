@@ -212,6 +212,7 @@ export function resolveNotificationHref(
       return programId ? `/programs/${programId}` : null;
 
     case "ProgramActivated":
+    case "ProgramWithdrawn":
     case "PaymentSucceeded":
     case "ModuleUnlocked":
     case "ModuleCompleted":
@@ -228,6 +229,7 @@ export function resolveNotificationHref(
     case "ClassSessionStarted":
     case "ClassSessionCompleted":
     case "ClassSessionCancelled":
+    case "SessionStartingSoon":
       if (isParent) return parentProgressHref(payload);
       if (isManager) {
         if (!classId) return null;
