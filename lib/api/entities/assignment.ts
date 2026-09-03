@@ -2,6 +2,12 @@ import { z } from "zod";
 
 export const assignmentTypeSchema = z.enum(["Quiz", "Retrospective", "FileUpload"]);
 
+/** BE often omits unset dates (undefined) rather than sending null. */
+const optionalNullableDateSchema = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? null);
+
 /**
  * Per-student status on enrollment curriculum assignment nodes.
  * Mirrors the backend `ResolveAssignmentStatus` output (CurriculumStatusHelper):
@@ -28,7 +34,18 @@ export const enrollmentCurriculumAssignmentSchema = z.object({
   maxPoints: z.number(),
   passScore: z.number(),
   isRequiredForModulePass: z.boolean(),
-  dueDate: z.string().nullable(),
+  dueDate: optionalNullableDateSchema,
+  availableFrom: optionalNullableDateSchema,
+  /**
+   * Latest quiz/file/retro submission for this student (when BE includes it on
+   * `EnrollmentCurriculumAssignmentDto`). Used to hydrate results via
+   * `GET /api/submissions/{submissionId}/quiz/result`.
+   */
+  latestSubmissionId: z
+    .string()
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? null),
   status: enrollmentAssignmentStatusSchema
     .nullish()
     .transform((value) => value ?? "locked"),
@@ -40,7 +57,11 @@ export type EnrollmentCurriculumAssignment = z.infer<
   typeof enrollmentCurriculumAssignmentSchema
 >;
 
-/** Full assignment detail from `GET /api/assignments/{assignmentId}`. */
+/**
+ * Full assignment detail from `GET /api/assignments/{assignmentId}`.
+ * OpenAPI `AssignmentResponseDto` currently omits schedule fields; tolerate
+ * omission while still accepting legacy null/string payloads.
+ */
 export const assignmentDetailSchema = z.object({
   id: z.string(),
   code: z.string().nullable(),
@@ -52,9 +73,9 @@ export const assignmentDetailSchema = z.object({
   maxPoints: z.number(),
   passScore: z.number(),
   isRequiredForModulePass: z.boolean(),
-  dueDate: z.string().nullable(),
-  availableFrom: z.string().nullable(),
-  availableUntil: z.string().nullable(),
+  dueDate: optionalNullableDateSchema,
+  availableFrom: optionalNullableDateSchema,
+  availableUntil: optionalNullableDateSchema,
   allowShuffle: z.boolean(),
   questionBankId: z.string().nullable(),
   questionCount: z.number().nullable(),

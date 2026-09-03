@@ -585,7 +585,9 @@ export function ResearchSubmissionPanel({
 
   const progressSubmissionId = isRetaking
     ? localSubmissionId
-    : (milestoneProgress?.submissionId ?? localSubmissionId);
+    : (milestoneProgress?.submissionId ??
+      flatAssignment.latestSubmissionId ??
+      localSubmissionId);
 
   const {
     data: submissionResult,
@@ -600,7 +602,11 @@ export function ResearchSubmissionPanel({
       }
       return getResearchSubmissionById(progressSubmissionId);
     },
-    deps: [progressSubmissionId],
+    deps: [
+      progressSubmissionId,
+      flatAssignment.latestSubmissionId,
+      milestoneProgress?.submissionId,
+    ],
     onError: (error) => {
       showAppErrorFromUnknown(error, "generic");
     },

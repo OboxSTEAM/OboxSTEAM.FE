@@ -11,6 +11,8 @@ export type FlatCurriculumAssignment = {
   title: string;
   assignmentType: AssignmentType;
   status: EnrollmentAssignmentStatus;
+  /** From curriculum DTO when BE exposes the student's latest attempt. */
+  latestSubmissionId: string | null;
   moduleId: string;
   moduleName: string;
   moduleType: EnrollmentCurriculum["modules"][number]["moduleType"];
@@ -46,6 +48,7 @@ function mapFlatAssignment(
     title: assignment.title,
     assignmentType: assignment.assignmentType,
     status: assignment.status,
+    latestSubmissionId: assignment.latestSubmissionId,
     moduleId: module.moduleId,
     moduleName: module.moduleName,
     moduleType: module.moduleType,

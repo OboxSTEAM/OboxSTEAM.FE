@@ -127,7 +127,14 @@ export const mindMapAssignmentInfoSchema = z.object({
   maxPoints: z.number(),
   passScore: z.number(),
   isRequiredForModulePass: z.boolean(),
-  dueDate: z.string().nullable(),
+  dueDate: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  availableFrom: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
 });
 
 export const mindMapAssignmentSchema = z.object({

@@ -140,6 +140,7 @@ function renderWindowState(
         email={handlers.userInfo.email}
         isModerator={handlers.meeting.isModerator}
         meetingHeight={handlers.meetingHeight}
+        onReadyToClose={handlers.onMeetingClose}
       />
     );
   }

@@ -6,6 +6,11 @@ import { enrollmentCurriculumAssignmentSchema } from "@/lib/api/entities/assignm
 import { curriculumMaterialSummarySchema } from "@/lib/api/entities/material";
 import { moduleTypeSchema } from "@/lib/api/entities/module";
 
+const optionalNullableString = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? null);
+
 export const enrollmentCurriculumActivitySchema = z.object({
   activityId: z.string(),
   activityName: z
@@ -17,9 +22,11 @@ export const enrollmentCurriculumActivitySchema = z.object({
   status: activityNavStatusSchema
     .nullish()
     .transform((value) => value ?? "locked"),
-  resumeState: resumeStateSchema.nullable(),
-  lastAccessedAt: z.string().nullable(),
-  material: curriculumMaterialSummarySchema.nullable(),
+  resumeState: resumeStateSchema.nullish().transform((value) => value ?? null),
+  lastAccessedAt: optionalNullableString,
+  material: curriculumMaterialSummarySchema
+    .nullish()
+    .transform((value) => value ?? null),
 });
 
 export const enrollmentCurriculumCourseSchema = z.object({
@@ -50,7 +57,9 @@ export const enrollmentCurriculumMilestoneSchema = z.object({
     .array(enrollmentCurriculumActivitySchema)
     .nullish()
     .transform((value) => value ?? []),
-  assignment: enrollmentCurriculumAssignmentSchema.nullable(),
+  assignment: enrollmentCurriculumAssignmentSchema
+    .nullish()
+    .transform((value) => value ?? null),
 });
 
 export const enrollmentCurriculumModuleSchema = z.object({
@@ -61,10 +70,10 @@ export const enrollmentCurriculumModuleSchema = z.object({
     .transform((value) => value ?? ""),
   moduleOrder: z.number(),
   moduleType: moduleTypeSchema,
-  prerequisiteModuleId: z.string().nullable(),
+  prerequisiteModuleId: optionalNullableString,
   isLocked: z.boolean(),
-  lockReason: z.string().nullable(),
-  moduleEnrollmentId: z.string().nullable(),
+  lockReason: optionalNullableString,
+  moduleEnrollmentId: optionalNullableString,
   courses: z
     .array(enrollmentCurriculumCourseSchema)
     .nullish()
@@ -87,7 +96,7 @@ export const enrollmentCurriculumSchema = z.object({
     .nullish()
     .transform((value) => value ?? ""),
   progressPercent: z.number(),
-  currentActivityId: z.string().nullable(),
+  currentActivityId: optionalNullableString,
   modules: z
     .array(enrollmentCurriculumModuleSchema)
     .nullish()

@@ -97,19 +97,22 @@ function formatDueDate(iso: string | null): string | null {
   }
 }
 
-/** Resume an existing attempt from local storage only — never auto-start. */
+/** Resume from curriculum `latestSubmissionId`, then localStorage — never auto-start. */
 async function loadRetrospectiveAttempt(
   assignmentId: string,
+  latestSubmissionId: string | null,
 ): Promise<RetrospectiveAttempt | null> {
-  const storedSubmissionId = getStoredRetrospectiveSubmissionId(assignmentId);
+  const submissionId =
+    latestSubmissionId?.trim() || getStoredRetrospectiveSubmissionId(assignmentId);
 
-  if (!storedSubmissionId) {
+  if (!submissionId) {
     return null;
   }
 
   try {
-    const result = await getRetrospectiveSubmission(storedSubmissionId);
+    const result = await getRetrospectiveSubmission(submissionId);
     if (result?.data) {
+      setStoredRetrospectiveSubmissionId(assignmentId, result.data.submissionId);
       return result.data;
     }
   } catch (error) {
@@ -273,8 +276,9 @@ export function RetrospectivePanel({
     retry: retryAttempt,
   } = useClientFetch({
     enabled: isAssignmentSelectable(flatAssignment.status),
-    fetcher: async () => loadRetrospectiveAttempt(assignmentId),
-    deps: [assignmentId, flatAssignment.status],
+    fetcher: async () =>
+      loadRetrospectiveAttempt(assignmentId, flatAssignment.latestSubmissionId),
+    deps: [assignmentId, flatAssignment.latestSubmissionId, flatAssignment.status],
     onError: (error) => {
       showAppErrorFromUnknown(error, "generic");
     },
@@ -457,7 +461,9 @@ export function RetrospectivePanel({
   const isRestoringSession =
     isAttemptLoading &&
     !attempt &&
-    (hasCompletedAttempt || Boolean(getStoredRetrospectiveSubmissionId(assignmentId)));
+    (hasCompletedAttempt ||
+      Boolean(flatAssignment.latestSubmissionId) ||
+      Boolean(getStoredRetrospectiveSubmissionId(assignmentId)));
 
   if (isRestoringSession) {
     return <RetrospectivePanelSkeleton />;
@@ -471,6 +477,30 @@ export function RetrospectivePanel({
           type="button"
           variant="outline"
           className="mt-4 border-learn-border"
+          onClick={retryAttempt}
+        >
+          Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  if (
+    hasCompletedAttempt &&
+    !attempt &&
+    !isAttemptLoading &&
+    !flatAssignment.latestSubmissionId &&
+    !getStoredRetrospectiveSubmissionId(assignmentId)
+  ) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">
+          Bài đã hoàn thành trên hồ sơ, nhưng chưa có mã bài nộp để tải nội dung.
+        </p>
+        <Button
+          type="button"
+          variant="outline"
+          className="border-learn-border"
           onClick={retryAttempt}
         >
           Thử lại

@@ -291,7 +291,6 @@ export {
   getAssignmentSubmissionById,
   getAssignmentSubmissions,
   getAssignments,
-  getAssignmentQuizResult,
   getInProgressQuiz,
   getQuizResult,
   getRetrospectiveSubmission,

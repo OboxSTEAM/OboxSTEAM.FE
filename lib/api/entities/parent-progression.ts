@@ -142,19 +142,46 @@ export const parentActivityStatsSchema = z.object({
  */
 export const parentAssignmentOutcomeSchema = z.object({
   assignmentId: z.string().uuid(),
-  title: z.string().nullable(),
+  title: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   assignmentType: assignmentTypeSchema,
   isRequiredForModulePass: z.boolean(),
-  dueDate: z.string().nullable(),
-  status: z.string().nullable(),
-  score: z.number().nullable(),
-  maxPoints: z.number().int().nullable(),
-  passScore: z.number().nullable(),
-  passed: z.boolean().nullable(),
-  submittedAt: z.string().nullable(),
-  gradedAt: z.string().nullable(),
-  attemptUsed: z.number().int().nullable(),
-  maxAttempts: z.number().int().nullable(),
+  dueDate: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  status: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  score: z.number().nullish().transform((value) => value ?? null),
+  maxPoints: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+  passScore: z.number().nullish().transform((value) => value ?? null),
+  passed: z.boolean().nullish().transform((value) => value ?? null),
+  submittedAt: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  gradedAt: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  attemptUsed: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+  maxAttempts: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
 });
 
 export const parentModuleProgressSchema = z.object({

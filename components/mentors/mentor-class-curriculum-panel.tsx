@@ -7,6 +7,8 @@ import {
   ClipboardList,
   ListTree,
   MapPin,
+  PanelLeftClose,
+  PanelLeftOpen,
   QrCode,
   Sparkles,
   Users,
@@ -67,6 +69,9 @@ import {
   ASSIGNMENT_TYPE_LABELS,
 } from "@/lib/curriculum/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { cn } from "@/lib/utils";
+
+const CURRICULUM_TREE_WIDTH_PX = 280;
 
 function getInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "HV";
@@ -181,6 +186,7 @@ export function MentorClassCurriculumPanel({
   const [isForceCompleteOpen, setIsForceCompleteOpen] = useState(false);
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [evidenceCount, setEvidenceCount] = useState(0);
+  const [isTreeOpen, setIsTreeOpen] = useState(true);
   const reduceMotion = useReducedMotion();
 
   useEffect(() => {
@@ -318,6 +324,7 @@ export function MentorClassCurriculumPanel({
     selection?.kind === "activity"
       ? findActivityInModules(modules, selection.activityId)
       : null;
+  const isOfflineActivity = selectedActivity?.activityType === "Offline";
 
   const selectedAssignment =
     selection?.kind === "assignment"
@@ -577,40 +584,88 @@ export function MentorClassCurriculumPanel({
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex h-[min(720px,calc(100dvh-14rem))] min-h-[480px] flex-col lg:flex-row">
-        <aside className="flex min-h-0 w-full shrink-0 flex-col border-b border-border bg-muted/25 max-lg:max-h-[45%] lg:h-full lg:w-[min(320px,34%)] lg:min-w-[240px] lg:border-b-0 lg:border-r">
-          <div className="shrink-0 border-b border-border px-4 py-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-              <ListTree className="size-4 text-primary" />
-              Chương trình
-            </p>
-            <p className="mt-0.5 text-[11px] text-muted-foreground">
-              {isTreeLoading
-                ? "Đang tải…"
-                : `${modules.length} module · ${assignments.length} bài tập`}
-            </p>
-          </div>
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-            {isTreeLoading && modules.length === 0 ? (
-              <div className="space-y-2 p-3">
-                <Skeleton className="h-12 w-full rounded-lg" />
-                <Skeleton className="h-12 w-full rounded-lg" />
-                <Skeleton className="h-12 w-full rounded-lg" />
+        <aside
+          id="mentor-curriculum-tree"
+          className={cn(
+            "flex min-h-0 shrink-0 flex-col overflow-hidden border-border bg-muted/25 transition-[width,max-height,opacity,border-width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
+            isTreeOpen
+              ? "w-full max-h-[45%] border-b opacity-100 lg:max-h-none lg:w-[280px] lg:min-w-[280px] lg:border-b-0 lg:border-r"
+              : "pointer-events-none max-h-0 w-0 border-0 opacity-0 lg:max-h-none",
+          )}
+          aria-hidden={!isTreeOpen}
+        >
+          <div
+            className="flex h-full w-full flex-col"
+            style={{ minWidth: CURRICULUM_TREE_WIDTH_PX }}
+          >
+            <div className="shrink-0 border-b border-border px-4 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <ListTree className="size-4 text-primary" />
+                    Chương trình
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
+                    {isTreeLoading
+                      ? "Đang tải…"
+                      : `${modules.length} module · ${assignments.length} bài tập`}
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="size-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground lg:hidden"
+                  onClick={() => setIsTreeOpen(false)}
+                  aria-label="Thu gọn cây chương trình"
+                  aria-expanded={isTreeOpen}
+                  aria-controls="mentor-curriculum-tree"
+                >
+                  <PanelLeftClose className="size-4" aria-hidden />
+                </Button>
               </div>
-            ) : (
-              <MentorCurriculumTree
-                modules={modules}
-                assignmentsByModule={assignmentsByModule}
-                milestonesByModule={milestonesByModule ?? {}}
-                selection={selection}
-                onSelect={handleSelect}
-                focusActivityId={selectedActivityId}
-                progress={treeProgress}
-              />
-            )}
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+              {isTreeLoading && modules.length === 0 ? (
+                <div className="space-y-2 p-3">
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                  <Skeleton className="h-12 w-full rounded-lg" />
+                </div>
+              ) : (
+                <MentorCurriculumTree
+                  modules={modules}
+                  assignmentsByModule={assignmentsByModule}
+                  milestonesByModule={milestonesByModule ?? {}}
+                  selection={selection}
+                  onSelect={handleSelect}
+                  focusActivityId={selectedActivityId}
+                  progress={treeProgress}
+                />
+              )}
+            </div>
           </div>
         </aside>
 
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border bg-muted/10 px-3 py-2 sm:px-4">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-2 rounded-lg px-2 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsTreeOpen((open) => !open)}
+              aria-expanded={isTreeOpen}
+              aria-controls="mentor-curriculum-tree"
+            >
+              {isTreeOpen ? (
+                <PanelLeftClose className="size-4" aria-hidden />
+              ) : (
+                <PanelLeftOpen className="size-4" aria-hidden />
+              )}
+              {isTreeOpen ? "Ẩn chương trình" : "Hiện chương trình"}
+            </Button>
+          </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           {!selection ? (
             <div className="flex min-h-full items-center justify-center p-6">
@@ -716,7 +771,8 @@ export function MentorClassCurriculumPanel({
                           />
                         </div>
                       ) : null}
-                      {selectedSession?.location?.trim() ? (
+                      {isOfflineActivity &&
+                      selectedSession?.location?.trim() ? (
                         <p className="flex items-center gap-1.5 border-t border-border px-4 py-2 text-xs text-muted-foreground">
                           <MapPin className="size-3.5 shrink-0" aria-hidden />
                           <span className="truncate">
@@ -753,18 +809,26 @@ export function MentorClassCurriculumPanel({
               {selectedActivity.activityType !== "SelfPaced" &&
               effectiveSessionId ? (
                 <>
-                  <SessionEvidencePanel
-                    sessionId={effectiveSessionId}
-                    requireMediaEvidence={selectedActivity.requireMediaEvidence}
-                    onCountChange={setEvidenceCount}
-                  />
+                  {isOfflineActivity ? (
+                    <SessionEvidencePanel
+                      sessionId={effectiveSessionId}
+                      requireMediaEvidence={
+                        selectedActivity.requireMediaEvidence
+                      }
+                      onCountChange={setEvidenceCount}
+                    />
+                  ) : null}
                   <MentorActivityAttendancePanel
                     students={attendanceStudents}
                     isLoading={isAttendanceLoading}
                     updatingStudentId={updatingAttendanceId}
                     isCompletingActivity={isMentorCompleting}
-                    requireMediaEvidence={selectedActivity.requireMediaEvidence}
-                    evidenceCount={evidenceCount}
+                    requireMediaEvidence={
+                      isOfflineActivity
+                        ? selectedActivity.requireMediaEvidence
+                        : false
+                    }
+                    evidenceCount={isOfflineActivity ? evidenceCount : 0}
                     onStatusChange={handleAttendanceChange}
                     onCompleteActivity={() => {
                       void handleMentorCompleteActivity();

@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getAssignmentById,
-  getAssignmentQuizResult,
   getInProgressQuiz,
   getQuizResult,
   saveQuizDraftAnswers,
@@ -81,34 +80,26 @@ function isMissingQuizResultError(error: unknown): boolean {
   return error instanceof ApiRequestError && (error.status === 404 || error.status === 405);
 }
 
+/**
+ * Hydrate graded/in-progress quiz via submission-scoped APIs only.
+ * Prefer curriculum `latestSubmissionId`, then localStorage from this browser.
+ */
 async function loadHydratedQuizState(
   assignmentId: string,
-  flatStatus: FlatCurriculumAssignment["status"],
+  latestSubmissionId: string | null,
 ): Promise<HydratedQuizState | null> {
-  if (isCompletedAssignmentStatus(flatStatus)) {
-    try {
-      const assignmentResult = await getAssignmentQuizResult(assignmentId);
-      const graded = assignmentResult?.data;
-      if (graded) {
-        setStoredQuizSubmissionId(assignmentId, graded.submissionId);
-        return { phase: "result", result: graded };
-      }
-    } catch (error) {
-      if (!isMissingQuizResultError(error)) {
-        throw error;
-      }
-    }
-  }
+  const submissionId =
+    latestSubmissionId?.trim() || getStoredQuizSubmissionId(assignmentId);
 
-  const storedSubmissionId = getStoredQuizSubmissionId(assignmentId);
-  if (!storedSubmissionId) {
+  if (!submissionId) {
     return null;
   }
 
   try {
-    const gradedResult = await getQuizResult(storedSubmissionId);
+    const gradedResult = await getQuizResult(submissionId);
     const graded = gradedResult?.data;
     if (graded) {
+      setStoredQuizSubmissionId(assignmentId, graded.submissionId);
       return { phase: "result", result: graded };
     }
   } catch (error) {
@@ -118,9 +109,10 @@ async function loadHydratedQuizState(
   }
 
   try {
-    const inProgressResult = await getInProgressQuiz(storedSubmissionId);
+    const inProgressResult = await getInProgressQuiz(submissionId);
     const attempt = inProgressResult?.data;
     if (attempt) {
+      setStoredQuizSubmissionId(assignmentId, attempt.submissionId);
       return { phase: "attempt", attempt };
     }
   } catch (error) {
@@ -233,8 +225,9 @@ export function QuizPanel({
     enabled:
       isAssignmentSelectable(flatAssignment.status) &&
       flatAssignment.assignmentType === "Quiz",
-    fetcher: async () => loadHydratedQuizState(assignmentId, flatAssignment.status),
-    deps: [assignmentId, flatAssignment.status],
+    fetcher: async () =>
+      loadHydratedQuizState(assignmentId, flatAssignment.latestSubmissionId),
+    deps: [assignmentId, flatAssignment.latestSubmissionId, flatAssignment.status],
     onError: (error) => {
       showAppErrorFromUnknown(error, "generic");
     },
@@ -455,7 +448,11 @@ export function QuizPanel({
   }
 
   const isRestoringSession =
-    isHydrating && phase === "intro" && (hasCompletedAttempt || Boolean(getStoredQuizSubmissionId(assignmentId)));
+    isHydrating &&
+    phase === "intro" &&
+    (hasCompletedAttempt ||
+      Boolean(flatAssignment.latestSubmissionId) ||
+      Boolean(getStoredQuizSubmissionId(assignmentId)));
 
   if (isRestoringSession) {
     return <QuizPanelSkeleton />;
@@ -463,7 +460,7 @@ export function QuizPanel({
 
   if (hydrationError && hasCompletedAttempt && phase === "intro" && !result) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Không tải được kết quả bài kiểm tra.</p>
         <Button
           type="button"
@@ -472,6 +469,31 @@ export function QuizPanel({
           onClick={retryHydration}
         >
           Thử lại
+        </Button>
+      </div>
+    );
+  }
+
+  if (
+    hasCompletedAttempt &&
+    phase === "intro" &&
+    !result &&
+    !isHydrating &&
+    !flatAssignment.latestSubmissionId &&
+    !getStoredQuizSubmissionId(assignmentId)
+  ) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+        <p className="text-sm text-learn-muted">
+          Bài đã hoàn thành trên hồ sơ, nhưng chưa có mã bài nộp để tải kết quả.
+        </p>
+        <Button
+          type="button"
+          className="bg-learn-primary text-white hover:bg-learn-primary/90"
+          disabled={isStarting}
+          onClick={() => void handleStart()}
+        >
+          {isStarting ? "Đang mở bài..." : "Làm lại bài kiểm tra"}
         </Button>
       </div>
     );
