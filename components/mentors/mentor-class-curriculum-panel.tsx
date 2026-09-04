@@ -3,42 +3,32 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CalendarClock,
-  ChevronDown,
-  ClipboardList,
   ListTree,
   MapPin,
   PanelLeftClose,
   PanelLeftOpen,
   QrCode,
-  Sparkles,
   Users,
-  Zap,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { MentorActivityAttendancePanel } from "@/components/mentors/mentor-activity-attendance-panel";
+import { MentorClassGradingPanel } from "@/components/mentors/mentor-class-grading-panel";
 import { MentorClassQuizSetPanel } from "@/components/mentors/mentor-class-quiz-set-panel";
 import {
   MentorCurriculumTree,
   type MentorCurriculumSelection,
   type MentorCurriculumTreeProgress,
 } from "@/components/mentors/mentor-curriculum-tree";
+import { MentorStudentProgressPane } from "@/components/mentors/mentor-student-progress-pane";
 import { LiveSessionJoinPanel } from "@/components/curriculum/live-session-join-panel";
 import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
 import { SessionEvidencePanel } from "@/components/mentors/session-evidence-panel";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
-import {
-  ManagerDataTable,
-  type ColumnDef,
-} from "@/components/manager/shared/data-table";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import {
-  forceCompleteActivity,
   getAssignments,
   getClassCurriculumProgress,
   getClassSessionWithStudents,
@@ -49,7 +39,6 @@ import {
   updateSessionAttendance,
   type Activity,
   type AssignmentListItem,
-  type AssignmentType,
   type ClassCurriculumProgress,
   type ClassSession,
   type ClassSessionStudent,
@@ -73,16 +62,6 @@ import { cn } from "@/lib/utils";
 
 const CURRICULUM_TREE_WIDTH_PX = 280;
 
-function getInitials(name: string | null | undefined): string {
-  if (!name?.trim()) return "HV";
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(-2)
-    .map((part) => part[0]?.toUpperCase())
-    .join("");
-}
-
 function findActivityInModules(
   modules: Module[],
   activityId: string,
@@ -91,24 +70,6 @@ function findActivityInModules(
     for (const course of module.courses ?? []) {
       const found = (course.activities ?? []).find((a) => a.id === activityId);
       if (found) return found;
-    }
-  }
-  return null;
-}
-
-function resolveAssignmentType(
-  assignmentId: string,
-  assignments: AssignmentListItem[],
-  milestonesByModule: Record<string, ResearchMilestone[]> | undefined,
-): AssignmentType | null {
-  const fromList = assignments.find((item) => item.id === assignmentId);
-  if (fromList) return fromList.assignmentType;
-
-  for (const list of Object.values(milestonesByModule ?? {})) {
-    for (const milestone of list) {
-      if (milestone.assignmentId === assignmentId) {
-        return milestone.assignment?.assignmentType ?? "FileUpload";
-      }
     }
   }
   return null;
@@ -125,12 +86,16 @@ function toTreeProgress(
   for (const module of data.modules ?? []) {
     for (const activity of module.activities ?? []) {
       activitiesById[activity.activityId] = {
+        status: activity.status,
         completedCount: activity.completedCount,
         inProgressCount: activity.inProgressCount,
+        classSessionId: activity.classSessionId,
+        sessionStatus: activity.sessionStatus,
       };
     }
     for (const assignment of module.assignments ?? []) {
       assignmentsById[assignment.assignmentId] = {
+        status: assignment.status,
         submittedCount: assignment.submittedCount,
         gradedCount: assignment.gradedCount,
       };
@@ -139,6 +104,7 @@ function toTreeProgress(
 
   return {
     totalStudents: data.totalStudents,
+    currentActivityId: data.currentActivityId,
     activitiesById,
     assignmentsById,
   };
@@ -152,18 +118,16 @@ type MentorClassCurriculumPanelProps = {
   initialActivityId?: string | null;
   initialSessionId?: string | null;
   initialAssignmentId?: string | null;
-  onOpenGrading?: (assignmentId: string) => void;
 };
 
 export function MentorClassCurriculumPanel({
   classId,
   programId,
-  roster,
+  roster: _roster,
   sessions,
   initialActivityId = null,
   initialSessionId = null,
   initialAssignmentId = null,
-  onOpenGrading,
 }: MentorClassCurriculumPanelProps) {
   const [selection, setSelection] = useState<MentorCurriculumSelection | null>(
     () => {
@@ -181,13 +145,9 @@ export function MentorClassCurriculumPanel({
     null,
   );
   const [isMentorCompleting, setIsMentorCompleting] = useState(false);
-  const [forceCompletingId, setForceCompletingId] = useState<string | null>(null);
-  const [bulkForceBusy, setBulkForceBusy] = useState(false);
-  const [isForceCompleteOpen, setIsForceCompleteOpen] = useState(false);
   const [isQrOpen, setIsQrOpen] = useState(false);
   const [evidenceCount, setEvidenceCount] = useState(0);
   const [isTreeOpen, setIsTreeOpen] = useState(true);
-  const reduceMotion = useReducedMotion();
 
   useEffect(() => {
     if (initialAssignmentId) {
@@ -215,7 +175,6 @@ export function MentorClassCurriculumPanel({
     selection?.kind === "activity" ? selection.activityId : null;
 
   useEffect(() => {
-    setIsForceCompleteOpen(false);
     setIsQrOpen(false);
     setEvidenceCount(0);
   }, [selectedActivityId]);
@@ -392,24 +351,12 @@ export function MentorClassCurriculumPanel({
     );
   }, [selectedSession]);
 
-  const handleSelect = useCallback(
-    (next: MentorCurriculumSelection) => {
-      if (next.kind === "assignment") {
-        const assignmentType = resolveAssignmentType(
-          next.assignmentId,
-          assignments,
-          milestonesByModule ?? undefined,
-        );
-        if (assignmentType && assignmentType !== "Quiz" && onOpenGrading) {
-          onOpenGrading(next.assignmentId);
-          return;
-        }
-        setSessionId("");
-      }
-      setSelection(next);
-    },
-    [assignments, milestonesByModule, onOpenGrading],
-  );
+  const handleSelect = useCallback((next: MentorCurriculumSelection) => {
+    if (next.kind === "assignment") {
+      setSessionId("");
+    }
+    setSelection(next);
+  }, []);
 
   const handleAttendanceChange = useCallback(
     async (student: ClassSessionStudent, status: SessionAttendanceStatus) => {
@@ -470,114 +417,6 @@ export function MentorClassCurriculumPanel({
     retryCurriculumProgress,
     selectedActivity,
   ]);
-
-  const handleForceComplete = useCallback(
-    async (student: ClassStudentRoster, activityId: string) => {
-      setForceCompletingId(student.studentId);
-      try {
-        await forceCompleteActivity({
-          studentId: student.studentId,
-          activityId,
-        });
-        showAppSuccess({
-          title: "Force complete (test)",
-          description: `${student.studentName || student.studentCode || "Học viên"} đã được đánh dấu Done.`,
-        });
-        retryCurriculumProgress();
-      } catch (error) {
-        showAppErrorFromUnknown(error, "activityProgress.forceComplete");
-      } finally {
-        setForceCompletingId(null);
-      }
-    },
-    [retryCurriculumProgress],
-  );
-
-  const handleBulkForceComplete = useCallback(
-    async (activityId: string) => {
-      const active = roster.filter((s) => s.enrollmentStatus === "Active");
-      if (active.length === 0) return;
-      setBulkForceBusy(true);
-      let ok = 0;
-      for (const student of active) {
-        try {
-          await forceCompleteActivity({
-            studentId: student.studentId,
-            activityId,
-          });
-          ok += 1;
-        } catch {
-          /* continue remaining students */
-        }
-      }
-      setBulkForceBusy(false);
-      showAppSuccess({
-        title: "Force complete hàng loạt (test)",
-        description: `Đã xử lý ${ok}/${active.length} học viên active.`,
-      });
-      retryCurriculumProgress();
-    },
-    [roster, retryCurriculumProgress],
-  );
-
-  const forceCompleteColumns: ColumnDef<ClassStudentRoster>[] = useMemo(
-    () => [
-      {
-        header: "Học viên",
-        render: (student) => (
-          <div className="flex min-w-0 items-center gap-3">
-            <Avatar className="size-9 border border-border">
-              <AvatarImage src={student.avatarUrl || undefined} alt="" />
-              <AvatarFallback className="bg-primary/10 text-[10px] font-bold text-primary">
-                {getInitials(student.studentName)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="min-w-0">
-              <p className="truncate font-semibold text-foreground">
-                {student.studentName || "Chưa cập nhật tên"}
-              </p>
-              <p className="truncate text-xs text-muted-foreground">
-                {student.studentCode || student.email || "—"}
-              </p>
-            </div>
-          </div>
-        ),
-      },
-      {
-        header: "",
-        sticky: "right",
-        className: "w-40 text-right",
-        render: (student) => (
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            disabled={
-              forceCompletingId === student.studentId ||
-              bulkForceBusy ||
-              !selectedActivity
-            }
-            className="h-7 gap-1 rounded-md text-xs"
-            onClick={() => {
-              if (!selectedActivity) return;
-              void handleForceComplete(student, selectedActivity.id);
-            }}
-          >
-            <Zap className="size-3.5" />
-            {forceCompletingId === student.studentId
-              ? "Đang lưu…"
-              : "Force complete"}
-          </Button>
-        ),
-      },
-    ],
-    [
-      bulkForceBusy,
-      forceCompletingId,
-      handleForceComplete,
-      selectedActivity,
-    ],
-  );
 
   const isTreeLoading = isProgramLoading || isAssignmentsLoading;
 
@@ -671,29 +510,43 @@ export function MentorClassCurriculumPanel({
             <div className="flex min-h-full items-center justify-center p-6">
               <ManagerEmptyState
                 title="Chọn một mục trong cây chương trình"
-                description="Xem hoạt động để điểm danh / force-complete, hoặc chọn bài Quiz để kéo và chỉnh bộ đề lớp."
+                description="Xem hoạt động để điểm danh / theo dõi tiến độ, hoặc chọn bài tập để chấm ngay tại đây."
                 icon={ListTree}
               />
             </div>
           ) : selection.kind === "assignment" && selectedAssignment ? (
-            selectedAssignment.assignmentType === "Quiz" ? (
-              <MentorClassQuizSetPanel
-                assignmentId={selectedAssignment.id}
-                classId={classId}
-                assignmentTitle={selectedAssignment.title}
-              />
-            ) : (
-              <div className="flex min-h-full flex-col items-center justify-center gap-3 p-6">
-                <Badge variant="secondary">
+            <div className="flex min-h-full flex-col">
+              <div className="border-b border-border bg-muted/30 px-4 py-3 sm:px-6">
+                <p className="text-xs text-muted-foreground">
                   {ASSIGNMENT_TYPE_LABELS[selectedAssignment.assignmentType]}
-                </Badge>
-                <ManagerEmptyState
-                  title={selectedAssignment.title?.trim() || "Bài tập"}
-                  description="Chấm bài và xem nộp nằm ở tab Chấm bài. Bộ đề kéo/chỉnh chỉ áp dụng cho Quiz."
-                  icon={ClipboardList}
-                />
+                </p>
+                <h2 className="font-heading text-lg font-semibold text-foreground">
+                  {selectedAssignment.title?.trim() || "Bài tập"}
+                </h2>
               </div>
-            )
+
+              <MentorStudentProgressPane
+                classId={classId}
+                kind="assignment"
+                targetId={selectedAssignment.id}
+                onProgressMutated={retryCurriculumProgress}
+              />
+
+              {selectedAssignment.assignmentType === "Quiz" ? (
+                <MentorClassQuizSetPanel
+                  assignmentId={selectedAssignment.id}
+                  classId={classId}
+                  assignmentTitle={selectedAssignment.title}
+                />
+              ) : (
+                <MentorClassGradingPanel
+                  classId={classId}
+                  programId={programId}
+                  initialAssignmentId={selectedAssignment.id}
+                  embedded
+                />
+              )}
+            </div>
           ) : selection.kind === "activity" && selectedActivity ? (
             <>
               <div className="border-b border-border bg-muted/30 px-4 py-3 sm:px-6">
@@ -806,6 +659,14 @@ export function MentorClassCurriculumPanel({
                 ) : null}
               </div>
 
+              <MentorStudentProgressPane
+                classId={classId}
+                kind="activity"
+                targetId={selectedActivity.id}
+                enableForceComplete
+                onProgressMutated={retryCurriculumProgress}
+              />
+
               {selectedActivity.activityType !== "SelfPaced" &&
               effectiveSessionId ? (
                 <>
@@ -844,88 +705,6 @@ export function MentorClassCurriculumPanel({
                   />
                 </div>
               ) : null}
-
-              <div className="border-t border-border">
-                <button
-                  type="button"
-                  onClick={() => setIsForceCompleteOpen((open) => !open)}
-                  aria-expanded={isForceCompleteOpen}
-                  className="flex w-full items-center justify-between gap-2 bg-muted/15 px-4 py-2.5 text-left transition-colors hover:bg-muted/30 sm:px-6"
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    <Zap className="size-3.5 shrink-0 text-muted-foreground" />
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      Force complete (test)
-                    </span>
-                    <Badge
-                      variant="outline"
-                      className="h-5 border-dashed px-1.5 text-[10px] font-medium text-muted-foreground"
-                    >
-                      Dev only
-                    </Badge>
-                  </span>
-                  <ChevronDown
-                    className={`size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none ${
-                      isForceCompleteOpen ? "rotate-180" : ""
-                    }`}
-                    aria-hidden
-                  />
-                </button>
-
-                <AnimatePresence initial={false}>
-                  {isForceCompleteOpen ? (
-                    <motion.div
-                      key="force-complete-panel"
-                      initial={
-                        reduceMotion ? false : { height: 0, opacity: 0 }
-                      }
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={
-                        reduceMotion ? undefined : { height: 0, opacity: 0 }
-                      }
-                      transition={{
-                        duration: 0.28,
-                        ease: [0.16, 1, 0.3, 1],
-                      }}
-                      className="overflow-hidden border-t border-border"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2 bg-muted/10 px-4 py-2 sm:px-6">
-                        <p className="text-[11px] text-muted-foreground">
-                          Bỏ qua khóa tuần tự — chỉ dùng khi kiểm thử
-                        </p>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={bulkForceBusy || roster.length === 0}
-                          className="h-7 gap-1.5 rounded-md text-[11px]"
-                          onClick={() =>
-                            void handleBulkForceComplete(selectedActivity.id)
-                          }
-                        >
-                          <Sparkles className="size-3.5" />
-                          {bulkForceBusy
-                            ? "Đang force…"
-                            : "Force complete cả lớp"}
-                        </Button>
-                      </div>
-                      <div className="overflow-x-auto p-4 sm:p-6">
-                        <ManagerDataTable
-                          columns={forceCompleteColumns}
-                          data={roster}
-                          emptyState={
-                            <ManagerEmptyState
-                              title="Chưa có học viên"
-                              description="Roster lớp trống."
-                              icon={Users}
-                            />
-                          }
-                        />
-                      </div>
-                    </motion.div>
-                  ) : null}
-                </AnimatePresence>
-              </div>
 
               <SessionCheckinQrDialog
                 open={isQrOpen}

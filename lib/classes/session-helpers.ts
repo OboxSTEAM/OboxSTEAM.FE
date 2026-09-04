@@ -146,7 +146,6 @@ export type LiveJoinPhase =
   | "locked"
   | "countdown"
   | "live"
-  | "recording"
   | "ended";
 
 export type LiveJoinState = {
@@ -216,12 +215,7 @@ export function getLiveJoinState(
   }
 
   if (session.status === "Completed" || nowMs >= endMs) {
-    return {
-      phase: joinUrl ? "recording" : "ended",
-      joinUrl,
-      msUntilOpen: 0,
-      msUntilStart: 0,
-    };
+    return { phase: "ended", joinUrl, msUntilOpen: 0, msUntilStart: 0 };
   }
 
   if (session.status === "InProgress" || nowMs >= startMs) {
@@ -257,9 +251,9 @@ export function isSessionAttendanceWindowOpen(
   return phase === "countdown" || phase === "live";
 }
 
-/** True when the Meet / join URL may be shown to students. */
+/** True when the Meet / join URL may be shown (T−15 through session end). */
 export function canRevealSessionJoinUrl(phase: LiveJoinPhase): boolean {
-  return phase === "countdown" || phase === "live" || phase === "recording";
+  return phase === "countdown" || phase === "live";
 }
 
 /** Roster / leave summary, e.g. "45 phút" or "1g 15p". */

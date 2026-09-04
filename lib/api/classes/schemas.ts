@@ -3,6 +3,10 @@ import { z } from "zod";
 import { classSchema, classWithSessionsSchema } from "@/lib/api/entities/class";
 import { classCurriculumProgressSchema } from "@/lib/api/entities/class-curriculum-progress";
 import {
+  classActivityStudentProgressSchema,
+  classAssignmentStudentProgressSchema,
+} from "@/lib/api/entities/class-student-progress";
+import {
   classSessionSchema,
   classSessionWithStudentsSchema,
 } from "@/lib/api/entities/class-session";
@@ -67,6 +71,18 @@ export const getClassCurriculumProgressResponseSchema = createApiResponseSchema(
   classCurriculumProgressValueSchema,
 );
 
+export const classActivityStudentProgressValueSchema = createApiValueSchema(
+  classActivityStudentProgressSchema,
+);
+export const getClassActivityStudentProgressResponseSchema =
+  createApiResponseSchema(classActivityStudentProgressValueSchema);
+
+export const classAssignmentStudentProgressValueSchema = createApiValueSchema(
+  classAssignmentStudentProgressSchema,
+);
+export const getClassAssignmentStudentProgressResponseSchema =
+  createApiResponseSchema(classAssignmentStudentProgressValueSchema);
+
 export type GetClassesResponse = z.infer<typeof getClassesResponseSchema>;
 export type GetClassesResult = GetClassesResponse["value"];
 
@@ -116,3 +132,15 @@ export type GetClassCurriculumProgressResponse = z.infer<
 >;
 export type GetClassCurriculumProgressResult =
   GetClassCurriculumProgressResponse["value"];
+
+export type GetClassActivityStudentProgressResponse = z.infer<
+  typeof getClassActivityStudentProgressResponseSchema
+>;
+export type GetClassActivityStudentProgressResult =
+  GetClassActivityStudentProgressResponse["value"];
+
+export type GetClassAssignmentStudentProgressResponse = z.infer<
+  typeof getClassAssignmentStudentProgressResponseSchema
+>;
+export type GetClassAssignmentStudentProgressResult =
+  GetClassAssignmentStudentProgressResponse["value"];

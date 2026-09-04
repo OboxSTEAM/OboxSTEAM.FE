@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ExternalLink, Loader2, Video } from "lucide-react";
+import { Loader2, Video } from "lucide-react";
 
 import { JoinCountdownHero } from "@/components/curriculum/join-countdown-hero";
 import { LiveJaasMeeting } from "@/components/curriculum/live-jaas-meeting";
@@ -9,7 +9,6 @@ import {
   idleJoinButtonClass,
   joinPanelDashedMessageClass,
   joinPanelMessageClass,
-  recordingLinkClass,
   type SessionJoinVariant,
 } from "@/components/curriculum/session-join-styles";
 import { Button } from "@/components/ui/button";
@@ -36,26 +35,6 @@ type LiveSessionJoinPanelProps = {
   /** `learn` = inside `.learn-shell`; `app` = mentor/manager surfaces */
   variant?: SessionJoinVariant;
 };
-
-function RecordingLink({
-  joinUrl,
-  variant,
-}: {
-  joinUrl: string;
-  variant: SessionJoinVariant;
-}) {
-  return (
-    <a
-      href={joinUrl}
-      target="_blank"
-      rel="noopener noreferrer"
-      className={recordingLinkClass(variant)}
-    >
-      Xem ghi hình
-      <ExternalLink className="size-3.5" aria-hidden />
-    </a>
-  );
-}
 
 function IdleJoinButton({
   label,
@@ -182,10 +161,6 @@ function renderWindowState(
         onJoin={handlers.onJoin}
       />
     );
-  }
-
-  if (join.phase === "recording" && join.joinUrl) {
-    return <RecordingLink joinUrl={join.joinUrl} variant={variant} />;
   }
 
   return (

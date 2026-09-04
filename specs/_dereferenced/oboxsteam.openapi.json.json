@@ -12358,7 +12358,7 @@
           "ActivityProgress"
         ],
         "summary": "Mentor-complete a session activity for the class roster",
-        "description": "Marks a LiveOnline or Offline activity Done for every active student on the class roster of the given class session who has Present, Late, or Excused attendance. Returns per-student outcomes (Completed, AlreadyDone, Skipped). Requires Mentor or Manager role.",
+        "description": "Marks a LiveOnline or Offline activity Done for every active student on the class roster of the given class session who has Present, Late, or Excused attendance (student QR/code check-in or mentor/manager roster mark; neither source is required). Returns per-student outcomes (Completed, AlreadyDone, Skipped). Requires Mentor or Manager role.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -38706,6 +38706,11 @@
                               "type": "integer",
                               "format": "int32"
                             },
+                            "currentActivityId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "modules": {
                               "type": "array",
                               "items": {
@@ -38723,6 +38728,25 @@
                                         "activityId": {
                                           "type": "string",
                                           "format": "uuid"
+                                        },
+                                        "status": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "classSessionId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "sessionStatus": {
+                                          "enum": [
+                                            "Scheduled",
+                                            "InProgress",
+                                            "Completed",
+                                            "Cancelled"
+                                          ],
+                                          "type": "string",
+                                          "nullable": true
                                         },
                                         "completedCount": {
                                           "type": "integer",
@@ -38745,6 +38769,10 @@
                                         "assignmentId": {
                                           "type": "string",
                                           "format": "uuid"
+                                        },
+                                        "status": {
+                                          "type": "string",
+                                          "nullable": true
                                         },
                                         "submittedCount": {
                                           "type": "integer",
@@ -38822,6 +38850,11 @@
                               "type": "integer",
                               "format": "int32"
                             },
+                            "currentActivityId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "modules": {
                               "type": "array",
                               "items": {
@@ -38839,6 +38872,25 @@
                                         "activityId": {
                                           "type": "string",
                                           "format": "uuid"
+                                        },
+                                        "status": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "classSessionId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "sessionStatus": {
+                                          "enum": [
+                                            "Scheduled",
+                                            "InProgress",
+                                            "Completed",
+                                            "Cancelled"
+                                          ],
+                                          "type": "string",
+                                          "nullable": true
                                         },
                                         "completedCount": {
                                           "type": "integer",
@@ -38861,6 +38913,10 @@
                                         "assignmentId": {
                                           "type": "string",
                                           "format": "uuid"
+                                        },
+                                        "status": {
+                                          "type": "string",
+                                          "nullable": true
                                         },
                                         "submittedCount": {
                                           "type": "integer",
@@ -38938,6 +38994,11 @@
                               "type": "integer",
                               "format": "int32"
                             },
+                            "currentActivityId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "modules": {
                               "type": "array",
                               "items": {
@@ -38955,6 +39016,25 @@
                                         "activityId": {
                                           "type": "string",
                                           "format": "uuid"
+                                        },
+                                        "status": {
+                                          "type": "string",
+                                          "nullable": true
+                                        },
+                                        "classSessionId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
+                                        },
+                                        "sessionStatus": {
+                                          "enum": [
+                                            "Scheduled",
+                                            "InProgress",
+                                            "Completed",
+                                            "Cancelled"
+                                          ],
+                                          "type": "string",
+                                          "nullable": true
                                         },
                                         "completedCount": {
                                           "type": "integer",
@@ -38977,6 +39057,10 @@
                                         "assignmentId": {
                                           "type": "string",
                                           "format": "uuid"
+                                        },
+                                        "status": {
+                                          "type": "string",
+                                          "nullable": true
                                         },
                                         "submittedCount": {
                                           "type": "integer",
@@ -39003,6 +39087,2104 @@
                             }
                           },
                           "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classes/{classId}/activities/{activityId}/student-progress": {
+      "get": {
+        "tags": [
+          "Class"
+        ],
+        "summary": "Get per-student activity progress for a class",
+        "description": "Returns one row per active class enrollment for the activity (missing progress → NotStart), plus summary counts. LiveOnline/Offline include primary session attendance fields. Requires the assigned mentor of the class.",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "activityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "classId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "activityId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "activityType": {
+                              "enum": [
+                                "SelfPaced",
+                                "LiveOnline",
+                                "Offline"
+                              ],
+                              "type": "string"
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "sessionStatus": {
+                              "enum": [
+                                "Scheduled",
+                                "InProgress",
+                                "Completed",
+                                "Cancelled"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "totalStudents": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "completedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "inProgressCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "notStartedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "studentId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "studentCode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "studentName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "avatarUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "activityStatus": {
+                                    "enum": [
+                                      "NotStart",
+                                      "InProgress",
+                                      "Done"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "completedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "lastAccessedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "completionSource": {
+                                    "enum": [
+                                      "Manual",
+                                      "Video",
+                                      "Reading",
+                                      "Mentor"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "attendanceStatus": {
+                                    "enum": [
+                                      "Expected",
+                                      "Present",
+                                      "Absent",
+                                      "Excused",
+                                      "Late"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "checkedInAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "participationMinutes": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "classId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "activityId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "activityType": {
+                              "enum": [
+                                "SelfPaced",
+                                "LiveOnline",
+                                "Offline"
+                              ],
+                              "type": "string"
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "sessionStatus": {
+                              "enum": [
+                                "Scheduled",
+                                "InProgress",
+                                "Completed",
+                                "Cancelled"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "totalStudents": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "completedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "inProgressCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "notStartedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "studentId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "studentCode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "studentName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "avatarUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "activityStatus": {
+                                    "enum": [
+                                      "NotStart",
+                                      "InProgress",
+                                      "Done"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "completedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "lastAccessedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "completionSource": {
+                                    "enum": [
+                                      "Manual",
+                                      "Video",
+                                      "Reading",
+                                      "Mentor"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "attendanceStatus": {
+                                    "enum": [
+                                      "Expected",
+                                      "Present",
+                                      "Absent",
+                                      "Excused",
+                                      "Late"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "checkedInAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "participationMinutes": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "classId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "activityId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "activityType": {
+                              "enum": [
+                                "SelfPaced",
+                                "LiveOnline",
+                                "Offline"
+                              ],
+                              "type": "string"
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "sessionStatus": {
+                              "enum": [
+                                "Scheduled",
+                                "InProgress",
+                                "Completed",
+                                "Cancelled"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "totalStudents": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "completedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "inProgressCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "notStartedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "studentId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "studentCode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "studentName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "avatarUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "activityStatus": {
+                                    "enum": [
+                                      "NotStart",
+                                      "InProgress",
+                                      "Done"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "completedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "lastAccessedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "completionSource": {
+                                    "enum": [
+                                      "Manual",
+                                      "Video",
+                                      "Reading",
+                                      "Mentor"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "attendanceStatus": {
+                                    "enum": [
+                                      "Expected",
+                                      "Present",
+                                      "Absent",
+                                      "Excused",
+                                      "Late"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "checkedInAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "participationMinutes": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/classes/{classId}/assignments/{assignmentId}/student-progress": {
+      "get": {
+        "tags": [
+          "Class"
+        ],
+        "summary": "Get per-student assignment progress for a class",
+        "description": "Returns one row per active class enrollment with the latest class-scoped attempt (or nulls if never started), plus summary counts and class nav status (available | submitted | completed). Requires the assigned mentor of the class.",
+        "parameters": [
+          {
+            "name": "classId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "assignmentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "classId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "assignmentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "assignmentType": {
+                              "enum": [
+                                "Retrospective",
+                                "FileUpload",
+                                "Quiz"
+                              ],
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "totalStudents": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "submittedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "gradedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "notStartedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "averageScore": {
+                              "type": "number",
+                              "format": "double",
+                              "nullable": true
+                            },
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "studentId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "studentCode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "studentName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "avatarUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "submissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  },
+                                  "submissionStatus": {
+                                    "enum": [
+                                      "Pending",
+                                      "TurnedIn",
+                                      "Graded",
+                                      "ReturnedForRevision"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "assignedGrade": {
+                                    "type": "number",
+                                    "format": "double",
+                                    "nullable": true
+                                  },
+                                  "passed": {
+                                    "type": "boolean",
+                                    "nullable": true
+                                  },
+                                  "submittedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "gradedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "classId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "assignmentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "assignmentType": {
+                              "enum": [
+                                "Retrospective",
+                                "FileUpload",
+                                "Quiz"
+                              ],
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "totalStudents": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "submittedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "gradedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "notStartedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "averageScore": {
+                              "type": "number",
+                              "format": "double",
+                              "nullable": true
+                            },
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "studentId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "studentCode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "studentName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "avatarUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "submissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  },
+                                  "submissionStatus": {
+                                    "enum": [
+                                      "Pending",
+                                      "TurnedIn",
+                                      "Graded",
+                                      "ReturnedForRevision"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "assignedGrade": {
+                                    "type": "number",
+                                    "format": "double",
+                                    "nullable": true
+                                  },
+                                  "passed": {
+                                    "type": "boolean",
+                                    "nullable": true
+                                  },
+                                  "submittedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "gradedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "classId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "assignmentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "assignmentType": {
+                              "enum": [
+                                "Retrospective",
+                                "FileUpload",
+                                "Quiz"
+                              ],
+                              "type": "string"
+                            },
+                            "status": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "totalStudents": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "submittedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "gradedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "notStartedCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "averageScore": {
+                              "type": "number",
+                              "format": "double",
+                              "nullable": true
+                            },
+                            "students": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "studentId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "studentCode": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "studentName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "email": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "avatarUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "submissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32",
+                                    "nullable": true
+                                  },
+                                  "submissionStatus": {
+                                    "enum": [
+                                      "Pending",
+                                      "TurnedIn",
+                                      "Graded",
+                                      "ReturnedForRevision"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "assignedGrade": {
+                                    "type": "number",
+                                    "format": "double",
+                                    "nullable": true
+                                  },
+                                  "passed": {
+                                    "type": "boolean",
+                                    "nullable": true
+                                  },
+                                  "submittedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  },
+                                  "gradedAt": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
                         }
                       },
                       "additionalProperties": false
@@ -210971,6 +213153,11 @@
                                               "status": {
                                                 "type": "string",
                                                 "nullable": true
+                                              },
+                                              "latestSubmissionId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "nullable": true
                                               }
                                             },
                                             "additionalProperties": false
@@ -211142,6 +213329,11 @@
                                             "status": {
                                               "type": "string",
                                               "nullable": true
+                                            },
+                                            "latestSubmissionId": {
+                                              "type": "string",
+                                              "format": "uuid",
+                                              "nullable": true
                                             }
                                           },
                                           "additionalProperties": false
@@ -211199,6 +213391,11 @@
                                         },
                                         "status": {
                                           "type": "string",
+                                          "nullable": true
+                                        },
+                                        "latestSubmissionId": {
+                                          "type": "string",
+                                          "format": "uuid",
                                           "nullable": true
                                         }
                                       },
@@ -211481,6 +213678,11 @@
                                               "status": {
                                                 "type": "string",
                                                 "nullable": true
+                                              },
+                                              "latestSubmissionId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "nullable": true
                                               }
                                             },
                                             "additionalProperties": false
@@ -211652,6 +213854,11 @@
                                             "status": {
                                               "type": "string",
                                               "nullable": true
+                                            },
+                                            "latestSubmissionId": {
+                                              "type": "string",
+                                              "format": "uuid",
+                                              "nullable": true
                                             }
                                           },
                                           "additionalProperties": false
@@ -211709,6 +213916,11 @@
                                         },
                                         "status": {
                                           "type": "string",
+                                          "nullable": true
+                                        },
+                                        "latestSubmissionId": {
+                                          "type": "string",
+                                          "format": "uuid",
                                           "nullable": true
                                         }
                                       },
@@ -211991,6 +214203,11 @@
                                               "status": {
                                                 "type": "string",
                                                 "nullable": true
+                                              },
+                                              "latestSubmissionId": {
+                                                "type": "string",
+                                                "format": "uuid",
+                                                "nullable": true
                                               }
                                             },
                                             "additionalProperties": false
@@ -212162,6 +214379,11 @@
                                             "status": {
                                               "type": "string",
                                               "nullable": true
+                                            },
+                                            "latestSubmissionId": {
+                                              "type": "string",
+                                              "format": "uuid",
+                                              "nullable": true
                                             }
                                           },
                                           "additionalProperties": false
@@ -212219,6 +214441,11 @@
                                         },
                                         "status": {
                                           "type": "string",
+                                          "nullable": true
+                                        },
+                                        "latestSubmissionId": {
+                                          "type": "string",
+                                          "format": "uuid",
                                           "nullable": true
                                         }
                                       },
@@ -213178,6 +215405,11 @@
                                                   "lockReason": {
                                                     "type": "string",
                                                     "nullable": true
+                                                  },
+                                                  "latestSubmissionId": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
                                                   }
                                                 },
                                                 "additionalProperties": false
@@ -213500,6 +215732,11 @@
                                                 "lockReason": {
                                                   "type": "string",
                                                   "nullable": true
+                                                },
+                                                "latestSubmissionId": {
+                                                  "type": "string",
+                                                  "format": "uuid",
+                                                  "nullable": true
                                                 }
                                               },
                                               "additionalProperties": false
@@ -213595,6 +215832,11 @@
                                             },
                                             "lockReason": {
                                               "type": "string",
+                                              "nullable": true
+                                            },
+                                            "latestSubmissionId": {
+                                              "type": "string",
+                                              "format": "uuid",
                                               "nullable": true
                                             }
                                           },
@@ -214156,6 +216398,11 @@
                                                   "lockReason": {
                                                     "type": "string",
                                                     "nullable": true
+                                                  },
+                                                  "latestSubmissionId": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
                                                   }
                                                 },
                                                 "additionalProperties": false
@@ -214478,6 +216725,11 @@
                                                 "lockReason": {
                                                   "type": "string",
                                                   "nullable": true
+                                                },
+                                                "latestSubmissionId": {
+                                                  "type": "string",
+                                                  "format": "uuid",
+                                                  "nullable": true
                                                 }
                                               },
                                               "additionalProperties": false
@@ -214573,6 +216825,11 @@
                                             },
                                             "lockReason": {
                                               "type": "string",
+                                              "nullable": true
+                                            },
+                                            "latestSubmissionId": {
+                                              "type": "string",
+                                              "format": "uuid",
                                               "nullable": true
                                             }
                                           },
@@ -215134,6 +217391,11 @@
                                                   "lockReason": {
                                                     "type": "string",
                                                     "nullable": true
+                                                  },
+                                                  "latestSubmissionId": {
+                                                    "type": "string",
+                                                    "format": "uuid",
+                                                    "nullable": true
                                                   }
                                                 },
                                                 "additionalProperties": false
@@ -215456,6 +217718,11 @@
                                                 "lockReason": {
                                                   "type": "string",
                                                   "nullable": true
+                                                },
+                                                "latestSubmissionId": {
+                                                  "type": "string",
+                                                  "format": "uuid",
+                                                  "nullable": true
                                                 }
                                               },
                                               "additionalProperties": false
@@ -215551,6 +217818,11 @@
                                             },
                                             "lockReason": {
                                               "type": "string",
+                                              "nullable": true
+                                            },
+                                            "latestSubmissionId": {
+                                              "type": "string",
+                                              "format": "uuid",
                                               "nullable": true
                                             }
                                           },
@@ -257916,12 +260188,1017 @@
         },
         "additionalProperties": false
       },
+      "ClassActivityStudentProgressDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityType": {
+            "enum": [
+              "SelfPaced",
+              "LiveOnline",
+              "Offline"
+            ],
+            "type": "string"
+          },
+          "classSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sessionStatus": {
+            "enum": [
+              "Scheduled",
+              "InProgress",
+              "Completed",
+              "Cancelled"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "totalStudents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "inProgressCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notStartedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "studentCode": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "studentName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "email": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "activityStatus": {
+                  "enum": [
+                    "NotStart",
+                    "InProgress",
+                    "Done"
+                  ],
+                  "type": "string"
+                },
+                "completedAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "15/06/2026 14:30:00"
+                },
+                "lastAccessedAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "15/06/2026 14:30:00"
+                },
+                "completionSource": {
+                  "enum": [
+                    "Manual",
+                    "Video",
+                    "Reading",
+                    "Mentor"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                },
+                "attendanceStatus": {
+                  "enum": [
+                    "Expected",
+                    "Present",
+                    "Absent",
+                    "Excused",
+                    "Late"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                },
+                "checkedInAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "15/06/2026 14:30:00"
+                },
+                "participationMinutes": {
+                  "type": "integer",
+                  "format": "int32",
+                  "nullable": true
+                }
+              },
+              "additionalProperties": false
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassActivityStudentProgressDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "classId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "activityId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "activityType": {
+                    "enum": [
+                      "SelfPaced",
+                      "LiveOnline",
+                      "Offline"
+                    ],
+                    "type": "string"
+                  },
+                  "classSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "sessionStatus": {
+                    "enum": [
+                      "Scheduled",
+                      "InProgress",
+                      "Completed",
+                      "Cancelled"
+                    ],
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "totalStudents": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "completedCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "inProgressCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "notStartedCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "students": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "studentId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "studentCode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "studentName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "email": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "activityStatus": {
+                          "enum": [
+                            "NotStart",
+                            "InProgress",
+                            "Done"
+                          ],
+                          "type": "string"
+                        },
+                        "completedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "15/06/2026 14:30:00"
+                        },
+                        "lastAccessedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "15/06/2026 14:30:00"
+                        },
+                        "completionSource": {
+                          "enum": [
+                            "Manual",
+                            "Video",
+                            "Reading",
+                            "Mentor"
+                          ],
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "attendanceStatus": {
+                          "enum": [
+                            "Expected",
+                            "Present",
+                            "Absent",
+                            "Excused",
+                            "Late"
+                          ],
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "checkedInAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "15/06/2026 14:30:00"
+                        },
+                        "participationMinutes": {
+                          "type": "integer",
+                          "format": "int32",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassActivityStudentProgressDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "classId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "activityId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "activityType": {
+                "enum": [
+                  "SelfPaced",
+                  "LiveOnline",
+                  "Offline"
+                ],
+                "type": "string"
+              },
+              "classSessionId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "sessionStatus": {
+                "enum": [
+                  "Scheduled",
+                  "InProgress",
+                  "Completed",
+                  "Cancelled"
+                ],
+                "type": "string",
+                "nullable": true
+              },
+              "totalStudents": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "completedCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "inProgressCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "notStartedCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "students": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "studentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "studentCode": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "studentName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "email": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "activityStatus": {
+                      "enum": [
+                        "NotStart",
+                        "InProgress",
+                        "Done"
+                      ],
+                      "type": "string"
+                    },
+                    "completedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "15/06/2026 14:30:00"
+                    },
+                    "lastAccessedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "15/06/2026 14:30:00"
+                    },
+                    "completionSource": {
+                      "enum": [
+                        "Manual",
+                        "Video",
+                        "Reading",
+                        "Mentor"
+                      ],
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "attendanceStatus": {
+                      "enum": [
+                        "Expected",
+                        "Present",
+                        "Absent",
+                        "Excused",
+                        "Late"
+                      ],
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "checkedInAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "15/06/2026 14:30:00"
+                    },
+                    "participationMinutes": {
+                      "type": "integer",
+                      "format": "int32",
+                      "nullable": true
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassActivityStudentProgressItemDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "activityStatus": {
+            "enum": [
+              "NotStart",
+              "InProgress",
+              "Done"
+            ],
+            "type": "string"
+          },
+          "completedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "lastAccessedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "completionSource": {
+            "enum": [
+              "Manual",
+              "Video",
+              "Reading",
+              "Mentor"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "attendanceStatus": {
+            "enum": [
+              "Expected",
+              "Present",
+              "Absent",
+              "Excused",
+              "Late"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "checkedInAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "participationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassAssignmentStudentProgressDto": {
+        "type": "object",
+        "properties": {
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignmentType": {
+            "enum": [
+              "Retrospective",
+              "FileUpload",
+              "Quiz"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "totalStudents": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "submittedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "gradedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "notStartedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "averageScore": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "students": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "studentId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "studentCode": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "studentName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "email": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "submissionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "attemptNumber": {
+                  "type": "integer",
+                  "format": "int32",
+                  "nullable": true
+                },
+                "submissionStatus": {
+                  "enum": [
+                    "Pending",
+                    "TurnedIn",
+                    "Graded",
+                    "ReturnedForRevision"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                },
+                "assignedGrade": {
+                  "type": "number",
+                  "format": "double",
+                  "nullable": true
+                },
+                "passed": {
+                  "type": "boolean",
+                  "nullable": true
+                },
+                "submittedAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "15/06/2026 14:30:00"
+                },
+                "gradedAt": {
+                  "type": "string",
+                  "nullable": true,
+                  "example": "15/06/2026 14:30:00"
+                }
+              },
+              "additionalProperties": false
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassAssignmentStudentProgressDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              },
+              "data": {
+                "type": "object",
+                "properties": {
+                  "classId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "assignmentId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "assignmentType": {
+                    "enum": [
+                      "Retrospective",
+                      "FileUpload",
+                      "Quiz"
+                    ],
+                    "type": "string"
+                  },
+                  "status": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "totalStudents": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "submittedCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "gradedCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "notStartedCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "averageScore": {
+                    "type": "number",
+                    "format": "double",
+                    "nullable": true
+                  },
+                  "students": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "studentId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "studentCode": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "studentName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "email": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "submissionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "attemptNumber": {
+                          "type": "integer",
+                          "format": "int32",
+                          "nullable": true
+                        },
+                        "submissionStatus": {
+                          "enum": [
+                            "Pending",
+                            "TurnedIn",
+                            "Graded",
+                            "ReturnedForRevision"
+                          ],
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "assignedGrade": {
+                          "type": "number",
+                          "format": "double",
+                          "nullable": true
+                        },
+                        "passed": {
+                          "type": "boolean",
+                          "nullable": true
+                        },
+                        "submittedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "15/06/2026 14:30:00"
+                        },
+                        "gradedAt": {
+                          "type": "string",
+                          "nullable": true,
+                          "example": "15/06/2026 14:30:00"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "message": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassAssignmentStudentProgressDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "classId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "assignmentId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "assignmentType": {
+                "enum": [
+                  "Retrospective",
+                  "FileUpload",
+                  "Quiz"
+                ],
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "nullable": true
+              },
+              "totalStudents": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "submittedCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "gradedCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "notStartedCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "averageScore": {
+                "type": "number",
+                "format": "double",
+                "nullable": true
+              },
+              "students": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "studentId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "studentCode": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "studentName": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "email": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "submissionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "attemptNumber": {
+                      "type": "integer",
+                      "format": "int32",
+                      "nullable": true
+                    },
+                    "submissionStatus": {
+                      "enum": [
+                        "Pending",
+                        "TurnedIn",
+                        "Graded",
+                        "ReturnedForRevision"
+                      ],
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "assignedGrade": {
+                      "type": "number",
+                      "format": "double",
+                      "nullable": true
+                    },
+                    "passed": {
+                      "type": "boolean",
+                      "nullable": true
+                    },
+                    "submittedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "15/06/2026 14:30:00"
+                    },
+                    "gradedAt": {
+                      "type": "string",
+                      "nullable": true,
+                      "example": "15/06/2026 14:30:00"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassAssignmentStudentProgressItemDto": {
+        "type": "object",
+        "properties": {
+          "studentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "studentCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "studentName": {
+            "type": "string",
+            "nullable": true
+          },
+          "email": {
+            "type": "string",
+            "nullable": true
+          },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "submissionStatus": {
+            "enum": [
+              "Pending",
+              "TurnedIn",
+              "Graded",
+              "ReturnedForRevision"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "assignedGrade": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "passed": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "gradedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
       "ClassCurriculumActivityProgressDto": {
         "type": "object",
         "properties": {
           "activityId": {
             "type": "string",
             "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
+          },
+          "classSessionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "sessionStatus": {
+            "enum": [
+              "Scheduled",
+              "InProgress",
+              "Completed",
+              "Cancelled"
+            ],
+            "type": "string",
+            "nullable": true
           },
           "completedCount": {
             "type": "integer",
@@ -257940,6 +261217,10 @@
           "assignmentId": {
             "type": "string",
             "format": "uuid"
+          },
+          "status": {
+            "type": "string",
+            "nullable": true
           },
           "submittedCount": {
             "type": "integer",
@@ -257973,6 +261254,25 @@
                   "type": "string",
                   "format": "uuid"
                 },
+                "status": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "classSessionId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "sessionStatus": {
+                  "enum": [
+                    "Scheduled",
+                    "InProgress",
+                    "Completed",
+                    "Cancelled"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                },
                 "completedCount": {
                   "type": "integer",
                   "format": "int32"
@@ -257994,6 +261294,10 @@
                 "assignmentId": {
                   "type": "string",
                   "format": "uuid"
+                },
+                "status": {
+                  "type": "string",
+                  "nullable": true
                 },
                 "submittedCount": {
                   "type": "integer",
@@ -258027,6 +261331,11 @@
             "type": "integer",
             "format": "int32"
           },
+          "currentActivityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "modules": {
             "type": "array",
             "items": {
@@ -258044,6 +261353,25 @@
                       "activityId": {
                         "type": "string",
                         "format": "uuid"
+                      },
+                      "status": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "classSessionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "sessionStatus": {
+                        "enum": [
+                          "Scheduled",
+                          "InProgress",
+                          "Completed",
+                          "Cancelled"
+                        ],
+                        "type": "string",
+                        "nullable": true
                       },
                       "completedCount": {
                         "type": "integer",
@@ -258066,6 +261394,10 @@
                       "assignmentId": {
                         "type": "string",
                         "format": "uuid"
+                      },
+                      "status": {
+                        "type": "string",
+                        "nullable": true
                       },
                       "submittedCount": {
                         "type": "integer",
@@ -258121,6 +261453,11 @@
                     "type": "integer",
                     "format": "int32"
                   },
+                  "currentActivityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
                   "modules": {
                     "type": "array",
                     "items": {
@@ -258138,6 +261475,25 @@
                               "activityId": {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              "status": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "classSessionId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
+                              },
+                              "sessionStatus": {
+                                "enum": [
+                                  "Scheduled",
+                                  "InProgress",
+                                  "Completed",
+                                  "Cancelled"
+                                ],
+                                "type": "string",
+                                "nullable": true
                               },
                               "completedCount": {
                                 "type": "integer",
@@ -258160,6 +261516,10 @@
                               "assignmentId": {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              "status": {
+                                "type": "string",
+                                "nullable": true
                               },
                               "submittedCount": {
                                 "type": "integer",
@@ -258229,6 +261589,11 @@
                 "type": "integer",
                 "format": "int32"
               },
+              "currentActivityId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
               "modules": {
                 "type": "array",
                 "items": {
@@ -258246,6 +261611,25 @@
                           "activityId": {
                             "type": "string",
                             "format": "uuid"
+                          },
+                          "status": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "classSessionId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
+                          },
+                          "sessionStatus": {
+                            "enum": [
+                              "Scheduled",
+                              "InProgress",
+                              "Completed",
+                              "Cancelled"
+                            ],
+                            "type": "string",
+                            "nullable": true
                           },
                           "completedCount": {
                             "type": "integer",
@@ -258268,6 +261652,10 @@
                           "assignmentId": {
                             "type": "string",
                             "format": "uuid"
+                          },
+                          "status": {
+                            "type": "string",
+                            "nullable": true
                           },
                           "submittedCount": {
                             "type": "integer",
@@ -272340,6 +275728,11 @@
           "status": {
             "type": "string",
             "nullable": true
+          },
+          "latestSubmissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -272503,6 +275896,11 @@
                 },
                 "status": {
                   "type": "string",
+                  "nullable": true
+                },
+                "latestSubmissionId": {
+                  "type": "string",
+                  "format": "uuid",
                   "nullable": true
                 }
               },
@@ -272741,6 +276139,11 @@
                             "status": {
                               "type": "string",
                               "nullable": true
+                            },
+                            "latestSubmissionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
                             }
                           },
                           "additionalProperties": false
@@ -272912,6 +276315,11 @@
                           "status": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "latestSubmissionId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
                           }
                         },
                         "additionalProperties": false
@@ -272969,6 +276377,11 @@
                       },
                       "status": {
                         "type": "string",
+                        "nullable": true
+                      },
+                      "latestSubmissionId": {
+                        "type": "string",
+                        "format": "uuid",
                         "nullable": true
                       }
                     },
@@ -273229,6 +276642,11 @@
                                     "status": {
                                       "type": "string",
                                       "nullable": true
+                                    },
+                                    "latestSubmissionId": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
                                     }
                                   },
                                   "additionalProperties": false
@@ -273400,6 +276818,11 @@
                                   "status": {
                                     "type": "string",
                                     "nullable": true
+                                  },
+                                  "latestSubmissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
                                   }
                                 },
                                 "additionalProperties": false
@@ -273457,6 +276880,11 @@
                               },
                               "status": {
                                 "type": "string",
+                                "nullable": true
+                              },
+                              "latestSubmissionId": {
+                                "type": "string",
+                                "format": "uuid",
                                 "nullable": true
                               }
                             },
@@ -273731,6 +277159,11 @@
                                 "status": {
                                   "type": "string",
                                   "nullable": true
+                                },
+                                "latestSubmissionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
                                 }
                               },
                               "additionalProperties": false
@@ -273902,6 +277335,11 @@
                               "status": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "latestSubmissionId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
                               }
                             },
                             "additionalProperties": false
@@ -273959,6 +277397,11 @@
                           },
                           "status": {
                             "type": "string",
+                            "nullable": true
+                          },
+                          "latestSubmissionId": {
+                            "type": "string",
+                            "format": "uuid",
                             "nullable": true
                           }
                         },
@@ -274158,6 +277601,11 @@
               },
               "status": {
                 "type": "string",
+                "nullable": true
+              },
+              "latestSubmissionId": {
+                "type": "string",
+                "format": "uuid",
                 "nullable": true
               }
             },
@@ -274480,6 +277928,11 @@
               "lockReason": {
                 "type": "string",
                 "nullable": true
+              },
+              "latestSubmissionId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
               }
             },
             "additionalProperties": false
@@ -274565,6 +278018,11 @@
           },
           "lockReason": {
             "type": "string",
+            "nullable": true
+          },
+          "latestSubmissionId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           }
         },
@@ -274894,6 +278352,11 @@
                     },
                     "lockReason": {
                       "type": "string",
+                      "nullable": true
+                    },
+                    "latestSubmissionId": {
+                      "type": "string",
+                      "format": "uuid",
                       "nullable": true
                     }
                   },
@@ -275429,6 +278892,11 @@
                                 "lockReason": {
                                   "type": "string",
                                   "nullable": true
+                                },
+                                "latestSubmissionId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
                                 }
                               },
                               "additionalProperties": false
@@ -275751,6 +279219,11 @@
                               "lockReason": {
                                 "type": "string",
                                 "nullable": true
+                              },
+                              "latestSubmissionId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "nullable": true
                               }
                             },
                             "additionalProperties": false
@@ -275846,6 +279319,11 @@
                           },
                           "lockReason": {
                             "type": "string",
+                            "nullable": true
+                          },
+                          "latestSubmissionId": {
+                            "type": "string",
+                            "format": "uuid",
                             "nullable": true
                           }
                         },
@@ -276385,6 +279863,11 @@
                                         "lockReason": {
                                           "type": "string",
                                           "nullable": true
+                                        },
+                                        "latestSubmissionId": {
+                                          "type": "string",
+                                          "format": "uuid",
+                                          "nullable": true
                                         }
                                       },
                                       "additionalProperties": false
@@ -276707,6 +280190,11 @@
                                       "lockReason": {
                                         "type": "string",
                                         "nullable": true
+                                      },
+                                      "latestSubmissionId": {
+                                        "type": "string",
+                                        "format": "uuid",
+                                        "nullable": true
                                       }
                                     },
                                     "additionalProperties": false
@@ -276802,6 +280290,11 @@
                                   },
                                   "lockReason": {
                                     "type": "string",
+                                    "nullable": true
+                                  },
+                                  "latestSubmissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
                                     "nullable": true
                                   }
                                 },
@@ -277355,6 +280848,11 @@
                                     "lockReason": {
                                       "type": "string",
                                       "nullable": true
+                                    },
+                                    "latestSubmissionId": {
+                                      "type": "string",
+                                      "format": "uuid",
+                                      "nullable": true
                                     }
                                   },
                                   "additionalProperties": false
@@ -277677,6 +281175,11 @@
                                   "lockReason": {
                                     "type": "string",
                                     "nullable": true
+                                  },
+                                  "latestSubmissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
                                   }
                                 },
                                 "additionalProperties": false
@@ -277772,6 +281275,11 @@
                               },
                               "lockReason": {
                                 "type": "string",
+                                "nullable": true
+                              },
+                              "latestSubmissionId": {
+                                "type": "string",
+                                "format": "uuid",
                                 "nullable": true
                               }
                             },
@@ -278147,6 +281655,11 @@
                   },
                   "lockReason": {
                     "type": "string",
+                    "nullable": true
+                  },
+                  "latestSubmissionId": {
+                    "type": "string",
+                    "format": "uuid",
                     "nullable": true
                   }
                 },
@@ -278597,6 +282110,11 @@
                           "lockReason": {
                             "type": "string",
                             "nullable": true
+                          },
+                          "latestSubmissionId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "nullable": true
                           }
                         },
                         "additionalProperties": false
@@ -278919,6 +282437,11 @@
                         "lockReason": {
                           "type": "string",
                           "nullable": true
+                        },
+                        "latestSubmissionId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
                         }
                       },
                       "additionalProperties": false
@@ -279014,6 +282537,11 @@
                     },
                     "lockReason": {
                       "type": "string",
+                      "nullable": true
+                    },
+                    "latestSubmissionId": {
+                      "type": "string",
+                      "format": "uuid",
                       "nullable": true
                     }
                   },
@@ -279376,6 +282904,11 @@
                       "status": {
                         "type": "string",
                         "nullable": true
+                      },
+                      "latestSubmissionId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
                       }
                     },
                     "additionalProperties": false
@@ -279547,6 +283080,11 @@
                     "status": {
                       "type": "string",
                       "nullable": true
+                    },
+                    "latestSubmissionId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
                     }
                   },
                   "additionalProperties": false
@@ -279604,6 +283142,11 @@
                 },
                 "status": {
                   "type": "string",
+                  "nullable": true
+                },
+                "latestSubmissionId": {
+                  "type": "string",
+                  "format": "uuid",
                   "nullable": true
                 }
               },

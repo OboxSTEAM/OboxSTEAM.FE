@@ -86,12 +86,6 @@ export function joinCountdownColonClass(variant: SessionJoinVariant): string {
     : "hidden self-center font-heading text-2xl font-extrabold text-muted-foreground/40 sm:inline";
 }
 
-export function recordingLinkClass(variant: SessionJoinVariant): string {
-  return variant === "learn"
-    ? "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-learn-border bg-learn-surface px-4 py-3 text-sm font-semibold text-learn-text-strong hover:bg-learn-surface-2"
-    : "inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-semibold text-foreground hover:bg-muted/50";
-}
-
 export function idleJoinButtonClass(variant: SessionJoinVariant): string {
   return variant === "learn"
     ? "inline-flex h-auto w-full items-center justify-center gap-2 rounded-2xl bg-learn-accent px-4 py-3.5 text-base font-semibold text-white hover:opacity-90"

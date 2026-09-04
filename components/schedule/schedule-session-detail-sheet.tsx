@@ -364,9 +364,7 @@ export function ScheduleSessionDetailSheet({
   const revealedMeetUrl = canRevealMeet ? liveJoin.joinUrl : null;
   const isMeetLocked = liveJoin?.phase === "locked";
   const isMeetCancelled = liveJoin?.phase === "cancelled";
-  const isMeetEnded =
-    liveJoin?.phase === "ended" ||
-    (liveJoin?.phase === "recording" && !liveJoin.joinUrl);
+  const isMeetEnded = liveJoin?.phase === "ended";
   const canJoinMeet =
     !isMentorView &&
     revealedMeetUrl != null &&

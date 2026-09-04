@@ -1,12 +1,11 @@
 "use client";
 
-import { Suspense, useMemo, useState, type ReactNode } from "react";
+import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   CalendarDays,
-  ClipboardPen,
   Images,
   ListTree,
   Users,
@@ -16,7 +15,6 @@ import { ClassStatusBadge } from "@/components/manager/classes/class-status-badg
 import { ClassCalendarDrawer } from "@/components/mentors/class-calendar-drawer";
 import { MentorClassCurriculumPanel } from "@/components/mentors/mentor-class-curriculum-panel";
 import { MentorClassMediaPanel } from "@/components/mentors/mentor-class-media-panel";
-import { MentorClassGradingPanel } from "@/components/mentors/mentor-class-grading-panel";
 import { MentorClassSessionsPanel } from "@/components/mentors/mentor-class-sessions-panel";
 import {
   ManagerDataTable,
@@ -63,11 +61,13 @@ const TAB_VALUES = [
 
 type MentorClassTab = (typeof TAB_VALUES)[number];
 
-function normalizeTab(value: MentorClassTab): MentorClassTab {
-  return value === "lich-hoc" ? "sessions" : value;
+function normalizeTab(value: MentorClassTab): Exclude<MentorClassTab, "lich-hoc" | "grading"> {
+  if (value === "lich-hoc") return "sessions";
+  if (value === "grading") return "curriculum";
+  return value;
 }
 
-function parseTab(value: string | null): MentorClassTab {
+function parseTab(value: string | null): Exclude<MentorClassTab, "lich-hoc" | "grading"> {
   if (value && (TAB_VALUES as readonly string[]).includes(value)) {
     return normalizeTab(value as MentorClassTab);
   }
@@ -87,8 +87,22 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
   const deepAssignmentId = searchParams.get("assignmentId");
   const [calendarOpen, setCalendarOpen] = useState(false);
 
+  useEffect(() => {
+    // Legacy Chấm bài deep-links → Chương trình + assignment selected.
+    if (searchParams.get("tab") !== "grading") return;
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", "curriculum");
+    params.delete("activityId");
+    params.delete("sessionId");
+    if (deepAssignmentId) params.set("assignmentId", deepAssignmentId);
+    else params.delete("assignmentId");
+    router.replace(`/mentor/classes/${classId}?${params.toString()}`, {
+      scroll: false,
+    });
+  }, [classId, deepAssignmentId, router, searchParams]);
+
   function replaceQuery(next: {
-    tab?: MentorClassTab;
+    tab?: Exclude<MentorClassTab, "lich-hoc" | "grading">;
     activityId?: string | null;
     sessionId?: string | null;
     assignmentId?: string | null;
@@ -109,10 +123,6 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
 
     if (nextTab === "curriculum") {
       // Keep activity / session / assignment deep-links for Chương trình.
-    } else if (nextTab === "grading") {
-      params.delete("activityId");
-      params.delete("sessionId");
-      // Keep assignmentId so Chấm bài can open the matching bài.
     } else {
       params.delete("activityId");
       params.delete("sessionId");
@@ -343,13 +353,6 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
               Chương trình
             </TabsTrigger>
             <TabsTrigger
-              value="grading"
-              className="rounded-none px-4 py-2.5 data-active:text-primary"
-            >
-              <ClipboardPen className="size-4" />
-              Chấm bài
-            </TabsTrigger>
-            <TabsTrigger
               value="media"
               className="rounded-none px-4 py-2.5 data-active:text-primary"
             >
@@ -411,38 +414,12 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
                 initialActivityId={deepActivityId}
                 initialSessionId={deepSessionId}
                 initialAssignmentId={deepAssignmentId}
-                onOpenGrading={(assignmentId) =>
-                  replaceQuery({
-                    tab: "grading",
-                    activityId: null,
-                    sessionId: null,
-                    assignmentId,
-                  })
-                }
               />
             ) : (
               <ManagerEmptyState
                 title="Chưa tải được chương trình"
                 description="Lớp không có programId."
                 icon={ListTree}
-              />
-            )}
-          </TabsContent>
-
-          <TabsContent value="grading" className="mt-0">
-            {classItem.programId ? (
-              <MentorClassGradingPanel
-                classId={classId}
-                programId={classItem.programId}
-                initialAssignmentId={
-                  tab === "grading" ? deepAssignmentId : null
-                }
-              />
-            ) : (
-              <ManagerEmptyState
-                title="Chưa tải được lớp"
-                description="Không có programId để lấy danh sách bài tập."
-                icon={ClipboardPen}
               />
             )}
           </TabsContent>

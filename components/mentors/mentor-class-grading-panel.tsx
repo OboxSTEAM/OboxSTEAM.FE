@@ -501,12 +501,18 @@ type MentorClassGradingPanelProps = {
   classId: string;
   programId: string;
   initialAssignmentId?: string | null;
+  /**
+   * When true, hide mode tabs + assignment picker — used inside Chương trình
+   * where the tree already selected the assignment.
+   */
+  embedded?: boolean;
 };
 
 export function MentorClassGradingPanel({
   classId,
   programId,
   initialAssignmentId = null,
+  embedded = false,
 }: MentorClassGradingPanelProps) {
   const [mode, setMode] = useState<GradingMode>("manual");
   const [assignmentId, setAssignmentId] = useState("");
@@ -1019,65 +1025,80 @@ export function MentorClassGradingPanel({
 
   return (
     <>
-      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <section
+        className={cn(
+          "overflow-hidden bg-card",
+          embedded
+            ? "border-0 shadow-none"
+            : "rounded-2xl border border-border shadow-sm",
+        )}
+      >
         <Tabs value={mode} onValueChange={handleModeChange} className="gap-0">
-          <div className="border-b border-border bg-muted/40 px-4 pt-4 sm:px-6">
-            <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <ClipboardPen className="size-4 text-primary" />
-                  Chấm bài
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {MODE_COPY[mode].subtitle}
-                </p>
+          {!embedded ? (
+            <div className="border-b border-border bg-muted/40 px-4 pt-4 sm:px-6">
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <ClipboardPen className="size-4 text-primary" />
+                    Chấm bài
+                  </p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {MODE_COPY[mode].subtitle}
+                  </p>
+                </div>
+                {selectedAssignment && canGradeInMode && pendingGradeCount > 0 ? (
+                  <Badge className="rounded-full bg-[#4FC3F7]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#0d6e9c] hover:bg-[#4FC3F7]/15">
+                    {pendingGradeCount} chờ chấm
+                  </Badge>
+                ) : null}
               </div>
-              {selectedAssignment && canGradeInMode && pendingGradeCount > 0 ? (
-                <Badge className="rounded-full bg-[#4FC3F7]/15 px-2.5 py-0.5 text-[11px] font-semibold text-[#0d6e9c] hover:bg-[#4FC3F7]/15">
-                  {pendingGradeCount} chờ chấm
-                </Badge>
-              ) : null}
+
+              <TabsList
+                variant="line"
+                className="h-auto w-full justify-center gap-0 rounded-none border-b-0 bg-transparent p-0"
+              >
+                <TabsTrigger
+                  value="research"
+                  className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
+                >
+                  <Beaker className="size-4" />
+                  Research
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    {researchAssignments.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="manual"
+                  className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
+                >
+                  <ListChecks className="size-4" />
+                  Bài thường
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    {manualAssignments.length}
+                  </span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="quiz"
+                  className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
+                >
+                  <Sparkles className="size-4" />
+                  Quiz · xem điểm
+                  <span className="font-mono text-[11px] text-muted-foreground">
+                    {quizAssignments.length}
+                  </span>
+                </TabsTrigger>
+              </TabsList>
             </div>
+          ) : null}
 
-            <TabsList
-              variant="line"
-              className="h-auto w-full justify-center gap-0 rounded-none border-b-0 bg-transparent p-0"
-            >
-              <TabsTrigger
-                value="research"
-                className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
-              >
-                <Beaker className="size-4" />
-                Research
-                <span className="font-mono text-[11px] text-muted-foreground">
-                  {researchAssignments.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="manual"
-                className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
-              >
-                <ListChecks className="size-4" />
-                Bài thường
-                <span className="font-mono text-[11px] text-muted-foreground">
-                  {manualAssignments.length}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="quiz"
-                className="flex-1 justify-center rounded-none px-3 py-2.5 text-sm data-active:text-primary"
-              >
-                <Sparkles className="size-4" />
-                Quiz · xem điểm
-                <span className="font-mono text-[11px] text-muted-foreground">
-                  {quizAssignments.length}
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <div className="flex min-h-[480px] flex-row items-stretch">
-            {/* Assignment picker — always open beside the student list (~30%) */}
+          <div
+            className={cn(
+              "flex flex-row items-stretch",
+              embedded ? "min-h-[420px]" : "min-h-[480px]",
+            )}
+          >
+            {/* Assignment picker — hidden when embedded in curriculum tree */}
+            {!embedded ? (
             <aside className="flex w-[min(300px,34%)] min-w-[220px] shrink-0 flex-col border-r border-border bg-muted/25">
               <div className="shrink-0 border-b border-border px-3 py-2.5 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
@@ -1165,6 +1186,7 @@ export function MentorClassGradingPanel({
                 )}
               </div>
             </aside>
+            ) : null}
 
             <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
               {assignmentId ? (

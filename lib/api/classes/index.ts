@@ -30,6 +30,8 @@ import {
   deleteClassSessionResponseSchema,
   generateClassSessionsResponseSchema,
   getClassCurriculumProgressResponseSchema,
+  getClassActivityStudentProgressResponseSchema,
+  getClassAssignmentStudentProgressResponseSchema,
   getClassSessionWithStudentsResponseSchema,
   getClassSessionsResponseSchema,
   getClassWithSessionsResponseSchema,
@@ -41,6 +43,8 @@ import {
   type ClassSessionResult,
   type DeleteClassSessionResult,
   type GetClassCurriculumProgressResult,
+  type GetClassActivityStudentProgressResult,
+  type GetClassAssignmentStudentProgressResult,
   type GetClassSessionWithStudentsResult,
   type GetClassSessionsResult,
   type GenerateClassSessionsResult,
@@ -60,6 +64,10 @@ export type {
   DeleteClassSessionResult,
   GetClassCurriculumProgressResponse,
   GetClassCurriculumProgressResult,
+  GetClassActivityStudentProgressResponse,
+  GetClassActivityStudentProgressResult,
+  GetClassAssignmentStudentProgressResponse,
+  GetClassAssignmentStudentProgressResult,
   GetClassSessionWithStudentsResponse,
   GetClassSessionWithStudentsResult,
   GetClassSessionsResponse,
@@ -86,11 +94,21 @@ export type {
 } from "@/lib/api/entities/class";
 
 export type {
+  ClassCurriculumActivityNavStatus,
   ClassCurriculumActivityProgress,
+  ClassCurriculumAssignmentNavStatus,
   ClassCurriculumAssignmentProgress,
   ClassCurriculumModuleProgress,
   ClassCurriculumProgress,
 } from "@/lib/api/entities/class-curriculum-progress";
+
+export type {
+  ActivityCompletionSource,
+  ClassActivityStudentProgress,
+  ClassActivityStudentProgressItem,
+  ClassAssignmentStudentProgress,
+  ClassAssignmentStudentProgressItem,
+} from "@/lib/api/entities/class-student-progress";
 
 export type {
   ClassStudentEnrollmentStatus,
@@ -265,6 +283,46 @@ export async function getClassCurriculumProgress(
   const response = await apiFetchParsed(
     `${CLASSES_BASE}/${parsedClassId}/curriculum-progress`,
     getClassCurriculumProgressResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** Per-student activity progress for the mentor curriculum detail pane. */
+export async function getClassActivityStudentProgress(
+  classId: string,
+  activityId: string,
+): Promise<GetClassActivityStudentProgressResult> {
+  const { classId: parsedClassId } = classIdParamSchema.parse({ classId });
+  const parsedActivityId = z
+    .string()
+    .uuid("ID hoạt động không hợp lệ.")
+    .parse(activityId);
+
+  const response = await apiFetchParsed(
+    `${CLASSES_BASE}/${parsedClassId}/activities/${parsedActivityId}/student-progress`,
+    getClassActivityStudentProgressResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** Per-student assignment progress for the mentor curriculum detail pane. */
+export async function getClassAssignmentStudentProgress(
+  classId: string,
+  assignmentId: string,
+): Promise<GetClassAssignmentStudentProgressResult> {
+  const { classId: parsedClassId } = classIdParamSchema.parse({ classId });
+  const parsedAssignmentId = z
+    .string()
+    .uuid("ID bài tập không hợp lệ.")
+    .parse(assignmentId);
+
+  const response = await apiFetchParsed(
+    `${CLASSES_BASE}/${parsedClassId}/assignments/${parsedAssignmentId}/student-progress`,
+    getClassAssignmentStudentProgressResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

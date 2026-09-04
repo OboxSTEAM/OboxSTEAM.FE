@@ -70,7 +70,7 @@
       {
         "path": "/api/activity-progresses/mentor-complete-bulk",
         "method": "post",
-        "description": "Marks a LiveOnline or Offline activity Done for every active student on the class roster of the given class session who has Present, Late, or Excused attendance. Returns per-student outcomes (Completed, AlreadyDone, Skipped). Requires Mentor or Manager role."
+        "description": "Marks a LiveOnline or Offline activity Done for every active student on the class roster of the given class session who has Present, Late, or Excused attendance (student QR/code check-in or mentor/manager roster mark; neither source is required). Returns per-student outcomes (Completed, AlreadyDone, Skipped). Requires Mentor or Manager role."
       },
       {
         "path": "/api/assessment-recovery-requests",
@@ -244,6 +244,16 @@
         "path": "/api/classes/{classId}/curriculum-progress",
         "method": "get",
         "description": "Returns activity Done/InProgress counts and assignment submitted/graded aggregates for active students in the class. Modules/activities/assignments are always included (zeros when no progress). Roster PII is not returned. Requires the assigned mentor of the class."
+      },
+      {
+        "path": "/api/classes/{classId}/activities/{activityId}/student-progress",
+        "method": "get",
+        "description": "Returns one row per active class enrollment for the activity (missing progress → NotStart), plus summary counts. LiveOnline/Offline include primary session attendance fields. Requires the assigned mentor of the class."
+      },
+      {
+        "path": "/api/classes/{classId}/assignments/{assignmentId}/student-progress",
+        "method": "get",
+        "description": "Returns one row per active class enrollment with the latest class-scoped attempt (or nulls if never started), plus summary counts and class nav status (available | submitted | completed). Requires the assigned mentor of the class."
       },
       {
         "path": "/api/classes/{id}",
@@ -1516,6 +1526,30 @@
       },
       {
         "name": "CheckoutResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ClassActivityStudentProgressDto"
+      },
+      {
+        "name": "ClassActivityStudentProgressDtoApiResult"
+      },
+      {
+        "name": "ClassActivityStudentProgressDtoResponseDataContent"
+      },
+      {
+        "name": "ClassActivityStudentProgressItemDto"
+      },
+      {
+        "name": "ClassAssignmentStudentProgressDto"
+      },
+      {
+        "name": "ClassAssignmentStudentProgressDtoApiResult"
+      },
+      {
+        "name": "ClassAssignmentStudentProgressDtoResponseDataContent"
+      },
+      {
+        "name": "ClassAssignmentStudentProgressItemDto"
       },
       {
         "name": "ClassCurriculumActivityProgressDto"
