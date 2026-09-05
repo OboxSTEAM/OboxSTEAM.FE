@@ -21,6 +21,7 @@ import {
   getProgramEnrollmentModuleEnrollmentsResponseSchema,
   getStudentProgramEnrollmentsResponseSchema,
   saveActivityCheckpointResponseSchema,
+  withdrawProgramEnrollmentResponseSchema,
   type CompleteActivityResult,
   type GetEnrollmentCurriculumMindMapResult,
   type GetEnrollmentCurriculumResult,
@@ -29,6 +30,7 @@ import {
   type GetProgramEnrollmentModuleEnrollmentsResult,
   type GetStudentProgramEnrollmentsResult,
   type SaveActivityCheckpointResult,
+  type WithdrawProgramEnrollmentResult,
 } from "./schemas";
 
 export type {
@@ -48,6 +50,8 @@ export type {
   GetStudentProgramEnrollmentsResult,
   SaveActivityCheckpointResponse,
   SaveActivityCheckpointResult,
+  WithdrawProgramEnrollmentResponse,
+  WithdrawProgramEnrollmentResult,
 } from "./schemas";
 
 export type {
@@ -270,6 +274,26 @@ export async function completeActivity(
     `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/activities/${parsedActivityId}/complete`,
     completeActivityResponseSchema,
     { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/program-enrollments/{id}/withdraw` — Active → Dropped (`EndReason=Withdraw`).
+ * Seat withdrawn immediately; continuing later uses rebuy-classes.
+ */
+export async function withdrawProgramEnrollment(
+  enrollmentId: string,
+): Promise<WithdrawProgramEnrollmentResult> {
+  const { enrollmentId: parsedEnrollmentId } = enrollmentIdParamSchema.parse({
+    enrollmentId,
+  });
+
+  const response = await apiFetchParsed(
+    `${PROGRAM_ENROLLMENTS_BASE}/${parsedEnrollmentId}/withdraw`,
+    withdrawProgramEnrollmentResponseSchema,
+    { method: "POST", body: {} },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

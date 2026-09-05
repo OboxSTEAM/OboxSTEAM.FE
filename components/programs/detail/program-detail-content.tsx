@@ -16,7 +16,7 @@ import { ProgramEnrollmentLookupProvider } from "./program-enrollment-lookup";
 import { ProgramCurriculum } from "./program-curriculum";
 import { ProgramDetailHero } from "./program-detail-hero";
 import { ProgramExpertsPanel } from "./program-experts-panel";
-import { ProgramOpenClassesPreview } from "./program-open-classes-preview";
+import { ProgramOpenClassesSection } from "./program-open-classes-section";
 import { ProgramOverview } from "./program-overview";
 import { ProgramReviewsSection } from "./program-reviews-section";
 import { ProgramSectionNav } from "./program-section-nav";
@@ -85,9 +85,7 @@ export function ProgramDetailContent({
                   <h2 id="program-open-classes-heading" className="sr-only">
                     Lớp đang tuyển sinh
                   </h2>
-                  <div className="rounded-xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-                    <ProgramOpenClassesPreview programId={program.id} />
-                  </div>
+                  <ProgramOpenClassesSection programId={program.id} />
                 </section>
               </AnimatedContent>
             ) : null}

@@ -79,6 +79,14 @@ export const completeActivityResponseSchema = createApiResponseSchema(
 export const getProgramEnrollmentModuleEnrollmentsResponseSchema =
   createApiResponseSchema(programEnrollmentModuleEnrollmentsValueSchema);
 
+export const withdrawProgramEnrollmentValueSchema = createApiValueSchema(
+  programEnrollmentSchema,
+);
+
+export const withdrawProgramEnrollmentResponseSchema = createApiResponseSchema(
+  withdrawProgramEnrollmentValueSchema,
+);
+
 export type GetMyProgramEnrollmentsResponse = z.infer<
   typeof getMyProgramEnrollmentsResponseSchema
 >;
@@ -119,3 +127,9 @@ export type GetProgramEnrollmentModuleEnrollmentsResponse = z.infer<
 >;
 export type GetProgramEnrollmentModuleEnrollmentsResult =
   GetProgramEnrollmentModuleEnrollmentsResponse["value"];
+
+export type WithdrawProgramEnrollmentResponse = z.infer<
+  typeof withdrawProgramEnrollmentResponseSchema
+>;
+export type WithdrawProgramEnrollmentResult =
+  WithdrawProgramEnrollmentResponse["value"];

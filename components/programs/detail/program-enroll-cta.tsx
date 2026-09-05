@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
 import { Button, buttonVariants } from "@/components/ui/button";
+import { WithdrawProgramEnrollmentControl } from "@/components/programs/withdraw-program-enrollment-control";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { useProgramOpenClasses } from "@/hooks/use-program-open-classes";
 import { checkoutPayment } from "@/lib/api/payments";
@@ -29,6 +30,7 @@ import { cn } from "@/lib/utils";
 
 import { useProgramEnrollmentLookup } from "./program-enrollment-lookup";
 import { ProgramEnrollPaymentDialog } from "./program-enroll-payment-dialog";
+import { ProgramRebuyDialog } from "./program-rebuy-dialog";
 import { useOptionalProgramSelectedClass } from "./program-selected-class-context";
 
 type ProgramEnrollCtaProps = {
@@ -51,6 +53,7 @@ export function ProgramEnrollCta({
   const { isAuthenticated, isHydrated, isLoading, profile } = useCurrentUser();
   const selectedClassContext = useOptionalProgramSelectedClass();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [rebuyOpen, setRebuyOpen] = useState(false);
   const [isEnrollingFree, setIsEnrollingFree] = useState(false);
 
   const priceParts = getProgramPriceParts(price);
@@ -60,7 +63,7 @@ export function ProgramEnrollCta({
   const isStudent = profile ? isStudentRole(profile.role) : false;
   const isOpenForEnrollment = isProgramOpenForEnrollment(programStatus);
 
-  const { enrollment, isLoading: isEnrollmentLoading } =
+  const { enrollment, isLoading: isEnrollmentLoading, refresh } =
     useProgramEnrollmentLookup();
 
   const enrollmentCta = resolveProgramDetailEnrollmentCta(enrollment);
@@ -96,6 +99,7 @@ export function ProgramEnrollCta({
 
   useEffect(() => {
     setDialogOpen(false);
+    setRebuyOpen(false);
   }, [programId]);
 
   const blocksNewEnrollment =
@@ -283,6 +287,26 @@ export function ProgramEnrollCta({
       );
     }
 
+    if (enrollmentCta.kind === "rebuy") {
+      if (!isOpenForEnrollment) {
+        return (
+          <Button type="button" className={buttonClassName} disabled>
+            Không mở đăng ký lại
+          </Button>
+        );
+      }
+
+      return (
+        <Button
+          type="button"
+          className={buttonClassName}
+          onClick={() => setRebuyOpen(true)}
+        >
+          {enrollmentCta.label}
+        </Button>
+      );
+    }
+
     if (enrollmentCta.kind === "complete-payment") {
       if (blocksNewEnrollment || blocksForNoOpenClass) {
         return (
@@ -367,6 +391,9 @@ export function ProgramEnrollCta({
   };
 
   const getSubtext = (): string => {
+    if (enrollmentCta.kind === "rebuy") {
+      return enrollmentCta.subtext;
+    }
     if (
       showEnrollFlow ||
       blocksForNoOpenClass ||
@@ -383,9 +410,19 @@ export function ProgramEnrollCta({
       <div className={cn("space-y-2", className)}>
         {renderPrimaryAction()}
         <p className={subtextClassName}>{getSubtext()}</p>
+        {enrollmentCta.kind === "continue" && enrollment ? (
+          <WithdrawProgramEnrollmentControl
+            enrollmentId={enrollment.id}
+            programName={enrollment.name}
+            redirectTo={`/programs/${programId}`}
+            variant={isHero ? "ghost" : "sidebar"}
+            className={isHero ? "mt-1" : "mt-1"}
+            onWithdrawn={() => refresh()}
+          />
+        ) : null}
       </div>
 
-      {checkoutClassId ? (
+      {checkoutClassId && enrollmentCta.kind !== "rebuy" ? (
         <ProgramEnrollPaymentDialog
           open={dialogOpen}
           onOpenChange={setDialogOpen}
@@ -394,6 +431,15 @@ export function ProgramEnrollCta({
           price={price}
           payBlocked={!hasOpenSeats}
           holdExpiresAt={holdExpiresAt}
+        />
+      ) : null}
+
+      {enrollmentCta.kind === "rebuy" ? (
+        <ProgramRebuyDialog
+          open={rebuyOpen}
+          onOpenChange={setRebuyOpen}
+          programId={programId}
+          programPrice={price}
         />
       ) : null}
     </>

@@ -212,6 +212,18 @@ export function EnrollmentCard({
             Xem lại khóa học
             <ArrowRight className="size-4" aria-hidden />
           </Link>
+        ) : enrollment.status === "Failed" ||
+          enrollment.status === "Dropped" ? (
+          <Link
+            href={detailHref}
+            className={cn(
+              buttonVariants({ size: "sm" }),
+              "inline-flex gap-1.5 font-semibold",
+            )}
+          >
+            Đăng ký lại
+            <ArrowRight className="size-4" aria-hidden />
+          </Link>
         ) : null}
       </CardFooter>
     </Card>

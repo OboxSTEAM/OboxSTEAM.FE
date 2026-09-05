@@ -108,6 +108,19 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action:
       "Chọn lớp khác còn ghế, kiểm tra lịch học, hoặc liên hệ hỗ trợ nếu lỗi lặp lại.",
   },
+  "programs.withdraw": {
+    title: "Không rời được chương trình",
+    reason:
+      "Ghi danh có thể không còn Active, hoặc máy chủ tạm thời không phản hồi.",
+    action: "Tải lại trang và thử lại. Liên hệ hỗ trợ nếu lỗi lặp lại.",
+  },
+  "programs.rebuy": {
+    title: "Không tải được lớp đăng ký lại",
+    reason:
+      "Bạn có thể vẫn đang Active, hoặc máy chủ tạm thời không phản hồi.",
+    action:
+      "Nếu đang học, dùng học lại lớp (continuity). Nếu đã dừng, thử tải lại trang.",
+  },
   "programs.create": {
     title: "Không tạo được chương trình",
     reason: "Thông tin chương trình chưa hợp lệ hoặc đã trùng mã/tên.",

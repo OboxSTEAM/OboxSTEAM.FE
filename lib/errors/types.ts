@@ -34,6 +34,8 @@ export type AppErrorContext =
   | "programs.list"
   | "programs.detail"
   | "programs.selectClass"
+  | "programs.withdraw"
+  | "programs.rebuy"
   | "programs.create"
   | "programs.update"
   | "programs.delete"

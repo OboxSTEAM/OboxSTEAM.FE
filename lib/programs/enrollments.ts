@@ -7,6 +7,11 @@ import type { MyProgramEnrollmentsQuery } from "@/lib/api/program-enrollments";
 export type ProgramDetailEnrollmentCta =
   | { kind: "enroll" }
   | {
+      kind: "rebuy";
+      label: string;
+      subtext: string;
+    }
+  | {
       kind: "continue" | "review";
       href: string;
       label: string;
@@ -59,12 +64,17 @@ export const PROGRAM_DETAIL_ENROLLMENTS_LOOKUP_QUERY: MyProgramEnrollmentsQuery 
 export function resolveProgramDetailEnrollmentCta(
   enrollment: ProgramEnrollment | null,
 ): ProgramDetailEnrollmentCta {
-  if (
-    !enrollment ||
-    enrollment.status === "Dropped" ||
-    enrollment.status === "Failed"
-  ) {
+  if (!enrollment) {
     return { kind: "enroll" };
+  }
+
+  if (enrollment.status === "Dropped" || enrollment.status === "Failed") {
+    return {
+      kind: "rebuy",
+      label: "Đăng ký lại",
+      subtext:
+        "Trong 1 tháng: phí 50% và có thể chọn lớp InProgress đủ điều kiện. Sau đó: giá đầy đủ, chỉ lớp Open.",
+    };
   }
 
   switch (enrollment.status) {

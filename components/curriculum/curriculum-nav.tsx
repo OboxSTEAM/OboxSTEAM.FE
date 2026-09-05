@@ -21,6 +21,7 @@ import { CurriculumClassBar } from "./curriculum-class-bar";
 import { CurriculumNavAssignmentItem } from "./curriculum-nav-assignment-item";
 import { CurriculumNavItem } from "./curriculum-nav-item";
 import { VoluntaryRetakeCta } from "./recovery/voluntary-retake-cta";
+import { WithdrawProgramEnrollmentControl } from "@/components/programs/withdraw-program-enrollment-control";
 
 const TREE_LINE = "bg-learn-faint/35";
 
@@ -403,6 +404,15 @@ export function CurriculumNav({
             );
           })}
         </Accordion>
+      </div>
+
+      <div className="mt-auto border-t border-learn-border px-3 py-3">
+        <WithdrawProgramEnrollmentControl
+          enrollmentId={curriculum.enrollmentId}
+          programName={curriculum.programName}
+          redirectTo={`/programs/${curriculum.programId}`}
+          variant="nav"
+        />
       </div>
     </div>
   );

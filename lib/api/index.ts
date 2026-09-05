@@ -754,6 +754,7 @@ export {
   getProgramEnrollmentModuleEnrollments,
   getProgramEnrollmentsByStudentId,
   saveActivityCheckpoint,
+  withdrawProgramEnrollment,
   type ActivityCheckpointData,
   type ActivityNavStatus,
   type CompleteActivityData,
@@ -814,6 +815,8 @@ export {
   type SaveActivityCheckpointResponse,
   type SaveActivityCheckpointResult,
   type StudentProgramEnrollmentsQuery,
+  type WithdrawProgramEnrollmentResponse,
+  type WithdrawProgramEnrollmentResult,
 } from "./program-enrollments";
 
 export {
