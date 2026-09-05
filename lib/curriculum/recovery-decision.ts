@@ -10,9 +10,7 @@ export type RecoveryAction =
   | "request-redelivery"
   | "wait-recovery"
   | "wait-redelivery-payment"
-  | "wait-manager"
   | "select-class"
-  | "intensive-consent"
   | "none";
 
 export type RecoveryDecisionInput = {
@@ -29,13 +27,11 @@ export type RecoveryDecisionInput = {
 
 const OPEN_RECOVERY_STATUSES = new Set(["Pending"]);
 const DECIDED_RECOVERY_STATUSES = new Set(["Approved", "Rejected"]);
+/** Live continuity statuses — ignore deprecated waitlist/intensive values. */
 const OPEN_REDELIVERY_STATUSES = new Set([
-  "PendingAutoMatch",
   "MatchedPendingPayment",
-  "PendingManager",
   "Approved",
   "AwaitingClassSelection",
-  "AwaitingIntensiveConsent",
 ]);
 
 export function countDecidedRecoveries(
@@ -170,21 +166,12 @@ export function resolveRecoveryAction(
     if (openRedelivery.status === "AwaitingClassSelection") {
       return "select-class";
     }
-    if (openRedelivery.status === "AwaitingIntensiveConsent") {
-      return "intensive-consent";
-    }
     if (
       openRedelivery.status === "MatchedPendingPayment" ||
       (openRedelivery.status === "Approved" &&
         openRedelivery.retakeModuleEnrollmentId)
     ) {
       return "wait-redelivery-payment";
-    }
-    if (
-      openRedelivery.status === "PendingManager" ||
-      openRedelivery.status === "PendingAutoMatch"
-    ) {
-      return "wait-manager";
     }
     return "wait-redelivery-payment";
   }

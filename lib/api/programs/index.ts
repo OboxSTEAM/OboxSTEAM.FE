@@ -19,6 +19,7 @@ import {
   getProgramByIdResponseSchema,
   getProgramCurriculumResponseSchema,
   getProgramOpenClassesResponseSchema,
+  getProgramRebuyClassesResponseSchema,
   getProgramReviewsResponseSchema,
   getProgramsResponseSchema,
   getProgramsWithModulesResponseSchema,
@@ -33,6 +34,7 @@ import {
   type GetProgramByIdResult,
   type GetProgramCurriculumResult,
   type GetProgramOpenClassesResult,
+  type GetProgramRebuyClassesResult,
   type GetProgramReviewsResult,
   type GetProgramsResult,
   type GetProgramsWithModulesResult,
@@ -55,6 +57,8 @@ export type {
   GetProgramCurriculumResult,
   GetProgramOpenClassesResponse,
   GetProgramOpenClassesResult,
+  GetProgramRebuyClassesResponse,
+  GetProgramRebuyClassesResult,
   GetProgramReviewsResponse,
   GetProgramReviewsResult,
   GetProgramsResponse,
@@ -81,6 +85,11 @@ export type {
   OpenEnrollmentClass,
   OpenEnrollmentClassSession,
 } from "@/lib/api/entities/open-enrollment-class";
+
+export type {
+  RebuyClass,
+  RebuyClassCatalog,
+} from "@/lib/api/entities/rebuy-class-catalog";
 
 export type { ProgramExpert } from "@/lib/api/entities/expert";
 
@@ -201,6 +210,24 @@ export async function getProgramOpenClasses(
     `${PROGRAMS_BASE}/${programId}/open-classes${query}`,
     getProgramOpenClassesResponseSchema,
     { method: "GET", skipAuth: true, skipRefresh: true },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/programs/{id}/rebuy-classes` — continuity catalog for Failed/Dropped
+ * (409 if still Active). Prefer continuity-classes while Active.
+ */
+export async function getProgramRebuyClasses(
+  id: string,
+): Promise<GetProgramRebuyClassesResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${programId}/rebuy-classes`,
+    getProgramRebuyClassesResponseSchema,
+    { method: "GET" },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

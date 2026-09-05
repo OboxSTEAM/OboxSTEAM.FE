@@ -14,15 +14,14 @@ import {
   type RecoveryAction,
 } from "@/lib/curriculum/recovery-decision";
 import {
+  cancelClassRedeliveryRequest,
   withdrawAssessmentRecoveryRequest,
-  withdrawClassRedeliveryRequest,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 import { AssessmentRecoveryRequestDialog } from "./assessment-recovery-request-dialog";
 import { ClassRedeliveryCandidatesDialog } from "./class-redelivery-candidates-dialog";
-import { ClassRedeliveryIntensiveConsentDialog } from "./class-redelivery-intensive-consent-dialog";
 import { ClassRedeliveryRequestDialog } from "./class-redelivery-request-dialog";
 import { RetakeCheckoutDialog } from "./retake-checkout-dialog";
 
@@ -35,7 +34,6 @@ type AssignmentRecoveryActionsProps = {
   /**
    * When false, only free retries (or in-flight wait states) are shown —
    * never the "request recovery / redelivery" CTA.
-   * Parents should set this from `!hasAttemptsRemaining(...)` (or Theory deadline grant).
    */
   showRecoveryUi: boolean;
   needsDeadlineGrant?: boolean;
@@ -45,6 +43,7 @@ type AssignmentRecoveryActionsProps = {
   isRetrying?: boolean;
   onRequestsChanged: () => void;
   programName?: string | null;
+  /** Fallback only — prefer `checkoutAmount` from continuity catalog after select. */
   programPrice?: number | null;
   completedModuleCount?: number | null;
   className?: string;
@@ -54,12 +53,10 @@ const STATUS_COPY: Record<
   Extract<
     RecoveryAction,
     | "wait-recovery"
-    | "wait-manager"
     | "wait-redelivery-payment"
     | "request-recovery"
     | "request-redelivery"
     | "select-class"
-    | "intensive-consent"
   >,
   { title: string; description: string }
 > = {
@@ -67,15 +64,10 @@ const STATUS_COPY: Record<
     title: "Đang chờ mentor duyệt",
     description: "Yêu cầu làm thêm lần đã gửi. Bạn có thể rút lại nếu cần.",
   },
-  "wait-manager": {
-    title: "Đang chờ xếp lớp",
-    description:
-      "Chưa có lớp Standard phù hợp. Quản lý sẽ mở lớp hoặc lịch học nén — bạn sẽ được thông báo.",
-  },
   "wait-redelivery-payment": {
     title: "Sẵn sàng thanh toán học lại",
     description:
-      "Lớp đích đã khớp. Thanh toán giá chương trình để hoàn tất (giữ tiến độ module đã xong).",
+      "Lớp đích đã khớp. Thanh toán phí học lại (50% giá chương trình) để hoàn tất.",
   },
   "request-recovery": {
     title: "Hết lượt làm bài",
@@ -84,16 +76,12 @@ const STATUS_COPY: Record<
   "request-redelivery": {
     title: "Cần học lại lớp",
     description:
-      "Bạn đã dùng hết yêu cầu làm thêm. Xin học lại module trên lớp khác.",
+      "Bạn đã dùng hết yêu cầu làm thêm. Chọn lớp Standard khác rồi thanh toán phí học lại.",
   },
   "select-class": {
     title: "Chọn lớp học lại",
-    description: "Có lớp Standard còn ghế. Hãy chọn lịch phù hợp rồi thanh toán.",
-  },
-  "intensive-consent": {
-    title: "Xác nhận lịch học nén",
     description:
-      "Quản lý đã mở lớp học lại (Remedial). Nhận lịch để thanh toán, hoặc từ chối (tiến độ giữ).",
+      "Chọn lớp Open (học lại từ đầu) hoặc lớp InProgress đủ điều kiện (giữ tiến độ). Đóng nếu chưa muốn chọn.",
   },
 };
 
@@ -118,9 +106,9 @@ export function AssignmentRecoveryActions({
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [redeliveryOpen, setRedeliveryOpen] = useState(false);
   const [candidatesOpen, setCandidatesOpen] = useState(false);
-  const [intensiveOpen, setIntensiveOpen] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [checkoutAmount, setCheckoutAmount] = useState<number | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const action = useMemo(
     () =>
@@ -170,19 +158,12 @@ export function AssignmentRecoveryActions({
     assignmentId,
   );
 
-  /**
-   * Free retries (base + mentor grants) always beat recovery CTAs.
-   * `showRecoveryUi` only gates request-* when resolve still says request
-   * (e.g. parent knows a free retry path exists before grants sync).
-   */
   const effectiveAction: RecoveryAction = (() => {
     if (attemptsRemaining > 0 && !needsDeadlineGrant) {
       if (
         action === "wait-recovery" ||
-        action === "wait-manager" ||
         action === "wait-redelivery-payment" ||
-        action === "select-class" ||
-        action === "intensive-consent"
+        action === "select-class"
       ) {
         return action;
       }
@@ -227,7 +208,7 @@ export function AssignmentRecoveryActions({
 
   async function handleWithdrawRecovery() {
     if (!openRecovery) return;
-    setIsWithdrawing(true);
+    setIsCancelling(true);
     try {
       await withdrawAssessmentRecoveryRequest(openRecovery.id);
       showAppSuccess({ title: "Đã rút yêu cầu làm lại" });
@@ -235,21 +216,21 @@ export function AssignmentRecoveryActions({
     } catch (error) {
       showAppErrorFromUnknown(error, "assessment-recovery.create");
     } finally {
-      setIsWithdrawing(false);
+      setIsCancelling(false);
     }
   }
 
-  async function handleWithdrawRedelivery() {
+  async function handleCancelRedelivery() {
     if (!openRedelivery) return;
-    setIsWithdrawing(true);
+    setIsCancelling(true);
     try {
-      await withdrawClassRedeliveryRequest(openRedelivery.id);
-      showAppSuccess({ title: "Đã rút yêu cầu học lại lớp" });
+      await cancelClassRedeliveryRequest(openRedelivery.id);
+      showAppSuccess({ title: "Đã hủy yêu cầu học lại lớp" });
       onRequestsChanged();
     } catch (error) {
       showAppErrorFromUnknown(error, "class-redelivery.create");
     } finally {
-      setIsWithdrawing(false);
+      setIsCancelling(false);
     }
   }
 
@@ -301,52 +282,50 @@ export function AssignmentRecoveryActions({
             </Button>
           ) : null}
 
-          {effectiveAction === "intensive-consent" && openRedelivery ? (
-            <Button
-              type="button"
-              className="bg-learn-primary text-white hover:bg-learn-primary/90"
-              onClick={() => setIntensiveOpen(true)}
-            >
-              Xem lịch nén
-            </Button>
-          ) : null}
-
           {effectiveAction === "wait-recovery" ? (
             <Button
               type="button"
               variant="outline"
               className="border-learn-border"
-              disabled={isWithdrawing}
+              disabled={isCancelling}
               onClick={() => void handleWithdrawRecovery()}
             >
-              {isWithdrawing ? "Đang rút…" : "Rút yêu cầu"}
+              {isCancelling ? "Đang rút…" : "Rút yêu cầu"}
             </Button>
           ) : null}
 
-          {(effectiveAction === "wait-manager" ||
-            effectiveAction === "select-class" ||
-            effectiveAction === "intensive-consent") &&
-          openRedelivery ? (
+          {effectiveAction === "select-class" && openRedelivery ? (
             <Button
               type="button"
               variant="outline"
               className="border-learn-border"
-              disabled={isWithdrawing}
-              onClick={() => void handleWithdrawRedelivery()}
+              disabled={isCancelling}
+              onClick={() => void handleCancelRedelivery()}
             >
-              {isWithdrawing ? "Đang rút…" : "Rút yêu cầu"}
+              {isCancelling ? "Đang hủy…" : "Hủy yêu cầu"}
             </Button>
           ) : null}
 
           {effectiveAction === "wait-redelivery-payment" &&
           openRedelivery?.retakeModuleEnrollmentId ? (
-            <Button
-              type="button"
-              className="bg-learn-primary text-white hover:bg-learn-primary/90"
-              onClick={() => setCheckoutOpen(true)}
-            >
-              Thanh toán học lại
-            </Button>
+            <>
+              <Button
+                type="button"
+                className="bg-learn-primary text-white hover:bg-learn-primary/90"
+                onClick={() => setCheckoutOpen(true)}
+              >
+                Thanh toán học lại
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-learn-border"
+                disabled={isCancelling}
+                onClick={() => void handleCancelRedelivery()}
+              >
+                {isCancelling ? "Đang hủy…" : "Hủy yêu cầu"}
+              </Button>
+            </>
           ) : null}
         </div>
       </div>
@@ -362,24 +341,20 @@ export function AssignmentRecoveryActions({
         open={redeliveryOpen}
         onOpenChange={setRedeliveryOpen}
         moduleEnrollmentId={moduleEnrollmentId}
-        onCreated={onRequestsChanged}
+        onCreated={() => {
+          onRequestsChanged();
+          setCandidatesOpen(true);
+        }}
       />
       {openRedelivery ? (
         <ClassRedeliveryCandidatesDialog
           open={candidatesOpen}
           onOpenChange={setCandidatesOpen}
           requestId={openRedelivery.id}
-          onSelected={onRequestsChanged}
-        />
-      ) : null}
-      {openRedelivery ? (
-        <ClassRedeliveryIntensiveConsentDialog
-          open={intensiveOpen}
-          onOpenChange={setIntensiveOpen}
-          requestId={openRedelivery.id}
-          targetClassId={openRedelivery.targetClassId}
-          moduleId={openRedelivery.moduleId}
-          onResolved={onRequestsChanged}
+          onSelected={(amount) => {
+            if (amount != null) setCheckoutAmount(amount);
+            onRequestsChanged();
+          }}
         />
       ) : null}
       {openRedelivery?.retakeModuleEnrollmentId ? (
@@ -388,7 +363,7 @@ export function AssignmentRecoveryActions({
           onOpenChange={setCheckoutOpen}
           retakeModuleEnrollmentId={openRedelivery.retakeModuleEnrollmentId}
           programName={programName}
-          programPrice={programPrice}
+          checkoutAmount={checkoutAmount ?? programPrice}
           completedModuleCount={completedModuleCount}
         />
       ) : null}

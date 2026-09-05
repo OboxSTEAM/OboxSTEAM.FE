@@ -41,7 +41,7 @@ export function ClassRedeliveryRequestDialog({
       showAppSuccess({
         title: "Đã gửi yêu cầu học lại lớp",
         description:
-          "Nếu còn lớp Standard phù hợp bạn sẽ chọn lớp; nếu không, quản lý sẽ mở lớp hoặc lịch nén.",
+          "Tiếp theo hãy chọn lớp Standard phù hợp rồi thanh toán phí học lại (50%).",
       });
       setMessage("");
       onOpenChange(false);
@@ -59,15 +59,15 @@ export function ClassRedeliveryRequestDialog({
         <DialogHeader>
           <DialogTitle>Xin học lại lớp</DialogTitle>
           <DialogDescription>
-            Bạn sẽ chọn lớp Standard còn ghế hoặc chờ quản lý mở lớp học lại.
-            Thanh toán bằng giá chương trình; tiến độ module đã hoàn thành được
-            giữ.
+            Chọn lớp Open để học lại từ đầu, hoặc lớp đang chạy đủ điều kiện để
+            giữ tiến độ. Phí học lại bằng 50% giá chương trình. Đóng danh sách
+            lớp nếu chưa muốn chọn — bạn vẫn Active.
           </DialogDescription>
         </DialogHeader>
         <Textarea
           value={message}
           onChange={(event) => setMessage(event.target.value)}
-          placeholder="Ghi chú cho quản lý (không bắt buộc)"
+          placeholder="Ghi chú (không bắt buộc)"
           className="min-h-24 border-learn-border"
           maxLength={1000}
         />

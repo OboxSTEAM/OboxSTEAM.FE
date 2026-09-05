@@ -7608,7 +7608,7 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Request class re-delivery (auto-match or manager queue)",
+        "summary": "Request class continuity (always AwaitingClassSelection)",
         "requestBody": {
           "content": {
             "application/json": {
@@ -7687,7 +7687,8 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Eligible classes the student can pick for re-delivery (tier 1)",
+        "summary": "Continuity class catalog for an open redelivery request",
+        "description": "Same shape as GET /api/programs/{id}/rebuy-classes (RebuyClassCatalogDto).",
         "parameters": [
           {
             "name": "id",
@@ -7705,17 +7706,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListApiResult"
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListApiResult"
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListApiResult"
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
                 }
               }
             }
@@ -7728,7 +7729,7 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Student picks a class for re-delivery (then pays the program price)",
+        "summary": "Student picks a class for continuity (then pays 50% of program price)",
         "parameters": [
           {
             "name": "id",
@@ -7788,7 +7789,7 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Student accepts the intensive remedial-class schedule (tier 2)",
+        "summary": "Removed — intensive remedial consent is no longer available",
         "parameters": [
           {
             "name": "id",
@@ -7801,22 +7802,22 @@
           }
         ],
         "responses": {
-          "200": {
-            "description": "OK",
+          "410": {
+            "description": "Gone",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -7829,7 +7830,79 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Student declines the remedial-class offer (progress is kept)",
+        "summary": "Removed — intensive remedial consent is no longer available",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "410": {
+            "description": "Gone",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/pending-manager": {
+      "get": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Removed — manager redelivery queue is no longer available",
+        "responses": {
+          "410": {
+            "description": "Gone",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/class-redelivery-requests/{id}/cancel": {
+      "post": {
+        "tags": [
+          "ClassRedeliveryRequest"
+        ],
+        "summary": "Cancel a continuity / redelivery request",
+        "description": "Cancels only this ClassRedeliveryRequest (status Withdrawn). Does NOT withdraw the student from the program — the ProgramEnrollment stays Active. Any PendingPayment retake module enrollment created at select-class is discarded. To quit the whole program use POST /api/program-enrollments/{id}/withdraw.",
         "parameters": [
           {
             "name": "id",
@@ -7865,42 +7938,13 @@
         }
       }
     },
-    "/api/class-redelivery-requests/pending-manager": {
-      "get": {
-        "tags": [
-          "ClassRedeliveryRequest"
-        ],
-        "summary": "Manager queue when no eligible class was auto-matched",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoListApiResult"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/class-redelivery-requests/{id}/withdraw": {
       "post": {
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Withdraw an open re-delivery request",
+        "summary": "Alias for cancel (obsolete name)",
+        "description": "Same as POST .../cancel. Prefer /cancel to avoid confusion with POST /api/program-enrollments/{id}/withdraw (quit program → Dropped).",
         "parameters": [
           {
             "name": "id",
@@ -7941,7 +7985,7 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Manager assigns a target class (then student pays program price for re-delivery)",
+        "summary": "Removed — manager assign-target is no longer available",
         "parameters": [
           {
             "name": "id",
@@ -7973,22 +8017,22 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "410": {
+            "description": "Gone",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -8001,7 +8045,7 @@
         "tags": [
           "ClassRedeliveryRequest"
         ],
-        "summary": "Reject a re-delivery request",
+        "summary": "Removed — manager reject is no longer available",
         "parameters": [
           {
             "name": "id",
@@ -8033,22 +8077,22 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "OK",
+          "410": {
+            "description": "Gone",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassRedeliveryRequestResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -15243,24 +15287,24 @@
         "tags": [
           "ManagerRedelivery"
         ],
-        "summary": "Re-delivery waitlist grouped by program then module",
+        "summary": "Removed — redelivery waitlist is no longer available",
         "responses": {
-          "200": {
-            "description": "OK",
+          "410": {
+            "description": "Gone",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -15273,7 +15317,7 @@
         "tags": [
           "ManagerRedelivery"
         ],
-        "summary": "Open an intensive remedial class and offer it to the module waitlist",
+        "summary": "Removed — open remedial class is no longer available",
         "requestBody": {
           "content": {
             "application/json": {
@@ -15294,22 +15338,22 @@
           }
         },
         "responses": {
-          "201": {
-            "description": "Created",
+          "410": {
+            "description": "Gone",
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenRemedialClassResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenRemedialClassResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/OpenRemedialClassResponseDtoApiResult"
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -18460,6 +18504,108 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/module-enrollments/{id}/continuity-classes": {
+      "get": {
+        "tags": [
+          "ModuleEnrollment"
+        ],
+        "summary": "Continuity class catalog for an Active module enrollment",
+        "description": "Same RebuyClassCatalogDto shape as rebuy-classes. Use while the program enrollment is still Active; after fail/drop use GET /api/programs/{id}/rebuy-classes.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RebuyClassCatalogDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "text/plain": {
                 "schema": {
@@ -23551,7 +23697,7 @@
           "Program"
         ],
         "summary": "List classes for first purchase or rebuy",
-        "description": "Student picker for this program. First purchase and a Completed (100%) source return Open Standard classes with seats (same join rule as open-classes). Failed or Dropped sources return Open and InProgress Standard classes with per-module session progress and isEligible (stop-module / source-class rules). IsRebuy is true only for Failed/Dropped. Active enrollment returns 409. Public browse of recruiting cohorts still uses GET .../open-classes.",
+        "description": "Student picker for this program. First purchase, a Completed (100%) source, and Failed/Dropped after the 3-month window return Open Standard classes with seats (same join rule as open-classes; credit copy does not run after the window). Failed or Dropped sources inside the window return Open and InProgress Standard classes with per-module session progress and isEligible (stop-module / source-class rules). IsRebuy is true only for Failed/Dropped inside the window. Active enrollment returns 409. Public browse of recruiting cohorts still uses GET .../open-classes.",
         "parameters": [
           {
             "name": "id",
@@ -33220,92 +33366,6 @@
         },
         "additionalProperties": false
       },
-      "ClassRedeliveryCandidateDto": {
-        "type": "object",
-        "properties": {
-          "classId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "name": {
-            "type": "string",
-            "nullable": true
-          },
-          "startDate": {
-            "type": "string",
-            "example": "15/06/2026 14:30:00"
-          },
-          "mentorId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "mentorName": {
-            "type": "string",
-            "nullable": true
-          },
-          "maxCapacity": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "seatsTaken": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "seatsRemaining": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "moduleSessions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClassRedeliveryCandidateSessionDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "ClassRedeliveryCandidateDtoListApiResult": {
-        "type": "object",
-        "properties": {
-          "isSuccess": {
-            "type": "boolean"
-          },
-          "value": {
-            "$ref": "#/components/schemas/ClassRedeliveryCandidateDtoListResponseDataContent"
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorContent"
-          }
-        },
-        "additionalProperties": false
-      },
-      "ClassRedeliveryCandidateDtoListResponseDataContent": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ClassRedeliveryCandidateDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
       "ClassRedeliveryCandidateSessionDto": {
         "type": "object",
         "properties": {
@@ -40345,60 +40405,6 @@
         },
         "additionalProperties": false
       },
-      "OpenRemedialClassResponseDto": {
-        "type": "object",
-        "properties": {
-          "classId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "classCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "className": {
-            "type": "string",
-            "nullable": true
-          },
-          "offeredRequestCount": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "OpenRemedialClassResponseDtoApiResult": {
-        "type": "object",
-        "properties": {
-          "isSuccess": {
-            "type": "boolean"
-          },
-          "value": {
-            "$ref": "#/components/schemas/OpenRemedialClassResponseDtoResponseDataContent"
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorContent"
-          }
-        },
-        "additionalProperties": false
-      },
-      "OpenRemedialClassResponseDtoResponseDataContent": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "$ref": "#/components/schemas/OpenRemedialClassResponseDto"
-          }
-        },
-        "additionalProperties": false
-      },
       "OperationsKpiSummaryDto": {
         "type": "object",
         "properties": {
@@ -43557,6 +43563,13 @@
             "type": "string",
             "format": "uuid"
           },
+          "context": {
+            "enum": [
+              "Rebuy",
+              "ActiveRedelivery"
+            ],
+            "type": "string"
+          },
           "isRebuy": {
             "type": "boolean"
           },
@@ -43725,6 +43738,13 @@
               "$ref": "#/components/schemas/RebuyClassModuleProgressDto"
             },
             "nullable": true
+          },
+          "moduleSessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassRedeliveryCandidateSessionDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -43774,93 +43794,6 @@
               "RedoWithClass"
             ],
             "type": "string"
-          }
-        },
-        "additionalProperties": false
-      },
-      "RedeliveryWaitlistModuleGroupDto": {
-        "type": "object",
-        "properties": {
-          "moduleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "moduleCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "moduleName": {
-            "type": "string",
-            "nullable": true
-          },
-          "waitingCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "oldestWaitingDays": {
-            "type": "integer",
-            "format": "int32"
-          }
-        },
-        "additionalProperties": false
-      },
-      "RedeliveryWaitlistProgramGroupDto": {
-        "type": "object",
-        "properties": {
-          "programId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "programCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "programName": {
-            "type": "string",
-            "nullable": true
-          },
-          "modules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RedeliveryWaitlistModuleGroupDto"
-            },
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "RedeliveryWaitlistProgramGroupDtoListApiResult": {
-        "type": "object",
-        "properties": {
-          "isSuccess": {
-            "type": "boolean"
-          },
-          "value": {
-            "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDtoListResponseDataContent"
-          },
-          "error": {
-            "$ref": "#/components/schemas/ErrorContent"
-          }
-        },
-        "additionalProperties": false
-      },
-      "RedeliveryWaitlistProgramGroupDtoListResponseDataContent": {
-        "type": "object",
-        "properties": {
-          "code": {
-            "type": "string",
-            "nullable": true
-          },
-          "message": {
-            "type": "string",
-            "nullable": true
-          },
-          "data": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/RedeliveryWaitlistProgramGroupDto"
-            },
-            "nullable": true
           }
         },
         "additionalProperties": false

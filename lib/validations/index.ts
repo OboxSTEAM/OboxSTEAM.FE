@@ -133,17 +133,11 @@ export {
   type RejectAssessmentRecoveryRequestInput,
 } from "./assessment-recovery-requests";
 export {
-  assignTargetClassRedeliveryRequestSchema,
   classRedeliveryRequestIdParamSchema,
   createClassRedeliveryRequestSchema,
-  openRemedialClassSchema,
-  rejectClassRedeliveryRequestSchema,
   selectClassRedeliveryRequestSchema,
-  type AssignTargetClassRedeliveryRequestInput,
   type ClassRedeliveryRequestIdParam,
   type CreateClassRedeliveryRequestInput,
-  type OpenRemedialClassInput,
-  type RejectClassRedeliveryRequestInput,
   type SelectClassRedeliveryRequestInput,
 } from "./class-redelivery-requests";
 export {

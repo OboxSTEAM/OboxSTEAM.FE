@@ -275,8 +275,6 @@ export function resolveNotificationHref(
         : studentLearnHref(programId, payload);
 
     case "ClassRedeliveryPendingManager":
-      return "/manager/redelivery";
-
     case "ClassRedeliveryAwaitingSelection":
     case "ClassRedeliveryCandidatesAvailable":
     case "ClassRedeliveryIntensiveOffered":

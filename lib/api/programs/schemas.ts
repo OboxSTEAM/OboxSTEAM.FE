@@ -8,6 +8,7 @@ import {
   programSchema,
   programWithModulesSchema,
 } from "@/lib/api/entities/program";
+import { rebuyClassCatalogSchema } from "@/lib/api/entities/rebuy-class-catalog";
 import { programReviewSchema } from "@/lib/api/entities/review";
 import { createApiResponseSchema, createApiValueSchema, apiValueMessageOnlySchema } from "@/lib/api/schemas";
 
@@ -70,6 +71,13 @@ export const getProgramOpenClassesResponseSchema = createApiResponseSchema(
   openEnrollmentClassesValueSchema,
 );
 
+export const rebuyClassCatalogValueSchema = createApiValueSchema(
+  rebuyClassCatalogSchema,
+);
+export const getProgramRebuyClassesResponseSchema = createApiResponseSchema(
+  rebuyClassCatalogValueSchema,
+);
+
 export const selectProgramClassValueSchema = createApiValueSchema(
   programClassSelectionSchema,
 );
@@ -114,6 +122,10 @@ export type GetProgramOpenClassesResponse = z.infer<
   typeof getProgramOpenClassesResponseSchema
 >;
 export type GetProgramOpenClassesResult = GetProgramOpenClassesResponse["value"];
+export type GetProgramRebuyClassesResponse = z.infer<
+  typeof getProgramRebuyClassesResponseSchema
+>;
+export type GetProgramRebuyClassesResult = GetProgramRebuyClassesResponse["value"];
 export type SelectProgramClassResponse = z.infer<
   typeof selectProgramClassResponseSchema
 >;

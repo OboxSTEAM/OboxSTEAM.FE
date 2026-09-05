@@ -393,6 +393,7 @@ export function CurriculumNav({
                   <VoluntaryRetakeCta
                     module={module}
                     redeliveryRequests={redeliveryRequests}
+                    programName={curriculum.programName}
                     onCreated={() => {
                       void refreshRedelivery();
                     }}
