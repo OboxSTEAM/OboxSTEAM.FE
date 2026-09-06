@@ -80,17 +80,20 @@ export function ContinuityClassPickerDialog({
   const defaultDescription =
     description ??
     (priceHint
-      ? `${priceHint}. Chọn lớp Open để học lại từ đầu, hoặc lớp InProgress còn ghế và đủ điều kiện để tiếp tục.`
-      : "Chọn lớp Standard phù hợp. Đóng hộp thoại nếu chưa muốn chọn — bạn vẫn giữ tiến độ hiện tại.");
+      ? `${priceHint}. Chọn lớp mới để học lại từ đầu, hoặc lớp đang chạy còn ghế và đủ điều kiện để tiếp tục.`
+      : "Chọn lớp phù hợp. Đóng hộp thoại nếu chưa muốn chọn — bạn vẫn giữ tiến độ hiện tại.");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="gap-0 overflow-hidden p-0 sm:max-w-lg">
+      {/* Portals outside .learn-shell — re-scope tokens + solid fill */}
+      <DialogPopup className="learn-shell gap-0 overflow-hidden bg-learn-surface p-0 text-learn-text sm:max-w-lg">
         <div className="relative border-b border-learn-border px-6 pb-4 pt-5">
           <DialogClose className="top-4 right-4" />
-          <DialogHeader className="gap-1.5 pr-8">
-            <DialogTitle className="text-lg font-semibold">{title}</DialogTitle>
-            <DialogDescription className="text-sm leading-relaxed">
+          <DialogHeader className="gap-1.5 pr-8 text-left">
+            <DialogTitle className="text-lg font-semibold text-learn-text-strong">
+              {title}
+            </DialogTitle>
+            <DialogDescription className="text-sm leading-relaxed text-learn-muted">
               {defaultDescription}
             </DialogDescription>
           </DialogHeader>
@@ -120,8 +123,8 @@ export function ContinuityClassPickerDialog({
             </div>
           ) : eligible.length === 0 && ineligible.length === 0 ? (
             <p className="py-8 text-center text-sm text-learn-muted">
-              Hiện chưa có lớp Standard phù hợp. Đóng và thử lại sau — bạn vẫn ở
-              trạng thái Active.
+              Hiện chưa có lớp phù hợp. Đóng và thử lại sau — bạn vẫn ở trạng thái
+              Active.
             </p>
           ) : (
             <div className="space-y-4">
@@ -183,77 +186,128 @@ function ContinuityClassCard({
 }) {
   const summary = creditSummary(item);
   const canPick = item.isEligible && item.seatsRemaining > 0 && !disabled;
+  const isOpen = item.status === "Open";
+  const isInProgress = item.status === "InProgress";
 
   return (
-    <li className="rounded-xl border border-learn-border bg-learn-surface-2/50 p-4">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-heading text-sm font-semibold text-learn-text-strong">
-            {item.name?.trim() || "Lớp học lại"}
-          </p>
-          <p className="mt-0.5 font-mono text-xs text-learn-muted">
-            {item.code?.trim() || item.classId.slice(0, 8)}
-          </p>
-          <p className="mt-1 text-xs text-learn-muted">{classKindLabel(item)}</p>
-        </div>
-        <Badge variant="outline" className="border-learn-border text-learn-muted">
-          {item.seatsTaken}/{item.maxCapacity} ghế
-          {item.seatsRemaining > 0
-            ? ` · còn ${item.seatsRemaining}`
-            : " · đã đầy"}
-        </Badge>
-      </div>
-
-      <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-learn-muted">
-        <span>Bắt đầu {formatApiDateTimeDisplay(item.startDate)}</span>
-        {item.mentorName?.trim() ? (
-          <span className="inline-flex items-center gap-1">
-            <Users className="size-3" aria-hidden />
-            {item.mentorName.trim()}
-          </span>
-        ) : null}
-      </div>
-
-      {summary ? (
-        <p className="mt-2 text-xs text-learn-text-strong">{summary}</p>
-      ) : null}
-
-      {!item.isEligible && item.ineligibleReason?.trim() ? (
-        <p className="mt-2 text-xs text-learn-muted">{item.ineligibleReason.trim()}</p>
-      ) : null}
-
-      {item.moduleSessions.length > 0 ? (
-        <ul className="mt-3 space-y-1.5 border-t border-learn-border pt-3">
-          {item.moduleSessions.slice(0, 4).map((session) => (
-            <li
-              key={session.sessionId}
-              className="flex flex-wrap items-center gap-2 text-xs"
-            >
-              <Badge variant="secondary" className="font-normal">
-                {CLASS_SESSION_KIND_LABELS[session.sessionKind] ??
-                  session.sessionKind}
-              </Badge>
-              <span className="text-learn-text-strong">
-                {session.title?.trim() || "Buổi học"}
-              </span>
-              <span className="text-learn-muted">
-                {formatApiDateTimeDisplay(session.startTime)}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-
-      <Button
+    <li>
+      <button
         type="button"
-        className={cn(
-          "mt-3 w-full bg-learn-primary text-white hover:bg-learn-primary/90",
-        )}
         disabled={!canPick}
+        aria-busy={isBusy}
         onClick={() => onSelect(item.classId)}
+        className={cn(
+          "w-full rounded-xl border p-4 text-left transition-colors outline-none",
+          "focus-visible:ring-2 focus-visible:ring-learn-primary/40",
+          canPick
+            ? "border-learn-border bg-learn-surface-2/50 hover:border-learn-primary/50 hover:bg-learn-surface-2"
+            : "cursor-not-allowed border-learn-border bg-learn-surface-2/30",
+          isBusy && "border-learn-primary/40 bg-learn-primary/5",
+        )}
       >
-        {isBusy ? "Đang chọn…" : canPick ? "Chọn lớp này" : "Không chọn được"}
-      </Button>
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-heading text-sm font-semibold text-learn-text-strong">
+              {item.name?.trim() || "Lớp học lại"}
+            </p>
+            <p className="mt-0.5 font-mono text-xs text-learn-muted">
+              {item.code?.trim() || item.classId.slice(0, 8)}
+            </p>
+            <p className="mt-1 text-xs text-learn-muted">{classKindLabel(item)}</p>
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-1.5">
+            <Badge
+              variant="outline"
+              className={cn(
+                "font-normal",
+                isOpen &&
+                  "border-learn-success/40 bg-learn-success/10 text-learn-text-strong",
+                isInProgress &&
+                  "border-learn-accent/40 bg-learn-accent/10 text-learn-text-strong",
+                !isOpen &&
+                  !isInProgress &&
+                  "border-learn-border text-learn-muted",
+              )}
+            >
+              {isOpen ? "Lớp mới" : isInProgress ? "Đang chạy" : item.status}
+            </Badge>
+            <Badge
+              variant="outline"
+              className="border-learn-border text-learn-muted"
+            >
+              {item.seatsTaken}/{item.maxCapacity} ghế
+              {item.seatsRemaining > 0
+                ? ` · còn ${item.seatsRemaining}`
+                : " · đã đầy"}
+            </Badge>
+          </div>
+        </div>
+
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-learn-muted">
+          <span>Bắt đầu {formatApiDateTimeDisplay(item.startDate)}</span>
+          {item.mentorName?.trim() ? (
+            <span className="inline-flex items-center gap-1">
+              <Users className="size-3" aria-hidden />
+              {item.mentorName.trim()}
+            </span>
+          ) : null}
+        </div>
+
+        {summary ? (
+          <p className="mt-2 text-xs font-medium text-learn-primary">{summary}</p>
+        ) : null}
+
+        {!item.isEligible && item.ineligibleReason?.trim() ? (
+          <p className="mt-2 text-xs text-learn-muted">
+            {item.ineligibleReason.trim()}
+          </p>
+        ) : null}
+
+        {item.moduleSessions.length > 0 ? (
+          <ul className="mt-3 space-y-1.5 border-t border-learn-border pt-3">
+            {item.moduleSessions.slice(0, 4).map((session) => (
+              <li
+                key={session.sessionId}
+                className="flex flex-wrap items-center gap-2 text-xs"
+              >
+                <Badge
+                  variant="secondary"
+                  className="border-learn-border bg-learn-surface font-normal text-learn-text"
+                >
+                  {CLASS_SESSION_KIND_LABELS[session.sessionKind] ??
+                    session.sessionKind}
+                </Badge>
+                <span className="text-learn-text-strong">
+                  {session.title?.trim() || "Buổi học"}
+                </span>
+                <span className="text-learn-muted">
+                  {formatApiDateTimeDisplay(session.startTime)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <span
+          className={cn(
+            "mt-3 flex h-9 w-full items-center justify-center rounded-lg text-sm font-medium",
+            canPick
+              ? "bg-learn-primary text-white"
+              : "bg-learn-surface-3 text-learn-muted",
+          )}
+        >
+          {isBusy ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+              Đang chọn…
+            </span>
+          ) : canPick ? (
+            "Chọn lớp này"
+          ) : (
+            "Không chọn được"
+          )}
+        </span>
+      </button>
     </li>
   );
 }

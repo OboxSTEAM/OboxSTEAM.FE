@@ -73,7 +73,7 @@ export function resolveProgramDetailEnrollmentCta(
       kind: "rebuy",
       label: "Đăng ký lại",
       subtext:
-        "Trong 1 tháng: phí 50% và có thể chọn lớp InProgress đủ điều kiện. Sau đó: giá đầy đủ, chỉ lớp Open.",
+        "Trong 1 tháng: học lại với nửa học phí (50%), và có thể vào lớp đang chạy nếu còn chỗ.\nNếu quá 1 tháng: đóng đủ học phí (100%) và chỉ đăng ký được lớp mới mở tuyển sinh.",
     };
   }
 

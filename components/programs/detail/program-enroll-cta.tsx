@@ -405,11 +405,20 @@ export function ProgramEnrollCta({
     return enrollmentCta.subtext;
   };
 
+  const subtextLines = getSubtext().split("\n").filter(Boolean);
+
   return (
     <>
       <div className={cn("space-y-2", className)}>
         {renderPrimaryAction()}
-        <p className={subtextClassName}>{getSubtext()}</p>
+        <p className={subtextClassName}>
+          {subtextLines.map((line, index) => (
+            <span key={line}>
+              {index > 0 ? <br /> : null}
+              {line}
+            </span>
+          ))}
+        </p>
         {enrollmentCta.kind === "continue" && enrollment ? (
           <WithdrawProgramEnrollmentControl
             enrollmentId={enrollment.id}

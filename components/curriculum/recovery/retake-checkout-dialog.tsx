@@ -135,7 +135,8 @@ export function RetakeCheckoutDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="gap-0 overflow-hidden p-0 sm:max-w-md">
+      {/* Portals outside .learn-shell — re-scope tokens + solid fill */}
+      <DialogPopup className="learn-shell gap-0 overflow-hidden bg-learn-surface p-0 text-learn-text sm:max-w-md">
         <div className="relative border-b border-learn-border px-6 pb-4 pt-5">
           <DialogClose className="top-4 right-4" />
           <div className="flex items-start gap-2 pr-8">

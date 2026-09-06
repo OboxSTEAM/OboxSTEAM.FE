@@ -47,3 +47,6 @@ next-env.d.ts
 
 # Cursor — local MCP config (machine-specific)
 .cursor/mcp.json
+
+# Codex — local agent config
+.codex/config.toml

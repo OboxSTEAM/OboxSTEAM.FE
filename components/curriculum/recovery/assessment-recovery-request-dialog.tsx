@@ -57,7 +57,8 @@ export function AssessmentRecoveryRequestDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-w-md">
+      {/* Portals outside .learn-shell — re-scope tokens + solid fill */}
+      <DialogPopup className="learn-shell max-w-md bg-learn-surface text-learn-text">
         <DialogHeader>
           <DialogTitle>Xin làm thêm lần</DialogTitle>
           <DialogDescription>
