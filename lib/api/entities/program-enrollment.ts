@@ -15,6 +15,13 @@ export const programEnrollmentStatusSchema = z.enum([
   "Dropped",
 ]);
 
+/** Matches `ProgramEnrollmentResponseDto.endReason` / `priorEndReason`. */
+export const programEnrollmentEndReasonSchema = z.enum([
+  "AcademicFail",
+  "Withdraw",
+  "Attendance",
+]);
+
 export const programEnrollmentSchema = z.object({
   id: z.string().uuid(),
   studentId: z.string().uuid(),
@@ -24,6 +31,16 @@ export const programEnrollmentSchema = z.object({
   enrolledAt: z.string().nullable(),
   startedAt: z.string().nullable(),
   completedAt: z.string().nullable(),
+  endReason: programEnrollmentEndReasonSchema.nullable(),
+  endedModuleId: z.string().uuid().nullable(),
+  endedAt: z.string().nullable(),
+  sourceProgramEnrollmentId: z.string().uuid().nullable(),
+  isRebuy: z.boolean(),
+  attemptNumber: z.number().int(),
+  priorStatus: programEnrollmentStatusSchema.nullable(),
+  priorEndReason: programEnrollmentEndReasonSchema.nullable(),
+  isSuperseded: z.boolean(),
+  supersededByEnrollmentId: z.string().uuid().nullable(),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   code: z.string().nullable(),
@@ -41,4 +58,7 @@ export const programEnrollmentSchema = z.object({
 });
 
 export type ProgramEnrollmentStatus = z.infer<typeof programEnrollmentStatusSchema>;
+export type ProgramEnrollmentEndReason = z.infer<
+  typeof programEnrollmentEndReasonSchema
+>;
 export type ProgramEnrollment = z.infer<typeof programEnrollmentSchema>;

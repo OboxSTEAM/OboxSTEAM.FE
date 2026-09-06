@@ -19,8 +19,9 @@ import {
   PROGRAM_LEVEL_LABELS,
 } from "@/lib/programs/constants";
 import {
+  getEnrollmentDisplayStatusLabel,
+  getEnrollmentRebuyHint,
   getProgramLearnHref,
-  PROGRAM_ENROLLMENT_STATUS_LABELS,
 } from "@/lib/programs/enrollments";
 import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
@@ -45,8 +46,12 @@ function formatEnrollmentDate(iso: string | null): string {
   }
 }
 
-function getStatusPillClass(status: ProgramEnrollment["status"]): string {
-  switch (status) {
+function getStatusPillClass(enrollment: ProgramEnrollment): string {
+  if (enrollment.isRebuy && enrollment.status === "Active") {
+    return "border-[#4FC3F7]/45 bg-[#E8F7FD] text-[#1565c0]";
+  }
+
+  switch (enrollment.status) {
     case "Active":
       return "border-[#7CB342]/40 bg-[#7CB342]/18 text-[#2d5016]";
     case "PendingPayment":
@@ -65,18 +70,18 @@ function getStatusPillClass(status: ProgramEnrollment["status"]): string {
 }
 
 function EnrollmentStatusPill({
-  status,
+  enrollment,
 }: {
-  status: ProgramEnrollment["status"];
+  enrollment: ProgramEnrollment;
 }) {
   return (
     <span
       className={cn(
         "inline-flex shrink-0 items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-wide shadow-sm",
-        getStatusPillClass(status),
+        getStatusPillClass(enrollment),
       )}
     >
-      {PROGRAM_ENROLLMENT_STATUS_LABELS[status]}
+      {getEnrollmentDisplayStatusLabel(enrollment)}
     </span>
   );
 }
@@ -93,6 +98,7 @@ export function EnrollmentCard({
   const isActive = enrollment.status === "Active";
   const isCompleted = enrollment.status === "Completed";
   const thumbnailUrl = getProgramThumbnailUrl(enrollment.thumbnailUrl);
+  const rebuyHint = getEnrollmentRebuyHint(enrollment);
 
   return (
     <Card
@@ -119,7 +125,7 @@ export function EnrollmentCard({
           <CardDescription className="min-w-0 text-xs font-medium uppercase tracking-wide text-[#6B6B6B]">
             {enrollment.seriesName || "Chương trình"}
           </CardDescription>
-          <EnrollmentStatusPill status={enrollment.status} />
+          <EnrollmentStatusPill enrollment={enrollment} />
         </div>
         <CardTitle className="font-heading line-clamp-2 text-lg leading-snug text-[#2D2D2D]">
           {enrollment.name || "Chưa đặt tên"}
@@ -157,6 +163,10 @@ export function EnrollmentCard({
               />
             </div>
           </div>
+        ) : null}
+
+        {rebuyHint ? (
+          <p className="text-xs leading-relaxed text-[#1565c0]">{rebuyHint}</p>
         ) : null}
 
         <p className="text-xs text-[#6B6B6B]">
@@ -198,7 +208,7 @@ export function EnrollmentCard({
               "inline-flex gap-1.5 font-semibold",
             )}
           >
-            Tiếp tục học
+            {enrollment.isRebuy ? "Tiếp tục học lại" : "Tiếp tục học"}
             <ArrowRight className="size-4" aria-hidden />
           </Link>
         ) : isCompleted ? (

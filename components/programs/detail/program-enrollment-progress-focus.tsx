@@ -1,7 +1,7 @@
 "use client";
 
 import type { ProgramEnrollment } from "@/lib/api/program-enrollments";
-import { PROGRAM_ENROLLMENT_STATUS_LABELS } from "@/lib/programs/enrollments";
+import { getEnrollmentDisplayStatusLabel } from "@/lib/programs/enrollments";
 import { cn } from "@/lib/utils";
 
 import { useProgramEnrollmentLookup } from "./program-enrollment-lookup";
@@ -90,7 +90,7 @@ function SidebarProgressContent({ enrollment }: { enrollment: ProgramEnrollment 
           isCompleted ? "text-[#7CB342]" : "text-[#4FC3F7]",
         )}
       >
-        {PROGRAM_ENROLLMENT_STATUS_LABELS[enrollment.status]}
+        {getEnrollmentDisplayStatusLabel(enrollment)}
       </p>
     </div>
   );
@@ -113,7 +113,7 @@ function HeroProgressContent({ enrollment }: { enrollment: ProgramEnrollment }) 
               isCompleted ? "text-[#7CB342]" : "text-[#4FC3F7]",
             )}
           >
-            {PROGRAM_ENROLLMENT_STATUS_LABELS[enrollment.status]}
+            {getEnrollmentDisplayStatusLabel(enrollment)}
           </p>
         </div>
         <p className="shrink-0 font-heading text-2xl font-extrabold tabular-nums leading-none text-[#2D2D2D]">

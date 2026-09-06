@@ -12,10 +12,15 @@ const programEnrollmentsListQueryFields = {
   isDescending: z.boolean().optional(),
   page: z.number().int().min(1).optional(),
   pageSize: z.number().int().min(1).optional(),
+  /** Default false — one current card per program. */
+  includeSuperseded: z.boolean().optional(),
 } as const;
 
 /** Query params for `GET /api/program-enrollments/me`. */
-export const myProgramEnrollmentsQuerySchema = z.object(programEnrollmentsListQueryFields);
+export const myProgramEnrollmentsQuerySchema = z.object({
+  ...programEnrollmentsListQueryFields,
+  programId: z.string().uuid().optional(),
+});
 
 /** Query params for `GET /api/program-enrollments/student/{studentId}`. */
 export const studentProgramEnrollmentsQuerySchema = z.object(

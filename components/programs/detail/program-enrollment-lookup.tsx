@@ -51,7 +51,10 @@ export function ProgramEnrollmentLookupProvider({
     minSkeletonMs: 0,
     fetcher: async () => {
       const result = await getMyProgramEnrollments(
-        PROGRAM_DETAIL_ENROLLMENTS_LOOKUP_QUERY,
+        {
+          ...PROGRAM_DETAIL_ENROLLMENTS_LOOKUP_QUERY,
+          programId,
+        },
       );
       return findEnrollmentForProgram(result?.data?.items ?? [], programId);
     },

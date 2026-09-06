@@ -103,6 +103,7 @@ export type {
 
 export type {
   ProgramEnrollment,
+  ProgramEnrollmentEndReason,
   ProgramEnrollmentStatus,
 } from "@/lib/api/entities/program-enrollment";
 

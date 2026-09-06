@@ -808,6 +808,7 @@ export {
   type MyProgramEnrollmentsQuery,
   type ProgramEnrollment,
   type ProgramEnrollmentClass,
+  type ProgramEnrollmentEndReason,
   type ProgramEnrollmentStatus,
   type ResumeState,
   type ResumeStateKind,

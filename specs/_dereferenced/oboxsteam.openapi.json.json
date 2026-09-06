@@ -209030,6 +209030,42 @@
                               "format": "uuid",
                               "nullable": true
                             },
+                            "isRebuy": {
+                              "type": "boolean"
+                            },
+                            "attemptNumber": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "priorStatus": {
+                              "enum": [
+                                "PendingPayment",
+                                "Active",
+                                "Deferred",
+                                "Completed",
+                                "Failed",
+                                "Dropped"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "priorEndReason": {
+                              "enum": [
+                                "AcademicFail",
+                                "Withdraw",
+                                "Attendance"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isSuperseded": {
+                              "type": "boolean"
+                            },
+                            "supersededByEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "createdAt": {
                               "type": "string",
                               "example": "15/06/2026 14:30:00"
@@ -209209,6 +209245,42 @@
                               "format": "uuid",
                               "nullable": true
                             },
+                            "isRebuy": {
+                              "type": "boolean"
+                            },
+                            "attemptNumber": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "priorStatus": {
+                              "enum": [
+                                "PendingPayment",
+                                "Active",
+                                "Deferred",
+                                "Completed",
+                                "Failed",
+                                "Dropped"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "priorEndReason": {
+                              "enum": [
+                                "AcademicFail",
+                                "Withdraw",
+                                "Attendance"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isSuperseded": {
+                              "type": "boolean"
+                            },
+                            "supersededByEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "createdAt": {
                               "type": "string",
                               "example": "15/06/2026 14:30:00"
@@ -209384,6 +209456,42 @@
                               "example": "15/06/2026 14:30:00"
                             },
                             "sourceProgramEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "isRebuy": {
+                              "type": "boolean"
+                            },
+                            "attemptNumber": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "priorStatus": {
+                              "enum": [
+                                "PendingPayment",
+                                "Active",
+                                "Deferred",
+                                "Completed",
+                                "Failed",
+                                "Dropped"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "priorEndReason": {
+                              "enum": [
+                                "AcademicFail",
+                                "Withdraw",
+                                "Attendance"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isSuperseded": {
+                              "type": "boolean"
+                            },
+                            "supersededByEnrollmentId": {
                               "type": "string",
                               "format": "uuid",
                               "nullable": true
@@ -209987,6 +210095,42 @@
                               "format": "uuid",
                               "nullable": true
                             },
+                            "isRebuy": {
+                              "type": "boolean"
+                            },
+                            "attemptNumber": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "priorStatus": {
+                              "enum": [
+                                "PendingPayment",
+                                "Active",
+                                "Deferred",
+                                "Completed",
+                                "Failed",
+                                "Dropped"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "priorEndReason": {
+                              "enum": [
+                                "AcademicFail",
+                                "Withdraw",
+                                "Attendance"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isSuperseded": {
+                              "type": "boolean"
+                            },
+                            "supersededByEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "createdAt": {
                               "type": "string",
                               "example": "15/06/2026 14:30:00"
@@ -210166,6 +210310,42 @@
                               "format": "uuid",
                               "nullable": true
                             },
+                            "isRebuy": {
+                              "type": "boolean"
+                            },
+                            "attemptNumber": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "priorStatus": {
+                              "enum": [
+                                "PendingPayment",
+                                "Active",
+                                "Deferred",
+                                "Completed",
+                                "Failed",
+                                "Dropped"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "priorEndReason": {
+                              "enum": [
+                                "AcademicFail",
+                                "Withdraw",
+                                "Attendance"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isSuperseded": {
+                              "type": "boolean"
+                            },
+                            "supersededByEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
                             "createdAt": {
                               "type": "string",
                               "example": "15/06/2026 14:30:00"
@@ -210341,6 +210521,42 @@
                               "example": "15/06/2026 14:30:00"
                             },
                             "sourceProgramEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "isRebuy": {
+                              "type": "boolean"
+                            },
+                            "attemptNumber": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "priorStatus": {
+                              "enum": [
+                                "PendingPayment",
+                                "Active",
+                                "Deferred",
+                                "Completed",
+                                "Failed",
+                                "Dropped"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "priorEndReason": {
+                              "enum": [
+                                "AcademicFail",
+                                "Withdraw",
+                                "Attendance"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "isSuperseded": {
+                              "type": "boolean"
+                            },
+                            "supersededByEnrollmentId": {
                               "type": "string",
                               "format": "uuid",
                               "nullable": true
@@ -210972,7 +211188,7 @@
           "ProgramEnrollment"
         ],
         "summary": "Get program enrollments for current user",
-        "description": "Students: own enrollments. Parents: linked students. Admins: all enrollments.",
+        "description": "Students: own enrollments. Parents: linked students. Admins: all enrollments. By default returns one current row per program (PendingPayment/Active/Deferred preferred; otherwise the latest non-superseded terminal). Pass includeSuperseded=true for full purchase history.",
         "parameters": [
           {
             "name": "programId",
@@ -211018,6 +211234,15 @@
               "type": "integer",
               "format": "int32",
               "default": 10
+            }
+          },
+          {
+            "name": "includeSuperseded",
+            "in": "query",
+            "description": "When true, return every purchase row including superseded history. Default: false (one current card per program).",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -211113,6 +211338,42 @@
                                     "example": "15/06/2026 14:30:00"
                                   },
                                   "sourceProgramEnrollmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "isRebuy": {
+                                    "type": "boolean"
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "PendingPayment",
+                                      "Active",
+                                      "Deferred",
+                                      "Completed",
+                                      "Failed",
+                                      "Dropped"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "priorEndReason": {
+                                    "enum": [
+                                      "AcademicFail",
+                                      "Withdraw",
+                                      "Attendance"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "isSuperseded": {
+                                    "type": "boolean"
+                                  },
+                                  "supersededByEnrollmentId": {
                                     "type": "string",
                                     "format": "uuid",
                                     "nullable": true
@@ -211330,6 +211591,42 @@
                                     "format": "uuid",
                                     "nullable": true
                                   },
+                                  "isRebuy": {
+                                    "type": "boolean"
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "PendingPayment",
+                                      "Active",
+                                      "Deferred",
+                                      "Completed",
+                                      "Failed",
+                                      "Dropped"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "priorEndReason": {
+                                    "enum": [
+                                      "AcademicFail",
+                                      "Withdraw",
+                                      "Attendance"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "isSuperseded": {
+                                    "type": "boolean"
+                                  },
+                                  "supersededByEnrollmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
                                   "createdAt": {
                                     "type": "string",
                                     "example": "15/06/2026 14:30:00"
@@ -211539,6 +211836,42 @@
                                     "example": "15/06/2026 14:30:00"
                                   },
                                   "sourceProgramEnrollmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "isRebuy": {
+                                    "type": "boolean"
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "PendingPayment",
+                                      "Active",
+                                      "Deferred",
+                                      "Completed",
+                                      "Failed",
+                                      "Dropped"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "priorEndReason": {
+                                    "enum": [
+                                      "AcademicFail",
+                                      "Withdraw",
+                                      "Attendance"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "isSuperseded": {
+                                    "type": "boolean"
+                                  },
+                                  "supersededByEnrollmentId": {
                                     "type": "string",
                                     "format": "uuid",
                                     "nullable": true
@@ -220702,7 +221035,7 @@
           "ProgramEnrollment"
         ],
         "summary": "Get program enrollments by student ID",
-        "description": "List program enrollments for a student. Access rules apply per role (self, linked parent, or admin).",
+        "description": "List program enrollments for a student. Access rules apply per role (self, linked parent, or admin). By default returns one current row per program; pass includeSuperseded=true for full purchase history.",
         "parameters": [
           {
             "name": "studentId",
@@ -220748,6 +221081,15 @@
               "type": "integer",
               "format": "int32",
               "default": 10
+            }
+          },
+          {
+            "name": "includeSuperseded",
+            "in": "query",
+            "description": "When true, return every purchase row including superseded history. Default: false (one current card per program).",
+            "schema": {
+              "type": "boolean",
+              "default": false
             }
           }
         ],
@@ -220843,6 +221185,42 @@
                                     "example": "15/06/2026 14:30:00"
                                   },
                                   "sourceProgramEnrollmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "isRebuy": {
+                                    "type": "boolean"
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "PendingPayment",
+                                      "Active",
+                                      "Deferred",
+                                      "Completed",
+                                      "Failed",
+                                      "Dropped"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "priorEndReason": {
+                                    "enum": [
+                                      "AcademicFail",
+                                      "Withdraw",
+                                      "Attendance"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "isSuperseded": {
+                                    "type": "boolean"
+                                  },
+                                  "supersededByEnrollmentId": {
                                     "type": "string",
                                     "format": "uuid",
                                     "nullable": true
@@ -221060,6 +221438,42 @@
                                     "format": "uuid",
                                     "nullable": true
                                   },
+                                  "isRebuy": {
+                                    "type": "boolean"
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "PendingPayment",
+                                      "Active",
+                                      "Deferred",
+                                      "Completed",
+                                      "Failed",
+                                      "Dropped"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "priorEndReason": {
+                                    "enum": [
+                                      "AcademicFail",
+                                      "Withdraw",
+                                      "Attendance"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "isSuperseded": {
+                                    "type": "boolean"
+                                  },
+                                  "supersededByEnrollmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
                                   "createdAt": {
                                     "type": "string",
                                     "example": "15/06/2026 14:30:00"
@@ -221269,6 +221683,42 @@
                                     "example": "15/06/2026 14:30:00"
                                   },
                                   "sourceProgramEnrollmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "isRebuy": {
+                                    "type": "boolean"
+                                  },
+                                  "attemptNumber": {
+                                    "type": "integer",
+                                    "format": "int32"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "PendingPayment",
+                                      "Active",
+                                      "Deferred",
+                                      "Completed",
+                                      "Failed",
+                                      "Dropped"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "priorEndReason": {
+                                    "enum": [
+                                      "AcademicFail",
+                                      "Withdraw",
+                                      "Attendance"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "isSuperseded": {
+                                    "type": "boolean"
+                                  },
+                                  "supersededByEnrollmentId": {
                                     "type": "string",
                                     "format": "uuid",
                                     "nullable": true
@@ -307859,6 +308309,42 @@
             "format": "uuid",
             "nullable": true
           },
+          "isRebuy": {
+            "type": "boolean"
+          },
+          "attemptNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "priorStatus": {
+            "enum": [
+              "PendingPayment",
+              "Active",
+              "Deferred",
+              "Completed",
+              "Failed",
+              "Dropped"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "priorEndReason": {
+            "enum": [
+              "AcademicFail",
+              "Withdraw",
+              "Attendance"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "isSuperseded": {
+            "type": "boolean"
+          },
+          "supersededByEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "example": "15/06/2026 14:30:00"
@@ -308012,6 +308498,42 @@
                     "example": "15/06/2026 14:30:00"
                   },
                   "sourceProgramEnrollmentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "isRebuy": {
+                    "type": "boolean"
+                  },
+                  "attemptNumber": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "priorStatus": {
+                    "enum": [
+                      "PendingPayment",
+                      "Active",
+                      "Deferred",
+                      "Completed",
+                      "Failed",
+                      "Dropped"
+                    ],
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "priorEndReason": {
+                    "enum": [
+                      "AcademicFail",
+                      "Withdraw",
+                      "Attendance"
+                    ],
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "isSuperseded": {
+                    "type": "boolean"
+                  },
+                  "supersededByEnrollmentId": {
                     "type": "string",
                     "format": "uuid",
                     "nullable": true
@@ -308177,6 +308699,42 @@
                   "example": "15/06/2026 14:30:00"
                 },
                 "sourceProgramEnrollmentId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "nullable": true
+                },
+                "isRebuy": {
+                  "type": "boolean"
+                },
+                "attemptNumber": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "priorStatus": {
+                  "enum": [
+                    "PendingPayment",
+                    "Active",
+                    "Deferred",
+                    "Completed",
+                    "Failed",
+                    "Dropped"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                },
+                "priorEndReason": {
+                  "enum": [
+                    "AcademicFail",
+                    "Withdraw",
+                    "Attendance"
+                  ],
+                  "type": "string",
+                  "nullable": true
+                },
+                "isSuperseded": {
+                  "type": "boolean"
+                },
+                "supersededByEnrollmentId": {
                   "type": "string",
                   "format": "uuid",
                   "nullable": true
@@ -308368,6 +308926,42 @@
                           "example": "15/06/2026 14:30:00"
                         },
                         "sourceProgramEnrollmentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "isRebuy": {
+                          "type": "boolean"
+                        },
+                        "attemptNumber": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "priorStatus": {
+                          "enum": [
+                            "PendingPayment",
+                            "Active",
+                            "Deferred",
+                            "Completed",
+                            "Failed",
+                            "Dropped"
+                          ],
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "priorEndReason": {
+                          "enum": [
+                            "AcademicFail",
+                            "Withdraw",
+                            "Attendance"
+                          ],
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "isSuperseded": {
+                          "type": "boolean"
+                        },
+                        "supersededByEnrollmentId": {
                           "type": "string",
                           "format": "uuid",
                           "nullable": true
@@ -308577,6 +309171,42 @@
                       "format": "uuid",
                       "nullable": true
                     },
+                    "isRebuy": {
+                      "type": "boolean"
+                    },
+                    "attemptNumber": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "priorStatus": {
+                      "enum": [
+                        "PendingPayment",
+                        "Active",
+                        "Deferred",
+                        "Completed",
+                        "Failed",
+                        "Dropped"
+                      ],
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "priorEndReason": {
+                      "enum": [
+                        "AcademicFail",
+                        "Withdraw",
+                        "Attendance"
+                      ],
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "isSuperseded": {
+                      "type": "boolean"
+                    },
+                    "supersededByEnrollmentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
                     "createdAt": {
                       "type": "string",
                       "example": "15/06/2026 14:30:00"
@@ -308756,6 +309386,42 @@
                 "example": "15/06/2026 14:30:00"
               },
               "sourceProgramEnrollmentId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "isRebuy": {
+                "type": "boolean"
+              },
+              "attemptNumber": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "priorStatus": {
+                "enum": [
+                  "PendingPayment",
+                  "Active",
+                  "Deferred",
+                  "Completed",
+                  "Failed",
+                  "Dropped"
+                ],
+                "type": "string",
+                "nullable": true
+              },
+              "priorEndReason": {
+                "enum": [
+                  "AcademicFail",
+                  "Withdraw",
+                  "Attendance"
+                ],
+                "type": "string",
+                "nullable": true
+              },
+              "isSuperseded": {
+                "type": "boolean"
+              },
+              "supersededByEnrollmentId": {
                 "type": "string",
                 "format": "uuid",
                 "nullable": true

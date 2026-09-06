@@ -1145,7 +1145,7 @@
       {
         "path": "/api/program-enrollments/me",
         "method": "get",
-        "description": "Students: own enrollments. Parents: linked students. Admins: all enrollments."
+        "description": "Students: own enrollments. Parents: linked students. Admins: all enrollments. By default returns one current row per program (PendingPayment/Active/Deferred preferred; otherwise the latest non-superseded terminal). Pass includeSuperseded=true for full purchase history."
       },
       {
         "path": "/api/program-enrollments/{enrollmentId}/class",
@@ -1180,7 +1180,7 @@
       {
         "path": "/api/program-enrollments/student/{studentId}",
         "method": "get",
-        "description": "List program enrollments for a student. Access rules apply per role (self, linked parent, or admin)."
+        "description": "List program enrollments for a student. Access rules apply per role (self, linked parent, or admin). By default returns one current row per program; pass includeSuperseded=true for full purchase history."
       },
       {
         "path": "/api/programs/{programId}/reviews",

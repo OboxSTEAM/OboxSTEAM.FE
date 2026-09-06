@@ -1,5 +1,6 @@
 import type {
   ProgramEnrollment,
+  ProgramEnrollmentEndReason,
   ProgramEnrollmentStatus,
 } from "@/lib/api/entities/program-enrollment";
 import type { MyProgramEnrollmentsQuery } from "@/lib/api/program-enrollments";
@@ -32,7 +33,13 @@ export function findEnrollmentForProgram(
   enrollments: ProgramEnrollment[],
   programId: string,
 ): ProgramEnrollment | null {
-  return enrollments.find((enrollment) => enrollment.programId === programId) ?? null;
+  const matches = enrollments.filter(
+    (enrollment) => enrollment.programId === programId,
+  );
+  if (matches.length === 0) return null;
+  return (
+    matches.find((enrollment) => !enrollment.isSuperseded) ?? matches[0] ?? null
+  );
 }
 
 export function getProgramLearnHref(programId: string): string {
@@ -101,8 +108,10 @@ export function resolveProgramDetailEnrollmentCta(
       return {
         kind: "continue",
         href: getProgramLearnHref(enrollment.programId),
-        label: "Tiếp tục học",
-        subtext: "Tiếp tục từ nơi bạn dừng lại.",
+        label: enrollment.isRebuy ? "Tiếp tục học lại" : "Tiếp tục học",
+        subtext: enrollment.isRebuy
+          ? getRebuyContinueSubtext(enrollment)
+          : "Tiếp tục từ nơi bạn dừng lại.",
       };
     default:
       return { kind: "enroll" };
@@ -120,6 +129,60 @@ export const PROGRAM_ENROLLMENT_STATUS_LABELS: Record<
   Failed: "Không đạt",
   Dropped: "Đã hủy",
 };
+
+export const PROGRAM_ENROLLMENT_END_REASON_LABELS: Record<
+  ProgramEnrollmentEndReason,
+  string
+> = {
+  AcademicFail: "không đạt",
+  Withdraw: "hủy đăng ký",
+  Attendance: "vắng học",
+};
+
+/** Status pill / progress label — surfaces rebuy while Active. */
+export function getEnrollmentDisplayStatusLabel(
+  enrollment: ProgramEnrollment,
+): string {
+  if (enrollment.isRebuy && enrollment.status === "Active") {
+    return enrollment.attemptNumber > 1
+      ? `Đang học lại · lần ${enrollment.attemptNumber}`
+      : "Đang học lại";
+  }
+  if (enrollment.isRebuy && enrollment.status === "PendingPayment") {
+    return "Đăng ký lại · chờ thanh toán";
+  }
+  return PROGRAM_ENROLLMENT_STATUS_LABELS[enrollment.status];
+}
+
+export function getEnrollmentRebuyHint(
+  enrollment: ProgramEnrollment,
+): string | null {
+  if (!enrollment.isRebuy) return null;
+
+  const prior =
+    enrollment.priorEndReason != null
+      ? PROGRAM_ENROLLMENT_END_REASON_LABELS[enrollment.priorEndReason]
+      : enrollment.priorStatus === "Failed"
+        ? "không đạt"
+        : enrollment.priorStatus === "Dropped"
+          ? "hủy đăng ký"
+          : null;
+
+  if (prior) {
+    return enrollment.attemptNumber > 1
+      ? `Học lại lần ${enrollment.attemptNumber} · sau khi ${prior}`
+      : `Học lại sau khi ${prior}`;
+  }
+
+  return enrollment.attemptNumber > 1
+    ? `Học lại lần ${enrollment.attemptNumber}`
+    : "Đang học lại chương trình này";
+}
+
+function getRebuyContinueSubtext(enrollment: ProgramEnrollment): string {
+  const hint = getEnrollmentRebuyHint(enrollment);
+  return hint ?? "Tiếp tục học lại từ tiến độ đã giữ.";
+}
 
 export const DEFAULT_MY_ENROLLMENTS_QUERY: MyProgramEnrollmentsQuery = {
   page: 1,
