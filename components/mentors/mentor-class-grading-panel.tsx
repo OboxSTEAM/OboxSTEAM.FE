@@ -616,32 +616,6 @@ export function MentorClassGradingPanel({
     [assignments],
   );
 
-  useEffect(() => {
-    if (!initialAssignmentId || assignments.length === 0) return;
-    const item = assignments.find((a) => a.id === initialAssignmentId);
-    if (!item) return;
-
-    if (isQuizAssignmentType(item.assignmentType)) {
-      markLoading();
-      setMode("quiz");
-      setAssignmentId(initialAssignmentId);
-      setGradeTarget(null);
-      setQuizPreview(null);
-      return;
-    }
-
-    if (!isRegularManualType(item.assignmentType)) return;
-
-    // FileUpload may be a research milestone — wait for the map before choosing mode.
-    if (item.assignmentType === "FileUpload" && !researchIdSet) return;
-
-    markLoading();
-    setMode(researchIdSet?.has(item.id) ? "research" : "manual");
-    setAssignmentId(initialAssignmentId);
-    setGradeTarget(null);
-    setQuizPreview(null);
-  }, [initialAssignmentId, assignments, researchIdSet, markLoading]);
-
   const visibleAssignments =
     mode === "research"
       ? researchAssignments
@@ -687,6 +661,32 @@ export function MentorClassGradingPanel({
     onError: (error) =>
       showAppErrorFromUnknown(error, "assignments.submissions.list"),
   });
+
+  useEffect(() => {
+    if (!initialAssignmentId || assignments.length === 0) return;
+    const item = assignments.find((a) => a.id === initialAssignmentId);
+    if (!item) return;
+
+    if (isQuizAssignmentType(item.assignmentType)) {
+      markLoading();
+      setMode("quiz");
+      setAssignmentId(initialAssignmentId);
+      setGradeTarget(null);
+      setQuizPreview(null);
+      return;
+    }
+
+    if (!isRegularManualType(item.assignmentType)) return;
+
+    // FileUpload may be a research milestone — wait for the map before choosing mode.
+    if (item.assignmentType === "FileUpload" && !researchIdSet) return;
+
+    markLoading();
+    setMode(researchIdSet?.has(item.id) ? "research" : "manual");
+    setAssignmentId(initialAssignmentId);
+    setGradeTarget(null);
+    setQuizPreview(null);
+  }, [initialAssignmentId, assignments, researchIdSet, markLoading]);
 
   const submissions = submissionsData ?? [];
   const isAssignmentDetailPending =
