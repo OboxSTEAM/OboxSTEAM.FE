@@ -622,6 +622,7 @@ export function MentorClassGradingPanel({
     if (!item) return;
 
     if (isQuizAssignmentType(item.assignmentType)) {
+      markLoading();
       setMode("quiz");
       setAssignmentId(initialAssignmentId);
       setGradeTarget(null);
@@ -634,11 +635,12 @@ export function MentorClassGradingPanel({
     // FileUpload may be a research milestone — wait for the map before choosing mode.
     if (item.assignmentType === "FileUpload" && !researchIdSet) return;
 
+    markLoading();
     setMode(researchIdSet?.has(item.id) ? "research" : "manual");
     setAssignmentId(initialAssignmentId);
     setGradeTarget(null);
     setQuizPreview(null);
-  }, [initialAssignmentId, assignments, researchIdSet]);
+  }, [initialAssignmentId, assignments, researchIdSet, markLoading]);
 
   const visibleAssignments =
     mode === "research"
@@ -687,6 +689,13 @@ export function MentorClassGradingPanel({
   });
 
   const submissions = submissionsData ?? [];
+  const isAssignmentDetailPending =
+    Boolean(assignmentId) &&
+    (isAssignmentDetailLoading ||
+      (assignmentDetail != null && assignmentDetail.id !== assignmentId));
+  const isSubmissionsPending =
+    Boolean(assignmentId) &&
+    (isSubmissionsLoading || isAssignmentDetailPending);
 
   const pendingGradeCount = useMemo(
     () => submissions.filter((row) => row.status === "TurnedIn").length,
@@ -1196,7 +1205,7 @@ export function MentorClassGradingPanel({
                       <BookOpenText className="size-3.5 text-primary" />
                       Đề bài
                     </p>
-                    {isAssignmentDetailLoading && !assignmentDetail ? (
+                    {isAssignmentDetailPending ? (
                       <Skeleton className="h-4 w-3/4" />
                     ) : (
                       <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
@@ -1218,7 +1227,9 @@ export function MentorClassGradingPanel({
                 </div>
               ) : null}
 
-              {assignmentId && assignmentDetail ? (
+              {assignmentId &&
+              assignmentDetail &&
+              assignmentDetail.id === assignmentId ? (
                 <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
                   <MentorAssignmentScheduleCard
                     assignment={assignmentDetail}
@@ -1226,6 +1237,11 @@ export function MentorClassGradingPanel({
                       mutateAssignmentDetail(next);
                     }}
                   />
+                </div>
+              ) : assignmentId && isAssignmentDetailPending ? (
+                <div className="shrink-0 space-y-2 border-b border-border px-4 py-3 sm:px-5">
+                  <Skeleton className="h-4 w-40" />
+                  <Skeleton className="h-16 w-full rounded-xl" />
                 </div>
               ) : null}
 
@@ -1258,7 +1274,7 @@ export function MentorClassGradingPanel({
                   <ManagerDataTable
                     columns={quizColumns}
                     data={submissions}
-                    isLoading={isSubmissionsLoading}
+                    isLoading={isSubmissionsPending}
                     emptyState={
                       <ManagerEmptyState
                         title="Chưa có kết quả quiz"
@@ -1271,7 +1287,7 @@ export function MentorClassGradingPanel({
                   <ManagerDataTable
                     columns={manualColumns}
                     data={submissions}
-                    isLoading={isSubmissionsLoading}
+                    isLoading={isSubmissionsPending}
                     emptyState={
                       <ManagerEmptyState
                         title={

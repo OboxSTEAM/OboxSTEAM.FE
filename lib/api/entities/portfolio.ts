@@ -134,6 +134,32 @@ export const portfolioThemeApiSchema = z
       cardStyle: coercePascalEnum(PORTFOLIO_CARD_STYLE_VALUES, theme.cardStyle),
     }),
   );
+
+/** BE may return `theme: null` on create; UI always needs a concrete theme object. */
+export function emptyPortfolioTheme(): z.infer<typeof portfolioThemeSchema> {
+  return {
+    templateId: null,
+    primaryColor: null,
+    secondaryColor: null,
+    fontFamily: null,
+    headingFontFamily: null,
+    fontScale: null,
+    lineHeight: null,
+    density: null,
+    accentColor: null,
+    backgroundStyle: null,
+    backgroundImageUrl: null,
+    cardStyle: null,
+    layoutStyle: null,
+    settingsJson: null,
+    sectionOrder: null,
+  };
+}
+
+const portfolioThemeResponseSchema = portfolioThemeApiSchema
+  .nullish()
+  .transform((theme) => theme ?? emptyPortfolioTheme());
+
 export const portfolioLinkSchema = z.object({
   label: z.string().nullable(),
   url: z.string().nullable(),
@@ -251,7 +277,7 @@ export const portfolioSchema = z.object({
   isPublic: z.boolean(),
   lastPublishedAt: z.string().nullable(),
   hasUnpublishedChanges: z.boolean(),
-  theme: portfolioThemeApiSchema,
+  theme: portfolioThemeResponseSchema,
   links: z.array(portfolioLinkSchema).nullable(),
   items: z.array(portfolioItemSchema).nullable(),
   sections: z.array(portfolioSectionSchema).nullable(),
@@ -268,7 +294,7 @@ export const publicPortfolioSchema = z.object({
   studentName: z.string().nullable(),
   avatarUrl: z.string().nullable(),
   coverImageUrl: z.string().nullable(),
-  theme: portfolioThemeApiSchema,
+  theme: portfolioThemeResponseSchema,
   links: z.array(portfolioLinkSchema).nullable(),
   items: z.array(portfolioItemSchema).nullable(),
   sections: z.array(portfolioSectionSchema).nullable(),

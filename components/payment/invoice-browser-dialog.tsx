@@ -14,6 +14,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getInvoiceById,
   getPaymentById,
@@ -29,6 +30,11 @@ import {
 import { formatProgramPrice } from "@/lib/programs/constants";
 import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
+
+type InvoiceDetailData = {
+  invoice: Invoice;
+  payment: Payment | null;
+};
 
 type InvoiceBrowserDialogProps = {
   invoices: Invoice[];
@@ -257,6 +263,56 @@ function InvoiceListPanel({
   );
 }
 
+function InvoiceDetailSkeleton() {
+  return (
+    <article
+      aria-busy
+      aria-label="Đang tải hóa đơn"
+      className="overflow-hidden rounded-2xl border border-[#E5E5E0] bg-white shadow-[0_8px_32px_rgba(45,45,45,0.06)]"
+    >
+      <header className="border-b border-[#E5E5E0] bg-[#FAFAF5] px-6 py-5 sm:px-8">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Skeleton className="size-10 shrink-0 rounded-lg" />
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-3 w-24" />
+            </div>
+          </div>
+          <Skeleton className="h-6 w-20 rounded-full" />
+        </div>
+      </header>
+
+      <div className="border-b border-[#E5E5E0] px-6 py-5 sm:px-8">
+        <div className="flex items-center gap-4">
+          <Skeleton className="aspect-[4/3] w-24 shrink-0 rounded-xl sm:w-28" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-5 w-3/4 max-w-xs" />
+          </div>
+        </div>
+      </div>
+
+      <div className="px-6 py-2 sm:px-8">
+        {Array.from({ length: 4 }, (_, index) => (
+          <div
+            key={index}
+            className="grid gap-2 border-b border-[#E5E5E0] py-3.5 sm:grid-cols-[9rem_1fr] sm:gap-4"
+          >
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-4 w-40 sm:w-48" />
+          </div>
+        ))}
+      </div>
+
+      <div className="border-t border-[#E5E5E0] bg-[#FAFAF5] px-6 py-5 sm:px-8">
+        <Skeleton className="h-3 w-28" />
+        <Skeleton className="mt-2 h-9 w-36" />
+      </div>
+    </article>
+  );
+}
+
 function InvoiceDetailPanel({
   invoiceId,
   programName,
@@ -266,58 +322,40 @@ function InvoiceDetailPanel({
   programName?: string | null;
   programThumbnailUrl?: string | null;
 }) {
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
-  const [payment, setPayment] = useState<Payment | null>(null);
-  const [loadState, setLoadState] = useState<
-    "idle" | "loading" | "ready" | "error"
-  >("idle");
+  const { data, isLoading, hasError } = useClientFetch<InvoiceDetailData>({
+    enabled: Boolean(invoiceId),
+    deps: [invoiceId],
+    fetcher: async () => {
+      if (!invoiceId) return null;
 
-  useEffect(() => {
-    if (!invoiceId) {
-      setInvoice(null);
-      setPayment(null);
-      setLoadState("idle");
-      return;
-    }
-
-    let cancelled = false;
-    setLoadState("loading");
-
-    (async () => {
-      try {
-        const invoiceResult = await getInvoiceById(invoiceId);
-        const nextInvoice = invoiceResult?.data ?? null;
-        if (!nextInvoice) {
-          throw new Error("Invoice missing data.");
-        }
-
-        let nextPayment: Payment | null = null;
-        try {
-          const paymentResult = await getPaymentById(nextInvoice.paymentId);
-          nextPayment = paymentResult?.data ?? null;
-        } catch {
-          nextPayment = null;
-        }
-
-        if (!cancelled) {
-          setInvoice(nextInvoice);
-          setPayment(nextPayment);
-          setLoadState("ready");
-        }
-      } catch (error) {
-        if (!cancelled) {
-          showAppErrorFromUnknown(error, "invoices.detail");
-          setLoadState("error");
-        }
+      const invoiceResult = await getInvoiceById(invoiceId);
+      const nextInvoice = invoiceResult?.data ?? null;
+      if (!nextInvoice) {
+        throw new Error("Invoice missing data.");
       }
-    })();
 
-    return () => {
-      cancelled = true;
-    };
-  }, [invoiceId]);
+      let nextPayment: Payment | null = null;
+      try {
+        const paymentResult = await getPaymentById(nextInvoice.paymentId);
+        nextPayment = paymentResult?.data ?? null;
+      } catch {
+        nextPayment = null;
+      }
 
-  if (!invoiceId || loadState === "idle") {
+      return { invoice: nextInvoice, payment: nextPayment };
+    },
+    onError: (error) => {
+      showAppErrorFromUnknown(error, "invoices.detail");
+    },
+  });
+
+  // Avoid one-frame stale receipt before the fetch effect marks loading.
+  const isPending =
+    Boolean(invoiceId) &&
+    !hasError &&
+    (isLoading || data?.invoice.id !== invoiceId);
+
+  if (!invoiceId) {
     return (
       <div className="flex h-full min-h-64 items-center justify-center rounded-2xl border border-dashed border-[#E5E5E0] bg-[#FAFAF5] px-4 text-center">
         <p className="text-sm text-[#6B6B6B]">Chọn một hóa đơn để xem chi tiết.</p>
@@ -325,22 +363,19 @@ function InvoiceDetailPanel({
     );
   }
 
-  if (loadState === "loading") {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-24 w-full rounded-2xl" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
-      </div>
-    );
+  if (isPending) {
+    return <InvoiceDetailSkeleton />;
   }
 
-  if (loadState === "error" || !invoice) {
+  if (hasError || !data) {
     return (
       <div className="flex h-full min-h-64 flex-col items-center justify-center rounded-2xl border border-[#E5E5E0] bg-white px-4 text-center">
         <p className="text-sm text-[#6B6B6B]">Không tải được hóa đơn.</p>
       </div>
     );
   }
+
+  const { invoice, payment } = data;
 
   if (payment) {
     return (
@@ -404,6 +439,7 @@ export function InvoiceBrowserDialog({
 
           <div className="min-h-0 overflow-y-auto p-4 sm:p-5">
             <InvoiceDetailPanel
+              key={selectedId ?? "empty"}
               invoiceId={selectedId}
               programName={programName}
               programThumbnailUrl={programThumbnailUrl}

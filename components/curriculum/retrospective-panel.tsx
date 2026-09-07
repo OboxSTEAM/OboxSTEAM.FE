@@ -434,11 +434,14 @@ export function RetrospectivePanel({
     );
   }
 
-  if (isAssignmentLoading && !assignment) {
+  if (
+    isAssignmentLoading ||
+    (assignment != null && assignment.id !== assignmentId)
+  ) {
     return <RetrospectivePanelSkeleton />;
   }
 
-  if (assignmentError && !assignment) {
+  if (assignmentError && (!assignment || assignment.id !== assignmentId)) {
     return (
       <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Không tải được bài đánh giá.</p>

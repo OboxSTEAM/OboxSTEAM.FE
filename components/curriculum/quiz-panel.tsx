@@ -428,11 +428,11 @@ export function QuizPanel({
     );
   }
 
-  if (isLoading && !assignment) {
+  if (isLoading || (assignment != null && assignment.id !== assignmentId)) {
     return <QuizPanelSkeleton />;
   }
 
-  if (hasError && !assignment) {
+  if (hasError && (!assignment || assignment.id !== assignmentId)) {
     return (
       <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Không tải được bài kiểm tra.</p>
@@ -443,7 +443,7 @@ export function QuizPanel({
     );
   }
 
-  if (!assignment) {
+  if (!assignment || assignment.id !== assignmentId) {
     return <QuizPanelSkeleton />;
   }
 

@@ -160,6 +160,7 @@ export function CurriculumShell({
               />
             ) : selectedAssignmentId && flatAssignment ? (
               <AssignmentPanel
+                key={selectedAssignmentId}
                 curriculum={curriculum}
                 assignmentId={selectedAssignmentId}
                 flatAssignment={flatAssignment}
@@ -168,6 +169,7 @@ export function CurriculumShell({
               />
             ) : (
               <ActivityPanel
+                key={selectedActivityId ?? "empty"}
                 curriculum={curriculum}
                 selectedActivityId={selectedActivityId}
                 onSelectActivity={onSelectActivity}

@@ -1008,7 +1008,8 @@ export function ResearchSubmissionPanel({
   }
 
   const isBootstrapping =
-    (isAssignmentLoading && !assignment) ||
+    isAssignmentLoading ||
+    (assignment != null && assignment.id !== assignmentId) ||
     (isProgressLoading && !progressResult) ||
     (Boolean(progressSubmissionId) && isSubmissionLoading && !submission);
 
@@ -1017,7 +1018,7 @@ export function ResearchSubmissionPanel({
   }
 
   if (
-    (assignmentError && !assignment) ||
+    (assignmentError && (!assignment || assignment.id !== assignmentId)) ||
     (progressError && !progressResult) ||
     (submissionError && progressSubmissionId && !submission)
   ) {

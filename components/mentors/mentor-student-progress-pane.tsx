@@ -291,8 +291,18 @@ export function MentorStudentProgressPane({
       showAppErrorFromUnknown(error, "classes.curriculumProgress"),
   });
 
+  // Hide previous target while deps change / fetch effect marks loading.
+  const matchedActivityData =
+    activityData?.activityId === targetId ? activityData : null;
+  const matchedAssignmentData =
+    assignmentData?.assignmentId === targetId ? assignmentData : null;
+
   const isLoading =
-    kind === "activity" ? isActivityLoading : isAssignmentLoading;
+    kind === "activity"
+      ? isActivityLoading ||
+        (activityData != null && activityData.activityId !== targetId)
+      : isAssignmentLoading ||
+        (assignmentData != null && assignmentData.assignmentId !== targetId);
 
   const handleForceComplete = async (studentId: string, studentLabel: string) => {
     if (kind !== "activity") return;
@@ -313,8 +323,8 @@ export function MentorStudentProgressPane({
   };
 
   const handleBulkForceComplete = async () => {
-    if (kind !== "activity" || !activityData) return;
-    const students = activityData.students ?? [];
+    if (kind !== "activity" || !matchedActivityData) return;
+    const students = matchedActivityData.students ?? [];
     if (students.length === 0) return;
     setBulkForceBusy(true);
     let ok = 0;
@@ -473,38 +483,38 @@ export function MentorStudentProgressPane({
     );
 
   const statusSummary =
-    kind === "activity" && activityData
+    kind === "activity" && matchedActivityData
       ? {
-          total: activityData.totalStudents,
+          total: matchedActivityData.totalStudents,
           segments: [
             {
               key: "done",
               label: "Hoàn thành",
-              value: activityData.completedCount,
+              value: matchedActivityData.completedCount,
               tone: "success" as const,
             },
             {
               key: "in-progress",
               label: "Đang học",
-              value: activityData.inProgressCount,
+              value: matchedActivityData.inProgressCount,
               tone: "accent" as const,
             },
             {
               key: "not-started",
               label: "Chưa bắt đầu",
-              value: activityData.notStartedCount,
+              value: matchedActivityData.notStartedCount,
               tone: "muted" as const,
             },
           ],
         }
-      : kind === "assignment" && assignmentData
+      : kind === "assignment" && matchedAssignmentData
         ? {
-            total: assignmentData.totalStudents,
+            total: matchedAssignmentData.totalStudents,
             segments: [
               {
                 key: "graded",
                 label: "Đã chấm",
-                value: assignmentData.gradedCount,
+                value: matchedAssignmentData.gradedCount,
                 tone: "success" as const,
               },
               {
@@ -512,14 +522,15 @@ export function MentorStudentProgressPane({
                 label: "Đã nộp",
                 value: Math.max(
                   0,
-                  assignmentData.submittedCount - assignmentData.gradedCount,
+                  matchedAssignmentData.submittedCount -
+                    matchedAssignmentData.gradedCount,
                 ),
                 tone: "accent" as const,
               },
               {
                 key: "not-started",
                 label: "Chưa nộp",
-                value: assignmentData.notStartedCount,
+                value: matchedAssignmentData.notStartedCount,
                 tone: "muted" as const,
               },
             ],
@@ -539,7 +550,7 @@ export function MentorStudentProgressPane({
           <span className="text-xs font-semibold text-foreground">
             Tiến độ lớp
           </span>
-          {isLoading && !statusSummary ? (
+          {isLoading ? (
             <Skeleton className="h-4 w-24" />
           ) : null}
         </span>
@@ -579,7 +590,8 @@ export function MentorStudentProgressPane({
                   variant="outline"
                   size="sm"
                   disabled={
-                    bulkForceBusy || (activityData?.students.length ?? 0) === 0
+                    bulkForceBusy ||
+                    (matchedActivityData?.students.length ?? 0) === 0
                   }
                   className="h-7 gap-1.5 rounded-md text-[11px]"
                   onClick={() => void handleBulkForceComplete()}
@@ -591,7 +603,7 @@ export function MentorStudentProgressPane({
             ) : null}
 
             <div className="overflow-x-auto p-4 sm:px-6 sm:py-4">
-              {isLoading && !statusSummary ? (
+              {isLoading ? (
                 <div className="mb-4 space-y-3">
                   <Skeleton className="h-10 w-32" />
                   <Skeleton className="h-2.5 w-full rounded-full" />
@@ -607,7 +619,7 @@ export function MentorStudentProgressPane({
               {kind === "activity" ? (
                 <ManagerDataTable
                   columns={activityColumns}
-                  data={activityData?.students ?? []}
+                  data={matchedActivityData?.students ?? []}
                   isLoading={isLoading}
                   emptyState={
                     <ManagerEmptyState
@@ -620,7 +632,7 @@ export function MentorStudentProgressPane({
               ) : (
                 <ManagerDataTable
                   columns={assignmentColumns}
-                  data={assignmentData?.students ?? []}
+                  data={matchedAssignmentData?.students ?? []}
                   isLoading={isLoading}
                   emptyState={
                     <ManagerEmptyState
@@ -634,8 +646,8 @@ export function MentorStudentProgressPane({
             </div>
 
             {!isLoading &&
-            ((kind === "activity" && !activityData) ||
-              (kind === "assignment" && !assignmentData)) ? (
+            ((kind === "activity" && !matchedActivityData) ||
+              (kind === "assignment" && !matchedAssignmentData)) ? (
               <div className="border-t border-border px-4 py-3 text-center sm:px-6">
                 <Button
                   type="button"

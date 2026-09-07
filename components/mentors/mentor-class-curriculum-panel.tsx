@@ -526,6 +526,7 @@ export function MentorClassCurriculumPanel({
               </div>
 
               <MentorStudentProgressPane
+                key={`assignment-${selectedAssignment.id}`}
                 classId={classId}
                 kind="assignment"
                 targetId={selectedAssignment.id}
@@ -534,12 +535,14 @@ export function MentorClassCurriculumPanel({
 
               {selectedAssignment.assignmentType === "Quiz" ? (
                 <MentorClassQuizSetPanel
+                  key={selectedAssignment.id}
                   assignmentId={selectedAssignment.id}
                   classId={classId}
                   assignmentTitle={selectedAssignment.title}
                 />
               ) : (
                 <MentorClassGradingPanel
+                  key={selectedAssignment.id}
                   classId={classId}
                   programId={programId}
                   initialAssignmentId={selectedAssignment.id}
@@ -660,6 +663,7 @@ export function MentorClassCurriculumPanel({
               </div>
 
               <MentorStudentProgressPane
+                key={`activity-${selectedActivity.id}`}
                 classId={classId}
                 kind="activity"
                 targetId={selectedActivity.id}

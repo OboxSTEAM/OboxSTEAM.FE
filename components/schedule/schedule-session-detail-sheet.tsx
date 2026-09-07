@@ -293,22 +293,30 @@ export function ScheduleSessionDetailSheet({
   const attendance = isMentorView ? null : session.attendanceStatus;
 
   const mentorName =
-    mentor?.fullName?.trim() ||
-    mentor?.code?.trim() ||
+    (mentor?.id === mentorId
+      ? mentor?.fullName?.trim() || mentor?.code?.trim()
+      : null) ||
     (mentorId ? "Giảng viên lớp" : "Chưa gán giảng viên");
-  const mentorHint = [mentor?.title?.trim(), mentor?.organization?.trim()]
+  const mentorHint = [
+    mentor?.id === mentorId ? mentor?.title?.trim() : null,
+    mentor?.id === mentorId ? mentor?.organization?.trim() : null,
+  ]
     .filter(Boolean)
     .join(" · ");
 
   const contentTitle =
-    activity?.name?.trim() ||
+    (activity?.id === resolvedActivityId ? activity?.name?.trim() : null) ||
     classSession?.title?.trim() ||
     SESSION_KIND_LABELS[session.sessionKind];
+  const matchedActivity =
+    activity?.id === resolvedActivityId ? activity : null;
   const contentHint = [
-    activity?.activityType
-      ? ACTIVITY_TYPE_LABELS[activity.activityType]
+    matchedActivity?.activityType
+      ? ACTIVITY_TYPE_LABELS[matchedActivity.activityType]
       : null,
-    activity?.description?.trim() || classSession?.description?.trim() || null,
+    matchedActivity?.description?.trim() ||
+      classSession?.description?.trim() ||
+      null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -337,14 +345,16 @@ export function ScheduleSessionDetailSheet({
     Number.isFinite(latitude) &&
     Number.isFinite(longitude);
 
-  const activityType = activity?.activityType ?? null;
+  const activityType = matchedActivity?.activityType ?? null;
   const isVenueLoading = isMentorView
     ? isClassSessionLoading && Boolean(resolvedActivityId)
     : !isAssignmentWindow &&
       Boolean(resolvedActivityId) &&
       (isClassSessionLoading ||
         isEnrollmentLoading ||
-        (Boolean(enrollmentId) && isActivityLoading));
+        (Boolean(enrollmentId) &&
+          (isActivityLoading ||
+            (activity != null && activity.id !== resolvedActivityId))));
 
   const isOnlineSession =
     !isAssignmentWindow &&
@@ -437,7 +447,11 @@ export function ScheduleSessionDetailSheet({
                     label="Giảng viên"
                     value={mentorName}
                     hint={mentorHint || null}
-                    isLoading={Boolean(mentorId) && isMentorLoading}
+                    isLoading={
+                      Boolean(mentorId) &&
+                      (isMentorLoading ||
+                        (mentor != null && mentor.id !== mentorId))
+                    }
                   />
                 ) : null}
                 <DetailInfoRow
@@ -449,7 +463,10 @@ export function ScheduleSessionDetailSheet({
                   isLoading={
                     isMentorView
                       ? isClassSessionLoading
-                      : isClassSessionLoading || isActivityLoading
+                      : isClassSessionLoading ||
+                        isActivityLoading ||
+                        (activity != null &&
+                          activity.id !== resolvedActivityId)
                   }
                 />
                 <DetailInfoRow

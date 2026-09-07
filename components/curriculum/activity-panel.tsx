@@ -205,6 +205,7 @@ export function ActivityPanel({
 
       const nextActivityId = result?.data.nextActivityId ?? null;
       if (nextActivityId) {
+        markLoading();
         onSelectActivity(nextActivityId);
       }
     } catch (error) {
@@ -218,6 +219,7 @@ export function ActivityPanel({
     canStudentComplete,
     curriculum.enrollmentId,
     isAlreadyComplete,
+    markLoading,
     onCurriculumRefresh,
     onSelectActivity,
     selectedActivityId,
@@ -241,13 +243,18 @@ export function ActivityPanel({
     );
   }
 
-  if (isLoading && !activity) {
+  // Avoid one-frame / stale activity while switching selection.
+  const isPending =
+    !hasError &&
+    (isLoading || (activity != null && activity.id !== selectedActivityId));
+
+  if (isPending) {
     return <ActivityPanelSkeleton />;
   }
 
-  if (hasError && !activity) {
+  if (hasError && (!activity || activity.id !== selectedActivityId)) {
     return (
-      <div className="flex h-full items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
+      <div className="flex h-full flex-col items-center justify-center rounded-2xl border border-learn-border bg-learn-surface p-8 text-center shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <p className="text-sm text-learn-muted">Không tải được nội dung hoạt động.</p>
         <Button type="button" variant="outline" className="mt-4 border-learn-border" onClick={retry}>
           Thử lại
@@ -256,7 +263,7 @@ export function ActivityPanel({
     );
   }
 
-  if (!activity) {
+  if (!activity || activity.id !== selectedActivityId) {
     return <ActivityPanelSkeleton />;
   }
 

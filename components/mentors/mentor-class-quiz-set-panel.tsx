@@ -121,7 +121,11 @@ export function MentorClassQuizSetPanel({
     }
   }
 
-  if (isLoading) {
+  // Avoid one-frame / stale quiz set while switching assignment.
+  const isPending =
+    isLoading || (quizSet != null && quizSet.assignmentId !== assignmentId);
+
+  if (isPending) {
     return (
       <div className="space-y-3 p-6">
         <Skeleton className="h-8 w-48" />
