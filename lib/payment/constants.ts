@@ -7,11 +7,13 @@ export const PAYMENT_CANCEL_ILLUSTRATION_URL =
 export const PAYMENT_STATUS_LABELS = {
   Pending: "Đang chờ",
   Success: "Thành công",
-  Cancelled: "Đã hủy",
   Failed: "Thất bại",
+  Cancelled: "Đã hủy",
+  Refunded: "Đã hoàn tiền",
 } as const;
 
 export const PAYMENT_GATEWAY_LABELS = {
+  VnPay: "VNPay",
   Stripe: "Stripe",
-  MoMo: "MoMo",
+  BankTransfer: "Chuyển khoản",
 } as const;

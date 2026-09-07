@@ -29,8 +29,11 @@ import {
   ChevronRight,
   AlertTriangle,
   GripVertical,
+  Lock,
+  ExternalLink,
   type LucideIcon,
 } from "lucide-react";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -46,12 +49,11 @@ import { ActivityMaterialSection } from "@/components/manager/programs/activity-
 import { AssignmentFormPanel } from "@/components/manager/programs/assignment-form-panel";
 import { MilestoneFormPanel } from "@/components/manager/programs/milestone-form-panel";
 import { QuestionBankSection } from "@/components/manager/programs/question-bank-section";
+import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
-  formatCohortLockClassLabel,
   type ProgramCohortLockClass,
 } from "@/lib/programs/editability";
-import { CLASS_STATUS_LABELS } from "@/lib/classes/constants";
 import {
   createModule,
   updateModule,
@@ -165,11 +167,11 @@ function FErr({ msg }: { msg?: string }) {
 }
 const IN = "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
-function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã lưu" }: {
-  submitting: boolean; success: boolean; label?: string; ok?: string;
+function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã lưu", disabled = false }: {
+  submitting: boolean; success: boolean; label?: string; ok?: string; disabled?: boolean;
 }) {
   return (
-    <Button type="submit" disabled={submitting || success}
+    <Button type="submit" disabled={submitting || success || disabled}
       className={cn("h-9 gap-2 rounded-lg px-5 text-sm font-semibold text-white shadow-sm transition-all duration-300",
         success ? "bg-emerald-600 hover:bg-emerald-600" : "bg-primary hover:bg-primary/90")}>
       {success
@@ -224,12 +226,14 @@ function AssignmentDetailLoader({
   courseOptions,
   initial,
   onSuccess,
+  disabled = false,
 }: {
   assignmentId: string;
   moduleId: string;
   courseOptions: { id: string; name: string }[];
   initial: AssignmentDetail | null;
   onSuccess: (a: AssignmentDetail) => void;
+  disabled?: boolean;
 }) {
   const [assignment, setAssignment] = useState<AssignmentDetail | null>(initial);
   const [loading, setLoading] = useState(!initial);
@@ -286,6 +290,7 @@ function AssignmentDetailLoader({
       courseOptions={courseOptions}
       assignmentToEdit={assignment}
       onSuccess={onSuccess}
+      disabled={disabled}
     />
   );
 }
@@ -297,12 +302,14 @@ function MilestoneDetailLoader({
   activityOptions,
   initial,
   onSuccess,
+  disabled = false,
 }: {
   milestoneId: string;
   moduleId: string;
   activityOptions: { id: string; name: string }[];
   initial: ResearchMilestone | null;
   onSuccess: (m: ResearchMilestone) => void;
+  disabled?: boolean;
 }) {
   const [milestone, setMilestone] = useState<ResearchMilestone | null>(initial);
   const [loading, setLoading] = useState(!initial);
@@ -359,6 +366,7 @@ function MilestoneDetailLoader({
       activityOptions={activityOptions}
       milestoneToEdit={milestone}
       onSuccess={onSuccess}
+      disabled={disabled}
     />
   );
 }
@@ -379,8 +387,8 @@ function useSuccessFlash() {
   return { ok, flash };
 }
 
-function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess }: {
-  programId: string; moduleToEdit: Module | null; modulesInProgram: Module[]; onSuccess: () => void;
+function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess, disabled = false }: {
+  programId: string; moduleToEdit: Module | null; modulesInProgram: Module[]; onSuccess: () => void; disabled?: boolean;
 }) {
   const isEdit = !!moduleToEdit;
   const [busy, setBusy] = useState(false);
@@ -409,6 +417,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
+    if (disabled) return;
     setBusy(true);
     try {
       // `learningOutcomesText` is a UI-only field absent from the module Zod
@@ -439,19 +448,19 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr icon={FolderOpen} color={W.success}
-        title={isEdit ? `Chỉnh sửa: ${moduleToEdit!.name}` : "Tạo Module mới"}
+        title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${moduleToEdit!.name}` : "Tạo Module mới"}
         sub="Học phần trong chương trình học" />
       <div className="space-y-6 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Module <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
+            <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} disabled={disabled} className={cn(IN, disabled && "opacity-70")} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
           </div>
           <div className="mt-4 space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Module <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: MOD-ROBO1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+            <input type="text" placeholder="Ví dụ: MOD-ROBO1" {...register("code")} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.code ? W.primary : W.border }} />
             <FErr msg={errors.code?.message} />
           </div>
         </div>
@@ -462,8 +471,8 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg")}>
+                <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
+                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg", disabled && "opacity-70")}>
                     <span className="truncate">
                       {MODULE_TYPE_LABELS[field.value] ?? field.value}
                     </span>
@@ -479,8 +488,8 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Module tiên quyết</Label>
               <Controller name="prerequisiteModuleId" control={control} render={({ field }) => (
-                <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? null : v)}>
-                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg")}>
+                <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? null : v)} disabled={disabled}>
+                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg", disabled && "opacity-70")}>
                     <span className="truncate">
                       {!field.value || field.value === "none"
                         ? "Không có"
@@ -504,6 +513,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
                   id="mand"
                   checked={field.value}
                   onCheckedChange={(v) => field.onChange(v === true)}
+                  disabled={disabled}
                   className="border-input bg-background data-checked:border-primary"
                 />
               )} />
@@ -511,14 +521,16 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
-              <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
+              <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} disabled={disabled} className={cn("w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50", disabled && "opacity-70")} style={{ borderColor: W.border }} />
             </div>
           </div>
         </div>
       </div>
-      <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
-        <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Module"} />
-      </div>
+      {!disabled ? (
+        <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
+          <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Module"} />
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -526,11 +538,12 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess 
 /* ══════════════════════════════════════════════════════════════════════════════
    COURSE FORM PANEL
 ══════════════════════════════════════════════════════════════════════════════ */
-function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }: {
+function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess, disabled = false }: {
   moduleId: string;
   courseToEdit: Course | null;
   coursesInModule: Course[];
   onSuccess: () => void;
+  disabled?: boolean;
 }) {
   const isEdit = !!courseToEdit;
   const [busy, setBusy] = useState(false);
@@ -556,6 +569,7 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }:
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
+    if (disabled) return;
     setBusy(true);
     try {
       const orderNum = Number(data.courseOrder);
@@ -584,33 +598,33 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }:
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-      <PHdr icon={BookOpen} color={W.accent} title={isEdit ? `Chỉnh sửa: ${courseToEdit!.name}` : "Tạo Khóa học mới"} sub="Khóa học trong học phần" />
+      <PHdr icon={BookOpen} color={W.accent} title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${courseToEdit!.name}` : "Tạo Khóa học mới"} sub="Khóa học trong học phần" />
       <div className="space-y-4 p-5">
         <STitle>Thông tin khóa học</STitle>
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Khóa học <span style={{ color: W.primary }}>*</span></Label>
-          <input type="text" placeholder="Ví dụ: Nhập môn lập trình với Scratch" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
+          <input type="text" placeholder="Ví dụ: Nhập môn lập trình với Scratch" {...register("name")} disabled={disabled} className={cn(IN, disabled && "opacity-70")} style={{ borderColor: errors.name ? W.primary : W.border }} />
           <FErr msg={errors.name?.message} />
         </div>
         <div className="grid grid-cols-[1fr_6.5rem] gap-4">
           <div className="min-w-0 space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+            <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.code ? W.primary : W.border }} />
             <FErr msg={errors.code?.message} />
           </div>
           <div className="space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
-            <input type="number" min={1} {...register("courseOrder", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: errors.courseOrder ? W.primary : W.border }} />
+            <input type="number" min={1} {...register("courseOrder", { valueAsNumber: true })} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.courseOrder ? W.primary : W.border }} />
             <FErr msg={errors.courseOrder?.message} />
           </div>
         </div>
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
-          <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
+          <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} disabled={disabled} className={cn("w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50", disabled && "opacity-70")} style={{ borderColor: W.border }} />
         </div>
 
         {isEdit && courseToEdit ? (
-          <QuestionBankSection courseId={courseToEdit.id} />
+          <QuestionBankSection courseId={courseToEdit.id} disabled={disabled} />
         ) : (
           <div className="border-t pt-5" style={{ borderColor: W.border }}>
             <STitle>Ngân hàng câu hỏi</STitle>
@@ -620,9 +634,11 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }:
           </div>
         )}
       </div>
-      <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
-        <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Khóa học"} />
-      </div>
+      {!disabled ? (
+        <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
+          <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Khóa học"} />
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -630,12 +646,13 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess }:
 /* ══════════════════════════════════════════════════════════════════════════════
    ACTIVITY FORM PANEL
 ══════════════════════════════════════════════════════════════════════════════ */
-function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuccess }: {
+function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuccess, disabled = false }: {
   courseId: string;
   activityToEdit: ActivityType | null;
   /** Sibling activities in the same course — used to default create order to max+1. */
   activitiesInCourse: ActivityType[];
   onSuccess: () => void;
+  disabled?: boolean;
 }) {
   const isEdit = !!activityToEdit;
   const [busy, setBusy] = useState(false);
@@ -710,6 +727,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
+    if (disabled) return;
     setBusy(true);
     try {
       const live = data.activityType !== "SelfPaced";
@@ -753,18 +771,18 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
-      <PHdr icon={ActivityIcon} color="#9c27b0" title={isEdit ? `Chỉnh sửa: ${activityToEdit!.name}` : "Tạo Hoạt động mới"} sub="Hoạt động học tập trong khóa học" />
+      <PHdr icon={ActivityIcon} color="#9c27b0" title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${activityToEdit!.name}` : "Tạo Hoạt động mới"} sub="Hoạt động học tập trong khóa học" />
       <div className="space-y-4 p-5">
         <STitle>Thông tin hoạt động</STitle>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2 space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} className={IN} style={{ borderColor: errors.name ? W.primary : W.border }} />
+            <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} disabled={disabled} className={cn(IN, disabled && "opacity-70")} style={{ borderColor: errors.name ? W.primary : W.border }} />
             <FErr msg={errors.name?.message} />
           </div>
           <div className="col-span-2 space-y-1.5">
             <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} className={cn(IN, "font-mono")} style={{ borderColor: errors.code ? W.primary : W.border }} />
+            <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.code ? W.primary : W.border }} />
             <FErr msg={errors.code?.message} />
           </div>
           <div className="col-span-2 flex flex-col gap-4 sm:flex-row">
@@ -772,7 +790,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
               <div className="flex flex-col space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Hoạt động <span style={{ color: W.primary }}>*</span></Label>
                 <Controller name="activityType" control={control} render={({ field }) => (
-                  <Select value={field.value} onValueChange={(v) => {
+                  <Select value={field.value} disabled={disabled} onValueChange={(v) => {
                     field.onChange(v);
                     if (v !== "Offline") {
                       setValue("requireQrCheckin", false);
@@ -784,7 +802,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                       setValue("durationMinutes", DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES);
                     }
                   }}>
-                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-44 rounded-lg")}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-44 rounded-lg", disabled && "opacity-70")}>
                       <span className="truncate">
                         {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
                       </span>
@@ -800,7 +818,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             </div>
             <div className="flex flex-1 flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
-              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} className="w-full flex-1 min-h-28 text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50" style={{ borderColor: W.border }} />
+              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} disabled={disabled} className={cn("w-full flex-1 min-h-28 text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50", disabled && "opacity-70")} style={{ borderColor: W.border }} />
             </div>
           </div>
 
@@ -815,7 +833,8 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                   min={1}
                   placeholder={String(DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES)}
                   {...register("durationMinutes", { valueAsNumber: true })}
-                  className={cn(IN, "font-mono")}
+                  disabled={disabled}
+                  className={cn(IN, "font-mono", disabled && "opacity-70")}
                   style={{ borderColor: errors.durationMinutes ? W.primary : W.border }}
                 />
                 <FErr msg={errors.durationMinutes?.message} />
@@ -836,6 +855,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                         id="qr"
                         checked={field.value}
                         onCheckedChange={(v) => field.onChange(v === true)}
+                        disabled={disabled}
                         className="border-input bg-background data-checked:border-primary"
                       />
                     )} />
@@ -847,6 +867,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                         id="med"
                         checked={field.value}
                         onCheckedChange={(v) => field.onChange(v === true)}
+                        disabled={disabled}
                         className="border-input bg-background data-checked:border-primary"
                       />
                     )} />
@@ -870,6 +891,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 activityId={activityToEdit.id}
                 initialMaterial={existingMaterial}
                 onChanged={() => void handleMaterialChanged()}
+                disabled={disabled}
               />
             )
           ) : (
@@ -891,9 +913,11 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
           </div>
         ) : null}
       </div>
-      <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
-        <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Hoạt động"} />
-      </div>
+      {!disabled ? (
+        <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
+          <SaveBtn submitting={busy} success={ok} label={isEdit ? "Lưu thay đổi" : "Tạo Hoạt động"} />
+        </div>
+      ) : null}
     </form>
   );
 }
@@ -905,12 +929,10 @@ function ProgramInfoPanel({
   program,
   onSuccess,
   disabled = false,
-  disabledReason = null,
 }: {
   program: ProgramWithModules;
   onSuccess: () => void;
   disabled?: boolean;
-  disabledReason?: string | null;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -939,11 +961,6 @@ function ProgramInfoPanel({
         sub={`Mã: ${program.code} · Thông tin chung`}
         action={<div ref={setStatusHost} className="shrink-0" />}
       />
-      {disabled && disabledReason ? (
-        <div className="mx-5 mt-4 rounded-lg border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-3 py-2.5 text-xs text-[#a82a1e]">
-          {disabledReason}
-        </div>
-      ) : null}
       <div className="p-5">
         <ProgramForm
           programId={program.id}
@@ -1916,20 +1933,27 @@ export function CurriculumSplitPanel({
           program={program}
           onSuccess={onRefresh}
           disabled={cohortLocked}
-          disabledReason={lockReason}
         />
       );
     }
 
-    if (cohortLocked) {
+    // Create flows are blocked while locked (tree already hides add actions).
+    if (
+      cohortLocked &&
+      (sel.kind === "module-new" ||
+        sel.kind === "course-new" ||
+        sel.kind === "activity-new" ||
+        sel.kind === "assignment-new" ||
+        sel.kind === "milestone-new")
+    ) {
       return (
         <div className="flex flex-col gap-3 p-5">
           <div className="rounded-lg border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-3 py-2.5 text-xs text-[#a82a1e]">
             {lockReason ??
-              "Không sửa khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên ghi danh."}
+              "Không thêm mục mới khi chương trình đang bị khóa chỉnh sửa."}
           </div>
           <p className="text-sm text-muted-foreground">
-            Chọn mục chương trình trên cây cấu trúc để xem thông tin chung (đã khóa chỉnh sửa).
+            Chọn module, khóa học hoặc hoạt động trên cây cấu trúc để xem chi tiết (chỉ xem).
           </p>
         </div>
       );
@@ -1956,6 +1980,7 @@ export function CurriculumSplitPanel({
           moduleToEdit={mod}
           modulesInProgram={modules}
           onSuccess={onRefresh}
+          disabled={cohortLocked}
         />
       );
     }
@@ -1983,6 +2008,7 @@ export function CurriculumSplitPanel({
           courseToEdit={course}
           coursesInModule={mod?.courses ?? []}
           onSuccess={onRefresh}
+          disabled={cohortLocked}
         />
       );
     }
@@ -2016,6 +2042,7 @@ export function CurriculumSplitPanel({
           activityToEdit={act}
           activitiesInCourse={course?.activities ?? []}
           onSuccess={onRefresh}
+          disabled={cohortLocked}
         />
       );
     }
@@ -2045,6 +2072,7 @@ export function CurriculumSplitPanel({
           courseOptions={courseOptions}
           initial={null}
           onSuccess={upsertSessionAssignment}
+          disabled={cohortLocked}
         />
       );
     }
@@ -2080,6 +2108,7 @@ export function CurriculumSplitPanel({
           activityOptions={activityOptions}
           initial={fromList}
           onSuccess={upsertMilestone}
+          disabled={cohortLocked}
         />
       );
     }
@@ -2457,39 +2486,69 @@ export function CurriculumSplitPanel({
   return (
     <CurriculumMutateContext.Provider value={canMutate}>
     <div className="flex flex-col gap-3">
-      {cohortLocked && lockReason ? (
-        <div className="rounded-xl border border-[#E94B3C]/25 bg-[#E94B3C]/8 px-4 py-3 text-sm text-[#a82a1e]">
-          <p className="font-semibold">Chương trình đang bị khóa chỉnh sửa</p>
-          <p className="mt-0.5 text-xs opacity-90">
-            {blockingClasses.length > 0
-              ? blockingClasses[0]?.status === "InProgress"
-                ? `Có ${blockingClasses.length} lớp đang học. Chờ lớp hoàn thành rồi mới sửa/xóa.`
-                : `Có ${blockingClasses.length} lớp đang tuyển sinh đã có học viên ghi danh.`
-              : lockReason}
-          </p>
+      {cohortLocked ? (
+        <div className="overflow-hidden rounded-xl border border-[#E94B3C]/35 bg-[#E94B3C]/8 shadow-[0_1px_0_rgba(233,75,60,0.12)]">
+          <div className="flex items-start gap-3 px-4 py-3.5">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#E94B3C]/25 bg-[#E94B3C]/12 text-[#a82a1e]">
+              <Lock className="size-5" strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-bold leading-snug text-[#a82a1e]">
+                Chương trình đang bị khóa chỉnh sửa
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-[#a82a1e]/90">
+                {blockingClasses.length > 0
+                  ? blockingClasses[0]?.status === "InProgress"
+                    ? `Có ${blockingClasses.length} lớp đang học. Chờ lớp hoàn thành rồi mới sửa/xóa khung chương trình.`
+                    : `Có ${blockingClasses.length} lớp đang tuyển sinh đã có học viên ghi danh.`
+                  : lockReason ??
+                    "Không sửa khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên ghi danh."}
+              </p>
+            </div>
+          </div>
+
           {blockingClasses.length > 0 ? (
-            <ul className="mt-2 space-y-1 border-t border-[#E94B3C]/20 pt-2">
-              {blockingClasses.map((item) => (
-                <li key={item.id} className="flex items-baseline gap-2 text-xs">
-                  <span className="shrink-0 font-semibold opacity-80">
-                    {CLASS_STATUS_LABELS[item.status]}
-                  </span>
-                  <span className="min-w-0 truncate opacity-90">
-                    {formatCohortLockClassLabel(item)}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <div className="border-t border-[#E94B3C]/20 bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] px-4 py-3">
+              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#a82a1e]/75">
+                Lớp đang khóa chương trình · {blockingClasses.length}
+              </p>
+              <ul className="space-y-2">
+                {blockingClasses.map((item) => (
+                  <li
+                    key={item.id}
+                    className="flex items-center gap-3 rounded-xl border border-[#E94B3C]/20 bg-card px-3 py-2.5 shadow-[0_1px_2px_rgba(45,43,39,0.04)]"
+                  >
+                    <ClassStatusBadge status={item.status} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-foreground">
+                        {item.name.trim() || "Lớp không tên"}
+                      </p>
+                      <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                        {item.code.trim() || "—"}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/manager/classes/${item.id}`}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-[#0d6e9c] transition-colors hover:bg-[#4FC3F7]/10 hover:text-[#0a5a80]"
+                    >
+                      Xem lớp
+                      <ExternalLink className="size-3" />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ) : null}
         </div>
       ) : null}
+
     <div
-      className="flex min-h-[520px] items-start rounded-xl border"
+      className="grid min-h-[520px] grid-cols-[300px_minmax(0,1fr)] overflow-hidden rounded-xl border"
       style={{ background: W.bg, borderColor: W.border }}
     >
-      {/* ── Structure tree (scrollable, sticky while editing) ─────── */}
+      {/* ── Structure tree — height matches detail column ─────────── */}
       <div
-        className="sticky top-14 flex h-[min(720px,calc(100dvh-14rem))] min-h-[520px] w-[300px] shrink-0 flex-col self-start overflow-hidden rounded-l-xl border-r"
+        className="flex min-h-0 flex-col overflow-hidden border-r"
         style={{ borderColor: W.border, background: W.surface }}
       >
         <div
@@ -2504,7 +2563,9 @@ export function CurriculumSplitPanel({
               Cấu trúc
             </span>
             <p className="mt-0.5 text-[11px] leading-snug" style={{ color: W.muted }}>
-              Kéo để đổi thứ tự module và hoạt động
+              {canMutate
+                ? "Kéo để đổi thứ tự module và hoạt động"
+                : "Chỉ xem — đang khóa chỉnh sửa"}
             </p>
           </div>
         </div>
@@ -2514,13 +2575,14 @@ export function CurriculumSplitPanel({
         </div>
       </div>
 
-      {/* ── Detail (no inner scroll — page scrolls with form) ─────── */}
-      <div className="flex min-w-0 flex-1 flex-col rounded-r-xl" style={{ background: W.bg }}>
+      {/* ── Detail (defines panel height; page scrolls with form) ─── */}
+      <div className="flex min-w-0 flex-col" style={{ background: W.bg }}>
         <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
           <ParentPathBreadcrumb parts={pathParts} />
         </div>
         <div className="min-w-0">{detail()}</div>
       </div>
+    </div>
 
       <ConfirmDialog
         isOpen={!!delTarget}
@@ -2534,7 +2596,6 @@ export function CurriculumSplitPanel({
         cancelLabel="Hủy"
         variant="destructive"
       />
-    </div>
     </div>
     </CurriculumMutateContext.Provider>
   );

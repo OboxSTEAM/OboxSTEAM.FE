@@ -44,6 +44,7 @@ export const CLASS_STUDENT_ENROLLMENT_STATUS_LABELS: Record<
   string
 > = {
   Active: "Đang học",
+  Pending: "Chờ duyệt",
   Transferred: "Đã chuyển lớp",
   Withdrawn: "Đã rút",
   Completed: "Hoàn thành",

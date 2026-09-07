@@ -84,9 +84,11 @@ const LEVELS = [
 ] as const;
 
 const STATUSES = [
-  { value: "Active",   label: "Đang mở",         dot: "#7CB342" },
-  { value: "Draft",    label: "Bản nháp",        dot: "#9e9e9e" },
-  { value: "Inactive", label: "Ngừng hoạt động", dot: "#E94B3C" },
+  { value: "Draft",         label: "Bản nháp",        dot: "#9e9e9e" },
+  { value: "PendingReview", label: "Chờ duyệt",       dot: "#4FC3F7" },
+  { value: "Approved",      label: "Đã duyệt",        dot: "#7E57C2" },
+  { value: "Active",        label: "Đang mở",         dot: "#7CB342" },
+  { value: "Inactive",      label: "Ngừng hoạt động", dot: "#E94B3C" },
 ] as const;
 
 // ── Field styles ──────────────────────────────────────────────────────────

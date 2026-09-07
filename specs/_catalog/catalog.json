@@ -228,7 +228,7 @@
       {
         "path": "/api/classes",
         "method": "post",
-        "description": "Creates a new class cohort in Draft status. Requires Admin or Manager role."
+        "description": "Creates a new class cohort in Draft status. The program must be Active. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/with-students/{classId}",
@@ -263,7 +263,7 @@
       {
         "path": "/api/classes/{id}",
         "method": "put",
-        "description": "Updates class cohort details. Status changes must use ReadyForMentor, Open, Start, or Complete endpoints. Requires Admin or Manager role."
+        "description": "Updates class cohort details. Reassigning ProgramId requires the target program to be Active. Status changes must use ReadyForMentor, Open, Start, or Complete endpoints. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}",
@@ -278,12 +278,12 @@
       {
         "path": "/api/classes/{id}/open",
         "method": "post",
-        "description": "Transitions a class from ReadyForMentor to Open. Requires an assigned mentor and a complete timetable. Students may enroll after this step. Requires Admin or Manager role."
+        "description": "Transitions a class from ReadyForMentor to Open. Requires an assigned mentor, a complete timetable, and an Active program. Students may enroll after this step. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}/start",
         "method": "post",
-        "description": "Transitions a class from Open to InProgress. Requires Admin or Manager role."
+        "description": "Transitions a class from Open to InProgress. The program must be Active. Requires Admin or Manager role."
       },
       {
         "path": "/api/classes/{id}/complete",
@@ -466,6 +466,41 @@
         "description": "Soft-deletes the evidence media and removes the S3 object."
       },
       {
+        "path": "/api/class-session-experts",
+        "method": "post",
+        "description": "Multiple Invited or Accepted experts are allowed. The expert must be on the class program board. The same expert cannot be invited twice while Invited or Accepted."
+      },
+      {
+        "path": "/api/class-session-experts",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-session-experts/mine",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-session-experts/{id}",
+        "method": "get"
+      },
+      {
+        "path": "/api/class-session-experts/{id}/accept",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-session-experts/{id}/decline",
+        "method": "post"
+      },
+      {
+        "path": "/api/class-session-experts/{id}/withdraw",
+        "method": "post",
+        "description": "Allowed only while the expert has not Accepted."
+      },
+      {
+        "path": "/api/class-session-experts/{id}/feedback",
+        "method": "put",
+        "description": "Allowed after the Offline session is Completed and this expert has Accepted. One overview for the class focused on how the mentor taught. Students never see this."
+      },
+      {
         "path": "/api/class-sessions/{id}/join",
         "method": "post",
         "description": "Records student attendance (Present within 10' grace, otherwise Late), and returns a JaaS JWT + room credentials. Mentors receive moderator:true. Join window opens 15 minutes before StartTime and closes at EndTime."
@@ -543,7 +578,7 @@
       {
         "path": "/api/experts",
         "method": "post",
-        "description": "Creates a new expert with the provided information. Requires Admin or Manager role."
+        "description": "Creates an expert profile and a dedicated Expert login. Email and password are required; the expert can sign in immediately. Password reset uses the existing forgot-password OTP flow. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{id}",
@@ -1075,7 +1110,7 @@
       {
         "path": "/api/programs",
         "method": "post",
-        "description": "Creates a new program with form-data program information and uploads thumbnail image. Requires Admin or Manager role."
+        "description": "Creates a new program as Draft. Use submit-review and publish to change status. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/with-modules",
@@ -1095,7 +1130,7 @@
       {
         "path": "/api/programs/{id}",
         "method": "put",
-        "description": "Updates the details of a specific program by its ID. Requires Admin or Manager role."
+        "description": "Updates program details. Status may only toggle Active ↔ Inactive. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/{id}",
@@ -1126,6 +1161,41 @@
         "path": "/api/programs/name/{name}",
         "method": "get",
         "description": "Retrieve a single program by its exact name (case-insensitive)."
+      },
+      {
+        "path": "/api/programs/review-queue",
+        "method": "get",
+        "description": "Experts see PendingReview programs on their program board or whose attached framework they own. Manager and Admin see all pending."
+      },
+      {
+        "path": "/api/programs/{id}/curriculum-reviews",
+        "method": "get",
+        "description": "Framework owner and program-board experts may read history. Manager and Admin may read all."
+      },
+      {
+        "path": "/api/programs/{id}/submit-review",
+        "method": "post",
+        "description": "With a framework: the owner must have a login. Without a framework: at least one program-board expert with a login. Always PendingReview. Framework pre-check runs when FrameworkId is set; no framework is free-form board review."
+      },
+      {
+        "path": "/api/programs/{id}/withdraw-review",
+        "method": "post",
+        "description": "Moves PendingReview or Approved back to Draft. No curriculum review row is created."
+      },
+      {
+        "path": "/api/programs/{id}/publish",
+        "method": "post",
+        "description": "Moves Approved to Active. Notifies managers. Enrollment and class creation require Active."
+      },
+      {
+        "path": "/api/programs/{id}/approve-review",
+        "method": "post",
+        "description": "PendingReview → Approved. With a framework: only the framework owner. Without a framework: any one login expert on ProgramBoard. Scores are required when the attached framework has rubric criteria."
+      },
+      {
+        "path": "/api/programs/{id}/request-changes",
+        "method": "post",
+        "description": "PendingReview → Draft. Same actor as approve-review. Comment is required so the manager knows what to fix."
       },
       {
         "path": "/api/programs/{id}/thumbnail",
@@ -1181,6 +1251,45 @@
         "path": "/api/program-enrollments/student/{studentId}",
         "method": "get",
         "description": "List program enrollments for a student. Access rules apply per role (self, linked parent, or admin). By default returns one current row per program; pass includeSuperseded=true for full purchase history."
+      },
+      {
+        "path": "/api/program-frameworks",
+        "method": "get",
+        "description": "Experts see their own blueprints. Manager and Admin see all. Category filter is a hint only — it does not require programs to match."
+      },
+      {
+        "path": "/api/program-frameworks",
+        "method": "post",
+        "description": "Expert-owned blueprint. Opt-in rules (null = not enforced). Zero rubric criteria is allowed."
+      },
+      {
+        "path": "/api/program-frameworks/{id}",
+        "method": "get"
+      },
+      {
+        "path": "/api/program-frameworks/{id}",
+        "method": "put",
+        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+      },
+      {
+        "path": "/api/program-frameworks/{id}",
+        "method": "delete",
+        "description": "Owning expert only. Unlinks the attached Draft program. Blocked with 409 when the attached program is not Draft."
+      },
+      {
+        "path": "/api/program-frameworks/{id}/criteria",
+        "method": "post",
+        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+      },
+      {
+        "path": "/api/program-frameworks/{id}/criteria/{criterionId}",
+        "method": "put",
+        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+      },
+      {
+        "path": "/api/program-frameworks/{id}/criteria/{criterionId}",
+        "method": "delete",
+        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
       },
       {
         "path": "/api/programs/{programId}/reviews",
@@ -1418,6 +1527,9 @@
       },
       {
         "name": "ApiResult"
+      },
+      {
+        "name": "ApproveCurriculumReviewRequest"
       },
       {
         "name": "ApproveLinkDto"
@@ -1711,6 +1823,33 @@
         "name": "ClassSessionCheckInTokenResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassSessionCoTeachDegreeDto"
+      },
+      {
+        "name": "ClassSessionCoTeachFeedbackDto"
+      },
+      {
+        "name": "ClassSessionCoTeachPublicDto"
+      },
+      {
+        "name": "ClassSessionExpertResponseDto"
+      },
+      {
+        "name": "ClassSessionExpertResponseDtoApiResult"
+      },
+      {
+        "name": "ClassSessionExpertResponseDtoPagination"
+      },
+      {
+        "name": "ClassSessionExpertResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassSessionExpertResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ClassSessionExpertResponseDtoResponseDataContent"
+      },
+      {
         "name": "ClassSessionJoinResponseDto"
       },
       {
@@ -1840,6 +1979,9 @@
         "name": "CreateCourseRequestDto"
       },
       {
+        "name": "CreateExpertRequest"
+      },
+      {
         "name": "CreateHighlightStackRequest"
       },
       {
@@ -1855,6 +1997,9 @@
         "name": "CreatePortfolioSectionRequestDto"
       },
       {
+        "name": "CreateProgramFrameworkRequest"
+      },
+      {
         "name": "CreateProgramReviewDto"
       },
       {
@@ -1862,6 +2007,21 @@
       },
       {
         "name": "CreateResearchMilestoneRequestDto"
+      },
+      {
+        "name": "CurriculumReviewResponseDto"
+      },
+      {
+        "name": "CurriculumReviewResponseDtoApiResult"
+      },
+      {
+        "name": "CurriculumReviewResponseDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "CurriculumReviewResponseDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "CurriculumReviewResponseDtoResponseDataContent"
       },
       {
         "name": "DashboardLandingDto"
@@ -1999,9 +2159,6 @@
         "name": "ErrorContent"
       },
       {
-        "name": "ExpertCreateDto"
-      },
-      {
         "name": "ExpertDegreeRequestDto"
       },
       {
@@ -2056,9 +2213,6 @@
         "name": "ExpertResponseDtoResponseDataContent"
       },
       {
-        "name": "ExpertUpdateDto"
-      },
-      {
         "name": "FaceSegmentDto"
       },
       {
@@ -2066,6 +2220,18 @@
       },
       {
         "name": "ForgotPasswordRequestDto"
+      },
+      {
+        "name": "FrameworkRubricCriterionRequest"
+      },
+      {
+        "name": "FrameworkRubricCriterionResponseDto"
+      },
+      {
+        "name": "FrameworkRubricCriterionResponseDtoApiResult"
+      },
+      {
+        "name": "FrameworkRubricCriterionResponseDtoResponseDataContent"
       },
       {
         "name": "GenerateClassSessionsRequestDto"
@@ -2156,6 +2322,9 @@
       },
       {
         "name": "ImportRowErrorDto"
+      },
+      {
+        "name": "InviteClassSessionExpertDto"
       },
       {
         "name": "InvoiceResponseDto"
@@ -2606,6 +2775,24 @@
         "name": "ProgramExpertSummaryDto"
       },
       {
+        "name": "ProgramFrameworkResponseDto"
+      },
+      {
+        "name": "ProgramFrameworkResponseDtoApiResult"
+      },
+      {
+        "name": "ProgramFrameworkResponseDtoPagination"
+      },
+      {
+        "name": "ProgramFrameworkResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ProgramFrameworkResponseDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramFrameworkResponseDtoResponseDataContent"
+      },
+      {
         "name": "ProgramListItemDto"
       },
       {
@@ -2616,6 +2803,18 @@
       },
       {
         "name": "ProgramListItemDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramReviewQueueItemDto"
+      },
+      {
+        "name": "ProgramReviewQueueItemDtoPagination"
+      },
+      {
+        "name": "ProgramReviewQueueItemDtoPaginationApiResult"
+      },
+      {
+        "name": "ProgramReviewQueueItemDtoPaginationResponseDataContent"
       },
       {
         "name": "ProgramReviewResponseDto"
@@ -2738,6 +2937,9 @@
         "name": "ReorderPortfolioSectionsRequestDto"
       },
       {
+        "name": "RequestCurriculumChangesRequest"
+      },
+      {
         "name": "RequestLinkDto"
       },
       {
@@ -2805,6 +3007,12 @@
       },
       {
         "name": "RevenueOverviewDtoResponseDataContent"
+      },
+      {
+        "name": "ReviewCriterionScoreRequest"
+      },
+      {
+        "name": "ReviewCriterionScoreResponseDto"
       },
       {
         "name": "SaveActivityCheckpointRequestDto"
@@ -2939,6 +3147,9 @@
         "name": "SubmitAssignmentRequestDto"
       },
       {
+        "name": "SubmitClassSessionExpertFeedbackDto"
+      },
+      {
         "name": "SubmitQuizAnswersRequestDto"
       },
       {
@@ -3005,6 +3216,9 @@
         "name": "UpdateCourseRequestDto"
       },
       {
+        "name": "UpdateExpertRequest"
+      },
+      {
         "name": "UpdateMaterialRequestDto"
       },
       {
@@ -3042,6 +3256,9 @@
       },
       {
         "name": "UpdatePortfolioSubdomainRequestDto"
+      },
+      {
+        "name": "UpdateProgramFrameworkRequest"
       },
       {
         "name": "UpdateProgramRequestDto"

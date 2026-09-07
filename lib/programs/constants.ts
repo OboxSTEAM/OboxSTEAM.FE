@@ -109,12 +109,16 @@ export const PUBLIC_PROGRAM_STATUS = "Active" as const;
 
 export const PROGRAM_STATUS_ORDER: ProgramStatus[] = [
   "Draft",
+  "PendingReview",
+  "Approved",
   "Active",
   "Inactive",
 ];
 
 export const PROGRAM_STATUS_LABELS: Record<ProgramStatus, string> = {
   Draft: "Bản nháp",
+  PendingReview: "Chờ duyệt",
+  Approved: "Đã duyệt",
   Active: "Đang mở",
   Inactive: "Ngừng hoạt động",
 };
@@ -130,6 +134,12 @@ export function getProgramEnrollmentClosedMessage(
 ): string {
   if (status === "Draft") {
     return "Chương trình đang ở bản nháp — chưa thể đăng ký hoặc thanh toán.";
+  }
+  if (status === "PendingReview") {
+    return "Chương trình đang chờ duyệt — chưa thể đăng ký hoặc thanh toán.";
+  }
+  if (status === "Approved") {
+    return "Chương trình đã được duyệt nhưng chưa mở đăng ký.";
   }
   if (status === "Inactive") {
     return "Chương trình đã ngừng hoạt động — không nhận đăng ký hoặc thanh toán.";

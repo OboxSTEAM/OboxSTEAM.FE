@@ -5,6 +5,7 @@ export const classStudentEnrollmentStatusSchema = z.enum([
   "Transferred",
   "Withdrawn",
   "Completed",
+  "Pending",
 ]);
 
 export const classStudentRosterSchema = z.object({

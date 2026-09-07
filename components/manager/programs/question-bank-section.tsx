@@ -82,7 +82,14 @@ function difficultyLabel(level: number | null | undefined): string {
 
 type SectionBank = QuestionBankListItem & { questions: BankQuestion[] };
 
-export function QuestionBankSection({ courseId }: { courseId: string }) {
+export function QuestionBankSection({
+  courseId,
+  disabled = false,
+}: {
+  courseId: string;
+  /** Cohort lock — list/view only. */
+  disabled?: boolean;
+}) {
   const [banks, setBanks] = useState<SectionBank[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(true);
   const [stats, setStats] = useState<Record<string, BankImportStat>>({});
@@ -335,34 +342,46 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
     }
   }
 
+  const showBanksPanel = showBank || disabled;
+
   return (
     <div className="border-t pt-5" style={{ borderColor: W.border }}>
       <STitle>Ngân hàng đề</STitle>
-      <label className="flex cursor-pointer items-center gap-2">
-        <Checkbox
-          checked={showBank}
-          onCheckedChange={(v) => setShowBank(v === true)}
-          className="border-input bg-background data-checked:border-primary"
-        />
-        <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
-          Đính kèm ngân hàng đề
-        </span>
-        {banks.length > 0 && (
-          <span
-            className="rounded-full px-2 py-0.5 text-[10px] font-bold"
-            style={{ background: W.surface2, color: W.muted }}
-          >
-            {banks.length} ngân hàng
-          </span>
-        )}
-      </label>
-      {!showBank && (
-        <p className="mt-1.5 text-[11px] leading-relaxed" style={{ color: W.faint }}>
-          Tích chọn để tạo và import câu hỏi cho ngân hàng đề của khóa học này.
+      {!disabled ? (
+        <>
+          <label className="flex cursor-pointer items-center gap-2">
+            <Checkbox
+              checked={showBank}
+              onCheckedChange={(v) => setShowBank(v === true)}
+              className="border-input bg-background data-checked:border-primary"
+            />
+            <span className="text-sm font-semibold" style={{ color: W.textStrong }}>
+              Đính kèm ngân hàng đề
+            </span>
+            {banks.length > 0 && (
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold"
+                style={{ background: W.surface2, color: W.muted }}
+              >
+                {banks.length} ngân hàng
+              </span>
+            )}
+          </label>
+          {!showBank && (
+            <p className="mt-1.5 text-[11px] leading-relaxed" style={{ color: W.faint }}>
+              Tích chọn để tạo và import câu hỏi cho ngân hàng đề của khóa học này.
+            </p>
+          )}
+        </>
+      ) : (
+        <p className="text-xs" style={{ color: W.muted }}>
+          {banks.length > 0
+            ? `${banks.length} ngân hàng đề (chỉ xem)`
+            : "Chưa có ngân hàng đề."}
         </p>
       )}
 
-      {showBank ? (
+      {showBanksPanel ? (
         <div className="mt-4">
           {loadingBanks ? (
             <p className="mb-4 text-xs" style={{ color: W.faint }}>
@@ -432,33 +451,37 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                         >
                           <Copy className="size-3.5" />
                         </button>
-                        <button
-                          type="button"
-                          title="Import câu hỏi (CSV)"
-                          onClick={() => triggerImport(bank.id)}
-                          disabled={busy}
-                          className={cn(
-                            "flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors hover:bg-muted disabled:opacity-50",
-                          )}
-                          style={{ borderColor: W.border, color: W.accent }}
-                        >
-                          {isImporting ? (
-                            <Loader2 className="size-3.5 animate-spin" />
-                          ) : (
-                            <Upload className="size-3.5" />
-                          )}
-                          {isImporting ? "Đang nhập..." : "Import CSV"}
-                        </button>
-                        <button
-                          type="button"
-                          title="Xóa ngân hàng"
-                          onClick={() => setConfirmDelete(bank)}
-                          disabled={busy}
-                          className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10 disabled:opacity-50"
-                          style={{ borderColor: W.border, color: W.primary }}
-                        >
-                          <Trash className="size-3.5" />
-                        </button>
+                        {!disabled ? (
+                          <>
+                            <button
+                              type="button"
+                              title="Import câu hỏi (CSV)"
+                              onClick={() => triggerImport(bank.id)}
+                              disabled={busy}
+                              className={cn(
+                                "flex h-8 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold transition-colors hover:bg-muted disabled:opacity-50",
+                              )}
+                              style={{ borderColor: W.border, color: W.accent }}
+                            >
+                              {isImporting ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <Upload className="size-3.5" />
+                              )}
+                              {isImporting ? "Đang nhập..." : "Import CSV"}
+                            </button>
+                            <button
+                              type="button"
+                              title="Xóa ngân hàng"
+                              onClick={() => setConfirmDelete(bank)}
+                              disabled={busy}
+                              className="flex size-8 items-center justify-center rounded-lg border transition-colors hover:bg-destructive/10 disabled:opacity-50"
+                              style={{ borderColor: W.border, color: W.primary }}
+                            >
+                              <Trash className="size-3.5" />
+                            </button>
+                          </>
+                        ) : null}
                       </div>
                     </div>
 
@@ -523,10 +546,13 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
               className="mb-4 rounded-xl border border-dashed p-4 text-center text-xs"
               style={{ borderColor: W.border, color: W.muted }}
             >
-              Chưa có ngân hàng đề. Tạo mới bên dưới rồi import câu hỏi từ CSV.
+              {disabled
+                ? "Chưa có ngân hàng đề."
+                : "Chưa có ngân hàng đề. Tạo mới bên dưới rồi import câu hỏi từ CSV."}
             </p>
           )}
 
+          {!disabled ? (
           <div
             className="space-y-3 rounded-xl border border-dashed bg-muted/60 p-4"
             style={{ borderColor: W.border }}
@@ -594,6 +620,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
               ngân hàng.
             </p>
           </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -672,6 +699,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                             {q.options?.length ? ` · ${q.options.length} đáp án` : ""}
                           </p>
                         </div>
+                        {!disabled ? (
                         <button
                           type="button"
                           title="Xóa câu hỏi"
@@ -684,6 +712,7 @@ export function QuestionBankSection({ courseId }: { courseId: string }) {
                         >
                           <Trash className="size-3.5" />
                         </button>
+                        ) : null}
                       </li>
                     ))}
                   </ul>

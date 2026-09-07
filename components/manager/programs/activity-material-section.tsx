@@ -118,12 +118,15 @@ type ActivityMaterialSectionProps = {
   activityId: string;
   initialMaterial: ActivityMaterial | null;
   onChanged: () => void;
+  /** Cohort lock — keep preview/download, block upload/edit/delete. */
+  disabled?: boolean;
 };
 
 export function ActivityMaterialSection({
   activityId,
   initialMaterial,
   onChanged,
+  disabled = false,
 }: ActivityMaterialSectionProps) {
   const [material, setMaterial] = useState<ActivityMaterial | null>(initialMaterial);
   const [busy, setBusy] = useState(false);
@@ -332,7 +335,7 @@ export function ActivityMaterialSection({
             </div>
           </div>
 
-          {!editingTitle && (
+          {!editingTitle && !disabled && (
             <div className="flex shrink-0 items-center gap-1">
               <button
                 type="button"
@@ -360,6 +363,10 @@ export function ActivityMaterialSection({
             </div>
           )}
         </div>
+      ) : disabled ? (
+        <p className="rounded-xl border border-dashed p-4 text-xs" style={{ borderColor: W.border, color: W.muted }}>
+          Chưa có tài liệu học tập.
+        </p>
       ) : (
         <div className="space-y-3 rounded-xl border border-dashed bg-muted/60 p-4" style={{ borderColor: W.border }}>
           <div className="space-y-1.5">

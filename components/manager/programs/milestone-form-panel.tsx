@@ -72,6 +72,8 @@ type MilestoneFormPanelProps = {
   activityOptions: ActivityOption[];
   milestoneToEdit: ResearchMilestone | null;
   onSuccess: (milestone: ResearchMilestone) => void;
+  /** Cohort lock — show values, block mutations. */
+  disabled?: boolean;
 };
 
 type FormValues = {
@@ -97,6 +99,7 @@ export function MilestoneFormPanel({
   activityOptions,
   milestoneToEdit,
   onSuccess,
+  disabled = false,
 }: MilestoneFormPanelProps) {
   const isEdit = !!milestoneToEdit;
   const [busy, setBusy] = useState(false);
@@ -158,6 +161,7 @@ export function MilestoneFormPanel({
   });
 
   const onSubmit = async (data: FormValues) => {
+    if (disabled) return;
     setBusy(true);
     try {
       let result: ResearchMilestone | null | undefined;
@@ -222,7 +226,9 @@ export function MilestoneFormPanel({
         </span>
         <div className="min-w-0">
           <p className="text-sm font-bold leading-snug truncate" style={{ color: W.textStrong }}>
-            {isEdit ? `Chỉnh sửa: ${milestoneToEdit!.title ?? "Milestone"}` : "Tạo Milestone nghiên cứu"}
+            {isEdit
+              ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${milestoneToEdit!.title ?? "Milestone"}`
+              : "Tạo Milestone nghiên cứu"}
           </p>
           <p className="text-xs mt-0.5 truncate" style={{ color: W.muted }}>
             Mốc nghiên cứu kèm sản phẩm nộp
@@ -230,7 +236,7 @@ export function MilestoneFormPanel({
         </div>
       </div>
 
-      <div className="space-y-6 p-5">
+      <fieldset disabled={disabled} className="min-w-0 space-y-6 border-0 p-5">
         <div>
           <STitle>Thông tin milestone</STitle>
           <div className="grid grid-cols-2 gap-4">
@@ -357,10 +363,12 @@ export function MilestoneFormPanel({
             linked={linkedActivities}
             options={unlinkedOptions}
             onChange={setLinkedActivities}
+            disabled={disabled}
           />
         )}
-      </div>
+      </fieldset>
 
+      {!disabled ? (
       <div className="flex justify-end gap-2 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         <Button
           type="submit"
@@ -383,6 +391,7 @@ export function MilestoneFormPanel({
           )}
         </Button>
       </div>
+      ) : null}
     </form>
   );
 }
@@ -392,11 +401,13 @@ function MilestoneActivityLinker({
   linked,
   options,
   onChange,
+  disabled = false,
 }: {
   milestoneId: string;
   linked: ResearchMilestoneActivity[];
   options: ActivityOption[];
   onChange: (next: ResearchMilestoneActivity[]) => void;
+  disabled?: boolean;
 }) {
   const [picked, setPicked] = useState("");
   const [required, setRequired] = useState(true);
@@ -455,6 +466,7 @@ function MilestoneActivityLinker({
                   Bắt buộc
                 </span>
               )}
+              {!disabled ? (
               <button
                 type="button"
                 onClick={() => handleUnlink(la.activityId)}
@@ -465,6 +477,7 @@ function MilestoneActivityLinker({
               >
                 <Trash className="size-3.5" />
               </button>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -474,7 +487,7 @@ function MilestoneActivityLinker({
         </p>
       )}
 
-      {options.length > 0 ? (
+      {!disabled && options.length > 0 ? (
         <div className="flex items-end gap-2">
           <div className="min-w-0 flex-1">
             <Select value={picked || "none"} onValueChange={(v) => setPicked(!v || v === "none" ? "" : v)}>
@@ -509,11 +522,11 @@ function MilestoneActivityLinker({
             Gắn
           </Button>
         </div>
-      ) : (
+      ) : !disabled ? (
         <p className="text-xs" style={{ color: W.faint }}>
           Không còn hoạt động nào trong module để liên kết.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -26,6 +26,7 @@ function getStatusBadgeClass(status: Payment["status"]): string {
     case "Success":
       return "bg-[#7CB342]/15 text-[#3d5c22] hover:bg-[#7CB342]/15";
     case "Cancelled":
+    case "Refunded":
       return "bg-[#E5E5E0] text-[#6B6B6B] hover:bg-[#E5E5E0]";
     case "Failed":
       return "bg-[#E94B3C]/12 text-[#B71C1C] hover:bg-[#E94B3C]/12";

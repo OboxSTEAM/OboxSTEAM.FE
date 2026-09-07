@@ -29,6 +29,7 @@ export const classEnrollmentStatusFilterSchema = z.enum([
   "Transferred",
   "Withdrawn",
   "Completed",
+  "Pending",
 ]);
 
 export const submissionStatusFilterSchema = z.enum([

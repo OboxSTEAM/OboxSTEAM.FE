@@ -1,12 +1,19 @@
 import { z } from "zod";
 
-export const paymentGatewaySchema = z.enum(["Stripe", "MoMo"]);
+/** OpenAPI `PaymentResponseDto.gateway` / checkout request gateway. */
+export const paymentGatewaySchema = z.enum([
+  "VnPay",
+  "Stripe",
+  "BankTransfer",
+]);
 
+/** OpenAPI `PaymentResponseDto.status`. */
 export const paymentStatusSchema = z.enum([
   "Pending",
   "Success",
-  "Cancelled",
   "Failed",
+  "Cancelled",
+  "Refunded",
 ]);
 
 /** Seat hold metadata returned by checkout / request-parent (5-minute window). */

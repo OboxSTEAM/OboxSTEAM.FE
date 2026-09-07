@@ -7,6 +7,7 @@ export const classEnrollmentStatusSchema = z.enum([
   "Transferred",
   "Withdrawn",
   "Completed",
+  "Pending",
 ]);
 
 /** Handoff WS7 — optional until OpenAPI surfaces `kind` on ClassEnrollmentResponseDto. */

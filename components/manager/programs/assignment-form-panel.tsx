@@ -104,6 +104,8 @@ type AssignmentFormPanelProps = {
   courseOptions: CourseOption[];
   assignmentToEdit: AssignmentDetail | null;
   onSuccess: (assignment: AssignmentDetail) => void;
+  /** Cohort lock — show values, block mutations. */
+  disabled?: boolean;
 };
 
 type FormValues = AssignmentFormValues;
@@ -121,6 +123,7 @@ export function AssignmentFormPanel({
   courseOptions,
   assignmentToEdit,
   onSuccess,
+  disabled = false,
 }: AssignmentFormPanelProps) {
   const isEdit = !!assignmentToEdit;
   const [busy, setBusy] = useState(false);
@@ -213,6 +216,7 @@ export function AssignmentFormPanel({
   }, [bankCourseId]);
 
   const onSubmit = async (data: FormValues) => {
+    if (disabled) return;
     setBusy(true);
     try {
       const payload = {
@@ -272,10 +276,10 @@ export function AssignmentFormPanel({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
       <PHdr
-        title={isEdit ? `Chỉnh sửa: ${assignmentToEdit!.title}` : "Tạo Bài tập mới"}
+        title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${assignmentToEdit!.title}` : "Tạo Bài tập mới"}
         sub="Bài tập thuộc học phần (module)"
       />
-      <div className="space-y-6 p-5">
+      <fieldset disabled={disabled} className="min-w-0 space-y-6 border-0 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
           <p className="mb-3 text-xs" style={{ color: W.muted }}>
@@ -612,7 +616,8 @@ export function AssignmentFormPanel({
             </div>
           </div>
         )}
-      </div>
+      </fieldset>
+      {!disabled ? (
       <div className="flex items-center justify-end gap-3 px-5 py-3 border-t shrink-0" style={{ borderColor: W.border, background: W.surface }}>
         {Object.keys(errors).length > 0 && (
           <p className="mr-auto text-xs font-semibold" style={{ color: W.primary }}>
@@ -640,6 +645,7 @@ export function AssignmentFormPanel({
           )}
         </Button>
       </div>
+      ) : null}
     </form>
   );
 }
