@@ -13,9 +13,8 @@ import {
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Reorder, useDragControls } from "motion/react";
+import { LayoutGroup, motion, useReducedMotion } from "motion/react";
 import {
-  Plus,
   Trash,
   BookOpen,
   FolderOpen,
@@ -27,10 +26,12 @@ import {
   Save,
   FolderPlus,
   ChevronRight,
+  ChevronUp,
+  ChevronDown,
   AlertTriangle,
-  GripVertical,
   Lock,
   ExternalLink,
+  Plus,
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -92,7 +93,6 @@ import {
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { useDragReorderList } from "@/hooks/use-drag-reorder-list";
 import { cn } from "@/lib/utils";
 import {
   THEME_SELECT_TRIGGER,
@@ -134,12 +134,12 @@ const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
 };
 
-/** Smooth sibling swaps without bounce — high damping spring. */
-const STRUCTURE_DRAG_TRANSITION = {
+/** Sibling reorder spring — skipped when prefers-reduced-motion. */
+const STRUCTURE_LAYOUT_TRANSITION = {
   type: "spring" as const,
-  stiffness: 520,
-  damping: 42,
-  mass: 0.7,
+  stiffness: 420,
+  damping: 36,
+  mass: 0.85,
 };
 
 /* ─── Selected node ─────────────────────────────────────────────────────────── */
@@ -1019,7 +1019,7 @@ const STRUCTURE_NODE_ICON: Record<
   milestone: { Icon: Flag, color: "#8b5cf6", bg: "var(--card)" },
 };
 
-/** Inline “Thêm …” leaf — dashed border, one shared hover/selected accent. */
+/** Quiet action chip — lives in StructureAddTray, not as a fake tree node. */
 function StructureAddLeafButton({
   label,
   selected,
@@ -1033,23 +1033,79 @@ function StructureAddLeafButton({
   icon?: LucideIcon;
   className?: string;
 }) {
+  const canMutate = useContext(CurriculumMutateContext);
+  if (!canMutate) return null;
+
   const accent = W.accent;
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        "flex items-center gap-1.5 rounded-md border border-dashed px-2 py-1.5 text-left text-[11px] font-medium transition-colors",
+        "flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-[11px] font-medium transition-colors",
         selected
-          ? "border-[color:var(--add-c)] text-[color:var(--add-c)] bg-[color:color-mix(in_srgb,var(--add-c)_12%,transparent)]"
-          : "border-border text-muted-foreground hover:border-[color:var(--add-c)] hover:text-[color:var(--add-c)] hover:bg-[color:color-mix(in_srgb,var(--add-c)_10%,transparent)]",
+          ? "bg-[color:color-mix(in_srgb,var(--add-c)_14%,transparent)] text-[color:var(--add-c)] ring-1 ring-[color:color-mix(in_srgb,var(--add-c)_35%,transparent)]"
+          : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
         className,
       )}
       style={{ ["--add-c" as string]: accent }}
     >
-      {Icon ? <Icon className="size-3 shrink-0" /> : null}
+      {Icon ? (
+        <Icon className="size-3 shrink-0 opacity-80" />
+      ) : (
+        <Plus className="size-3 shrink-0 opacity-70" />
+      )}
       {label}
     </button>
+  );
+}
+
+/**
+ * Footer tray under a branch — dashed separator, stacked actions with gap.
+ * Keeps “Thêm …” out of the tree guide / sibling geometry.
+ */
+function StructureAddTray({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
+  const canMutate = useContext(CurriculumMutateContext);
+  if (!canMutate) return null;
+
+  return (
+    <li className="relative list-none">
+      <div
+        className={cn(
+          "ml-3 mt-1.5 flex flex-col gap-1.5 border-t border-dashed border-border/70 pt-2 pl-1",
+          className,
+        )}
+      >
+        {children}
+      </div>
+    </li>
+  );
+}
+
+function StructureTreeGuides({ depth, isLast }: { depth: number; isLast: boolean }) {
+  if (depth <= 0) return null;
+  return (
+    <>
+      <span
+        className={cn(
+          "pointer-events-none absolute left-0 z-0 w-px",
+          isLast ? "top-0 h-[1.125rem]" : "inset-y-0",
+        )}
+        style={{ background: W.border }}
+        aria-hidden
+      />
+      <span
+        className="pointer-events-none absolute top-[1.125rem] left-0 z-0 h-px w-3"
+        style={{ background: W.border }}
+        aria-hidden
+      />
+    </>
   );
 }
 
@@ -1062,13 +1118,13 @@ function StructureTreeRow({
   meta,
   onSelect,
   onDelete,
-  onAdd,
-  addLabel,
   defaultOpen = false,
   forceOpen = false,
-  reorderable = false,
-  reorderValue,
-  onReorderDragEnd,
+  canMoveUp = false,
+  canMoveDown = false,
+  onMoveUp,
+  onMoveDown,
+  moveBusy = false,
   children,
 }: {
   depth: number;
@@ -1079,28 +1135,25 @@ function StructureTreeRow({
   meta?: string;
   onSelect: () => void;
   onDelete?: () => void;
-  onAdd?: () => void;
-  addLabel?: string;
   /** Initial expand state (e.g. program root). */
   defaultOpen?: boolean;
   /** Keep open when selection / create-flow lives under this node. */
   forceOpen?: boolean;
-  /** Enable drag-reorder via grip handle (parent must wrap in Reorder.Group). */
-  reorderable?: boolean;
-  /** Stable id for Reorder.Item — required when reorderable. */
-  reorderValue?: string;
-  onReorderDragEnd?: () => void;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  moveBusy?: boolean;
   children?: ReactNode;
 }) {
   const canMutate = useContext(CurriculumMutateContext);
-  const dragControls = useDragControls();
+  const reduceMotion = useReducedMotion();
   const childItems = useMemo(
     () => (Array.isArray(children) ? children : [children]).filter(Boolean),
     [children],
   );
   const effectiveOnDelete = canMutate ? onDelete : undefined;
-  const effectiveOnAdd = canMutate ? onAdd : undefined;
-  const effectiveReorderable = canMutate && reorderable;
+  const showReorder = canMutate && (onMoveUp != null || onMoveDown != null);
   const hasBranch = childItems.length > 0;
   const [open, setOpen] = useState(defaultOpen || forceOpen);
   const { Icon: NodeIcon, color: iconColor, bg: iconBg } = STRUCTURE_NODE_ICON[kind];
@@ -1114,202 +1167,134 @@ function StructureTreeRow({
     setOpen((prev) => !prev);
   };
 
-  const handleAdd = () => {
-    if (hasBranch) setOpen(true);
-    effectiveOnAdd?.();
-  };
-
-  const rowInner = (
-    <div
-      className="group/tr flex items-center gap-0.5 rounded-lg"
-      style={{
-        background: selected ? "rgba(79,195,247,0.13)" : "transparent",
-        border: selected
-          ? "1px solid rgba(79,195,247,0.28)"
-          : "1px solid transparent",
-      }}
+  return (
+    <motion.li
+      layout={reduceMotion ? false : "position"}
+      transition={reduceMotion ? { duration: 0 } : STRUCTURE_LAYOUT_TRANSITION}
+      className="relative"
     >
-      {effectiveReorderable ? (
-        <button
-          type="button"
-          aria-label={`Kéo sắp xếp ${label}`}
-          title="Kéo để sắp xếp"
-          onPointerDown={(event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            dragControls.start(event);
-          }}
-          className="flex size-6 shrink-0 cursor-grab items-center justify-center rounded outline-none hover:bg-muted active:cursor-grabbing focus-visible:ring-2 focus-visible:ring-ring/50"
-          style={{ color: W.faint }}
-        >
-          <GripVertical className="size-3.5" strokeWidth={2.25} />
-        </button>
-      ) : hasBranch ? (
-        <button
-          type="button"
-          title={open ? "Thu gọn" : "Mở rộng"}
-          aria-expanded={open}
-          aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
-          onClick={handleToggle}
-          className="flex size-6 shrink-0 items-center justify-center rounded"
-          style={{ color: W.faint }}
-        >
-          <ChevronRight
-            className={cn(
-              "size-3.5 transition-transform duration-200",
-              open && "rotate-90",
-            )}
-          />
-        </button>
-      ) : (
-        <span className="size-6 shrink-0" aria-hidden />
-      )}
-
-      {effectiveReorderable && hasBranch ? (
-        <button
-          type="button"
-          title={open ? "Thu gọn" : "Mở rộng"}
-          aria-expanded={open}
-          aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
-          onClick={handleToggle}
-          className="flex size-5 shrink-0 items-center justify-center rounded"
-          style={{ color: W.faint }}
-        >
-          <ChevronRight
-            className={cn(
-              "size-3 transition-transform duration-200",
-              open && "rotate-90",
-            )}
-          />
-        </button>
-      ) : null}
-
-      <span
-        className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
-        style={{
-          background: iconBg,
-          borderColor: selected ? "rgba(79,195,247,0.35)" : W.border,
-          color: iconColor,
-        }}
-        aria-hidden
-      >
-        <NodeIcon className="size-3.5" strokeWidth={2.25} />
-      </span>
-
-      <button
-        type="button"
-        onClick={() => {
-          if (hasBranch) setOpen(true);
-          onSelect();
-        }}
-        className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
-      >
-        <span
-          className={cn(
-            "truncate text-[12.5px] leading-snug",
-            selected ? "text-[#0d6e9c] dark:text-[#7dd3fc]" : "",
-          )}
-          style={{
-            color: selected ? undefined : W.text,
-            fontWeight: selected ? 600 : 500,
-          }}
-        >
-          {label}
-        </span>
-        {meta && (
-          <span className="mt-0.5 truncate text-[10px]" style={{ color: W.faint }}>
-            {meta}
-          </span>
-        )}
-      </button>
-
-      <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100">
-        {effectiveOnAdd && (
-          <button
-            type="button"
-            title={addLabel || "Thêm"}
-            onClick={handleAdd}
-            className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-[color:color-mix(in_srgb,#7cb342_14%,transparent)] hover:text-[#7cb342]"
-          >
-            <Plus className="size-3" />
-          </button>
-        )}
-        {effectiveOnDelete && (
-          <button
-            type="button"
-            title="Xóa"
-            onClick={effectiveOnDelete}
-            className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-          >
-            <Trash className="size-3" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-
-  const branchContent =
-    hasBranch && open ? (
-      <ul className="relative mt-0.5" role="list">
-        {children}
-      </ul>
-    ) : null;
-
-  const depthGuides =
-    depth > 0 ? (
-      <>
-        <span
-          className={cn(
-            "pointer-events-none absolute left-0 z-0 w-px",
-            isLast ? "top-0 h-[1.125rem]" : "inset-y-0",
-          )}
-          style={{ background: W.border }}
-          aria-hidden
-        />
-        <span
-          className="pointer-events-none absolute top-[1.125rem] left-0 z-0 h-px w-3"
-          style={{ background: W.border }}
-          aria-hidden
-        />
-      </>
-    ) : null;
-
-  const body = (
-    <>
-      {depthGuides}
+      <StructureTreeGuides depth={depth} isLast={isLast} />
       <div className={cn("relative z-10", depth > 0 && "ml-3")}>
-        {rowInner}
-        {branchContent}
+        <div
+          className="group/tr flex items-center gap-0.5 rounded-lg"
+          style={{
+            background: selected ? "rgba(79,195,247,0.13)" : "transparent",
+            border: selected
+              ? "1px solid rgba(79,195,247,0.28)"
+              : "1px solid transparent",
+          }}
+        >
+          {hasBranch ? (
+            <button
+              type="button"
+              title={open ? "Thu gọn" : "Mở rộng"}
+              aria-expanded={open}
+              aria-label={open ? `Thu gọn ${label}` : `Mở rộng ${label}`}
+              onClick={handleToggle}
+              className="flex size-6 shrink-0 items-center justify-center rounded"
+              style={{ color: W.faint }}
+            >
+              <ChevronRight
+                className={cn(
+                  "size-3.5 transition-transform duration-200",
+                  open && "rotate-90",
+                )}
+              />
+            </button>
+          ) : (
+            <span className="size-6 shrink-0" aria-hidden />
+          )}
+
+          <span
+            className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
+            style={{
+              background: iconBg,
+              borderColor: selected ? "rgba(79,195,247,0.35)" : W.border,
+              color: iconColor,
+            }}
+            aria-hidden
+          >
+            <NodeIcon className="size-3.5" strokeWidth={2.25} />
+          </span>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (hasBranch) setOpen(true);
+              onSelect();
+            }}
+            className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
+          >
+            <span
+              className={cn(
+                "truncate text-[12.5px] leading-snug",
+                selected ? "text-[#0d6e9c] dark:text-[#7dd3fc]" : "",
+              )}
+              style={{
+                color: selected ? undefined : W.text,
+                fontWeight: selected ? 600 : 500,
+              }}
+            >
+              {label}
+            </span>
+            {meta && (
+              <span className="mt-0.5 truncate text-[10px]" style={{ color: W.faint }}>
+                {meta}
+              </span>
+            )}
+          </button>
+
+          <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100 group-focus-within/tr:opacity-100">
+            {showReorder ? (
+              <>
+                <button
+                  type="button"
+                  title="Đưa lên"
+                  aria-label={`Đưa lên ${label}`}
+                  disabled={moveBusy || !canMoveUp}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveUp?.();
+                  }}
+                  className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+                >
+                  <ChevronUp className="size-3.5" strokeWidth={2.25} />
+                </button>
+                <button
+                  type="button"
+                  title="Đưa xuống"
+                  aria-label={`Đưa xuống ${label}`}
+                  disabled={moveBusy || !canMoveDown}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onMoveDown?.();
+                  }}
+                  className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
+                >
+                  <ChevronDown className="size-3.5" strokeWidth={2.25} />
+                </button>
+              </>
+            ) : null}
+            {effectiveOnDelete && (
+              <button
+                type="button"
+                title="Xóa"
+                onClick={effectiveOnDelete}
+                className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash className="size-3" />
+              </button>
+            )}
+          </div>
+        </div>
+        {hasBranch && open ? (
+          <ul className="relative mt-0.5" role="list">
+            {children}
+          </ul>
+        ) : null}
       </div>
-    </>
+    </motion.li>
   );
-
-  if (effectiveReorderable && reorderValue) {
-    return (
-      <Reorder.Item
-        as="li"
-        value={reorderValue}
-        dragListener={false}
-        dragControls={dragControls}
-        layout="position"
-        transition={STRUCTURE_DRAG_TRANSITION}
-        onDragEnd={onReorderDragEnd}
-        whileDrag={{
-          zIndex: 30,
-          scale: 1.01,
-          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.18)",
-          borderRadius: 10,
-          backgroundColor: "var(--card)",
-        }}
-        className="relative list-none"
-        style={{ position: "relative" }}
-      >
-        {body}
-      </Reorder.Item>
-    );
-  }
-
-  return <li className="relative">{body}</li>;
 }
 
 function ParentPathBreadcrumb({
@@ -1389,12 +1374,61 @@ function movedItemNewOrder(currentIds: string[], orderedIds: string[]): number |
   return orderedIds.indexOf(movedId) + 1;
 }
 
+/** Swap one sibling with its neighbor; returns null when the move is out of range. */
+function swapAdjacentIds(
+  ids: string[],
+  index: number,
+  direction: "up" | "down",
+): string[] | null {
+  const target = direction === "up" ? index - 1 : index + 1;
+  if (index < 0 || target < 0 || target >= ids.length) return null;
+  const next = [...ids];
+  const a = next[index];
+  const b = next[target];
+  if (a == null || b == null) return null;
+  next[index] = b;
+  next[target] = a;
+  return next;
+}
+
+/**
+ * Local sibling order for arrow moves — updates immediately so layout spring
+ * can run, then clears when parent `ids` catch up after refresh.
+ */
+function useOptimisticOrder(ids: string[]) {
+  const idsKey = ids.join("|");
+  const [override, setOverride] = useState<string[] | null>(null);
+
+  useEffect(() => {
+    setOverride(null);
+  }, [idsKey]);
+
+  const values = override ?? ids;
+
+  const applySwap = useCallback(
+    (index: number, direction: "up" | "down") => {
+      const next = swapAdjacentIds(values, index, direction);
+      if (!next) return null;
+      setOverride(next);
+      return next;
+    },
+    [values],
+  );
+
+  const revert = useCallback(() => {
+    setOverride(null);
+  }, []);
+
+  return { values, applySwap, revert };
+}
+
 function CourseActivityRows({
   course,
   sel,
   select,
   setDelTarget,
   onReorder,
+  moveBusy,
 }: {
   course: Course;
   sel: SelectedNode;
@@ -1407,29 +1441,24 @@ function CourseActivityRows({
       moduleId?: string;
     } | null>
   >;
-  onReorder: (courseId: string, orderedIds: string[]) => void | Promise<void>;
+  onReorder: (courseId: string, orderedIds: string[]) => Promise<void>;
+  moveBusy?: boolean;
 }) {
   const acts = useMemo(
     () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
     [course.activities],
   );
   const actIds = useMemo(() => acts.map((activity) => activity.id), [acts]);
-  const reorder = useDragReorderList(actIds);
+  const order = useOptimisticOrder(actIds);
 
-  const orderedActs = reorder.values
+  const orderedActs = order.values
     .map((id) => acts.find((activity) => activity.id === id))
     .filter((activity): activity is ActivityType => activity != null);
 
   if (orderedActs.length === 0) return null;
 
   return (
-    <Reorder.Group
-      as="div"
-      axis="y"
-      values={reorder.values}
-      onReorder={reorder.onReorder}
-      className="relative"
-    >
+    <LayoutGroup id={`acts-${course.id}`}>
       {orderedActs.map((act, aIdx) => {
         const typeLabel = ACTIVITY_PREFIX[act.activityType] ?? act.activityType;
         const activityMeta = act.material ? `${typeLabel} · Có tài liệu` : typeLabel;
@@ -1443,11 +1472,19 @@ function CourseActivityRows({
               !(sel?.kind === "activity-new" && sel.courseId === course.id)
             }
             kind="activity"
-            reorderable
-            reorderValue={act.id}
-            onReorderDragEnd={() =>
-              reorder.commitDrag((ids) => onReorder(course.id, ids))
-            }
+            canMoveUp={aIdx > 0}
+            canMoveDown={aIdx < orderedActs.length - 1}
+            moveBusy={moveBusy}
+            onMoveUp={() => {
+              const next = order.applySwap(aIdx, "up");
+              if (!next) return;
+              void onReorder(course.id, next).catch(() => order.revert());
+            }}
+            onMoveDown={() => {
+              const next = order.applySwap(aIdx, "down");
+              if (!next) return;
+              void onReorder(course.id, next).catch(() => order.revert());
+            }}
             selected={sel?.kind === "activity" && sel.id === act.id}
             label={act.name}
             meta={activityMeta}
@@ -1456,7 +1493,7 @@ function CourseActivityRows({
           />
         );
       })}
-    </Reorder.Group>
+    </LayoutGroup>
   );
 }
 
@@ -1720,16 +1757,61 @@ export function CurriculumSplitPanel({
     });
   }, []);
 
-  const moduleIds = useMemo(() => modules.map((mod) => mod.id), [modules]);
-  const moduleReorder = useDragReorderList(moduleIds);
+  const [reorderBusy, setReorderBusy] = useState(false);
 
+  const moduleIds = useMemo(() => modules.map((mod) => mod.id), [modules]);
+  const moduleOrder = useOptimisticOrder(moduleIds);
   const orderedModules = useMemo(
     () =>
-      moduleReorder.values
+      moduleOrder.values
         .map((id) => modules.find((mod) => mod.id === id))
         .filter((mod): mod is Module => mod != null),
-    [moduleReorder.values, modules],
+    [moduleOrder.values, modules],
   );
+
+  /** Per-module optimistic course id order (arrow moves). */
+  const [courseOrderByModule, setCourseOrderByModule] = useState<
+    Record<string, string[]>
+  >({});
+
+  const coursesSignature = modules
+    .map((mod) => {
+      const ids = [...(mod.courses || [])]
+        .sort((a, b) => (a.courseOrder ?? 0) - (b.courseOrder ?? 0))
+        .map((course) => course.id)
+        .join(",");
+      return `${mod.id}:${ids}`;
+    })
+    .join("|");
+
+  useEffect(() => {
+    setCourseOrderByModule((prev) => {
+      if (Object.keys(prev).length === 0) return prev;
+      const next = { ...prev };
+      let changed = false;
+      for (const mod of modules) {
+        const serverIds = [...(mod.courses || [])]
+          .sort((a, b) => (a.courseOrder ?? 0) - (b.courseOrder ?? 0))
+          .map((course) => course.id);
+        const override = next[mod.id];
+        if (!override) continue;
+        if (override.join("|") === serverIds.join("|")) {
+          delete next[mod.id];
+          changed = true;
+          continue;
+        }
+        const serverSet = new Set(serverIds);
+        if (
+          override.length !== serverIds.length ||
+          override.some((id) => !serverSet.has(id))
+        ) {
+          delete next[mod.id];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [coursesSignature, modules]);
 
   const handleModuleReorder = useCallback(
     async (orderedIds: string[]) => {
@@ -1741,12 +1823,45 @@ export function CurriculumSplitPanel({
       const mod = modules.find((item) => item.id === movedId);
       if (!movedId || !mod || mod.moduleOrder === newOrder) return;
 
+      setReorderBusy(true);
       try {
         await updateModule(movedId, { moduleOrder: newOrder });
         onRefresh();
       } catch (err) {
         showAppErrorFromUnknown(err, "curriculum.module.save");
         throw err;
+      } finally {
+        setReorderBusy(false);
+      }
+    },
+    [modules, onRefresh],
+  );
+
+  const handleCourseReorder = useCallback(
+    async (moduleId: string, orderedIds: string[]) => {
+      const mod = modules.find((item) => item.id === moduleId);
+      if (!mod) return;
+
+      const courses = [...(mod.courses || [])].sort(
+        (a, b) => (a.courseOrder ?? 0) - (b.courseOrder ?? 0),
+      );
+      const currentIds = courses.map((course) => course.id);
+      const newOrder = movedItemNewOrder(currentIds, orderedIds);
+      if (newOrder == null) return;
+
+      const movedId = orderedIds.find((id, index) => currentIds[index] !== id);
+      const course = courses.find((item) => item.id === movedId);
+      if (!movedId || !course || (course.courseOrder ?? 0) === newOrder) return;
+
+      setReorderBusy(true);
+      try {
+        await updateCourse(movedId, { courseOrder: newOrder });
+        onRefresh();
+      } catch (err) {
+        showAppErrorFromUnknown(err, "curriculum.course.save");
+        throw err;
+      } finally {
+        setReorderBusy(false);
       }
     },
     [modules, onRefresh],
@@ -1770,12 +1885,15 @@ export function CurriculumSplitPanel({
       const act = acts.find((item) => item.id === movedId);
       if (!movedId || !act || act.activityOrder === newOrder) return;
 
+      setReorderBusy(true);
       try {
         await updateActivity(movedId, { activityOrder: newOrder });
         onRefresh();
       } catch (err) {
         showAppErrorFromUnknown(err, "curriculum.activity.save");
         throw err;
+      } finally {
+        setReorderBusy(false);
       }
     },
     [modules, onRefresh],
@@ -2138,175 +2256,208 @@ export function CurriculumSplitPanel({
         label={program.name}
         meta={program.code}
         onSelect={() => select({ kind: "program" })}
-        onAdd={() => select({ kind: "module-new" })}
-        addLabel="Thêm Module"
       >
-        <Reorder.Group
-          as="div"
-          axis="y"
-          values={moduleReorder.values}
-          onReorder={moduleReorder.onReorder}
-          className="relative"
-        >
+        <LayoutGroup id="curriculum-modules">
           {orderedModules.map((mod, mIdx) => {
-          const courses = [...(mod.courses || [])];
-          const isLastMod = mIdx === orderedModules.length - 1 && sel?.kind !== "module-new";
-          const moduleForceOpen =
-            (sel?.kind === "module" && sel.id === mod.id) ||
-            (sel?.kind === "course" && sel.moduleId === mod.id) ||
-            (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
-            (sel?.kind === "assignment" && sel.moduleId === mod.id) ||
-            (sel?.kind === "assignment-new" && sel.moduleId === mod.id) ||
-            (sel?.kind === "milestone" && sel.moduleId === mod.id) ||
-            (sel?.kind === "milestone-new" && sel.moduleId === mod.id) ||
-            (sel?.kind === "activity" &&
-              courses.some((c) => c.id === sel.courseId)) ||
-            (sel?.kind === "activity-new" &&
-              courses.some((c) => c.id === sel.courseId));
-          return (
-            <StructureTreeRow
-              key={mod.id}
-              depth={1}
-              isLast={isLastMod}
-              kind="module"
-              forceOpen={moduleForceOpen}
-              reorderable
-              reorderValue={mod.id}
-              onReorderDragEnd={() =>
-                moduleReorder.commitDrag(handleModuleReorder)
-              }
-              selected={sel?.kind === "module" && sel.id === mod.id}
-              label={mod.name}
-              meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
-              onSelect={() => select({ kind: "module", id: mod.id })}
-              onDelete={() => setDelTarget({ type: "module", id: mod.id, name: mod.name })}
-              onAdd={() => select({ kind: "course-new", moduleId: mod.id })}
-              addLabel="Thêm khóa học"
-            >
-              {(() => {
-                const allAsg = sessionAssignments[mod.id] ?? [];
-                const courseIdSet = new Set(courses.map((c) => c.id));
-                const moduleAsgs = allAsg.filter(
-                  (a) => !a.courseId || !courseIdSet.has(a.courseId),
-                );
-                const asgsForCourse = (courseId: string) =>
-                  allAsg.filter((a) => a.courseId === courseId);
-                const showCourseNew =
-                  (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
-                  courses.length === 0;
-                const showMilestones = mod.moduleType === "Research";
-                const milestoneList = milestonesByModule[mod.id] ?? [];
+            const sortedCourses = [...(mod.courses || [])].sort(
+              (a, b) => (a.courseOrder ?? 0) - (b.courseOrder ?? 0),
+            );
+            const courseIds =
+              courseOrderByModule[mod.id] ??
+              sortedCourses.map((course) => course.id);
+            const courses = courseIds
+              .map((id) => sortedCourses.find((course) => course.id === id))
+              .filter((course): course is Course => course != null);
+            const showProgramAdd =
+              canMutate &&
+              (sel?.kind === "program" ||
+                sel?.kind === "module-new" ||
+                modules.length === 0);
+            const isLastMod =
+              mIdx === orderedModules.length - 1 && !showProgramAdd;
+            const moduleForceOpen =
+              (sel?.kind === "module" && sel.id === mod.id) ||
+              (sel?.kind === "course" && sel.moduleId === mod.id) ||
+              (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
+              (sel?.kind === "assignment" && sel.moduleId === mod.id) ||
+              (sel?.kind === "assignment-new" && sel.moduleId === mod.id) ||
+              (sel?.kind === "milestone" && sel.moduleId === mod.id) ||
+              (sel?.kind === "milestone-new" && sel.moduleId === mod.id) ||
+              (sel?.kind === "activity" &&
+                courses.some((c) => c.id === sel.courseId)) ||
+              (sel?.kind === "activity-new" &&
+                courses.some((c) => c.id === sel.courseId));
 
-                const assignmentRow = (
-                  asg: (typeof allAsg)[number],
-                  depth: number,
-                  isLast: boolean,
-                ) => (
-                  <StructureTreeRow
-                    key={asg.id}
-                    depth={depth}
-                    isLast={isLast}
-                    kind="assignment"
-                    selected={sel?.kind === "assignment" && sel.id === asg.id}
-                    label={asg.title ?? "Không tiêu đề"}
-                    meta={
-                      ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ??
-                      asg.assignmentType
-                    }
-                    onSelect={() =>
-                      select({
-                        kind: "assignment",
-                        id: asg.id,
-                        moduleId: mod.id,
-                      })
-                    }
-                    onDelete={() =>
-                      setDelTarget({
-                        type: "assignment",
-                        id: asg.id,
-                        name: asg.title ?? "Bài tập",
-                        moduleId: mod.id,
-                      })
-                    }
-                  />
-                );
+            const allAsg = sessionAssignments[mod.id] ?? [];
+            const courseIdSet = new Set(courses.map((c) => c.id));
+            const moduleAsgs = allAsg.filter(
+              (a) => !a.courseId || !courseIdSet.has(a.courseId),
+            );
+            const asgsForCourse = (courseId: string) =>
+              allAsg.filter((a) => a.courseId === courseId);
+            const showMilestones = mod.moduleType === "Research";
+            const milestoneList = milestonesByModule[mod.id] ?? [];
+            const moduleEmpty =
+              courses.length === 0 &&
+              moduleAsgs.length === 0 &&
+              (!showMilestones || milestoneList.length === 0);
+            const showModuleAdds =
+              (sel?.kind === "module" && sel.id === mod.id) ||
+              (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
+              (sel?.kind === "assignment-new" && sel.moduleId === mod.id) ||
+              (sel?.kind === "milestone-new" && sel.moduleId === mod.id) ||
+              moduleEmpty;
 
-                return (
-                  <>
-                    {courses.map((course, cIdx) => {
-                      const courseAsgs = asgsForCourse(course.id);
-                      const isLastCourse =
-                        cIdx === courses.length - 1 &&
-                        !showCourseNew &&
-                        moduleAsgs.length === 0 &&
-                        !(
-                          sel?.kind === "assignment-new" &&
-                          sel.moduleId === mod.id
-                        ) &&
-                        !showMilestones;
-                      const courseForceOpen =
-                        (sel?.kind === "course" && sel.id === course.id) ||
-                        (sel?.kind === "activity" &&
-                          sel.courseId === course.id) ||
-                        (sel?.kind === "activity-new" &&
-                          sel.courseId === course.id) ||
-                        (sel?.kind === "assignment" &&
-                          courseAsgs.some((a) => a.id === sel.id));
-                      return (
-                        <StructureTreeRow
-                          key={course.id}
-                          depth={2}
-                          isLast={isLastCourse}
-                          kind="course"
-                          forceOpen={courseForceOpen}
-                          selected={
-                            sel?.kind === "course" && sel.id === course.id
-                          }
-                          label={course.name}
-                          meta={course.code ?? undefined}
-                          onSelect={() =>
-                            select({
-                              kind: "course",
-                              id: course.id,
-                              moduleId: mod.id,
-                            })
-                          }
-                          onDelete={() =>
-                            setDelTarget({
-                              type: "course",
-                              id: course.id,
-                              name: course.name,
-                            })
-                          }
-                          onAdd={() =>
-                            select({
-                              kind: "activity-new",
-                              courseId: course.id,
-                            })
-                          }
-                          addLabel="Thêm hoạt động"
-                        >
-                          <CourseActivityRows
-                            course={course}
-                            sel={sel}
-                            select={select}
-                            setDelTarget={setDelTarget}
-                            onReorder={handleActivityReorder}
-                          />
-                          {courseAsgs.map((asg) => assignmentRow(asg, 3, false))}
-                          <li className="relative">
-                            <span
-                              className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                              style={{ background: W.border }}
-                              aria-hidden
-                            />
-                            <span
-                              className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                              style={{ background: W.border }}
-                              aria-hidden
-                            />
+            const assignmentRow = (
+              asg: (typeof allAsg)[number],
+              depth: number,
+              isLast: boolean,
+            ) => (
+              <StructureTreeRow
+                key={asg.id}
+                depth={depth}
+                isLast={isLast}
+                kind="assignment"
+                selected={sel?.kind === "assignment" && sel.id === asg.id}
+                label={asg.title ?? "Không tiêu đề"}
+                meta={
+                  ASSIGNMENT_TYPE_LABELS[asg.assignmentType] ??
+                  asg.assignmentType
+                }
+                onSelect={() =>
+                  select({
+                    kind: "assignment",
+                    id: asg.id,
+                    moduleId: mod.id,
+                  })
+                }
+                onDelete={() =>
+                  setDelTarget({
+                    type: "assignment",
+                    id: asg.id,
+                    name: asg.title ?? "Bài tập",
+                    moduleId: mod.id,
+                  })
+                }
+              />
+            );
+
+            const moveCourse = (cIdx: number, direction: "up" | "down") => {
+              const next = swapAdjacentIds(
+                courses.map((item) => item.id),
+                cIdx,
+                direction,
+              );
+              if (!next) return;
+              setCourseOrderByModule((prev) => ({ ...prev, [mod.id]: next }));
+              void handleCourseReorder(mod.id, next).catch(() => {
+                setCourseOrderByModule((prev) => {
+                  const copy = { ...prev };
+                  delete copy[mod.id];
+                  return copy;
+                });
+              });
+            };
+
+            return (
+              <StructureTreeRow
+                key={mod.id}
+                depth={1}
+                isLast={isLastMod}
+                kind="module"
+                forceOpen={moduleForceOpen}
+                canMoveUp={mIdx > 0}
+                canMoveDown={mIdx < orderedModules.length - 1}
+                moveBusy={reorderBusy}
+                onMoveUp={() => {
+                  const next = moduleOrder.applySwap(mIdx, "up");
+                  if (!next) return;
+                  void handleModuleReorder(next).catch(() =>
+                    moduleOrder.revert(),
+                  );
+                }}
+                onMoveDown={() => {
+                  const next = moduleOrder.applySwap(mIdx, "down");
+                  if (!next) return;
+                  void handleModuleReorder(next).catch(() =>
+                    moduleOrder.revert(),
+                  );
+                }}
+                selected={sel?.kind === "module" && sel.id === mod.id}
+                label={mod.name}
+                meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
+                onSelect={() => select({ kind: "module", id: mod.id })}
+                onDelete={() =>
+                  setDelTarget({ type: "module", id: mod.id, name: mod.name })
+                }
+              >
+                <LayoutGroup id={`courses-${mod.id}`}>
+                  {courses.map((course, cIdx) => {
+                    const courseAsgs = asgsForCourse(course.id);
+                    const courseForceOpen =
+                      (sel?.kind === "course" && sel.id === course.id) ||
+                      (sel?.kind === "activity" &&
+                        sel.courseId === course.id) ||
+                      (sel?.kind === "activity-new" &&
+                        sel.courseId === course.id) ||
+                      (sel?.kind === "assignment" &&
+                        courseAsgs.some((a) => a.id === sel.id));
+                    const showCourseAdds =
+                      courseForceOpen ||
+                      (course.activities?.length ?? 0) === 0;
+                    const hasModuleTail =
+                      moduleAsgs.length > 0 ||
+                      (showMilestones && milestoneList.length > 0) ||
+                      (canMutate && showModuleAdds);
+                    const isLastCourse =
+                      cIdx === courses.length - 1 && !hasModuleTail;
+
+                    return (
+                      <StructureTreeRow
+                        key={course.id}
+                        depth={2}
+                        isLast={isLastCourse}
+                        kind="course"
+                        forceOpen={courseForceOpen}
+                        canMoveUp={cIdx > 0}
+                        canMoveDown={cIdx < courses.length - 1}
+                        moveBusy={reorderBusy}
+                        onMoveUp={() => moveCourse(cIdx, "up")}
+                        onMoveDown={() => moveCourse(cIdx, "down")}
+                        selected={
+                          sel?.kind === "course" && sel.id === course.id
+                        }
+                        label={course.name}
+                        meta={course.code ?? undefined}
+                        onSelect={() =>
+                          select({
+                            kind: "course",
+                            id: course.id,
+                            moduleId: mod.id,
+                          })
+                        }
+                        onDelete={() =>
+                          setDelTarget({
+                            type: "course",
+                            id: course.id,
+                            name: course.name,
+                          })
+                        }
+                      >
+                        <CourseActivityRows
+                          course={course}
+                          sel={sel}
+                          select={select}
+                          setDelTarget={setDelTarget}
+                          onReorder={handleActivityReorder}
+                          moveBusy={reorderBusy}
+                        />
+                        {courseAsgs.map((asg) =>
+                          assignmentRow(asg, 3, false),
+                        )}
+                        {canMutate && showCourseAdds ? (
+                          <StructureAddTray>
                             <StructureAddLeafButton
-                              className="ml-4"
                               label="Thêm hoạt động"
                               icon={ActivityIcon}
                               selected={
@@ -2320,165 +2471,115 @@ export function CurriculumSplitPanel({
                                 })
                               }
                             />
-                          </li>
-                        </StructureTreeRow>
-                      );
-                    })}
+                          </StructureAddTray>
+                        ) : null}
+                      </StructureTreeRow>
+                    );
+                  })}
+                </LayoutGroup>
 
-                    {showCourseNew ? (
-                      <li className="relative">
-                        <span
-                          className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                          style={{ background: W.border }}
-                          aria-hidden
-                        />
-                        <span
-                          className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                          style={{ background: W.border }}
-                          aria-hidden
-                        />
-                        <StructureAddLeafButton
-                          className="ml-4"
-                          label="+ Thêm khóa học"
-                          selected={
-                            sel?.kind === "course-new" &&
-                            sel.moduleId === mod.id
-                          }
-                          onClick={() =>
-                            select({ kind: "course-new", moduleId: mod.id })
-                          }
-                        />
-                      </li>
-                    ) : null}
+                {moduleAsgs.map((asg) => assignmentRow(asg, 2, false))}
 
-                    {/* Module-level assignments after courses/activities */}
-                    {moduleAsgs.map((asg) => assignmentRow(asg, 2, false))}
-                    <li className="relative">
-                      <span
-                        className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                        style={{ background: W.border }}
-                        aria-hidden
-                      />
-                      <span
-                        className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                        style={{ background: W.border }}
-                        aria-hidden
-                      />
-                      <StructureAddLeafButton
-                        className="ml-4"
-                        label="Thêm bài tập"
-                        icon={ClipboardList}
+                {showMilestones
+                  ? milestoneList.map((ms, msIdx) => (
+                      <StructureTreeRow
+                        key={ms.id}
+                        depth={2}
+                        isLast={
+                          msIdx === milestoneList.length - 1 &&
+                          !(canMutate && showModuleAdds)
+                        }
+                        kind="milestone"
                         selected={
-                          sel?.kind === "assignment-new" &&
+                          sel?.kind === "milestone" && sel.id === ms.id
+                        }
+                        label={ms.title || ms.code || "Milestone"}
+                        meta={
+                          ms.isCapstone
+                            ? "Capstone"
+                            : `Mốc ${ms.milestoneOrder}`
+                        }
+                        onSelect={() =>
+                          select({
+                            kind: "milestone",
+                            id: ms.id,
+                            moduleId: mod.id,
+                          })
+                        }
+                        onDelete={() =>
+                          setDelTarget({
+                            type: "milestone",
+                            id: ms.id,
+                            name: ms.title || "Milestone",
+                            moduleId: mod.id,
+                          })
+                        }
+                      />
+                    ))
+                  : null}
+
+                {canMutate && showModuleAdds ? (
+                  <StructureAddTray>
+                    <StructureAddLeafButton
+                      label="Thêm khóa học"
+                      icon={BookOpen}
+                      selected={
+                        sel?.kind === "course-new" && sel.moduleId === mod.id
+                      }
+                      onClick={() =>
+                        select({ kind: "course-new", moduleId: mod.id })
+                      }
+                    />
+                    <StructureAddLeafButton
+                      label="Thêm bài tập"
+                      icon={ClipboardList}
+                      selected={
+                        sel?.kind === "assignment-new" &&
+                        sel.moduleId === mod.id
+                      }
+                      onClick={() =>
+                        select({
+                          kind: "assignment-new",
+                          moduleId: mod.id,
+                        })
+                      }
+                    />
+                    {showMilestones ? (
+                      <StructureAddLeafButton
+                        label="Thêm milestone"
+                        icon={Flag}
+                        selected={
+                          sel?.kind === "milestone-new" &&
                           sel.moduleId === mod.id
                         }
                         onClick={() =>
-                          select({ kind: "assignment-new", moduleId: mod.id })
+                          select({
+                            kind: "milestone-new",
+                            moduleId: mod.id,
+                          })
                         }
                       />
-                    </li>
-
-                    {showMilestones ? (
-                      <>
-                        {milestoneList.map((ms, msIdx) => (
-                          <StructureTreeRow
-                            key={ms.id}
-                            depth={2}
-                            isLast={
-                              msIdx === milestoneList.length - 1 &&
-                              !(
-                                sel?.kind === "milestone-new" &&
-                                sel.moduleId === mod.id
-                              )
-                            }
-                            kind="milestone"
-                            selected={
-                              sel?.kind === "milestone" && sel.id === ms.id
-                            }
-                            label={ms.title || ms.code || "Milestone"}
-                            meta={
-                              ms.isCapstone
-                                ? "Capstone"
-                                : `Mốc ${ms.milestoneOrder}`
-                            }
-                            onSelect={() =>
-                              select({
-                                kind: "milestone",
-                                id: ms.id,
-                                moduleId: mod.id,
-                              })
-                            }
-                            onDelete={() =>
-                              setDelTarget({
-                                type: "milestone",
-                                id: ms.id,
-                                name: ms.title || "Milestone",
-                                moduleId: mod.id,
-                              })
-                            }
-                          />
-                        ))}
-                        <li className="relative">
-                          <span
-                            className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                            style={{ background: W.border }}
-                            aria-hidden
-                          />
-                          <span
-                            className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                            style={{ background: W.border }}
-                            aria-hidden
-                          />
-                          <StructureAddLeafButton
-                            className="ml-4"
-                            label="Thêm milestone"
-                            icon={Flag}
-                            selected={
-                              sel?.kind === "milestone-new" &&
-                              sel.moduleId === mod.id
-                            }
-                            onClick={() =>
-                              select({
-                                kind: "milestone-new",
-                                moduleId: mod.id,
-                              })
-                            }
-                          />
-                        </li>
-                      </>
                     ) : null}
-                  </>
-                );
-              })()}
-            </StructureTreeRow>
-          );
-        })}
-        </Reorder.Group>
-        <li className="relative">
-          {modules.length > 0 && (
-            <>
-              <span
-                className="pointer-events-none absolute top-0 left-0 h-4 w-px"
-                style={{ background: W.border }}
-                aria-hidden
-              />
-              <span
-                className="pointer-events-none absolute top-4 left-0 h-px w-3"
-                style={{ background: W.border }}
-                aria-hidden
-              />
-            </>
-          )}
-          {canMutate ? (
+                  </StructureAddTray>
+                ) : null}
+              </StructureTreeRow>
+            );
+          })}
+        </LayoutGroup>
+
+        {canMutate &&
+        (sel?.kind === "program" ||
+          sel?.kind === "module-new" ||
+          modules.length === 0) ? (
+          <StructureAddTray>
             <StructureAddLeafButton
-              className={cn(modules.length > 0 && "ml-4")}
               label="Thêm module"
               icon={FolderPlus}
               selected={sel?.kind === "module-new"}
               onClick={() => select({ kind: "module-new" })}
             />
-          ) : null}
-        </li>
+          </StructureAddTray>
+        ) : null}
       </StructureTreeRow>
     </ul>
   );
@@ -2543,12 +2644,12 @@ export function CurriculumSplitPanel({
       ) : null}
 
     <div
-      className="grid min-h-[520px] grid-cols-[300px_minmax(0,1fr)] overflow-hidden rounded-xl border"
+      className="relative grid min-h-[520px] grid-cols-[300px_minmax(0,1fr)] overflow-hidden rounded-xl border"
       style={{ background: W.bg, borderColor: W.border }}
     >
-      {/* ── Structure tree — height matches detail column ─────────── */}
+      {/* Left rail: absolute so height follows the detail column; scrolls inside */}
       <div
-        className="flex min-h-0 flex-col overflow-hidden border-r"
+        className="absolute inset-y-0 left-0 z-10 flex w-[300px] flex-col overflow-hidden border-r"
         style={{ borderColor: W.border, background: W.surface }}
       >
         <div
@@ -2564,7 +2665,7 @@ export function CurriculumSplitPanel({
             </span>
             <p className="mt-0.5 text-[11px] leading-snug" style={{ color: W.muted }}>
               {canMutate
-                ? "Kéo để đổi thứ tự module và hoạt động"
+                ? "Chọn mục để thêm · mũi tên để đổi thứ tự"
                 : "Chỉ xem — đang khóa chỉnh sửa"}
             </p>
           </div>
@@ -2575,8 +2676,8 @@ export function CurriculumSplitPanel({
         </div>
       </div>
 
-      {/* ── Detail (defines panel height; page scrolls with form) ─── */}
-      <div className="flex min-w-0 flex-col" style={{ background: W.bg }}>
+      {/* Detail column defines overall panel height */}
+      <div className="col-start-2 flex min-w-0 flex-col" style={{ background: W.bg }}>
         <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
           <ParentPathBreadcrumb parts={pathParts} />
         </div>
