@@ -219,6 +219,51 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Nhận xét chưa hợp lệ hoặc chương trình không còn chờ duyệt.",
     action: "Nhập nhận xét cụ thể rồi gửi lại.",
   },
+  "expert.advisory.mine": {
+    title: "Không tải được danh sách chương trình phụ trách",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "expert.advisory.workspace": {
+    title: "Không tải được không gian thẩm định",
+    reason: "Chương trình có thể đã thay đổi quyền truy cập hoặc không còn tồn tại.",
+    action: "Quay lại danh sách và mở lại chương trình.",
+  },
+  "expert.advisory.threads": {
+    title: "Không tải được luồng trao đổi",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Thử tải lại trang sau vài giây.",
+  },
+  "expert.advisory.draft": {
+    title: "Không lưu được nháp thẩm định",
+    reason: "Phiên bản nháp đã thay đổi ở nơi khác hoặc dữ liệu không hợp lệ.",
+    action: "Tải lại trang và thử lưu lại.",
+  },
+  "expert.advisory.decide": {
+    title: "Không gửi được quyết định thẩm định",
+    reason: "Lần nộp đã thay đổi hoặc điểm rubric chưa hợp lệ.",
+    action: "Tải lại trang, kiểm tra điểm và thử lại.",
+  },
+  "programs.advisor": {
+    title: "Không gán được chuyên gia phụ trách",
+    reason: "Chuyên gia không thuộc hội đồng hoặc trạng thái chương trình không cho phép.",
+    action: "Gán chuyên gia vào hội đồng trước, hoặc rút duyệt nếu đang chờ thẩm định.",
+  },
+  "programs.advisory": {
+    title: "Không thực hiện được thao tác advisory",
+    reason: "Luồng trao đổi có thể đã đóng hoặc bạn không có quyền.",
+    action: "Tải lại trang và thử lại.",
+  },
+  "programs.framework-check": {
+    title: "Không tải được kiểm tra khung",
+    reason: "Chương trình chưa gán khung hoặc máy chủ tạm thời không phản hồi.",
+    action: "Kiểm tra khung gán cho chương trình và thử lại.",
+  },
+  "frameworks.versions": {
+    title: "Không thao tác được phiên bản khung",
+    reason: "Phiên bản nháp có thể đã được xuất bản hoặc dữ liệu rubric chưa hợp lệ.",
+    action: "Tải lại trang và thử lại.",
+  },
   "frameworks.list": {
     title: "Không tải được khung chương trình",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",

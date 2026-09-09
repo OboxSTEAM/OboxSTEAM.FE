@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   CalendarDays,
-  ClipboardCheck,
+  GraduationCap,
   UserRound,
 } from "lucide-react";
 
@@ -23,9 +23,9 @@ export const EXPERT_NAV_GROUPS: ExpertNavGroup[] = [
     title: "Công việc",
     items: [
       {
-        label: "Duyệt chương trình",
-        href: "/expert/reviews",
-        icon: ClipboardCheck,
+        label: "Chương trình phụ trách",
+        href: "/expert/programs",
+        icon: GraduationCap,
       },
       {
         label: "Khung chương trình",

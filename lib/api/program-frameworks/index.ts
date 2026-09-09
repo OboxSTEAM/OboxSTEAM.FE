@@ -6,47 +6,74 @@ import {
   createProgramFrameworkSchema,
   frameworkCriterionIdParamSchema,
   frameworkRubricCriterionRequestSchema,
+  frameworkVersionIdParamSchema,
   programFrameworkIdParamSchema,
   programFrameworkListQuerySchema,
+  saveFrameworkRubricSchema,
   updateProgramFrameworkSchema,
   type CreateProgramFrameworkInput,
   type FrameworkRubricCriterionRequestInput,
   type ProgramFrameworkListQuery,
+  type SaveFrameworkRubricInput,
   type UpdateProgramFrameworkInput,
 } from "@/lib/validations/program-frameworks";
 
 import {
+  archiveProgramFrameworkResponseSchema,
   createFrameworkCriterionResponseSchema,
+  createFrameworkDraftVersionResponseSchema,
   createProgramFrameworkResponseSchema,
   deleteFrameworkCriterionResponseSchema,
   deleteProgramFrameworkResponseSchema,
+  getFrameworkVersionResponseSchema,
+  getFrameworkVersionsResponseSchema,
   getProgramFrameworkByIdResponseSchema,
   getProgramFrameworksResponseSchema,
+  publishFrameworkVersionResponseSchema,
+  saveFrameworkRubricResponseSchema,
   updateFrameworkCriterionResponseSchema,
   updateProgramFrameworkResponseSchema,
+  type ArchiveProgramFrameworkResult,
   type CreateFrameworkCriterionResult,
+  type CreateFrameworkDraftVersionResult,
   type CreateProgramFrameworkResult,
   type DeleteFrameworkCriterionResult,
   type DeleteProgramFrameworkResult,
+  type GetFrameworkVersionResult,
+  type GetFrameworkVersionsResult,
   type GetProgramFrameworkByIdResult,
   type GetProgramFrameworksResult,
+  type PublishFrameworkVersionResult,
+  type SaveFrameworkRubricResult,
   type UpdateFrameworkCriterionResult,
   type UpdateProgramFrameworkResult,
 } from "./schemas";
 
 export type {
+  ArchiveProgramFrameworkResponse,
+  ArchiveProgramFrameworkResult,
   CreateFrameworkCriterionResponse,
   CreateFrameworkCriterionResult,
+  CreateFrameworkDraftVersionResponse,
+  CreateFrameworkDraftVersionResult,
   CreateProgramFrameworkResponse,
   CreateProgramFrameworkResult,
   DeleteFrameworkCriterionResponse,
   DeleteFrameworkCriterionResult,
   DeleteProgramFrameworkResponse,
   DeleteProgramFrameworkResult,
+  GetFrameworkVersionResponse,
+  GetFrameworkVersionResult,
+  GetFrameworkVersionsResponse,
+  GetFrameworkVersionsResult,
   GetProgramFrameworkByIdResponse,
   GetProgramFrameworkByIdResult,
   GetProgramFrameworksResponse,
   GetProgramFrameworksResult,
+  PublishFrameworkVersionResponse,
+  PublishFrameworkVersionResult,
+  SaveFrameworkRubricResponse,
+  SaveFrameworkRubricResult,
   UpdateFrameworkCriterionResponse,
   UpdateFrameworkCriterionResult,
   UpdateProgramFrameworkResponse,
@@ -56,12 +83,14 @@ export type {
 export type {
   FrameworkRubricCriterion,
   ProgramFramework,
+  ProgramFrameworkVersion,
 } from "@/lib/api/entities/program-framework";
 
 export type {
   CreateProgramFrameworkInput,
   FrameworkRubricCriterionRequestInput,
   ProgramFrameworkListQuery,
+  SaveFrameworkRubricInput,
   UpdateProgramFrameworkInput,
 } from "@/lib/validations/program-frameworks";
 
@@ -200,6 +229,98 @@ export async function deleteFrameworkCriterion(
     `${BASE}/${params.id}/criteria/${params.criterionId}`,
     deleteFrameworkCriterionResponseSchema,
     { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function archiveProgramFramework(
+  id: string,
+): Promise<ArchiveProgramFrameworkResult> {
+  const { id: frameworkId } = programFrameworkIdParamSchema.parse({ id });
+  const response = await apiFetchParsed(
+    `${BASE}/${frameworkId}/archive`,
+    archiveProgramFrameworkResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getFrameworkVersions(
+  id: string,
+): Promise<GetFrameworkVersionsResult> {
+  const { id: frameworkId } = programFrameworkIdParamSchema.parse({ id });
+  const response = await apiFetchParsed(
+    `${BASE}/${frameworkId}/versions`,
+    getFrameworkVersionsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getFrameworkVersion(
+  frameworkId: string,
+  versionId: string,
+): Promise<GetFrameworkVersionResult> {
+  const params = frameworkVersionIdParamSchema.parse({
+    id: frameworkId,
+    versionId,
+  });
+  const response = await apiFetchParsed(
+    `${BASE}/${params.id}/versions/${params.versionId}`,
+    getFrameworkVersionResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function createFrameworkDraftVersion(
+  id: string,
+): Promise<CreateFrameworkDraftVersionResult> {
+  const { id: frameworkId } = programFrameworkIdParamSchema.parse({ id });
+  const response = await apiFetchParsed(
+    `${BASE}/${frameworkId}/versions/draft`,
+    createFrameworkDraftVersionResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function publishFrameworkVersion(
+  frameworkId: string,
+  versionId: string,
+): Promise<PublishFrameworkVersionResult> {
+  const params = frameworkVersionIdParamSchema.parse({
+    id: frameworkId,
+    versionId,
+  });
+  const response = await apiFetchParsed(
+    `${BASE}/${params.id}/versions/${params.versionId}/publish`,
+    publishFrameworkVersionResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function saveFrameworkDraftRubric(
+  frameworkId: string,
+  versionId: string,
+  input: SaveFrameworkRubricInput,
+): Promise<SaveFrameworkRubricResult> {
+  const params = frameworkVersionIdParamSchema.parse({
+    id: frameworkId,
+    versionId,
+  });
+  const body = saveFrameworkRubricSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${BASE}/${params.id}/versions/${params.versionId}/rubric`,
+    saveFrameworkRubricResponseSchema,
+    { method: "PUT", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

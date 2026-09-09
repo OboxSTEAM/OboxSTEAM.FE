@@ -993,6 +993,7 @@ function ProgramInfoPanel({
           programId={program.id}
           disabled={disabled}
           statusPortalHost={statusHost}
+          frameworkVersionNumber={program.frameworkVersionNumber}
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",

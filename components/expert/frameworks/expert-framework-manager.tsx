@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ArrowRight, BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
 
 import {
   FrameworkFormDialog,
@@ -24,7 +26,6 @@ import {
   createProgramFramework,
   deleteFrameworkCriterion,
   deleteProgramFramework,
-  getProgramFrameworkById,
   getProgramFrameworks,
   updateFrameworkCriterion,
   updateProgramFramework,
@@ -52,7 +53,7 @@ function toCount(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   const parsed = Number(trimmed);
-  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
 }
 
 function toCriterionRequest(
@@ -110,6 +111,7 @@ async function syncFrameworkCriteria(
 }
 
 export function ExpertFrameworkManager() {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("all");
@@ -146,18 +148,6 @@ export function ExpertFrameworkManager() {
     setFormOpen(true);
   }
 
-  function openEdit(framework: ProgramFramework) {
-    void (async () => {
-      try {
-        const result = await getProgramFrameworkById(framework.id);
-        setEditingFramework(result?.data ?? framework);
-        setFormOpen(true);
-      } catch (error) {
-        showAppErrorFromUnknown(error, "frameworks.detail");
-      }
-    })();
-  }
-
   async function handleSubmit(
     values: FrameworkFormValues,
     criteria: CriterionDraft[],
@@ -188,7 +178,7 @@ export function ExpertFrameworkManager() {
           description: `Khung “${values.name}” đã được lưu.`,
         });
       } else {
-        await createProgramFramework({
+        const created = await createProgramFramework({
           name: values.name,
           description: values.description || null,
           category: values.category,
@@ -199,10 +189,17 @@ export function ExpertFrameworkManager() {
             values.requireCapstoneResearchMilestone,
           criteria: criteria.map(toCriterionRequest),
         });
+        const frameworkId = created?.data?.id;
         showAppSuccess({
           title: "Đã tạo khung chương trình",
-          description: `Khung “${values.name}” sẵn sàng để gán cho chương trình.`,
+          description: `Khung “${values.name}” sẵn sàng để biên tập.`,
         });
+        setFormOpen(false);
+        setEditingFramework(null);
+        if (frameworkId) {
+          router.push(`/expert/frameworks/${frameworkId}`);
+          return;
+        }
       }
       setFormOpen(false);
       setEditingFramework(null);
@@ -310,14 +307,23 @@ export function ExpertFrameworkManager() {
       render: (framework) => (
         <div className="flex justify-end gap-1">
           <Button
-            type="button"
+            nativeButton={false}
+            render={<Link href={`/expert/frameworks/${framework.id}`} />}
             variant="ghost"
             size="icon"
-            onClick={() => openEdit(framework)}
-            aria-label={`Sửa khung ${framework.name}`}
+            aria-label={`Biên tập khung ${framework.name}`}
             className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
           >
             <Pencil className="size-4" />
+          </Button>
+          <Button
+            nativeButton={false}
+            render={<Link href={`/expert/frameworks/${framework.id}`} />}
+            variant="outline"
+            className="h-9 gap-1 rounded-lg px-2.5 text-[11px] font-semibold"
+          >
+            Mở
+            <ArrowRight className="size-3" />
           </Button>
           <Button
             type="button"

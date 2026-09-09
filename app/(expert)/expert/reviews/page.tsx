@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
-import { ExpertReviewQueue } from "@/components/expert/reviews/expert-review-queue";
-
-export const metadata: Metadata = {
-  title: "Duyệt chương trình",
-};
-
-export default function ExpertReviewsPage() {
-  return <ExpertReviewQueue />;
+export default function ExpertReviewsRedirectPage() {
+  redirect("/expert/programs");
 }

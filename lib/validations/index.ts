@@ -93,15 +93,34 @@ export {
   type ReviewCriterionScoreRequestInput,
 } from "./curriculum-reviews";
 export {
+  addAdvisoryMessageSchema,
+  advisoryMineQuerySchema,
+  assignProgramAdvisorSchema,
+  createAdvisoryThreadSchema,
+  recordAdvisoryReadSchema,
+  saveProgramReviewDraftSchema,
+  updateAdvisoryThreadStatusSchema,
+  type AddAdvisoryMessageInput,
+  type AdvisoryMineQuery,
+  type AssignProgramAdvisorInput,
+  type CreateAdvisoryThreadInput,
+  type RecordAdvisoryReadInput,
+  type SaveProgramReviewDraftInput,
+  type UpdateAdvisoryThreadStatusInput,
+} from "./program-advisory";
+export {
   createProgramFrameworkSchema,
   frameworkCriterionIdParamSchema,
   frameworkRubricCriterionRequestSchema,
+  frameworkVersionIdParamSchema,
   programFrameworkIdParamSchema,
   programFrameworkListQuerySchema,
+  saveFrameworkRubricSchema,
   updateProgramFrameworkSchema,
   type CreateProgramFrameworkInput,
   type FrameworkRubricCriterionRequestInput,
   type ProgramFrameworkListQuery,
+  type SaveFrameworkRubricInput,
   type UpdateProgramFrameworkInput,
 } from "./program-frameworks";
 export {

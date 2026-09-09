@@ -69,6 +69,13 @@ export const programUpsertSchema = z.object({
   frameworkId: z
     .union([z.string().uuid("ID khung không hợp lệ."), z.literal(""), z.null()])
     .optional(),
+  frameworkVersionId: z
+    .union([
+      z.string().uuid("ID phiên bản khung không hợp lệ."),
+      z.literal(""),
+      z.null(),
+    ])
+    .optional(),
 });
 
 /** Create omits status — BE defaults to Draft. Optional `file` for create-time thumbnail. */

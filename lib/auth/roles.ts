@@ -63,7 +63,7 @@ export function canAccessExpertArea(role: string | null | undefined): boolean {
 export function getRoleHomePath(role: string | null | undefined): string {
   if (canAccessManagerArea(role)) return "/manager";
   if (isMentorRole(role)) return "/mentor/schedule";
-  if (isExpertRole(role)) return "/expert/reviews";
+  if (isExpertRole(role)) return "/expert/programs";
   return "/";
 }
 
@@ -73,7 +73,7 @@ export function getPreferredRoleHomePath(
 ): string {
   if (roles.some((role) => canAccessManagerArea(role))) return "/manager";
   if (roles.some((role) => isMentorRole(role))) return "/mentor/schedule";
-  if (roles.some((role) => isExpertRole(role))) return "/expert/reviews";
+  if (roles.some((role) => isExpertRole(role))) return "/expert/programs";
   return "/";
 }
 

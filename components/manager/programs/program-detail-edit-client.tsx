@@ -7,6 +7,7 @@ import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
+import { ManagerAdvisoryPanel } from "@/components/advisory/manager-advisory-panel";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
@@ -128,6 +129,10 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
   /** Curriculum is frozen while the expert board reviews it. */
   const isReviewLocked = program.status === "PendingReview";
+  const showAdvisoryPanel =
+    program.status === "Draft" ||
+    program.status === "PendingReview" ||
+    program.status === "Approved";
 
   return (
     <div className="flex flex-col gap-0">
@@ -145,27 +150,31 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
             programId={program.id}
             status={program.status}
             hasFramework={program.frameworkId != null}
+            hasAdvisor={program.advisorExpertId != null}
             moduleCount={program.modules.length}
             onChanged={() => router.refresh()}
           />
         </div>
 
         {activeTab === "curriculum" && (
-          <Suspense fallback={<CurriculumPanelFallback />}>
-            <CurriculumSplitPanel
-              program={program}
-              onRefresh={() => {
-                router.refresh();
-              }}
-              cohortLocked={isReviewLocked || cohortLock.locked}
-              lockReason={
-                isReviewLocked
-                  ? "Chương trình đang chờ chuyên gia thẩm định. Rút duyệt để tiếp tục chỉnh sửa."
-                  : cohortLock.reason
-              }
-              blockingClasses={cohortLock.blockingClasses}
-            />
-          </Suspense>
+          <div className="space-y-6">
+            {showAdvisoryPanel ? <ManagerAdvisoryPanel program={program} /> : null}
+            <Suspense fallback={<CurriculumPanelFallback />}>
+              <CurriculumSplitPanel
+                program={program}
+                onRefresh={() => {
+                  router.refresh();
+                }}
+                cohortLocked={isReviewLocked || cohortLock.locked}
+                lockReason={
+                  isReviewLocked
+                    ? "Chương trình đang chờ chuyên gia thẩm định. Rút duyệt để tiếp tục chỉnh sửa."
+                    : cohortLock.reason
+                }
+                blockingClasses={cohortLock.blockingClasses}
+              />
+            </Suspense>
+          </div>
         )}
 
         {activeTab === "experts" && (

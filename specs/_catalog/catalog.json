@@ -1,9 +1,9 @@
 [
   {
     "uri": {
-      "specId": "oboxsteam.openapi.json",
+      "specId": "oboxsteam",
       "type": "specification",
-      "identifier": "oboxsteam.openapi.json"
+      "identifier": "oboxsteam"
     },
     "description": "API for OboxSteam.",
     "operations": [
@@ -578,7 +578,7 @@
       {
         "path": "/api/experts",
         "method": "post",
-        "description": "Creates an expert profile and a dedicated Expert login. Email and password are required; the expert can sign in immediately. Password reset uses the existing forgot-password OTP flow. Requires Admin or Manager role."
+        "description": "Creates an expert profile and a dedicated Expert login. Email is required; a temporary password is auto-generated and emailed to the expert. Creation fails (and rolls back) if the credentials email cannot be sent. Requires Admin or Manager role."
       },
       {
         "path": "/api/experts/{id}",
@@ -857,6 +857,11 @@
       {
         "path": "/api/mentors",
         "method": "get"
+      },
+      {
+        "path": "/api/mentors",
+        "method": "post",
+        "description": "Creates a Mentor login with Email and FullName (optional Phone). A temporary password is auto-generated and emailed. Creation fails and rolls back if the credentials email cannot be sent. Profile details and skills are filled in later by the mentor. Requires Admin or Manager role."
       },
       {
         "path": "/api/mentors/{id}",
@@ -1183,6 +1188,11 @@
         "description": "Moves PendingReview or Approved back to Draft. No curriculum review row is created."
       },
       {
+        "path": "/api/programs/{id}/advisor",
+        "method": "put",
+        "description": "The expert must have an active linked login and is added to the program board. Pending or approved review must be withdrawn before reassignment."
+      },
+      {
         "path": "/api/programs/{id}/publish",
         "method": "post",
         "description": "Moves Approved to Active. Notifies managers. Enrollment and class creation require Active."
@@ -1196,6 +1206,62 @@
         "path": "/api/programs/{id}/request-changes",
         "method": "post",
         "description": "PendingReview → Draft. Same actor as approve-review. Comment is required so the manager knows what to fix."
+      },
+      {
+        "path": "/api/programs/advisory-mine",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/advisory",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/framework-check",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads/{threadId}/messages",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads/{threadId}/messages",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads/{threadId}/status",
+        "method": "patch"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-read",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/review-submissions",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/review-submissions/{submissionId}",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/review-submissions/{submissionId}/changes",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/review-submissions/{submissionId}/draft",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/review-submissions/{submissionId}/draft",
+        "method": "put"
       },
       {
         "path": "/api/programs/{id}/thumbnail",
@@ -1269,12 +1335,37 @@
       {
         "path": "/api/program-frameworks/{id}",
         "method": "put",
-        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+        "description": "Owning expert only. Updates the current draft; published versions are immutable."
       },
       {
         "path": "/api/program-frameworks/{id}",
         "method": "delete",
         "description": "Owning expert only. Unlinks the attached Draft program. Blocked with 409 when the attached program is not Draft."
+      },
+      {
+        "path": "/api/program-frameworks/{id}/archive",
+        "method": "post",
+        "description": "Prevents new assignments while preserving existing pinned programs and history."
+      },
+      {
+        "path": "/api/program-frameworks/{id}/versions",
+        "method": "get"
+      },
+      {
+        "path": "/api/program-frameworks/{id}/versions/{versionId}",
+        "method": "get"
+      },
+      {
+        "path": "/api/program-frameworks/{id}/versions/draft",
+        "method": "post"
+      },
+      {
+        "path": "/api/program-frameworks/{id}/versions/{versionId}/publish",
+        "method": "post"
+      },
+      {
+        "path": "/api/program-frameworks/{id}/versions/{versionId}/rubric",
+        "method": "put"
       },
       {
         "path": "/api/program-frameworks/{id}/criteria",
@@ -1517,6 +1608,9 @@
         "name": "ActivityResumeStateDto"
       },
       {
+        "name": "AddAdvisoryMessageRequest"
+      },
+      {
         "name": "AddHighlightSegmentRequest"
       },
       {
@@ -1524,6 +1618,57 @@
       },
       {
         "name": "AddProgramToExpertDto"
+      },
+      {
+        "name": "AdvisoryFeedbackCountsDto"
+      },
+      {
+        "name": "AdvisoryMessageDto"
+      },
+      {
+        "name": "AdvisoryMessageDtoApiResult"
+      },
+      {
+        "name": "AdvisoryMessageDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "AdvisoryMessageDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "AdvisoryMessageDtoResponseDataContent"
+      },
+      {
+        "name": "AdvisoryMineItemDto"
+      },
+      {
+        "name": "AdvisoryMineItemDtoPagination"
+      },
+      {
+        "name": "AdvisoryMineItemDtoPaginationApiResult"
+      },
+      {
+        "name": "AdvisoryMineItemDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "AdvisoryParticipantDto"
+      },
+      {
+        "name": "AdvisoryThreadDto"
+      },
+      {
+        "name": "AdvisoryThreadDtoApiResult"
+      },
+      {
+        "name": "AdvisoryThreadDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "AdvisoryThreadDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "AdvisoryThreadDtoResponseDataContent"
+      },
+      {
+        "name": "AffectedCurriculumLinkDto"
       },
       {
         "name": "ApiResult"
@@ -1560,6 +1705,9 @@
       },
       {
         "name": "AssessmentRecoveryRequestResponseDtoResponseDataContent"
+      },
+      {
+        "name": "AssignProgramAdvisorRequest"
       },
       {
         "name": "AssignmentListItemDto"
@@ -1955,6 +2103,9 @@
         "name": "CreateActivityProgressRequestDto"
       },
       {
+        "name": "CreateAdvisoryThreadRequest"
+      },
+      {
         "name": "CreateAssessmentRecoveryRequestDto"
       },
       {
@@ -1983,6 +2134,9 @@
       },
       {
         "name": "CreateHighlightStackRequest"
+      },
+      {
+        "name": "CreateMentorRequestDto"
       },
       {
         "name": "CreateMentorSkillRequestDto"
@@ -2220,6 +2374,18 @@
       },
       {
         "name": "ForgotPasswordRequestDto"
+      },
+      {
+        "name": "FrameworkCheckDto"
+      },
+      {
+        "name": "FrameworkCheckDtoApiResult"
+      },
+      {
+        "name": "FrameworkCheckDtoResponseDataContent"
+      },
+      {
+        "name": "FrameworkCheckItemDto"
       },
       {
         "name": "FrameworkRubricCriterionRequest"
@@ -2721,6 +2887,15 @@
         "name": "ProblemDetails"
       },
       {
+        "name": "ProgramAdvisoryWorkspaceDto"
+      },
+      {
+        "name": "ProgramAdvisoryWorkspaceDtoApiResult"
+      },
+      {
+        "name": "ProgramAdvisoryWorkspaceDtoResponseDataContent"
+      },
+      {
         "name": "ProgramCurriculumActivityDto"
       },
       {
@@ -2793,6 +2968,9 @@
         "name": "ProgramFrameworkResponseDtoResponseDataContent"
       },
       {
+        "name": "ProgramFrameworkVersionResponseDto"
+      },
+      {
         "name": "ProgramListItemDto"
       },
       {
@@ -2803,6 +2981,15 @@
       },
       {
         "name": "ProgramListItemDtoPaginationResponseDataContent"
+      },
+      {
+        "name": "ProgramReviewDraftDto"
+      },
+      {
+        "name": "ProgramReviewDraftDtoApiResult"
+      },
+      {
+        "name": "ProgramReviewDraftDtoResponseDataContent"
       },
       {
         "name": "ProgramReviewQueueItemDto"
@@ -2833,6 +3020,24 @@
       },
       {
         "name": "ProgramReviewResponseDtoResponseDataContent"
+      },
+      {
+        "name": "ProgramReviewSubmissionDetailDto"
+      },
+      {
+        "name": "ProgramReviewSubmissionDetailDtoApiResult"
+      },
+      {
+        "name": "ProgramReviewSubmissionDetailDtoResponseDataContent"
+      },
+      {
+        "name": "ProgramReviewSubmissionSummaryDto"
+      },
+      {
+        "name": "ProgramReviewSubmissionSummaryDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "ProgramReviewSubmissionSummaryDtoIReadOnlyListResponseDataContent"
       },
       {
         "name": "ProgramsResponseDto"
@@ -2923,6 +3128,9 @@
       },
       {
         "name": "RebuyClassModuleProgressDto"
+      },
+      {
+        "name": "RecordAdvisoryReadRequest"
       },
       {
         "name": "ReorderPortfolioItemEntryDto"
@@ -3039,6 +3247,12 @@
         "name": "SaveDraftAnswersResponseDtoResponseDataContent"
       },
       {
+        "name": "SaveFrameworkRubricRequest"
+      },
+      {
+        "name": "SaveProgramReviewDraftRequest"
+      },
+      {
         "name": "SaveRetrospectiveDraftRequestDto"
       },
       {
@@ -3144,6 +3358,18 @@
         "name": "SubdomainAvailabilityResponseDtoResponseDataContent"
       },
       {
+        "name": "SubmissionChangeItemDto"
+      },
+      {
+        "name": "SubmissionChangesDto"
+      },
+      {
+        "name": "SubmissionChangesDtoApiResult"
+      },
+      {
+        "name": "SubmissionChangesDtoResponseDataContent"
+      },
+      {
         "name": "SubmitAssignmentRequestDto"
       },
       {
@@ -3193,6 +3419,9 @@
       },
       {
         "name": "UpdateActivityProgressRequestDto"
+      },
+      {
+        "name": "UpdateAdvisoryThreadStatusRequest"
       },
       {
         "name": "UpdateAssignmentRequestDto"

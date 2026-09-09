@@ -41,13 +41,15 @@ import {
 } from "@/lib/ui/select-styles";
 import { cn } from "@/lib/utils";
 
-/** Counts stay as text so form input and parsed output share one type. */
+/** Counts stay as text so form input and parsed output share one type.
+ * Blank = unrestricted; zero is not a valid configured minimum.
+ */
 const countTextSchema = z
   .string()
   .trim()
   .refine(
-    (value) => value === "" || /^\d{1,4}$/.test(value),
-    "Chỉ nhập số nguyên không âm.",
+    (value) => value === "" || /^[1-9]\d{0,3}$/.test(value),
+    "Để trống nếu không ràng buộc, hoặc nhập số nguyên từ 1 trở lên.",
   );
 
 const frameworkFormSchema = z.object({

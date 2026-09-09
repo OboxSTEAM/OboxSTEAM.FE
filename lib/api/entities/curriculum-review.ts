@@ -26,6 +26,12 @@ export const curriculumReviewSchema = z.object({
   expertId: z.string().uuid(),
   expertName: nullableStringSchema,
   round: z.number().int(),
+  submissionId: z
+    .string()
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? null),
+  snapshotAvailable: z.boolean().nullish().transform((value) => value ?? false),
   decision: curriculumReviewDecisionSchema,
   comment: nullableStringSchema,
   reviewedAt: z.string(),

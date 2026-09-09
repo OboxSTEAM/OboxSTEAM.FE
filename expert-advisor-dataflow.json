@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "diagram_type": "dataflow",
+  "meta": {
+    "title": "OboxSTEAM expert-advisor data flow",
+    "quality_profile": "showcase",
+    "viewBox": [1800, 820]
+  },
+  "stages": [
+    { "label": "Actor input" },
+    { "label": "Frontend boundary" },
+    { "label": "API & policy" },
+    { "label": "Domain services" },
+    { "label": "Sinks & consumers" }
+  ],
+  "nodes": [
+    { "id": "manager", "type": "frontend", "label": "Manager", "sublabel": "program and invite input", "stage": 0, "row": 0, "width": 154 },
+    { "id": "expert", "type": "frontend", "label": "Expert", "sublabel": "review and feedback input", "stage": 0, "row": 2, "width": 154 },
+    { "id": "feforms", "type": "frontend", "label": "Next.js forms", "sublabel": "React Hook Form + Zod", "stage": 1, "row": 0, "width": 154 },
+    { "id": "apiclient", "type": "security", "label": "API client", "sublabel": "JWT, refresh, response parse", "stage": 1, "row": 2, "width": 154 },
+    { "id": "controllers", "type": "backend", "label": "API controllers", "sublabel": "typed DTO and role check", "stage": 2, "row": 1, "width": 154 },
+    { "id": "services", "type": "backend", "label": "Expert services", "sublabel": "framework, review, co-teach", "stage": 3, "row": 1, "width": 166 },
+    { "id": "postgres", "type": "database", "label": "PostgreSQL", "sublabel": "EF Core UnitOfWork", "stage": 4, "row": 0, "width": 154 },
+    { "id": "notifications", "type": "messagebus", "label": "Notifications", "sublabel": "inbox, SignalR, email", "stage": 4, "row": 2, "width": 154 }
+  ],
+  "flows": [
+    { "id": "manager-form", "from": "manager", "to": "feforms", "label": "forms", "classification": "user input" },
+    { "id": "expert-client", "from": "expert", "to": "apiclient", "label": "scores", "classification": "user input" },
+    { "id": "forms-client", "from": "feforms", "to": "apiclient", "label": "validated", "classification": "validated", "labelAt": [315, 200] },
+    { "id": "client-controller", "from": "apiclient", "to": "controllers", "label": "Bearer JWT", "classification": "authenticated", "variant": "security" },
+    { "id": "controller-service", "from": "controllers", "to": "services", "label": "DTO + claims", "classification": "authorized", "labelAt": [635, 314] },
+    { "id": "service-db", "from": "services", "to": "postgres", "label": "records", "classification": "persistent" },
+    { "id": "service-notify", "from": "services", "to": "notifications", "label": "events", "classification": "side effect" }
+  ],
+  "cards": [
+    {
+      "dot": "violet",
+      "title": "Primary records",
+      "items": [
+        "Program.FrameworkId binds one expert-owned framework to a curriculum.",
+        "CurriculumReview stores each expert decision and criterion scores.",
+        "ClassSessionExpert stores invite state and private mentor feedback."
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "Security observations",
+      "items": [
+        "Password hashes use PBKDF2-HMAC-SHA256 with a random salt and constant-time verification.",
+        "JWTs are HMAC-SHA256 signed; frontend keeps access and refresh tokens in sessionStorage.",
+        "Refresh tokens are generated cryptographically but are persisted as raw values, not hashes."
+      ]
+    }
+  ]
+}

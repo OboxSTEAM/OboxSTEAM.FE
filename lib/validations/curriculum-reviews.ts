@@ -16,16 +16,21 @@ export const reviewCriterionScoreRequestSchema = z.object({
 });
 
 export const approveCurriculumReviewSchema = z.object({
+  submissionId: z.string().uuid().optional().nullable(),
+  concurrencyVersion: z.string().uuid().optional().nullable(),
   comment: z.string().trim().max(4000).optional().nullable(),
   scores: z.array(reviewCriterionScoreRequestSchema).optional().nullable(),
 });
 
 export const requestCurriculumChangesSchema = z.object({
+  submissionId: z.string().uuid().optional().nullable(),
+  concurrencyVersion: z.string().uuid().optional().nullable(),
   comment: z
     .string()
     .trim()
     .min(1, "Vui lòng nhập lý do cần chỉnh sửa.")
     .max(4000, "Nhận xét không được quá 4000 ký tự."),
+  scores: z.array(reviewCriterionScoreRequestSchema).optional().nullable(),
 });
 
 export type ProgramReviewQueueQuery = z.infer<typeof programReviewQueueQuerySchema>;

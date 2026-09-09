@@ -4,6 +4,7 @@ import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import {
   frameworkRubricCriterionSchema,
   programFrameworkSchema,
+  programFrameworkVersionSchema,
 } from "@/lib/api/entities/program-framework";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
@@ -16,6 +17,9 @@ export const programFrameworksListValueSchema = createApiValueSchema(
 );
 export const programFrameworkValueSchema = createApiValueSchema(
   programFrameworkSchema,
+);
+export const programFrameworkVersionValueSchema = createApiValueSchema(
+  programFrameworkVersionSchema,
 );
 export const frameworkRubricCriterionValueSchema = createApiValueSchema(
   frameworkRubricCriterionSchema,
@@ -36,6 +40,24 @@ export const updateProgramFrameworkResponseSchema = createApiResponseSchema(
 );
 export const deleteProgramFrameworkResponseSchema = createApiResponseSchema(
   deleteProgramFrameworkValueSchema,
+);
+export const archiveProgramFrameworkResponseSchema = createApiResponseSchema(
+  programFrameworkValueSchema,
+);
+export const getFrameworkVersionsResponseSchema = createApiResponseSchema(
+  createApiValueSchema(z.array(programFrameworkVersionSchema)),
+);
+export const getFrameworkVersionResponseSchema = createApiResponseSchema(
+  programFrameworkVersionValueSchema,
+);
+export const createFrameworkDraftVersionResponseSchema = createApiResponseSchema(
+  programFrameworkVersionValueSchema,
+);
+export const publishFrameworkVersionResponseSchema = createApiResponseSchema(
+  programFrameworkVersionValueSchema,
+);
+export const saveFrameworkRubricResponseSchema = createApiResponseSchema(
+  programFrameworkVersionValueSchema,
 );
 export const createFrameworkCriterionResponseSchema = createApiResponseSchema(
   frameworkRubricCriterionValueSchema,
@@ -86,3 +108,30 @@ export type DeleteFrameworkCriterionResponse = z.infer<
 >;
 export type DeleteFrameworkCriterionResult =
   DeleteFrameworkCriterionResponse["value"];
+export type ArchiveProgramFrameworkResponse = z.infer<
+  typeof archiveProgramFrameworkResponseSchema
+>;
+export type ArchiveProgramFrameworkResult =
+  ArchiveProgramFrameworkResponse["value"];
+export type GetFrameworkVersionsResponse = z.infer<
+  typeof getFrameworkVersionsResponseSchema
+>;
+export type GetFrameworkVersionsResult = GetFrameworkVersionsResponse["value"];
+export type GetFrameworkVersionResponse = z.infer<
+  typeof getFrameworkVersionResponseSchema
+>;
+export type GetFrameworkVersionResult = GetFrameworkVersionResponse["value"];
+export type CreateFrameworkDraftVersionResponse = z.infer<
+  typeof createFrameworkDraftVersionResponseSchema
+>;
+export type CreateFrameworkDraftVersionResult =
+  CreateFrameworkDraftVersionResponse["value"];
+export type PublishFrameworkVersionResponse = z.infer<
+  typeof publishFrameworkVersionResponseSchema
+>;
+export type PublishFrameworkVersionResult =
+  PublishFrameworkVersionResponse["value"];
+export type SaveFrameworkRubricResponse = z.infer<
+  typeof saveFrameworkRubricResponseSchema
+>;
+export type SaveFrameworkRubricResult = SaveFrameworkRubricResponse["value"];

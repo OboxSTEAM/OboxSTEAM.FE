@@ -20,6 +20,7 @@ import {
   type ExpertFormValues,
 } from "@/components/manager/experts/expert-form-dialog";
 import { AssignExistingExpertDialog } from "@/components/manager/programs/assign-existing-expert-dialog";
+import { ProgramAdvisorAssign } from "@/components/manager/programs/program-advisor-assign";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -182,6 +183,9 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
   }
 
   return (
+    <div className="space-y-6">
+      <ProgramAdvisorAssign program={program} />
+
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
       <header className="flex flex-col gap-4 border-b border-border bg-background/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -387,5 +391,6 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         }}
       />
     </section>
+    </div>
   );
 }

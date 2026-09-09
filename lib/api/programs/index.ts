@@ -419,7 +419,11 @@ export async function updateProgram(
 ): Promise<UpdateProgramResult> {
   const { id: programId } = programIdParamSchema.parse({ id });
   const parsed = updateProgramSchema.parse(input);
-  const body = { ...parsed, frameworkId: parsed.frameworkId || null };
+  const body = {
+    ...parsed,
+    frameworkId: parsed.frameworkId || null,
+    frameworkVersionId: parsed.frameworkVersionId || null,
+  };
 
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${programId}`,
@@ -555,3 +559,59 @@ export async function requestProgramChanges(
   assertApiSuccess(response);
   return requireApiValue(response.value);
 }
+
+export {
+  addAdvisoryMessage,
+  assignProgramAdvisor,
+  createAdvisoryThread,
+  getAdvisoryMessages,
+  getAdvisoryMine,
+  getAdvisoryThreads,
+  getProgramAdvisoryWorkspace,
+  getProgramFrameworkCheck,
+  getReviewDraft,
+  getReviewSubmission,
+  getReviewSubmissionChanges,
+  getReviewSubmissions,
+  recordAdvisoryRead,
+  saveReviewDraft,
+  updateAdvisoryThreadStatus,
+} from "./advisory";
+
+export type {
+  AddAdvisoryMessageInput,
+  AdvisoryFeedbackCounts,
+  AdvisoryMessage,
+  AdvisoryMessageMutationResult,
+  AdvisoryMineItem,
+  AdvisoryMineQuery,
+  AdvisoryParticipant,
+  AdvisoryTargetType,
+  AdvisoryThread,
+  AdvisoryThreadMutationResult,
+  AdvisoryThreadStatus,
+  AdvisoryThreadType,
+  AssignProgramAdvisorInput,
+  AssignProgramAdvisorResult,
+  CreateAdvisoryThreadInput,
+  FrameworkCheck,
+  GetAdvisoryMessagesResult,
+  GetAdvisoryMineResult,
+  GetAdvisoryThreadsResult,
+  GetFrameworkCheckResult,
+  GetProgramAdvisoryWorkspaceResult,
+  GetReviewDraftResult,
+  GetReviewSubmissionDetailResult,
+  GetReviewSubmissionsResult,
+  GetSubmissionChangesResult,
+  ProgramAdvisoryWorkspace,
+  ProgramReviewDraft,
+  ProgramReviewSubmissionDetail,
+  ProgramReviewSubmissionSummary,
+  RecordAdvisoryReadInput,
+  RecordAdvisoryReadResult,
+  ReviewSubmissionStatus,
+  SaveProgramReviewDraftInput,
+  SubmissionChanges,
+  UpdateAdvisoryThreadStatusInput,
+} from "./advisory";

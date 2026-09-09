@@ -72,6 +72,8 @@ export type ProgramFormProps = {
    * When set in edit mode, status renders here instead of the section title.
    */
   statusPortalHost?: HTMLElement | null;
+  /** Pinned framework version on the program (display only). */
+  frameworkVersionNumber?: number | null;
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -136,9 +138,11 @@ function FormSectionTitle({
 function FrameworkGuidelines({
   framework,
   isCategoryMismatch,
+  frameworkVersionNumber,
 }: {
   framework: ProgramFramework | null;
   isCategoryMismatch: boolean;
+  frameworkVersionNumber?: number | null;
 }) {
   if (!framework) {
     return (
@@ -153,10 +157,14 @@ function FrameworkGuidelines({
     rules.push(`Tối thiểu ${framework.minModules} học phần`);
   }
   if (framework.minOfflineSessions != null) {
-    rules.push(`Tối thiểu ${framework.minOfflineSessions} buổi ngoại khóa`);
+    rules.push(
+      `Tối thiểu ${framework.minOfflineSessions} mẫu hoạt động offline trong curriculum (không phải buổi lớp đã lên lịch)`,
+    );
   }
   if (framework.minLiveSessions != null) {
-    rules.push(`Tối thiểu ${framework.minLiveSessions} buổi học trực tuyến`);
+    rules.push(
+      `Tối thiểu ${framework.minLiveSessions} mẫu hoạt động live trong curriculum (không phải buổi lớp đã lên lịch)`,
+    );
   }
   if (framework.requireCapstoneResearchMilestone) {
     rules.push("Bắt buộc có mốc nghiên cứu / dự án tổng kết");
@@ -185,8 +193,9 @@ function FrameworkGuidelines({
         </p>
       )}
       <p className="mt-2 text-[11px] text-muted-foreground">
-        {framework.criteria.length} tiêu chí rubric · Chuyên gia:{" "}
-        {framework.expertName || "—"}
+        {framework.criteria.length} tiêu chí rubric
+        {frameworkVersionNumber != null ? ` · Phiên bản v${frameworkVersionNumber}` : ""}
+        {" · "}Chuyên gia: {framework.expertName || "—"}
       </p>
       {isCategoryMismatch ? (
         <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-primary">
@@ -207,6 +216,7 @@ export function ProgramForm({
   isLoading = false,
   disabled = false,
   statusPortalHost = null,
+  frameworkVersionNumber = null,
 }: ProgramFormProps) {
   const isEdit = Boolean(programId);
   const statusInPortal = isEdit && statusPortalHost != null;
@@ -831,6 +841,7 @@ export function ProgramForm({
               <FieldError message={errors.frameworkId?.message} />
               <FrameworkGuidelines
                 framework={selectedFramework}
+                frameworkVersionNumber={frameworkVersionNumber}
                 isCategoryMismatch={
                   selectedFramework != null &&
                   selectedFramework.category !== category

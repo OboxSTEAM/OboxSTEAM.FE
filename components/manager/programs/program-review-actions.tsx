@@ -75,6 +75,7 @@ type ProgramReviewActionsProps = {
   programId: string;
   status: ProgramStatus;
   hasFramework: boolean;
+  hasAdvisor?: boolean;
   moduleCount: number;
   onChanged?: () => void;
 };
@@ -83,6 +84,7 @@ export function ProgramReviewActions({
   programId,
   status,
   hasFramework,
+  hasAdvisor = false,
   moduleCount,
   onChanged,
 }: ProgramReviewActionsProps) {
@@ -145,6 +147,9 @@ export function ProgramReviewActions({
             {STATUS_HINT[status]}
             {status === "Draft" && moduleCount === 0
               ? " Cần ít nhất một học phần trước khi gửi duyệt."
+              : ""}
+            {status === "Draft" && !hasAdvisor
+              ? " Nên gán chuyên gia phụ trách trước khi gửi thẩm định."
               : ""}
           </p>
         </div>

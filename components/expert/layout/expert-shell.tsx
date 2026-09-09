@@ -13,7 +13,11 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 /** Map pathname prefix to page title shown in header. */
 function resolvePageTitle(pathname: string): string {
   if (pathname === "/expert") return "Chuyên gia";
-  if (pathname.startsWith("/expert/reviews")) return "Duyệt chương trình";
+  if (pathname.startsWith("/expert/programs")) return "Chương trình phụ trách";
+  if (pathname.startsWith("/expert/reviews")) return "Chương trình phụ trách";
+  if (pathname.match(/^\/expert\/frameworks\/[^/]+/)) {
+    return "Biên tập khung chương trình";
+  }
   if (pathname.startsWith("/expert/frameworks")) return "Khung chương trình";
   if (pathname.startsWith("/expert/schedule")) return "Lịch đồng hành";
   if (pathname.startsWith("/expert/profile")) return "Hồ sơ chuyên môn";
