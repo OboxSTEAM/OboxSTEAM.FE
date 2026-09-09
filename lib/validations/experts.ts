@@ -117,16 +117,13 @@ export const expertUpsertSchema = z.object({
   programs: z.array(expertProgramInputSchema),
 });
 
-/** Manager provisions Expert login — email + password required. */
+/** Manager provisions Expert login — email required; BE emails a temp password. */
 export const createExpertSchema = expertUpsertSchema.extend({
   email: z
     .string()
     .trim()
     .min(1, "Vui lòng nhập email đăng nhập.")
     .email("Email không hợp lệ."),
-  password: z
-    .string()
-    .min(6, "Mật khẩu phải có ít nhất 6 ký tự."),
   phone: z
     .string()
     .trim()

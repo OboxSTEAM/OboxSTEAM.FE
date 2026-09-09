@@ -169,8 +169,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "experts.create": {
     title: "Không tạo được chuyên gia",
-    reason: "Thông tin chưa hợp lệ hoặc mã chuyên gia đã tồn tại.",
-    action: "Kiểm tra mã, họ tên và các chương trình được gán rồi thử lại.",
+    reason:
+      "Thông tin chưa hợp lệ, mã/email đã tồn tại, hoặc không gửi được email mật khẩu tạm.",
+    action:
+      "Kiểm tra mã, email, họ tên và các chương trình được gán rồi thử lại.",
   },
   "experts.update": {
     title: "Không cập nhật được chuyên gia",
@@ -354,6 +356,17 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không từ chối được yêu cầu mentor",
     reason: "Yêu cầu không còn ở trạng thái chờ duyệt hoặc đã được xử lý.",
     action: "Tải lại danh sách yêu cầu và thử lại.",
+  },
+  "mentors.list": {
+    title: "Không tải được danh sách Mentor",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "mentors.create": {
+    title: "Không tạo được Mentor",
+    reason:
+      "Email đã tồn tại, thông tin chưa hợp lệ, hoặc không gửi được email mật khẩu tạm.",
+    action: "Kiểm tra email và họ tên rồi thử lại.",
   },
   "mentors.detail": {
     title: "Không tải được hồ sơ mentor",
@@ -895,6 +908,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "classMentorRequests.withdraw",
   "classMentorRequests.approve",
   "classMentorRequests.reject",
+  "mentors.create",
   "mentors.skills.add",
   "mentors.skills.update",
   "mentors.skills.visibility",

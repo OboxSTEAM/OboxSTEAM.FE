@@ -39,12 +39,19 @@ export const deleteMyMentorSkillResponseSchema = createApiResponseSchema(
 );
 export const updateMentorClassLimitResponseSchema =
   createApiResponseSchema(mentorDetailValueSchema);
+export const createMentorAccountResponseSchema =
+  createApiResponseSchema(mentorDetailValueSchema);
 
 export type GetMentorsResponse = z.infer<typeof getMentorsResponseSchema>;
 export type GetMentorsResult = GetMentorsResponse["value"];
 
 export type GetMentorByIdResponse = z.infer<typeof getMentorByIdResponseSchema>;
 export type GetMentorByIdResult = GetMentorByIdResponse["value"];
+
+export type CreateMentorAccountResponse = z.infer<
+  typeof createMentorAccountResponseSchema
+>;
+export type CreateMentorAccountResult = CreateMentorAccountResponse["value"];
 
 export type GetMyMentorProfileResponse = z.infer<
   typeof getMyMentorProfileResponseSchema

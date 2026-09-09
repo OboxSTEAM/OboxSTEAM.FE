@@ -46,8 +46,8 @@ import { cn } from "@/lib/utils";
 import { ExpertCredentialsEditor } from "./expert-credentials-editor";
 
 /**
- * Create provisions an Expert login (email + password required); edit keeps the
- * same field shape so one resolver type serves both modes — only the
+ * Create provisions an Expert login (email required; BE emails temp password);
+ * edit keeps the same field shape so one resolver type serves both modes — only the
  * refinements differ.
  */
 function buildExpertFormSchema(isEdit: boolean) {
@@ -59,9 +59,6 @@ function buildExpertFormSchema(isEdit: boolean) {
           .trim()
           .min(1, "Vui lòng nhập email đăng nhập.")
           .email("Email không hợp lệ."),
-    password: isEdit
-      ? z.string()
-      : z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự."),
     phone: z
       .string()
       .trim()
@@ -130,7 +127,6 @@ function toDefaultValues(
     specialization: expert?.specialization ?? [],
     programs: assignedPrograms,
     email: expert?.email ?? "",
-    password: "",
     phone: "",
   };
 }
@@ -447,8 +443,9 @@ export function ExpertFormDialog({
               {isEdit ? null : (
                 <FormSection icon={KeyRound} title="Tài khoản đăng nhập">
                   <p className="-mt-2 text-xs leading-5 text-muted-foreground">
-                    Hệ thống tạo tài khoản Chuyên gia với email và mật khẩu này. Hãy
-                    gửi thông tin đăng nhập cho chuyên gia sau khi tạo.
+                    Hệ thống tạo tài khoản Chuyên gia với email này, tự sinh mật
+                    khẩu tạm và gửi vào hộp thư. Tạo thất bại nếu không gửi được
+                    email.
                   </p>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <FormField
@@ -463,21 +460,6 @@ export function ExpertFormDialog({
                         autoComplete="off"
                         placeholder="chuyengia@oboxsteam.vn"
                         {...register("email")}
-                        className={INPUT_CLASS}
-                      />
-                    </FormField>
-                    <FormField
-                      id="password"
-                      label="Mật khẩu"
-                      required
-                      error={errors.password?.message}
-                    >
-                      <Input
-                        id="password"
-                        type="password"
-                        autoComplete="new-password"
-                        placeholder="Tối thiểu 6 ký tự"
-                        {...register("password")}
                         className={INPUT_CLASS}
                       />
                     </FormField>

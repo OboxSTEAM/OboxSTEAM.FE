@@ -29,7 +29,7 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/manager/enrollments")) return "Đăng ký học";
   if (pathname.startsWith("/manager/reviews")) return "Đánh giá";
   if (pathname.startsWith("/manager/experts")) return "Chuyên gia";
-  if (pathname.startsWith("/manager/mentors")) return "Duyệt Mentor";
+  if (pathname.startsWith("/manager/mentors")) return "Mentor";
   return "Manager";
 }
 

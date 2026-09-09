@@ -175,7 +175,7 @@ export function ExpertManager() {
         setEditingExpert(synced ?? expert);
         showAppSuccess({
           title: "Đã thêm chuyên gia",
-          description: `${values.fullName} đã được tạo. Bạn có thể tiếp tục chỉnh bằng cấp và bài báo.`,
+          description: `${values.fullName} đã được tạo. Mật khẩu tạm đã gửi tới ${values.email}.`,
         });
       }
       retry();

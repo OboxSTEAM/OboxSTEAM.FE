@@ -36,6 +36,7 @@ export {
 } from "./experts";
 export {
   addMentorSkillSchema,
+  createMentorAccountSchema,
   mentorIdParamSchema,
   mentorListQuerySchema,
   mentorSkillEvidenceInputSchema,
@@ -45,6 +46,7 @@ export {
   updateMentorSkillSchema,
   updateMentorSkillVisibilitySchema,
   type AddMentorSkillInput,
+  type CreateMentorAccountInput,
   type MentorIdParam,
   type MentorListQuery,
   type MentorSkillEvidenceInput,

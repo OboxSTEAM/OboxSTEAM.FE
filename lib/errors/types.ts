@@ -81,6 +81,8 @@ export type AppErrorContext =
   | "classMentorRequests.withdraw"
   | "classMentorRequests.approve"
   | "classMentorRequests.reject"
+  | "mentors.list"
+  | "mentors.create"
   | "mentors.detail"
   | "mentors.skills.list"
   | "mentors.skills.add"

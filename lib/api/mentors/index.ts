@@ -4,6 +4,7 @@ import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   addMentorSkillSchema,
+  createMentorAccountSchema,
   mentorIdParamSchema,
   mentorListQuerySchema,
   mentorSkillIdParamSchema,
@@ -15,6 +16,7 @@ import {
 
 import {
   addMyMentorSkillResponseSchema,
+  createMentorAccountResponseSchema,
   deleteMyMentorSkillResponseSchema,
   getMentorByIdResponseSchema,
   getMentorsResponseSchema,
@@ -25,6 +27,7 @@ import {
   updateMyMentorProfileResponseSchema,
   updateMyMentorSkillResponseSchema,
   type AddMyMentorSkillResult,
+  type CreateMentorAccountResult,
   type DeleteMyMentorSkillResult,
   type GetMentorByIdResult,
   type GetMentorsResult,
@@ -79,6 +82,7 @@ export type MentorResult = import("./schemas").GetMentorByIdResult;
 
 export type {
   AddMentorSkillInput,
+  CreateMentorAccountInput,
   MentorIdParam,
   MentorListQuery,
   MentorSkillEvidenceInput,
@@ -91,6 +95,7 @@ export type {
 
 import type {
   AddMentorSkillInput,
+  CreateMentorAccountInput,
   MentorListQuery,
   UpdateMentorClassLimitInput,
   UpdateMentorProfileInput,
@@ -271,6 +276,30 @@ export async function updateMentorClassLimit(
     `${MENTORS_BASE}/${parsedMentorId}/class-limit`,
     updateMentorClassLimitResponseSchema,
     { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * Manager provisions a Mentor login via `POST /api/mentors`.
+ * BE auto-generates a temporary password and emails it; create rolls back if email fails.
+ */
+export async function createMentorAccount(
+  input: CreateMentorAccountInput,
+): Promise<CreateMentorAccountResult> {
+  const parsed = createMentorAccountSchema.parse(input);
+  const response = await apiFetchParsed(
+    MENTORS_BASE,
+    createMentorAccountResponseSchema,
+    {
+      method: "POST",
+      body: {
+        email: parsed.email,
+        fullName: parsed.fullName,
+        phone: parsed.phone?.trim() || null,
+      },
+    },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

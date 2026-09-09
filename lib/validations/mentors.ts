@@ -2,6 +2,18 @@ import { z } from "zod";
 
 import { skillProficiencyLevelSchema } from "@/lib/api/entities/mentor";
 
+/** Manager `POST /api/mentors` — BE emails a temporary password. */
+export const createMentorAccountSchema = z.object({
+  email: z.email("Email không hợp lệ."),
+  fullName: z.string().trim().min(2, "Họ tên phải có ít nhất 2 ký tự."),
+  phone: z
+    .string()
+    .trim()
+    .max(20, "Số điện thoại không được quá 20 ký tự."),
+});
+
+export type CreateMentorAccountInput = z.infer<typeof createMentorAccountSchema>;
+
 export const mentorListQuerySchema = z.object({
   search: z.string().trim().optional(),
   page: z.number().int().min(1).optional(),

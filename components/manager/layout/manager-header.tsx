@@ -35,7 +35,7 @@ const PATH_LABELS: Record<string, string> = {
   enrollments: "Đăng ký học",
   reviews: "Đánh giá",
   experts: "Chuyên gia",
-  mentors: "Duyệt Mentor",
+  mentors: "Mentor",
 };
 
 export function ManagerHeader({

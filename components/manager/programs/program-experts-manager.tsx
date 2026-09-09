@@ -128,7 +128,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         setEditingExpert(synced ?? expert);
         showAppSuccess({
           title: "Đã thêm chuyên gia",
-          description: `${values.fullName} đã được tạo. Bạn có thể tiếp tục chỉnh hồ sơ chuyên môn.`,
+          description: `${values.fullName} đã được tạo. Mật khẩu tạm đã gửi tới ${values.email}.`,
         });
       }
       router.refresh();

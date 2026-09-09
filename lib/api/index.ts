@@ -68,6 +68,7 @@ export {
 
 export {
   addMyMentorSkill,
+  createMentorAccount,
   deleteMyMentorSkill,
   getMentorById,
   getMentors,
@@ -81,6 +82,7 @@ export {
   type AddMyMentorSkillResponse,
   type AddMyMentorSkillResult,
   type ClassMentorSummary,
+  type CreateMentorAccountInput,
   type DeleteMyMentorSkillResponse,
   type DeleteMyMentorSkillResult,
   type GetMentorByIdResponse,
