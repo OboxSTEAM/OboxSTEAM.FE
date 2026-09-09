@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ClipboardList, Check, Save } from "lucide-react";
@@ -8,7 +8,6 @@ import { ClipboardList, Check, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Slider } from "@/components/ui/slider";
 import {
   Select,
   SelectTrigger,
@@ -20,6 +19,13 @@ import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
+import {
+  CompactNumberField,
+  CURRICULUM_TEXTAREA,
+  DEFAULT_QUIZ_DIFFICULTY,
+  NameWithAutoCode,
+  QuizDifficultyControl,
+} from "@/components/manager/programs/curriculum-form-controls";
 import {
   createAssignment,
   getQuestionBanks,
@@ -47,9 +53,6 @@ const W = {
   accent: "#4fc3f7",
   primary: "var(--primary)",
 } as const;
-
-const IN =
-  "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 const ASSIGNMENT_TYPE_LABELS: Record<string, string> = {
   Retrospective: "Nhật ký phản tư",
@@ -166,7 +169,7 @@ export function AssignmentFormPanel({
           hardPercent: assignmentToEdit.hardPercent,
         }
       : {
-          code: "",
+          code: "ASG",
           courseId: NO_COURSE,
           title: "",
           description: "",
@@ -183,17 +186,22 @@ export function AssignmentFormPanel({
           timeLimitMinutes: null,
           allowShuffle: false,
           shuffleOptions: false,
-          easyPercent: 0,
-          mediumPercent: 0,
-          hardPercent: 0,
+          ...DEFAULT_QUIZ_DIFFICULTY,
         },
   });
 
   const assignmentType = watch("assignmentType");
   const selectedCourseId = watch("courseId");
+  const titleValue = watch("title");
+  const codeValue = watch("code") ?? "";
   const isQuiz = assignmentType === "Quiz";
   const bankCourseId =
     selectedCourseId && selectedCourseId !== NO_COURSE ? selectedCourseId : "";
+
+  const setCode = useCallback(
+    (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
 
   const [banks, setBanks] = useState<QuestionBankListItem[]>([]);
 
@@ -214,6 +222,21 @@ export function AssignmentFormPanel({
       active = false;
     };
   }, [bankCourseId]);
+
+  /** When switching into Quiz on create, seed balanced difficulty if still empty. */
+  useEffect(() => {
+    if (assignmentType !== "Quiz" || isEdit) return;
+    const easy = watch("easyPercent");
+    const medium = watch("mediumPercent");
+    const hard = watch("hardPercent");
+    if ((easy ?? 0) === 0 && (medium ?? 0) === 0 && (hard ?? 0) === 0) {
+      setValue("easyPercent", DEFAULT_QUIZ_DIFFICULTY.easyPercent, { shouldValidate: true });
+      setValue("mediumPercent", DEFAULT_QUIZ_DIFFICULTY.mediumPercent, { shouldValidate: true });
+      setValue("hardPercent", DEFAULT_QUIZ_DIFFICULTY.hardPercent, { shouldValidate: true });
+    }
+    // Only re-run when type flips to Quiz
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [assignmentType, isEdit, setValue]);
 
   const onSubmit = async (data: FormValues) => {
     if (disabled) return;
@@ -286,82 +309,77 @@ export function AssignmentFormPanel({
             Lịch mở / hạn nộp do mentor thiết lập khi mở bài cho học viên — không cần nhập khi tạo khung bài tập.
           </p>
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Tiêu đề <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input
-                type="text"
-                placeholder="Ví dụ: Báo cáo dự án cuối module"
-                {...register("title")}
-                className={IN}
-                style={{ borderColor: errors.title ? W.primary : W.border }}
-              />
-              <FErr msg={errors.title?.message as string | undefined} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Mã bài tập
-              </Label>
-              <input
-                type="text"
-                placeholder="ASG-001"
-                {...register("code")}
-                className={cn(IN, "font-mono")}
-                style={{ borderColor: W.border }}
+            <div className="col-span-2">
+              <NameWithAutoCode
+                nameLabel="Tiêu đề"
+                codeLabel="Mã bài tập"
+                codePrefix="ASG"
+                name={titleValue}
+                code={codeValue}
+                lockCode={isEdit}
+                disabled={disabled}
+                namePlaceholder="Ví dụ: Báo cáo dự án cuối module"
+                nameError={errors.title?.message as string | undefined}
+                onNameChange={(value) =>
+                  setValue("title", value, { shouldValidate: true, shouldDirty: true })
+                }
+                onCodeChange={setCode}
               />
             </div>
-            <div className="flex flex-col space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Loại bài tập <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <Controller
-                name="assignmentType"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg")}>
-                      <span className="truncate">
-                        {ASSIGNMENT_TYPE_LABELS[field.value] ?? field.value}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent className={THEME_SELECT_CONTENT}>
-                      <SelectItem value="Retrospective" className={THEME_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
-                      <SelectItem value="FileUpload" className={THEME_SELECT_ITEM}>Nộp tệp</SelectItem>
-                      <SelectItem value="Quiz" className={THEME_SELECT_ITEM}>Trắc nghiệm</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <div className="col-span-2 flex flex-col space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Gắn với khóa học <span className="text-xs font-normal" style={{ color: W.muted }}>(tùy chọn)</span>
-              </Label>
-              <Controller
-                name="courseId"
-                control={control}
-                render={({ field }) => (
-                  <Select value={field.value || NO_COURSE} onValueChange={field.onChange}>
-                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg")}>
-                      <span className="truncate">
-                        {field.value === NO_COURSE || !field.value
-                          ? "Không gắn khóa học"
-                          : courseOptions.find((c) => c.id === field.value)?.name ?? "Không gắn khóa học"}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent className={THEME_SELECT_CONTENT}>
-                      <SelectItem value={NO_COURSE} className={THEME_SELECT_ITEM}>Không gắn khóa học</SelectItem>
-                      {courseOptions.map((c) => (
-                        <SelectItem key={c.id} value={c.id} className={THEME_SELECT_ITEM}>
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              <FErr msg={errors.courseId?.message} />
+            <div className="col-span-2 grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="flex flex-col space-y-1.5">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                  Loại bài tập <span style={{ color: W.primary }}>*</span>
+                </Label>
+                <Controller
+                  name="assignmentType"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value} onValueChange={field.onChange}>
+                      <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
+                        <span className="truncate">
+                          {ASSIGNMENT_TYPE_LABELS[field.value] ?? field.value}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent className={THEME_SELECT_CONTENT}>
+                        <SelectItem value="Retrospective" className={THEME_SELECT_ITEM}>Nhật ký phản tư</SelectItem>
+                        <SelectItem value="FileUpload" className={THEME_SELECT_ITEM}>Nộp tệp</SelectItem>
+                        <SelectItem value="Quiz" className={THEME_SELECT_ITEM}>Trắc nghiệm</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+              </div>
+              <div className="flex flex-col space-y-1.5">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                  Gắn với khóa học{" "}
+                  <span className="text-xs font-normal" style={{ color: W.muted }}>(tùy chọn)</span>
+                </Label>
+                <Controller
+                  name="courseId"
+                  control={control}
+                  render={({ field }) => (
+                    <Select value={field.value || NO_COURSE} onValueChange={field.onChange}>
+                      <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
+                        <span className="truncate">
+                          {field.value === NO_COURSE || !field.value
+                            ? "Không gắn khóa học"
+                            : courseOptions.find((c) => c.id === field.value)?.name ?? "Không gắn khóa học"}
+                        </span>
+                      </SelectTrigger>
+                      <SelectContent className={THEME_SELECT_CONTENT}>
+                        <SelectItem value={NO_COURSE} className={THEME_SELECT_ITEM}>Không gắn khóa học</SelectItem>
+                        {courseOptions.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className={THEME_SELECT_ITEM}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                <FErr msg={errors.courseId?.message} />
+              </div>
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
@@ -369,7 +387,7 @@ export function AssignmentFormPanel({
                 rows={3}
                 placeholder="Hướng dẫn, yêu cầu nộp bài..."
                 {...register("description")}
-                className="w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50"
+                className={CURRICULUM_TEXTAREA}
                 style={{ borderColor: W.border }}
               />
             </div>
@@ -378,29 +396,35 @@ export function AssignmentFormPanel({
 
         <div>
           <STitle>Điểm & điều kiện</STitle>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Điểm tối đa <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input type="number" {...register("maxPoints", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <FErr msg={errors.maxPoints?.message as string | undefined} />
+          <div
+            className="rounded-xl border p-4"
+            style={{ borderColor: W.border, background: W.surface }}
+          >
+            <div className="grid grid-cols-3 gap-3">
+              <CompactNumberField
+                fill
+                label="Điểm tối đa"
+                required
+                error={errors.maxPoints?.message as string | undefined}
+                {...register("maxPoints", { valueAsNumber: true })}
+              />
+              <CompactNumberField
+                fill
+                label="Điểm đạt"
+                required
+                step="0.1"
+                error={errors.passScore?.message as string | undefined}
+                {...register("passScore", { valueAsNumber: true })}
+              />
+              <CompactNumberField
+                fill
+                label="Số lần làm"
+                required
+                error={errors.maxAttempts?.message as string | undefined}
+                {...register("maxAttempts", { valueAsNumber: true })}
+              />
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Điểm đạt <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input type="number" step="0.1" {...register("passScore", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <FErr msg={errors.passScore?.message as string | undefined} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Số lần làm tối đa <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input type="number" {...register("maxAttempts", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
-              <FErr msg={errors.maxAttempts?.message as string | undefined} />
-            </div>
-            <div className="flex items-end gap-2 pb-2">
+            <div className="mt-4 flex items-center gap-2 border-t pt-3" style={{ borderColor: W.border }}>
               <Controller
                 name="isRequiredForModulePass"
                 control={control}
@@ -423,8 +447,11 @@ export function AssignmentFormPanel({
         {isQuiz && (
           <div>
             <STitle>Cấu hình trắc nghiệm</STitle>
-            <div className="grid grid-cols-2 gap-4">
-              <div className="col-span-2 space-y-1.5">
+            <div
+              className="space-y-5 rounded-xl border p-4"
+              style={{ borderColor: W.border, background: W.surface }}
+            >
+              <div className="space-y-1.5">
                 <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
                   Ngân hàng câu hỏi
                 </Label>
@@ -446,7 +473,7 @@ export function AssignmentFormPanel({
                           field.onChange(!v || v === "none" ? "" : v)
                         }
                       >
-                        <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
+                        <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 w-full rounded-lg")}>
                           <span className="truncate">
                             {banks.find((b) => b.id === field.value)?.name ||
                               (field.value
@@ -494,104 +521,43 @@ export function AssignmentFormPanel({
                     </p>
                   )}
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Số câu hỏi</Label>
-                <input
-                  type="number"
+
+              <div className="grid grid-cols-2 gap-3">
+                <CompactNumberField
+                  fill
+                  label="Số câu hỏi"
+                  error={errors.questionCount?.message}
                   {...register("questionCount", { setValueAs: emptyNumberField })}
-                  className={IN}
-                  style={{ borderColor: W.border }}
                 />
-                <FErr msg={errors.questionCount?.message} />
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thời lượng làm bài (phút)</Label>
-                <input
-                  type="number"
+                <CompactNumberField
+                  fill
+                  label="Thời lượng (phút)"
+                  error={errors.timeLimitMinutes?.message}
                   {...register("timeLimitMinutes", { setValueAs: emptyNumberField })}
-                  className={IN}
-                  style={{ borderColor: W.border }}
                 />
-                <FErr msg={errors.timeLimitMinutes?.message} />
               </div>
-              <div className="col-span-2 space-y-3">
-                <div className="flex items-center justify-between gap-3">
-                  <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                    Tỉ lệ độ khó
-                  </Label>
-                  <span className="text-[11px] tabular-nums" style={{ color: W.faint }}>
-                    Tổng 100%
-                  </span>
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  {(
-                    [
-                      { key: "easy" as const, label: "Dễ", color: "#7cb342", value: watch("easyPercent") ?? 0 },
-                      { key: "medium" as const, label: "Trung bình", color: "#f59e0b", value: watch("mediumPercent") ?? 0 },
-                      { key: "hard" as const, label: "Khó", color: "#E94B3C", value: watch("hardPercent") ?? 0 },
-                    ] as const
-                  ).map((item) => (
-                    <div
-                      key={item.key}
-                      className="rounded-lg border px-2.5 py-2 text-center"
-                      style={{ borderColor: W.border, background: W.surface }}
-                    >
-                      <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color: W.faint }}>
-                        {item.label}
-                      </p>
-                      <p className="mt-0.5 text-sm font-bold tabular-nums" style={{ color: item.color }}>
-                        {item.value}%
-                      </p>
-                    </div>
-                  ))}
-                </div>
-                {(() => {
-                  const easy = Math.max(0, Math.min(100, Number(watch("easyPercent")) || 0));
-                  const medium = Math.max(0, Math.min(100, Number(watch("mediumPercent")) || 0));
-                  const hard = Math.max(0, Math.min(100, Number(watch("hardPercent")) || 0));
-                  const lo = easy;
-                  const hi = Math.max(lo, Math.min(100, easy + medium));
-                  return (
-                    <div className="space-y-2 px-0.5">
-                      <div
-                        className="flex h-2 overflow-hidden rounded-full"
-                        aria-hidden
-                      >
-                        <span className="h-full bg-[#7cb342]" style={{ width: `${easy}%` }} />
-                        <span className="h-full bg-[#f59e0b]" style={{ width: `${medium}%` }} />
-                        <span className="h-full bg-[#E94B3C]" style={{ width: `${hard}%` }} />
-                      </div>
-                      <Slider
-                        min={0}
-                        max={100}
-                        step={1}
-                        value={[lo, hi]}
-                        onValueChange={(next) => {
-                          const vals = Array.isArray(next) ? next : [lo, hi];
-                          const a = Math.max(0, Math.min(100, Number(vals[0]) || 0));
-                          const b = Math.max(0, Math.min(100, Number(vals[1]) || 0));
-                          const left = Math.min(a, b);
-                          const right = Math.max(a, b);
-                          setValue("easyPercent", left, { shouldValidate: true, shouldDirty: true });
-                          setValue("mediumPercent", right - left, { shouldValidate: true, shouldDirty: true });
-                          setValue("hardPercent", 100 - right, { shouldValidate: true, shouldDirty: true });
-                        }}
-                        className={cn(
-                          "**:data-[slot=slider-track]:h-2 **:data-[slot=slider-track]:bg-muted",
-                          "**:data-[slot=slider-range]:bg-transparent",
-                        )}
-                        aria-label="Tỉ lệ độ khó dễ / trung bình / khó"
-                      />
-                      <div className="flex justify-between text-[10px]" style={{ color: W.faint }}>
-                        <span>Kéo 2 nút để chia Dễ · TB · Khó</span>
-                        <span className="tabular-nums">{easy + medium + hard}%</span>
-                      </div>
-                    </div>
-                  );
-                })()}
-                <FErr msg={errors.easyPercent?.message as string | undefined} />
+
+              <div className="border-t pt-4" style={{ borderColor: W.border }}>
+                <QuizDifficultyControl
+                  disabled={disabled}
+                  error={errors.easyPercent?.message as string | undefined}
+                  value={{
+                    easyPercent: watch("easyPercent") ?? 0,
+                    mediumPercent: watch("mediumPercent") ?? 0,
+                    hardPercent: watch("hardPercent") ?? 0,
+                  }}
+                  onChange={(next) => {
+                    setValue("easyPercent", next.easyPercent, { shouldValidate: true, shouldDirty: true });
+                    setValue("mediumPercent", next.mediumPercent, { shouldValidate: true, shouldDirty: true });
+                    setValue("hardPercent", next.hardPercent, { shouldValidate: true, shouldDirty: true });
+                  }}
+                />
               </div>
-              <div className="col-span-2 flex flex-wrap gap-5 pt-1">
+
+              <div
+                className="flex flex-wrap gap-5 border-t pt-3"
+                style={{ borderColor: W.border }}
+              >
                 <div className="flex items-center gap-2">
                   <Controller
                     name="allowShuffle"

@@ -50,6 +50,11 @@ import { ActivityMaterialSection } from "@/components/manager/programs/activity-
 import { AssignmentFormPanel } from "@/components/manager/programs/assignment-form-panel";
 import { MilestoneFormPanel } from "@/components/manager/programs/milestone-form-panel";
 import { QuestionBankSection } from "@/components/manager/programs/question-bank-section";
+import {
+  CURRICULUM_TEXTAREA,
+  CompactNumberField,
+  NameWithAutoCode,
+} from "@/components/manager/programs/curriculum-form-controls";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
@@ -165,7 +170,6 @@ function STitle({ children }: { children: React.ReactNode }) {
 function FErr({ msg }: { msg?: string }) {
   return msg ? <p className="text-xs font-semibold mt-1" style={{ color: W.primary }}>{msg}</p> : null;
 }
-const IN = "h-10 rounded-lg border text-sm font-normal outline-none px-3 w-full transition-colors focus:ring-1 focus:ring-ring/50 bg-card";
 
 function SaveBtn({ submitting, success, label = "Lưu thay đổi", ok = "Đã lưu", disabled = false }: {
   submitting: boolean; success: boolean; label?: string; ok?: string; disabled?: boolean;
@@ -394,7 +398,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess,
   const [busy, setBusy] = useState(false);
   const { ok, flash } = useSuccessFlash();
 
-  const { register, handleSubmit, control, getValues, formState: { errors } } = useForm<MFV>({
+  const { register, handleSubmit, control, getValues, setValue, watch, formState: { errors } } = useForm<MFV>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(isEdit ? updateModuleSchema : createModuleSchema) as any,
     shouldUnregister: false,
@@ -409,20 +413,24 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       learningOutcomesText: (moduleToEdit as any).learningOutcomes?.join("\n") || "",
     } : {
-      code: "", programId, name: "", moduleType: "Theory" as const,
+      code: "MOD", programId, name: "", moduleType: "Theory" as const,
       moduleOrder: modulesInProgram.reduce((max, module) => Math.max(max, module.moduleOrder), 0) + 1,
       prerequisiteModuleId: null, isMandatory: true, learningOutcomesText: "",
     },
   });
+
+  const nameValue = watch("name") ?? "";
+  const codeValue = watch("code") ?? "";
+  const setCode = useCallback(
+    (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
     if (disabled) return;
     setBusy(true);
     try {
-      // `learningOutcomesText` is a UI-only field absent from the module Zod
-      // schema, so the resolver strips it from `data`. Read it straight from the
-      // form state so edits actually reach the API payload.
       const outcomesText = getValues("learningOutcomesText") ?? "";
       const outcomes = outcomesText
         ? outcomesText.split("\n").map((s) => s.trim()).filter(Boolean) : [];
@@ -453,16 +461,21 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess,
       <div className="space-y-6 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Module <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: Robotics Cơ Bản" {...register("name")} disabled={disabled} className={cn(IN, disabled && "opacity-70")} style={{ borderColor: errors.name ? W.primary : W.border }} />
-            <FErr msg={errors.name?.message} />
-          </div>
-          <div className="mt-4 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Module <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: MOD-ROBO1" {...register("code")} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-            <FErr msg={errors.code?.message} />
-          </div>
+          <NameWithAutoCode
+            nameLabel="Tên Module"
+            codeLabel="Mã module"
+            codePrefix="MOD"
+            name={nameValue}
+            code={codeValue}
+            lockCode={isEdit}
+            disabled={disabled}
+            namePlaceholder="Ví dụ: Robotics Cơ Bản"
+            nameError={errors.name?.message}
+            onNameChange={(value) =>
+              setValue("name", value, { shouldValidate: true, shouldDirty: true })
+            }
+            onCodeChange={setCode}
+          />
         </div>
 
         <div>
@@ -472,7 +485,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess,
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Loại Module <span style={{ color: W.primary }}>*</span></Label>
               <Controller name="moduleType" control={control} render={({ field }) => (
                 <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
-                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg", disabled && "opacity-70")}>
+                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 w-full rounded-lg", disabled && "opacity-70")}>
                     <span className="truncate">
                       {MODULE_TYPE_LABELS[field.value] ?? field.value}
                     </span>
@@ -489,7 +502,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess,
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Module tiên quyết</Label>
               <Controller name="prerequisiteModuleId" control={control} render={({ field }) => (
                 <Select value={field.value || "none"} onValueChange={(v) => field.onChange(v === "none" ? null : v)} disabled={disabled}>
-                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-full rounded-lg", disabled && "opacity-70")}>
+                  <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 w-full rounded-lg", disabled && "opacity-70")}>
                     <span className="truncate">
                       {!field.value || field.value === "none"
                         ? "Không có"
@@ -521,7 +534,7 @@ function ModuleFormPanel({ programId, moduleToEdit, modulesInProgram, onSuccess,
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Kiến thức đạt được <span className="text-xs font-normal" style={{ color: W.muted }}>(mỗi dòng một mục)</span></Label>
-              <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} disabled={disabled} className={cn("w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50", disabled && "opacity-70")} style={{ borderColor: W.border }} />
+              <textarea rows={3} placeholder={"Ví dụ:\nHiểu các linh kiện\nLập trình Robot"} {...register("learningOutcomesText")} disabled={disabled} className={cn(CURRICULUM_TEXTAREA, disabled && "opacity-70")} style={{ borderColor: W.border }} />
             </div>
           </div>
         </div>
@@ -553,7 +566,7 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess, d
     return max + 1;
   }, [coursesInModule]);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateCourseSchema : createCourseSchema),
     shouldUnregister: false,
     values: courseToEdit
@@ -564,8 +577,15 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess, d
           description: courseToEdit.description || "",
           courseOrder: courseToEdit.courseOrder ?? 1,
         }
-      : { code: "", moduleId, name: "", description: "", courseOrder: nextCourseOrder },
+      : { code: "CRS", moduleId, name: "", description: "", courseOrder: nextCourseOrder },
   });
+
+  const nameValue = watch("name") ?? "";
+  const codeValue = watch("code") ?? "";
+  const setCode = useCallback(
+    (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const onSubmit = async (data: any) => {
@@ -601,26 +621,24 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess, d
       <PHdr icon={BookOpen} color={W.accent} title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${courseToEdit!.name}` : "Tạo Khóa học mới"} sub="Khóa học trong học phần" />
       <div className="space-y-4 p-5">
         <STitle>Thông tin khóa học</STitle>
-        <div className="space-y-1.5">
-          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Khóa học <span style={{ color: W.primary }}>*</span></Label>
-          <input type="text" placeholder="Ví dụ: Nhập môn lập trình với Scratch" {...register("name")} disabled={disabled} className={cn(IN, disabled && "opacity-70")} style={{ borderColor: errors.name ? W.primary : W.border }} />
-          <FErr msg={errors.name?.message} />
-        </div>
-        <div className="grid grid-cols-[1fr_6.5rem] gap-4">
-          <div className="min-w-0 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Khóa học <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: CRS-SCRATCH1" {...register("code")} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-            <FErr msg={errors.code?.message} />
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Thứ tự <span style={{ color: W.primary }}>*</span></Label>
-            <input type="number" min={1} {...register("courseOrder", { valueAsNumber: true })} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.courseOrder ? W.primary : W.border }} />
-            <FErr msg={errors.courseOrder?.message} />
-          </div>
-        </div>
+        <NameWithAutoCode
+          nameLabel="Tên Khóa học"
+          codeLabel="Mã khóa học"
+          codePrefix="CRS"
+          name={nameValue}
+          code={codeValue}
+          lockCode={isEdit}
+          disabled={disabled}
+          namePlaceholder="Ví dụ: Nhập môn lập trình với Scratch"
+          nameError={errors.name?.message}
+          onNameChange={(value) =>
+            setValue("name", value, { shouldValidate: true, shouldDirty: true })
+          }
+          onCodeChange={setCode}
+        />
         <div className="space-y-1.5">
           <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
-          <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} disabled={disabled} className={cn("w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50", disabled && "opacity-70")} style={{ borderColor: W.border }} />
+          <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} disabled={disabled} className={cn(CURRICULUM_TEXTAREA, disabled && "opacity-70")} style={{ borderColor: W.border }} />
         </div>
 
         {isEdit && courseToEdit ? (
@@ -663,7 +681,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
     return max + 1;
   }, [activitiesInCourse]);
 
-  const { register, handleSubmit, control, setValue, formState: { errors } } = useForm({
+  const { register, handleSubmit, control, setValue, watch, formState: { errors } } = useForm({
     resolver: zodResolver(isEdit ? updateActivitySchema : createActivitySchema),
     shouldUnregister: false,
     values: activityToEdit ? {
@@ -673,12 +691,18 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       durationMinutes: activityToEdit.durationMinutes ?? null,
       requireQrCheckin: activityToEdit.requireQrCheckin, requireMediaEvidence: activityToEdit.requireMediaEvidence,
     } : {
-      code: "", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
+      code: "ACT", courseId, name: "", activityType: "SelfPaced" as const, description: "", activityOrder: nextOrder,
       durationMinutes: null,
       requireQrCheckin: false, requireMediaEvidence: false,
     },
   });
 
+  const nameValue = watch("name") ?? "";
+  const codeValue = watch("code") ?? "";
+  const setCode = useCallback(
+    (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
   const actType = useWatch({ control, name: "activityType" });
   const activityId = activityToEdit?.id;
   const [existingMaterial, setExistingMaterial] = useState<ActivityMaterial | null>(
@@ -775,15 +799,22 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
       <div className="space-y-4 p-5">
         <STitle>Thông tin hoạt động</STitle>
         <div className="grid grid-cols-2 gap-4">
-          <div className="col-span-2 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Tên Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: Xem Video hướng dẫn Assembly" {...register("name")} disabled={disabled} className={cn(IN, disabled && "opacity-70")} style={{ borderColor: errors.name ? W.primary : W.border }} />
-            <FErr msg={errors.name?.message} />
-          </div>
-          <div className="col-span-2 space-y-1.5">
-            <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mã Hoạt động <span style={{ color: W.primary }}>*</span></Label>
-            <input type="text" placeholder="Ví dụ: ACT-01" {...register("code")} disabled={disabled} className={cn(IN, "font-mono", disabled && "opacity-70")} style={{ borderColor: errors.code ? W.primary : W.border }} />
-            <FErr msg={errors.code?.message} />
+          <div className="col-span-2">
+            <NameWithAutoCode
+              nameLabel="Tên Hoạt động"
+              codeLabel="Mã hoạt động"
+              codePrefix="ACT"
+              name={nameValue}
+              code={codeValue}
+              lockCode={isEdit}
+              disabled={disabled}
+              namePlaceholder="Ví dụ: Xem Video hướng dẫn Assembly"
+              nameError={errors.name?.message}
+              onNameChange={(value) =>
+                setValue("name", value, { shouldValidate: true, shouldDirty: true })
+              }
+              onCodeChange={setCode}
+            />
           </div>
           <div className="col-span-2 flex flex-col gap-4 sm:flex-row">
             <div className="w-full shrink-0 space-y-4 sm:w-44">
@@ -802,7 +833,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                       setValue("durationMinutes", DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES);
                     }
                   }}>
-                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 w-44 rounded-lg", disabled && "opacity-70")}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 w-44 rounded-lg", disabled && "opacity-70")}>
                       <span className="truncate">
                         {(field.value && ACTIVITY_TYPE_LABELS[field.value]) || field.value || "Chọn loại"}
                       </span>
@@ -818,26 +849,22 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
             </div>
             <div className="flex flex-1 flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
-              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} disabled={disabled} className={cn("w-full flex-1 min-h-28 text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50", disabled && "opacity-70")} style={{ borderColor: W.border }} />
+              <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} disabled={disabled} className={cn(CURRICULUM_TEXTAREA, "min-h-28 flex-1", disabled && "opacity-70")} style={{ borderColor: W.border }} />
             </div>
           </div>
 
           {actType !== "SelfPaced" && (
             <>
-              <div className="col-span-2 space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                  Thời lượng (phút) <span style={{ color: W.primary }}>*</span>
-                </Label>
-                <input
-                  type="number"
+              <div className="col-span-2">
+                <CompactNumberField
+                  label="Thời lượng (phút)"
+                  required
                   min={1}
                   placeholder={String(DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES)}
-                  {...register("durationMinutes", { valueAsNumber: true })}
                   disabled={disabled}
-                  className={cn(IN, "font-mono", disabled && "opacity-70")}
-                  style={{ borderColor: errors.durationMinutes ? W.primary : W.border }}
+                  error={errors.durationMinutes?.message}
+                  {...register("durationMinutes", { valueAsNumber: true })}
                 />
-                <FErr msg={errors.durationMinutes?.message} />
               </div>
               <div
                 className="col-span-2 rounded-lg border border-dashed px-3 py-2.5 text-sm"

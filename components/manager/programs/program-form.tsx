@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -28,6 +28,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
 import { uploadProgramThumbnail, type ProgramWithModules } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { programUpsertSchema, uploadProgramThumbnailSchema } from "@/lib/validations/programs";
@@ -168,7 +169,7 @@ export function ProgramForm({
     resolver: zodResolver(programUpsertSchema),
     shouldUnregister: false,
     defaultValues: {
-      code:              initialValues?.code              ?? "",
+      code:              initialValues?.code              ?? (isEdit ? "" : "PRG"),
       name:              initialValues?.name              ?? "",
       seriesName:        initialValues?.seriesName        ?? "",
       description:       initialValues?.description       ?? "",
@@ -182,12 +183,17 @@ export function ProgramForm({
     },
   });
 
-  const [thumbUrl = "", category] = useWatch({
+  const [thumbUrl = "", category, nameValue = "", codeValue = ""] = useWatch({
     control,
-    name: ["thumbnailUrl", "category"],
+    name: ["thumbnailUrl", "category", "name", "code"],
   });
   const catColor = CATEGORIES.find((item) => item.value === category)?.color ?? "#4FC3F7";
   const displayThumbUrl = pendingThumbnailPreview || thumbUrl;
+
+  const setCode = useCallback(
+    (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
 
   const onFormSubmit = handleSubmit(
     async (data) => {
@@ -503,48 +509,37 @@ export function ProgramForm({
           </FormSectionTitle>
           {isEdit && !statusInPortal && <FieldError message={errors.status?.message} />}
           <div className="space-y-4">
+            <NameWithAutoCode
+              nameLabel="Tên chương trình học"
+              codeLabel="Mã chương trình"
+              codePrefix="PRG"
+              name={nameValue}
+              code={codeValue}
+              lockCode={isEdit}
+              disabled={disabled || isLoading}
+              namePlaceholder="Ví dụ: STEAM Robotics Cơ bản"
+              nameError={errors.name?.message}
+              onNameChange={(value) =>
+                setValue("name", value, { shouldValidate: true, shouldDirty: true })
+              }
+              onCodeChange={setCode}
+            />
+            {errors.code?.message ? (
+              <FieldError message={errors.code.message} />
+            ) : null}
+
             <div>
               <label className={LBL}>
-                Tên chương trình học <span className="text-primary">*</span>
+                Tên Series <span className="text-primary">*</span>
               </label>
               <Input
-                id="name"
-                placeholder="Ví dụ: STEAM Robotics Cơ bản"
-                {...register("name")}
-                aria-invalid={!!errors.name}
-                className={cn(INPUT_CLS, errors.name && "border-primary focus-visible:ring-primary/30")}
+                id="seriesName"
+                placeholder="Ví dụ: Obox Kids"
+                {...register("seriesName")}
+                aria-invalid={!!errors.seriesName}
+                className={cn(INPUT_CLS, errors.seriesName && "border-primary")}
               />
-              <FieldError message={errors.name?.message} />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className={LBL}>
-                  Tên Series <span className="text-primary">*</span>
-                </label>
-                <Input
-                  id="seriesName"
-                  placeholder="Ví dụ: Obox Kids"
-                  {...register("seriesName")}
-                  aria-invalid={!!errors.seriesName}
-                  className={cn(INPUT_CLS, errors.seriesName && "border-primary")}
-                />
-                <FieldError message={errors.seriesName?.message} />
-              </div>
-
-              <div>
-                <label className={LBL}>
-                  Mã chương trình <span className="text-primary">*</span>
-                </label>
-                <Input
-                  id="code"
-                  placeholder="PROG101"
-                  {...register("code")}
-                  aria-invalid={!!errors.code}
-                  className={cn(INPUT_CLS, "font-mono", errors.code && "border-primary")}
-                />
-                <FieldError message={errors.code?.message} />
-              </div>
+              <FieldError message={errors.seriesName?.message} />
             </div>
 
             <div>
