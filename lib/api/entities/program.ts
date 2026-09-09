@@ -63,6 +63,11 @@ export const programSchema = z.object({
     .number()
     .nullish()
     .transform((value) => value ?? 0),
+  frameworkId: z
+    .string()
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? null),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   experts: z

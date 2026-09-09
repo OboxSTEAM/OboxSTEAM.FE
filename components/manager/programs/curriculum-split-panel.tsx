@@ -999,6 +999,7 @@ function ProgramInfoPanel({
             level: program.level, estimatedDuration: program.estimatedDuration,
             skillsGained: program.skillsGained, thumbnailUrl: program.thumbnailUrl || "",
             status: program.status, price: program.price,
+            frameworkId: program.frameworkId ?? "",
           }}
           onSubmit={handleUpdate}
           onThumbnailUploaded={() => {

@@ -81,6 +81,39 @@ export {
   type UploadProgramThumbnailInput,
 } from "./programs";
 export {
+  approveCurriculumReviewSchema,
+  programReviewQueueQuerySchema,
+  requestCurriculumChangesSchema,
+  reviewCriterionScoreRequestSchema,
+  type ApproveCurriculumReviewInput,
+  type ProgramReviewQueueQuery,
+  type RequestCurriculumChangesInput,
+  type ReviewCriterionScoreRequestInput,
+} from "./curriculum-reviews";
+export {
+  createProgramFrameworkSchema,
+  frameworkCriterionIdParamSchema,
+  frameworkRubricCriterionRequestSchema,
+  programFrameworkIdParamSchema,
+  programFrameworkListQuerySchema,
+  updateProgramFrameworkSchema,
+  type CreateProgramFrameworkInput,
+  type FrameworkRubricCriterionRequestInput,
+  type ProgramFrameworkListQuery,
+  type UpdateProgramFrameworkInput,
+} from "./program-frameworks";
+export {
+  classSessionExpertIdParamSchema,
+  classSessionExpertListQuerySchema,
+  inviteClassSessionExpertSchema,
+  myClassSessionExpertListQuerySchema,
+  submitClassSessionExpertFeedbackSchema,
+  type ClassSessionExpertListQuery,
+  type InviteClassSessionExpertInput,
+  type MyClassSessionExpertListQuery,
+  type SubmitClassSessionExpertFeedbackInput,
+} from "./class-session-experts";
+export {
   approveParentLinkSchema,
   completeParentProfileSchema,
   parentChildProgressionParamsSchema,

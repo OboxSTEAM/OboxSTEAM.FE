@@ -33,6 +33,7 @@ import { useLiveJoinState } from "@/hooks/use-live-join-state";
 import {
   getActivityById,
   getClassSessionById,
+  getClassSessionExperts,
   getMentorById,
   getMyProgramEnrollments,
 } from "@/lib/api";
@@ -214,6 +215,22 @@ export function ScheduleSessionDetailSheet({
       deps: [classId, sessionId, open],
       onError: () => undefined,
     });
+
+  const { data: coTeachExperts, isLoading: isCoTeachLoading } = useClientFetch({
+    enabled: open && Boolean(sessionId) && session?.sessionKind === "Offline",
+    fetcher: async () => {
+      if (!sessionId) return [];
+      const result = await getClassSessionExperts({
+        sessionId,
+        status: "Accepted",
+        page: 1,
+        pageSize: 20,
+      });
+      return result?.data?.items ?? [];
+    },
+    deps: [sessionId, open, session?.sessionKind],
+    onError: () => undefined,
+  });
 
   const resolvedActivityId =
     scheduleActivityId ?? classSession?.activityId ?? null;
@@ -453,6 +470,56 @@ export function ScheduleSessionDetailSheet({
                         (mentor != null && mentor.id !== mentorId))
                     }
                   />
+                ) : null}
+                {session.sessionKind === "Offline" ? (
+                  <div className="space-y-2 px-4 py-3.5">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6B6B6B]">
+                      Chuyên gia đồng hành
+                    </p>
+                    {isCoTeachLoading ? (
+                      <Skeleton className="h-12 w-full rounded-lg" />
+                    ) : (coTeachExperts?.length ?? 0) === 0 ? (
+                      <p className="text-sm text-[#6B6B6B]">
+                        Chưa có chuyên gia tham gia buổi này.
+                      </p>
+                    ) : (
+                      <ul className="space-y-2">
+                        {(coTeachExperts ?? []).map((expert) => (
+                          <li
+                            key={expert.id}
+                            className="rounded-xl border border-border bg-card px-3 py-2.5"
+                          >
+                            <p className="text-sm font-semibold text-foreground">
+                              {expert.expertName || "Chuyên gia"}
+                            </p>
+                            {expert.expertCode ? (
+                              <p className="font-mono text-[11px] text-muted-foreground">
+                                {expert.expertCode}
+                              </p>
+                            ) : null}
+                            {isMentorView && expert.mentorFeedback ? (
+                              <div className="mt-2 rounded-lg bg-muted/50 px-2.5 py-2 text-xs text-muted-foreground">
+                                <p className="font-semibold text-foreground">
+                                  Phản hồi riêng tư
+                                  {expert.mentorFeedbackRating
+                                    ? ` · ${expert.mentorFeedbackRating}/5`
+                                    : ""}
+                                </p>
+                                <p className="mt-1 whitespace-pre-wrap leading-relaxed">
+                                  {expert.mentorFeedback}
+                                </p>
+                              </div>
+                            ) : null}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {!isMentorView && (coTeachExperts?.length ?? 0) > 0 ? (
+                      <p className="text-[11px] text-muted-foreground">
+                        Có chuyên gia tham gia buổi ngoại khóa này.
+                      </p>
+                    ) : null}
+                  </div>
                 ) : null}
                 <DetailInfoRow
                   icon={BookOpen}

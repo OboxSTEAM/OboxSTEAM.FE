@@ -3,6 +3,7 @@ import {
   Bell,
   BookOpen,
   CalendarDays,
+  ClipboardCheck,
   ClipboardList,
   LayoutDashboard,
   LogOut,
@@ -15,6 +16,7 @@ import {
 import {
   canAccessManagerArea,
   isAdminRole,
+  isExpertRole,
   isMentorRole,
   isParentRole,
 } from "@/lib/auth/roles";
@@ -140,6 +142,39 @@ export const MANAGER_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   },
 ];
 
+export const EXPERT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
+  {
+    label: "Duyệt chương trình",
+    href: "/expert/reviews",
+    icon: ClipboardCheck,
+    description: "Hàng chờ duyệt curriculum",
+  },
+  {
+    label: "Khung chương trình",
+    href: "/expert/frameworks",
+    icon: BookOpen,
+    description: "Blueprint & tiêu chí rubric",
+  },
+  {
+    label: "Lịch đồng hành",
+    href: "/expert/schedule",
+    icon: CalendarDays,
+    description: "Lời mời & buổi Offline",
+  },
+  {
+    label: "Hồ sơ chuyên môn",
+    href: "/expert/profile",
+    icon: User,
+    description: "Bằng cấp & công bố",
+  },
+  {
+    label: "Thông báo",
+    href: "/notifications",
+    icon: Bell,
+    description: "Hộp thư thông báo",
+  },
+];
+
 /** @deprecated Use getAccountNavItems(role) */
 export const ACCOUNT_NAV_ITEMS = STUDENT_ACCOUNT_NAV_ITEMS;
 
@@ -147,6 +182,7 @@ export function getAccountNavItems(role?: string | null): AccountNavItem[] {
   if (isParentRole(role)) return PARENT_ACCOUNT_NAV_ITEMS;
   if (canAccessManagerArea(role)) return MANAGER_ACCOUNT_NAV_ITEMS;
   if (isMentorRole(role)) return MENTOR_ACCOUNT_NAV_ITEMS;
+  if (isExpertRole(role)) return EXPERT_ACCOUNT_NAV_ITEMS;
   return STUDENT_ACCOUNT_NAV_ITEMS;
 }
 
@@ -156,6 +192,7 @@ export function getAccountRoleLabel(role?: string | null): string {
   if (isAdminRole(role)) return "Quản trị";
   if (canAccessManagerArea(role)) return "Quản lý";
   if (isMentorRole(role)) return "Mentor";
+  if (isExpertRole(role)) return "Chuyên gia";
   return "Học viên";
 }
 

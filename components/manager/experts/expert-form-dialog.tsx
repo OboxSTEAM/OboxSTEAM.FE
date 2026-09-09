@@ -8,6 +8,7 @@ import {
   BriefcaseBusiness,
   GraduationCap,
   ImagePlus,
+  KeyRound,
   Link2,
   Loader2,
   Search,
@@ -44,7 +45,32 @@ import { cn } from "@/lib/utils";
 
 import { ExpertCredentialsEditor } from "./expert-credentials-editor";
 
-export type ExpertFormValues = z.infer<typeof expertUpsertSchema>;
+/**
+ * Create provisions an Expert login (email + password required); edit keeps the
+ * same field shape so one resolver type serves both modes — only the
+ * refinements differ.
+ */
+function buildExpertFormSchema(isEdit: boolean) {
+  return expertUpsertSchema.extend({
+    email: isEdit
+      ? z.string().trim()
+      : z
+          .string()
+          .trim()
+          .min(1, "Vui lòng nhập email đăng nhập.")
+          .email("Email không hợp lệ."),
+    password: isEdit
+      ? z.string()
+      : z.string().min(6, "Mật khẩu phải có ít nhất 6 ký tự."),
+    phone: z
+      .string()
+      .trim()
+      .max(20, "Số điện thoại không được quá 20 ký tự.")
+      .optional(),
+  });
+}
+
+export type ExpertFormValues = z.infer<ReturnType<typeof buildExpertFormSchema>>;
 
 type ExpertFormDialogProps = {
   open: boolean;
@@ -94,7 +120,6 @@ function toDefaultValues(
 
   return {
     code: expert?.code ?? "",
-    userId: expert?.userId ?? "",
     fullName: expert?.fullName ?? "",
     title: expert?.title ?? "",
     organization: expert?.organization ?? "",
@@ -104,6 +129,9 @@ function toDefaultValues(
     achievements: expert?.achievements ?? "",
     specialization: expert?.specialization ?? [],
     programs: assignedPrograms,
+    email: expert?.email ?? "",
+    password: "",
+    phone: "",
   };
 }
 
@@ -119,6 +147,7 @@ export function ExpertFormDialog({
   onExpertChange,
 }: ExpertFormDialogProps) {
   const expertId = expert?.id ?? null;
+  const isEdit = expert != null;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [credentialDrafts, setCredentialDrafts] = useState<ExpertCredentialDrafts>(
     EMPTY_CREDENTIAL_DRAFTS,
@@ -129,6 +158,8 @@ export function ExpertFormDialog({
     expert?.specialization.join(", ") ?? "",
   );
 
+  const formSchema = useMemo(() => buildExpertFormSchema(isEdit), [isEdit]);
+
   const {
     control,
     register,
@@ -137,7 +168,7 @@ export function ExpertFormDialog({
     setValue,
     formState: { errors },
   } = useForm<ExpertFormValues>({
-    resolver: zodResolver(expertUpsertSchema),
+    resolver: zodResolver(formSchema),
     defaultValues: toDefaultValues(expert, defaultProgramId),
   });
   const { fields, append, remove } = useFieldArray({ control, name: "programs" });
@@ -412,6 +443,60 @@ export function ExpertFormDialog({
                   />
                 </FormField>
               </FormSection>
+
+              {isEdit ? null : (
+                <FormSection icon={KeyRound} title="Tài khoản đăng nhập">
+                  <p className="-mt-2 text-xs leading-5 text-muted-foreground">
+                    Hệ thống tạo tài khoản Chuyên gia với email và mật khẩu này. Hãy
+                    gửi thông tin đăng nhập cho chuyên gia sau khi tạo.
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      id="email"
+                      label="Email đăng nhập"
+                      required
+                      error={errors.email?.message}
+                    >
+                      <Input
+                        id="email"
+                        type="email"
+                        autoComplete="off"
+                        placeholder="chuyengia@oboxsteam.vn"
+                        {...register("email")}
+                        className={INPUT_CLASS}
+                      />
+                    </FormField>
+                    <FormField
+                      id="password"
+                      label="Mật khẩu"
+                      required
+                      error={errors.password?.message}
+                    >
+                      <Input
+                        id="password"
+                        type="password"
+                        autoComplete="new-password"
+                        placeholder="Tối thiểu 6 ký tự"
+                        {...register("password")}
+                        className={INPUT_CLASS}
+                      />
+                    </FormField>
+                    <FormField
+                      id="phone"
+                      label="Số điện thoại"
+                      error={errors.phone?.message}
+                    >
+                      <Input
+                        id="phone"
+                        inputMode="tel"
+                        placeholder="0901234567"
+                        {...register("phone")}
+                        className={INPUT_CLASS}
+                      />
+                    </FormField>
+                  </div>
+                </FormSection>
+              )}
 
               <div className="grid gap-6 xl:grid-cols-2 xl:items-start">
               <FormSection icon={BriefcaseBusiness} title="Chương trình tham gia">

@@ -10,6 +10,8 @@ import {
 } from "@/lib/api/entities/program";
 import { rebuyClassCatalogSchema } from "@/lib/api/entities/rebuy-class-catalog";
 import { programReviewSchema } from "@/lib/api/entities/review";
+import { curriculumReviewSchema } from "@/lib/api/entities/curriculum-review";
+import { programReviewQueueItemSchema } from "@/lib/api/entities/program-review-queue";
 import { createApiResponseSchema, createApiValueSchema, apiValueMessageOnlySchema } from "@/lib/api/schemas";
 
 export const paginatedProgramsSchema = createPaginatedSchema(programSchema);
@@ -89,6 +91,29 @@ export const releaseProgramClassHoldResponseSchema = createApiResponseSchema(
   apiValueMessageOnlySchema,
 );
 
+export const curriculumReviewsValueSchema = createApiValueSchema(
+  z.array(curriculumReviewSchema),
+);
+export const getCurriculumReviewsResponseSchema = createApiResponseSchema(
+  curriculumReviewsValueSchema,
+);
+export const curriculumReviewMutationResponseSchema = createApiResponseSchema(
+  createApiValueSchema(curriculumReviewSchema),
+);
+export const programLifecycleResponseSchema = createApiResponseSchema(
+  programMutationValueSchema,
+);
+
+export const paginatedProgramReviewQueueSchema = createPaginatedSchema(
+  programReviewQueueItemSchema,
+);
+export const programReviewQueueListValueSchema = createApiValueSchema(
+  paginatedProgramReviewQueueSchema,
+);
+export const getProgramReviewQueueResponseSchema = createApiResponseSchema(
+  programReviewQueueListValueSchema,
+);
+
 export type GetProgramsResponse = z.infer<typeof getProgramsResponseSchema>;
 export type GetProgramsWithModulesResponse = z.infer<typeof getProgramsWithModulesResponseSchema>;
 export type GetProgramByIdResponse = z.infer<typeof getProgramByIdResponseSchema>;
@@ -134,3 +159,24 @@ export type ReleaseProgramClassHoldResponse = z.infer<
   typeof releaseProgramClassHoldResponseSchema
 >;
 export type ReleaseProgramClassHoldResult = ReleaseProgramClassHoldResponse["value"];
+export type GetCurriculumReviewsResponse = z.infer<
+  typeof getCurriculumReviewsResponseSchema
+>;
+export type GetCurriculumReviewsResult = GetCurriculumReviewsResponse["value"];
+export type CurriculumReviewMutationResponse = z.infer<
+  typeof curriculumReviewMutationResponseSchema
+>;
+export type CurriculumReviewMutationResult =
+  CurriculumReviewMutationResponse["value"];
+export type ProgramLifecycleResponse = z.infer<
+  typeof programLifecycleResponseSchema
+>;
+export type ProgramLifecycleResult = ProgramLifecycleResponse["value"];
+export type GetProgramReviewQueueResponse = z.infer<
+  typeof getProgramReviewQueueResponseSchema
+>;
+export type GetProgramReviewQueueResult = GetProgramReviewQueueResponse["value"];
+/** @deprecated Use GetProgramReviewQueueResponse */
+export type GetReviewQueueResponse = GetProgramReviewQueueResponse;
+/** @deprecated Use GetProgramReviewQueueResult */
+export type GetReviewQueueResult = GetProgramReviewQueueResult;

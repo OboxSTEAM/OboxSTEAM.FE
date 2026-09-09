@@ -16,6 +16,8 @@ export type ScheduleDisplaySession = {
   status: ClassSessionStatus;
   isCompleted?: boolean;
   attendanceStatus?: SessionAttendanceStatus | null;
+  /** When true, show “Có chuyên gia” badge (Accepted co-teach). */
+  hasAcceptedExpert?: boolean;
 };
 
 export type ScheduleDayData<T extends ScheduleDisplaySession = ScheduleDisplaySession> =

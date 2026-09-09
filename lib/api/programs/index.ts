@@ -12,6 +12,14 @@ import {
   updateProgramSchema,
   uploadProgramThumbnailSchema,
 } from "@/lib/validations/programs";
+import {
+  approveCurriculumReviewSchema,
+  programReviewQueueQuerySchema,
+  requestCurriculumChangesSchema,
+  type ApproveCurriculumReviewInput,
+  type ProgramReviewQueueQuery,
+  type RequestCurriculumChangesInput,
+} from "@/lib/validations/curriculum-reviews";
 
 import {
   deleteProgramResponseSchema,
@@ -42,6 +50,15 @@ import {
   type ReleaseProgramClassHoldResult,
   type UpdateProgramResult,
   type UploadProgramThumbnailResult,
+  type GetCurriculumReviewsResult,
+  type CurriculumReviewMutationResult,
+  type ProgramLifecycleResult,
+  type GetReviewQueueResult,
+  type GetProgramReviewQueueResult,
+  getCurriculumReviewsResponseSchema,
+  curriculumReviewMutationResponseSchema,
+  programLifecycleResponseSchema,
+  getProgramReviewQueueResponseSchema,
 } from "./schemas";
 
 export type {
@@ -73,7 +90,32 @@ export type {
   UpdateProgramResult,
   UploadProgramThumbnailResponse,
   UploadProgramThumbnailResult,
+  GetCurriculumReviewsResponse,
+  GetCurriculumReviewsResult,
+  CurriculumReviewMutationResponse,
+  CurriculumReviewMutationResult,
+  ProgramLifecycleResponse,
+  ProgramLifecycleResult,
+  GetReviewQueueResponse,
+  GetReviewQueueResult,
+  GetProgramReviewQueueResponse,
+  GetProgramReviewQueueResult,
 } from "./schemas";
+
+export type {
+  ApproveCurriculumReviewInput,
+  ProgramReviewQueueQuery,
+  RequestCurriculumChangesInput,
+  ReviewCriterionScoreRequestInput,
+} from "@/lib/validations/curriculum-reviews";
+
+export type {
+  CurriculumReview,
+  CurriculumReviewDecision,
+  ReviewCriterionScore,
+} from "@/lib/api/entities/curriculum-review";
+
+export type { ProgramReviewQueueItem } from "@/lib/api/entities/program-review-queue";
 
 export type {
   Module,
@@ -346,6 +388,10 @@ export async function createProgram(
     entries.push(["ThumbnailUrl", fields.thumbnailUrl]);
   }
 
+  if (fields.frameworkId) {
+    entries.push(["FrameworkId", fields.frameworkId]);
+  }
+
   for (const [key, value] of entries) {
     const text = String(value);
     // Controller binds `[FromForm] CreateProgramRequestDto data` → `data.Code`.
@@ -372,7 +418,8 @@ export async function updateProgram(
   input: UpdateProgramInput,
 ): Promise<UpdateProgramResult> {
   const { id: programId } = programIdParamSchema.parse({ id });
-  const body = updateProgramSchema.parse(input);
+  const parsed = updateProgramSchema.parse(input);
+  const body = { ...parsed, frameworkId: parsed.frameworkId || null };
 
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${programId}`,
@@ -410,6 +457,100 @@ export async function deleteProgram(id: string): Promise<DeleteProgramResult> {
     `${PROGRAMS_BASE}/${programId}`,
     deleteProgramResponseSchema,
     { method: "DELETE" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getProgramReviewQueue(
+  params?: ProgramReviewQueueQuery,
+): Promise<GetReviewQueueResult> {
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/review-queue${buildQueryString(params, programReviewQueueQuerySchema)}`,
+    getProgramReviewQueueResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getCurriculumReviews(
+  programId: string,
+): Promise<GetCurriculumReviewsResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/curriculum-reviews`,
+    getCurriculumReviewsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function submitProgramReview(
+  programId: string,
+): Promise<ProgramLifecycleResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/submit-review`,
+    programLifecycleResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function withdrawProgramReview(
+  programId: string,
+): Promise<ProgramLifecycleResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/withdraw-review`,
+    programLifecycleResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function publishProgram(
+  programId: string,
+): Promise<ProgramLifecycleResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/publish`,
+    programLifecycleResponseSchema,
+    { method: "POST" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function approveProgramReview(
+  programId: string,
+  input: ApproveCurriculumReviewInput = {},
+): Promise<CurriculumReviewMutationResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = approveCurriculumReviewSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/approve-review`,
+    curriculumReviewMutationResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function requestProgramChanges(
+  programId: string,
+  input: RequestCurriculumChangesInput,
+): Promise<CurriculumReviewMutationResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = requestCurriculumChangesSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/request-changes`,
+    curriculumReviewMutationResponseSchema,
+    { method: "POST", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

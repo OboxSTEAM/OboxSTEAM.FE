@@ -162,7 +162,10 @@ export function ExpertManager() {
         setFormOpen(false);
         setEditingExpert(null);
       } else {
-        const created = await createExpert(values);
+        const created = await createExpert({
+          ...values,
+          phone: values.phone?.trim() || null,
+        });
         const expert = created?.data;
         if (!expert) {
           throw new Error("Không nhận được hồ sơ chuyên gia vừa tạo.");

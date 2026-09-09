@@ -11,6 +11,7 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  UserPlus,
 } from "lucide-react";
 
 import {
@@ -18,6 +19,7 @@ import {
   type ClassSessionFormSubmitPayload,
 } from "@/components/manager/classes/session-form-dialog";
 import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
+import { InviteSessionExpertDialog } from "@/components/manager/classes/invite-session-expert-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import { SessionEvidenceGalleryDrawer } from "@/components/manager/classes/session-evidence-gallery-drawer";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
@@ -87,6 +89,7 @@ function SessionManagerInner() {
   );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
   const [evidenceSession, setEvidenceSession] = useState<ClassSession | null>(null);
+  const [inviteSession, setInviteSession] = useState<ClassSession | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
@@ -399,6 +402,18 @@ function SessionManagerInner() {
               <Images className="size-4" />
             </Button>
           ) : null}
+          {session.sessionKind === "Offline" && session.status === "Scheduled" ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setInviteSession(session)}
+              aria-label={`Mời chuyên gia đồng hành ${session.title}`}
+              className="size-9 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              <UserPlus className="size-4" />
+            </Button>
+          ) : null}
           <Button
             type="button"
             variant="ghost"
@@ -706,6 +721,15 @@ function SessionManagerInner() {
         }}
         session={evidenceSession}
         onEditSession={openEditSession}
+      />
+
+      <InviteSessionExpertDialog
+        isOpen={inviteSession !== null}
+        onOpenChange={(open) => {
+          if (!open) setInviteSession(null);
+        }}
+        session={inviteSession}
+        programId={selectedProgramId}
       />
     </div>
   );

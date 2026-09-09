@@ -121,10 +121,7 @@ function buildQueryString<T extends Record<string, unknown>>(
 }
 
 function toExpertRequest(input: CreateExpertInput | UpdateExpertInput) {
-  return {
-    ...input,
-    userId: input.userId || null,
-  };
+  return input;
 }
 
 export async function getExperts(params?: ExpertListQuery): Promise<GetExpertsResult> {

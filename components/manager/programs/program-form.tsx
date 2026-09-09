@@ -29,7 +29,13 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
-import { uploadProgramThumbnail, type ProgramWithModules } from "@/lib/api";
+import { useClientFetch } from "@/hooks/use-client-fetch";
+import {
+  getProgramFrameworks,
+  uploadProgramThumbnail,
+  type ProgramFramework,
+  type ProgramWithModules,
+} from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { programUpsertSchema, uploadProgramThumbnailSchema } from "@/lib/validations/programs";
 import { cn } from "@/lib/utils";
@@ -126,6 +132,72 @@ function FormSectionTitle({
   );
 }
 
+// ── Framework guidelines ──────────────────────────────────────────────────
+function FrameworkGuidelines({
+  framework,
+  isCategoryMismatch,
+}: {
+  framework: ProgramFramework | null;
+  isCategoryMismatch: boolean;
+}) {
+  if (!framework) {
+    return (
+      <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+        Gắn khung để chuyên gia thẩm định curriculum theo rubric có sẵn.
+      </p>
+    );
+  }
+
+  const rules: string[] = [];
+  if (framework.minModules != null) {
+    rules.push(`Tối thiểu ${framework.minModules} học phần`);
+  }
+  if (framework.minOfflineSessions != null) {
+    rules.push(`Tối thiểu ${framework.minOfflineSessions} buổi ngoại khóa`);
+  }
+  if (framework.minLiveSessions != null) {
+    rules.push(`Tối thiểu ${framework.minLiveSessions} buổi học trực tuyến`);
+  }
+  if (framework.requireCapstoneResearchMilestone) {
+    rules.push("Bắt buộc có mốc nghiên cứu / dự án tổng kết");
+  }
+
+  return (
+    <div className="mt-2.5 rounded-lg border border-border bg-muted/40 p-3">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        Yêu cầu của khung
+      </p>
+      {rules.length > 0 ? (
+        <ul className="mt-1.5 space-y-1">
+          {rules.map((rule) => (
+            <li
+              key={rule}
+              className="flex items-start gap-1.5 text-xs leading-relaxed text-foreground"
+            >
+              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-primary" />
+              {rule}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-1.5 text-xs text-muted-foreground">
+          Khung này không đặt yêu cầu tối thiểu về cấu trúc.
+        </p>
+      )}
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {framework.criteria.length} tiêu chí rubric · Chuyên gia:{" "}
+        {framework.expertName || "—"}
+      </p>
+      {isCategoryMismatch ? (
+        <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-primary">
+          <AlertCircle className="mt-px size-3 shrink-0" />
+          Khung này thuộc thể loại khác với chương trình — hãy kiểm tra lại.
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 // ── Main Form ─────────────────────────────────────────────────────────────
 export function ProgramForm({
   programId,
@@ -180,15 +252,34 @@ export function ProgramForm({
       thumbnailUrl:      initialValues?.thumbnailUrl      ?? "",
       status:            initialValues?.status            ?? "Draft",
       price:             initialValues?.price             ?? 0,
+      frameworkId:       initialValues?.frameworkId       ?? "",
     },
   });
 
-  const [thumbUrl = "", category, nameValue = "", codeValue = ""] = useWatch({
-    control,
-    name: ["thumbnailUrl", "category", "name", "code"],
-  });
+  const [thumbUrl = "", category, nameValue = "", codeValue = "", frameworkId] =
+    useWatch({
+      control,
+      name: ["thumbnailUrl", "category", "name", "code", "frameworkId"],
+    });
   const catColor = CATEGORIES.find((item) => item.value === category)?.color ?? "#4FC3F7";
   const displayThumbUrl = pendingThumbnailPreview || thumbUrl;
+
+  const { data: frameworksData } = useClientFetch({
+    fetcher: () => getProgramFrameworks({ page: 1, pageSize: 100 }),
+    deps: [],
+    onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
+  });
+
+  const frameworks = frameworksData?.data?.items ?? [];
+  const selectedFramework =
+    frameworks.find((item) => item.id === frameworkId) ?? null;
+  /** Soft filter: same-category first, others stay pickable below. */
+  const matchingFrameworks = frameworks.filter(
+    (item) => item.category === category,
+  );
+  const otherFrameworks = frameworks.filter(
+    (item) => item.category !== category,
+  );
 
   const setCode = useCallback(
     (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
@@ -682,6 +773,69 @@ export function ProgramForm({
                 />
                 <FieldError message={errors.estimatedDuration?.message} />
               </div>
+            </div>
+
+            <div>
+              <label className={LBL}>Khung thẩm định chuyên môn</label>
+              <Controller
+                name="frameworkId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value ? field.value : "none"}
+                    onValueChange={(value) =>
+                      field.onChange(value === "none" ? "" : (value ?? ""))
+                    }
+                  >
+                    <SelectTrigger
+                      className={cn(
+                        LIGHT_SELECT_TRIGGER,
+                        "h-9 w-full rounded-lg border-input text-sm",
+                      )}
+                      aria-label="Khung thẩm định chuyên môn"
+                    >
+                      <span className="truncate">
+                        {selectedFramework
+                          ? selectedFramework.name
+                          : "Không gắn khung"}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent className={LIGHT_SELECT_CONTENT}>
+                      <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
+                        Không gắn khung
+                      </SelectItem>
+                      {matchingFrameworks.map((item) => (
+                        <SelectItem
+                          key={item.id}
+                          value={item.id}
+                          className={LIGHT_SELECT_ITEM}
+                        >
+                          {item.name}
+                        </SelectItem>
+                      ))}
+                      {otherFrameworks.map((item) => (
+                        <SelectItem
+                          key={item.id}
+                          value={item.id}
+                          className={LIGHT_SELECT_ITEM}
+                        >
+                          {item.name} ·{" "}
+                          {CATEGORIES.find((cat) => cat.value === item.category)
+                            ?.label ?? item.category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              <FieldError message={errors.frameworkId?.message} />
+              <FrameworkGuidelines
+                framework={selectedFramework}
+                isCategoryMismatch={
+                  selectedFramework != null &&
+                  selectedFramework.category !== category
+                }
+              />
             </div>
           </div>
         </div>

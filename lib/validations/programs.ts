@@ -61,6 +61,14 @@ export const programUpsertSchema = z.object({
   thumbnailUrl: z.string().url("URL ảnh thumbnail không hợp lệ.").or(z.literal("")).nullable().optional(),
   status: programStatusSchema,
   price: z.number().min(0, "Giá không được âm."),
+  /**
+   * Kept transform-free so `z.input` === `z.output` — react-hook-form resolvers
+   * reject schemas whose parsed shape differs from the form shape. Empty string
+   * is normalized to `null` at the API boundary.
+   */
+  frameworkId: z
+    .union([z.string().uuid("ID khung không hợp lệ."), z.literal(""), z.null()])
+    .optional(),
 });
 
 /** Create omits status — BE defaults to Draft. Optional `file` for create-time thumbnail. */
@@ -82,7 +90,9 @@ export const createProgramRequestSchema = createProgramSchema.extend({
     .nullable(),
 });
 
-export const updateProgramSchema = programUpsertSchema;
+export const updateProgramSchema = programUpsertSchema.extend({
+  clearFramework: z.boolean().optional().nullable(),
+});
 
 export const uploadProgramThumbnailSchema = z.object({
   file: z

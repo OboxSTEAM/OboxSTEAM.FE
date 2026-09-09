@@ -99,9 +99,6 @@ export const expertUpsertSchema = z.object({
     .trim()
     .min(1, "Vui lòng nhập mã chuyên gia.")
     .max(50, "Mã chuyên gia không được quá 50 ký tự."),
-  userId: z
-    .union([z.string().uuid("ID tài khoản không hợp lệ."), z.literal("")])
-    .optional(),
   fullName: z
     .string()
     .trim()
@@ -120,7 +117,24 @@ export const expertUpsertSchema = z.object({
   programs: z.array(expertProgramInputSchema),
 });
 
-export const createExpertSchema = expertUpsertSchema;
+/** Manager provisions Expert login — email + password required. */
+export const createExpertSchema = expertUpsertSchema.extend({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập email đăng nhập.")
+    .email("Email không hợp lệ."),
+  password: z
+    .string()
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự."),
+  phone: z
+    .string()
+    .trim()
+    .max(20, "Số điện thoại không được quá 20 ký tự.")
+    .optional()
+    .nullable(),
+});
+
 export const updateExpertSchema = expertUpsertSchema;
 
 export const uploadExpertAvatarSchema = z.object({

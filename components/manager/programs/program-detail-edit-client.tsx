@@ -8,6 +8,7 @@ import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
+import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { type ProgramWithModules } from "@/lib/api";
@@ -125,6 +126,9 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     { label: program.name },
   ];
 
+  /** Curriculum is frozen while the expert board reviews it. */
+  const isReviewLocked = program.status === "PendingReview";
+
   return (
     <div className="flex flex-col gap-0">
       <ManagerPageHeader
@@ -136,6 +140,16 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
       <StepperTabBar active={activeTab} onChange={setActiveTab} />
 
       <div className="px-6 pb-12 pt-6">
+        <div className="mb-6">
+          <ProgramReviewActions
+            programId={program.id}
+            status={program.status}
+            hasFramework={program.frameworkId != null}
+            moduleCount={program.modules.length}
+            onChanged={() => router.refresh()}
+          />
+        </div>
+
         {activeTab === "curriculum" && (
           <Suspense fallback={<CurriculumPanelFallback />}>
             <CurriculumSplitPanel
@@ -143,8 +157,12 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
               onRefresh={() => {
                 router.refresh();
               }}
-              cohortLocked={cohortLock.locked}
-              lockReason={cohortLock.reason}
+              cohortLocked={isReviewLocked || cohortLock.locked}
+              lockReason={
+                isReviewLocked
+                  ? "Chương trình đang chờ chuyên gia thẩm định. Rút duyệt để tiếp tục chỉnh sửa."
+                  : cohortLock.reason
+              }
               blockingClasses={cohortLock.blockingClasses}
             />
           </Suspense>

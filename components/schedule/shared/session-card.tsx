@@ -124,6 +124,11 @@ export function ScheduleSessionCard<T extends ScheduleDisplaySession>({
           <StatusBadge status={session.status} isCompleted={session.isCompleted} />
         )}
         <SessionKindBadge kind={session.sessionKind} />
+        {session.hasAcceptedExpert ? (
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+            Có chuyên gia
+          </span>
+        ) : null}
       </div>
 
       {session.meetingUrl ? (

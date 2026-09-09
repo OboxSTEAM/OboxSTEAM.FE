@@ -95,6 +95,7 @@ export const expertSchema = z.object({
   id: z.string().uuid(),
   code: nullableStringSchema,
   userId: nullableStringSchema,
+  email: nullableStringSchema,
   fullName: nullableStringSchema,
   title: nullableStringSchema,
   organization: nullableStringSchema,
