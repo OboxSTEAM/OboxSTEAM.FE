@@ -4,6 +4,7 @@ import {
   advisoryTargetTypeSchema,
   advisoryThreadStatusSchema,
   advisoryThreadTypeSchema,
+  advisoryAnchorKindSchema,
 } from "@/lib/api/entities/program-advisory";
 import { programStatusSchema } from "@/lib/api/entities/program";
 import { reviewCriterionScoreRequestSchema } from "@/lib/validations/curriculum-reviews";
@@ -28,7 +29,27 @@ export const createAdvisoryThreadSchema = z.object({
     .trim()
     .min(1, "Vui lòng nhập nội dung góp ý.")
     .max(4000, "Nội dung không được quá 4000 ký tự."),
+  /** Always send during PendingReview — BE returns 400 if missing. */
   submissionId: z.string().uuid().optional().nullable(),
+  anchorKind: advisoryAnchorKindSchema.optional().nullable(),
+  anchorField: z.string().trim().max(200).optional().nullable(),
+  anchorQuote: z.string().trim().max(1000).optional().nullable(),
+});
+
+export const advisoryThreadsQuerySchema = z.object({
+  submissionId: z.string().uuid().optional(),
+  targetType: advisoryTargetTypeSchema.optional(),
+  targetId: z.string().uuid().optional(),
+  status: advisoryThreadStatusSchema.optional(),
+  type: advisoryThreadTypeSchema.optional(),
+});
+
+export const advisoryBoardQuerySchema = z.object({
+  submissionId: z.string().uuid().optional(),
+});
+
+export const advisoryPinsQuerySchema = z.object({
+  submissionId: z.string().uuid().optional(),
 });
 
 export const addAdvisoryMessageSchema = z.object({
@@ -71,6 +92,9 @@ export type AssignProgramAdvisorInput = z.infer<
 export type CreateAdvisoryThreadInput = z.infer<
   typeof createAdvisoryThreadSchema
 >;
+export type AdvisoryThreadsQuery = z.infer<typeof advisoryThreadsQuerySchema>;
+export type AdvisoryBoardQuery = z.infer<typeof advisoryBoardQuerySchema>;
+export type AdvisoryPinsQuery = z.infer<typeof advisoryPinsQuerySchema>;
 export type AddAdvisoryMessageInput = z.infer<typeof addAdvisoryMessageSchema>;
 export type UpdateAdvisoryThreadStatusInput = z.infer<
   typeof updateAdvisoryThreadStatusSchema

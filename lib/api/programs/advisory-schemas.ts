@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import {
+  advisoryBoardSchema,
   advisoryMessageSchema,
+  advisoryThreadPinSummarySchema,
   advisoryThreadSchema,
   frameworkCheckSchema,
   paginatedAdvisoryMineSchema,
@@ -26,8 +28,16 @@ export const getFrameworkCheckResponseSchema = createApiResponseSchema(
   createApiValueSchema(frameworkCheckSchema),
 );
 
+export const getAdvisoryBoardResponseSchema = createApiResponseSchema(
+  createApiValueSchema(advisoryBoardSchema),
+);
+
 export const getAdvisoryThreadsResponseSchema = createApiResponseSchema(
   createApiValueSchema(z.array(advisoryThreadSchema)),
+);
+
+export const getAdvisoryThreadPinsResponseSchema = createApiResponseSchema(
+  createApiValueSchema(z.array(advisoryThreadPinSummarySchema)),
 );
 
 export const advisoryThreadMutationResponseSchema = createApiResponseSchema(
@@ -75,8 +85,14 @@ export type GetProgramAdvisoryWorkspaceResult = z.infer<
 export type GetFrameworkCheckResult = z.infer<
   typeof getFrameworkCheckResponseSchema
 >["value"];
+export type GetAdvisoryBoardResult = z.infer<
+  typeof getAdvisoryBoardResponseSchema
+>["value"];
 export type GetAdvisoryThreadsResult = z.infer<
   typeof getAdvisoryThreadsResponseSchema
+>["value"];
+export type GetAdvisoryThreadPinsResult = z.infer<
+  typeof getAdvisoryThreadPinsResponseSchema
 >["value"];
 export type AdvisoryThreadMutationResult = z.infer<
   typeof advisoryThreadMutationResponseSchema

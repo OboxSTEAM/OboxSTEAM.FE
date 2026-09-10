@@ -35,6 +35,8 @@ export const advisoryThreadStatusSchema = z.enum([
   "Resolved",
 ]);
 
+export const advisoryAnchorKindSchema = z.enum(["Node", "Field", "Quote"]);
+
 export const reviewSubmissionStatusSchema = z.enum([
   "Pending",
   "ChangesRequested",
@@ -149,6 +151,16 @@ export const advisoryThreadSchema = z.object({
   targetContext: nullableStringSchema,
   type: advisoryThreadTypeSchema,
   status: advisoryThreadStatusSchema,
+  anchorKind: advisoryAnchorKindSchema.nullish().transform((value) => value ?? null),
+  anchorField: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  anchorQuote: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  latestMessagePreview: nullableStringSchema,
   lastMessageAt: z.string(),
   createdAt: z.string(),
   messageCount: z.number().int(),
@@ -241,6 +253,14 @@ export const submissionChangeItemSchema = z.object({
   id: z.string().uuid(),
   label: nullableStringSchema,
   field: nullableStringSchema,
+  before: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  after: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   detail: nullableStringSchema,
 });
 
@@ -263,13 +283,236 @@ export const submissionChangesSchema = z.object({
     .array(submissionChangeItemSchema)
     .nullish()
     .transform((value) => value ?? []),
+  addedCount: z.number().int().optional(),
+  removedCount: z.number().int().optional(),
+  reorderedCount: z.number().int().optional(),
+  modifiedCount: z.number().int().optional(),
 });
 
 export type SubmissionChanges = z.infer<typeof submissionChangesSchema>;
+export type SubmissionChangeItem = z.infer<typeof submissionChangeItemSchema>;
+
+export const materialSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  activityId: z.string().uuid(),
+  title: nullableStringSchema,
+  type: z.string().nullish().transform((value) => value ?? null),
+  materialType: z.string().nullish().transform((value) => value ?? null),
+  fileName: z.string().nullish().transform((value) => value ?? null),
+  url: z.string().nullish().transform((value) => value ?? null),
+  fileSizeBytes: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+});
+
+export const activitySnapshotSchema = z.object({
+  id: z.string().uuid(),
+  courseId: optionalUuidSchema,
+  milestoneId: optionalUuidSchema,
+  name: nullableStringSchema,
+  type: z.string().nullish().transform((value) => value ?? null),
+  activityType: z.string().nullish().transform((value) => value ?? null),
+  order: z.number().int(),
+  description: z.string().nullish().transform((value) => value ?? null),
+  durationMinutes: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+  requireQrCheckin: z.boolean().optional().default(false),
+  requireMediaEvidence: z.boolean().optional().default(false),
+  material: materialSnapshotSchema.nullish().transform((value) => value ?? null),
+});
+
+export const courseSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string().nullish().transform((value) => value ?? null),
+  name: nullableStringSchema,
+  order: z.number().int(),
+  description: z.string().nullish().transform((value) => value ?? null),
+  activities: z
+    .array(activitySnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const assignmentSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string().nullish().transform((value) => value ?? null),
+  moduleId: z.string().uuid(),
+  courseId: optionalUuidSchema,
+  title: nullableStringSchema,
+  scope: z.string().nullish().transform((value) => value ?? null),
+  description: z.string().nullish().transform((value) => value ?? null),
+  assignmentType: z.string().nullish().transform((value) => value ?? null),
+  maxPoints: z.number().int(),
+  passScore: z.number(),
+  isRequiredForModulePass: z.boolean().optional().default(false),
+  timeLimitMinutes: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+  maxAttempts: z.number().int(),
+  availableFrom: z.string().nullish().transform((value) => value ?? null),
+  dueAt: z.string().nullish().transform((value) => value ?? null),
+});
+
+export const milestoneSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string().nullish().transform((value) => value ?? null),
+  title: nullableStringSchema,
+  order: z.number().int(),
+  isCapstone: z.boolean(),
+  description: z.string().nullish().transform((value) => value ?? null),
+  assignmentId: z.string().uuid(),
+  assignment: assignmentSnapshotSchema
+    .nullish()
+    .transform((value) => value ?? null),
+  activities: z
+    .array(activitySnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  activityIds: z
+    .array(z.string().uuid())
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const moduleSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  code: z.string().nullish().transform((value) => value ?? null),
+  name: nullableStringSchema,
+  order: z.number().int(),
+  type: z.string().nullish().transform((value) => value ?? null),
+  moduleType: z.string().nullish().transform((value) => value ?? null),
+  prerequisiteModuleId: optionalUuidSchema,
+  isMandatory: z.boolean().optional().default(true),
+  learningOutcomes: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  courses: z
+    .array(courseSnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  /** Legacy fallback — prefer `courses[].activities`. */
+  activities: z
+    .array(activitySnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  materials: z
+    .array(materialSnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  assignments: z
+    .array(assignmentSnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  milestones: z
+    .array(milestoneSnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const programSnapshotSchema = z.object({
+  id: z.string().uuid(),
+  name: nullableStringSchema,
+  code: nullableStringSchema,
+  description: nullableStringSchema,
+  skillsGained: nullableStringSchema,
+  frameworkVersionId: optionalUuidSchema,
+});
+
+export const curriculumSnapshotDocumentSchema = z.object({
+  programId: z.string().uuid(),
+  programName: nullableStringSchema,
+  program: programSnapshotSchema.nullish().transform((value) => value ?? null),
+  modules: z
+    .array(moduleSnapshotSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const advisoryBoardProgramSchema = z.object({
+  id: z.string().uuid(),
+  name: nullableStringSchema,
+  code: nullableStringSchema,
+  status: programStatusSchema,
+  description: nullableStringSchema,
+  skillsGained: nullableStringSchema,
+  frameworkVersionId: optionalUuidSchema,
+});
+
+export const advisoryThreadPinSchema = z.object({
+  threadId: z.string().uuid(),
+  submissionId: optionalUuidSchema,
+  targetType: advisoryTargetTypeSchema,
+  targetId: optionalUuidSchema,
+  type: advisoryThreadTypeSchema,
+  status: advisoryThreadStatusSchema,
+  messageCount: z.number().int(),
+  authorName: nullableStringSchema,
+  lastMessagePreview: nullableStringSchema,
+  lastMessageAt: z.string(),
+  targetLabel: nullableStringSchema,
+});
+
+export const advisoryThreadPinSummarySchema = z.object({
+  targetType: advisoryTargetTypeSchema,
+  targetId: z.string().uuid(),
+  openRequired: z.number().int(),
+  openSuggestions: z.number().int(),
+  total: z.number().int(),
+});
+
+export const frameworkHighlightSchema = z.object({
+  targetType: advisoryTargetTypeSchema,
+  targetId: z.string().uuid(),
+  checkCode: nullableStringSchema,
+  label: nullableStringSchema,
+  passed: z.boolean(),
+});
+
+export const advisoryBoardSchema = z.object({
+  submissionId: z.string().uuid(),
+  previousSubmissionId: optionalUuidSchema,
+  program: advisoryBoardProgramSchema,
+  curriculum: curriculumSnapshotDocumentSchema,
+  threadPins: z
+    .array(advisoryThreadPinSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  changeSummary: submissionChangesSchema
+    .nullish()
+    .transform((value) => value ?? null),
+  frameworkHighlights: z
+    .array(frameworkHighlightSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
 
 export type AdvisoryTargetType = z.infer<typeof advisoryTargetTypeSchema>;
 export type AdvisoryThreadType = z.infer<typeof advisoryThreadTypeSchema>;
 export type AdvisoryThreadStatus = z.infer<typeof advisoryThreadStatusSchema>;
+export type AdvisoryAnchorKind = z.infer<typeof advisoryAnchorKindSchema>;
 export type ReviewSubmissionStatus = z.infer<
   typeof reviewSubmissionStatusSchema
 >;
+export type MaterialSnapshot = z.infer<typeof materialSnapshotSchema>;
+export type ActivitySnapshot = z.infer<typeof activitySnapshotSchema>;
+export type CourseSnapshot = z.infer<typeof courseSnapshotSchema>;
+export type AssignmentSnapshot = z.infer<typeof assignmentSnapshotSchema>;
+export type MilestoneSnapshot = z.infer<typeof milestoneSnapshotSchema>;
+export type ModuleSnapshot = z.infer<typeof moduleSnapshotSchema>;
+export type CurriculumSnapshotDocument = z.infer<
+  typeof curriculumSnapshotDocumentSchema
+>;
+export type AdvisoryBoard = z.infer<typeof advisoryBoardSchema>;
+export type AdvisoryThreadPin = z.infer<typeof advisoryThreadPinSchema>;
+export type AdvisoryThreadPinSummary = z.infer<
+  typeof advisoryThreadPinSummarySchema
+>;
+export type FrameworkHighlight = z.infer<typeof frameworkHighlightSchema>;

@@ -5,14 +5,20 @@ import { ApiResponseError } from "@/lib/api/errors";
 import { programIdParamSchema } from "@/lib/validations/programs";
 import {
   addAdvisoryMessageSchema,
+  advisoryBoardQuerySchema,
   advisoryMineQuerySchema,
+  advisoryPinsQuerySchema,
+  advisoryThreadsQuerySchema,
   assignProgramAdvisorSchema,
   createAdvisoryThreadSchema,
   recordAdvisoryReadSchema,
   saveProgramReviewDraftSchema,
   updateAdvisoryThreadStatusSchema,
   type AddAdvisoryMessageInput,
+  type AdvisoryBoardQuery,
   type AdvisoryMineQuery,
+  type AdvisoryPinsQuery,
+  type AdvisoryThreadsQuery,
   type AssignProgramAdvisorInput,
   type CreateAdvisoryThreadInput,
   type RecordAdvisoryReadInput,
@@ -24,8 +30,10 @@ import {
   advisoryMessageMutationResponseSchema,
   advisoryThreadMutationResponseSchema,
   assignProgramAdvisorResponseSchema,
+  getAdvisoryBoardResponseSchema,
   getAdvisoryMessagesResponseSchema,
   getAdvisoryMineResponseSchema,
+  getAdvisoryThreadPinsResponseSchema,
   getAdvisoryThreadsResponseSchema,
   getFrameworkCheckResponseSchema,
   getProgramAdvisoryWorkspaceResponseSchema,
@@ -37,8 +45,10 @@ import {
   type AdvisoryMessageMutationResult,
   type AdvisoryThreadMutationResult,
   type AssignProgramAdvisorResult,
+  type GetAdvisoryBoardResult,
   type GetAdvisoryMessagesResult,
   type GetAdvisoryMineResult,
+  type GetAdvisoryThreadPinsResult,
   type GetAdvisoryThreadsResult,
   type GetFrameworkCheckResult,
   type GetProgramAdvisoryWorkspaceResult,
@@ -53,8 +63,10 @@ export type {
   AdvisoryMessageMutationResult,
   AdvisoryThreadMutationResult,
   AssignProgramAdvisorResult,
+  GetAdvisoryBoardResult,
   GetAdvisoryMessagesResult,
   GetAdvisoryMineResult,
+  GetAdvisoryThreadPinsResult,
   GetAdvisoryThreadsResult,
   GetFrameworkCheckResult,
   GetProgramAdvisoryWorkspaceResult,
@@ -67,7 +79,10 @@ export type {
 
 export type {
   AddAdvisoryMessageInput,
+  AdvisoryBoardQuery,
   AdvisoryMineQuery,
+  AdvisoryPinsQuery,
+  AdvisoryThreadsQuery,
   AssignProgramAdvisorInput,
   CreateAdvisoryThreadInput,
   RecordAdvisoryReadInput,
@@ -76,20 +91,33 @@ export type {
 } from "@/lib/validations/program-advisory";
 
 export type {
+  ActivitySnapshot,
+  AdvisoryAnchorKind,
+  AdvisoryBoard,
   AdvisoryFeedbackCounts,
   AdvisoryMessage,
   AdvisoryMineItem,
   AdvisoryParticipant,
   AdvisoryTargetType,
   AdvisoryThread,
+  AdvisoryThreadPin,
+  AdvisoryThreadPinSummary,
   AdvisoryThreadStatus,
   AdvisoryThreadType,
+  AssignmentSnapshot,
+  CourseSnapshot,
+  CurriculumSnapshotDocument,
   FrameworkCheck,
+  FrameworkHighlight,
+  MaterialSnapshot,
+  MilestoneSnapshot,
+  ModuleSnapshot,
   ProgramAdvisoryWorkspace,
   ProgramReviewDraft,
   ProgramReviewSubmissionDetail,
   ProgramReviewSubmissionSummary,
   ReviewSubmissionStatus,
+  SubmissionChangeItem,
   SubmissionChanges,
 } from "@/lib/api/entities/program-advisory";
 
@@ -154,6 +182,20 @@ export async function getProgramFrameworkCheck(
   return requireApiValue(response.value);
 }
 
+export async function getAdvisoryBoard(
+  programId: string,
+  params?: AdvisoryBoardQuery,
+): Promise<GetAdvisoryBoardResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory/board${buildQueryString(params, advisoryBoardQuerySchema)}`,
+    getAdvisoryBoardResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
 export async function assignProgramAdvisor(
   programId: string,
   input: AssignProgramAdvisorInput,
@@ -171,11 +213,26 @@ export async function assignProgramAdvisor(
 
 export async function getAdvisoryThreads(
   programId: string,
+  params?: AdvisoryThreadsQuery,
 ): Promise<GetAdvisoryThreadsResult> {
   const { id } = programIdParamSchema.parse({ id: programId });
   const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/advisory-threads`,
+    `${PROGRAMS_BASE}/${id}/advisory-threads${buildQueryString(params, advisoryThreadsQuerySchema)}`,
     getAdvisoryThreadsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getAdvisoryThreadPins(
+  programId: string,
+  params?: AdvisoryPinsQuery,
+): Promise<GetAdvisoryThreadPinsResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-threads/pins${buildQueryString(params, advisoryPinsQuerySchema)}`,
+    getAdvisoryThreadPinsResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);

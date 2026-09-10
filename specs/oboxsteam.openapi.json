@@ -25882,6 +25882,56 @@
         }
       }
     },
+    "/api/programs/{id}/advisory/board": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Get the submission-scoped hybrid advisory board",
+        "description": "Returns the frozen curriculum tree, submission pins, revision summary, and framework highlights.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryBoardDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryBoardDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryBoardDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/programs/{id}/framework-check": {
       "get": {
         "tags": [
@@ -25937,6 +25987,62 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "targetType",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Program",
+                "Module",
+                "Course",
+                "Activity",
+                "Assignment",
+                "ResearchMilestone",
+                "Material",
+                "RubricCriterion"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "targetId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Open",
+                "Addressed",
+                "Resolved"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Suggestion",
+                "RequiredChange"
+              ],
+              "type": "string"
             }
           }
         ],
@@ -26015,6 +26121,55 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/advisory-threads/pins": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Get advisory pin counts grouped by curriculum node",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadPinSummaryDtoIReadOnlyListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadPinSummaryDtoIReadOnlyListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadPinSummaryDtoIReadOnlyListApiResult"
                 }
               }
             }
@@ -34355,6 +34510,60 @@
         },
         "additionalProperties": false
       },
+      "ActivitySnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "milestoneId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "activityType": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "durationMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "requireQrCheckin": {
+            "type": "boolean"
+          },
+          "requireMediaEvidence": {
+            "type": "boolean"
+          },
+          "material": {
+            "$ref": "#/components/schemas/MaterialSnapshot"
+          }
+        },
+        "additionalProperties": false
+      },
       "AddAdvisoryMessageRequest": {
         "type": "object",
         "properties": {
@@ -34402,6 +34611,117 @@
         "properties": {
           "roleInBoard": {
             "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryBoardDto": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "previousSubmissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "program": {
+            "$ref": "#/components/schemas/AdvisoryBoardProgramDto"
+          },
+          "curriculum": {
+            "$ref": "#/components/schemas/CurriculumSnapshotDocument"
+          },
+          "threadPins": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryThreadPinDto"
+            },
+            "nullable": true
+          },
+          "changeSummary": {
+            "$ref": "#/components/schemas/SubmissionChangesDto"
+          },
+          "frameworkHighlights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkHighlightDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryBoardDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryBoardDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryBoardDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdvisoryBoardDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryBoardProgramDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive",
+              "PendingReview",
+              "Approved"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "skillsGained": {
+            "type": "string",
+            "nullable": true
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
             "nullable": true
           }
         },
@@ -34744,6 +35064,27 @@
             ],
             "type": "string"
           },
+          "anchorKind": {
+            "enum": [
+              "Node",
+              "Field",
+              "Quote"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "anchorField": {
+            "type": "string",
+            "nullable": true
+          },
+          "anchorQuote": {
+            "type": "string",
+            "nullable": true
+          },
+          "latestMessagePreview": {
+            "type": "string",
+            "nullable": true
+          },
           "lastMessageAt": {
             "type": "string",
             "example": "15/06/2026 14:30:00"
@@ -34823,6 +35164,145 @@
           },
           "data": {
             "$ref": "#/components/schemas/AdvisoryThreadDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadPinDto": {
+        "type": "object",
+        "properties": {
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "Suggestion",
+              "RequiredChange"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Open",
+              "Addressed",
+              "Resolved"
+            ],
+            "type": "string"
+          },
+          "messageCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "authorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastMessagePreview": {
+            "type": "string",
+            "nullable": true
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "targetLabel": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadPinSummaryDto": {
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "openRequired": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openSuggestions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "total": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadPinSummaryDtoIReadOnlyListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryThreadPinSummaryDtoIReadOnlyListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadPinSummaryDtoIReadOnlyListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryThreadPinSummaryDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -35446,6 +35926,75 @@
           },
           "data": {
             "$ref": "#/components/schemas/AssignmentResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignmentSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "moduleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "scope": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentType": {
+            "type": "string",
+            "nullable": true
+          },
+          "maxPoints": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "passScore": {
+            "type": "number",
+            "format": "double"
+          },
+          "isRequiredForModulePass": {
+            "type": "boolean"
+          },
+          "timeLimitMinutes": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "availableFrom": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "dueAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
           }
         },
         "additionalProperties": false
@@ -39062,6 +39611,39 @@
         },
         "additionalProperties": false
       },
+      "CourseSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySnapshot"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateActivitiesRequestDto": {
         "type": "object",
         "properties": {
@@ -39160,6 +39742,23 @@
           "submissionId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "anchorKind": {
+            "enum": [
+              "Node",
+              "Field",
+              "Quote"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "anchorField": {
+            "type": "string",
+            "nullable": true
+          },
+          "anchorQuote": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -40133,6 +40732,30 @@
           },
           "data": {
             "$ref": "#/components/schemas/CurriculumReviewResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "CurriculumSnapshotDocument": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
+          "program": {
+            "$ref": "#/components/schemas/ProgramSnapshot"
+          },
+          "modules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ModuleSnapshot"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -41848,6 +42471,40 @@
         },
         "additionalProperties": false
       },
+      "FrameworkHighlightDto": {
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "checkCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "passed": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
       "FrameworkRubricCriterionRequest": {
         "required": [
           "name"
@@ -43187,6 +43844,45 @@
         },
         "additionalProperties": false
       },
+      "MaterialSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "materialType": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileName": {
+            "type": "string",
+            "nullable": true
+          },
+          "url": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileSizeBytes": {
+            "type": "integer",
+            "format": "int64",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "MediaAssetDto": {
         "type": "object",
         "properties": {
@@ -44149,6 +44845,57 @@
         },
         "additionalProperties": false
       },
+      "MilestoneSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "isCapstone": {
+            "type": "boolean"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignment": {
+            "$ref": "#/components/schemas/AssignmentSnapshot"
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySnapshot"
+            },
+            "nullable": true
+          },
+          "activityIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ModuleEnrollmentResponseDto": {
         "type": "object",
         "properties": {
@@ -44333,6 +45080,86 @@
               "BankTransfer"
             ],
             "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ModuleSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "order": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "type": {
+            "type": "string",
+            "nullable": true
+          },
+          "moduleType": {
+            "type": "string",
+            "nullable": true
+          },
+          "prerequisiteModuleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "isMandatory": {
+            "type": "boolean"
+          },
+          "learningOutcomes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          },
+          "courses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CourseSnapshot"
+            },
+            "nullable": true
+          },
+          "activities": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActivitySnapshot"
+            },
+            "nullable": true
+          },
+          "materials": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MaterialSnapshot"
+            },
+            "nullable": true
+          },
+          "assignments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssignmentSnapshot"
+            },
+            "nullable": true
+          },
+          "milestones": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MilestoneSnapshot"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -48326,6 +49153,37 @@
         },
         "additionalProperties": false
       },
+      "ProgramSnapshot": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "skillsGained": {
+            "type": "string",
+            "nullable": true
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ProgramsResponseDto": {
         "type": "object",
         "properties": {
@@ -51159,6 +52017,14 @@
             "type": "string",
             "nullable": true
           },
+          "before": {
+            "type": "string",
+            "nullable": true
+          },
+          "after": {
+            "type": "string",
+            "nullable": true
+          },
           "detail": {
             "type": "string",
             "nullable": true
@@ -51205,6 +52071,26 @@
               "$ref": "#/components/schemas/SubmissionChangeItemDto"
             },
             "nullable": true
+          },
+          "addedCount": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "removedCount": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "reorderedCount": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
+          },
+          "modifiedCount": {
+            "type": "integer",
+            "format": "int32",
+            "readOnly": true
           }
         },
         "additionalProperties": false

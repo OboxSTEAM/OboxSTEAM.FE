@@ -389,7 +389,7 @@ export function resolveNotificationHref(
       }
       if (isExpert) {
         return expertProgramHref(programId, {
-          tab: "discussion",
+          tab: "content",
           threadId,
         });
       }

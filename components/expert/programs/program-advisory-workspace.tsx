@@ -9,21 +9,11 @@ import {
   CheckCircle2,
   LayoutGrid,
   ListChecks,
-  MessageSquare,
   ShieldCheck,
   XCircle,
 } from "lucide-react";
 
-import {
-  AdvisoryCreateThreadForm,
-  type AdvisoryThreadTarget,
-} from "@/components/advisory/advisory-create-thread-form";
-import {
-  AdvisoryCurriculumNavigator,
-  type CurriculumSelection,
-} from "@/components/advisory/advisory-curriculum-navigator";
-import { AdvisoryThreadList } from "@/components/advisory/advisory-thread-list";
-import { AdvisoryThreadPanel } from "@/components/advisory/advisory-thread-panel";
+import { AdvisoryCurriculumBoard } from "@/components/advisory/advisory-curriculum-board";
 import { ReviewAssessmentPanel } from "@/components/advisory/review-assessment-panel";
 import {
   ExpertWorkbenchHero,
@@ -31,45 +21,33 @@ import {
 } from "@/components/expert/shared/expert-workbench";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Sheet,
-  SheetBody,
-  SheetHeader,
-  SheetPopup,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   createAdvisoryThread,
+  getAdvisoryBoard,
+  getAdvisoryThreadPins,
   getAdvisoryThreads,
   getFrameworkVersion,
   getProgramAdvisoryWorkspace,
   getProgramFrameworkCheck,
   getReviewSubmission,
   recordAdvisoryRead,
-  type AdvisoryThread,
   type FrameworkCheck,
   type ProgramAdvisoryWorkspace,
   type ProgramWithModules,
 } from "@/lib/api";
-import {
-  parseCurriculumSnapshot,
-  parseRubricSnapshot,
-} from "@/lib/advisory/parse-snapshot";
+import { parseRubricSnapshot } from "@/lib/advisory/parse-snapshot";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   REVIEW_SUBMISSION_STATUS_LABELS,
 } from "@/lib/expert/advisory-labels";
-import {
-  MODULE_TYPE_LABELS,
-  PROGRAM_STATUS_LABELS,
-} from "@/lib/programs/constants";
+import { PROGRAM_STATUS_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
-type WorkspaceTab = "overview" | "content" | "discussion" | "assessment";
+type WorkspaceTab = "overview" | "content" | "assessment";
 
 const WORKSPACE_STEPS: {
   value: WorkspaceTab;
@@ -83,13 +61,8 @@ const WORKSPACE_STEPS: {
   },
   {
     value: "content",
-    label: "Hồ sơ lần nộp",
-    detail: "Đọc đúng snapshot và kiểm tra cấu trúc curriculum.",
-  },
-  {
-    value: "discussion",
-    label: "Trao đổi cố vấn",
-    detail: "Góp ý đúng nội dung và theo dõi việc chỉnh sửa.",
+    label: "Curriculum board",
+    detail: "Đọc snapshot, xem diff và pin góp ý ngay trên cây chương trình.",
   },
   {
     value: "assessment",
@@ -102,15 +75,23 @@ type ProgramAdvisoryWorkspaceProps = {
   program: ProgramWithModules;
 };
 
+function normalizeWorkspaceTab(raw: string | null): WorkspaceTab {
+  if (raw === "content" || raw === "assessment" || raw === "overview") {
+    return raw;
+  }
+  // Legacy inbox deep links → board (thread query param still opens the panel).
+  if (raw === "discussion") return "content";
+  return "overview";
+}
+
 function useWorkspaceParams() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const tab = (searchParams.get("tab") as WorkspaceTab) || "overview";
+  const tab = normalizeWorkspaceTab(searchParams.get("tab"));
   const threadId = searchParams.get("thread");
   const submissionId = searchParams.get("submission");
-  const targetType = searchParams.get("targetType");
-  const targetId = searchParams.get("targetId");
+  const rawTab = searchParams.get("tab");
 
   const setParams = useCallback(
     (patch: Record<string, string | null | undefined>) => {
@@ -124,18 +105,12 @@ function useWorkspaceParams() {
     [router, searchParams],
   );
 
-  return { tab, threadId, submissionId, targetType, targetId, setParams };
+  return { tab, threadId, submissionId, rawTab, setParams };
 }
 
 export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspaceProps) {
-  const { tab, threadId, submissionId, targetType, targetId, setParams } =
-    useWorkspaceParams();
-  const [showCreateThread, setShowCreateThread] = useState(false);
-  const [createTarget, setCreateTarget] = useState<CurriculumSelection | null>(
-    null,
-  );
+  const { tab, threadId, submissionId, rawTab, setParams } = useWorkspaceParams();
   const [isCreatingThread, setIsCreatingThread] = useState(false);
-  const [mobileContentOpen, setMobileContentOpen] = useState(false);
   const { profile } = useCurrentUser();
 
   const { data: workspaceData, retry: retryWorkspace } = useClientFetch({
@@ -156,12 +131,41 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     onError: (error) => showAppErrorFromUnknown(error, "programs.framework-check"),
   });
 
-  const { data: threadsData, isLoading: isThreadsLoading, retry: retryThreads } =
-    useClientFetch({
-      fetcher: () => getAdvisoryThreads(program.id),
-      deps: [program.id],
-      onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
-    });
+  const { data: threadsData, retry: retryThreads } = useClientFetch({
+    fetcher: () =>
+      getAdvisoryThreads(program.id, {
+        submissionId: activeSubmissionId ?? undefined,
+      }),
+    deps: [program.id, activeSubmissionId],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
+  });
+
+  const {
+    data: boardData,
+    isLoading: isBoardLoading,
+    retry: retryBoard,
+  } = useClientFetch({
+    enabled: activeSubmissionId != null,
+    fetcher: () =>
+      activeSubmissionId
+        ? getAdvisoryBoard(program.id, { submissionId: activeSubmissionId })
+        : Promise.resolve(null),
+    deps: [program.id, activeSubmissionId],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
+  });
+
+  const {
+    data: pinsData,
+    retry: retryPins,
+  } = useClientFetch({
+    enabled: activeSubmissionId != null,
+    fetcher: () =>
+      activeSubmissionId
+        ? getAdvisoryThreadPins(program.id, { submissionId: activeSubmissionId })
+        : Promise.resolve(null),
+    deps: [program.id, activeSubmissionId],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
+  });
 
   const { data: submissionData, isLoading: isSubmissionLoading } = useClientFetch({
     enabled: activeSubmissionId != null,
@@ -188,27 +192,14 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   });
 
   useEffect(() => {
-    if (tab !== "discussion") return;
+    if (tab !== "content") return;
     void recordAdvisoryRead(program.id).catch(() => undefined);
   }, [program.id, tab]);
 
-  const snapshotModules = useMemo(() => {
-    if (submission?.curriculumSnapshotJson) {
-      const parsed = parseCurriculumSnapshot(submission.curriculumSnapshotJson);
-      return parsed ?? [];
-    }
-    return program.modules;
-  }, [submission, program.modules]);
-
-  const isViewingSnapshot =
-    submission != null && submission.curriculumSnapshotJson != null;
-  const snapshotUnavailable =
-    submission != null &&
-    submission.curriculumSnapshotJson == null &&
-    activeSubmissionId != null;
-  const snapshotUnreadable =
-    submission?.curriculumSnapshotJson != null &&
-    parseCurriculumSnapshot(submission.curriculumSnapshotJson) == null;
+  useEffect(() => {
+    if (rawTab !== "discussion") return;
+    setParams({ tab: "content" });
+  }, [rawTab, setParams]);
 
   const rubricCriteria = useMemo(() => {
     if (submission?.rubricSnapshotJson) {
@@ -228,100 +219,39 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
       }));
   }, [submission, frameworkVersionData]);
 
+  const board = boardData?.data ?? null;
+  const pinSummaries = pinsData?.data ?? [];
+
   const threads = threadsData?.data ?? [];
-  const selectedThread =
-    threads.find((t) => t.id === threadId) ?? null;
-
-  const threadTargets: AdvisoryThreadTarget[] = useMemo(
-    () => [
-      {
-        targetType: "Program",
-        targetId: program.id,
-        targetLabel: program.name || "Chương trình",
-      },
-      ...program.modules.flatMap((mod) => [
-        {
-          targetType: "Module" as const,
-          targetId: mod.id,
-          targetLabel: mod.name,
-          targetContext: `Học phần ${mod.moduleOrder}`,
-        },
-        ...(mod.courses ?? []).map((course) => ({
-          targetType: "Course" as const,
-          targetId: course.id,
-          targetLabel: course.name,
-          targetContext: mod.name,
-        })),
-      ]),
-    ],
-    [program],
-  );
-
-  const curriculumSelection: CurriculumSelection | null = (() => {
-    if (targetType === "Module" && targetId) {
-      const mod = snapshotModules.find((m) => m.id === targetId);
-      if (mod) {
-        return {
-          targetType: "Module" as const,
-          targetId: mod.id,
-          label: mod.name,
-          context: `Học phần ${mod.moduleOrder}`,
-          module: mod,
-        };
-      }
-    }
-    if (targetType === "Course" && targetId) {
-      for (const mod of snapshotModules) {
-        const course = (mod.courses ?? []).find((c) => c.id === targetId);
-        if (course) {
-          return {
-            targetType: "Course" as const,
-            targetId: course.id,
-            label: course.name,
-            context: mod.name,
-            module: mod,
-            course,
-          };
-        }
-      }
-    }
-    return null;
-  })();
+  const selectedThread = threads.find((t) => t.id === threadId) ?? null;
 
   const openRequiredChanges = threads.filter(
     (t) => t.type === "RequiredChange" && t.status === "Open",
   );
 
+  function refreshAdvisorySurfaces() {
+    retryThreads();
+    retryBoard();
+    retryPins();
+  }
+
   async function handleCreateThread(input: Parameters<typeof createAdvisoryThread>[1]) {
     setIsCreatingThread(true);
     try {
-      const result = await createAdvisoryThread(program.id, input);
+      const result = await createAdvisoryThread(program.id, {
+        ...input,
+        submissionId: input.submissionId ?? activeSubmissionId,
+      });
       showAppSuccess({ title: "Đã gửi góp ý" });
-      setShowCreateThread(false);
-      setCreateTarget(null);
-      retryThreads();
+      refreshAdvisorySurfaces();
       if (result?.data?.id) {
-        setParams({ tab: "discussion", thread: result.data.id });
+        setParams({ tab: "content", thread: result.data.id });
       }
     } catch (error) {
       showAppErrorFromUnknown(error, "programs.advisory");
     } finally {
       setIsCreatingThread(false);
     }
-  }
-
-  function handleCurriculumSelect(selection: CurriculumSelection) {
-    setParams({
-      tab: "content",
-      targetType: selection.targetType,
-      targetId: selection.targetId,
-    });
-  }
-
-  function handleFeedbackRequest(selection: CurriculumSelection) {
-    setCreateTarget(selection);
-    setShowCreateThread(true);
-    setParams({ tab: "discussion" });
   }
 
   const frameworkCheck = frameworkCheckData?.data ?? null;
@@ -382,7 +312,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
           animate
           onStepSelect={(index) => {
             const next = WORKSPACE_STEPS[index];
-            if (next) setParams({ tab: next.value });
+            if (next) setParams({ tab: next.value, thread: null });
           }}
           steps={WORKSPACE_STEPS.map((step, index) => ({
             label: step.label,
@@ -390,7 +320,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
             state:
               index < tabIndex ? "done" : index === tabIndex ? "current" : "next",
             badge:
-              step.value === "discussion" && workspace?.hasUnreadFeedback ? (
+              step.value === "content" && workspace?.hasUnreadFeedback ? (
                 <span className="size-2 rounded-full bg-primary" />
               ) : undefined,
           }))}
@@ -400,7 +330,9 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-12 sm:px-6">
         <Tabs
           value={tab}
-          onValueChange={(value) => setParams({ tab: value as WorkspaceTab })}
+          onValueChange={(value) =>
+            setParams({ tab: value as WorkspaceTab, thread: null })
+          }
         >
           <TabsContent value="overview" className="mt-0">
             <OverviewTab
@@ -410,40 +342,25 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               isCheckLoading={isCheckLoading}
               openRequiredChanges={openRequiredChanges}
               feedbackCounts={feedbackCounts}
+              onOpenThread={(id) => setParams({ tab: "content", thread: id })}
             />
           </TabsContent>
 
           <TabsContent value="content" className="mt-0">
-            <ContentTab
-              modules={snapshotModules}
-              selection={curriculumSelection}
-              isSnapshot={isViewingSnapshot}
-              snapshotUnavailable={snapshotUnavailable}
-              snapshotUnreadable={snapshotUnreadable}
-              onSelect={handleCurriculumSelect}
-              onFeedback={workspace?.canAdvise ? handleFeedbackRequest : undefined}
-              onMobileOpen={() => setMobileContentOpen(true)}
-            />
-          </TabsContent>
-
-          <TabsContent value="discussion" className="mt-0">
-            <DiscussionTab
+            <AdvisoryCurriculumBoard
+              board={board}
               programId={program.id}
-              threads={threads}
-              isLoading={isThreadsLoading}
-              selectedThreadId={threadId}
+              pinSummaries={pinSummaries}
               selectedThread={selectedThread}
+              isLoading={isBoardLoading && activeSubmissionId != null}
               canAdvise={workspace?.canAdvise ?? false}
-              isResponsibleAdvisor={isResponsibleAdvisor}
-              showCreate={showCreateThread}
-              createTarget={createTarget}
-              targets={threadTargets}
-              submissionId={activeSubmissionId}
+              canCreateRequiredChange={isResponsibleAdvisor}
+              isAdvisor={isResponsibleAdvisor}
               isCreating={isCreatingThread}
-              onSelectThread={(id) => setParams({ thread: id })}
-              onToggleCreate={() => setShowCreateThread((v) => !v)}
-              onCreate={handleCreateThread}
-              onThreadUpdated={retryThreads}
+              onCreateThread={handleCreateThread}
+              onOpenThread={(id) => setParams({ tab: "content", thread: id })}
+              onCloseThread={() => setParams({ thread: null })}
+              onThreadUpdated={refreshAdvisorySurfaces}
             />
           </TabsContent>
 
@@ -487,17 +404,6 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
           </TabsContent>
         </Tabs>
       </div>
-
-      <Sheet open={mobileContentOpen} onOpenChange={setMobileContentOpen}>
-        <SheetPopup side="right" className="flex h-[80vh] w-full flex-col rounded-t-2xl p-0 sm:max-w-lg">
-          <SheetHeader className="border-b border-border px-4 py-3">
-            <SheetTitle>Nội dung chi tiết</SheetTitle>
-          </SheetHeader>
-          <SheetBody>
-            <CurriculumReadingPane selection={curriculumSelection} />
-          </SheetBody>
-        </SheetPopup>
-      </Sheet>
     </div>
   );
 }
@@ -509,6 +415,7 @@ function OverviewTab({
   isCheckLoading,
   openRequiredChanges,
   feedbackCounts,
+  onOpenThread,
 }: {
   program: ProgramWithModules;
   workspace: ProgramAdvisoryWorkspace | null;
@@ -519,6 +426,7 @@ function OverviewTab({
     openRequiredChanges: number;
     openSuggestions: number;
   };
+  onOpenThread?: (threadId: string) => void;
 }) {
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -644,256 +552,19 @@ function OverviewTab({
           <h2 className="text-sm font-bold text-primary">Yêu cầu chỉnh sửa đang mở</h2>
           <ul className="mt-3 space-y-1">
             {openRequiredChanges.map((thread) => (
-              <li key={thread.id} className="text-sm text-foreground">
-                · {thread.targetLabel}
+              <li key={thread.id}>
+                <button
+                  type="button"
+                  onClick={() => onOpenThread?.(thread.id)}
+                  className="text-sm text-foreground underline-offset-2 hover:underline"
+                >
+                  · {thread.targetLabel}
+                </button>
               </li>
             ))}
           </ul>
         </section>
       ) : null}
-    </div>
-  );
-}
-
-function ContentTab({
-  modules,
-  selection,
-  isSnapshot,
-  snapshotUnavailable,
-  snapshotUnreadable,
-  onSelect,
-  onFeedback,
-  onMobileOpen,
-}: {
-  modules: ProgramWithModules["modules"];
-  selection: CurriculumSelection | null;
-  isSnapshot: boolean;
-  snapshotUnavailable: boolean;
-  snapshotUnreadable: boolean;
-  onSelect: (s: CurriculumSelection) => void;
-  onFeedback?: (s: CurriculumSelection) => void;
-  onMobileOpen: () => void;
-}) {
-  if (snapshotUnreadable) {
-    return (
-      <div className="rounded-2xl border border-primary/25 bg-primary/5 p-8 text-center">
-        <AlertCircle className="mx-auto size-6 text-primary" />
-        <p className="mt-3 font-semibold text-foreground">
-          Không thể đọc hồ sơ lần nộp này
-        </p>
-        <p className="mx-auto mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
-          Dữ liệu chương trình hiện tại không được dùng thay cho ảnh chụp thẩm định,
-          để tránh đưa ra nhận định trên sai phiên bản.
-        </p>
-      </div>
-    );
-  }
-
-  if (snapshotUnavailable) {
-    return (
-      <p className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
-        Ảnh chụp curriculum không khả dụng cho lần nộp legacy này.
-      </p>
-    );
-  }
-
-  return (
-    <>
-      <div className="hidden min-h-[520px] overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)] lg:grid lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
-        <AdvisoryCurriculumNavigator
-          modules={modules}
-          selected={selection}
-          onSelect={onSelect}
-          onFeedback={onFeedback}
-          isSnapshot={isSnapshot}
-          showFeedbackAction={onFeedback != null}
-          className="border-r border-border"
-        />
-        <CurriculumReadingPane selection={selection} />
-      </div>
-
-      <div className="lg:hidden">
-        <AdvisoryCurriculumNavigator
-          modules={modules}
-          selected={selection}
-          onSelect={(s) => {
-            onSelect(s);
-            onMobileOpen();
-          }}
-          isSnapshot={isSnapshot}
-          showFeedbackAction={false}
-        />
-      </div>
-    </>
-  );
-}
-
-function CurriculumReadingPane({
-  selection,
-}: {
-  selection: CurriculumSelection | null;
-}) {
-  if (!selection) {
-    return (
-      <p className="flex h-full items-center justify-center p-8 text-center text-sm text-muted-foreground">
-        Chọn học phần hoặc khóa học để xem chi tiết.
-      </p>
-    );
-  }
-
-  if (selection.targetType === "Course" && selection.course) {
-    const course = selection.course;
-    return (
-      <div className="overflow-y-auto p-6">
-        <h3 className="font-heading text-lg font-bold text-foreground">{course.name}</h3>
-        <p className="mt-1 text-xs text-muted-foreground">{selection.context}</p>
-        {course.description ? (
-          <p className="mt-4 whitespace-pre-line text-sm text-muted-foreground">
-            {course.description}
-          </p>
-        ) : null}
-        {(course.activities ?? []).length > 0 ? (
-          <ul className="mt-4 space-y-2">
-            {course.activities.map((activity) => (
-              <li
-                key={activity.id}
-                className="rounded-lg border border-border px-3 py-2 text-sm text-foreground"
-              >
-                {activity.name}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-4 text-xs italic text-muted-foreground">Chưa có hoạt động.</p>
-        )}
-      </div>
-    );
-  }
-
-  if (selection.module) {
-    const mod = selection.module;
-    return (
-      <div className="overflow-y-auto p-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <h3 className="font-heading text-lg font-bold text-foreground">{mod.name}</h3>
-          <Badge variant="outline" className="rounded-md text-[10px]">
-            {MODULE_TYPE_LABELS[mod.moduleType]}
-          </Badge>
-        </div>
-        <p className="mt-1 text-xs text-muted-foreground">{selection.context}</p>
-        {mod.learningOutcomes?.length ? (
-          <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-            {mod.learningOutcomes.map((outcome) => (
-              <li key={outcome}>· {outcome}</li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-    );
-  }
-
-  return null;
-}
-
-function DiscussionTab({
-  programId,
-  threads,
-  isLoading,
-  selectedThreadId,
-  selectedThread,
-  canAdvise,
-  isResponsibleAdvisor,
-  showCreate,
-  createTarget,
-  targets,
-  submissionId,
-  isCreating,
-  onSelectThread,
-  onToggleCreate,
-  onCreate,
-  onThreadUpdated,
-}: {
-  programId: string;
-  threads: AdvisoryThread[];
-  isLoading: boolean;
-  selectedThreadId: string | null;
-  selectedThread: AdvisoryThread | null;
-  canAdvise: boolean;
-  isResponsibleAdvisor: boolean;
-  showCreate: boolean;
-  createTarget: CurriculumSelection | null;
-  targets: AdvisoryThreadTarget[];
-  submissionId: string | null;
-  isCreating: boolean;
-  onSelectThread: (id: string) => void;
-  onToggleCreate: () => void;
-  onCreate: (input: Parameters<typeof createAdvisoryThread>[1]) => Promise<void>;
-  onThreadUpdated: () => void;
-}) {
-  const defaultTarget = createTarget
-    ? {
-        targetType: createTarget.targetType,
-        targetId: createTarget.targetId,
-        targetLabel: createTarget.label,
-        targetContext: createTarget.context,
-      }
-    : null;
-
-  return (
-    <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-      <header className="flex items-center justify-between border-b border-border px-5 py-4">
-        <div className="flex items-start gap-2">
-          <MessageSquare className="mt-0.5 size-4 text-primary" />
-          <div>
-            <h2 className="font-heading text-sm font-bold text-foreground">Trao đổi theo nội dung</h2>
-            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
-              Đề xuất là hướng dẫn chuyên môn; yêu cầu bắt buộc cần được xác minh trước khi phê duyệt.
-            </p>
-          </div>
-        </div>
-        {canAdvise ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onToggleCreate}
-            className="h-9 rounded-lg text-xs font-semibold"
-          >
-            {showCreate ? "Đóng" : "Góp ý mới"}
-          </Button>
-        ) : null}
-      </header>
-
-      {showCreate ? (
-        <div className="border-b border-border p-4">
-          <AdvisoryCreateThreadForm
-            targets={targets}
-            defaultTarget={defaultTarget}
-            canCreateRequiredChange={isResponsibleAdvisor}
-            submissionId={submissionId}
-            isSubmitting={isCreating}
-            onSubmit={onCreate}
-            onCancel={onToggleCreate}
-          />
-        </div>
-      ) : null}
-
-      <div className="grid min-h-[480px] lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)]">
-        <AdvisoryThreadList
-          threads={threads}
-          selectedThreadId={selectedThreadId}
-          onSelect={onSelectThread}
-          isLoading={isLoading}
-        />
-        <div className="border-t border-border lg:border-t-0 lg:border-l">
-          <AdvisoryThreadPanel
-            programId={programId}
-            thread={selectedThread}
-            isAdvisor={isResponsibleAdvisor}
-            isManager={false}
-            onThreadUpdated={onThreadUpdated}
-          />
-        </div>
-      </div>
     </div>
   );
 }

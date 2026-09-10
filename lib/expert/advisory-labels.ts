@@ -84,6 +84,16 @@ export const REVIEW_SUBMISSION_STATUS_LABELS: Record<
   Withdrawn: "Đã rút",
 };
 
+export const CHANGE_KIND_LABELS: Record<
+  "added" | "removed" | "modified" | "reordered",
+  string
+> = {
+  added: "Mới",
+  removed: "Đã gỡ",
+  modified: "Đã sửa",
+  reordered: "Đổi thứ tự",
+};
+
 /** Priority filter groups for expert program home. */
 export const ADVISORY_STATUS_FILTER_OPTIONS: {
   value: string;
