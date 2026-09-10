@@ -38,6 +38,7 @@ import {
   CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
+import { formatClassSessionSchedule } from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -92,29 +93,6 @@ function isHistory(invite: ClassSessionExpert): boolean {
     invite.sessionStatus === "Cancelled" ||
     (invite.sessionStatus === "Completed" && !needsFeedback(invite))
   );
-}
-
-function formatSessionRange(start: string, end: string): string {
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-  if (Number.isNaN(startDate.getTime())) return "—";
-
-  const day = new Intl.DateTimeFormat("vi-VN", {
-    weekday: "short",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  }).format(startDate);
-  const timeFormatter = new Intl.DateTimeFormat("vi-VN", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-  const startTime = timeFormatter.format(startDate);
-  const endTime = Number.isNaN(endDate.getTime())
-    ? null
-    : timeFormatter.format(endDate);
-
-  return endTime ? `${day} · ${startTime}–${endTime}` : `${day} · ${startTime}`;
 }
 
 export function ExpertScheduleManager() {
@@ -363,64 +341,97 @@ function InviteCard({
   ) => Promise<void>;
 }) {
   const badge = STATUS_BADGE[invite.status];
-  const canGiveFeedback = needsFeedback(invite) || (
-    invite.status === "Accepted" &&
-    invite.sessionStatus === "Completed" &&
-    invite.mentorFeedback != null
+  const schedule = formatClassSessionSchedule(
+    invite.sessionStartTime,
+    invite.sessionEndTime,
   );
+  const needsAction = canRespondToInvite(invite) || needsFeedback(invite);
+  const canGiveFeedback =
+    needsFeedback(invite) ||
+    (invite.status === "Accepted" &&
+      invite.sessionStatus === "Completed" &&
+      invite.mentorFeedback != null);
   const canRespond = canRespondToInvite(invite);
   const stageLabel = needsFeedback(invite)
-    ? "Cần gửi phản hồi sau buổi"
+    ? "Cần gửi phản hồi"
     : canRespond
-      ? "Chờ bạn xác nhận"
+      ? "Chờ xác nhận"
       : invite.sessionStatus === "InProgress"
         ? "Đang diễn ra"
         : isUpcomingAccepted(invite)
-          ? "Lịch đã nhận"
+          ? "Sắp diễn ra"
           : invite.sessionStatus === "Cancelled"
-            ? "Buổi đã hủy"
+            ? "Đã hủy"
             : invite.status === "Declined"
               ? "Đã từ chối"
               : "Đã hoàn tất";
 
+  const timeLabel = schedule.end
+    ? `${schedule.start.time}–${schedule.end.time}`
+    : schedule.start.time;
+
   return (
-    <li id={`engagement-${invite.id}`} className={cn("rounded-2xl border bg-card p-4 shadow-[0_2px_10px_rgba(45,45,45,0.03)] sm:p-5", canRespond || needsFeedback(invite) ? "border-primary/30 shadow-[inset_3px_0_0_var(--primary)]" : "border-border", isHighlighted && "ring-2 ring-primary/35 ring-offset-2 ring-offset-background")}>
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex min-w-0 gap-3">
-          <div className="hidden w-16 shrink-0 rounded-xl border border-border bg-background/70 py-2 text-center sm:block">
-            <p className="text-xs font-bold uppercase text-primary">
-              {new Intl.DateTimeFormat("vi-VN", { month: "short" }).format(new Date(invite.sessionStartTime))}
+    <li
+      id={`engagement-${invite.id}`}
+      className={cn(
+        "rounded-2xl border border-border bg-card p-4 sm:p-5",
+        needsAction && "bg-muted/25",
+        isHighlighted && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
+      )}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex min-w-0 flex-1 gap-4">
+          <div className="flex w-[9.5rem] shrink-0 flex-col justify-center rounded-xl border border-border bg-background px-3.5 py-3 sm:w-[10.5rem]">
+            <p className="whitespace-nowrap font-mono text-lg font-bold tabular-nums tracking-tight text-foreground sm:text-xl">
+              {timeLabel}
             </p>
-            <p className="font-heading text-2xl font-extrabold text-foreground">
-              {new Intl.DateTimeFormat("vi-VN", { day: "2-digit" }).format(new Date(invite.sessionStartTime))}
+            <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
+              {schedule.start.date}
             </p>
+            {schedule.relative ? (
+              <p className="mt-2 w-fit rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                {schedule.relative}
+              </p>
+            ) : null}
           </div>
-          <div className="min-w-0">
-          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{stageLabel}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            <h3 className="font-heading text-sm font-bold text-foreground">
+
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge
+                className={cn(
+                  "rounded-md text-[11px] font-semibold",
+                  needsAction
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-foreground",
+                )}
+              >
+                {stageLabel}
+              </Badge>
+              <Badge
+                className={cn(
+                  "rounded-md text-[11px] font-semibold",
+                  badge.className,
+                )}
+              >
+                {badge.label}
+              </Badge>
+            </div>
+
+            <h3 className="mt-2 font-heading text-base font-bold text-foreground">
               {invite.sessionTitle || "Buổi học chưa đặt tên"}
             </h3>
-            <Badge className={cn("rounded-md text-[11px] font-semibold", badge.className)}>
-              {badge.label}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="rounded-md border-border text-[11px] font-medium text-muted-foreground"
-            >
-              {CLASS_SESSION_KIND_LABELS[invite.sessionKind]}
-            </Badge>
-            <Badge
-              variant="outline"
-              className="rounded-md border-border text-[11px] font-medium text-muted-foreground"
-            >
-              {CLASS_SESSION_STATUS_LABELS[invite.sessionStatus]}
-            </Badge>
-          </div>
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            {invite.className || "Lớp chưa đặt tên"} ·{" "}
-            {formatSessionRange(invite.sessionStartTime, invite.sessionEndTime)}
-          </p>
+
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
+              <span>{invite.className || "Lớp chưa đặt tên"}</span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span>{CLASS_SESSION_KIND_LABELS[invite.sessionKind]}</span>
+              <span aria-hidden className="text-border">
+                ·
+              </span>
+              <span>{CLASS_SESSION_STATUS_LABELS[invite.sessionStatus]}</span>
+            </p>
           </div>
         </div>
 
@@ -430,7 +441,7 @@ function InviteCard({
               type="button"
               disabled={isBusy}
               onClick={() => void onRespond(invite, true)}
-              className="h-10 gap-1.5 rounded-xl bg-[#7CB342] px-4 text-sm font-semibold text-white hover:bg-[#7CB342]/90"
+              className="h-10 gap-1.5 rounded-xl bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90"
             >
               <Check className="size-4" />
               Nhận lời
@@ -450,7 +461,7 @@ function InviteCard({
       </div>
 
       {canRespond && invite.scheduleConflictWarning ? (
-        <p className="mt-4 flex items-start gap-2 rounded-xl border border-[#FDD835]/50 bg-[#FDD835]/12 p-3 text-xs leading-relaxed text-[#725D00] dark:text-[#fde047]">
+        <p className="mt-4 flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-900 dark:text-amber-200">
           <TriangleAlert className="mt-px size-4 shrink-0" />
           {invite.scheduleConflictWarning}
         </p>
@@ -463,9 +474,11 @@ function InviteCard({
           isBusy={isBusy}
           onSubmit={(comment, rating) => onSaveFeedback(invite, comment, rating)}
         />
-      ) : invite.status === "Accepted" && invite.sessionStatus !== "Cancelled" ? (
-        <p className="mt-4 text-xs text-muted-foreground">
-          Nhận xét chuyên môn sẽ mở khi buổi học chuyển sang trạng thái Hoàn thành.
+      ) : invite.status === "Accepted" &&
+        invite.sessionStatus !== "Cancelled" &&
+        invite.sessionStatus !== "Completed" ? (
+        <p className="mt-4 rounded-xl border border-dashed border-border bg-background/50 px-3 py-2.5 text-xs text-muted-foreground">
+          Nhận xét chuyên môn sẽ mở khi buổi học hoàn thành.
         </p>
       ) : null}
     </li>

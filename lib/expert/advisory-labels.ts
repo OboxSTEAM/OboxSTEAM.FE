@@ -20,10 +20,33 @@ export const ADVISORY_NEXT_ACTION_LABELS: Record<string, string> = {
   None: "Chưa có việc cần xử lý",
 };
 
+/** Compact labels for dense tables — full copy stays in ADVISORY_NEXT_ACTION_LABELS. */
+export const ADVISORY_NEXT_ACTION_SHORT_LABELS: Record<string, string> = {
+  ReviewSubmission: "Chờ thẩm định",
+  VerifyAddressed: "Xác minh sửa",
+  AdviseOptional: "Có thể góp ý",
+  PendingReview: "Chờ quyết định",
+  ReviewDraft: "Tiếp tục nháp",
+  UnreadFeedback: "Chưa đọc",
+  AddressedCorrections: "Cần xem lại",
+  AwaitingManager: "Chờ Manager",
+  None: "Không việc mới",
+};
+
 export function getAdvisoryNextActionLabel(nextAction: string): string {
   const trimmed = nextAction.trim();
   if (!trimmed) return "—";
   return ADVISORY_NEXT_ACTION_LABELS[trimmed] ?? trimmed;
+}
+
+export function getAdvisoryNextActionShortLabel(nextAction: string): string {
+  const trimmed = nextAction.trim();
+  if (!trimmed) return "—";
+  return (
+    ADVISORY_NEXT_ACTION_SHORT_LABELS[trimmed] ??
+    ADVISORY_NEXT_ACTION_LABELS[trimmed] ??
+    trimmed
+  );
 }
 
 export const ADVISORY_THREAD_TYPE_LABELS: Record<AdvisoryThreadType, string> = {

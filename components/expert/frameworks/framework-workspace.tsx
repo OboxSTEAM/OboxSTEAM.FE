@@ -9,7 +9,7 @@ import {
   ArrowLeft,
   Archive,
   BookOpen,
-  CheckCircle2,
+  GitBranch,
   History,
   Info,
   ListChecks,
@@ -636,89 +636,121 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
         </main>
 
         <aside className="xl:sticky xl:top-5 xl:self-start">
-          <section className="rounded-2xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-              <History className="size-4 text-primary" />
-              Lịch sử phiên bản
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void handleCreateDraft()}
-                disabled={draftVersion != null}
-                className="h-9 rounded-lg text-xs font-semibold"
-              >
-                {draftVersion ? "Đã có bản nháp" : "Tạo bản nháp mới"}
-              </Button>
-              {isEditingDraft ? (
+          <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+            <div className="border-b border-border bg-background/70 px-4 py-3.5">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+                  <History className="size-4 text-primary" />
+                  Lịch sử phiên bản
+                </h2>
+                <Badge variant="secondary" className="rounded-md font-mono text-[11px]">
+                  {versions.length}
+                </Badge>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
                 <Button
                   type="button"
-                  onClick={() => setShowPublishConfirm(true)}
-                  disabled={isPublishing || isRubricDirty}
-                  title={isRubricDirty ? "Lưu rubric trước khi xuất bản" : undefined}
-                  className="h-9 gap-1.5 rounded-lg bg-[#7CB342] px-4 text-xs font-semibold text-white"
+                  variant="outline"
+                  onClick={() => void handleCreateDraft()}
+                  disabled={draftVersion != null}
+                  className="h-8 gap-1.5 rounded-lg px-2.5 text-[11px] font-semibold"
                 >
-                  <Rocket className="size-3.5" />
-                  Xuất bản
+                  <GitBranch className="size-3.5" />
+                  {draftVersion ? "Đã có nháp" : "Tạo nháp"}
                 </Button>
-              ) : null}
+                {isEditingDraft ? (
+                  <Button
+                    type="button"
+                    onClick={() => setShowPublishConfirm(true)}
+                    disabled={isPublishing || isRubricDirty}
+                    title={
+                      isRubricDirty ? "Lưu rubric trước khi xuất bản" : undefined
+                    }
+                    className="h-8 gap-1.5 rounded-lg bg-primary px-2.5 text-[11px] font-semibold text-white hover:bg-primary/90"
+                  >
+                    <Rocket className="size-3.5" />
+                    {isPublishing ? "Đang xuất bản…" : "Xuất bản"}
+                  </Button>
+                ) : null}
+              </div>
             </div>
-          </div>
 
-          <ul className="mt-4 divide-y divide-border rounded-xl border border-border">
-            {versions.length === 0 ? (
-              <li className="px-4 py-6 text-center text-sm text-muted-foreground">
-                Chưa có phiên bản.
-              </li>
-            ) : (
-              versions.map((version: ProgramFrameworkVersion) => (
-                <li
-                  key={version.id}
-                  className={cn(
-                    "flex flex-wrap items-center justify-between gap-3 px-3 py-3",
-                    selectedVersion?.id === version.id && "bg-primary/6",
-                  )}
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      Phiên bản {version.versionNumber}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {version.criteria.length} tiêu chí · {version.criteria.reduce((total, criterion) => total + criterion.maxScore, 0)} điểm
-                      {version.isPublished ? "Đã xuất bản" : "Nháp"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    {version.isPublished ? (
-                      <Badge className="rounded-md bg-[#7CB342]/15 text-[11px] text-[#33691e]">
-                        Đã xuất bản
-                      </Badge>
-                    ) : (
-                      <Badge variant="outline" className="rounded-md text-[11px]">
-                        Bản nháp
-                      </Badge>
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => selectVersion(version.id)}
-                      className="h-8 rounded-lg text-xs"
-                    >
-                      {version.isPublished ? "Xem" : "Biên tập"}
-                    </Button>
-                  </div>
+            <ul className="max-h-[28rem] divide-y divide-border overflow-y-auto">
+              {versions.length === 0 ? (
+                <li className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  Chưa có phiên bản.
                 </li>
-              ))
-            )}
-          </ul>
-        </section>
-          <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/7 p-3 text-xs leading-5 text-muted-foreground">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-            Manager chỉ gán phiên bản đã xuất bản. Việc tạo phiên bản mới không tự thay đổi chương trình đang sử dụng bản cũ.
-          </div>
+              ) : (
+                versions.map((version: ProgramFrameworkVersion) => {
+                  const isSelected = selectedVersion?.id === version.id;
+                  const isLive =
+                    version.isPublished &&
+                    version.id === framework.currentVersionId;
+                  const score = version.criteria.reduce(
+                    (total, criterion) => total + criterion.maxScore,
+                    0,
+                  );
+
+                  return (
+                    <li
+                      key={version.id}
+                      className={cn(
+                        "px-4 py-3 transition-colors",
+                        isSelected && "bg-primary/6",
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="font-mono text-sm font-bold tabular-nums text-foreground">
+                              v{version.versionNumber}
+                            </span>
+                            {version.isPublished ? (
+                              <Badge
+                                variant="secondary"
+                                className="rounded-md text-[10px] font-semibold"
+                              >
+                                {isLive ? "Đang dùng" : "Đã xuất bản"}
+                              </Badge>
+                            ) : (
+                              <Badge className="rounded-md bg-amber-500/12 text-[10px] font-semibold text-amber-800 dark:text-amber-300">
+                                Bản nháp
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {version.criteria.length} tiêu chí · {score} điểm
+                          </p>
+                        </div>
+
+                        <Button
+                          type="button"
+                          variant={isSelected ? "secondary" : "ghost"}
+                          size="sm"
+                          onClick={() => selectVersion(version.id)}
+                          className="h-8 shrink-0 rounded-lg px-2.5 text-[11px] font-semibold"
+                        >
+                          {isSelected
+                            ? "Đang xem"
+                            : version.isPublished
+                              ? "Xem"
+                              : "Sửa"}
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+
+            <div className="flex items-start gap-2 border-t border-border bg-muted/40 px-4 py-3 text-[11px] leading-5 text-muted-foreground">
+              <Info className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
+              <p>
+                Manager chỉ gán bản đã xuất bản. Bản mới không tự thay thế chương
+                trình đang dùng bản cũ.
+              </p>
+            </div>
+          </section>
         </aside>
       </div>
 

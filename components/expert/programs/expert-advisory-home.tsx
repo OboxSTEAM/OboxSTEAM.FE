@@ -16,12 +16,18 @@ import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { getAdvisoryMine, type AdvisoryMineItem } from "@/lib/api";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import {
   ADVISORY_STATUS_FILTER_OPTIONS,
   getAdvisoryNextActionLabel,
+  getAdvisoryNextActionShortLabel,
 } from "@/lib/expert/advisory-labels";
 import { PROGRAM_STATUS_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
@@ -114,40 +120,48 @@ export function ExpertAdvisoryHome() {
     },
     {
       header: "Việc tiếp theo",
+      className: "w-44 whitespace-normal",
       render: (item) => {
         const isDecision =
           item.nextAction === "ReviewSubmission" ||
           item.nextAction === "PendingReview";
         const hasUnread = item.unreadFeedbackCount > 0;
+        const shortLabel = getAdvisoryNextActionShortLabel(item.nextAction);
+        const fullLabel = getAdvisoryNextActionLabel(item.nextAction);
 
         return (
-          <div className="flex min-w-0 max-w-64 items-start gap-2">
-            <span
-              aria-hidden
-              className={cn(
-                "mt-1.5 size-1.5 shrink-0 rounded-full",
-                isDecision
-                  ? "bg-primary"
-                  : hasUnread
-                    ? "bg-amber-500"
-                    : "bg-border",
-              )}
-            />
-            <div className="min-w-0">
-              <p
-                className={cn(
-                  "text-sm font-semibold leading-5",
-                  isDecision || hasUnread ? "text-primary" : "text-foreground",
-                )}
+          <div className="flex min-w-0 flex-col items-start gap-1">
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <button
+                    type="button"
+                    className="max-w-full cursor-help outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                  />
+                }
               >
-                {getAdvisoryNextActionLabel(item.nextAction)}
-              </p>
-              {hasUnread ? (
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {item.unreadFeedbackCount} trao đổi chưa đọc
-                </p>
-              ) : null}
-            </div>
+                <Badge
+                  className={cn(
+                    "max-w-full truncate rounded-md text-[11px] font-semibold",
+                    isDecision
+                      ? "bg-primary/10 text-primary"
+                      : hasUnread
+                        ? "bg-amber-500/12 text-amber-800 dark:text-amber-300"
+                        : "bg-muted text-foreground",
+                  )}
+                >
+                  {shortLabel}
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="max-w-56 text-left leading-5">
+                {fullLabel}
+              </TooltipContent>
+            </Tooltip>
+            {hasUnread ? (
+              <span className="text-[11px] text-muted-foreground">
+                {item.unreadFeedbackCount} chưa đọc
+              </span>
+            ) : null}
           </div>
         );
       },

@@ -97,14 +97,6 @@ function resolveCurrentIndex(steps: ExpertWorkflowStep[]): number {
   return Math.max(0, lastDone);
 }
 
-function resolveLastDoneIndex(steps: ExpertWorkflowStep[]): number {
-  let lastDone = -1;
-  for (let i = 0; i < steps.length; i += 1) {
-    if (steps[i]?.state === "done") lastDone = i;
-  }
-  return lastDone;
-}
-
 function WorkflowStepContent({
   index,
   label,
@@ -153,36 +145,23 @@ export function ExpertWorkflowRail({
   className,
 }: ExpertWorkflowRailProps) {
   const currentIndex = resolveCurrentIndex(steps);
-  const lastDoneIndex = resolveLastDoneIndex(steps);
   const segmentCount = Math.max(1, steps.length - 1);
-  const targetCurrentProgress = currentIndex / segmentCount;
-  const targetDoneProgress =
-    lastDoneIndex >= 0 ? lastDoneIndex / segmentCount : 0;
-  const [currentProgress, setCurrentProgress] = useState(
-    animate ? 0 : targetCurrentProgress,
-  );
-  const [doneProgress, setDoneProgress] = useState(
-    animate ? 0 : targetDoneProgress,
-  );
+  const targetProgress = currentIndex / segmentCount;
+  const [progress, setProgress] = useState(animate ? 0 : targetProgress);
   const isInteractive = typeof onStepSelect === "function";
 
   useEffect(() => {
     if (!animate) {
-      setCurrentProgress(targetCurrentProgress);
-      setDoneProgress(targetDoneProgress);
+      setProgress(targetProgress);
       return;
     }
 
-    setCurrentProgress(0);
-    setDoneProgress(0);
+    setProgress(0);
     const frame = window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        setCurrentProgress(targetCurrentProgress);
-        setDoneProgress(targetDoneProgress);
-      });
+      window.requestAnimationFrame(() => setProgress(targetProgress));
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [animate, targetCurrentProgress, targetDoneProgress, currentIndex]);
+  }, [animate, targetProgress, currentIndex]);
 
   return (
     <nav aria-label="Tiến trình công việc" className={cn("w-full", className)}>
@@ -200,16 +179,8 @@ export function ExpertWorkflowRail({
           className="pointer-events-none absolute top-3.5 right-[12.5%] left-[12.5%] hidden h-0.5 overflow-hidden rounded-full bg-border sm:block"
         >
           <div
-            className="absolute inset-y-0 left-0 rounded-full bg-primary motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
-            style={{
-              width: `${Math.min(1, Math.max(0, currentProgress)) * 100}%`,
-            }}
-          />
-          <div
-            className="absolute inset-y-0 left-0 rounded-full bg-emerald-600 motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
-            style={{
-              width: `${Math.min(1, Math.max(0, doneProgress)) * 100}%`,
-            }}
+            className="h-full origin-left rounded-full bg-emerald-600 motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+            style={{ width: `${Math.min(1, Math.max(0, progress)) * 100}%` }}
           />
         </div>
 
