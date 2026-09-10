@@ -1,18 +1,26 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
+  ArrowRight,
   CalendarDays,
   Check,
+  History,
   MessageSquare,
+  ShieldCheck,
   Star,
   TriangleAlert,
   X,
 } from "lucide-react";
 
+import {
+  ExpertWorkbenchHero,
+  ExpertWorkflowRail,
+} from "@/components/expert/shared/expert-workbench";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
-import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,6 +65,34 @@ const STATUS_BADGE: Record<ClassSessionExpertStatus, { label: string; className:
   };
 
 const PAGE_SIZE = 50;
+type ScheduleView = "action" | "upcoming" | "history" | "all";
+
+function canRespondToInvite(invite: ClassSessionExpert): boolean {
+  return invite.status === "Invited" && invite.sessionStatus === "Scheduled";
+}
+
+function needsFeedback(invite: ClassSessionExpert): boolean {
+  return (
+    invite.status === "Accepted" &&
+    invite.sessionStatus === "Completed" &&
+    invite.mentorFeedback == null
+  );
+}
+
+function isUpcomingAccepted(invite: ClassSessionExpert): boolean {
+  return (
+    invite.status === "Accepted" &&
+    (invite.sessionStatus === "Scheduled" || invite.sessionStatus === "InProgress")
+  );
+}
+
+function isHistory(invite: ClassSessionExpert): boolean {
+  return (
+    invite.status === "Declined" ||
+    invite.sessionStatus === "Cancelled" ||
+    (invite.sessionStatus === "Completed" && !needsFeedback(invite))
+  );
+}
 
 function formatSessionRange(start: string, end: string): string {
   const startDate = new Date(start);
@@ -82,8 +118,11 @@ function formatSessionRange(start: string, end: string): string {
 }
 
 export function ExpertScheduleManager() {
+  const searchParams = useSearchParams();
+  const highlightedInviteId = searchParams.get("invite");
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("all");
+  const [view, setView] = useState<ScheduleView>("action");
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const { data, isLoading, markLoading, retry } = useClientFetch({
@@ -109,12 +148,32 @@ export function ExpertScheduleManager() {
         )
       : items;
 
-    return [...filtered].sort(
-      (left, right) =>
+    const inView = filtered.filter((invite) => {
+      if (invite.id === highlightedInviteId) return true;
+      if (view === "action") return canRespondToInvite(invite) || needsFeedback(invite);
+      if (view === "upcoming") return isUpcomingAccepted(invite);
+      if (view === "history") return isHistory(invite);
+      return true;
+    });
+
+    return [...inView].sort((left, right) => {
+      if (left.id === highlightedInviteId) return -1;
+      if (right.id === highlightedInviteId) return 1;
+      const leftPriority = needsFeedback(left) ? 0 : canRespondToInvite(left) ? 1 : 2;
+      const rightPriority = needsFeedback(right) ? 0 : canRespondToInvite(right) ? 1 : 2;
+      return (
+        leftPriority - rightPriority ||
         new Date(left.sessionStartTime).getTime() -
-        new Date(right.sessionStartTime).getTime(),
-    );
-  }, [data?.data?.items, search]);
+          new Date(right.sessionStartTime).getTime()
+      );
+    });
+  }, [data?.data?.items, highlightedInviteId, search, view]);
+
+  const allItems = data?.data?.items ?? [];
+  const awaitingResponseCount = allItems.filter(canRespondToInvite).length;
+  const upcomingCount = allItems.filter(isUpcomingAccepted).length;
+  const feedbackCount = allItems.filter(needsFeedback).length;
+  const totalCount = data?.data?.totalCount ?? allItems.length;
 
   async function respond(invite: ClassSessionExpert, accept: boolean) {
     setBusyId(invite.id);
@@ -165,24 +224,67 @@ export function ExpertScheduleManager() {
 
   return (
     <div className="flex flex-col gap-6">
-      <ManagerPageHeader
-        title="Lịch đồng hành"
-        description="Các buổi đồng hành, phản biện và cố vấn chuyên môn của bạn."
-        breadcrumbs={[{ label: "Lịch đồng hành" }]}
-      />
+      <ExpertWorkbenchHero
+        eyebrow="Đồng hành theo phiên lớp"
+        title="Lịch đồng hành chuyên môn"
+        description="Xác nhận lời mời, chuẩn bị phiên chuyên môn, rồi gửi phản hồi cho mentor sau buổi."
+        icon={CalendarDays}
+        actions={
+          <Button nativeButton={false} render={<Link href="/expert/programs" />} variant="outline" className="h-10 gap-2 rounded-xl">
+            Bàn cố vấn chương trình <ArrowRight className="size-4" />
+          </Button>
+        }
+      >
+        <ExpertWorkflowRail
+          steps={[
+            {
+              label: "Trước buổi",
+              detail: "Xác nhận lịch và kiểm tra xung đột.",
+              state: awaitingResponseCount > 0 ? "current" : "done",
+            },
+            {
+              label: "Chuẩn bị",
+              detail: "Nắm tên phiên, lớp và hình thức tổ chức.",
+              state:
+                awaitingResponseCount > 0
+                  ? "next"
+                  : upcomingCount > 0
+                    ? "current"
+                    : "done",
+            },
+            {
+              label: "Trong buổi",
+              detail: "Quan sát cách triển khai và phối hợp chuyên môn.",
+              state: "next",
+            },
+            {
+              label: "Sau buổi",
+              detail: "Gửi phản hồi để mentor có hành động tiếp theo.",
+              state: feedbackCount > 0 ? "current" : "next",
+            },
+          ]}
+        />
+      </ExpertWorkbenchHero>
 
-      <div className="px-6 pb-12">
+      <div className="mx-auto w-full max-w-[1500px] px-4 pb-12 sm:px-6">
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
-            <p className="text-xs font-medium text-muted-foreground">
-              <span className="font-mono font-bold text-foreground">
-                {invites.length}
-              </span>{" "}
-              buổi đồng hành
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Nhận xét chỉ mở sau khi buổi học hoàn thành.
-            </p>
+          <div className="flex flex-col gap-4 border-b border-border bg-background/70 px-4 py-4 sm:px-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h2 className="font-heading text-base font-bold text-foreground">Chương trình làm việc</h2>
+              <p className="mt-0.5 text-sm text-muted-foreground">{totalCount} phiên được ghi nhận · ưu tiên việc cần xử lý trước.</p>
+            </div>
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-xl border border-border bg-card p-1">
+              {([
+                ["action", "Cần xử lý"],
+                ["upcoming", "Lịch đã nhận"],
+                ["history", "Đã hoàn tất"],
+                ["all", "Tất cả"],
+              ] as const).map(([value, label]) => (
+                <Button key={value} type="button" variant="ghost" size="sm" onClick={() => setView(value)} className={cn("h-8 shrink-0 rounded-lg px-3 text-xs", view === value && "bg-foreground text-background hover:bg-foreground/90 hover:text-background")}>
+                  {label}
+                </Button>
+              ))}
+            </div>
           </div>
 
           <ManagerFilterBar
@@ -209,7 +311,7 @@ export function ExpertScheduleManager() {
             }}
           />
 
-          <div className="p-6">
+          <div className="p-4 sm:p-5">
             {isLoading ? (
               <div className="space-y-4">
                 {[0, 1, 2].map((item) => (
@@ -218,9 +320,9 @@ export function ExpertScheduleManager() {
               </div>
             ) : invites.length === 0 ? (
               <ManagerEmptyState
-                icon={CalendarDays}
-                title="Chưa có buổi đồng hành"
-                description="Khi được xếp lịch đồng hành cùng lớp học, các buổi sắp tới sẽ hiển thị tại đây."
+                icon={view === "history" ? History : ShieldCheck}
+                title={view === "action" ? "Bạn đã xử lý mọi việc" : "Không có buổi phù hợp"}
+                description={view === "action" ? "Không có lời mời hoặc phản hồi sau buổi nào đang chờ bạn." : "Thử đổi chế độ xem, từ khóa hoặc bộ lọc trạng thái."}
               />
             ) : (
               <ul className="space-y-4">
@@ -228,6 +330,7 @@ export function ExpertScheduleManager() {
                   <InviteCard
                     key={invite.id}
                     invite={invite}
+                    isHighlighted={invite.id === highlightedInviteId}
                     isBusy={busyId === invite.id}
                     onRespond={respond}
                     onSaveFeedback={saveFeedback}
@@ -244,11 +347,13 @@ export function ExpertScheduleManager() {
 
 function InviteCard({
   invite,
+  isHighlighted,
   isBusy,
   onRespond,
   onSaveFeedback,
 }: {
   invite: ClassSessionExpert;
+  isHighlighted: boolean;
   isBusy: boolean;
   onRespond: (invite: ClassSessionExpert, accept: boolean) => Promise<void>;
   onSaveFeedback: (
@@ -258,13 +363,40 @@ function InviteCard({
   ) => Promise<void>;
 }) {
   const badge = STATUS_BADGE[invite.status];
-  const canGiveFeedback =
-    invite.status === "Accepted" && invite.sessionStatus === "Completed";
+  const canGiveFeedback = needsFeedback(invite) || (
+    invite.status === "Accepted" &&
+    invite.sessionStatus === "Completed" &&
+    invite.mentorFeedback != null
+  );
+  const canRespond = canRespondToInvite(invite);
+  const stageLabel = needsFeedback(invite)
+    ? "Cần gửi phản hồi sau buổi"
+    : canRespond
+      ? "Chờ bạn xác nhận"
+      : invite.sessionStatus === "InProgress"
+        ? "Đang diễn ra"
+        : isUpcomingAccepted(invite)
+          ? "Lịch đã nhận"
+          : invite.sessionStatus === "Cancelled"
+            ? "Buổi đã hủy"
+            : invite.status === "Declined"
+              ? "Đã từ chối"
+              : "Đã hoàn tất";
 
   return (
-    <li className="rounded-2xl border border-border bg-card p-5 shadow-[0_2px_10px_rgba(45,45,45,0.03)]">
+    <li id={`engagement-${invite.id}`} className={cn("rounded-2xl border bg-card p-4 shadow-[0_2px_10px_rgba(45,45,45,0.03)] sm:p-5", canRespond || needsFeedback(invite) ? "border-primary/30 shadow-[inset_3px_0_0_var(--primary)]" : "border-border", isHighlighted && "ring-2 ring-primary/35 ring-offset-2 ring-offset-background")}>
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="min-w-0">
+        <div className="flex min-w-0 gap-3">
+          <div className="hidden w-16 shrink-0 rounded-xl border border-border bg-background/70 py-2 text-center sm:block">
+            <p className="text-xs font-bold uppercase text-primary">
+              {new Intl.DateTimeFormat("vi-VN", { month: "short" }).format(new Date(invite.sessionStartTime))}
+            </p>
+            <p className="font-heading text-2xl font-extrabold text-foreground">
+              {new Intl.DateTimeFormat("vi-VN", { day: "2-digit" }).format(new Date(invite.sessionStartTime))}
+            </p>
+          </div>
+          <div className="min-w-0">
+          <p className="mb-1 text-xs font-bold uppercase tracking-wider text-primary">{stageLabel}</p>
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-heading text-sm font-bold text-foreground">
               {invite.sessionTitle || "Buổi học chưa đặt tên"}
@@ -289,10 +421,11 @@ function InviteCard({
             {invite.className || "Lớp chưa đặt tên"} ·{" "}
             {formatSessionRange(invite.sessionStartTime, invite.sessionEndTime)}
           </p>
+          </div>
         </div>
 
-        {invite.status === "Invited" ? (
-          <div className="flex shrink-0 gap-2">
+        {canRespond ? (
+          <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto">
             <Button
               type="button"
               disabled={isBusy}
@@ -316,7 +449,7 @@ function InviteCard({
         ) : null}
       </div>
 
-      {invite.status === "Invited" && invite.scheduleConflictWarning ? (
+      {canRespond && invite.scheduleConflictWarning ? (
         <p className="mt-4 flex items-start gap-2 rounded-xl border border-[#FDD835]/50 bg-[#FDD835]/12 p-3 text-xs leading-relaxed text-[#725D00] dark:text-[#fde047]">
           <TriangleAlert className="mt-px size-4 shrink-0" />
           {invite.scheduleConflictWarning}
@@ -330,7 +463,7 @@ function InviteCard({
           isBusy={isBusy}
           onSubmit={(comment, rating) => onSaveFeedback(invite, comment, rating)}
         />
-      ) : invite.status === "Accepted" ? (
+      ) : invite.status === "Accepted" && invite.sessionStatus !== "Cancelled" ? (
         <p className="mt-4 text-xs text-muted-foreground">
           Nhận xét chuyên môn sẽ mở khi buổi học chuyển sang trạng thái Hoàn thành.
         </p>
@@ -372,7 +505,7 @@ function FeedbackForm({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h4 className="flex items-center gap-2 text-sm font-bold text-foreground">
           <MessageSquare className="size-4 text-primary" />
-          Nhận xét chuyên môn
+          Phản hồi cho mentor sau buổi
         </h4>
         <div className="flex items-center gap-1">
           {[1, 2, 3, 4, 5].map((value) => (
@@ -403,24 +536,24 @@ function FeedbackForm({
         value={comment}
         onChange={(event) => setComment(event.target.value)}
         disabled={isBusy}
-        placeholder="Học viên tiếp thu ra sao, nội dung nào cần củng cố..."
+        placeholder="Nêu điều đã diễn ra tốt, điểm mentor nên điều chỉnh và đề xuất cho buổi tiếp theo."
         aria-label={`Nhận xét cho buổi ${invite.sessionTitle || "học"}`}
         className="rounded-xl border-input bg-card"
       />
 
       {error ? <p className="text-xs font-medium text-primary">{error}</p> : null}
 
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-[11px] text-muted-foreground">
           {hasFeedback
             ? "Nhận xét đã gửi — bạn có thể chỉnh sửa và lưu lại."
-            : "Nhận xét sẽ được chia sẻ với mentor và quản lý lớp."}
+            : "Đánh giá mức độ phối hợp và triển khai buổi học; phản hồi được chia sẻ với mentor và quản lý lớp."}
         </p>
         <Button
           type="button"
           disabled={isBusy}
           onClick={handleSubmit}
-          className="h-10 rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary/90"
+          className="h-10 w-full rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary/90 sm:w-auto"
         >
           {isBusy ? "Đang lưu..." : hasFeedback ? "Cập nhật nhận xét" : "Gửi nhận xét"}
         </Button>

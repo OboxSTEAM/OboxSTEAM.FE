@@ -16,10 +16,10 @@ function resolvePageTitle(pathname: string): string {
   if (pathname.startsWith("/expert/programs")) return "Chương trình phụ trách";
   if (pathname.startsWith("/expert/reviews")) return "Chương trình phụ trách";
   if (pathname.match(/^\/expert\/frameworks\/[^/]+/)) {
-    return "Biên tập khung chương trình";
+    return "Biên tập bộ khung thẩm định";
   }
-  if (pathname.startsWith("/expert/frameworks")) return "Khung chương trình";
-  if (pathname.startsWith("/expert/schedule")) return "Lịch đồng hành";
+  if (pathname.startsWith("/expert/frameworks")) return "Bộ khung thẩm định";
+  if (pathname.startsWith("/expert/schedule")) return "Lịch đồng hành chuyên môn";
   if (pathname.startsWith("/expert/profile")) return "Hồ sơ chuyên môn";
   return "Expert";
 }

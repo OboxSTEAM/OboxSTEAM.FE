@@ -74,8 +74,24 @@ export const notificationTypeSchema = z.enum([
   "MaterialUpdated",
   "AssignmentEditedByMentor",
   "ClassQuizSetEditedByMentor",
+  // Curriculum review (expert framework)
+  "CurriculumReviewSubmitted",
+  "CurriculumReviewApproved",
+  "CurriculumReviewChangesRequested",
+  // Offline co-teach (ClassSessionExpert)
+  "ClassSessionExpertInvited",
+  "ClassSessionExpertAccepted",
+  "ClassSessionExpertDeclined",
+  "ClassSessionExpertInvitationWithdrawn",
+  "ClassSessionExpertFeedbackRequested",
+  "ClassSessionExpertFeedbackSubmitted",
+  "CurriculumReviewPublished",
+  "ClassSessionExpertClearedOnReschedule",
+  // Program advisory workspace
+  "AdvisoryFeedbackPublished",
+  "AdvisoryReply",
+  "AdvisoryCorrectionAddressed",
 ]);
-
 export const notificationSchema = z.object({
   id: z.string().uuid(),
   recipientUserId: z.string().uuid(),

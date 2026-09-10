@@ -266,6 +266,7 @@ export function NotificationProvider({
         payload: notification.payload,
         payloadJson: notification.payloadJson,
         accountRole,
+        entityId: notification.entityId,
       });
       if (href) {
         router.push(href);

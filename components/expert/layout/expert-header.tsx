@@ -20,8 +20,8 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 const PATH_LABELS: Record<string, string> = {
   expert: "Chuyên gia",
   reviews: "Duyệt chương trình",
-  frameworks: "Khung chương trình",
-  schedule: "Lịch đồng hành",
+  frameworks: "Bộ khung thẩm định",
+  schedule: "Lịch đồng hành chuyên môn",
   profile: "Hồ sơ chuyên môn",
 };
 

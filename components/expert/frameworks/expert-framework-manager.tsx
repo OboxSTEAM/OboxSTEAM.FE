@@ -3,13 +3,22 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, BookOpen, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Archive,
+  ArrowRight,
+  BookOpen,
+  Plus,
+} from "lucide-react";
 
 import {
   FrameworkFormDialog,
   type CriterionDraft,
   type FrameworkFormValues,
 } from "@/components/expert/frameworks/framework-form-dialog";
+import {
+  ExpertWorkbenchHero,
+  ExpertWorkflowRail,
+} from "@/components/expert/shared/expert-workbench";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   ManagerDataTable,
@@ -17,9 +26,13 @@ import {
 } from "@/components/manager/shared/data-table";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
-import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   addFrameworkCriterion,
@@ -63,6 +76,7 @@ function toCriterionRequest(
   return {
     name: criterion.name.trim(),
     description: criterion.description.trim() || null,
+    evidenceGuidance: criterion.evidenceGuidance.trim() || null,
     maxScore: Number(criterion.maxScore),
     displayOrder: index,
   };
@@ -78,6 +92,7 @@ function hasCriterionChanged(
   return (
     original.name !== criterion.name.trim() ||
     original.description !== criterion.description.trim() ||
+    (original.evidenceGuidance ?? "") !== criterion.evidenceGuidance.trim() ||
     original.maxScore !== Number(criterion.maxScore) ||
     original.displayOrder !== index
   );
@@ -162,6 +177,7 @@ export function ExpertFrameworkManager() {
         await updateProgramFramework(editingFramework.id, {
           name: values.name,
           description: values.description || null,
+          academicGuidance: values.academicGuidance || null,
           category: values.category,
           minModules,
           minOfflineSessions,
@@ -181,6 +197,7 @@ export function ExpertFrameworkManager() {
         const created = await createProgramFramework({
           name: values.name,
           description: values.description || null,
+          academicGuidance: values.academicGuidance || null,
           category: values.category,
           minModules: toCount(values.minModules),
           minOfflineSessions: toCount(values.minOfflineSessions),
@@ -219,8 +236,8 @@ export function ExpertFrameworkManager() {
     try {
       await deleteProgramFramework(deleteTarget.id);
       showAppSuccess({
-        title: "Đã xóa khung chương trình",
-        description: `Khung “${deleteTarget.name}” đã được xóa.`,
+        title: "Đã lưu trữ bộ khung",
+        description: `Bộ khung “${deleteTarget.name}” không còn dùng cho chương trình mới.`,
       });
       setDeleteTarget(null);
       retry();
@@ -258,7 +275,30 @@ export function ExpertFrameworkManager() {
       ),
     },
     {
+      header: "Trạng thái phiên bản",
+      className: "w-44",
+      render: (framework) => (
+        <div className="flex flex-wrap gap-1.5">
+          {framework.currentVersionNumber != null ? (
+            <Badge className="rounded-md bg-emerald-500/10 text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+              Phát hành v{framework.currentVersionNumber}
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="rounded-md text-[11px]">
+              Chưa phát hành
+            </Badge>
+          )}
+          {framework.hasDraftVersion ? (
+            <Badge className="rounded-md bg-amber-500/12 text-[11px] font-semibold text-amber-800 dark:text-amber-300">
+              Có bản nháp
+            </Badge>
+          ) : null}
+        </div>
+      ),
+    },
+    {
       header: "Yêu cầu tối thiểu",
+      className: "w-40",
       render: (framework) => {
         const rules = [
           framework.minModules != null
@@ -274,21 +314,33 @@ export function ExpertFrameworkManager() {
         ].filter(Boolean) as string[];
 
         if (rules.length === 0) {
-          return <span className="text-xs text-muted-foreground">Không ràng buộc</span>;
+          return (
+            <span className="text-xs text-muted-foreground">Không ràng buộc</span>
+          );
         }
 
         return (
-          <div className="flex max-w-72 flex-wrap gap-1.5">
-            {rules.map((rule) => (
-              <Badge
-                key={rule}
-                variant="secondary"
-                className="rounded-md bg-muted text-[11px] font-medium text-foreground"
-              >
-                {rule}
-              </Badge>
-            ))}
-          </div>
+          <Tooltip>
+            <TooltipTrigger
+              render={
+                <button
+                  type="button"
+                  className="inline-flex max-w-full cursor-help items-center rounded-md border border-transparent px-1.5 py-0.5 text-left text-sm font-medium text-foreground outline-none hover:border-border hover:bg-muted/60 focus-visible:ring-2 focus-visible:ring-ring/50"
+                />
+              }
+            >
+              <span className="truncate tabular-nums">
+                {rules.length} ràng buộc
+              </span>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="max-w-56 text-left leading-5">
+              <ul className="space-y-1">
+                {rules.map((rule) => (
+                  <li key={rule}>· {rule}</li>
+                ))}
+              </ul>
+            </TooltipContent>
+          </Tooltip>
         );
       },
     },
@@ -303,26 +355,16 @@ export function ExpertFrameworkManager() {
     },
     {
       header: "Thao tác",
-      className: "w-24 text-right",
+      className: "w-44 text-right",
       render: (framework) => (
         <div className="flex justify-end gap-1">
-          <Button
-            nativeButton={false}
-            render={<Link href={`/expert/frameworks/${framework.id}`} />}
-            variant="ghost"
-            size="icon"
-            aria-label={`Biên tập khung ${framework.name}`}
-            className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
-          >
-            <Pencil className="size-4" />
-          </Button>
           <Button
             nativeButton={false}
             render={<Link href={`/expert/frameworks/${framework.id}`} />}
             variant="outline"
             className="h-9 gap-1 rounded-lg px-2.5 text-[11px] font-semibold"
           >
-            Mở
+            Vào biên soạn
             <ArrowRight className="size-3" />
           </Button>
           <Button
@@ -330,10 +372,10 @@ export function ExpertFrameworkManager() {
             variant="ghost"
             size="icon"
             onClick={() => setDeleteTarget(framework)}
-            aria-label={`Xóa khung ${framework.name}`}
+            aria-label={`Lưu trữ bộ khung ${framework.name}`}
             className="size-9 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
           >
-            <Trash2 className="size-4" />
+            <Archive className="size-4" />
           </Button>
         </div>
       ),
@@ -342,22 +384,49 @@ export function ExpertFrameworkManager() {
 
   return (
     <div className="flex flex-col gap-6">
-      <ManagerPageHeader
-        title="Khung chương trình"
-        description="Blueprint và tiêu chí rubric dùng để thẩm định chương trình."
-        breadcrumbs={[{ label: "Khung chương trình" }]}
+      <ExpertWorkbenchHero
+        eyebrow="Thư viện chuẩn học thuật"
+        title="Bộ khung thẩm định"
+        description="Khung = chuẩn cấu trúc & hướng dẫn học thuật. Rubric = tiêu chí chấm khi thẩm định. Hoàn thiện rồi xuất bản để Manager gán vào chương trình."
+        icon={BookOpen}
+        actions={
+          <Button
+            type="button"
+            onClick={openCreate}
+            className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
+          >
+            <Plus className="size-4" />
+            Khởi tạo bộ khung
+          </Button>
+        }
       >
-        <Button
-          type="button"
-          onClick={openCreate}
-          className="h-11 gap-2 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
-        >
-          <Plus className="size-4" />
-          Tạo khung
-        </Button>
-      </ManagerPageHeader>
+        <ExpertWorkflowRail
+          steps={[
+            {
+              label: "Xác định bối cảnh",
+              detail: "Đối tượng học, cấp độ và kết quả mong đợi.",
+              state: "current",
+            },
+            {
+              label: "Đặt chuẩn nền",
+              detail: "Nguyên tắc học thuật và điều kiện cấu trúc tối thiểu.",
+              state: "next",
+            },
+            {
+              label: "Viết rubric",
+              detail: "Tiêu chí, minh chứng và thang điểm rõ ràng.",
+              state: "next",
+            },
+            {
+              label: "Xuất bản",
+              detail: "Khóa phiên bản để gán vào chương trình.",
+              state: "next",
+            },
+          ]}
+        />
+      </ExpertWorkbenchHero>
 
-      <div className="px-6 pb-12">
+      <div className="mx-auto w-full max-w-[1500px] px-4 pb-12 sm:px-6">
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
           <div className="flex items-center justify-between border-b border-border bg-background/70 px-6 py-3">
             <p className="text-xs font-medium text-muted-foreground">
@@ -365,7 +434,7 @@ export function ExpertFrameworkManager() {
               khung chương trình
             </p>
             <p className="text-xs text-muted-foreground">
-              Khung được gán cho chương trình khi Manager tạo hoặc chỉnh curriculum.
+              Manager chỉ gán phiên bản đã xuất bản; chương trình đã gán không tự nâng cấp.
             </p>
           </div>
 
@@ -414,9 +483,9 @@ export function ExpertFrameworkManager() {
               emptyState={
                 <ManagerEmptyState
                   icon={BookOpen}
-                  title="Chưa có khung chương trình"
-                  description="Tạo blueprint đầu tiên với bộ tiêu chí rubric để bắt đầu thẩm định."
-                  actionLabel="Tạo khung"
+                  title="Chưa có bộ khung thẩm định"
+                  description="Khởi tạo bộ khung đầu tiên, sau đó hoàn thiện bối cảnh, chuẩn học thuật và rubric trong trang biên tập."
+                  actionLabel="Khởi tạo bộ khung"
                   onAction={openCreate}
                 />
               }
@@ -442,9 +511,9 @@ export function ExpertFrameworkManager() {
           if (!open) setDeleteTarget(null);
         }}
         onConfirm={handleDelete}
-        title="Xóa khung chương trình?"
-        description={`Khung “${deleteTarget?.name ?? ""}” và toàn bộ tiêu chí rubric sẽ bị xóa. Các chương trình đang gán khung này sẽ mất ràng buộc thẩm định.`}
-        confirmLabel="Xóa khung"
+        title="Lưu trữ bộ khung này?"
+        description={`Bộ khung “${deleteTarget?.name ?? ""}” sẽ không còn được chọn cho chương trình mới. Các chương trình đã gán vẫn giữ nguyên phiên bản và lịch sử thẩm định.`}
+        confirmLabel="Lưu trữ"
         variant="destructive"
       />
     </div>

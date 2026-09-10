@@ -8,12 +8,16 @@ import type { ProgramStatus } from "@/lib/api/entities/program";
 
 /** Vietnamese labels for advisory next-action hints from API. */
 export const ADVISORY_NEXT_ACTION_LABELS: Record<string, string> = {
+  ReviewSubmission: "Thẩm định lần nộp đang chờ",
+  VerifyAddressed: "Xác minh nội dung Manager đã sửa",
+  AdviseOptional: "Có thể góp ý khi chương trình đang soạn",
+  // Backward-compatible labels for older API fixtures.
   PendingReview: "Chờ quyết định thẩm định",
   ReviewDraft: "Tiếp tục nháp đánh giá",
   UnreadFeedback: "Có góp ý chưa đọc",
   AddressedCorrections: "Có chỉnh sửa cần xem lại",
   AwaitingManager: "Chờ Manager phản hồi",
-  None: "Không có việc ưu tiên",
+  None: "Chưa có việc cần xử lý",
 };
 
 export function getAdvisoryNextActionLabel(nextAction: string): string {
@@ -31,9 +35,9 @@ export const ADVISORY_THREAD_STATUS_LABELS: Record<
   AdvisoryThreadStatus,
   string
 > = {
-  Open: "Đang mở",
-  Addressed: "Đã xử lý",
-  Resolved: "Đã đóng",
+  Open: "Chờ Manager xử lý",
+  Addressed: "Chờ chuyên gia xác minh",
+  Resolved: "Đã xác minh",
 };
 
 export const ADVISORY_TARGET_TYPE_LABELS: Record<AdvisoryTargetType, string> = {

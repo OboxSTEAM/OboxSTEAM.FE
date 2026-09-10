@@ -1,5 +1,6 @@
 import type { NotificationType } from "@/lib/api/entities/notification";
 import {
+  canAccessExpertArea,
   canAccessManagerArea,
   isMentorRole,
   isParentRole,
@@ -21,6 +22,8 @@ export type ResolveNotificationHrefInput = {
   payload: NotificationPayload;
   /** Used only to pick student vs manager/parent destination paths — not to filter inbox. */
   accountRole?: string | null;
+  /** Advisory thread / invitation id when present on the notification row. */
+  entityId?: string | null;
 };
 
 function learnWithAssignment(
@@ -125,7 +128,33 @@ function resolveDeeplinkPathOverride(
   if (deeplinkPath === "/parent" || deeplinkPath.startsWith("/parent/")) {
     return isParent ? deeplinkPath : null;
   }
+  if (deeplinkPath === "/expert" || deeplinkPath.startsWith("/expert/")) {
+    return canAccessExpertArea(accountRole) ? deeplinkPath : null;
+  }
   return deeplinkPath;
+}
+
+function expertProgramHref(
+  programId: string,
+  opts?: { tab?: string; threadId?: string | null },
+): string {
+  const params = new URLSearchParams();
+  if (opts?.tab) params.set("tab", opts.tab);
+  if (opts?.threadId) params.set("thread", opts.threadId);
+  const query = params.toString();
+  return query
+    ? `/expert/programs/${programId}?${query}`
+    : `/expert/programs/${programId}`;
+}
+
+function managerProgramHref(programId: string): string {
+  return `/manager/programs/${programId}`;
+}
+
+function expertScheduleHref(invitationId: string | null): string {
+  return invitationId
+    ? `/expert/schedule?invite=${encodeURIComponent(invitationId)}`
+    : "/expert/schedule";
 }
 
 /**
@@ -137,10 +166,12 @@ function resolveDeeplinkPathOverride(
 export function resolveNotificationHref(
   input: ResolveNotificationHrefInput,
 ): string | null {
-  const { type, payload, accountRole } = input;
+  const { type, payload, accountRole, entityId } = input;
   const isManager = canAccessManagerArea(accountRole);
   const isParent = isParentRole(accountRole);
   const isMentor = isMentorRole(accountRole);
+  const isExpert = canAccessExpertArea(accountRole);
+  const threadId = entityId?.trim() || null;
 
   const override = resolveDeeplinkPathOverride(payload, accountRole);
   if (override) return override;
@@ -334,6 +365,50 @@ export function resolveNotificationHref(
         : "/portfolio";
     }
 
+    case "CurriculumReviewSubmitted":
+      if (!programId) return isExpert ? "/expert/programs" : null;
+      return isExpert
+        ? expertProgramHref(programId)
+        : managerProgramHref(programId);
+
+    case "CurriculumReviewApproved":
+    case "CurriculumReviewChangesRequested":
+    case "CurriculumReviewPublished":
+      if (!programId) return isManager ? "/manager/programs" : null;
+      return isExpert
+        ? expertProgramHref(programId)
+        : managerProgramHref(programId);
+
+    case "AdvisoryFeedbackPublished":
+    case "AdvisoryReply":
+    case "AdvisoryCorrectionAddressed":
+      if (!programId) {
+        if (isExpert) return "/expert/programs";
+        if (isManager) return "/manager/programs";
+        return null;
+      }
+      if (isExpert) {
+        return expertProgramHref(programId, {
+          tab: "discussion",
+          threadId,
+        });
+      }
+      return managerProgramHref(programId);
+
+    case "ClassSessionExpertInvited":
+    case "ClassSessionExpertInvitationWithdrawn":
+    case "ClassSessionExpertFeedbackRequested":
+    case "ClassSessionExpertClearedOnReschedule":
+      return isExpert ? expertScheduleHref(threadId) : classId
+        ? `/manager/classes/${classId}`
+        : "/manager/classes";
+
+    case "ClassSessionExpertAccepted":
+    case "ClassSessionExpertDeclined":
+    case "ClassSessionExpertFeedbackSubmitted":
+      if (isExpert) return expertScheduleHref(threadId);
+      return classId ? `/manager/classes/${classId}` : "/manager/classes";
+
     default:
       return null;
   }
@@ -345,6 +420,7 @@ export function resolveNotificationHrefFromNotification(input: {
   payload?: NotificationPayload | null;
   payloadJson?: string | null;
   accountRole?: string | null;
+  entityId?: string | null;
 }): string | null {
   return resolveNotificationHref({
     type: input.type,
@@ -353,5 +429,6 @@ export function resolveNotificationHrefFromNotification(input: {
       payloadJson: input.payloadJson,
     }),
     accountRole: input.accountRole,
+    entityId: input.entityId,
   });
 }

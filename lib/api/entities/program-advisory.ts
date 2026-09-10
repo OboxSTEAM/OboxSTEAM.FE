@@ -47,9 +47,17 @@ export const advisoryMineItemSchema = z.object({
   code: nullableStringSchema,
   name: nullableStringSchema,
   isAdvisor: z.boolean(),
-  frameworkVersionNumber: z.number().int().nullable(),
+  /** BE may omit null ints when the program has no framework version. */
+  frameworkVersionNumber: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
   status: programStatusSchema,
-  latestActivityAt: z.string().nullable(),
+  latestActivityAt: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   nextAction: nullableStringSchema,
   unreadFeedbackCount: z.number().int(),
 });
@@ -105,7 +113,11 @@ export const programAdvisoryWorkspaceSchema = z.object({
   advisorExpertId: optionalUuidSchema,
   advisorName: nullableStringSchema,
   frameworkVersionId: optionalUuidSchema,
-  frameworkVersionNumber: z.number().int().nullable(),
+  frameworkVersionNumber: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
   participants: z
     .array(advisoryParticipantSchema)
     .nullish()

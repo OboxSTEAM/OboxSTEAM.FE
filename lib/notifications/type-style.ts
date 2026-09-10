@@ -178,6 +178,20 @@ const TYPE_GROUP: Record<NotificationType, NotificationTypeGroup> = {
   MaterialUpdated: "progress",
   AssignmentEditedByMentor: "grading",
   ClassQuizSetEditedByMentor: "grading",
+  CurriculumReviewSubmitted: "grading",
+  CurriculumReviewApproved: "grading",
+  CurriculumReviewChangesRequested: "grading",
+  CurriculumReviewPublished: "grading",
+  ClassSessionExpertInvited: "session",
+  ClassSessionExpertAccepted: "session",
+  ClassSessionExpertDeclined: "session",
+  ClassSessionExpertInvitationWithdrawn: "session",
+  ClassSessionExpertFeedbackRequested: "session",
+  ClassSessionExpertFeedbackSubmitted: "session",
+  ClassSessionExpertClearedOnReschedule: "session",
+  AdvisoryFeedbackPublished: "grading",
+  AdvisoryReply: "grading",
+  AdvisoryCorrectionAddressed: "grading",
 };
 
 export function getNotificationTypeStyle(type: NotificationType): TypeStyle {

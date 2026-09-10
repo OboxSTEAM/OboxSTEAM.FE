@@ -40,6 +40,7 @@ type ReviewAssessmentPanelProps = {
   concurrencyVersion: string;
   criteria: RubricSnapshotCriterion[];
   canDecide: boolean;
+  blockingChangeCount?: number;
   onDecisionComplete?: () => void;
 };
 
@@ -53,11 +54,13 @@ export function ReviewAssessmentPanel({
   concurrencyVersion: initialConcurrencyVersion,
   criteria,
   canDecide,
+  blockingChangeCount = 0,
   onDecisionComplete,
 }: ReviewAssessmentPanelProps) {
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
   const [overallComment, setOverallComment] = useState("");
   const [changesComment, setChangesComment] = useState("");
+  const [showChangesReason, setShowChangesReason] = useState(false);
   const [concurrencyVersion, setConcurrencyVersion] = useState(
     initialConcurrencyVersion,
   );
@@ -71,6 +74,7 @@ export function ReviewAssessmentPanel({
 
   const { data: draftData, isLoading: isDraftLoading, retry: retryDraft } =
     useClientFetch({
+      enabled: canDecide && submissionStatus === "Pending",
       fetcher: () => getReviewDraft(programId, submissionId),
       deps: [programId, submissionId],
       onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.draft"),
@@ -266,6 +270,9 @@ export function ReviewAssessmentPanel({
 
   const isBusy = pendingAction !== null;
   const isPending = submissionStatus === "Pending";
+  const rubricComplete = criteria.length === 0 || scoredCount === criteria.length;
+  const canApprove =
+    canDecide && isPending && rubricComplete && blockingChangeCount === 0;
 
   return (
     <div className="space-y-5">
@@ -277,10 +284,59 @@ export function ReviewAssessmentPanel({
         </Badge>
         {isSaving ? (
           <span className="text-[11px] text-muted-foreground">Đang lưu nháp…</span>
-        ) : null}
+        ) : canDecide && isPending ? (
+          <span className="text-[11px] text-emerald-700 dark:text-emerald-300">
+            Nháp được lưu tự động
+          </span>
+        ) : (
+          <span className="text-[11px] text-muted-foreground">Chế độ chỉ đọc</span>
+        )}
         <span className="text-[11px] text-muted-foreground">
           {scoredCount}/{criteria.length} tiêu chí đã chấm
         </span>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-background/65 p-4">
+        <p className="text-sm font-bold text-foreground">
+          Mức độ sẵn sàng cho quyết định
+        </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-3">
+          <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-sm">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+            <div>
+              <p className="font-semibold text-foreground">Hồ sơ đã tải</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Đúng lần nộp đang chờ</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-sm">
+            {rubricComplete ? (
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+            ) : (
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600" />
+            )}
+            <div>
+              <p className="font-semibold text-foreground">Rubric {scoredCount}/{criteria.length}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {rubricComplete ? "Đã chấm đủ tiêu chí" : "Cần hoàn tất trước khi duyệt"}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-sm">
+            {blockingChangeCount === 0 ? (
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+            ) : (
+              <AlertCircle className="mt-0.5 size-4 shrink-0 text-primary" />
+            )}
+            <div>
+              <p className="font-semibold text-foreground">Yêu cầu bắt buộc</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {blockingChangeCount === 0
+                  ? "Không còn nội dung chờ xác minh"
+                  : `${blockingChangeCount} nội dung chưa xác minh`}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {isDraftLoading ? (
@@ -336,7 +392,7 @@ export function ReviewAssessmentPanel({
                   onChange={(e) => updateScore(criterion.id, { comment: e.target.value })}
                   placeholder="Nhận xét cho tiêu chí (không bắt buộc)"
                   disabled={!canDecide || isBusy}
-                  className="h-10 rounded-lg border-input bg-card text-xs"
+                  className="h-10 rounded-lg border-input bg-card text-sm"
                 />
               </div>
             );
@@ -369,9 +425,9 @@ export function ReviewAssessmentPanel({
 
       {canDecide && isPending ? (
         <>
-          <div className="space-y-2">
+          {showChangesReason ? <div className="space-y-2 rounded-xl border border-primary/25 bg-primary/5 p-4">
             <Label htmlFor="assessment-changes">
-              Lý do cần chỉnh sửa
+              Yêu cầu Manager cần xử lý
               <span className="ml-1 text-primary">*</span>
             </Label>
             <Textarea
@@ -380,9 +436,10 @@ export function ReviewAssessmentPanel({
               value={changesComment}
               onChange={(e) => setChangesComment(e.target.value)}
               disabled={isBusy}
+              placeholder="Nêu rõ nội dung cần sửa, lý do chuyên môn và dấu hiệu để xác minh ở lần nộp tiếp theo."
               className="rounded-xl border-input bg-card"
             />
-          </div>
+          </div> : null}
 
           {formError ? (
             <p className="flex items-start gap-1.5 text-xs font-medium text-primary">
@@ -395,7 +452,7 @@ export function ReviewAssessmentPanel({
             <Button
               type="button"
               onClick={() => setPendingAction("approve")}
-              disabled={isBusy}
+              disabled={isBusy || !canApprove}
               className="h-11 flex-1 gap-2 rounded-xl bg-[#7CB342] font-semibold text-white hover:bg-[#7CB342]/90"
             >
               <CheckCircle2 className="size-4" />
@@ -404,14 +461,30 @@ export function ReviewAssessmentPanel({
             <Button
               type="button"
               variant="outline"
-              onClick={() => setPendingAction("request-changes")}
+              onClick={() => {
+                if (!showChangesReason) {
+                  setShowChangesReason(true);
+                  return;
+                }
+                if (!changesComment.trim()) {
+                  setFormError("Vui lòng mô tả nội dung Manager cần chỉnh sửa.");
+                  return;
+                }
+                setPendingAction("request-changes");
+              }}
               disabled={isBusy}
               className="h-11 flex-1 gap-2 rounded-xl border-primary/40 font-semibold text-primary"
             >
               <MessageSquareWarning className="size-4" />
-              Yêu cầu chỉnh sửa
+              {showChangesReason ? "Xác nhận gửi yêu cầu" : "Soạn yêu cầu chỉnh sửa"}
             </Button>
           </div>
+
+          {!canApprove ? (
+            <p className="text-xs leading-5 text-muted-foreground">
+              Phê duyệt chỉ mở khi rubric đã được chấm đủ và mọi yêu cầu bắt buộc đã được chuyên gia xác minh.
+            </p>
+          ) : null}
 
           <ConfirmDialog
             isOpen={pendingAction === "approve"}
@@ -436,7 +509,12 @@ export function ReviewAssessmentPanel({
         </>
       ) : !canDecide ? (
         <p className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
-          Bạn không có quyền quyết định thẩm định cho lần nộp này.
+          Quyết định chính thức không khả dụng trong ngữ cảnh này. Chỉ chuyên gia
+          chịu trách nhiệm mới có thể quyết định trên lần nộp mới nhất đang chờ.
+        </p>
+      ) : !isPending ? (
+        <p className="rounded-xl border border-dashed border-border p-4 text-xs text-muted-foreground">
+          Lần nộp này đã kết thúc. Nội dung và kết quả được giữ ở chế độ chỉ đọc.
         </p>
       ) : null}
     </div>

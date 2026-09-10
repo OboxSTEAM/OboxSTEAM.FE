@@ -23378,6 +23378,14 @@
                     "type": "string",
                     "format": "uuid"
                   },
+                  "FrameworkVersionId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "AdvisorExpertId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
                   "file": {
                     "type": "string",
                     "format": "binary"
@@ -25196,6 +25204,127 @@
         }
       }
     },
+    "/api/programs/{id}/advisor": {
+      "put": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Assign the responsible program expert",
+        "description": "The expert must have an active linked login and is added to the program board. Pending or approved review must be withdrawn before reassignment.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignProgramAdvisorRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignProgramAdvisorRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignProgramAdvisorRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramsResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramsResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramsResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/programs/{id}/publish": {
       "post": {
         "tags": [
@@ -25633,6 +25762,763 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/advisory-mine": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Assigned advisory programs for the current user",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 10
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Draft",
+                "Active",
+                "Inactive",
+                "PendingReview",
+                "Approved"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "unreadOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMineItemDtoPaginationApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMineItemDtoPaginationApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMineItemDtoPaginationApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/advisory": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Advisory workspace summary for a program",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/framework-check": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Structured framework checks for a program",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameworkCheckDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameworkCheckDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FrameworkCheckDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/advisory-threads": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "List advisory threads for a program",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoIReadOnlyListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoIReadOnlyListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoIReadOnlyListApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Create an advisory thread",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdvisoryThreadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdvisoryThreadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAdvisoryThreadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/advisory-threads/{threadId}/messages": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "List messages in an advisory thread",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMessageDtoIReadOnlyListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMessageDtoIReadOnlyListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMessageDtoIReadOnlyListApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Add a message to an advisory thread",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAdvisoryMessageRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAdvisoryMessageRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddAdvisoryMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMessageDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMessageDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryMessageDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/advisory-threads/{threadId}/status": {
+      "patch": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Update advisory thread status",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdvisoryThreadStatusRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdvisoryThreadStatusRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAdvisoryThreadStatusRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/advisory-read": {
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Record advisory last-read position",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAdvisoryReadRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAdvisoryReadRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecordAdvisoryReadRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/review-submissions": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "List formal review submissions",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewSubmissionSummaryDtoIReadOnlyListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewSubmissionSummaryDtoIReadOnlyListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewSubmissionSummaryDtoIReadOnlyListApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/review-submissions/{submissionId}": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Get a review submission snapshot",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewSubmissionDetailDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewSubmissionDetailDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewSubmissionDetailDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/review-submissions/{submissionId}/changes": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Diff a submission against the previous one",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionChangesDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionChangesDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SubmissionChangesDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/review-submissions/{submissionId}/draft": {
+      "get": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Get the advisor private review draft",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewDraftDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewDraftDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewDraftDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Autosave the advisor private review draft",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "submissionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProgramReviewDraftRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProgramReviewDraftRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveProgramReviewDraftRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewDraftDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewDraftDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramReviewDraftDtoApiResult"
                 }
               }
             }
@@ -27270,7 +28156,7 @@
           "ProgramFramework"
         ],
         "summary": "Update a program framework",
-        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise.",
+        "description": "Owning expert only. Updates the current draft; published versions are immutable.",
         "parameters": [
           {
             "name": "id",
@@ -27501,6 +28387,193 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/program-frameworks/{id}/archive": {
+      "post": {
+        "tags": [
+          "ProgramFramework"
+        ],
+        "summary": "Archive a framework",
+        "description": "Prevents new assignments while preserving existing pinned programs and history.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/program-frameworks/{id}/versions": {
+      "get": {
+        "tags": [
+          "ProgramFramework"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/program-frameworks/{id}/versions/{versionId}": {
+      "get": {
+        "tags": [
+          "ProgramFramework"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/program-frameworks/{id}/versions/draft": {
+      "post": {
+        "tags": [
+          "ProgramFramework"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/program-frameworks/{id}/versions/{versionId}/publish": {
+      "post": {
+        "tags": [
+          "ProgramFramework"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/program-frameworks/{id}/versions/{versionId}/rubric": {
+      "put": {
+        "tags": [
+          "ProgramFramework"
+        ],
+        "summary": "Replace a draft rubric atomically",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFrameworkRubricRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFrameworkRubricRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFrameworkRubricRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
           }
         }
       }
@@ -33282,6 +34355,16 @@
         },
         "additionalProperties": false
       },
+      "AddAdvisoryMessageRequest": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AddHighlightSegmentRequest": {
         "type": "object",
         "properties": {
@@ -33324,6 +34407,453 @@
         },
         "additionalProperties": false
       },
+      "AdvisoryFeedbackCountsDto": {
+        "type": "object",
+        "properties": {
+          "openSuggestions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "addressedSuggestions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resolvedSuggestions": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openRequiredChanges": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "addressedRequiredChanges": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resolvedRequiredChanges": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMessageDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryMessageDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMessageDtoIReadOnlyListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryMessageDtoIReadOnlyListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMessageDtoIReadOnlyListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryMessageDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMessageDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdvisoryMessageDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMineItemDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAdvisor": {
+            "type": "boolean"
+          },
+          "frameworkVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive",
+              "PendingReview",
+              "Approved"
+            ],
+            "type": "string"
+          },
+          "latestActivityAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "nextAction": {
+            "type": "string",
+            "nullable": true
+          },
+          "unreadFeedbackCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMineItemDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryMineItemDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMineItemDtoPaginationApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryMineItemDtoPaginationResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryMineItemDtoPaginationResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdvisoryMineItemDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryParticipantDto": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expertId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "displayName": {
+            "type": "string",
+            "nullable": true
+          },
+          "role": {
+            "type": "string",
+            "nullable": true
+          },
+          "isAdvisor": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "authorUserId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "authorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "targetLabel": {
+            "type": "string",
+            "nullable": true
+          },
+          "targetContext": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "Suggestion",
+              "RequiredChange"
+            ],
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "Open",
+              "Addressed",
+              "Resolved"
+            ],
+            "type": "string"
+          },
+          "lastMessageAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "messageCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryThreadDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadDtoIReadOnlyListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/AdvisoryThreadDtoIReadOnlyListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadDtoIReadOnlyListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryThreadDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/AdvisoryThreadDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AffectedCurriculumLinkDto": {
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ApiResult": {
         "type": "object",
         "properties": {
@@ -33342,6 +34872,16 @@
       "ApproveCurriculumReviewRequest": {
         "type": "object",
         "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "comment": {
             "type": "string",
             "nullable": true
@@ -33625,6 +35165,16 @@
           },
           "data": {
             "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AssignProgramAdvisorRequest": {
+        "type": "object",
+        "properties": {
+          "advisorExpertId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -37575,6 +39125,46 @@
         },
         "additionalProperties": false
       },
+      "CreateAdvisoryThreadRequest": {
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "type": {
+            "enum": [
+              "Suggestion",
+              "RequiredChange"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "CreateAssessmentRecoveryRequestDto": {
         "type": "object",
         "properties": {
@@ -38270,6 +39860,10 @@
             "type": "string",
             "nullable": true
           },
+          "academicGuidance": {
+            "type": "string",
+            "nullable": true
+          },
           "category": {
             "enum": [
               "Science",
@@ -38441,6 +40035,14 @@
           "round": {
             "type": "integer",
             "format": "int32"
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "snapshotAvailable": {
+            "type": "boolean"
           },
           "decision": {
             "enum": [
@@ -40157,6 +41759,95 @@
         },
         "additionalProperties": false
       },
+      "FrameworkCheckDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "allPassed": {
+            "type": "boolean"
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkCheckItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "FrameworkCheckDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/FrameworkCheckDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FrameworkCheckDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/FrameworkCheckDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "FrameworkCheckItemDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "expected": {
+            "type": "string",
+            "nullable": true
+          },
+          "actual": {
+            "type": "string",
+            "nullable": true
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "affectedCurriculumLinks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AffectedCurriculumLinkDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "FrameworkRubricCriterionRequest": {
         "required": [
           "name"
@@ -40169,6 +41860,10 @@
             "type": "string"
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceGuidance": {
             "type": "string",
             "nullable": true
           },
@@ -40197,11 +41892,19 @@
             "type": "string",
             "format": "uuid"
           },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "name": {
             "type": "string",
             "nullable": true
           },
           "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "evidenceGuidance": {
             "type": "string",
             "nullable": true
           },
@@ -40806,7 +42509,7 @@
                 "nullable": true
               }
             },
-            "additionalProperties": { }
+            "additionalProperties": {}
           }
         ]
       },
@@ -42894,7 +44597,10 @@
               "ClassSessionExpertFeedbackRequested",
               "ClassSessionExpertFeedbackSubmitted",
               "CurriculumReviewPublished",
-              "ClassSessionExpertClearedOnReschedule"
+              "ClassSessionExpertClearedOnReschedule",
+              "AdvisoryFeedbackPublished",
+              "AdvisoryReply",
+              "AdvisoryCorrectionAddressed"
             ],
             "type": "string"
           },
@@ -44981,7 +46687,114 @@
             "nullable": true
           }
         },
-        "additionalProperties": { }
+        "additionalProperties": {}
+      },
+      "ProgramAdvisoryWorkspaceDto": {
+        "type": "object",
+        "properties": {
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Draft",
+              "Active",
+              "Inactive",
+              "PendingReview",
+              "Approved"
+            ],
+            "type": "string"
+          },
+          "advisorExpertId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "advisorName": {
+            "type": "string",
+            "nullable": true
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "frameworkVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AdvisoryParticipantDto"
+            },
+            "nullable": true
+          },
+          "canAdvise": {
+            "type": "boolean"
+          },
+          "canDecide": {
+            "type": "boolean"
+          },
+          "canEditCurriculum": {
+            "type": "boolean"
+          },
+          "canAssignAdvisor": {
+            "type": "boolean"
+          },
+          "latestSubmission": {
+            "$ref": "#/components/schemas/ProgramReviewSubmissionSummaryDto"
+          },
+          "feedbackCounts": {
+            "$ref": "#/components/schemas/AdvisoryFeedbackCountsDto"
+          },
+          "hasUnreadFeedback": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramAdvisoryWorkspaceDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramAdvisoryWorkspaceDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDto"
+          }
+        },
+        "additionalProperties": false
       },
       "ProgramCurriculumActivityDto": {
         "type": "object",
@@ -45615,10 +47428,33 @@
           "requiresExpertReview": {
             "type": "boolean"
           },
+          "isArchived": {
+            "type": "boolean"
+          },
+          "currentVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "currentVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "hasDraftVersion": {
+            "type": "boolean"
+          },
           "criteria": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/FrameworkRubricCriterionResponseDto"
+            },
+            "nullable": true
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramFrameworkVersionResponseDto"
             },
             "nullable": true
           },
@@ -45735,6 +47571,75 @@
         },
         "additionalProperties": false
       },
+      "ProgramFrameworkVersionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frameworkId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "versionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "academicGuidance": {
+            "type": "string",
+            "nullable": true
+          },
+          "minModules": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minOfflineSessions": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "minLiveSessions": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "requireCapstoneResearchMilestone": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "isPublished": {
+            "type": "boolean"
+          },
+          "publishedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkRubricCriterionResponseDto"
+            },
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
       "ProgramListItemDto": {
         "type": "object",
         "properties": {
@@ -45814,6 +47719,16 @@
             "nullable": true
           },
           "frameworkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "advisorExpertId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -45902,6 +47817,73 @@
           },
           "data": {
             "$ref": "#/components/schemas/ProgramListItemDtoPagination"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewDraftDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "scores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewCriterionScoreRequest"
+            },
+            "nullable": true
+          },
+          "overallComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastSavedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewDraftDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ProgramReviewDraftDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewDraftDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramReviewDraftDto"
           }
         },
         "additionalProperties": false
@@ -46170,6 +48152,180 @@
         },
         "additionalProperties": false
       },
+      "ProgramReviewSubmissionDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "enum": [
+              "Pending",
+              "ChangesRequested",
+              "Approved",
+              "Withdrawn"
+            ],
+            "type": "string"
+          },
+          "submittedByManagerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assignedAdvisorExpertId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "curriculumSnapshotJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "rubricSnapshotJson": {
+            "type": "string",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "closedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewSubmissionDetailDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ProgramReviewSubmissionDetailDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewSubmissionDetailDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ProgramReviewSubmissionDetailDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewSubmissionSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "submissionNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "enum": [
+              "Pending",
+              "ChangesRequested",
+              "Approved",
+              "Withdrawn"
+            ],
+            "type": "string"
+          },
+          "assignedAdvisorExpertId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "submittedAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "closedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewSubmissionSummaryDtoIReadOnlyListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ProgramReviewSubmissionSummaryDtoIReadOnlyListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ProgramReviewSubmissionSummaryDtoIReadOnlyListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProgramReviewSubmissionSummaryDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "ProgramsResponseDto": {
         "type": "object",
         "properties": {
@@ -46251,6 +48407,25 @@
           "frameworkId": {
             "type": "string",
             "format": "uuid",
+            "nullable": true
+          },
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "frameworkVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "advisorExpertId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "advisorExpertName": {
+            "type": "string",
             "nullable": true
           },
           "createdAt": {
@@ -47155,6 +49330,17 @@
         },
         "additionalProperties": false
       },
+      "RecordAdvisoryReadRequest": {
+        "type": "object",
+        "properties": {
+          "lastReadAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
       "ReorderPortfolioItemEntryDto": {
         "type": "object",
         "properties": {
@@ -47220,8 +49406,25 @@
       "RequestCurriculumChangesRequest": {
         "type": "object",
         "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "comment": {
             "type": "string",
+            "nullable": true
+          },
+          "scores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewCriterionScoreRequest"
+            },
             "nullable": true
           }
         },
@@ -48047,6 +50250,40 @@
           },
           "data": {
             "$ref": "#/components/schemas/SaveDraftAnswersResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaveFrameworkRubricRequest": {
+        "type": "object",
+        "properties": {
+          "criteria": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkRubricCriterionRequest"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SaveProgramReviewDraftRequest": {
+        "type": "object",
+        "properties": {
+          "scores": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReviewCriterionScoreRequest"
+            },
+            "nullable": true
+          },
+          "overallComment": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false
@@ -48894,6 +51131,116 @@
         },
         "additionalProperties": false
       },
+      "SubmissionChangeItemDto": {
+        "type": "object",
+        "properties": {
+          "targetType": {
+            "enum": [
+              "Program",
+              "Module",
+              "Course",
+              "Activity",
+              "Assignment",
+              "ResearchMilestone",
+              "Material",
+              "RubricCriterion"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "field": {
+            "type": "string",
+            "nullable": true
+          },
+          "detail": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubmissionChangesDto": {
+        "type": "object",
+        "properties": {
+          "submissionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "previousSubmissionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "added": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionChangeItemDto"
+            },
+            "nullable": true
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionChangeItemDto"
+            },
+            "nullable": true
+          },
+          "reordered": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionChangeItemDto"
+            },
+            "nullable": true
+          },
+          "modified": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubmissionChangeItemDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubmissionChangesDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/SubmissionChangesDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SubmissionChangesDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/SubmissionChangesDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "SubmitAssignmentRequestDto": {
         "required": [
           "assignmentId"
@@ -49371,6 +51718,24 @@
           "activityId": {
             "type": "string",
             "format": "uuid"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdateAdvisoryThreadStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "enum": [
+              "Open",
+              "Addressed",
+              "Resolved"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -50151,6 +52516,10 @@
             "type": "string",
             "nullable": true
           },
+          "academicGuidance": {
+            "type": "string",
+            "nullable": true
+          },
           "category": {
             "enum": [
               "Science",
@@ -50269,6 +52638,11 @@
             "nullable": true
           },
           "frameworkId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "frameworkVersionId": {
             "type": "string",
             "format": "uuid",
             "nullable": true
@@ -50662,7 +53036,7 @@
   },
   "security": [
     {
-      "Bearer": [ ]
+      "Bearer": []
     }
   ]
 }

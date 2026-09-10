@@ -28,7 +28,7 @@ export const EXPERT_NAV_GROUPS: ExpertNavGroup[] = [
         icon: GraduationCap,
       },
       {
-        label: "Khung chương trình",
+        label: "Bộ khung thẩm định",
         href: "/expert/frameworks",
         icon: BookOpen,
       },

@@ -10,6 +10,7 @@ import {
   LayoutGrid,
   ListChecks,
   MessageSquare,
+  ShieldCheck,
   XCircle,
 } from "lucide-react";
 
@@ -24,7 +25,10 @@ import {
 import { AdvisoryThreadList } from "@/components/advisory/advisory-thread-list";
 import { AdvisoryThreadPanel } from "@/components/advisory/advisory-thread-panel";
 import { ReviewAssessmentPanel } from "@/components/advisory/review-assessment-panel";
-import { ManagerPageHeader } from "@/components/manager/shared/page-header";
+import {
+  ExpertWorkbenchHero,
+  ExpertWorkflowRail,
+} from "@/components/expert/shared/expert-workbench";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -35,13 +39,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { useClientFetch } from "@/hooks/use-client-fetch";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   createAdvisoryThread,
   getAdvisoryThreads,
+  getFrameworkVersion,
   getProgramAdvisoryWorkspace,
-  getProgramFrameworkById,
   getProgramFrameworkCheck,
   getReviewSubmission,
   recordAdvisoryRead,
@@ -65,6 +70,33 @@ import {
 import { cn } from "@/lib/utils";
 
 type WorkspaceTab = "overview" | "content" | "discussion" | "assessment";
+
+const WORKSPACE_STEPS: {
+  value: WorkspaceTab;
+  label: string;
+  detail: string;
+}[] = [
+  {
+    value: "overview",
+    label: "Hồ sơ chương trình",
+    detail: "Hiểu mục tiêu, kết quả và trách nhiệm cố vấn của bạn.",
+  },
+  {
+    value: "content",
+    label: "Hồ sơ lần nộp",
+    detail: "Đọc đúng snapshot và kiểm tra cấu trúc curriculum.",
+  },
+  {
+    value: "discussion",
+    label: "Trao đổi cố vấn",
+    detail: "Góp ý đúng nội dung và theo dõi việc chỉnh sửa.",
+  },
+  {
+    value: "assessment",
+    label: "Quyết định chính thức",
+    detail: "Chấm rubric và kết thúc lần nộp thẩm định.",
+  },
+];
 
 type ProgramAdvisoryWorkspaceProps = {
   program: ProgramWithModules;
@@ -104,6 +136,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   );
   const [isCreatingThread, setIsCreatingThread] = useState(false);
   const [mobileContentOpen, setMobileContentOpen] = useState(false);
+  const { profile } = useCurrentUser();
 
   const { data: workspaceData, retry: retryWorkspace } = useClientFetch({
     fetcher: () => getProgramAdvisoryWorkspace(program.id),
@@ -112,8 +145,10 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   });
 
   const workspace = workspaceData?.data ?? null;
-  const activeSubmissionId =
-    submissionId ?? workspace?.latestSubmission?.id ?? null;
+  // Until a full submission-history selector is present, always bind the
+  // decision surface to the latest summary. This prevents an older snapshot
+  // URL from being paired with the latest submission's concurrency token.
+  const activeSubmissionId = workspace?.latestSubmission?.id ?? submissionId;
 
   const { data: frameworkCheckData, isLoading: isCheckLoading } = useClientFetch({
     fetcher: () => getProgramFrameworkCheck(program.id),
@@ -138,22 +173,29 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     onError: (error) => showAppErrorFromUnknown(error, "expert.review.detail"),
   });
 
-  const { data: frameworkData } = useClientFetch({
-    enabled: program.frameworkId != null,
-    fetcher: () => getProgramFrameworkById(program.frameworkId as string),
-    deps: [program.frameworkId],
+  const submission = submissionData?.data ?? null;
+  const pinnedFrameworkVersionId =
+    submission?.frameworkVersionId ?? workspace?.frameworkVersionId ?? null;
+
+  const { data: frameworkVersionData } = useClientFetch({
+    enabled: program.frameworkId != null && pinnedFrameworkVersionId != null,
+    fetcher: () =>
+      program.frameworkId && pinnedFrameworkVersionId
+        ? getFrameworkVersion(program.frameworkId, pinnedFrameworkVersionId)
+        : Promise.resolve(null),
+    deps: [program.frameworkId, pinnedFrameworkVersionId],
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.detail"),
   });
 
   useEffect(() => {
+    if (tab !== "discussion") return;
     void recordAdvisoryRead(program.id).catch(() => undefined);
-  }, [program.id]);
+  }, [program.id, tab]);
 
-  const submission = submissionData?.data ?? null;
   const snapshotModules = useMemo(() => {
     if (submission?.curriculumSnapshotJson) {
       const parsed = parseCurriculumSnapshot(submission.curriculumSnapshotJson);
-      if (parsed) return parsed;
+      return parsed ?? [];
     }
     return program.modules;
   }, [submission, program.modules]);
@@ -164,13 +206,16 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     submission != null &&
     submission.curriculumSnapshotJson == null &&
     activeSubmissionId != null;
+  const snapshotUnreadable =
+    submission?.curriculumSnapshotJson != null &&
+    parseCurriculumSnapshot(submission.curriculumSnapshotJson) == null;
 
   const rubricCriteria = useMemo(() => {
     if (submission?.rubricSnapshotJson) {
       const fromSnapshot = parseRubricSnapshot(submission.rubricSnapshotJson);
       if (fromSnapshot.length > 0) return fromSnapshot;
     }
-    const live = frameworkData?.data?.criteria ?? [];
+    const live = frameworkVersionData?.data?.criteria ?? [];
     return [...live]
       .sort((a, b) => a.displayOrder - b.displayOrder)
       .map((c) => ({
@@ -181,7 +226,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
         maxScore: c.maxScore,
         displayOrder: c.displayOrder,
       }));
-  }, [submission, frameworkData]);
+  }, [submission, frameworkVersionData]);
 
   const threads = threadsData?.data ?? [];
   const selectedThread =
@@ -281,51 +326,82 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
 
   const frameworkCheck = frameworkCheckData?.data ?? null;
   const feedbackCounts = workspace?.feedbackCounts;
+  const currentParticipant = workspace?.participants.find(
+    (participant) => participant.userId === profile?.id,
+  );
+  const isResponsibleAdvisor = currentParticipant?.isAdvisor === true;
+  const canDecideLatest =
+    isResponsibleAdvisor &&
+    submission?.status === "Pending" &&
+    submission.id === workspace?.latestSubmission?.id &&
+    workspace?.status === "PendingReview";
+  const addressedRequiredCount = threads.filter(
+    (thread) =>
+      thread.type === "RequiredChange" && thread.status === "Addressed",
+  ).length;
+  const advisorRoleLabel = isResponsibleAdvisor
+    ? "Chuyên gia chịu trách nhiệm"
+    : "Chuyên gia hội đồng";
+
+  const tabIndex = Math.max(
+    0,
+    WORKSPACE_STEPS.findIndex((step) => step.value === tab),
+  );
+  const nextActionLabel = canDecideLatest
+    ? "Đối chiếu hồ sơ và hoàn tất quyết định"
+    : addressedRequiredCount > 0
+      ? `Xác minh ${addressedRequiredCount} nội dung Manager đã sửa`
+      : workspace?.canAdvise
+        ? "Đọc hồ sơ và gửi góp ý theo nội dung"
+        : "Theo dõi tiến trình chương trình";
 
   return (
     <div className="flex flex-col gap-6">
-      <ManagerPageHeader
-        title={program.name || "Chương trình"}
-        description={`Mã: ${program.code || "—"} · Khung v${workspace?.frameworkVersionNumber ?? "—"} · ${workspace?.advisorName || "Chưa gán phụ trách"}`}
-        breadcrumbs={[
-          { label: "Chương trình phụ trách", href: "/expert/programs" },
-          { label: program.name },
-        ]}
+      <ExpertWorkbenchHero
+        eyebrow={
+          workspace?.latestSubmission
+            ? `Hồ sơ cố vấn · Lần nộp #${workspace.latestSubmission.submissionNumber}`
+            : "Hồ sơ cố vấn chương trình"
+        }
+        title={program.name || "Chương trình chưa đặt tên"}
+        description={`${program.code || "Chưa có mã"} · ${PROGRAM_STATUS_LABELS[program.status]} · ${advisorRoleLabel} · Khung v${workspace?.frameworkVersionNumber ?? "—"} · ${nextActionLabel}`}
+        icon={ShieldCheck}
+        actions={
+          <Button
+            nativeButton={false}
+            render={<Link href="/expert/programs" />}
+            variant="outline"
+            className="h-10 gap-2 rounded-xl border-border px-4 font-semibold"
+          >
+            <ArrowLeft className="size-4" />
+            Hàng đợi cố vấn
+          </Button>
+        }
       >
-        <Button
-          nativeButton={false}
-          render={<Link href="/expert/programs" />}
-          variant="outline"
-          className="h-11 gap-2 rounded-xl border-border px-4 font-semibold"
-        >
-          <ArrowLeft className="size-4" />
-          Về danh sách
-        </Button>
-      </ManagerPageHeader>
+        <ExpertWorkflowRail
+          animate
+          onStepSelect={(index) => {
+            const next = WORKSPACE_STEPS[index];
+            if (next) setParams({ tab: next.value });
+          }}
+          steps={WORKSPACE_STEPS.map((step, index) => ({
+            label: step.label,
+            detail: step.detail,
+            state:
+              index < tabIndex ? "done" : index === tabIndex ? "current" : "next",
+            badge:
+              step.value === "discussion" && workspace?.hasUnreadFeedback ? (
+                <span className="size-2 rounded-full bg-primary" />
+              ) : undefined,
+          }))}
+        />
+      </ExpertWorkbenchHero>
 
-      <div className="px-6 pb-12">
+      <div className="mx-auto w-full max-w-[1500px] px-4 pb-12 sm:px-6">
         <Tabs
           value={tab}
           onValueChange={(value) => setParams({ tab: value as WorkspaceTab })}
         >
-          <TabsList className="mb-6 h-auto w-full justify-start gap-1 rounded-xl bg-muted/50 p-1">
-            <TabsTrigger value="overview" className="rounded-lg px-4 py-2 text-sm">
-              Tổng quan
-            </TabsTrigger>
-            <TabsTrigger value="content" className="rounded-lg px-4 py-2 text-sm">
-              Nội dung chương trình
-            </TabsTrigger>
-            <TabsTrigger value="discussion" className="rounded-lg px-4 py-2 text-sm">
-              Trao đổi
-              {workspace?.hasUnreadFeedback ? (
-                <span className="ml-1.5 size-2 rounded-full bg-primary" />
-              ) : null}
-            </TabsTrigger>
-            <TabsTrigger value="assessment" className="rounded-lg px-4 py-2 text-sm">
-              Thẩm định
-            </TabsTrigger>
-          </TabsList>
-
           <TabsContent value="overview" className="mt-0">
             <OverviewTab
               program={program}
@@ -343,6 +419,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               selection={curriculumSelection}
               isSnapshot={isViewingSnapshot}
               snapshotUnavailable={snapshotUnavailable}
+              snapshotUnreadable={snapshotUnreadable}
               onSelect={handleCurriculumSelect}
               onFeedback={workspace?.canAdvise ? handleFeedbackRequest : undefined}
               onMobileOpen={() => setMobileContentOpen(true)}
@@ -356,7 +433,8 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               isLoading={isThreadsLoading}
               selectedThreadId={threadId}
               selectedThread={selectedThread}
-              isAdvisor={workspace?.canAdvise ?? false}
+              canAdvise={workspace?.canAdvise ?? false}
+              isResponsibleAdvisor={isResponsibleAdvisor}
               showCreate={showCreateThread}
               createTarget={createTarget}
               targets={threadTargets}
@@ -391,7 +469,10 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
                   submissionStatus={workspace.latestSubmission.status}
                   concurrencyVersion={workspace.latestSubmission.concurrencyVersion}
                   criteria={rubricCriteria}
-                  canDecide={workspace.canDecide}
+                  canDecide={canDecideLatest}
+                  blockingChangeCount={
+                    openRequiredChanges.length + addressedRequiredCount
+                  }
                   onDecisionComplete={() => {
                     retryWorkspace();
                     retryThreads();
@@ -579,6 +660,7 @@ function ContentTab({
   selection,
   isSnapshot,
   snapshotUnavailable,
+  snapshotUnreadable,
   onSelect,
   onFeedback,
   onMobileOpen,
@@ -587,10 +669,26 @@ function ContentTab({
   selection: CurriculumSelection | null;
   isSnapshot: boolean;
   snapshotUnavailable: boolean;
+  snapshotUnreadable: boolean;
   onSelect: (s: CurriculumSelection) => void;
   onFeedback?: (s: CurriculumSelection) => void;
   onMobileOpen: () => void;
 }) {
+  if (snapshotUnreadable) {
+    return (
+      <div className="rounded-2xl border border-primary/25 bg-primary/5 p-8 text-center">
+        <AlertCircle className="mx-auto size-6 text-primary" />
+        <p className="mt-3 font-semibold text-foreground">
+          Không thể đọc hồ sơ lần nộp này
+        </p>
+        <p className="mx-auto mt-1 max-w-xl text-sm leading-6 text-muted-foreground">
+          Dữ liệu chương trình hiện tại không được dùng thay cho ảnh chụp thẩm định,
+          để tránh đưa ra nhận định trên sai phiên bản.
+        </p>
+      </div>
+    );
+  }
+
   if (snapshotUnavailable) {
     return (
       <p className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
@@ -703,7 +801,8 @@ function DiscussionTab({
   isLoading,
   selectedThreadId,
   selectedThread,
-  isAdvisor,
+  canAdvise,
+  isResponsibleAdvisor,
   showCreate,
   createTarget,
   targets,
@@ -719,7 +818,8 @@ function DiscussionTab({
   isLoading: boolean;
   selectedThreadId: string | null;
   selectedThread: AdvisoryThread | null;
-  isAdvisor: boolean;
+  canAdvise: boolean;
+  isResponsibleAdvisor: boolean;
   showCreate: boolean;
   createTarget: CurriculumSelection | null;
   targets: AdvisoryThreadTarget[];
@@ -742,18 +842,25 @@ function DiscussionTab({
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
       <header className="flex items-center justify-between border-b border-border px-5 py-4">
-        <div className="flex items-center gap-2">
-          <MessageSquare className="size-4 text-primary" />
-          <h2 className="font-heading text-sm font-bold text-foreground">Trao đổi</h2>
+        <div className="flex items-start gap-2">
+          <MessageSquare className="mt-0.5 size-4 text-primary" />
+          <div>
+            <h2 className="font-heading text-sm font-bold text-foreground">Trao đổi theo nội dung</h2>
+            <p className="mt-0.5 text-xs leading-5 text-muted-foreground">
+              Đề xuất là hướng dẫn chuyên môn; yêu cầu bắt buộc cần được xác minh trước khi phê duyệt.
+            </p>
+          </div>
         </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onToggleCreate}
-          className="h-9 rounded-lg text-xs font-semibold"
-        >
-          {showCreate ? "Đóng" : "Góp ý mới"}
-        </Button>
+        {canAdvise ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onToggleCreate}
+            className="h-9 rounded-lg text-xs font-semibold"
+          >
+            {showCreate ? "Đóng" : "Góp ý mới"}
+          </Button>
+        ) : null}
       </header>
 
       {showCreate ? (
@@ -761,7 +868,7 @@ function DiscussionTab({
           <AdvisoryCreateThreadForm
             targets={targets}
             defaultTarget={defaultTarget}
-            canCreateRequiredChange={isAdvisor}
+            canCreateRequiredChange={isResponsibleAdvisor}
             submissionId={submissionId}
             isSubmitting={isCreating}
             onSubmit={onCreate}
@@ -781,7 +888,7 @@ function DiscussionTab({
           <AdvisoryThreadPanel
             programId={programId}
             thread={selectedThread}
-            isAdvisor={isAdvisor}
+            isAdvisor={isResponsibleAdvisor}
             isManager={false}
             onThreadUpdated={onThreadUpdated}
           />

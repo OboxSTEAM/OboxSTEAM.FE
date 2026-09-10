@@ -59,6 +59,10 @@ const frameworkFormSchema = z.object({
     .min(1, "Vui lòng nhập tên khung.")
     .max(255, "Tên khung không được quá 255 ký tự."),
   description: z.string().trim().max(4000, "Mô tả không được quá 4000 ký tự."),
+  academicGuidance: z
+    .string()
+    .trim()
+    .max(8000, "Hướng dẫn học thuật không được quá 8000 ký tự."),
   category: programCategorySchema,
   minModules: countTextSchema,
   minOfflineSessions: countTextSchema,
@@ -75,6 +79,7 @@ export type CriterionDraft = {
   id: string | null;
   name: string;
   description: string;
+  evidenceGuidance: string;
   maxScore: string;
 };
 
@@ -102,6 +107,7 @@ function toDefaultValues(framework: ProgramFramework | null): FrameworkFormValue
   return {
     name: framework?.name ?? "",
     description: framework?.description ?? "",
+    academicGuidance: framework?.academicGuidance ?? "",
     category: framework?.category ?? "Science",
     minModules: framework?.minModules?.toString() ?? "",
     minOfflineSessions: framework?.minOfflineSessions?.toString() ?? "",
@@ -120,6 +126,7 @@ function toCriterionDrafts(framework: ProgramFramework | null): CriterionDraft[]
       id: criterion.id,
       name: criterion.name,
       description: criterion.description,
+      evidenceGuidance: criterion.evidenceGuidance ?? "",
       maxScore: criterion.maxScore.toString(),
     }));
 }
@@ -195,8 +202,8 @@ export function FrameworkFormDialog({
               {framework ? "Cập nhật khung chương trình" : "Tạo khung chương trình"}
             </DialogTitle>
             <DialogDescription>
-              Blueprint quy định yêu cầu tối thiểu và bộ tiêu chí rubric dùng khi
-              thẩm định chương trình.
+              Khung quy định chuẩn cấu trúc và hướng dẫn học thuật. Rubric bên
+              dưới là bộ tiêu chí dùng khi chuyên gia thẩm định chương trình.
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />
@@ -265,6 +272,19 @@ export function FrameworkFormDialog({
                   className="rounded-xl border-input bg-card"
                 />
                 <FieldError message={errors.description?.message} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="framework-academic-guidance">
+                  Hướng dẫn học thuật
+                </Label>
+                <Textarea
+                  id="framework-academic-guidance"
+                  rows={4}
+                  placeholder="Nêu nguyên tắc sư phạm, độ sâu kiến thức và những minh chứng quan trọng người thẩm định cần tìm."
+                  {...register("academicGuidance")}
+                  className="rounded-xl border-input bg-card"
+                />
+                <FieldError message={errors.academicGuidance?.message} />
               </div>
             </section>
 
@@ -339,10 +359,15 @@ export function FrameworkFormDialog({
 
             <section className="space-y-4 border-t border-border pt-5">
               <div className="flex items-center justify-between gap-3">
-                <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-                  <ListChecks className="size-4 text-primary" />
-                  Tiêu chí rubric
-                </h3>
+                <div>
+                  <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+                    <ListChecks className="size-4 text-primary" />
+                    Rubric — tiêu chí chấm điểm
+                  </h3>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                    Mỗi tiêu chí nên nêu chuẩn cần đạt và minh chứng cần quan sát.
+                  </p>
+                </div>
                 <span className="text-[11px] font-medium text-muted-foreground">
                   {criteria.length} tiêu chí
                 </span>
@@ -357,7 +382,7 @@ export function FrameworkFormDialog({
                   {criteria.map((criterion, index) => (
                     <li
                       key={criterion.key}
-                      className="grid gap-2 rounded-xl border border-border bg-background/60 p-3 sm:grid-cols-[minmax(0,1fr)_6.5rem_auto]"
+                      className="grid gap-3 rounded-xl border border-border bg-background/60 p-4 sm:grid-cols-[minmax(0,1fr)_7rem_auto]"
                     >
                       <div className="space-y-2">
                         <Input
@@ -370,15 +395,27 @@ export function FrameworkFormDialog({
                           placeholder={`Tiêu chí ${index + 1}`}
                           className="h-10 rounded-lg border-input bg-card text-sm"
                         />
-                        <Input
+                        <Textarea
                           value={criterion.description}
                           onChange={(event) =>
                             updateCriterion(criterion.key, {
                               description: event.target.value,
                             })
                           }
-                          placeholder="Mô tả cách chấm (không bắt buộc)"
-                          className="h-10 rounded-lg border-input bg-card text-xs"
+                          placeholder="Chuẩn cần đạt (không bắt buộc)"
+                          rows={2}
+                          className="rounded-lg border-input bg-card text-sm"
+                        />
+                        <Textarea
+                          value={criterion.evidenceGuidance}
+                          onChange={(event) =>
+                            updateCriterion(criterion.key, {
+                              evidenceGuidance: event.target.value,
+                            })
+                          }
+                          placeholder="Minh chứng cần quan sát (không bắt buộc)"
+                          rows={2}
+                          className="rounded-lg border-input bg-card text-sm"
                         />
                       </div>
                       <Input
@@ -427,6 +464,7 @@ export function FrameworkFormDialog({
                       id: null,
                       name: "",
                       description: "",
+                      evidenceGuidance: "",
                       maxScore: "10",
                     },
                   ])

@@ -9,8 +9,11 @@ import {
   ArrowLeft,
   Archive,
   BookOpen,
+  CheckCircle2,
   History,
+  Info,
   ListChecks,
+  LockKeyhole,
   Plus,
   Rocket,
   Trash2,
@@ -18,7 +21,10 @@ import {
 import { z } from "zod";
 
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
-import { ManagerPageHeader } from "@/components/manager/shared/page-header";
+import {
+  ExpertWorkbenchHero,
+  ExpertWorkflowRail,
+} from "@/components/expert/shared/expert-workbench";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,19 +60,20 @@ import {
   THEME_SELECT_ITEM,
   THEME_SELECT_TRIGGER,
 } from "@/lib/ui/select-styles";
+import { cn } from "@/lib/utils";
 
 const countTextSchema = z
   .string()
   .trim()
   .refine(
-    (value) => value === "" || /^\d{1,4}$/.test(value),
-    "Chỉ nhập số nguyên không âm.",
+    (value) => value === "" || /^[1-9]\d{0,3}$/.test(value),
+    "Để trống nếu không ràng buộc, hoặc nhập số nguyên từ 1 trở lên.",
   );
 
 const metadataSchema = z.object({
   name: z.string().trim().min(1, "Vui lòng nhập tên khung."),
   description: z.string().trim().max(4000),
-  academicGuidance: z.string().trim().max(4000),
+  academicGuidance: z.string().trim().max(8000),
   category: z.enum(["Science", "Technology", "Engineering", "Art", "Mathematic"]),
   minModules: countTextSchema,
   minOfflineSessions: countTextSchema,
@@ -118,6 +125,7 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
   const [isSavingMeta, setIsSavingMeta] = useState(false);
   const [isSavingRubric, setIsSavingRubric] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isRubricDirty, setIsRubricDirty] = useState(false);
   const [showPublishConfirm, setShowPublishConfirm] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
 
@@ -136,10 +144,17 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
   const framework = frameworkData?.data ?? null;
   const versions = versionsData?.data ?? [];
 
-  const draftVersion =
-    versions.find((v) => !v.isPublished) ??
+  const draftVersion = versions.find((v) => !v.isPublished) ?? null;
+  const selectedVersion =
+    versions.find((v) => v.id === activeVersionId) ??
+    draftVersion ??
     versions.find((v) => v.id === framework?.currentVersionId) ??
+    versions[0] ??
     null;
+  const isEditingDraft =
+    selectedVersion != null &&
+    draftVersion?.id === selectedVersion.id &&
+    !selectedVersion.isPublished;
 
   const {
     register,
@@ -162,27 +177,31 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
   });
 
   useEffect(() => {
-    if (!framework) return;
+    if (!framework || !selectedVersion) return;
     reset({
       name: framework.name,
-      description: framework.description,
-      academicGuidance: framework.academicGuidance ?? "",
+      description: selectedVersion.description,
+      academicGuidance: selectedVersion.academicGuidance,
       category: framework.category,
-      minModules: framework.minModules != null ? String(framework.minModules) : "",
+      minModules:
+        selectedVersion.minModules != null
+          ? String(selectedVersion.minModules)
+          : "",
       minOfflineSessions:
-        framework.minOfflineSessions != null
-          ? String(framework.minOfflineSessions)
+        selectedVersion.minOfflineSessions != null
+          ? String(selectedVersion.minOfflineSessions)
           : "",
       minLiveSessions:
-        framework.minLiveSessions != null ? String(framework.minLiveSessions) : "",
+        selectedVersion.minLiveSessions != null
+          ? String(selectedVersion.minLiveSessions)
+          : "",
       requireCapstoneResearchMilestone:
-        framework.requireCapstoneResearchMilestone ?? false,
+        selectedVersion.requireCapstoneResearchMilestone ?? false,
     });
-  }, [framework, reset]);
+  }, [framework, selectedVersion, reset]);
 
   useEffect(() => {
-    const version =
-      versions.find((v) => v.id === activeVersionId) ?? draftVersion;
+    const version = selectedVersion;
     if (!version) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clear when no version
       setCriteria([]);
@@ -196,11 +215,12 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
         .sort((a, b) => a.displayOrder - b.displayOrder)
         .map(criterionFromEntity),
     );
+    setIsRubricDirty(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reseed when version list changes
-  }, [versionsData?.data, draftVersion?.id, activeVersionId]);
+  }, [versionsData?.data, selectedVersion?.id]);
 
   async function handleSaveMetadata(values: MetadataValues) {
-    if (!framework) return;
+    if (!framework || !isEditingDraft) return;
     setIsSavingMeta(true);
     try {
       const minModules = toCount(values.minModules);
@@ -229,10 +249,10 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
   }
 
   async function handleSaveRubric() {
-    if (!framework || !draftVersion) return;
+    if (!framework || !selectedVersion || !isEditingDraft) return;
     setIsSavingRubric(true);
     try {
-      await saveFrameworkDraftRubric(framework.id, draftVersion.id, {
+      await saveFrameworkDraftRubric(framework.id, selectedVersion.id, {
         criteria: criteria.map((c, index) => ({
           name: c.name.trim(),
           description: c.description.trim() || null,
@@ -242,6 +262,7 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
         })),
       });
       showAppSuccess({ title: "Đã lưu rubric" });
+      setIsRubricDirty(false);
       retryVersions();
       retryFramework();
     } catch (error) {
@@ -306,17 +327,35 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
         maxScore: "10",
       },
     ]);
+    setIsRubricDirty(true);
   }
 
   function removeCriterion(key: string) {
     setCriteria((prev) => prev.filter((c) => c.key !== key));
+    setIsRubricDirty(true);
   }
 
   function updateCriterion(key: string, patch: Partial<CriterionDraft>) {
     setCriteria((prev) =>
       prev.map((c) => (c.key === key ? { ...c, ...patch } : c)),
     );
+    setIsRubricDirty(true);
   }
+
+  function selectVersion(versionId: string) {
+    if (
+      isRubricDirty &&
+      !window.confirm("Rubric có thay đổi chưa lưu. Bạn có muốn bỏ các thay đổi này?")
+    ) {
+      return;
+    }
+    setActiveVersionId(versionId);
+  }
+
+  const totalPossibleScore = criteria.reduce((total, criterion) => {
+    const value = Number(criterion.maxScore);
+    return Number.isFinite(value) ? total + value : total;
+  }, 0);
 
   if (isLoading || !framework) {
     return (
@@ -329,132 +368,200 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <ManagerPageHeader
-        title={framework.name || "Khung chương trình"}
-        description="Biên tập mục đích, quy tắc cấu trúc, rubric và lịch sử phiên bản."
-        breadcrumbs={[
-          { label: "Khung chương trình", href: "/expert/frameworks" },
-          { label: framework.name },
-        ]}
+      <ExpertWorkbenchHero
+        eyebrow="Bộ khung thẩm định"
+        title={framework.name || "Khung chưa đặt tên"}
+        description="Khung đặt chuẩn cấu trúc; rubric là bộ tiêu chí bạn sẽ chấm khi thẩm định. Phiên bản đã xuất bản được giữ nguyên."
+        icon={BookOpen}
+        actions={
+          <>
+            <Button
+              nativeButton={false}
+              render={<Link href="/expert/frameworks" />}
+              variant="outline"
+              className="h-10 gap-2 rounded-xl"
+            >
+              <ArrowLeft className="size-4" />
+              Danh sách bộ khung
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowArchiveConfirm(true)}
+              className="h-10 gap-2 rounded-xl text-primary"
+            >
+              <Archive className="size-4" />
+              Lưu trữ
+            </Button>
+          </>
+        }
       >
-        <Button
-          nativeButton={false}
-          render={<Link href="/expert/frameworks" />}
-          variant="outline"
-          className="h-11 gap-2 rounded-xl"
-        >
-          <ArrowLeft className="size-4" />
-          Về danh sách
-        </Button>
-      </ManagerPageHeader>
+        <ExpertWorkflowRail
+          animate
+          steps={[
+            {
+              label: "Phạm vi áp dụng",
+              detail: "Nêu đối tượng, cấp độ và mục tiêu của bộ khung.",
+              state: "done",
+            },
+            {
+              label: "Chuẩn học thuật",
+              detail: "Đặt hướng dẫn và điều kiện cấu trúc tối thiểu.",
+              state: "done",
+            },
+            {
+              label: "Rubric & minh chứng",
+              detail: "Chuyển chuẩn chuyên môn thành tiêu chí quan sát được.",
+              state: isEditingDraft ? "current" : "done",
+            },
+            {
+              label: "Xuất bản",
+              detail: "Khóa phiên bản để Manager có thể gán cho chương trình.",
+              state: isEditingDraft ? "next" : "done",
+            },
+          ]}
+        />
+      </ExpertWorkbenchHero>
 
-      <div className="space-y-6 px-6 pb-12">
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-            <BookOpen className="size-4 text-primary" />
-            Mục đích & lĩnh vực
-          </h2>
+      <div className="mx-auto grid w-full max-w-[1500px] gap-5 px-4 pb-12 sm:px-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+        <main className="space-y-5">
+          <div className="flex items-start gap-3 rounded-2xl border border-border bg-card px-4 py-3.5">
+            {isEditingDraft ? (
+              <Info className="mt-0.5 size-5 shrink-0 text-primary" />
+            ) : (
+              <LockKeyhole className="mt-0.5 size-5 shrink-0 text-emerald-600" />
+            )}
+            <div>
+              <p className="text-sm font-bold text-foreground">
+                {isEditingDraft
+                  ? `Đang biên tập bản nháp v${selectedVersion?.versionNumber ?? "—"}`
+                  : `Đang xem phiên bản v${selectedVersion?.versionNumber ?? "—"} đã xuất bản`}
+              </p>
+              <p className="mt-0.5 text-sm leading-6 text-muted-foreground">
+                {isEditingDraft
+                  ? "Các thay đổi chỉ ảnh hưởng bản nháp này cho đến khi bạn xuất bản."
+                  : "Phiên bản này chỉ đọc. Chương trình đã gán vẫn giữ nguyên nội dung, kể cả khi có phiên bản mới."}
+              </p>
+            </div>
+          </div>
+
           <form
-            className="mt-4 grid gap-4 lg:grid-cols-2"
+            className="space-y-5"
             onSubmit={handleSubmit((values) => void handleSaveMetadata(values))}
           >
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="fw-name">Tên khung</Label>
-              <Input id="fw-name" {...register("name")} className="rounded-xl" />
-              {errors.name ? (
-                <p className="text-xs text-primary">{errors.name.message}</p>
-              ) : null}
-            </div>
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="fw-desc">Mô tả</Label>
-              <Textarea id="fw-desc" rows={3} {...register("description")} className="rounded-xl" />
-            </div>
-            <div className="space-y-2 lg:col-span-2">
-              <Label htmlFor="fw-guidance">Hướng dẫn học thuật</Label>
-              <Textarea
-                id="fw-guidance"
-                rows={3}
-                {...register("academicGuidance")}
-                className="rounded-xl"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Lĩnh vực</Label>
-              <Controller
-                control={control}
-                name="category"
-                render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <SelectTrigger className={THEME_SELECT_TRIGGER}>
-                      {PROGRAM_CATEGORY_META[field.value].label}
-                    </SelectTrigger>
-                    <SelectContent className={THEME_SELECT_CONTENT}>
-                      {PROGRAM_CATEGORY_ORDER.map((cat) => (
-                        <SelectItem key={cat} value={cat} className={THEME_SELECT_ITEM}>
-                          {PROGRAM_CATEGORY_META[cat].label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-            </div>
-            <div className="flex items-end">
-              <Button
-                type="submit"
-                disabled={isSavingMeta}
-                className="h-10 rounded-xl bg-primary px-5 font-semibold text-white"
-              >
-                {isSavingMeta ? "Đang lưu…" : "Lưu thông tin"}
-              </Button>
-            </div>
-          </form>
-        </section>
+            <fieldset disabled={!isEditingDraft} className="space-y-5 disabled:opacity-75">
+              <section className="rounded-2xl border border-border bg-card p-5 shadow-[0_4px_18px_rgba(45,45,45,0.04)] sm:p-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">01 · Bối cảnh</p>
+                  <h2 className="mt-1 font-heading text-lg font-bold text-foreground">Phạm vi áp dụng</h2>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Giúp người thiết kế chương trình hiểu bộ khung dành cho ai và kết quả học tập nào được kỳ vọng.
+                  </p>
+                </div>
+                <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                  <div className="space-y-2 lg:col-span-2">
+                    <Label htmlFor="fw-name">Tên bộ khung</Label>
+                    <Input id="fw-name" {...register("name")} className="h-11 rounded-xl" />
+                    {errors.name ? <p className="text-xs text-primary">{errors.name.message}</p> : null}
+                  </div>
+                  <div className="space-y-2 lg:col-span-2">
+                    <Label htmlFor="fw-desc">Mục đích và phạm vi sử dụng</Label>
+                    <Textarea
+                      id="fw-desc"
+                      rows={4}
+                      placeholder="Ví dụ: dùng cho chương trình Robotics nhập môn 10–13 tuổi; ưu tiên tư duy thiết kế, an toàn và khả năng giải thích lựa chọn kỹ thuật."
+                      {...register("description")}
+                      className="rounded-xl"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Lĩnh vực STEAM chính</Label>
+                    <Controller
+                      control={control}
+                      name="category"
+                      render={({ field }) => (
+                        <Select value={field.value} onValueChange={field.onChange} disabled={!isEditingDraft}>
+                          <SelectTrigger className={THEME_SELECT_TRIGGER}>{PROGRAM_CATEGORY_META[field.value].label}</SelectTrigger>
+                          <SelectContent className={THEME_SELECT_CONTENT}>
+                            {PROGRAM_CATEGORY_ORDER.map((cat) => (
+                              <SelectItem key={cat} value={cat} className={THEME_SELECT_ITEM}>{PROGRAM_CATEGORY_META[cat].label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    />
+                  </div>
+                </div>
+              </section>
 
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
-          <h2 className="font-heading text-sm font-bold text-foreground">
-            Quy tắc cấu trúc
-          </h2>
-          <p className="mt-1 text-xs text-muted-foreground">
-            Để trống = không ràng buộc. Số buổi offline/live là mẫu hoạt động trong
-            curriculum (không phải buổi lớp đã lên lịch).
-          </p>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="fw-min-modules">Tối thiểu học phần</Label>
-              <Input id="fw-min-modules" {...register("minModules")} className="rounded-xl" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fw-min-offline">Mẫu offline tối thiểu</Label>
-              <Input id="fw-min-offline" {...register("minOfflineSessions")} className="rounded-xl" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fw-min-live">Mẫu live tối thiểu</Label>
-              <Input id="fw-min-live" {...register("minLiveSessions")} className="rounded-xl" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center gap-2">
-            <Controller
-              control={control}
-              name="requireCapstoneResearchMilestone"
-              render={({ field }) => (
-                <Checkbox
-                  checked={field.value}
-                  onCheckedChange={(v) => field.onChange(v === true)}
+              <section className="rounded-2xl border border-border bg-card p-5 shadow-[0_4px_18px_rgba(45,45,45,0.04)] sm:p-6">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">02 · Chuẩn nền</p>
+                  <h2 className="mt-1 font-heading text-lg font-bold text-foreground">Chuẩn học thuật & điều kiện cấu trúc</h2>
+                  <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                    Số buổi là mẫu hoạt động trong curriculum, không phải lịch lớp. Để trống nghĩa là không ràng buộc.
+                  </p>
+                </div>
+                <div className="mt-5 space-y-2">
+                  <Label htmlFor="fw-guidance">Hướng dẫn học thuật cho người thiết kế</Label>
+                  <Textarea
+                    id="fw-guidance"
+                    rows={5}
+                    placeholder="Nêu nguyên tắc sư phạm, độ sâu kiến thức, cách tổ chức trải nghiệm và những điều không nên đánh đổi."
+                    {...register("academicGuidance")}
+                    className="rounded-xl"
+                  />
+                </div>
+                <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="fw-min-modules">Học phần tối thiểu</Label>
+                    <Input id="fw-min-modules" inputMode="numeric" placeholder="Không ràng buộc" {...register("minModules")} className="h-11 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fw-min-offline">Mẫu offline tối thiểu</Label>
+                    <Input id="fw-min-offline" inputMode="numeric" placeholder="Không ràng buộc" {...register("minOfflineSessions")} className="h-11 rounded-xl" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="fw-min-live">Mẫu live tối thiểu</Label>
+                    <Input id="fw-min-live" inputMode="numeric" placeholder="Không ràng buộc" {...register("minLiveSessions")} className="h-11 rounded-xl" />
+                  </div>
+                </div>
+                <Controller
+                  control={control}
+                  name="requireCapstoneResearchMilestone"
+                  render={({ field }) => (
+                    <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/60 p-4">
+                      <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="mt-0.5" />
+                      <span>
+                        <span className="block text-sm font-bold text-foreground">Bắt buộc có mốc nghiên cứu / capstone</span>
+                        <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Curriculum cần có ít nhất một mốc tổng hợp để học viên chứng minh khả năng vận dụng.</span>
+                      </span>
+                    </label>
+                  )}
                 />
-              )}
-            />
-            <Label>Bắt buộc mốc nghiên cứu / capstone</Label>
-          </div>
-        </section>
+                {isEditingDraft ? (
+                  <div className="mt-5 flex justify-end border-t border-border pt-4">
+                    <Button type="submit" disabled={isSavingMeta} className="h-10 rounded-xl bg-foreground px-5 font-semibold text-background hover:bg-foreground/90">
+                      {isSavingMeta ? "Đang lưu…" : "Lưu bối cảnh & quy tắc"}
+                    </Button>
+                  </div>
+                ) : null}
+              </section>
+            </fieldset>
+          </form>
 
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <section className="rounded-2xl border border-border bg-card p-5 shadow-[0_4px_18px_rgba(45,45,45,0.04)] sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-              <ListChecks className="size-4 text-primary" />
-              Rubric thẩm định
-            </h2>
-            <div className="flex gap-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">03 · Bằng chứng</p>
+              <h2 className="mt-1 flex items-center gap-2 font-heading text-lg font-bold text-foreground">
+                <ListChecks className="size-5 text-primary" /> Rubric thẩm định
+              </h2>
+              <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
+                Mỗi tiêu chí cần nêu chuẩn cần đạt, minh chứng cần quan sát và điểm tối đa. Điểm số hỗ trợ nhận định, không tự quyết định đậu/rớt.
+              </p>
+            </div>
+            {isEditingDraft ? <div className="flex gap-2">
               <Button
                 type="button"
                 variant="outline"
@@ -467,67 +574,46 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
               <Button
                 type="button"
                 onClick={() => void handleSaveRubric()}
-                disabled={isSavingRubric || !draftVersion}
+                disabled={isSavingRubric || !isRubricDirty}
                 className="h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-white"
               >
-                {isSavingRubric ? "Đang lưu…" : "Lưu rubric"}
+                {isSavingRubric ? "Đang lưu…" : isRubricDirty ? "Lưu rubric" : "Đã lưu"}
               </Button>
-            </div>
+            </div> : null}
           </div>
 
-          {!draftVersion ? (
-            <p className="mt-4 text-sm text-muted-foreground">
-              Chưa có phiên bản nháp. Tạo phiên bản nháp để chỉnh rubric.
-            </p>
+          {criteria.length === 0 ? (
+            <div className="mt-5 rounded-xl border border-dashed border-border bg-background/50 p-6 text-center">
+              <p className="text-sm font-semibold text-foreground">Chưa có tiêu chí thẩm định</p>
+              <p className="mt-1 text-sm text-muted-foreground">Nếu xuất bản như hiện tại, chuyên gia chỉ có thể ghi nhận xét tổng quan.</p>
+            </div>
           ) : (
             <div className="mt-4 space-y-3">
-              {criteria.map((criterion) => (
+              {criteria.map((criterion, index) => (
                 <div
                   key={criterion.key}
-                  className="rounded-xl border border-border bg-background/50 p-4"
+                  className="rounded-xl border border-border bg-background/50 p-4 sm:p-5"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="grid flex-1 gap-3 sm:grid-cols-2">
-                      <Input
-                        value={criterion.name}
-                        onChange={(e) =>
-                          updateCriterion(criterion.key, { name: e.target.value })
-                        }
-                        placeholder="Tên tiêu chí"
-                        className="rounded-lg"
-                      />
-                      <Input
-                        value={criterion.maxScore}
-                        onChange={(e) =>
-                          updateCriterion(criterion.key, { maxScore: e.target.value })
-                        }
-                        inputMode="numeric"
-                        placeholder="Điểm tối đa"
-                        className="rounded-lg"
-                      />
-                      <Input
-                        value={criterion.description}
-                        onChange={(e) =>
-                          updateCriterion(criterion.key, {
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Mô tả"
-                        className="rounded-lg sm:col-span-2"
-                      />
-                      <Textarea
-                        value={criterion.evidenceGuidance}
-                        onChange={(e) =>
-                          updateCriterion(criterion.key, {
-                            evidenceGuidance: e.target.value,
-                          })
-                        }
-                        placeholder="Gợi ý minh chứng cho chuyên gia"
-                        rows={2}
-                        className="rounded-lg sm:col-span-2"
-                      />
+                      <div className="space-y-2">
+                        <Label htmlFor={`criterion-${criterion.key}-name`}>Tiêu chí {index + 1}</Label>
+                        <Input id={`criterion-${criterion.key}-name`} value={criterion.name} onChange={(e) => updateCriterion(criterion.key, { name: e.target.value })} placeholder="Tên năng lực hoặc tiêu chí" disabled={!isEditingDraft} className="rounded-lg" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor={`criterion-${criterion.key}-score`}>Điểm tối đa</Label>
+                        <Input id={`criterion-${criterion.key}-score`} value={criterion.maxScore} onChange={(e) => updateCriterion(criterion.key, { maxScore: e.target.value })} inputMode="numeric" placeholder="10" disabled={!isEditingDraft} className="rounded-lg" />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor={`criterion-${criterion.key}-description`}>Chuẩn cần đạt</Label>
+                        <Textarea id={`criterion-${criterion.key}-description`} value={criterion.description} onChange={(e) => updateCriterion(criterion.key, { description: e.target.value })} placeholder="Mô tả chất lượng hoặc mức độ chuyên môn mong đợi" rows={2} disabled={!isEditingDraft} className="rounded-lg" />
+                      </div>
+                      <div className="space-y-2 sm:col-span-2">
+                        <Label htmlFor={`criterion-${criterion.key}-evidence`}>Minh chứng cần quan sát</Label>
+                        <Textarea id={`criterion-${criterion.key}-evidence`} value={criterion.evidenceGuidance} onChange={(e) => updateCriterion(criterion.key, { evidenceGuidance: e.target.value })} placeholder="Chỉ ra sản phẩm, hành vi hoặc dấu hiệu giúp chuyên gia đánh giá tiêu chí" rows={3} disabled={!isEditingDraft} className="rounded-lg" />
+                      </div>
                     </div>
-                    <Button
+                    {isEditingDraft ? <Button
                       type="button"
                       variant="ghost"
                       size="icon"
@@ -536,15 +622,21 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
                       className="size-9 text-primary"
                     >
                       <Trash2 className="size-4" />
-                    </Button>
+                    </Button> : null}
                   </div>
                 </div>
               ))}
             </div>
           )}
+          <div className="mt-4 flex items-center justify-between rounded-xl bg-muted px-4 py-3 text-sm">
+            <span className="text-muted-foreground">{criteria.length} tiêu chí</span>
+            <span className="font-mono font-bold text-foreground">Tổng {totalPossibleScore} điểm</span>
+          </div>
         </section>
+        </main>
 
-        <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+        <aside className="xl:sticky xl:top-5 xl:self-start">
+          <section className="rounded-2xl border border-border bg-card p-4 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
               <History className="size-4 text-primary" />
@@ -555,30 +647,23 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
                 type="button"
                 variant="outline"
                 onClick={() => void handleCreateDraft()}
+                disabled={draftVersion != null}
                 className="h-9 rounded-lg text-xs font-semibold"
               >
-                Tạo phiên bản nháp
+                {draftVersion ? "Đã có bản nháp" : "Tạo bản nháp mới"}
               </Button>
-              {draftVersion && !draftVersion.isPublished ? (
+              {isEditingDraft ? (
                 <Button
                   type="button"
                   onClick={() => setShowPublishConfirm(true)}
-                  disabled={isPublishing}
+                  disabled={isPublishing || isRubricDirty}
+                  title={isRubricDirty ? "Lưu rubric trước khi xuất bản" : undefined}
                   className="h-9 gap-1.5 rounded-lg bg-[#7CB342] px-4 text-xs font-semibold text-white"
                 >
                   <Rocket className="size-3.5" />
                   Xuất bản
                 </Button>
               ) : null}
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowArchiveConfirm(true)}
-                className="h-9 gap-1.5 rounded-lg text-xs font-semibold text-primary"
-              >
-                <Archive className="size-3.5" />
-                Lưu trữ
-              </Button>
             </div>
           </div>
 
@@ -591,35 +676,38 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
               versions.map((version: ProgramFrameworkVersion) => (
                 <li
                   key={version.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3"
+                  className={cn(
+                    "flex flex-wrap items-center justify-between gap-3 px-3 py-3",
+                    selectedVersion?.id === version.id && "bg-primary/6",
+                  )}
                 >
                   <div>
                     <p className="text-sm font-semibold text-foreground">
                       Phiên bản {version.versionNumber}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {version.criteria.length} tiêu chí ·{" "}
+                      {version.criteria.length} tiêu chí · {version.criteria.reduce((total, criterion) => total + criterion.maxScore, 0)} điểm
                       {version.isPublished ? "Đã xuất bản" : "Nháp"}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
                     {version.isPublished ? (
                       <Badge className="rounded-md bg-[#7CB342]/15 text-[11px] text-[#33691e]">
-                        Published
+                        Đã xuất bản
                       </Badge>
                     ) : (
                       <Badge variant="outline" className="rounded-md text-[11px]">
-                        Draft
+                        Bản nháp
                       </Badge>
                     )}
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      onClick={() => setActiveVersionId(version.id)}
+                      onClick={() => selectVersion(version.id)}
                       className="h-8 rounded-lg text-xs"
                     >
-                      Chỉnh sửa
+                      {version.isPublished ? "Xem" : "Biên tập"}
                     </Button>
                   </div>
                 </li>
@@ -627,6 +715,11 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
             )}
           </ul>
         </section>
+          <div className="mt-3 flex items-start gap-2 rounded-xl border border-emerald-500/20 bg-emerald-500/7 p-3 text-xs leading-5 text-muted-foreground">
+            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+            Manager chỉ gán phiên bản đã xuất bản. Việc tạo phiên bản mới không tự thay đổi chương trình đang sử dụng bản cũ.
+          </div>
+        </aside>
       </div>
 
       <ConfirmDialog
