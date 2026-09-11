@@ -9,6 +9,8 @@ function isSameOriginUrl(fileUrl: string): boolean {
 /**
  * Fetch cross-origin PDFs into a blob URL for same-origin loading in the
  * browser's native PDF iframe viewer.
+ * Signed preview URLs from materials API are short-lived SAS links — callers
+ * should refresh via `resolveMaterialSignedPreviewUrl` if this fails.
  */
 export async function resolvePdfEmbedUrl(fileUrl: string): Promise<{
   embedUrl: string;

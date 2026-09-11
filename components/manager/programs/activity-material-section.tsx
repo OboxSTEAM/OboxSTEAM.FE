@@ -23,6 +23,7 @@ import {
   updateMaterial,
   type ActivityMaterial,
 } from "@/lib/api";
+import { openMaterialSignedPreview } from "@/lib/curriculum/material-preview";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -318,20 +319,30 @@ export function ActivityMaterialSection({
                 {visualFor(material.materialType).label}
               </span>
               {formatBytes(material.fileSizeBytes) && <span>{formatBytes(material.fileSizeBytes)}</span>}
-              {fileUrl ? (
-                <a
-                  href={fileUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-semibold hover:underline"
-                  style={{ color: W.accent }}
-                >
-                  <ExternalLink className="size-3" />
-                  Xem tệp
-                </a>
-              ) : (
-                <span style={{ color: W.faint }}>Đang tải tệp…</span>
-              )}
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  void (async () => {
+                    setBusy(true);
+                    try {
+                      await openMaterialSignedPreview({
+                        activityId,
+                        fallbackUrl: fileUrl,
+                      });
+                    } catch (err) {
+                      showAppErrorFromUnknown(err, "curriculum.material.preview");
+                    } finally {
+                      setBusy(false);
+                    }
+                  })();
+                }}
+                className="inline-flex items-center gap-1 font-semibold hover:underline disabled:opacity-60"
+                style={{ color: W.accent }}
+              >
+                <ExternalLink className="size-3" />
+                {busy ? "Đang mở…" : "Xem tệp"}
+              </button>
             </div>
           </div>
 

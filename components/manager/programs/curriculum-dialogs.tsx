@@ -57,6 +57,7 @@ import {
   type UpdateActivityInput,
 } from "@/lib/validations/curriculum";
 import { updateMaterialSchema, type UpdateMaterialInput } from "@/lib/validations/materials";
+import { openMaterialSignedPreview } from "@/lib/curriculum/material-preview";
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppError, showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
@@ -1076,16 +1077,22 @@ export function MaterialUploadDialog({
                     <p className="text-sm font-medium text-foreground truncate">
                       {existingMaterial.title}
                     </p>
-                    {existingMaterial.fileUrl && (
-                      <a
-                        href={existingMaterial.fileUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="text-xs text-[#4FC3F7] hover:underline truncate block"
+                    {existingMaterial ? (
+                      <button
+                        type="button"
+                        className="text-xs text-[#4FC3F7] hover:underline truncate block text-left"
+                        onClick={() => {
+                          void openMaterialSignedPreview({
+                            activityId,
+                            fallbackUrl: existingMaterial.fileUrl,
+                          }).catch((err) =>
+                            showAppErrorFromUnknown(err, "curriculum.material.preview"),
+                          );
+                        }}
                       >
                         Xem tài liệu hiện tại
-                      </a>
-                    )}
+                      </button>
+                    ) : null}
                   </div>
                   <Button
                     type="button"

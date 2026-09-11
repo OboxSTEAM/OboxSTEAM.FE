@@ -137,6 +137,7 @@ export type AppErrorContext =
   | "curriculum.activity.save"
   | "curriculum.material.save"
   | "curriculum.material.delete"
+  | "curriculum.material.preview"
   | "curriculum.assignment.save"
   | "curriculum.milestone.save"
   | "curriculum.milestone.link"

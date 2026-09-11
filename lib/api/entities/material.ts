@@ -24,13 +24,20 @@ export const activityMaterialSchema = z.object({
   uploadedAt: z.string(),
 });
 
-/** Full material with signed file URL from `GET /api/materials/activity/{activityId}`. */
+/**
+ * Full material with signed preview URL from `GET /api/materials/activity/{activityId}`.
+ * `fileUrl` is short-lived: public only for Active programs; Draft/PendingReview
+ * requires Expert/Manager/Admin (or enrolled student when Active).
+ */
 export const materialSchema = z.object({
   id: z.string(),
   activityId: z.string(),
   title: z.string(),
   materialType: materialTypeSchema,
-  fileUrl: z.string(),
+  fileUrl: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   fileSizeBytes: z.number().nullable(),
   uploaderId: z.string(),
   uploadedAt: z.string(),

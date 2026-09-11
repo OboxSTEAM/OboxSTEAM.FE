@@ -299,7 +299,10 @@ export const materialSnapshotSchema = z.object({
   type: z.string().nullish().transform((value) => value ?? null),
   materialType: z.string().nullish().transform((value) => value ?? null),
   fileName: z.string().nullish().transform((value) => value ?? null),
+  /** Signed preview URL from board/activity payloads (expires; refresh via materials API). */
   url: z.string().nullish().transform((value) => value ?? null),
+  /** Alias some payloads may use instead of `url`. */
+  fileUrl: z.string().nullish().transform((value) => value ?? null),
   fileSizeBytes: z
     .number()
     .int()

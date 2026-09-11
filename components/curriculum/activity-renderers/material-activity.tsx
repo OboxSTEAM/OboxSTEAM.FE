@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import type { Activity, ResumeState } from "@/lib/api";
 import { getMaterialByActivityId } from "@/lib/api";
+import { ApiRequestError } from "@/lib/api/errors";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   CHECKPOINT_DEBOUNCE_MS,
@@ -18,6 +19,7 @@ import {
   type EmbeddedFrameProgress,
 } from "@/lib/curriculum/embedded-frame-progress";
 import { resolvePdfEmbedUrl } from "@/lib/curriculum/pdf-embed-url";
+import { resolveMaterialSignedPreviewUrl } from "@/lib/curriculum/material-preview";
 import {
   useActivityCompletionGate,
   useDebouncedCheckpoint,
@@ -401,12 +403,30 @@ function PdfMaterialView({
 
     void (async () => {
       try {
-        const resolved = await resolvePdfEmbedUrl(fileUrl);
+        let sourceUrl = fileUrl;
+        try {
+          const resolved = await resolvePdfEmbedUrl(sourceUrl);
+          if (cancelled) {
+            resolved.revoke?.();
+            return;
+          }
+          revoke = resolved.revoke;
+          setEmbedUrl(resolved.embedUrl);
+          return;
+        } catch {
+          // Signed preview may have expired — mint a fresh one and retry once.
+          sourceUrl = await resolveMaterialSignedPreviewUrl({
+            activityId,
+            enrollmentId,
+            fallbackUrl: fileUrl,
+          });
+        }
+
+        const resolved = await resolvePdfEmbedUrl(sourceUrl);
         if (cancelled) {
           resolved.revoke?.();
           return;
         }
-
         revoke = resolved.revoke;
         setEmbedUrl(resolved.embedUrl);
       } catch {
@@ -424,7 +444,7 @@ function PdfMaterialView({
       cancelled = true;
       revoke?.();
     };
-  }, [activityId, fileUrl]);
+  }, [activityId, enrollmentId, fileUrl]);
 
   const buildResumeState = useCallback(() => {
     const live = readEmbeddedFrameProgress(iframeRef.current);
@@ -637,14 +657,24 @@ export function MaterialActivity({
 }: MaterialActivityProps) {
   const materialMeta = activity.material;
   const materialKind = materialMeta ? resolveMaterialKind(materialMeta.materialType) : "manual";
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const { data: materialResult, isLoading, hasError, retry } = useClientFetch({
     enabled: Boolean(materialMeta),
     fetcher: async () => getMaterialByActivityId(activity.id, enrollmentId),
     deps: [activity.id, enrollmentId, materialMeta?.id],
+    onError: (error) => {
+      setAccessDenied(
+        error instanceof ApiRequestError && error.status === 403,
+      );
+    },
   });
 
   const fileUrl = materialResult?.data?.fileUrl ?? null;
+
+  useEffect(() => {
+    if (!hasError) setAccessDenied(false);
+  }, [hasError, materialResult]);
 
   useEffect(() => {
     if (!materialMeta && !isAlreadyComplete) {
@@ -679,7 +709,11 @@ export function MaterialActivity({
           className,
         )}
       >
-        <p className="text-sm text-learn-muted">Không tải được tài liệu học tập.</p>
+        <p className="text-sm text-learn-muted">
+          {accessDenied
+            ? "Bạn không có quyền xem tài liệu này. Tài liệu chỉ công khai khi chương trình Active; Draft/PendingReview cần Expert/Manager/Admin."
+            : "Không tải được tài liệu học tập (liên kết ký số có thể đã hết hạn)."}
+        </p>
         <button
           type="button"
           onClick={retry}

@@ -22,7 +22,6 @@ import type {
   AdvisoryBoard,
   AdvisoryTargetType,
   AdvisoryThread,
-  AdvisoryThreadPin,
   AdvisoryThreadPinSummary,
   AdvisoryThreadType,
   CreateAdvisoryThreadInput,
@@ -41,6 +40,11 @@ import {
   ADVISORY_THREAD_STATUS_LABELS,
   CHANGE_KIND_LABELS,
 } from "@/lib/expert/advisory-labels";
+import {
+  openMaterialSignedPreview,
+  pickMaterialPreviewUrl,
+} from "@/lib/curriculum/material-preview";
+import { showAppErrorFromUnknown } from "@/lib/errors";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
@@ -75,6 +79,46 @@ const CHANGE_EDGE: Record<BoardChangeKind, string> = {
   modified: "border-l-steam-technology",
   reordered: "border-l-steam-science",
 };
+
+function MaterialPreviewLink({
+  activityId,
+  material,
+}: {
+  activityId: string;
+  material: {
+    url?: string | null;
+    fileUrl?: string | null;
+  };
+}) {
+  const [isOpening, setIsOpening] = useState(false);
+  const snapshotUrl = pickMaterialPreviewUrl(material);
+
+  async function handleOpen() {
+    setIsOpening(true);
+    try {
+      await openMaterialSignedPreview({
+        activityId,
+        fallbackUrl: snapshotUrl,
+      });
+    } catch (error) {
+      showAppErrorFromUnknown(error, "curriculum.material.preview");
+    } finally {
+      setIsOpening(false);
+    }
+  }
+
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      className="mt-2 h-8 rounded-lg text-xs font-semibold text-steam-technology"
+      disabled={isOpening}
+      onClick={() => void handleOpen()}
+    >
+      {isOpening ? "Đang mở…" : "Mở tài liệu (xem trước ký số)"}
+    </Button>
+  );
+}
 
 function moduleTypeLabel(value: string | null | undefined): string {
   if (!value) return "Học phần";
@@ -136,6 +180,30 @@ function ChangeChip({ kind }: { kind: BoardChangeKind }) {
   );
 }
 
+function DiffStatsBar({
+  added,
+  removed,
+  modified,
+}: {
+  added: number;
+  removed: number;
+  modified: number;
+  reordered?: number;
+}) {
+  return (
+    <p
+      className="flex items-center gap-1.5 text-sm font-semibold tabular-nums sm:text-base"
+      aria-label="Tóm tắt thay đổi so với lần nộp trước"
+    >
+      <span className="text-[#1a7f37] dark:text-[#3fb950]">+{added}</span>
+      <span className="font-normal text-muted-foreground">/</span>
+      <span className="text-[#cf222e] dark:text-[#ff7b72]">−{removed}</span>
+      <span className="font-normal text-muted-foreground">/</span>
+      <span className="text-[#9a6700] dark:text-[#d29922]">~{modified}</span>
+    </p>
+  );
+}
+
 function FieldChangeCards({ items }: { items: SubmissionChangeItem[] }) {
   if (items.length === 0) return null;
   return (
@@ -179,18 +247,10 @@ function NodeDetail({
   node,
   fieldChanges,
   showChanges,
-  pins,
-  canAdvise,
-  onPinField,
-  onOpenThread,
 }: {
   node: BoardTreeNode;
   fieldChanges: SubmissionChangeItem[];
   showChanges: boolean;
-  pins: AdvisoryThreadPin[];
-  canAdvise: boolean;
-  onPinField: (field: string) => void;
-  onOpenThread?: (threadId: string) => void;
 }) {
   const activity = node.activity;
   const material = activity?.material;
@@ -234,16 +294,6 @@ function NodeDetail({
               {mod.courses.length} khóa · {mod.assignments.length} bài tập ·{" "}
               {mod.milestones.length} mốc
             </p>
-            {canAdvise && mod.learningOutcomes.length > 0 ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-8 rounded-lg text-xs"
-                onClick={() => onPinField("learningOutcomes")}
-              >
-                Góp ý learning outcomes
-              </Button>
-            ) : null}
           </div>
         ) : null}
 
@@ -256,16 +306,6 @@ function NodeDetail({
             ) : (
               <p className="text-sm italic text-muted-foreground">Chưa có mô tả.</p>
             )}
-            {canAdvise ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-8 rounded-lg text-xs"
-                onClick={() => onPinField("description")}
-              >
-                Góp ý mô tả khóa
-              </Button>
-            ) : null}
           </div>
         ) : null}
 
@@ -289,16 +329,10 @@ function NodeDetail({
                     .filter(Boolean)
                     .join(" · ")}
                 </p>
-                {material.url ? (
-                  <a
-                    href={material.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-2 inline-flex text-xs font-semibold text-steam-technology underline-offset-2 hover:underline"
-                  >
-                    Mở tài liệu
-                  </a>
-                ) : null}
+                <MaterialPreviewLink
+                  activityId={activity.id}
+                  material={material}
+                />
               </div>
             ) : (
               <p className="text-sm italic text-muted-foreground">
@@ -323,16 +357,6 @@ function NodeDetail({
               Số lần làm: {assignment.maxAttempts}
               {assignment.dueAt ? ` · Hạn ${assignment.dueAt}` : ""}
             </p>
-            {canAdvise ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-2 h-8 rounded-lg text-xs"
-                onClick={() => onPinField("passScore")}
-              >
-                Góp ý pass score
-              </Button>
-            ) : null}
           </div>
         ) : null}
 
@@ -363,34 +387,6 @@ function NodeDetail({
         ) : null}
 
         {showChanges ? <FieldChangeCards items={fieldChanges} /> : null}
-
-        {pins.length > 0 ? (
-          <div className="mt-5 space-y-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Góp ý gắn node này
-            </p>
-            {pins.map((pin) => (
-              <button
-                key={pin.threadId}
-                type="button"
-                onClick={() => onOpenThread?.(pin.threadId)}
-                className="flex w-full flex-col rounded-xl border border-border px-3 py-2 text-left transition-colors hover:bg-muted/40"
-              >
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="rounded-md text-[10px]">
-                    {ADVISORY_THREAD_TYPE_LABELS[pin.type]}
-                  </Badge>
-                  <span className="text-[11px] text-muted-foreground">
-                    {pin.authorName || "—"}
-                  </span>
-                </div>
-                <p className="mt-1 line-clamp-2 text-sm text-foreground">
-                  {pin.lastMessagePreview || "Xem luồng góp ý"}
-                </p>
-              </button>
-            ))}
-          </div>
-        ) : null}
       </div>
     </div>
   );
@@ -653,12 +649,7 @@ export function AdvisoryCurriculumBoard({
             />
           </label>
         ) : null}
-        {showChanges && changeCounts ? (
-          <p className="text-[11px] tabular-nums text-muted-foreground">
-            +{changeCounts.added} / −{changeCounts.removed} / ~
-            {changeCounts.modified}
-          </p>
-        ) : null}
+        {showChanges && changeCounts ? <DiffStatsBar {...changeCounts} /> : null}
       </header>
 
       <div className="hidden min-h-[560px] lg:grid lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(260px,0.9fr)]">
@@ -733,10 +724,6 @@ export function AdvisoryCurriculumBoard({
               node={selected}
               fieldChanges={fieldChanges}
               showChanges={showChanges}
-              pins={nodePins}
-              canAdvise={canAdvise}
-              onPinField={(field) => openComposer(selected, field)}
-              onOpenThread={onOpenThread}
             />
           ) : (
             <p className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
@@ -896,10 +883,6 @@ export function AdvisoryCurriculumBoard({
                 node={selected}
                 fieldChanges={fieldChanges}
                 showChanges={showChanges}
-                pins={nodePins}
-                canAdvise={canAdvise}
-                onPinField={(field) => openComposer(selected, field)}
-                onOpenThread={onOpenThread}
               />
             ) : null}
             {canAdvise && selected && !composer ? (

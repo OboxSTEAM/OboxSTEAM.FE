@@ -57,7 +57,7 @@ export function AdvisoryThreadPanel({
   const [isSending, setIsSending] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
-  const { data, isLoading, retry } = useClientFetch({
+  const { data, isLoading, mutate } = useClientFetch({
     enabled: thread != null,
     fetcher: () =>
       thread ? getAdvisoryMessages(programId, thread.id) : Promise.resolve(null),
@@ -66,6 +66,7 @@ export function AdvisoryThreadPanel({
   });
 
   const messages = data?.data ?? [];
+  const showMessageSkeleton = isLoading && messages.length === 0;
   const reply =
     replyDraft.threadId === (thread?.id ?? null) ? replyDraft.text : "";
 
@@ -80,10 +81,27 @@ export function AdvisoryThreadPanel({
 
     setIsSending(true);
     try {
-      await addAdvisoryMessage(programId, thread.id, { message: trimmed });
+      const result = await addAdvisoryMessage(programId, thread.id, {
+        message: trimmed,
+      });
+      const created = result?.data ?? null;
       setReply("");
-      retry();
-      onThreadUpdated?.();
+      // Append in place — avoid retry()/parent refresh which remounts the board.
+      if (created) {
+        mutate((prev) => {
+          if (!prev) {
+            return { ...result, data: [created] };
+          }
+          const existing = prev.data ?? [];
+          if (existing.some((msg) => msg.id === created.id)) {
+            return prev;
+          }
+          return {
+            ...prev,
+            data: [...existing, created],
+          };
+        });
+      }
     } catch (error) {
       showAppErrorFromUnknown(error, "programs.advisory");
     } finally {
@@ -193,7 +211,7 @@ export function AdvisoryThreadPanel({
       </header>
 
       <div className="flex-1 space-y-3 overflow-y-auto p-4">
-        {isLoading ? (
+        {showMessageSkeleton ? (
           <>
             <Skeleton className="h-14 w-full rounded-xl" />
             <Skeleton className="h-14 w-full rounded-xl" />

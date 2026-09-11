@@ -644,6 +644,13 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Tài liệu có thể không còn tồn tại hoặc máy chủ từ chối yêu cầu.",
     action: "Tải lại trang rồi thử xóa lại.",
   },
+  "curriculum.material.preview": {
+    title: "Không mở được tài liệu",
+    reason:
+      "Liên kết xem trước đã hết hạn, hoặc bạn không có quyền xem tài liệu ở trạng thái chương trình hiện tại.",
+    action:
+      "Thử lại. Tài liệu công khai chỉ khi chương trình Active; Draft/PendingReview cần Expert/Manager/Admin.",
+  },
   "curriculum.assignment.save": {
     title: "Không lưu được bài tập",
     reason: "Thông tin bài tập chưa hợp lệ hoặc đã trùng mã.",
@@ -996,6 +1003,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "curriculum.activity.save",
   "curriculum.material.save",
   "curriculum.material.delete",
+  "curriculum.material.preview",
   "curriculum.assignment.save",
   "curriculum.milestone.save",
   "curriculum.milestone.link",
@@ -1014,6 +1022,9 @@ function reasonForHttpStatus(
     return "Phiên đăng nhập đã hết hạn hoặc bạn chưa đăng nhập.";
   }
   if (status === 403) {
+    if (context === "curriculum.material.preview") {
+      return "Tài liệu chỉ công khai khi chương trình Active. Draft/PendingReview cần quyền Expert, Manager hoặc Admin và dùng URL ký số.";
+    }
     return "Bạn không có quyền thực hiện thao tác này.";
   }
   if (status === 404) {
@@ -1104,6 +1115,9 @@ function actionForHttpStatus(status: number): string {
     return "Đăng nhập lại rồi thử tiếp.";
   }
   if (status === 403) {
+    if (context === "curriculum.material.preview") {
+      return "Đăng nhập đúng vai trò (Expert/Manager/Admin) hoặc đợi chương trình Active.";
+    }
     return "Liên hệ quản trị viên nếu bạn cần quyền này.";
   }
   if (status === 404) {
