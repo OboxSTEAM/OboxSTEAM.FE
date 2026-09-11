@@ -228,6 +228,9 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   const openRequiredChanges = threads.filter(
     (t) => t.type === "RequiredChange" && t.status === "Open",
   );
+  const openSuggestions = threads.filter(
+    (t) => t.type === "Suggestion" && t.status === "Open",
+  );
 
   function refreshAdvisorySurfaces() {
     retryThreads();
@@ -341,6 +344,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               frameworkCheck={frameworkCheck}
               isCheckLoading={isCheckLoading}
               openRequiredChanges={openRequiredChanges}
+              openSuggestions={openSuggestions}
               feedbackCounts={feedbackCounts}
               onOpenThread={(id) => setParams({ tab: "content", thread: id })}
             />
@@ -414,6 +418,7 @@ function OverviewTab({
   frameworkCheck,
   isCheckLoading,
   openRequiredChanges,
+  openSuggestions,
   feedbackCounts,
   onOpenThread,
 }: {
@@ -422,12 +427,28 @@ function OverviewTab({
   frameworkCheck: FrameworkCheck | null;
   isCheckLoading: boolean;
   openRequiredChanges: { id: string; targetLabel: string }[];
+  openSuggestions: { id: string; targetLabel: string }[];
   feedbackCounts?: {
     openRequiredChanges: number;
     openSuggestions: number;
   };
   onOpenThread?: (threadId: string) => void;
 }) {
+  const openFeedbackItems = [
+    ...openRequiredChanges.map((thread) => ({
+      ...thread,
+      kind: "required" as const,
+    })),
+    ...openSuggestions.map((thread) => ({
+      ...thread,
+      kind: "suggestion" as const,
+    })),
+  ];
+  const suggestionCount =
+    feedbackCounts?.openSuggestions ?? openSuggestions.length;
+  const requiredCount =
+    feedbackCounts?.openRequiredChanges ?? openRequiredChanges.length;
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
       <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
@@ -478,93 +499,189 @@ function OverviewTab({
             </div>
           ) : null}
         </dl>
-
-        {feedbackCounts ? (
-          <div className="mt-4 flex flex-wrap gap-2 border-t border-border pt-4">
-            <Badge variant="secondary" className="rounded-md text-[11px]">
-              {feedbackCounts.openSuggestions} góp ý mở
-            </Badge>
-            <Badge
-              className={cn(
-                "rounded-md text-[11px]",
-                feedbackCounts.openRequiredChanges > 0
-                  ? "bg-primary/10 text-primary"
-                  : "bg-muted text-foreground",
-              )}
-            >
-              {feedbackCounts.openRequiredChanges} yêu cầu chỉnh sửa
-            </Badge>
-          </div>
-        ) : null}
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)] lg:col-span-2">
-        <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-          <LayoutGrid className="size-4 text-primary" />
-          Kiểm tra khung chương trình
-        </h2>
-        {isCheckLoading ? (
-          <Skeleton className="mt-4 h-24 w-full rounded-xl" />
-        ) : frameworkCheck ? (
-          <div className="mt-4 space-y-2">
-            <div className="flex items-center gap-2">
-              {frameworkCheck.allPassed ? (
-                <CheckCircle2 className="size-4 text-[#7CB342]" />
-              ) : (
-                <XCircle className="size-4 text-primary" />
-              )}
-              <span className="text-sm font-medium text-foreground">
-                {frameworkCheck.allPassed
-                  ? "Đáp ứng yêu cầu khung"
-                  : "Còn mục chưa đáp ứng"}
-              </span>
-            </div>
-            <ul className="space-y-2">
-              {frameworkCheck.checks.map((check, index) => (
-                <li
-                  key={`${check.code}-${index}`}
-                  className="flex items-start gap-2 rounded-xl border border-border bg-background/50 px-3 py-2 text-xs"
-                >
-                  {check.passed ? (
-                    <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-[#7CB342]" />
-                  ) : (
-                    <AlertCircle className="mt-0.5 size-3.5 shrink-0 text-primary" />
-                  )}
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {check.label || check.code}
-                    </p>
-                    <p className="text-muted-foreground">
-                      Yêu cầu: {check.expected || "—"} · Thực tế: {check.actual || "—"}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <p className="mt-4 text-sm text-muted-foreground">Không có dữ liệu kiểm tra.</p>
-        )}
-      </section>
-
-      {openRequiredChanges.length > 0 ? (
-        <section className="rounded-2xl border border-primary/30 bg-primary/5 p-6 lg:col-span-2">
-          <h2 className="text-sm font-bold text-primary">Yêu cầu chỉnh sửa đang mở</h2>
-          <ul className="mt-3 space-y-1">
-            {openRequiredChanges.map((thread) => (
-              <li key={thread.id}>
-                <button
-                  type="button"
-                  onClick={() => onOpenThread?.(thread.id)}
-                  className="text-sm text-foreground underline-offset-2 hover:underline"
-                >
-                  · {thread.targetLabel}
-                </button>
-              </li>
-            ))}
-          </ul>
+      <div className="grid gap-6 lg:col-span-2 lg:grid-cols-[minmax(0,1fr)_minmax(240px,300px)]">
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
+            <LayoutGrid className="size-4 text-primary" />
+            Kiểm tra khung chương trình
+          </h2>
+          {isCheckLoading ? (
+            <Skeleton className="mt-4 h-24 w-full rounded-xl" />
+          ) : frameworkCheck ? (
+            <FrameworkCheckPanel check={frameworkCheck} />
+          ) : (
+            <p className="mt-4 text-sm text-muted-foreground">Không có dữ liệu kiểm tra.</p>
+          )}
         </section>
-      ) : null}
+
+        <section className="rounded-2xl border border-border bg-card p-5 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <p className="font-heading text-2xl font-bold tabular-nums leading-none text-[#4FC3F7]">
+                {suggestionCount}
+              </p>
+              <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
+                Góp ý mở
+              </p>
+            </div>
+            <div>
+              <p
+                className={cn(
+                  "font-heading text-2xl font-bold tabular-nums leading-none",
+                  requiredCount > 0 ? "text-primary" : "text-foreground",
+                )}
+              >
+                {requiredCount}
+              </p>
+              <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
+                Yêu cầu chỉnh sửa
+              </p>
+            </div>
+          </div>
+
+          {openFeedbackItems.length > 0 ? (
+            <ul className="mt-4 space-y-2.5 border-t border-border pt-3">
+              {openFeedbackItems.map((thread) => {
+                const isRequired = thread.kind === "required";
+                return (
+                  <li key={thread.id}>
+                    <button
+                      type="button"
+                      onClick={() => onOpenThread?.(thread.id)}
+                      className="flex w-full items-start gap-2.5 text-left"
+                    >
+                      <span
+                        className={cn(
+                          "mt-1.5 size-2 shrink-0 rounded-full",
+                          isRequired ? "bg-primary" : "bg-[#4FC3F7]",
+                        )}
+                        aria-hidden
+                      />
+                      <span className="min-w-0 flex-1">
+                        <span
+                          className={cn(
+                            "text-[10px] font-semibold uppercase tracking-wide",
+                            isRequired ? "text-primary" : "text-[#4FC3F7]",
+                          )}
+                        >
+                          {isRequired ? "Yêu cầu" : "Góp ý"}
+                        </span>
+                        <span className="mt-0.5 block truncate text-sm text-foreground underline-offset-2 hover:underline">
+                          {thread.targetLabel}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
+              Chưa có góp ý hoặc yêu cầu chỉnh sửa đang mở.
+            </p>
+          )}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function FrameworkCheckPanel({ check }: { check: FrameworkCheck }) {
+  const passedCount = check.checks.filter((item) => item.passed).length;
+  const totalCount = check.checks.length;
+  const ordered = [...check.checks].sort((a, b) => {
+    if (a.passed === b.passed) return 0;
+    return a.passed ? 1 : -1;
+  });
+
+  return (
+    <div className="mt-4">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        {check.allPassed ? (
+          <CheckCircle2 className="size-4 text-[#7CB342]" aria-hidden />
+        ) : (
+          <XCircle className="size-4 text-primary" aria-hidden />
+        )}
+        <span className="text-sm font-medium text-foreground">
+          {check.allPassed
+            ? "Đáp ứng yêu cầu khung"
+            : "Còn mục chưa đáp ứng"}
+        </span>
+        {totalCount > 0 ? (
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {passedCount}/{totalCount} đạt
+          </span>
+        ) : null}
+      </div>
+
+      {totalCount === 0 ? (
+        <p className="text-sm text-muted-foreground">Không có mục kiểm tra.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[420px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-border text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <th className="w-8 py-2 pr-2 font-semibold" scope="col">
+                  <span className="sr-only">Trạng thái</span>
+                </th>
+                <th className="py-2 pr-4 font-semibold" scope="col">
+                  Tiêu chí
+                </th>
+                <th className="py-2 pr-4 font-semibold" scope="col">
+                  Yêu cầu
+                </th>
+                <th className="py-2 font-semibold" scope="col">
+                  Thực tế
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {ordered.map((item, index) => {
+                const statusLabel = item.passed ? "Đạt" : "Chưa đạt";
+
+                return (
+                  <tr
+                    key={`${item.code}-${index}`}
+                    className="border-b border-border/70 last:border-b-0"
+                  >
+                    <td className="py-2.5 pr-2 align-top">
+                      {item.passed ? (
+                        <CheckCircle2
+                          className="size-3.5 text-[#7CB342]"
+                          aria-label={statusLabel}
+                        />
+                      ) : (
+                        <AlertCircle
+                          className="size-3.5 text-primary"
+                          aria-label={statusLabel}
+                        />
+                      )}
+                    </td>
+                    <td className="py-2.5 pr-4 align-top font-medium text-foreground">
+                      {item.label || item.code}
+                    </td>
+                    <td className="py-2.5 pr-4 align-top text-muted-foreground">
+                      {item.expected?.trim() || "—"}
+                    </td>
+                    <td
+                      className={cn(
+                        "py-2.5 align-top tabular-nums",
+                        item.passed
+                          ? "text-muted-foreground"
+                          : "font-medium text-foreground",
+                      )}
+                    >
+                      {item.actual?.trim() || "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
