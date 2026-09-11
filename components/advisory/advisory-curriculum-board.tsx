@@ -1,18 +1,17 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import {
-  AlertCircle,
-  ArrowLeft,
-  BookOpen,
-  ClipboardList,
-  FileText,
-  Flag,
-  Layers,
-  MessageSquarePlus,
-} from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { AlertCircle, ArrowLeft, MessageSquarePlus } from "lucide-react";
 
 import { AdvisoryThreadPanel } from "@/components/advisory/advisory-thread-panel";
+import { FrameworkCheckPanel } from "@/components/advisory/framework-check-panel";
+import {
+  CurriculumMutateContext,
+  STRUCTURE_NODE_ICON,
+  StructureTreePanelHeader,
+  StructureTreeRow,
+  type StructureNodeKind,
+} from "@/components/curriculum/structure-tree";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,20 +24,20 @@ import type {
   AdvisoryThreadPinSummary,
   AdvisoryThreadType,
   CreateAdvisoryThreadInput,
+  FrameworkCheck,
   SubmissionChangeItem,
 } from "@/lib/api";
 import {
   buildBoardTree,
   buildFieldChangesForTarget,
-  frameworkFailKeys,
+  nestBoardTree,
   pinSummaryKey,
-  type BoardChangeKind,
   type BoardTreeNode,
+  type NestedBoardNode,
 } from "@/lib/advisory/board-tree";
 import {
   ADVISORY_THREAD_TYPE_LABELS,
   ADVISORY_THREAD_STATUS_LABELS,
-  CHANGE_KIND_LABELS,
 } from "@/lib/expert/advisory-labels";
 import {
   openMaterialSignedPreview,
@@ -61,6 +60,8 @@ type AdvisoryCurriculumBoardProps = {
   programId: string;
   pinSummaries?: AdvisoryThreadPinSummary[];
   selectedThread?: AdvisoryThread | null;
+  frameworkCheck?: FrameworkCheck | null;
+  isFrameworkCheckLoading?: boolean;
   isLoading?: boolean;
   canAdvise?: boolean;
   canCreateRequiredChange?: boolean;
@@ -71,13 +72,6 @@ type AdvisoryCurriculumBoardProps = {
   onCloseThread?: () => void;
   onThreadUpdated?: () => void;
   className?: string;
-};
-
-const CHANGE_EDGE: Record<BoardChangeKind, string> = {
-  added: "border-l-steam-engineering",
-  removed: "border-l-primary",
-  modified: "border-l-steam-technology",
-  reordered: "border-l-steam-science",
 };
 
 function MaterialPreviewLink({
@@ -127,20 +121,78 @@ function moduleTypeLabel(value: string | null | undefined): string {
   );
 }
 
-function KindIcon({ kind }: { kind: BoardTreeNode["kind"] }) {
-  const className = "size-3.5 shrink-0 text-muted-foreground";
-  switch (kind) {
-    case "module":
-      return <Layers className={cn(className, "text-primary")} />;
-    case "course":
-      return <BookOpen className={className} />;
-    case "activity":
-      return <FileText className={className} />;
-    case "assignment":
-      return <ClipboardList className={className} />;
-    case "milestone":
-      return <Flag className={className} />;
+function KindIcon({ kind }: { kind: StructureNodeKind }) {
+  const { Icon, color, bg } = STRUCTURE_NODE_ICON[kind];
+  return (
+    <span
+      className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border border-border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
+      style={{ color, background: bg }}
+      aria-hidden
+    >
+      <Icon className="size-3.5" strokeWidth={2.25} />
+    </span>
+  );
+}
+
+function containsKey(nodes: NestedBoardNode[], key: string): boolean {
+  for (const node of nodes) {
+    if (node.key === key) return true;
+    if (containsKey(node.children, key)) return true;
   }
+  return false;
+}
+
+function AdvisoryStructureTreeRow({
+  node,
+  depth,
+  isLast,
+  selectedKey,
+  pinMap,
+  onSelect,
+}: {
+  node: NestedBoardNode;
+  depth: number;
+  isLast: boolean;
+  selectedKey: string | null;
+  pinMap: Map<string, AdvisoryThreadPinSummary>;
+  onSelect: (key: string) => void;
+}) {
+  const selected = selectedKey === node.key;
+  const forceOpen =
+    selected ||
+    (selectedKey != null && containsKey(node.children, selectedKey));
+  const summary = pinMap.get(pinSummaryKey(node.targetType, node.targetId));
+
+  return (
+    <StructureTreeRow
+      depth={depth}
+      isLast={isLast}
+      kind={node.kind as StructureNodeKind}
+      selected={selected}
+      label={node.label}
+      meta={node.meta}
+      defaultOpen={depth === 0}
+      forceOpen={forceOpen}
+      onSelect={() => onSelect(node.key)}
+      trailing={
+        summary && summary.total > 0 ? (
+          <PinCountBadge summary={summary} />
+        ) : undefined
+      }
+    >
+      {node.children.map((child, index) => (
+        <AdvisoryStructureTreeRow
+          key={child.key}
+          node={child}
+          depth={depth + 1}
+          isLast={index === node.children.length - 1}
+          selectedKey={selectedKey}
+          pinMap={pinMap}
+          onSelect={onSelect}
+        />
+      ))}
+    </StructureTreeRow>
+  );
 }
 
 function PinCountBadge({
@@ -163,20 +215,27 @@ function PinCountBadge({
   );
 }
 
-function ChangeChip({ kind }: { kind: BoardChangeKind }) {
+function TruncationHint({ truncated }: { truncated?: boolean }) {
+  if (!truncated) return null;
   return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "rounded-md px-1.5 py-0 text-[10px] font-semibold uppercase tracking-wide",
-        kind === "added" && "border-steam-engineering/40 text-steam-engineering",
-        kind === "removed" && "border-primary/40 text-primary",
-        kind === "modified" && "border-steam-technology/40 text-steam-technology",
-        kind === "reordered" && "border-steam-science/40 text-steam-science",
-      )}
-    >
-      {CHANGE_KIND_LABELS[kind]}
-    </Badge>
+    <p className="mt-1 text-[11px] text-muted-foreground">
+      Nội dung đã rút gọn trên board — mở chi tiết đầy đủ nếu cần.
+    </p>
+  );
+}
+
+function DetailRow({
+  label,
+  value,
+}: {
+  label: string;
+  value: ReactNode;
+}) {
+  return (
+    <div className="flex justify-between gap-4 border-b border-border/60 py-2 text-sm last:border-b-0">
+      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 text-right font-medium text-foreground">{value}</dd>
+    </div>
   );
 }
 
@@ -211,11 +270,11 @@ function FieldChangeCards({ items }: { items: SubmissionChangeItem[] }) {
       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         Thay đổi trường · so với lần nộp trước
       </p>
-      {items.map((item) => (
-        <div
-          key={`${item.field}-${item.detail}`}
-          className="overflow-hidden rounded-xl border border-border"
-        >
+          {items.map((item, index) => (
+            <div
+              key={`${item.targetType}-${item.id}-${item.field}-${index}`}
+              className="overflow-hidden rounded-xl border border-border"
+            >
           <div className="border-b border-border bg-muted/40 px-3 py-1.5 text-xs font-semibold text-foreground">
             {item.field || "Nội dung"}
           </div>
@@ -258,27 +317,70 @@ function NodeDetail({
   const milestone = node.milestone;
   const course = node.course;
   const mod = node.module;
+  const program = node.program;
+  const isQuiz =
+    (assignment?.assignmentType || "").toLowerCase().includes("quiz") ||
+    assignment?.questionBankId != null ||
+    (assignment?.questionCount ?? 0) > 0;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto p-5 sm:p-6">
         <div className="flex flex-wrap items-center gap-2">
-          <KindIcon kind={node.kind} />
+          <KindIcon kind={node.kind as StructureNodeKind} />
           <h3 className="font-heading text-lg font-bold text-foreground">
             {node.label}
           </h3>
-          {showChanges && node.change ? <ChangeChip kind={node.change} /> : null}
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{node.meta}</p>
 
-        {node.kind === "module" ? (
+        {node.kind === "program" && program ? (
           <div className="mt-4 space-y-3">
-            <p className="text-sm text-muted-foreground">
-              {moduleTypeLabel(mod.moduleType || mod.type)}
-              {mod.prerequisiteModuleId
-                ? " · có học phần tiên quyết"
-                : " · không tiên quyết"}
-            </p>
+            {program.description ? (
+              <div>
+                <p className="whitespace-pre-line text-sm text-muted-foreground">
+                  {program.description}
+                </p>
+                <TruncationHint truncated={program.descriptionIsTruncated} />
+              </div>
+            ) : (
+              <p className="text-sm italic text-muted-foreground">
+                Chưa có mô tả chương trình.
+              </p>
+            )}
+            {program.skillsGained ? (
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Kỹ năng đạt được
+                </p>
+                <p className="mt-1 text-sm text-foreground">
+                  {program.skillsGained}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
+
+        {node.kind === "module" && mod ? (
+          <div className="mt-4 space-y-3">
+            <dl>
+              <DetailRow
+                label="Loại"
+                value={moduleTypeLabel(mod.moduleType || mod.type)}
+              />
+              <DetailRow
+                label="Bắt buộc"
+                value={mod.isMandatory ? "Có" : "Không"}
+              />
+              <DetailRow
+                label="Tiên quyết"
+                value={mod.prerequisiteModuleId ? "Có" : "Không"}
+              />
+              <DetailRow
+                label="Cấu trúc"
+                value={`${mod.courses.length} khóa · ${mod.assignments.length} bài tập · ${mod.milestones.length} mốc`}
+              />
+            </dl>
             {mod.learningOutcomes.length > 0 ? (
               <ul className="space-y-1 text-sm text-foreground">
                 {mod.learningOutcomes.map((outcome) => (
@@ -290,32 +392,63 @@ function NodeDetail({
                 Chưa có learning outcomes.
               </p>
             )}
-            <p className="text-xs text-muted-foreground">
-              {mod.courses.length} khóa · {mod.assignments.length} bài tập ·{" "}
-              {mod.milestones.length} mốc
-            </p>
           </div>
         ) : null}
 
         {node.kind === "course" && course ? (
           <div className="mt-4 space-y-3">
             {course.description ? (
-              <p className="whitespace-pre-line text-sm text-muted-foreground">
-                {course.description}
-              </p>
+              <div>
+                <p className="whitespace-pre-line text-sm text-muted-foreground">
+                  {course.description}
+                </p>
+                <TruncationHint truncated={course.descriptionIsTruncated} />
+              </div>
             ) : (
               <p className="text-sm italic text-muted-foreground">Chưa có mô tả.</p>
             )}
+            <dl>
+              <DetailRow label="Mã" value={course.code || "—"} />
+              <DetailRow
+                label="Hoạt động"
+                value={`${course.activities.length}`}
+              />
+            </dl>
           </div>
         ) : null}
 
         {node.kind === "activity" && activity ? (
           <div className="mt-4 space-y-3">
             {activity.description ? (
-              <p className="whitespace-pre-line text-sm text-muted-foreground">
-                {activity.description}
-              </p>
+              <div>
+                <p className="whitespace-pre-line text-sm text-muted-foreground">
+                  {activity.description}
+                </p>
+                <TruncationHint truncated={activity.descriptionIsTruncated} />
+              </div>
             ) : null}
+            <dl>
+              <DetailRow
+                label="Loại"
+                value={activity.activityType || activity.type || "—"}
+              />
+              <DetailRow
+                label="Thời lượng"
+                value={
+                  activity.durationMinutes != null
+                    ? `${activity.durationMinutes} phút`
+                    : "—"
+                }
+              />
+              <DetailRow
+                label="QR check-in"
+                value={activity.requireQrCheckin ? "Có" : "Không"}
+              />
+              <DetailRow
+                label="Bằng chứng media"
+                value={activity.requireMediaEvidence ? "Có" : "Không"}
+              />
+            </dl>
             {material ? (
               <div className="rounded-xl border border-dashed border-border bg-muted/30 p-4">
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -343,34 +476,94 @@ function NodeDetail({
         ) : null}
 
         {node.kind === "assignment" && assignment ? (
-          <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <div className="mt-4 space-y-3">
             {assignment.description ? (
-              <p className="whitespace-pre-line text-foreground">
-                {assignment.description}
-              </p>
+              <div>
+                <p className="whitespace-pre-line text-sm text-foreground">
+                  {assignment.description}
+                </p>
+                <TruncationHint truncated={assignment.descriptionIsTruncated} />
+              </div>
             ) : null}
-            <p>
-              Loại: {assignment.assignmentType || "—"} · Điểm tối đa{" "}
-              {assignment.maxPoints} · Đạt ≥ {assignment.passScore}
-            </p>
-            <p>
-              Số lần làm: {assignment.maxAttempts}
-              {assignment.dueAt ? ` · Hạn ${assignment.dueAt}` : ""}
-            </p>
+            <dl>
+              <DetailRow
+                label="Loại"
+                value={assignment.assignmentType || "—"}
+              />
+              <DetailRow label="Điểm tối đa" value={assignment.maxPoints} />
+              <DetailRow label="Đạt ≥" value={assignment.passScore} />
+              <DetailRow label="Số lần làm" value={assignment.maxAttempts} />
+              <DetailRow
+                label="Giới hạn thời gian"
+                value={
+                  assignment.timeLimitMinutes != null
+                    ? `${assignment.timeLimitMinutes} phút`
+                    : "—"
+                }
+              />
+              <DetailRow
+                label="Bắt buộc để pass học phần"
+                value={assignment.isRequiredForModulePass ? "Có" : "Không"}
+              />
+            </dl>
+            {isQuiz ? (
+              <div className="rounded-xl border border-border bg-muted/20 p-3">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Cấu hình quiz
+                </p>
+                <dl className="mt-1">
+                  <DetailRow
+                    label="Ngân hàng câu hỏi"
+                    value={assignment.questionBankId ? "Đã gắn" : "—"}
+                  />
+                  <DetailRow
+                    label="Số câu"
+                    value={assignment.questionCount ?? "—"}
+                  />
+                  <DetailRow
+                    label="Xáo câu"
+                    value={assignment.allowShuffle ? "Có" : "Không"}
+                  />
+                  <DetailRow
+                    label="Xáo đáp án"
+                    value={assignment.shuffleOptions ? "Có" : "Không"}
+                  />
+                  <DetailRow
+                    label="Tỷ lệ độ khó"
+                    value={`${assignment.easyPercent}/${assignment.mediumPercent}/${assignment.hardPercent}%`}
+                  />
+                </dl>
+              </div>
+            ) : null}
           </div>
         ) : null}
 
         {node.kind === "milestone" && milestone ? (
-          <div className="mt-4 space-y-2 text-sm text-muted-foreground">
+          <div className="mt-4 space-y-3">
             {milestone.description ? (
-              <p className="whitespace-pre-line text-foreground">
-                {milestone.description}
-              </p>
+              <div>
+                <p className="whitespace-pre-line text-sm text-foreground">
+                  {milestone.description}
+                </p>
+                <TruncationHint truncated={milestone.descriptionIsTruncated} />
+              </div>
             ) : null}
-            <p>{milestone.isCapstone ? "Capstone" : "Milestone thường"}</p>
-            {milestone.assignment ? (
-              <p>Assignment: {milestone.assignment.title || milestone.assignmentId}</p>
-            ) : null}
+            <dl>
+              <DetailRow
+                label="Loại"
+                value={milestone.isCapstone ? "Capstone" : "Milestone thường"}
+              />
+              <DetailRow
+                label="Assignment"
+                value={
+                  milestone.assignment?.title || milestone.assignmentId || "—"
+                }
+              />
+              <DetailRow
+                label="Hoạt động gắn"
+                value={milestone.activities.length || milestone.activityIds.length}
+              />
+            </dl>
           </div>
         ) : null}
 
@@ -499,6 +692,8 @@ export function AdvisoryCurriculumBoard({
   programId,
   pinSummaries = [],
   selectedThread = null,
+  frameworkCheck = null,
+  isFrameworkCheckLoading = false,
   isLoading = false,
   canAdvise = false,
   canCreateRequiredChange = false,
@@ -519,6 +714,8 @@ export function AdvisoryCurriculumBoard({
     [board, showChanges],
   );
 
+  const nestedTree = useMemo(() => nestBoardTree(tree), [tree]);
+
   useEffect(() => {
     if (!selectedThread?.targetId) return;
     const match = tree.find(
@@ -529,6 +726,12 @@ export function AdvisoryCurriculumBoard({
     if (match) setSelectedKey(match.key);
   }, [selectedThread, tree]);
 
+  // Prefer the program root when nothing selected yet.
+  useEffect(() => {
+    if (selectedKey != null || tree.length === 0) return;
+    setSelectedKey(tree[0]!.key);
+  }, [selectedKey, tree]);
+
   const pinMap = useMemo(() => {
     const map = new Map<string, AdvisoryThreadPinSummary>();
     for (const summary of pinSummaries) {
@@ -536,11 +739,6 @@ export function AdvisoryCurriculumBoard({
     }
     return map;
   }, [pinSummaries]);
-
-  const failKeys = useMemo(
-    () => frameworkFailKeys(board?.frameworkHighlights ?? []),
-    [board?.frameworkHighlights],
-  );
 
   const selected =
     tree.find((node) => node.key === selectedKey) ?? tree[0] ?? null;
@@ -629,7 +827,7 @@ export function AdvisoryCurriculumBoard({
       <header className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
         <div className="min-w-0 flex-1">
           <h3 className="text-sm font-bold text-foreground">
-            Curriculum board
+            Khung chương trình
           </h3>
           <p className="text-xs text-muted-foreground">
             Ảnh chụp lần nộp · {board.curriculum.modules.length} học phần
@@ -652,69 +850,44 @@ export function AdvisoryCurriculumBoard({
         {showChanges && changeCounts ? <DiffStatsBar {...changeCounts} /> : null}
       </header>
 
+      {(isFrameworkCheckLoading || frameworkCheck) && (
+        <div className="border-b border-border px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Kiểm tra khung chương trình
+          </p>
+          {isFrameworkCheckLoading ? (
+            <Skeleton className="mt-3 h-20 w-full rounded-xl" />
+          ) : frameworkCheck ? (
+            <FrameworkCheckPanel check={frameworkCheck} compact className="mt-2" />
+          ) : null}
+        </div>
+      )}
+
       <div className="hidden min-h-[560px] lg:grid lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(260px,0.9fr)]">
         <nav
-          className="flex flex-col overflow-hidden border-r border-border"
+          className="flex flex-col overflow-hidden border-r border-border bg-card"
           aria-label="Cấu trúc curriculum"
         >
-          <div className="flex-1 overflow-y-auto">
-            {tree.map((node) => {
-              const summary = pinMap.get(
-                pinSummaryKey(node.targetType, node.targetId),
-              );
-              const isSelected = selected?.key === node.key;
-              const hasFail = failKeys.has(node.key);
-              return (
-                <button
-                  key={node.key}
-                  type="button"
-                  onClick={() => {
-                    setSelectedKey(node.key);
-                    setComposer(null);
-                  }}
-                  className={cn(
-                    "flex w-full items-start gap-2 border-b border-border/60 border-l-[3px] py-2.5 pr-3 text-left transition-colors hover:bg-muted/40",
-                    isSelected && "bg-primary/5",
-                    showChanges && node.change
-                      ? CHANGE_EDGE[node.change]
-                      : "border-l-transparent",
-                    node.change === "removed" && showChanges && "opacity-60",
-                  )}
-                  style={{ paddingLeft: 10 + node.depth * 14 }}
-                >
-                  <KindIcon kind={node.kind} />
-                  <span className="min-w-0 flex-1">
-                    <span
-                      className={cn(
-                        "block truncate text-xs font-semibold text-foreground",
-                        node.change === "removed" &&
-                          showChanges &&
-                          "line-through",
-                      )}
-                    >
-                      {node.label}
-                    </span>
-                    <span className="mt-0.5 block truncate text-[10px] text-muted-foreground">
-                      {node.meta}
-                    </span>
-                  </span>
-                  <span className="flex shrink-0 flex-col items-end gap-1">
-                    {showChanges && node.change ? (
-                      <ChangeChip kind={node.change} />
-                    ) : null}
-                    {hasFail ? (
-                      <Badge
-                        variant="outline"
-                        className="rounded-md border-primary/40 px-1.5 py-0 text-[10px] text-primary"
-                      >
-                        Framework
-                      </Badge>
-                    ) : null}
-                    <PinCountBadge summary={summary} />
-                  </span>
-                </button>
-              );
-            })}
+          <StructureTreePanelHeader hint="Chọn mục để xem chi tiết và gắn góp ý" />
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
+            <CurriculumMutateContext.Provider value={false}>
+              <ul role="list">
+                {nestedTree.map((node, index) => (
+                  <AdvisoryStructureTreeRow
+                    key={node.key}
+                    node={node}
+                    depth={0}
+                    isLast={index === nestedTree.length - 1}
+                    selectedKey={selected?.key ?? selectedKey}
+                    pinMap={pinMap}
+                    onSelect={(key) => {
+                      setSelectedKey(key);
+                      setComposer(null);
+                    }}
+                  />
+                ))}
+              </ul>
+            </CurriculumMutateContext.Provider>
           </div>
         </nav>
 
@@ -856,27 +1029,25 @@ export function AdvisoryCurriculumBoard({
           </div>
         ) : (
           <>
-            <div className="max-h-[320px] overflow-y-auto border-b border-border">
-              {tree.map((node) => (
-                <button
-                  key={node.key}
-                  type="button"
-                  onClick={() => setSelectedKey(node.key)}
-                  className={cn(
-                    "flex w-full items-center gap-2 border-b border-border/60 px-3 py-2 text-left",
-                    selected?.key === node.key && "bg-primary/5",
-                  )}
-                  style={{ paddingLeft: 12 + node.depth * 12 }}
-                >
-                  <KindIcon kind={node.kind} />
-                  <span className="truncate text-xs font-semibold">
-                    {node.label}
-                  </span>
-                  {showChanges && node.change ? (
-                    <ChangeChip kind={node.change} />
-                  ) : null}
-                </button>
-              ))}
+            <div className="max-h-[320px] overflow-y-auto border-b border-border p-2">
+              <CurriculumMutateContext.Provider value={false}>
+                <ul role="list">
+                  {nestedTree.map((node, index) => (
+                    <AdvisoryStructureTreeRow
+                      key={node.key}
+                      node={node}
+                      depth={0}
+                      isLast={index === nestedTree.length - 1}
+                      selectedKey={selected?.key ?? selectedKey}
+                      pinMap={pinMap}
+                      onSelect={(key) => {
+                        setSelectedKey(key);
+                        setComposer(null);
+                      }}
+                    />
+                  ))}
+                </ul>
+              </CurriculumMutateContext.Provider>
             </div>
             {selected ? (
               <NodeDetail

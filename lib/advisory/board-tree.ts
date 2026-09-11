@@ -7,11 +7,13 @@ import type {
   FrameworkHighlight,
   MilestoneSnapshot,
   ModuleSnapshot,
+  ProgramSnapshot,
   SubmissionChangeItem,
   SubmissionChanges,
 } from "@/lib/api/entities/program-advisory";
 
 export type BoardNodeKind =
+  | "program"
   | "module"
   | "course"
   | "activity"
@@ -29,7 +31,8 @@ export type BoardTreeNode = {
   meta: string;
   depth: number;
   change?: BoardChangeKind;
-  module: ModuleSnapshot;
+  program?: ProgramSnapshot | null;
+  module?: ModuleSnapshot;
   course?: CourseSnapshot;
   activity?: ActivitySnapshot;
   assignment?: AssignmentSnapshot;
@@ -42,6 +45,25 @@ function resolveActivityType(activity: ActivitySnapshot): string {
 
 function resolveModuleType(mod: ModuleSnapshot): string {
   return mod.moduleType || mod.type || "Theory";
+}
+
+function emptyModuleStub(id: string, label: string): ModuleSnapshot {
+  return {
+    id,
+    code: null,
+    name: label,
+    order: 0,
+    type: null,
+    moduleType: null,
+    prerequisiteModuleId: null,
+    isMandatory: true,
+    learningOutcomes: [],
+    courses: [],
+    activities: [],
+    materials: [],
+    assignments: [],
+    milestones: [],
+  };
 }
 
 /** Prefer course-nested activities; fall back to module-level by courseId. */
@@ -101,6 +123,33 @@ export function buildBoardTree(
   const nodes: BoardTreeNode[] = [];
   const seenActivityIds = new Set<string>();
 
+  const programSnapshot =
+    board.curriculum.program ??
+    ({
+      id: board.program.id,
+      name: board.program.name,
+      code: board.program.code,
+      description: board.program.description,
+      descriptionIsTruncated: false,
+      skillsGained: board.program.skillsGained,
+      frameworkVersionId: board.program.frameworkVersionId,
+    } satisfies ProgramSnapshot);
+
+  const programChange = changeIndex.get(`Program:${board.program.id}`);
+  nodes.push({
+    key: `Program:${board.program.id}`,
+    kind: "program",
+    targetType: "Program",
+    targetId: board.program.id,
+    label: programSnapshot.name || board.curriculum.programName || "Chương trình",
+    meta: [programSnapshot.code, `${board.curriculum.modules.length} học phần`]
+      .filter(Boolean)
+      .join(" · "),
+    depth: 0,
+    change: programChange,
+    program: programSnapshot,
+  });
+
   const modules = [...board.curriculum.modules].sort(
     (left, right) => left.order - right.order,
   );
@@ -118,7 +167,7 @@ export function buildBoardTree(
         mod.isMandatory ? "bắt buộc" : "tùy chọn",
         `${mod.courses.length} khóa`,
       ].join(" · "),
-      depth: 0,
+      depth: 1,
       change: moduleChange,
       module: mod,
     });
@@ -133,13 +182,10 @@ export function buildBoardTree(
         targetType: "Course",
         targetId: course.id,
         label: course.name || "Khóa học",
-        meta: [
-          course.code,
-          `${activities.length} hoạt động`,
-        ]
+        meta: [course.code, `${activities.length} hoạt động`]
           .filter(Boolean)
           .join(" · "),
-        depth: 1,
+        depth: 2,
         change: courseChange,
         module: mod,
         course,
@@ -168,7 +214,7 @@ export function buildBoardTree(
           ]
             .filter(Boolean)
             .join(" · "),
-          depth: 2,
+          depth: 3,
           change: activityChange,
           module: mod,
           course,
@@ -190,7 +236,7 @@ export function buildBoardTree(
         targetId: activity.id,
         label: activity.name || "Hoạt động",
         meta: [resolveActivityType(activity), "legacy"].join(" · "),
-        depth: 1,
+        depth: 2,
         change: changeIndex.get(`Activity:${activity.id}`),
         module: mod,
         activity,
@@ -213,7 +259,7 @@ export function buildBoardTree(
         ]
           .filter(Boolean)
           .join(" · "),
-        depth: 1,
+        depth: 2,
         change: changeIndex.get(`Assignment:${assignment.id}`),
         module: mod,
         assignment,
@@ -235,7 +281,7 @@ export function buildBoardTree(
         ]
           .filter(Boolean)
           .join(" · "),
-        depth: 1,
+        depth: 2,
         change: changeIndex.get(`ResearchMilestone:${milestone.id}`),
         module: mod,
         milestone,
@@ -257,24 +303,31 @@ export function buildBoardTree(
         targetId: item.id,
         label: item.label || item.targetType,
         meta: "Đã gỡ khỏi lần nộp này",
-        depth: kind === "module" ? 0 : kind === "activity" ? 2 : 1,
+        depth:
+          kind === "program"
+            ? 0
+            : kind === "module"
+              ? 1
+              : kind === "activity"
+                ? 3
+                : 2,
         change: "removed",
-        module: modules[0] ?? {
-          id: item.id,
-          code: null,
-          name: item.label || "",
-          order: 0,
-          type: null,
-          moduleType: null,
-          prerequisiteModuleId: null,
-          isMandatory: true,
-          learningOutcomes: [],
-          courses: [],
-          activities: [],
-          materials: [],
-          assignments: [],
-          milestones: [],
-        },
+        module:
+          kind === "program"
+            ? undefined
+            : emptyModuleStub(item.id, item.label || ""),
+        program:
+          kind === "program"
+            ? {
+                id: item.id,
+                name: item.label || "",
+                code: "",
+                description: "",
+                descriptionIsTruncated: false,
+                skillsGained: "",
+                frameworkVersionId: null,
+              }
+            : undefined,
       });
     }
   }
@@ -286,6 +339,8 @@ function targetTypeToKind(
   targetType: AdvisoryTargetType,
 ): BoardNodeKind | null {
   switch (targetType) {
+    case "Program":
+      return "program";
     case "Module":
       return "module";
     case "Course":
@@ -316,4 +371,40 @@ export function frameworkFailKeys(
       .filter((item) => !item.passed)
       .map((item) => `${item.targetType}:${item.targetId}`),
   );
+}
+
+export function programFrameworkFails(
+  highlights: FrameworkHighlight[],
+  programId: string,
+): FrameworkHighlight[] {
+  return highlights.filter(
+    (item) =>
+      !item.passed &&
+      item.targetType === "Program" &&
+      item.targetId === programId,
+  );
+}
+
+export type NestedBoardNode = BoardTreeNode & { children: NestedBoardNode[] };
+
+/** Nest a depth-ordered flat board tree into a hierarchical structure tree. */
+export function nestBoardTree(flat: BoardTreeNode[]): NestedBoardNode[] {
+  const roots: NestedBoardNode[] = [];
+  const stack: NestedBoardNode[] = [];
+
+  for (const node of flat) {
+    const nested: NestedBoardNode = { ...node, children: [] };
+    while (stack.length > 0 && stack[stack.length - 1]!.depth >= node.depth) {
+      stack.pop();
+    }
+    const parent = stack[stack.length - 1];
+    if (!parent) {
+      roots.push(nested);
+    } else {
+      parent.children.push(nested);
+    }
+    stack.push(nested);
+  }
+
+  return roots;
 }

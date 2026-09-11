@@ -34547,6 +34547,9 @@
             "type": "string",
             "nullable": true
           },
+          "descriptionIsTruncated": {
+            "type": "boolean"
+          },
           "durationMinutes": {
             "type": "integer",
             "format": "int32",
@@ -35962,6 +35965,9 @@
             "type": "string",
             "nullable": true
           },
+          "descriptionIsTruncated": {
+            "type": "boolean"
+          },
           "assignmentType": {
             "type": "string",
             "nullable": true
@@ -35986,15 +35992,33 @@
             "type": "integer",
             "format": "int32"
           },
-          "availableFrom": {
-            "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
+          "allowShuffle": {
+            "type": "boolean"
           },
-          "dueAt": {
+          "questionBankId": {
             "type": "string",
-            "nullable": true,
-            "example": "15/06/2026 14:30:00"
+            "format": "uuid",
+            "nullable": true
+          },
+          "questionCount": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "shuffleOptions": {
+            "type": "boolean"
+          },
+          "easyPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "mediumPercent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hardPercent": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -39633,6 +39657,9 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "descriptionIsTruncated": {
+            "type": "boolean"
           },
           "activities": {
             "type": "array",
@@ -44871,6 +44898,9 @@
             "type": "string",
             "nullable": true
           },
+          "descriptionIsTruncated": {
+            "type": "boolean"
+          },
           "assignmentId": {
             "type": "string",
             "format": "uuid"
@@ -49171,6 +49201,9 @@
           "description": {
             "type": "string",
             "nullable": true
+          },
+          "descriptionIsTruncated": {
+            "type": "boolean"
           },
           "skillsGained": {
             "type": "string",

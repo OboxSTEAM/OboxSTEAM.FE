@@ -292,6 +292,11 @@ export const submissionChangesSchema = z.object({
 export type SubmissionChanges = z.infer<typeof submissionChangesSchema>;
 export type SubmissionChangeItem = z.infer<typeof submissionChangeItemSchema>;
 
+const descriptionTruncatedSchema = z
+  .boolean()
+  .nullish()
+  .transform((value) => value ?? false);
+
 export const materialSnapshotSchema = z.object({
   id: z.string().uuid(),
   activityId: z.string().uuid(),
@@ -301,7 +306,7 @@ export const materialSnapshotSchema = z.object({
   fileName: z.string().nullish().transform((value) => value ?? null),
   /** Signed preview URL from board/activity payloads (expires; refresh via materials API). */
   url: z.string().nullish().transform((value) => value ?? null),
-  /** Alias some payloads may use instead of `url`. */
+  /** Legacy alias — prefer `url` from advisory board payloads. */
   fileUrl: z.string().nullish().transform((value) => value ?? null),
   fileSizeBytes: z
     .number()
@@ -319,6 +324,7 @@ export const activitySnapshotSchema = z.object({
   activityType: z.string().nullish().transform((value) => value ?? null),
   order: z.number().int(),
   description: z.string().nullish().transform((value) => value ?? null),
+  descriptionIsTruncated: descriptionTruncatedSchema,
   durationMinutes: z
     .number()
     .int()
@@ -335,6 +341,7 @@ export const courseSnapshotSchema = z.object({
   name: nullableStringSchema,
   order: z.number().int(),
   description: z.string().nullish().transform((value) => value ?? null),
+  descriptionIsTruncated: descriptionTruncatedSchema,
   activities: z
     .array(activitySnapshotSchema)
     .nullish()
@@ -349,6 +356,7 @@ export const assignmentSnapshotSchema = z.object({
   title: nullableStringSchema,
   scope: z.string().nullish().transform((value) => value ?? null),
   description: z.string().nullish().transform((value) => value ?? null),
+  descriptionIsTruncated: descriptionTruncatedSchema,
   assignmentType: z.string().nullish().transform((value) => value ?? null),
   maxPoints: z.number().int(),
   passScore: z.number(),
@@ -359,8 +367,17 @@ export const assignmentSnapshotSchema = z.object({
     .nullish()
     .transform((value) => value ?? null),
   maxAttempts: z.number().int(),
-  availableFrom: z.string().nullish().transform((value) => value ?? null),
-  dueAt: z.string().nullish().transform((value) => value ?? null),
+  allowShuffle: z.boolean().optional().default(false),
+  questionBankId: optionalUuidSchema,
+  questionCount: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+  shuffleOptions: z.boolean().optional().default(false),
+  easyPercent: z.number().int().optional().default(0),
+  mediumPercent: z.number().int().optional().default(0),
+  hardPercent: z.number().int().optional().default(0),
 });
 
 export const milestoneSnapshotSchema = z.object({
@@ -370,6 +387,7 @@ export const milestoneSnapshotSchema = z.object({
   order: z.number().int(),
   isCapstone: z.boolean(),
   description: z.string().nullish().transform((value) => value ?? null),
+  descriptionIsTruncated: descriptionTruncatedSchema,
   assignmentId: z.string().uuid(),
   assignment: assignmentSnapshotSchema
     .nullish()
@@ -425,6 +443,7 @@ export const programSnapshotSchema = z.object({
   name: nullableStringSchema,
   code: nullableStringSchema,
   description: nullableStringSchema,
+  descriptionIsTruncated: descriptionTruncatedSchema,
   skillsGained: nullableStringSchema,
   frameworkVersionId: optionalUuidSchema,
 });
@@ -510,6 +529,7 @@ export type CourseSnapshot = z.infer<typeof courseSnapshotSchema>;
 export type AssignmentSnapshot = z.infer<typeof assignmentSnapshotSchema>;
 export type MilestoneSnapshot = z.infer<typeof milestoneSnapshotSchema>;
 export type ModuleSnapshot = z.infer<typeof moduleSnapshotSchema>;
+export type ProgramSnapshot = z.infer<typeof programSnapshotSchema>;
 export type CurriculumSnapshotDocument = z.infer<
   typeof curriculumSnapshotDocumentSchema
 >;
