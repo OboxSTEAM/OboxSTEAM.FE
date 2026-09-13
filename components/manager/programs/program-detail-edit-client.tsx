@@ -8,16 +8,23 @@ import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
 import { ManagerAdvisoryPanel } from "@/components/advisory/manager-advisory-panel";
+import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
-import { type ProgramWithModules } from "@/lib/api";
+import { useClientFetch } from "@/hooks/use-client-fetch";
+import {
+  getAdvisoryTimeline,
+  getProgramAdvisoryWorkspace,
+  type ProgramWithModules,
+} from "@/lib/api";
 import {
   fetchProgramCohortLock,
   type ProgramCohortLock,
 } from "@/lib/programs/editability";
 import { cn } from "@/lib/utils";
+import { showAppErrorFromUnknown } from "@/lib/errors";
 
 // ─── Stepper tab config ────────────────────────────────────────────────────────
 type TabId = "curriculum" | "experts" | "reviews" | "classes";
@@ -107,6 +114,19 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
   useCurriculumSync(program.id, handleSilentSync);
 
+  const { data: advisoryWorkspaceData } = useClientFetch({
+    fetcher: () => getProgramAdvisoryWorkspace(program.id),
+    deps: [program.id],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
+  });
+  const advisoryWorkspace = advisoryWorkspaceData?.data ?? null;
+  const { data: advisoryTimelineData } = useClientFetch({
+    enabled: advisoryWorkspace != null,
+    fetcher: () => getAdvisoryTimeline(program.id),
+    deps: [program.id, advisoryWorkspace != null],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
+  });
+
   useEffect(() => {
     let cancelled = false;
     fetchProgramCohortLock(program.id).then((lock) => {
@@ -128,7 +148,8 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   ];
 
   /** Curriculum is frozen while the expert board reviews it. */
-  const isReviewLocked = program.status === "PendingReview";
+  const isReviewLocked =
+    program.status === "PendingReview" || program.status === "Approved";
   const showAdvisoryPanel =
     program.status === "Draft" ||
     program.status === "PendingReview" ||
@@ -158,22 +179,34 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
         {activeTab === "curriculum" && (
           <div className="space-y-6">
-            {showAdvisoryPanel ? <ManagerAdvisoryPanel program={program} /> : null}
-            <Suspense fallback={<CurriculumPanelFallback />}>
-              <CurriculumSplitPanel
-                program={program}
-                onRefresh={() => {
-                  router.refresh();
-                }}
-                cohortLocked={isReviewLocked || cohortLock.locked}
-                lockReason={
-                  isReviewLocked
-                    ? "Chương trình đang chờ chuyên gia thẩm định. Rút duyệt để tiếp tục chỉnh sửa."
-                    : cohortLock.reason
-                }
-                blockingClasses={cohortLock.blockingClasses}
+            {showAdvisoryPanel ? (
+              <AdvisoryWorkflowTimeline
+                timeline={advisoryTimelineData?.data ?? advisoryWorkspace?.workflow}
+                participants={advisoryWorkspace?.participants}
               />
-            </Suspense>
+            ) : null}
+            <div className="w-full">
+              <Suspense fallback={<CurriculumPanelFallback />}>
+                <CurriculumSplitPanel
+                  program={program}
+                  onRefresh={() => {
+                    router.refresh();
+                  }}
+                  cohortLocked={isReviewLocked || cohortLock.locked}
+                  lockReason={
+                    isReviewLocked
+                      ? program.status === "Approved"
+                        ? "Chương trình đã được duyệt và đang ở chế độ chỉ xem."
+                        : "Chương trình đang chờ chuyên gia thẩm định. Rút duyệt để tiếp tục chỉnh sửa."
+                      : cohortLock.reason
+                  }
+                  blockingClasses={cohortLock.blockingClasses}
+                />
+              </Suspense>
+            </div>
+            {showAdvisoryPanel ? (
+              <ManagerAdvisoryPanel program={program} workspace={advisoryWorkspace} />
+            ) : null}
           </div>
         )}
 

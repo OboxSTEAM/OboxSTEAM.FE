@@ -1092,14 +1092,25 @@ function sanitizeApiMessage(message: string | null | undefined): string | null {
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
   if (error instanceof ApiResponseError) {
+    if (error.code) {
+      const codeTranslated = translateApiMessage(error.code);
+      if (codeTranslated) return codeTranslated;
+    }
     return sanitizeApiMessage(error.message);
   }
 
   const body = error.body as {
-    error?: { message?: string };
+    error?: { message?: string; code?: string };
     message?: string;
-    value?: { message?: string };
+    code?: string;
+    value?: { message?: string; code?: string };
   } | null;
+
+  const rawCode = body?.error?.code ?? body?.value?.code ?? body?.code;
+  if (rawCode) {
+    const codeTranslated = translateApiMessage(rawCode);
+    if (codeTranslated) return codeTranslated;
+  }
 
   return sanitizeApiMessage(
     body?.error?.message ?? body?.value?.message ?? body?.message,
@@ -1107,7 +1118,7 @@ function extractApiMessage(error: ApiRequestError | ApiResponseError): string | 
 }
 
 /** Neutral next-step copy keyed by HTTP status — used when BE drives `reason`. */
-function actionForHttpStatus(status: number): string {
+function actionForHttpStatus(status: number, context?: AppErrorContext): string {
   if (status === 0) {
     return "Kiểm tra mạng internet và thử lại.";
   }
@@ -1140,10 +1151,11 @@ function actionForHttpStatus(status: number): string {
 
 function resolveAction(
   status: number,
+  context: AppErrorContext,
   apiMessage: string | null,
   curatedAction: string,
 ): string {
-  return apiMessage ? actionForHttpStatus(status) : curatedAction;
+  return apiMessage ? actionForHttpStatus(status, context) : curatedAction;
 }
 
 function mapHttpStatusToError(
@@ -1157,6 +1169,7 @@ function mapHttpStatusToError(
       reason: apiMessage ?? "Email hoặc mật khẩu không đúng.",
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Kiểm tra lại thông tin hoặc chọn Quên mật khẩu.",
       ),
@@ -1169,6 +1182,7 @@ function mapHttpStatusToError(
       reason: apiMessage ?? "Tài khoản với email này đã tồn tại.",
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Đăng nhập hoặc dùng email khác để đăng ký.",
       ),
@@ -1182,6 +1196,7 @@ function mapHttpStatusToError(
         apiMessage ?? "Mỗi hoạt động chỉ đính kèm được một tài liệu.",
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Tải lại trang để xem tài liệu hiện có, hoặc xóa nó trước khi tải tài liệu mới.",
       ),
@@ -1205,7 +1220,7 @@ function mapHttpStatusToError(
       reason: apiMessage ?? fallback.reason,
       action: isCohortLock
         ? "Chờ lớp InProgress hoàn thành, hoặc chỉ thao tác khi lớp Open chưa có học viên Active."
-        : resolveAction(status, apiMessage, fallback.action),
+        : resolveAction(status, context, apiMessage, fallback.action),
     };
   }
 
@@ -1267,6 +1282,7 @@ function mapHttpStatusToError(
         "Bạn đang học tối đa 2 chương trình (đang học hoặc chờ thanh toán).",
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Hoàn thành hoặc hủy một chương trình rồi thử đăng ký lại.",
       ),
@@ -1281,6 +1297,7 @@ function mapHttpStatusToError(
         "Bạn đang tham gia tối đa 2 lớp Active, hoặc đã có lớp trong chương trình này.",
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Rời hoặc hoàn thành một lớp Active trước, rồi chọn lớp Open khác.",
       ),
@@ -1298,6 +1315,7 @@ function mapHttpStatusToError(
       reason: apiMessage,
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Chọn ngày bắt đầu cách hôm nay ít nhất 14 ngày rồi lưu lại.",
       ),
@@ -1313,6 +1331,7 @@ function mapHttpStatusToError(
       reason: apiMessage ?? statusReason ?? "Hệ thống tạm thời không phản hồi.",
       action: resolveAction(
         status,
+        context,
         apiMessage,
         "Thử lại sau vài phút. Nếu vẫn lỗi, liên hệ hỗ trợ OboxSTEAM.",
       ),
@@ -1328,7 +1347,7 @@ function mapHttpStatusToError(
     return {
       title: fallback.title,
       reason: apiMessage ?? statusReason ?? fallback.reason,
-      action: resolveAction(status, apiMessage, curatedAction),
+      action: resolveAction(status, context, apiMessage, curatedAction),
     };
   }
 
@@ -1352,7 +1371,7 @@ function fromZodError(error: ZodError): AppErrorState {
   };
 }
 
-function fromNetworkError(_context: AppErrorContext): AppErrorState {
+function fromNetworkError(): AppErrorState {
   return {
     title: "Không thể kết nối máy chủ",
     reason: "Thiết bị của bạn không kết nối được với OboxSTEAM.",
@@ -1385,7 +1404,7 @@ export function resolveAppError(
     if (mapped) return mapped;
 
     if (error.status === 0 || error.status >= 502) {
-      return fromNetworkError(context);
+      return fromNetworkError();
     }
   }
 
@@ -1394,7 +1413,7 @@ export function resolveAppError(
   }
 
   if (error instanceof TypeError && error.message.includes("fetch")) {
-    return fromNetworkError(context);
+    return fromNetworkError();
   }
 
   // Intentional client-side tips — localize English; keep Vietnamese as-is.

@@ -31,6 +31,8 @@ export const requestCurriculumChangesSchema = z.object({
     .min(1, "Vui lòng nhập lý do cần chỉnh sửa.")
     .max(4000, "Nhận xét không được quá 4000 ký tự."),
   scores: z.array(reviewCriterionScoreRequestSchema).optional().nullable(),
+  requiredChangeThreadIds: z.array(z.string().uuid()).max(100).optional().nullable(),
+  clientOperationId: z.string().trim().max(100).optional().nullable(),
 });
 
 export type ProgramReviewQueueQuery = z.infer<typeof programReviewQueueQuerySchema>;

@@ -5,6 +5,7 @@ import {
   advisoryThreadStatusSchema,
   advisoryThreadTypeSchema,
   advisoryAnchorKindSchema,
+  advisoryReferenceContextSchema,
 } from "@/lib/api/entities/program-advisory";
 import { programStatusSchema } from "@/lib/api/entities/program";
 import { reviewCriterionScoreRequestSchema } from "@/lib/validations/curriculum-reviews";
@@ -42,6 +43,7 @@ export const advisoryThreadsQuerySchema = z.object({
   targetId: z.string().uuid().optional(),
   status: advisoryThreadStatusSchema.optional(),
   type: advisoryThreadTypeSchema.optional(),
+  scope: z.enum(["outstanding"]).optional(),
 });
 
 export const advisoryBoardQuerySchema = z.object({
@@ -58,6 +60,7 @@ export const addAdvisoryMessageSchema = z.object({
     .trim()
     .min(1, "Vui lòng nhập nội dung tin nhắn.")
     .max(4000, "Nội dung không được quá 4000 ký tự."),
+  concurrencyVersion: z.string().uuid().optional().nullable(),
 });
 
 export const updateAdvisoryThreadStatusSchema = z.object({
@@ -68,10 +71,53 @@ export const updateAdvisoryThreadStatusSchema = z.object({
     .max(4000, "Nội dung không được quá 4000 ký tự.")
     .optional()
     .nullable(),
+  concurrencyVersion: z.string().uuid().optional().nullable(),
+  resolutionKind: z.enum(["Verified", "Waived"]).optional().nullable(),
+  verifiedAgainstSubmissionId: z.string().uuid().optional().nullable(),
+  correctionReferenceIds: z.array(z.string().uuid()).max(10).optional().nullable(),
+  clientOperationId: z.string().trim().max(100).optional().nullable(),
 });
 
 export const recordAdvisoryReadSchema = z.object({
   lastReadAt: z.string().optional().nullable(),
+});
+
+export const createAdvisoryReferenceSchema = z.object({
+  context: advisoryReferenceContextSchema,
+  submissionId: z.string().uuid().optional().nullable(),
+  targetType: advisoryTargetTypeSchema,
+  targetId: z.string().uuid().optional().nullable(),
+  anchorKind: advisoryAnchorKindSchema,
+  fieldKey: z.string().trim().max(200).optional().nullable(),
+  quote: z.string().trim().max(1000).optional().nullable(),
+  quotePrefix: z.string().trim().max(500).optional().nullable(),
+  quoteSuffix: z.string().trim().max(500).optional().nullable(),
+});
+
+export const advisoryDiscussionQuerySchema = z.object({
+  before: z.string().trim().min(1).optional(),
+  after: z.string().trim().min(1).optional(),
+  pageSize: z.number().int().min(1).max(100).optional(),
+});
+
+export const postAdvisoryDiscussionMessageSchema = z.object({
+  text: z
+    .string()
+    .trim()
+    .min(1, "Vui lòng nhập nội dung trao đổi.")
+    .max(10000, "Nội dung không được quá 10.000 ký tự."),
+  referenceIds: z.array(z.string().uuid()).max(10).optional().default([]),
+  clientMessageId: z.string().trim().min(1).max(100),
+});
+
+export const recordAdvisoryThreadReadSchema = z.object({
+  lastDisplayedSequence: z.number().int().min(0),
+  cursor: z.string().trim().optional().nullable(),
+});
+
+export const recordAdvisoryDiscussionReadSchema = z.object({
+  lastDisplayedSequence: z.number().int().min(0),
+  cursor: z.string().trim().optional().nullable(),
 });
 
 export const saveProgramReviewDraftSchema = z.object({
@@ -100,6 +146,21 @@ export type UpdateAdvisoryThreadStatusInput = z.infer<
   typeof updateAdvisoryThreadStatusSchema
 >;
 export type RecordAdvisoryReadInput = z.infer<typeof recordAdvisoryReadSchema>;
+export type CreateAdvisoryReferenceInput = z.infer<
+  typeof createAdvisoryReferenceSchema
+>;
+export type AdvisoryDiscussionQuery = z.infer<
+  typeof advisoryDiscussionQuerySchema
+>;
+export type PostAdvisoryDiscussionMessageInput = z.infer<
+  typeof postAdvisoryDiscussionMessageSchema
+>;
+export type RecordAdvisoryThreadReadInput = z.infer<
+  typeof recordAdvisoryThreadReadSchema
+>;
+export type RecordAdvisoryDiscussionReadInput = z.infer<
+  typeof recordAdvisoryDiscussionReadSchema
+>;
 export type SaveProgramReviewDraftInput = z.infer<
   typeof saveProgramReviewDraftSchema
 >;

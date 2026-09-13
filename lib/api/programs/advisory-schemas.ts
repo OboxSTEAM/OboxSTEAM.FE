@@ -1,10 +1,15 @@
 import { z } from "zod";
 
 import {
+  advisoryAnchorFieldSchema,
   advisoryBoardSchema,
+  advisoryDiscussionMessageSchema,
+  advisoryDiscussionPageSchema,
+  advisoryReferenceSchema,
   advisoryMessageSchema,
   advisoryThreadPinSummarySchema,
   advisoryThreadSchema,
+  advisoryWorkflowTimelineSchema,
   frameworkCheckSchema,
   paginatedAdvisoryMineSchema,
   programAdvisoryWorkspaceSchema,
@@ -36,6 +41,14 @@ export const getAdvisoryThreadsResponseSchema = createApiResponseSchema(
   createApiValueSchema(z.array(advisoryThreadSchema)),
 );
 
+export const getAdvisoryThreadResponseSchema = createApiResponseSchema(
+  createApiValueSchema(advisoryThreadSchema),
+);
+
+export const getAdvisoryTimelineResponseSchema = createApiResponseSchema(
+  createApiValueSchema(advisoryWorkflowTimelineSchema),
+);
+
 export const getAdvisoryThreadPinsResponseSchema = createApiResponseSchema(
   createApiValueSchema(z.array(advisoryThreadPinSummarySchema)),
 );
@@ -52,7 +65,23 @@ export const advisoryMessageMutationResponseSchema = createApiResponseSchema(
   createApiValueSchema(advisoryMessageSchema),
 );
 
+export const advisoryReferenceResponseSchema = createApiResponseSchema(
+  createApiValueSchema(advisoryReferenceSchema),
+);
+
+export const getAdvisoryDiscussionPageResponseSchema = createApiResponseSchema(
+  createApiValueSchema(advisoryDiscussionPageSchema),
+);
+
+export const advisoryDiscussionMessageResponseSchema = createApiResponseSchema(
+  createApiValueSchema(advisoryDiscussionMessageSchema),
+);
+
 export const recordAdvisoryReadResponseSchema = createApiResponseSchema(
+  createApiValueSchema(z.boolean()),
+);
+
+export const recordAdvisoryCursorResponseSchema = createApiResponseSchema(
   createApiValueSchema(z.boolean()),
 );
 
@@ -70,6 +99,10 @@ export const getSubmissionChangesResponseSchema = createApiResponseSchema(
 
 export const getReviewDraftResponseSchema = createApiResponseSchema(
   createApiValueSchema(programReviewDraftSchema),
+);
+
+export const getAdvisoryAnchorFieldsResponseSchema = createApiResponseSchema(
+  createApiValueSchema(z.array(advisoryAnchorFieldSchema)),
 );
 
 export const assignProgramAdvisorResponseSchema = createApiResponseSchema(
@@ -91,6 +124,12 @@ export type GetAdvisoryBoardResult = z.infer<
 export type GetAdvisoryThreadsResult = z.infer<
   typeof getAdvisoryThreadsResponseSchema
 >["value"];
+export type GetAdvisoryThreadResult = z.infer<
+  typeof getAdvisoryThreadResponseSchema
+>["value"];
+export type GetAdvisoryTimelineResult = z.infer<
+  typeof getAdvisoryTimelineResponseSchema
+>["value"];
 export type GetAdvisoryThreadPinsResult = z.infer<
   typeof getAdvisoryThreadPinsResponseSchema
 >["value"];
@@ -103,8 +142,20 @@ export type GetAdvisoryMessagesResult = z.infer<
 export type AdvisoryMessageMutationResult = z.infer<
   typeof advisoryMessageMutationResponseSchema
 >["value"];
+export type AdvisoryReferenceResult = z.infer<
+  typeof advisoryReferenceResponseSchema
+>["value"];
+export type GetAdvisoryDiscussionPageResult = z.infer<
+  typeof getAdvisoryDiscussionPageResponseSchema
+>["value"];
+export type AdvisoryDiscussionMessageResult = z.infer<
+  typeof advisoryDiscussionMessageResponseSchema
+>["value"];
 export type RecordAdvisoryReadResult = z.infer<
   typeof recordAdvisoryReadResponseSchema
+>["value"];
+export type RecordAdvisoryCursorResult = z.infer<
+  typeof recordAdvisoryCursorResponseSchema
 >["value"];
 export type GetReviewSubmissionsResult = z.infer<
   typeof getReviewSubmissionsResponseSchema
@@ -117,6 +168,9 @@ export type GetSubmissionChangesResult = z.infer<
 >["value"];
 export type GetReviewDraftResult = z.infer<
   typeof getReviewDraftResponseSchema
+>["value"];
+export type GetAdvisoryAnchorFieldsResult = z.infer<
+  typeof getAdvisoryAnchorFieldsResponseSchema
 >["value"];
 export type AssignProgramAdvisorResult = z.infer<
   typeof assignProgramAdvisorResponseSchema

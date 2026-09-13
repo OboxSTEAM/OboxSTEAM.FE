@@ -41,6 +41,7 @@ type ReviewAssessmentPanelProps = {
   criteria: RubricSnapshotCriterion[];
   canDecide: boolean;
   blockingChangeCount?: number;
+  requiredChangeThreadIds?: string[];
   onDecisionComplete?: () => void;
 };
 
@@ -55,6 +56,7 @@ export function ReviewAssessmentPanel({
   criteria,
   canDecide,
   blockingChangeCount = 0,
+  requiredChangeThreadIds = [],
   onDecisionComplete,
 }: ReviewAssessmentPanelProps) {
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
@@ -71,6 +73,7 @@ export function ReviewAssessmentPanel({
   const [isSaving, setIsSaving] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydratedRef = useRef(false);
+  const dirtyRef = useRef(false);
 
   const { data: draftData, isLoading: isDraftLoading, retry: retryDraft } =
     useClientFetch({
@@ -93,6 +96,7 @@ export function ReviewAssessmentPanel({
     setScores(nextScores);
     setOverallComment(draft.overallComment ?? "");
     setConcurrencyVersion(draft.concurrencyVersion);
+    dirtyRef.current = false;
     hydratedRef.current = true;
   }, [draftData]);
 
@@ -108,6 +112,7 @@ export function ReviewAssessmentPanel({
   }, 0);
 
   function updateScore(criterionId: string, patch: Partial<ScoreDraft>) {
+    dirtyRef.current = true;
     setScores((prev) => ({
       ...prev,
       [criterionId]: { ...(prev[criterionId] ?? { score: "", comment: "" }), ...patch },
@@ -115,8 +120,21 @@ export function ReviewAssessmentPanel({
   }
 
   const persistDraft = useCallback(async () => {
-    if (!canDecide) return;
+    if (!canDecide || !dirtyRef.current) return;
+    const invalidCriterion = criteria.find((criterion) => {
+      const raw = scores[criterion.id]?.score.trim() ?? "";
+      if (raw === "") return false;
+      const value = Number(raw);
+      return !Number.isInteger(value) || value < 0 || value > criterion.maxScore;
+    });
+    if (invalidCriterion) {
+      setFormError(
+        `Điểm của “${invalidCriterion.name}” phải là số nguyên từ 0 đến ${invalidCriterion.maxScore}.`,
+      );
+      return;
+    }
     setIsSaving(true);
+    dirtyRef.current = false;
     try {
       const collected: ReviewCriterionScoreRequestInput[] = [];
       for (const criterion of criteria) {
@@ -124,9 +142,6 @@ export function ReviewAssessmentPanel({
         const raw = draft?.score.trim() ?? "";
         if (raw === "") continue;
         const value = Number(raw);
-        if (!Number.isInteger(value) || value < 0 || value > criterion.maxScore) {
-          continue;
-        }
         collected.push({
           criterionId: criterion.id,
           score: value,
@@ -142,11 +157,15 @@ export function ReviewAssessmentPanel({
       if (result?.data?.concurrencyVersion) {
         setConcurrencyVersion(result.data.concurrencyVersion);
       }
+      setFormError(null);
     } catch (error) {
+      dirtyRef.current = true;
       if (error instanceof ApiRequestError && error.status === 409) {
         showAppErrorFromUnknown(error, "expert.advisory.draft");
         retryDraft();
         hydratedRef.current = false;
+      } else {
+        showAppErrorFromUnknown(error, "expert.advisory.draft");
       }
     } finally {
       setIsSaving(false);
@@ -171,7 +190,7 @@ export function ReviewAssessmentPanel({
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [scores, overallComment, canDecide, persistDraft]);
+    }, [scores, overallComment, canDecide, persistDraft]);
 
   function collectScores(requireAll: boolean): ReviewCriterionScoreRequestInput[] | null {
     const collected: ReviewCriterionScoreRequestInput[] = [];
@@ -239,6 +258,7 @@ export function ReviewAssessmentPanel({
       return;
     }
     const collected = collectScores(false);
+    if (collected == null) return;
 
     setFormError(null);
     setPendingAction("request-changes");
@@ -248,6 +268,8 @@ export function ReviewAssessmentPanel({
         concurrencyVersion,
         comment,
         scores: collected && collected.length > 0 ? collected : null,
+        requiredChangeThreadIds,
+        clientOperationId: crypto.randomUUID(),
       });
       showAppSuccess({
         title: "Đã gửi yêu cầu chỉnh sửa",
@@ -417,7 +439,10 @@ export function ReviewAssessmentPanel({
           id="assessment-overall"
           rows={3}
           value={overallComment}
-          onChange={(e) => setOverallComment(e.target.value)}
+          onChange={(e) => {
+            dirtyRef.current = true;
+            setOverallComment(e.target.value);
+          }}
           disabled={!canDecide || isBusy}
           className="rounded-xl border-input bg-card"
         />
@@ -470,7 +495,7 @@ export function ReviewAssessmentPanel({
                   setFormError("Vui lòng mô tả nội dung Manager cần chỉnh sửa.");
                   return;
                 }
-                setPendingAction("request-changes");
+    setPendingAction("request-changes");
               }}
               disabled={isBusy}
               className="h-11 flex-1 gap-2 rounded-xl border-primary/40 font-semibold text-primary"

@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, MessageSquarePlus } from "lucide-react";
 
 import { AdvisoryThreadPanel } from "@/components/advisory/advisory-thread-panel";
+import { AdvisoryDiscussionPanel } from "@/components/advisory/advisory-discussion-panel";
 import { FrameworkCheckPanel } from "@/components/advisory/framework-check-panel";
 import {
   CurriculumMutateContext,
@@ -19,6 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import type {
   AdvisoryBoard,
+  AdvisoryCapabilities,
   AdvisoryTargetType,
   AdvisoryThread,
   AdvisoryThreadPinSummary,
@@ -64,6 +66,8 @@ type AdvisoryCurriculumBoardProps = {
   isFrameworkCheckLoading?: boolean;
   isLoading?: boolean;
   canAdvise?: boolean;
+  capabilities?: AdvisoryCapabilities;
+  reviewActionsLocked?: boolean;
   canCreateRequiredChange?: boolean;
   isAdvisor?: boolean;
   isCreating?: boolean;
@@ -227,13 +231,28 @@ function TruncationHint({ truncated }: { truncated?: boolean }) {
 function DetailRow({
   label,
   value,
+  onComment,
 }: {
   label: string;
   value: ReactNode;
+  onComment?: () => void;
 }) {
   return (
     <div className="flex justify-between gap-4 border-b border-border/60 py-2 text-sm last:border-b-0">
-      <dt className="shrink-0 text-muted-foreground">{label}</dt>
+      <dt className="flex shrink-0 items-center gap-1.5 text-muted-foreground">
+        {label}
+        {onComment ? (
+          <button
+            type="button"
+            onClick={onComment}
+            className="rounded p-0.5 text-muted-foreground opacity-60 transition-opacity hover:bg-primary/10 hover:text-primary hover:opacity-100 focus-visible:opacity-100"
+            aria-label={`Góp ý cho ${label}`}
+            title={`Góp ý cho ${label}`}
+          >
+            <MessageSquarePlus className="size-3" />
+          </button>
+        ) : null}
+      </dt>
       <dd className="min-w-0 text-right font-medium text-foreground">{value}</dd>
     </div>
   );
@@ -306,10 +325,12 @@ function NodeDetail({
   node,
   fieldChanges,
   showChanges,
+  onCommentField,
 }: {
   node: BoardTreeNode;
   fieldChanges: SubmissionChangeItem[];
   showChanges: boolean;
+  onCommentField?: (fieldKey: string) => void;
 }) {
   const activity = node.activity;
   const material = activity?.material;
@@ -490,8 +511,16 @@ function NodeDetail({
                 label="Loại"
                 value={assignment.assignmentType || "—"}
               />
-              <DetailRow label="Điểm tối đa" value={assignment.maxPoints} />
-              <DetailRow label="Đạt ≥" value={assignment.passScore} />
+              <DetailRow
+                label="Điểm tối đa"
+                value={assignment.maxPoints}
+                onComment={() => onCommentField?.("maxPoints")}
+              />
+              <DetailRow
+                label="Đạt ≥"
+                value={assignment.passScore}
+                onComment={() => onCommentField?.("passScore")}
+              />
               <DetailRow label="Số lần làm" value={assignment.maxAttempts} />
               <DetailRow
                 label="Giới hạn thời gian"
@@ -696,6 +725,8 @@ export function AdvisoryCurriculumBoard({
   isFrameworkCheckLoading = false,
   isLoading = false,
   canAdvise = false,
+  capabilities,
+  reviewActionsLocked = false,
   canCreateRequiredChange = false,
   isAdvisor = false,
   isCreating = false,
@@ -708,6 +739,7 @@ export function AdvisoryCurriculumBoard({
   const [showChanges, setShowChanges] = useState(true);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [composer, setComposer] = useState<AdvisoryBoardSelection | null>(null);
+  const [sidebarTab, setSidebarTab] = useState<"notes" | "discussion">("notes");
 
   const tree = useMemo(
     () => (board ? buildBoardTree(board, { includeRemovedGhosts: showChanges }) : []),
@@ -716,21 +748,19 @@ export function AdvisoryCurriculumBoard({
 
   const nestedTree = useMemo(() => nestBoardTree(tree), [tree]);
 
-  useEffect(() => {
-    if (!selectedThread?.targetId) return;
-    const match = tree.find(
-      (node) =>
-        node.targetType === selectedThread.targetType &&
-        node.targetId === selectedThread.targetId,
+  const selectedThreadKey = useMemo(() => {
+    if (!selectedThread?.targetId) return null;
+    return (
+      tree.find(
+        (node) =>
+          node.targetType === selectedThread.targetType &&
+          node.targetId === selectedThread.targetId,
+      )?.key ?? null
     );
-    if (match) setSelectedKey(match.key);
   }, [selectedThread, tree]);
 
-  // Prefer the program root when nothing selected yet.
-  useEffect(() => {
-    if (selectedKey != null || tree.length === 0) return;
-    setSelectedKey(tree[0]!.key);
-  }, [selectedKey, tree]);
+  // Prefer the active thread, then the user's selection, then the program root.
+  const activeSelectedKey = selectedThreadKey ?? selectedKey ?? tree[0]?.key ?? null;
 
   const pinMap = useMemo(() => {
     const map = new Map<string, AdvisoryThreadPinSummary>();
@@ -740,8 +770,7 @@ export function AdvisoryCurriculumBoard({
     return map;
   }, [pinSummaries]);
 
-  const selected =
-    tree.find((node) => node.key === selectedKey) ?? tree[0] ?? null;
+  const selected = tree.find((node) => node.key === activeSelectedKey) ?? tree[0] ?? null;
 
   const fieldChanges = useMemo(() => {
     if (!board || !selected || !showChanges) return [];
@@ -878,7 +907,7 @@ export function AdvisoryCurriculumBoard({
                     node={node}
                     depth={0}
                     isLast={index === nestedTree.length - 1}
-                    selectedKey={selected?.key ?? selectedKey}
+                    selectedKey={activeSelectedKey}
                     pinMap={pinMap}
                     onSelect={(key) => {
                       setSelectedKey(key);
@@ -897,6 +926,7 @@ export function AdvisoryCurriculumBoard({
               node={selected}
               fieldChanges={fieldChanges}
               showChanges={showChanges}
+              onCommentField={(fieldKey) => openComposer(selected, fieldKey)}
             />
           ) : (
             <p className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
@@ -906,7 +936,39 @@ export function AdvisoryCurriculumBoard({
         </div>
 
         <aside className="flex flex-col overflow-hidden bg-muted/10">
-          {selectedThread ? (
+          <div className="grid grid-cols-2 gap-1 border-b border-border bg-card p-2" role="tablist" aria-label="Kênh cộng tác">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={sidebarTab === "notes"}
+              onClick={() => setSidebarTab("notes")}
+              className={cn(
+                "h-8 rounded-lg text-xs font-semibold",
+                sidebarTab === "notes" ? "bg-primary/10 text-primary" : "text-muted-foreground",
+              )}
+            >
+              Góp ý {nodePins.length > 0 ? `(${nodePins.length})` : ""}
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={sidebarTab === "discussion"}
+              onClick={() => setSidebarTab("discussion")}
+              className={cn(
+                "h-8 rounded-lg text-xs font-semibold",
+                sidebarTab === "discussion" ? "bg-primary/10 text-primary" : "text-muted-foreground",
+              )}
+            >
+              Trao đổi
+            </button>
+          </div>
+          {sidebarTab === "discussion" ? (
+            <AdvisoryDiscussionPanel
+              programId={programId}
+              capabilities={capabilities}
+              className="min-h-0 flex-1 rounded-none border-0"
+            />
+          ) : selectedThread ? (
             <>
               <div className="flex items-center gap-2 border-b border-border px-3 py-2">
                 <Button
@@ -917,7 +979,7 @@ export function AdvisoryCurriculumBoard({
                   onClick={() => onCloseThread?.()}
                 >
                   <ArrowLeft className="size-3.5" />
-                  Pins
+                  Góp ý
                 </Button>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
@@ -926,6 +988,8 @@ export function AdvisoryCurriculumBoard({
                   thread={selectedThread}
                   isAdvisor={isAdvisor}
                   isManager={false}
+                  reviewActionsLocked={reviewActionsLocked}
+                  canReplyToNotes={capabilities?.canReplyToNotes !== false}
                   onThreadUpdated={onThreadUpdated}
                 />
               </div>
@@ -949,7 +1013,10 @@ export function AdvisoryCurriculumBoard({
                       <button
                         key={pin.threadId}
                         type="button"
-                        onClick={() => onOpenThread?.(pin.threadId)}
+                        onClick={() => {
+                          setSidebarTab("notes");
+                          onOpenThread?.(pin.threadId);
+                        }}
                         className="w-full rounded-xl border border-border bg-card px-3 py-2 text-left hover:bg-muted/40"
                       >
                         <div className="flex items-center gap-2">
@@ -1024,6 +1091,8 @@ export function AdvisoryCurriculumBoard({
               thread={selectedThread}
               isAdvisor={isAdvisor}
               isManager={false}
+              reviewActionsLocked={reviewActionsLocked}
+              canReplyToNotes={capabilities?.canReplyToNotes !== false}
               onThreadUpdated={onThreadUpdated}
             />
           </div>
@@ -1038,7 +1107,7 @@ export function AdvisoryCurriculumBoard({
                       node={node}
                       depth={0}
                       isLast={index === nestedTree.length - 1}
-                      selectedKey={selected?.key ?? selectedKey}
+                      selectedKey={activeSelectedKey}
                       pinMap={pinMap}
                       onSelect={(key) => {
                         setSelectedKey(key);
@@ -1052,8 +1121,9 @@ export function AdvisoryCurriculumBoard({
             {selected ? (
               <NodeDetail
                 node={selected}
-                fieldChanges={fieldChanges}
-                showChanges={showChanges}
+              fieldChanges={fieldChanges}
+              showChanges={showChanges}
+              onCommentField={(fieldKey) => openComposer(selected, fieldKey)}
               />
             ) : null}
             {canAdvise && selected && !composer ? (

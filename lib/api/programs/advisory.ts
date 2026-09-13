@@ -6,31 +6,47 @@ import { programIdParamSchema } from "@/lib/validations/programs";
 import {
   addAdvisoryMessageSchema,
   advisoryBoardQuerySchema,
+  advisoryDiscussionQuerySchema,
   advisoryMineQuerySchema,
   advisoryPinsQuerySchema,
   advisoryThreadsQuerySchema,
   assignProgramAdvisorSchema,
   createAdvisoryThreadSchema,
+  createAdvisoryReferenceSchema,
+  postAdvisoryDiscussionMessageSchema,
   recordAdvisoryReadSchema,
+  recordAdvisoryDiscussionReadSchema,
+  recordAdvisoryThreadReadSchema,
   saveProgramReviewDraftSchema,
   updateAdvisoryThreadStatusSchema,
   type AddAdvisoryMessageInput,
   type AdvisoryBoardQuery,
+  type AdvisoryDiscussionQuery,
   type AdvisoryMineQuery,
   type AdvisoryPinsQuery,
   type AdvisoryThreadsQuery,
   type AssignProgramAdvisorInput,
   type CreateAdvisoryThreadInput,
+  type CreateAdvisoryReferenceInput,
+  type PostAdvisoryDiscussionMessageInput,
   type RecordAdvisoryReadInput,
+  type RecordAdvisoryDiscussionReadInput,
+  type RecordAdvisoryThreadReadInput,
   type SaveProgramReviewDraftInput,
   type UpdateAdvisoryThreadStatusInput,
 } from "@/lib/validations/program-advisory";
 
 import {
   advisoryMessageMutationResponseSchema,
+  advisoryDiscussionMessageResponseSchema,
+  advisoryReferenceResponseSchema,
+  getAdvisoryDiscussionPageResponseSchema,
+  getAdvisoryThreadResponseSchema,
+  getAdvisoryTimelineResponseSchema,
   advisoryThreadMutationResponseSchema,
   assignProgramAdvisorResponseSchema,
   getAdvisoryBoardResponseSchema,
+  getAdvisoryAnchorFieldsResponseSchema,
   getAdvisoryMessagesResponseSchema,
   getAdvisoryMineResponseSchema,
   getAdvisoryThreadPinsResponseSchema,
@@ -42,11 +58,18 @@ import {
   getReviewSubmissionsResponseSchema,
   getSubmissionChangesResponseSchema,
   recordAdvisoryReadResponseSchema,
+  recordAdvisoryCursorResponseSchema,
   type AdvisoryMessageMutationResult,
+  type AdvisoryDiscussionMessageResult,
+  type AdvisoryReferenceResult,
   type AdvisoryThreadMutationResult,
   type AssignProgramAdvisorResult,
   type GetAdvisoryBoardResult,
+  type GetAdvisoryAnchorFieldsResult,
   type GetAdvisoryMessagesResult,
+  type GetAdvisoryDiscussionPageResult,
+  type GetAdvisoryThreadResult,
+  type GetAdvisoryTimelineResult,
   type GetAdvisoryMineResult,
   type GetAdvisoryThreadPinsResult,
   type GetAdvisoryThreadsResult,
@@ -57,14 +80,21 @@ import {
   type GetReviewSubmissionsResult,
   type GetSubmissionChangesResult,
   type RecordAdvisoryReadResult,
+  type RecordAdvisoryCursorResult,
 } from "./advisory-schemas";
 
 export type {
   AdvisoryMessageMutationResult,
+  AdvisoryDiscussionMessageResult,
+  AdvisoryReferenceResult,
   AdvisoryThreadMutationResult,
   AssignProgramAdvisorResult,
   GetAdvisoryBoardResult,
+  GetAdvisoryAnchorFieldsResult,
   GetAdvisoryMessagesResult,
+  GetAdvisoryDiscussionPageResult,
+  GetAdvisoryThreadResult,
+  GetAdvisoryTimelineResult,
   GetAdvisoryMineResult,
   GetAdvisoryThreadPinsResult,
   GetAdvisoryThreadsResult,
@@ -75,35 +105,50 @@ export type {
   GetReviewSubmissionsResult,
   GetSubmissionChangesResult,
   RecordAdvisoryReadResult,
+  RecordAdvisoryCursorResult,
 } from "./advisory-schemas";
 
 export type {
   AddAdvisoryMessageInput,
   AdvisoryBoardQuery,
+  AdvisoryDiscussionQuery,
   AdvisoryMineQuery,
   AdvisoryPinsQuery,
   AdvisoryThreadsQuery,
   AssignProgramAdvisorInput,
   CreateAdvisoryThreadInput,
+  CreateAdvisoryReferenceInput,
+  PostAdvisoryDiscussionMessageInput,
   RecordAdvisoryReadInput,
+  RecordAdvisoryDiscussionReadInput,
+  RecordAdvisoryThreadReadInput,
   SaveProgramReviewDraftInput,
   UpdateAdvisoryThreadStatusInput,
 } from "@/lib/validations/program-advisory";
 
 export type {
   ActivitySnapshot,
+  AdvisoryAnchorField,
   AdvisoryAnchorKind,
+  AdvisoryCapabilities,
   AdvisoryBoard,
+  AdvisoryDiscussionMessage,
   AdvisoryFeedbackCounts,
   AdvisoryMessage,
   AdvisoryMineItem,
   AdvisoryParticipant,
   AdvisoryTargetType,
   AdvisoryThread,
+  AdvisoryThreadEvent,
   AdvisoryThreadPin,
   AdvisoryThreadPinSummary,
   AdvisoryThreadStatus,
   AdvisoryThreadType,
+  AdvisoryReference,
+  AdvisoryWorkflowStage,
+  AdvisoryWorkflowStageKey,
+  AdvisoryWorkflowStageState,
+  AdvisoryWorkflowTimeline,
   AssignmentSnapshot,
   CourseSnapshot,
   CurriculumSnapshotDocument,
@@ -169,6 +214,19 @@ export async function getProgramAdvisoryWorkspace(
   return requireApiValue(response.value);
 }
 
+export async function getAdvisoryTimeline(
+  programId: string,
+): Promise<GetAdvisoryTimelineResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory/timeline`,
+    getAdvisoryTimelineResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
 export async function getProgramFrameworkCheck(
   programId: string,
 ): Promise<GetFrameworkCheckResult> {
@@ -219,6 +277,20 @@ export async function getAdvisoryThreads(
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${id}/advisory-threads${buildQueryString(params, advisoryThreadsQuerySchema)}`,
     getAdvisoryThreadsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getAdvisoryThread(
+  programId: string,
+  threadId: string,
+): Promise<GetAdvisoryThreadResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-threads/${threadId}`,
+    getAdvisoryThreadResponseSchema,
     { method: "GET" },
   );
   assertApiSuccess(response);
@@ -309,6 +381,119 @@ export async function recordAdvisoryRead(
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${id}/advisory-read`,
     recordAdvisoryReadResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function createAdvisoryReference(
+  programId: string,
+  input: CreateAdvisoryReferenceInput,
+): Promise<AdvisoryReferenceResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = createAdvisoryReferenceSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-references`,
+    advisoryReferenceResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getAdvisoryReference(
+  programId: string,
+  referenceId: string,
+): Promise<AdvisoryReferenceResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-references/${referenceId}`,
+    advisoryReferenceResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getAdvisoryAnchorFields(): Promise<GetAdvisoryAnchorFieldsResult> {
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/advisory-anchor-fields`,
+    getAdvisoryAnchorFieldsResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getAdvisoryDiscussionMessages(
+  programId: string,
+  params?: AdvisoryDiscussionQuery,
+): Promise<GetAdvisoryDiscussionPageResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-discussion/messages${buildQueryString(params, advisoryDiscussionQuerySchema)}`,
+    getAdvisoryDiscussionPageResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function postAdvisoryDiscussionMessage(
+  programId: string,
+  input: PostAdvisoryDiscussionMessageInput,
+): Promise<AdvisoryDiscussionMessageResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = postAdvisoryDiscussionMessageSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-discussion/messages`,
+    advisoryDiscussionMessageResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function getAdvisoryDiscussionMessage(
+  programId: string,
+  messageId: string,
+): Promise<AdvisoryDiscussionMessageResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-discussion/messages/${messageId}`,
+    advisoryDiscussionMessageResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function recordAdvisoryThreadRead(
+  programId: string,
+  threadId: string,
+  input: RecordAdvisoryThreadReadInput,
+): Promise<RecordAdvisoryCursorResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = recordAdvisoryThreadReadSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-threads/${threadId}/read`,
+    recordAdvisoryCursorResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+export async function recordAdvisoryDiscussionRead(
+  programId: string,
+  input: RecordAdvisoryDiscussionReadInput,
+): Promise<RecordAdvisoryCursorResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = recordAdvisoryDiscussionReadSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisory-discussion/read`,
+    recordAdvisoryCursorResponseSchema,
     { method: "POST", body },
   );
   assertApiSuccess(response);

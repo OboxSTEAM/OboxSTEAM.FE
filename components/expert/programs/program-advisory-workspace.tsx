@@ -13,9 +13,9 @@ import {
 import { AdvisoryCurriculumBoard } from "@/components/advisory/advisory-curriculum-board";
 import { FrameworkCheckPanel } from "@/components/advisory/framework-check-panel";
 import { ReviewAssessmentPanel } from "@/components/advisory/review-assessment-panel";
+import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
 import {
   ExpertWorkbenchHero,
-  ExpertWorkflowRail,
 } from "@/components/expert/shared/expert-workbench";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,13 +26,14 @@ import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   createAdvisoryThread,
   getAdvisoryBoard,
+  getAdvisoryThread,
   getAdvisoryThreadPins,
   getAdvisoryThreads,
+  getAdvisoryTimeline,
   getFrameworkVersion,
   getProgramAdvisoryWorkspace,
   getProgramFrameworkCheck,
   getReviewSubmission,
-  recordAdvisoryRead,
   type FrameworkCheck,
   type ProgramAdvisoryWorkspace,
   type ProgramWithModules,
@@ -118,10 +119,23 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   });
 
   const workspace = workspaceData?.data ?? null;
-  // Until a full submission-history selector is present, always bind the
-  // decision surface to the latest summary. This prevents an older snapshot
-  // URL from being paired with the latest submission's concurrency token.
-  const activeSubmissionId = workspace?.latestSubmission?.id ?? submissionId;
+  // An explicit round in the URL wins; otherwise use the backend's pending
+  // submission and fall back to the latest summary.
+  const activeSubmissionId =
+    submissionId ??
+    workspace?.pendingSubmission?.id ??
+    workspace?.latestSubmission?.id ??
+    null;
+
+  const { data: timelineData, retry: retryTimeline } = useClientFetch({
+    enabled: workspace != null,
+    fetcher: () => getAdvisoryTimeline(program.id),
+    deps: [program.id],
+    initialData: workspace?.workflow
+      ? { code: "OK", message: "", data: workspace.workflow }
+      : null,
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
+  });
 
   const { data: frameworkCheckData, isLoading: isCheckLoading } = useClientFetch({
     fetcher: () => getProgramFrameworkCheck(program.id),
@@ -135,6 +149,19 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
         submissionId: activeSubmissionId ?? undefined,
       }),
     deps: [program.id, activeSubmissionId],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
+  });
+
+  const threads = threadsData?.data ?? [];
+  const hasSelectedThreadInList = threadId != null && threads.some(
+    (thread) => thread.id === threadId,
+  );
+
+  const { data: selectedThreadData } = useClientFetch({
+    enabled: threadId != null && !hasSelectedThreadInList,
+    fetcher: () =>
+      threadId ? getAdvisoryThread(program.id, threadId) : Promise.resolve(null),
+    deps: [program.id, threadId, hasSelectedThreadInList],
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
   });
 
@@ -176,6 +203,13 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   });
 
   const submission = submissionData?.data ?? null;
+  const selectedSubmissionSummary =
+    workspace?.pendingSubmission?.id === activeSubmissionId
+      ? workspace.pendingSubmission
+      : workspace?.latestSubmission?.id === activeSubmissionId
+        ? workspace.latestSubmission
+        : null;
+  const selectedSubmission = submission ?? selectedSubmissionSummary;
   const pinnedFrameworkVersionId =
     submission?.frameworkVersionId ?? workspace?.frameworkVersionId ?? null;
 
@@ -188,11 +222,6 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     deps: [program.frameworkId, pinnedFrameworkVersionId],
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.detail"),
   });
-
-  useEffect(() => {
-    if (tab !== "content") return;
-    void recordAdvisoryRead(program.id).catch(() => undefined);
-  }, [program.id, tab]);
 
   useEffect(() => {
     if (rawTab !== "discussion") return;
@@ -220,8 +249,8 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   const board = boardData?.data ?? null;
   const pinSummaries = pinsData?.data ?? [];
 
-  const threads = threadsData?.data ?? [];
-  const selectedThread = threads.find((t) => t.id === threadId) ?? null;
+  const selectedThread =
+    threads.find((t) => t.id === threadId) ?? selectedThreadData?.data ?? null;
 
   const openRequiredChanges = threads.filter(
     (t) => t.type === "RequiredChange" && t.status === "Open",
@@ -234,6 +263,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     retryThreads();
     retryBoard();
     retryPins();
+    retryTimeline();
   }
 
   async function handleCreateThread(input: Parameters<typeof createAdvisoryThread>[1]) {
@@ -262,7 +292,8 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   );
   const isResponsibleAdvisor = currentParticipant?.isAdvisor === true;
   const canDecideLatest =
-    isResponsibleAdvisor &&
+    workspace?.capabilities.canDecide === true &&
+    workspace?.reviewActionsLocked !== true &&
     submission?.status === "Pending" &&
     submission.id === workspace?.latestSubmission?.id &&
     workspace?.status === "PendingReview";
@@ -274,10 +305,6 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     ? "Chuyên gia chịu trách nhiệm"
     : "Chuyên gia hội đồng";
 
-  const tabIndex = Math.max(
-    0,
-    WORKSPACE_STEPS.findIndex((step) => step.value === tab),
-  );
   const nextActionLabel = canDecideLatest
     ? "Đối chiếu hồ sơ và hoàn tất quyết định"
     : addressedRequiredCount > 0
@@ -309,23 +336,31 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
           </Button>
         }
       >
-        <ExpertWorkflowRail
-          animate
-          onStepSelect={(index) => {
-            const next = WORKSPACE_STEPS[index];
-            if (next) setParams({ tab: next.value, thread: null });
-          }}
-          steps={WORKSPACE_STEPS.map((step, index) => ({
-            label: step.label,
-            detail: step.detail,
-            state:
-              index < tabIndex ? "done" : index === tabIndex ? "current" : "next",
-            badge:
-              step.value === "content" && workspace?.hasUnreadFeedback ? (
-                <span className="size-2 rounded-full bg-primary" />
-              ) : undefined,
-          }))}
+        <AdvisoryWorkflowTimeline
+          timeline={timelineData?.data ?? workspace?.workflow}
+          participants={workspace?.participants}
         />
+        <div className="flex flex-wrap gap-2 border-t border-border/70 pt-3" role="tablist" aria-label="Khu vực workspace">
+          {WORKSPACE_STEPS.map((step) => (
+            <Button
+              key={step.value}
+              type="button"
+              size="sm"
+              variant={tab === step.value ? "default" : "outline"}
+              role="tab"
+              aria-selected={tab === step.value}
+              onClick={() => setParams({ tab: step.value, thread: null })}
+              className="h-8 rounded-lg text-xs"
+            >
+              {step.label}
+              {step.value === "content" && workspace?.unreadNoteCount ? (
+                <span className="ml-1 rounded-full bg-primary-foreground/20 px-1.5 text-[10px]">
+                  {workspace.unreadNoteCount}
+                </span>
+              ) : null}
+            </Button>
+          ))}
+        </div>
       </ExpertWorkbenchHero>
 
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-12 sm:px-6">
@@ -357,8 +392,12 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               frameworkCheck={frameworkCheck}
               isFrameworkCheckLoading={isCheckLoading}
               isLoading={isBoardLoading && activeSubmissionId != null}
-              canAdvise={workspace?.canAdvise ?? false}
-              canCreateRequiredChange={isResponsibleAdvisor}
+               canAdvise={workspace?.capabilities.canCreateSuggestion === true}
+               capabilities={workspace?.capabilities}
+               reviewActionsLocked={workspace?.reviewActionsLocked}
+               canCreateRequiredChange={
+                 workspace?.capabilities.canCreateRequiredChange === true
+               }
               isAdvisor={isResponsibleAdvisor}
               isCreating={isCreatingThread}
               onCreateThread={handleCreateThread}
@@ -371,15 +410,15 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
           <TabsContent value="assessment" className="mt-0">
             {isSubmissionLoading ? (
               <Skeleton className="h-64 w-full rounded-2xl" />
-            ) : activeSubmissionId && workspace?.latestSubmission ? (
+            ) : activeSubmissionId && selectedSubmission ? (
               <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
                 <header className="mb-5 flex flex-wrap items-center gap-2">
                   <h2 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
                     <ListChecks className="size-4 text-primary" />
-                    Thẩm định lần {workspace.latestSubmission.submissionNumber}
+                    Thẩm định lần {selectedSubmission.submissionNumber}
                   </h2>
                   <Badge variant="outline" className="rounded-md text-[11px]">
-                    {REVIEW_SUBMISSION_STATUS_LABELS[workspace.latestSubmission.status]}
+                    {REVIEW_SUBMISSION_STATUS_LABELS[selectedSubmission.status]}
                   </Badge>
                 </header>
                 <ReviewAssessmentPanel
@@ -387,13 +426,12 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
                   programId={program.id}
                   programName={program.name}
                   submissionId={activeSubmissionId}
-                  submissionStatus={workspace.latestSubmission.status}
-                  concurrencyVersion={workspace.latestSubmission.concurrencyVersion}
+                   submissionStatus={selectedSubmission.status}
+                   concurrencyVersion={selectedSubmission.concurrencyVersion}
                   criteria={rubricCriteria}
                   canDecide={canDecideLatest}
-                  blockingChangeCount={
-                    openRequiredChanges.length + addressedRequiredCount
-                  }
+                   blockingChangeCount={workspace?.approvalBlockingCount ?? 0}
+                   requiredChangeThreadIds={openRequiredChanges.map((thread) => thread.id)}
                   onDecisionComplete={() => {
                     retryWorkspace();
                     retryThreads();

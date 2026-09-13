@@ -37,6 +37,94 @@ export const advisoryThreadStatusSchema = z.enum([
 
 export const advisoryAnchorKindSchema = z.enum(["Node", "Field", "Quote"]);
 
+export const advisoryAnchorFieldSchema = z.object({
+  targetType: advisoryTargetTypeSchema,
+  fieldKey: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  label: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+});
+
+export type AdvisoryAnchorField = z.infer<typeof advisoryAnchorFieldSchema>;
+
+const advisoryWorkflowStageKeys = [
+  "Preparation",
+  "Review",
+  "Revision",
+  "Verification",
+  "AwaitingPublication",
+  "Published",
+] as const;
+
+export const advisoryWorkflowStageKeySchema = z.enum(
+  advisoryWorkflowStageKeys,
+);
+
+export const advisoryWorkflowStageStateSchema = z.preprocess(
+  (value) => (typeof value === "string" ? value.toLowerCase() : value),
+  z.enum(["completed", "current", "upcoming", "skipped"]),
+);
+
+export const advisoryWorkflowResponsibleRoleSchema = z.enum([
+  "Manager",
+  "Advisor",
+]);
+
+export const advisoryCapabilitiesSchema = z.object({
+  canCreateSuggestion: z.boolean().optional().default(false),
+  canCreateRequiredChange: z.boolean().optional().default(false),
+  canDiscuss: z.boolean().optional().default(false),
+  canReplyToNotes: z.boolean().optional().default(false),
+  canEditCurriculum: z.boolean().optional().default(false),
+  canAssignAdvisor: z.boolean().optional().default(false),
+  canDecide: z.boolean().optional().default(false),
+});
+
+export const advisoryWorkflowStageSchema = z.object({
+  key: advisoryWorkflowStageKeySchema,
+  state: advisoryWorkflowStageStateSchema,
+  submissionId: optionalUuidSchema,
+});
+
+export const advisoryWorkflowTimelineSchema = z.object({
+  currentStage: advisoryWorkflowStageKeySchema.nullish().transform(
+    (value) => value ?? null,
+  ),
+  currentSubmissionId: optionalUuidSchema,
+  responsibleRole: advisoryWorkflowResponsibleRoleSchema.nullish().transform(
+    (value) => value ?? null,
+  ),
+  responsibleUserId: optionalUuidSchema,
+  outstandingRequirementCount: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  stages: z
+    .array(advisoryWorkflowStageSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export type AdvisoryCapabilities = z.infer<typeof advisoryCapabilitiesSchema>;
+export type AdvisoryWorkflowStageKey = z.infer<
+  typeof advisoryWorkflowStageKeySchema
+>;
+export type AdvisoryWorkflowStageState = z.infer<
+  typeof advisoryWorkflowStageStateSchema
+>;
+export type AdvisoryWorkflowResponsibleRole = z.infer<
+  typeof advisoryWorkflowResponsibleRoleSchema
+>;
+export type AdvisoryWorkflowStage = z.infer<
+  typeof advisoryWorkflowStageSchema
+>;
+export type AdvisoryWorkflowTimeline = z.infer<
+  typeof advisoryWorkflowTimelineSchema
+>;
+
 export const reviewSubmissionStatusSchema = z.enum([
   "Pending",
   "ChangesRequested",
@@ -97,6 +185,10 @@ export const programReviewSubmissionSummarySchema = z.object({
   submissionNumber: z.number().int(),
   status: reviewSubmissionStatusSchema,
   assignedAdvisorExpertId: z.string().uuid(),
+  reviewRoundIntent: z
+    .enum(["InitialReview", "RevisionVerification"])
+    .nullish()
+    .transform((value) => value ?? null),
   frameworkVersionId: optionalUuidSchema,
   submittedAt: z.string(),
   closedAt: z.string().nullable(),
@@ -124,10 +216,37 @@ export const programAdvisoryWorkspaceSchema = z.object({
     .array(advisoryParticipantSchema)
     .nullish()
     .transform((value) => value ?? []),
-  canAdvise: z.boolean(),
-  canDecide: z.boolean(),
-  canEditCurriculum: z.boolean(),
-  canAssignAdvisor: z.boolean(),
+  canAdvise: z.boolean().optional().default(false),
+  canDecide: z.boolean().optional().default(false),
+  canEditCurriculum: z.boolean().optional().default(false),
+  canAssignAdvisor: z.boolean().optional().default(false),
+  capabilities: advisoryCapabilitiesSchema.nullish().transform(
+    (value) => value ?? advisoryCapabilitiesSchema.parse({}),
+  ),
+  workflow: advisoryWorkflowTimelineSchema.nullish().transform(
+    (value) => value ?? null,
+  ),
+  approvalBlockingCount: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  openRequiredChangeCount: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  addressedRequiredChangeCount: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  unreadNoteCount: z.number().int().nullish().transform((value) => value ?? 0),
+  unreadDiscussionCount: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  pendingSubmission: programReviewSubmissionSummarySchema.nullish().transform(
+    (value) => value ?? null,
+  ),
+  reviewActionsLocked: z.boolean().nullish().transform((value) => value ?? false),
+  collaborationContractVersion: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   latestSubmission: programReviewSubmissionSummarySchema.nullish().transform(
     (value) => value ?? null,
   ),
@@ -138,6 +257,40 @@ export const programAdvisoryWorkspaceSchema = z.object({
 export type ProgramAdvisoryWorkspace = z.infer<
   typeof programAdvisoryWorkspaceSchema
 >;
+
+export const advisoryThreadEventSchema = z.object({
+  id: z.string().uuid(),
+  threadId: z.string().uuid(),
+  sequence: z.number().int(),
+  eventType: z.enum([
+    "Created",
+    "MessageAdded",
+    "StatusChanged",
+    "CorrectionSubmitted",
+    "VerificationRecorded",
+    "WaiverRecorded",
+  ]),
+  actorUserId: z.string().uuid(),
+  priorStatus: advisoryThreadStatusSchema.nullish().transform(
+    (value) => value ?? null,
+  ),
+  newStatus: advisoryThreadStatusSchema.nullish().transform(
+    (value) => value ?? null,
+  ),
+  message: z.string().nullish().transform((value) => value ?? null),
+  resolutionKind: z.enum(["Verified", "Waived"]).nullish().transform(
+    (value) => value ?? null,
+  ),
+  verifiedAgainstSubmissionId: optionalUuidSchema,
+  correctionReferenceIds: z
+    .array(z.string().uuid())
+    .nullish()
+    .transform((value) => value ?? []),
+  operationId: z.string().nullish().transform((value) => value ?? null),
+  createdAt: z.string(),
+});
+
+export type AdvisoryThreadEvent = z.infer<typeof advisoryThreadEventSchema>;
 
 export const advisoryThreadSchema = z.object({
   id: z.string().uuid(),
@@ -164,6 +317,18 @@ export const advisoryThreadSchema = z.object({
   lastMessageAt: z.string(),
   createdAt: z.string(),
   messageCount: z.number().int(),
+  concurrencyVersion: optionalUuidSchema,
+  latestActivitySequence: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  canAddress: z.boolean().nullish().transform((value) => value ?? false),
+  canResolve: z.boolean().nullish().transform((value) => value ?? false),
+  canReopen: z.boolean().nullish().transform((value) => value ?? false),
+  canWaive: z.boolean().nullish().transform((value) => value ?? false),
+  events: z
+    .array(advisoryThreadEventSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export type AdvisoryThread = z.infer<typeof advisoryThreadSchema>;
@@ -178,6 +343,66 @@ export const advisoryMessageSchema = z.object({
 });
 
 export type AdvisoryMessage = z.infer<typeof advisoryMessageSchema>;
+
+export const advisoryReferenceContextSchema = z.enum([
+  "Submission",
+  "WorkingDraft",
+]);
+
+export const advisoryReferenceSchema = z.object({
+  id: z.string().uuid(),
+  programId: z.string().uuid(),
+  context: advisoryReferenceContextSchema,
+  submissionId: optionalUuidSchema,
+  targetType: advisoryTargetTypeSchema,
+  targetId: optionalUuidSchema,
+  anchorKind: advisoryAnchorKindSchema,
+  fieldKey: z.string().nullish().transform((value) => value ?? null),
+  quote: z.string().nullish().transform((value) => value ?? null),
+  quotePrefix: z.string().nullish().transform((value) => value ?? null),
+  quoteSuffix: z.string().nullish().transform((value) => value ?? null),
+  capturedLabel: z.string().nullish().transform((value) => value ?? null),
+  capturedExcerpt: z.string().nullish().transform((value) => value ?? null),
+  capturedAt: z.string(),
+  isAvailable: z.boolean(),
+  unavailableReason: z.string().nullish().transform((value) => value ?? null),
+  quoteMatched: z.boolean(),
+});
+
+export type AdvisoryReference = z.infer<typeof advisoryReferenceSchema>;
+
+export const advisoryDiscussionMessageSchema = z.object({
+  id: z.string().uuid(),
+  programId: z.string().uuid(),
+  authorUserId: z.string().uuid(),
+  authorName: nullableStringSchema,
+  sequence: z.number().int(),
+  cursor: z.string().nullish().transform((value) => value ?? null),
+  text: nullableStringSchema,
+  clientMessageId: z.string().nullish().transform((value) => value ?? null),
+  createdAt: z.string(),
+  references: z
+    .array(advisoryReferenceSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export type AdvisoryDiscussionMessage = z.infer<
+  typeof advisoryDiscussionMessageSchema
+>;
+
+export const advisoryDiscussionPageSchema = z.object({
+  messages: z
+    .array(advisoryDiscussionMessageSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  before: z.string().nullish().transform((value) => value ?? null),
+  after: z.string().nullish().transform((value) => value ?? null),
+  hasMoreBefore: z.boolean().optional().default(false),
+  hasMoreAfter: z.boolean().optional().default(false),
+});
+
+export type AdvisoryDiscussionPage = z.infer<typeof advisoryDiscussionPageSchema>;
 
 export const programReviewSubmissionDetailSchema = z.object({
   id: z.string().uuid(),

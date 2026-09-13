@@ -74,7 +74,7 @@ export type ExpertWorkflowStep = {
   label: string;
   /** Shown on hover — keep the rail itself label-only. */
   detail?: string;
-  state?: "done" | "current" | "next";
+  state?: "done" | "current" | "next" | "skipped";
   badge?: ReactNode;
 };
 
@@ -105,7 +105,7 @@ function WorkflowStepContent({
 }: {
   index: number;
   label: string;
-  state: "done" | "current" | "next";
+  state: "done" | "current" | "next" | "skipped";
   badge?: ReactNode;
 }) {
   return (
@@ -116,6 +116,8 @@ function WorkflowStepContent({
           state === "current" &&
             "scale-110 border-primary bg-primary text-primary-foreground shadow-[0_0_0_4px_color-mix(in_srgb,var(--primary)_18%,transparent)]",
           state === "done" && "border-emerald-600 bg-emerald-600 text-white",
+          state === "skipped" &&
+            "border-dashed border-border bg-muted text-muted-foreground",
           state === "next" && "border-border bg-card text-muted-foreground",
         )}
       >
@@ -125,7 +127,11 @@ function WorkflowStepContent({
         <span
           className={cn(
             "block text-xs font-bold sm:text-sm",
-            state === "current" ? "text-primary" : "text-foreground",
+            state === "current"
+              ? "text-primary"
+              : state === "skipped"
+                ? "text-muted-foreground"
+                : "text-foreground",
           )}
         >
           {label}
@@ -149,9 +155,13 @@ export function ExpertWorkflowRail({
   const targetProgress = currentIndex / segmentCount;
   const [progress, setProgress] = useState(animate ? 0 : targetProgress);
   const isInteractive = typeof onStepSelect === "function";
+  const stepCount = steps.length;
+  const insetPercent = stepCount > 1 ? 100 / (2 * stepCount) : 0;
 
   useEffect(() => {
     if (!animate) {
+      // Synchronize the visual progress when the workflow target changes.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setProgress(targetProgress);
       return;
     }
@@ -170,13 +180,19 @@ export function ExpertWorkflowRail({
           "relative grid w-full gap-3",
           steps.length <= 2 && "grid-cols-2",
           steps.length === 3 && "grid-cols-3",
-          steps.length >= 4 && "grid-cols-2 sm:grid-cols-4",
+          steps.length === 4 && "grid-cols-2 sm:grid-cols-4",
+          steps.length === 5 && "grid-cols-2 sm:grid-cols-5",
+          steps.length >= 6 && "grid-cols-2 sm:grid-cols-6",
         )}
         role={isInteractive ? "tablist" : undefined}
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute top-3.5 right-[12.5%] left-[12.5%] hidden h-0.5 overflow-hidden rounded-full bg-border sm:block"
+          className="pointer-events-none absolute top-3.5 hidden h-0.5 overflow-hidden rounded-full bg-border sm:block"
+          style={{
+            left: `${insetPercent}%`,
+            right: `${insetPercent}%`,
+          }}
         >
           <div
             className="h-full origin-left rounded-full bg-emerald-600 motion-safe:transition-[width] motion-safe:duration-500 motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"

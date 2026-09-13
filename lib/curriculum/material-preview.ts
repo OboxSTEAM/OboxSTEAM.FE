@@ -28,6 +28,13 @@ export async function resolveMaterialSignedPreviewUrl(options: {
       options.activityId,
       options.enrollmentId,
     );
+    if (!result) {
+      if (fallback) return fallback;
+      throw new ApiResponseError(
+        "Tài liệu chưa có URL xem trước.",
+        "MaterialPreviewUnavailable",
+      );
+    }
     const live = result.data?.fileUrl?.trim() || null;
     if (live) return live;
     if (fallback) return fallback;

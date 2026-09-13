@@ -6,6 +6,22 @@
  */
 
 const EXACT_VI: Record<string, string> = {
+  ADVISOR_REQUIRED:
+    "Chương trình cần có chuyên gia phụ trách đã liên kết tài khoản trước khi gửi thẩm định.",
+  ADVISOR_LOGIN_REQUIRED:
+    "Chuyên gia phụ trách chưa kích hoạt hoặc liên kết tài khoản đăng nhập.",
+  MODULES_REQUIRED:
+    "Chương trình phải có ít nhất một học phần trước khi gửi thẩm định.",
+  FRAMEWORK_UNAVAILABLE:
+    "Khung năng lực liên kết chưa được xuất bản hoặc không khả dụng.",
+  FRAMEWORK_CHECK_FAILED:
+    "Kiểm tra đối sánh khung năng lực chưa đạt. Vui lòng kiểm tra lại cấu trúc chương trình.",
+  APPROVAL_BLOCKED:
+    "Còn yêu cầu chỉnh sửa bắt buộc (Required Change) chưa được giải quyết dứt điểm.",
+  SUBMISSION_CONCURRENCY_STALE:
+    "Dữ liệu thẩm định đã được cập nhật bởi thao tác khác. Vui lòng tải lại trang.",
+  ADVISORY_ANCHOR_FIELD_INVALID:
+    "Trường neo góp ý không hợp lệ hoặc không thuộc danh mục cho phép.",
   "This activity is locked until prerequisites are met.":
     "Hoạt động này chưa mở khóa. Hoàn thành các bài trước để tiếp tục.",
   "This module is locked until prerequisites are met.":
@@ -125,6 +141,34 @@ const EXACT_VI: Record<string, string> = {
 };
 
 const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
+  {
+    pattern: /ADVISOR_REQUIRED|responsible advisor.*active linked login/i,
+    vi: "Chương trình cần có chuyên gia phụ trách đã liên kết tài khoản trước khi gửi thẩm định.",
+  },
+  {
+    pattern: /ADVISOR_LOGIN_REQUIRED|advisor.*login/i,
+    vi: "Chuyên gia phụ trách chưa kích hoạt hoặc liên kết tài khoản đăng nhập.",
+  },
+  {
+    pattern: /MODULES_REQUIRED|at least one module/i,
+    vi: "Chương trình phải có ít nhất một học phần trước khi gửi thẩm định.",
+  },
+  {
+    pattern: /FRAMEWORK_CHECK_FAILED|framework check failed/i,
+    vi: "Kiểm tra đối sánh khung năng lực chưa đạt. Vui lòng kiểm tra lại cấu trúc chương trình.",
+  },
+  {
+    pattern: /APPROVAL_BLOCKED|unresolved RequiredChange/i,
+    vi: "Còn yêu cầu chỉnh sửa bắt buộc (Required Change) chưa được giải quyết dứt điểm.",
+  },
+  {
+    pattern: /SUBMISSION_CONCURRENCY_STALE|concurrency.*stale/i,
+    vi: "Dữ liệu thẩm định đã được cập nhật bởi thao tác khác. Vui lòng tải lại trang.",
+  },
+  {
+    pattern: /ADVISORY_ANCHOR_FIELD_INVALID/i,
+    vi: "Trường neo góp ý không hợp lệ hoặc không thuộc danh mục cho phép.",
+  },
   {
     pattern: /locked until prerequisites? are met/i,
     vi: "Chưa mở khóa. Hoàn thành các điều kiện tiên quyết trước để tiếp tục.",
