@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useClientFetch } from "@/hooks/use-client-fetch";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   getAdvisoryDiscussionMessages,
   postAdvisoryDiscussionMessage,
@@ -71,6 +72,8 @@ export function AdvisoryDiscussionPanel({
   onReferenceConsumed,
   className,
 }: AdvisoryDiscussionPanelProps) {
+  const { profile } = useCurrentUser();
+  const currentUserId = profile?.id ?? null;
   const [messages, setMessages] = useState<AdvisoryDiscussionMessage[]>([]);
   const [beforeCursor, setBeforeCursor] = useState<string | null>(null);
   const [hasMoreBefore, setHasMoreBefore] = useState(false);
@@ -240,7 +243,7 @@ export function AdvisoryDiscussionPanel({
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="min-h-0 flex-1 space-y-3 overflow-y-auto p-3"
+        className="min-h-0 flex-1 space-y-2.5 overflow-y-auto p-3"
       >
         {hasMoreBefore ? (
           <Button
@@ -258,52 +261,96 @@ export function AdvisoryDiscussionPanel({
 
         {isLoading && messages.length === 0 ? (
           <>
-            <Skeleton className="h-16 w-full rounded-xl" />
-            <Skeleton className="h-16 w-full rounded-xl" />
+            <Skeleton className="ml-auto h-12 w-2/3 rounded-2xl" />
+            <Skeleton className="mr-auto h-12 w-1/2 rounded-2xl" />
           </>
         ) : messages.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
             Chưa có trao đổi nào.
           </p>
         ) : (
-          messages.map((message, index) => (
-            <div key={message.id}>
-              {index > 0 && message.sequence > lastReadSequence && messages[index - 1]!.sequence <= lastReadSequence ? (
-                <p className="mb-2 border-y border-primary/20 bg-primary/5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-primary">
-                  Tin mới
-                </p>
-              ) : null}
-              <article className="rounded-xl border border-border bg-card px-3 py-2.5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="text-xs font-semibold text-foreground">{message.authorName || "—"}</span>
-                  <time className="shrink-0 text-[10px] text-muted-foreground">{formatDateTime(message.createdAt)}</time>
-                </div>
-                <p className="mt-1 whitespace-pre-line text-sm text-foreground">{message.text}</p>
-                {message.references.length > 0 ? (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {message.references.map((reference) => (
-                      <button
-                        key={reference.id}
-                        type="button"
-                        onClick={() => onReferenceClick?.(reference)}
-                        className={cn(
-                          "inline-flex max-w-full items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold",
-                          reference.isAvailable
-                            ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
-                            : "border-border bg-muted text-muted-foreground",
-                        )}
-                        title={reference.unavailableReason ?? undefined}
-                      >
-                        <Link2 className="size-3 shrink-0" />
-                        <span className="truncate">{referenceLabel(reference)}</span>
-                        {!reference.isAvailable ? " · không khả dụng" : null}
-                      </button>
-                    ))}
-                  </div>
+          messages.map((message, index) => {
+            const isOwn =
+              currentUserId != null && message.authorUserId === currentUserId;
+            return (
+              <div key={message.id}>
+                {index > 0 &&
+                message.sequence > lastReadSequence &&
+                messages[index - 1]!.sequence <= lastReadSequence ? (
+                  <p className="mb-2 border-y border-primary/20 bg-primary/5 px-2 py-1 text-center text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    Tin mới
+                  </p>
                 ) : null}
-              </article>
-            </div>
-          ))
+                <div className={cn("flex", isOwn ? "justify-end" : "justify-start")}>
+                  <article
+                    className={cn(
+                      "w-fit max-w-[min(85%,22rem)] rounded-2xl px-3 py-2",
+                      isOwn
+                        ? "rounded-br-md bg-primary text-primary-foreground"
+                        : "rounded-bl-md border border-border bg-muted/50 text-foreground",
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "flex items-baseline gap-2",
+                        isOwn ? "justify-end" : "justify-start",
+                      )}
+                    >
+                      {!isOwn ? (
+                        <span className="text-[11px] font-semibold text-foreground">
+                          {message.authorName || "—"}
+                        </span>
+                      ) : null}
+                      <time
+                        className={cn(
+                          "shrink-0 text-[10px]",
+                          isOwn
+                            ? "text-primary-foreground/70"
+                            : "text-muted-foreground",
+                        )}
+                      >
+                        {formatDateTime(message.createdAt)}
+                      </time>
+                    </div>
+                    <p
+                      className={cn(
+                        "mt-0.5 whitespace-pre-line text-sm leading-snug",
+                        isOwn ? "text-primary-foreground" : "text-foreground",
+                      )}
+                    >
+                      {message.text}
+                    </p>
+                    {message.references.length > 0 ? (
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {message.references.map((reference) => (
+                          <button
+                            key={reference.id}
+                            type="button"
+                            onClick={() => onReferenceClick?.(reference)}
+                            className={cn(
+                              "inline-flex max-w-full items-center gap-1 rounded-md border px-2 py-1 text-[10px] font-semibold",
+                              isOwn
+                                ? reference.isAvailable
+                                  ? "border-primary-foreground/35 bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/15"
+                                  : "border-primary-foreground/20 bg-primary-foreground/5 text-primary-foreground/70"
+                                : reference.isAvailable
+                                  ? "border-primary/30 bg-primary/5 text-primary hover:bg-primary/10"
+                                  : "border-border bg-muted text-muted-foreground",
+                            )}
+                            title={reference.unavailableReason ?? undefined}
+                          >
+                            <Link2 className="size-3 shrink-0" />
+                            <span className="truncate">{referenceLabel(reference)}</span>
+                            {!reference.isAvailable ? " · không khả dụng" : null}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                  </article>
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
 
