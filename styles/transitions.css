@@ -124,6 +124,25 @@
   --acc-collapse: var(--duration-fast);
   --acc-chevron: var(--duration-fast);
   --acc-ease: var(--ease-smooth-out);
+
+  /* Input clear dissolve */
+  --clear-dur: 1000ms;
+  --clear-out-dur: 400ms;
+  --clear-in-dur: 400ms;
+  --clear-out-fly: 12px;
+  --clear-in-fly: 12px;
+  --clear-out-ease: var(--ease-smooth-out);
+  --clear-in-ease: var(--ease-smooth-out);
+  --clear-blur: var(--blur-small);
+
+  /* Number pop-in */
+  --digit-dur: var(--duration-very-slow);
+  --digit-distance: var(--distance-base);
+  --digit-stagger: 70ms;
+  --digit-blur: var(--blur-small);
+  --digit-ease: cubic-bezier(0.34, 1.45, 0.64, 1);
+  --digit-dir-x: 0;
+  --digit-dir-y: 1;
 }
 
 /* ── Text states swap (04) ─────────────────────────────────────────── */
@@ -711,5 +730,142 @@
   .t-acc-panel-inner,
   .t-acc-chevron {
     transition: none !important;
+  }
+}
+
+/* ── Input clear dissolve (13) — pragmatic CSS mirror/placeholder ─── */
+
+.t-clear {
+  position: relative;
+  overflow: hidden;
+}
+.t-clear-mirror,
+.t-clear-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  z-index: 2;
+  transition:
+    transform var(--clear-out-dur) var(--clear-out-ease),
+    opacity var(--clear-out-dur) var(--clear-out-ease),
+    filter var(--clear-out-dur) var(--clear-out-ease);
+}
+.t-clear-mirror {
+  opacity: 0;
+  color: var(--foreground);
+}
+.t-clear-placeholder {
+  opacity: 0;
+  color: var(--muted-foreground);
+  transform: translateY(calc(var(--clear-in-fly) * -1));
+  filter: blur(var(--clear-blur));
+}
+.t-clear.has-value .t-clear-mirror,
+.t-clear.is-clearing .t-clear-mirror {
+  opacity: 1;
+}
+.t-clear.has-value > input,
+.t-clear.is-clearing > input,
+.t-clear.has-value > [data-slot="input"],
+.t-clear.is-clearing > [data-slot="input"] {
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  caret-color: var(--foreground);
+}
+.t-clear.has-value .t-clear-placeholder {
+  opacity: 0;
+}
+.t-clear.is-clearing .t-clear-mirror {
+  transform: translateY(var(--clear-out-fly));
+  opacity: 0;
+  filter: blur(var(--clear-blur));
+}
+.t-clear.is-clearing .t-clear-placeholder {
+  transform: translateY(0);
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    transform var(--clear-in-dur) var(--clear-in-ease),
+    opacity var(--clear-in-dur) var(--clear-in-ease),
+    filter var(--clear-in-dur) var(--clear-in-ease);
+}
+.t-clear-btn {
+  z-index: 4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-clear-mirror,
+  .t-clear-placeholder {
+    transition: none !important;
+    filter: none !important;
+    transform: none !important;
+  }
+}
+
+/* ── Number pop-in (02) ───────────────────────────────────────────── */
+
+@keyframes t-digit-pop-in {
+  0% {
+    transform: translate(
+      calc(var(--digit-distance) * var(--digit-dir-x)),
+      calc(var(--digit-distance) * var(--digit-dir-y))
+    );
+    opacity: 0;
+    filter: blur(var(--digit-blur));
+  }
+  100% {
+    transform: translate(0, 0);
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+.t-digit-group {
+  display: inline-flex;
+  align-items: baseline;
+}
+.t-digit {
+  display: inline-block;
+  will-change: transform, opacity, filter;
+}
+.t-digit-group.is-animating .t-digit {
+  animation: t-digit-pop-in var(--digit-dur) var(--digit-ease) both;
+}
+.t-digit-group.is-animating .t-digit[data-stagger="1"] {
+  animation-delay: var(--digit-stagger);
+}
+.t-digit-group.is-animating .t-digit[data-stagger="2"] {
+  animation-delay: calc(var(--digit-stagger) * 2);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-digit-group .t-digit {
+    animation: none !important;
+  }
+}
+
+/* ── Table body soft reveal (skeleton leave) ──────────────────────── */
+
+.t-table-reveal {
+  opacity: 0;
+  filter: blur(var(--reveal-blur));
+  transition:
+    opacity var(--reveal-dur) var(--reveal-ease),
+    filter var(--reveal-dur) var(--reveal-ease);
+}
+.t-table-reveal.is-revealed {
+  opacity: 1;
+  filter: blur(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .t-table-reveal {
+    transition: none !important;
+    filter: none !important;
+    opacity: 1;
   }
 }

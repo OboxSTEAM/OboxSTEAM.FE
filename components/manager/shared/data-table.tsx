@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   Table,
   TableBody,
@@ -69,6 +69,26 @@ export function ManagerDataTable<T>({
   emptyState,
 }: ManagerDataTableProps<T>) {
   const showPagination = totalPages > 1 && !isLoading;
+  const [isRevealed, setIsRevealed] = useState(!isLoading);
+  const wasLoadingRef = useRef(isLoading);
+
+  useEffect(() => {
+    if (isLoading) {
+      wasLoadingRef.current = true;
+      setIsRevealed(false);
+      return;
+    }
+    if (!wasLoadingRef.current) {
+      setIsRevealed(true);
+      return;
+    }
+    wasLoadingRef.current = false;
+    setIsRevealed(false);
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setIsRevealed(true));
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [isLoading]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -91,7 +111,12 @@ export function ManagerDataTable<T>({
               ))}
             </TableRow>
           </TableHeader>
-          <TableBody>
+          <TableBody
+            className={cn(
+              !isLoading && "t-table-reveal",
+              !isLoading && isRevealed && "is-revealed",
+            )}
+          >
             {isLoading ? (
               [...Array(skeletonRows)].map((_, rIdx) => (
                 <TableRow key={rIdx} className="group border-border">

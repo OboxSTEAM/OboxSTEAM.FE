@@ -15,6 +15,7 @@ import {
 
 import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
+import { NumberPop } from "@/components/transitions/number-pop";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -487,7 +488,7 @@ export function ExpertReviewDetail({ program }: ExpertReviewDetailProps) {
                       Tổng điểm
                     </span>
                     <span className="font-mono text-sm font-bold text-foreground">
-                      {totalScore}/{totalMaxScore}
+                      <NumberPop value={totalScore} />/{totalMaxScore}
                     </span>
                   </div>
                 </>
