@@ -2,13 +2,17 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { verifyOtp } from "@/lib/api";
-import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  resolveAppError,
+  showAppError,
+  showAppSuccess,
+} from "@/lib/errors";
 import { verifyOtpSchema } from "@/lib/validations/auth";
 
 import { AuthField } from "./auth-field";
@@ -21,12 +25,15 @@ export function VerifyOtpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const emailFromQuery = searchParams.get("email") ?? "";
+  const [otpShakeKey, setOtpShakeKey] = useState(0);
 
   const {
     register,
     control,
     handleSubmit,
     setValue,
+    setError,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm<VerifyOtpFormValues>({
     resolver: zodResolver(verifyOtpSchema),
@@ -51,7 +58,13 @@ export function VerifyOtpForm() {
       });
       setTimeout(() => router.push("/login"), 1200);
     } catch (error) {
-      showAppErrorFromUnknown(error, "auth.verify-otp");
+      const state = resolveAppError(error, "auth.verify-otp");
+      showAppError(state);
+      setError("otp", {
+        type: "server",
+        message: state.reason || "Mã OTP không đúng. Vui lòng thử lại.",
+      });
+      setOtpShakeKey((key) => key + 1);
     }
   });
 
@@ -80,9 +93,13 @@ export function VerifyOtpForm() {
             <OtpInput
               id="otp"
               value={field.value}
-              onChange={field.onChange}
+              onChange={(next) => {
+                field.onChange(next);
+                if (errors.otp) clearErrors("otp");
+              }}
               onBlur={field.onBlur}
               error={errors.otp?.message}
+              shakeKey={otpShakeKey}
               disabled={isSubmitting}
               autoFocus
             />

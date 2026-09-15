@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { SuccessCheckIcon } from "@/components/transitions/success-check-icon";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
@@ -285,6 +286,9 @@ export function PaymentSuccessPageContent() {
       illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
       illustrationAlt="Minh họa thanh toán thành công"
     >
+      <div className="mb-6 flex justify-center lg:justify-start">
+        <SuccessCheckIcon className="text-[#7CB342]" size={56} />
+      </div>
       <PaymentInvoiceCard
         payment={payment}
         programName={programName}

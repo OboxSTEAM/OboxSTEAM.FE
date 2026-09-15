@@ -7,8 +7,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
 import { AuthField } from "@/components/auth/auth-field";
+import { AuthSubmitButton } from "@/components/auth/auth-shell";
 import { PasswordField } from "@/components/auth/password-field";
-import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogDescription,
@@ -144,13 +144,12 @@ export function ParentProfileCompletionDialog({
             {...register("confirmPassword")}
           />
 
-          <Button
-            type="submit"
-            disabled={isSubmitting}
+          <AuthSubmitButton
+            isLoading={isSubmitting}
             className="h-11 w-full rounded-xl bg-[#E94B3C] text-base font-semibold text-white hover:bg-[#d43e30]"
           >
-            {isSubmitting ? "Đang lưu…" : "Hoàn tất hồ sơ"}
-          </Button>
+            Hoàn tất hồ sơ
+          </AuthSubmitButton>
         </form>
 
         <p className="mt-4 text-center text-sm text-[#6B6B6B]">

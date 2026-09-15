@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
 import { AuthFieldError } from "./auth-shell";
+import { useAuthErrorShake } from "./use-auth-error-shake";
 
 const OTP_LENGTH = 6;
 
@@ -16,6 +17,8 @@ type OtpInputProps = {
   onChange: (value: string) => void;
   onBlur?: () => void;
   error?: string;
+  /** Bump to re-shake when the same error message is set again (e.g. API retry). */
+  shakeKey?: number;
   disabled?: boolean;
   autoFocus?: boolean;
 };
@@ -31,6 +34,7 @@ export function OtpInput({
   onChange,
   onBlur,
   error,
+  shakeKey = 0,
   disabled,
   autoFocus,
 }: OtpInputProps) {
@@ -38,6 +42,9 @@ export function OtpInput({
   const id = idProp ?? generatedId;
   const inputRef = useRef<HTMLInputElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const shakeRef = useRef<HTMLDivElement>(null);
+  useAuthErrorShake(shakeRef, error, shakeKey);
+  const hasError = Boolean(error);
 
   const digits = Array.from({ length: OTP_LENGTH }, (_, i) => value[i] ?? "");
   const activeIndex = Math.min(value.length, OTP_LENGTH - 1);
@@ -81,23 +88,20 @@ export function OtpInput({
   };
 
   return (
-    <div className="space-y-2">
+    <div className={cn("t-input-wrap space-y-2", hasError && "is-error")}>
       <Label htmlFor={id} className="text-[#2D2D2D]">
         {label}
       </Label>
 
       <div
+        ref={shakeRef}
         className={cn(
-          "relative rounded-xl outline-none",
-          isFocused && "ring-2 ring-[#2D2D2D]/15 ring-offset-2 ring-offset-white",
-          error && "ring-2 ring-destructive/25 ring-offset-2",
+          "t-input t-input--otp relative rounded-xl outline-none",
+          hasError && "is-error",
         )}
         onClick={focusInput}
       >
-        <div
-          className="flex justify-between gap-2 sm:gap-2.5"
-          aria-hidden
-        >
+        <div className="flex justify-between gap-2 sm:gap-2.5" aria-hidden>
           {digits.map((digit, index) => {
             const isActive =
               isFocused &&
@@ -109,9 +113,13 @@ export function OtpInput({
               <div
                 key={index}
                 className={cn(
-                  "flex h-12 flex-1 max-w-12 items-center justify-center rounded-xl bg-[#F3F4F6] text-lg font-semibold tabular-nums text-[#2D2D2D] transition-all",
-                  isActive && "bg-white ring-2 ring-[#2D2D2D]/25",
-                  digit && !isActive && "bg-[#ECECF0]",
+                  "flex h-12 flex-1 max-w-12 items-center justify-center rounded-xl bg-[#F3F4F6] text-lg font-semibold tabular-nums text-[#2D2D2D] transition-[background-color,box-shadow] duration-150",
+                  isActive &&
+                    !hasError &&
+                    "bg-white ring-2 ring-[#2D2D2D]/25",
+                  digit && !isActive && !hasError && "bg-[#ECECF0]",
+                  hasError &&
+                    "bg-[#F3F4F6] ring-2 ring-destructive/35 ring-offset-0",
                 )}
               >
                 {digit}
@@ -138,9 +146,9 @@ export function OtpInput({
             onBlur?.();
           }}
           maxLength={OTP_LENGTH}
-          aria-invalid={!!error}
+          aria-invalid={hasError}
           aria-label={label}
-          className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0"
+          className="absolute inset-0 z-10 h-full w-full cursor-text opacity-0 outline-none border-0 shadow-none ring-0 focus:outline-none focus-visible:outline-none focus-visible:ring-0"
         />
       </div>
 

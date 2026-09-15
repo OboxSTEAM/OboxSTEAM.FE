@@ -12,6 +12,7 @@ import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflo
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
+import { useSlidingTabs } from "@/components/transitions/use-sliding-tabs";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -44,18 +45,36 @@ function StepperTabBar({
   active: TabId;
   onChange: (id: TabId) => void;
 }) {
+  const { tabsRef, pillRef, syncPill } = useSlidingTabs();
+
+  useEffect(() => {
+    syncPill(true);
+  }, [active, syncPill]);
+
   return (
-    <div className="sticky top-0 z-30 flex items-center gap-0 border-b border-border bg-background px-6 pt-4">
+    <div
+      ref={tabsRef}
+      role="tablist"
+      aria-label="Các bước chỉnh sửa chương trình"
+      className="sticky top-0 z-30 flex items-center gap-0 border-b border-border bg-background px-6 pt-4"
+    >
+      <span
+        ref={pillRef}
+        className="t-tabs-pill pointer-events-none absolute top-auto bottom-0 left-0 z-0 h-0.5 rounded-t-full bg-primary"
+        aria-hidden
+      />
       {TABS.map((tab, idx) => {
         const isActive = tab.id === active;
         return (
           <button
             key={tab.id}
             type="button"
+            role="tab"
             id={`stepper-tab-${tab.id}`}
+            aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "relative flex items-center gap-2 px-4 pb-3 text-sm font-medium transition-colors",
+              "relative z-1 flex items-center gap-2 px-4 pb-3 text-sm font-medium transition-colors",
               isActive
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground"
@@ -72,10 +91,6 @@ function StepperTabBar({
               {idx + 1}
             </span>
             {tab.label}
-
-            {isActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-t-full bg-primary" />
-            )}
           </button>
         );
       })}

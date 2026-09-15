@@ -305,7 +305,12 @@ export function ReviewAssessmentPanel({
           ] ?? submissionStatus}
         </Badge>
         {isSaving ? (
-          <span className="text-[11px] text-muted-foreground">Đang lưu nháp…</span>
+          <span
+            className="t-shimmer text-[11px]"
+            data-text="Đang lưu nháp…"
+          >
+            Đang lưu nháp…
+          </span>
         ) : canDecide && isPending ? (
           <span className="text-[11px] text-emerald-700 dark:text-emerald-300">
             Nháp được lưu tự động

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Clapperboard, Images, Link2, Palette, LayoutList, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -87,14 +87,20 @@ export function PortfolioPanelHost({
   onClose,
   children,
 }: PortfolioPanelHostProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  useEffect(() => {
+    setIsOpen(true);
+  }, []);
+
   return (
     <aside
       className={cn(
-        "z-30 bg-background",
+        "t-panel-slide z-30 bg-background",
         "fixed inset-x-0 top-[7rem] overflow-y-auto overscroll-contain sm:top-[7.5rem]",
         "bottom-[calc(3.75rem+env(safe-area-inset-bottom))]",
         "lg:static lg:inset-auto lg:bottom-auto lg:w-[22.5rem] lg:shrink-0 lg:overflow-visible lg:border-r lg:border-border",
       )}
+      data-open={isOpen ? "true" : "false"}
     >
       <div className="lg:sticky lg:top-[7.5rem] lg:max-h-[calc(100dvh-8.5rem)] lg:overflow-y-auto">
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm sm:px-5">

@@ -4,12 +4,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Beaker,
   CheckCircle2,
-  ChevronRight,
+  ChevronDown,
   Circle,
   ClipboardList,
   Lock,
 } from "lucide-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import {
   Accordion,
@@ -180,11 +179,8 @@ function NavGroupHeader({
       className="flex w-full items-start gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-left transition-colors hover:bg-muted/50"
       aria-expanded={isOpen}
     >
-      <ChevronRight
-        className={cn(
-          "mt-0.5 size-4 shrink-0 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none",
-          isOpen && "rotate-90",
-        )}
+      <ChevronDown
+        className="t-acc-chevron mt-0.5 size-4 shrink-0 text-muted-foreground"
         aria-hidden
       />
       <span className="min-w-0 flex-1">
@@ -403,36 +399,25 @@ function AssignmentSection({
 }
 
 function CollapsibleGroup({
-  groupKey,
   isOpen,
   header,
   children,
-  reduceMotion,
 }: {
   groupKey: string;
   isOpen: boolean;
   header: ReactNode;
   children: ReactNode;
-  reduceMotion: boolean | null;
+  reduceMotion?: boolean | null;
 }) {
   return (
     <TreeNode>
-      <div className="space-y-1">
+      <div className="t-acc space-y-1" data-open={isOpen ? "true" : "false"}>
         {header}
-        <AnimatePresence initial={false}>
-          {isOpen ? (
-            <motion.div
-              key={`${groupKey}-children`}
-              initial={reduceMotion ? false : { height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={reduceMotion ? undefined : { height: 0, opacity: 0 }}
-              transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
-              className="overflow-hidden"
-            >
-              <TreeBranch className="space-y-0.5 py-0.5">{children}</TreeBranch>
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
+        <div className="t-acc-panel">
+          <div className="t-acc-panel-inner">
+            <TreeBranch className="space-y-0.5 py-0.5">{children}</TreeBranch>
+          </div>
+        </div>
       </div>
     </TreeNode>
   );
@@ -448,7 +433,6 @@ export function MentorCurriculumTree({
   progress = null,
   className,
 }: MentorCurriculumTreeProps) {
-  const reduceMotion = useReducedMotion();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   const orderedModules = useMemo(
@@ -548,7 +532,6 @@ export function MentorCurriculumTree({
                           key={course.id}
                           groupKey={course.id}
                           isOpen={open}
-                          reduceMotion={reduceMotion}
                           header={
                             <NavGroupHeader
                               name={course.name}
@@ -608,7 +591,6 @@ export function MentorCurriculumTree({
                           key={milestone.id}
                           groupKey={milestone.id}
                           isOpen={open}
-                          reduceMotion={reduceMotion}
                           header={
                             <NavGroupHeader
                               name={title}

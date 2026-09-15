@@ -1,9 +1,11 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef } from "react";
 import { useForm } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 
+import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,6 +35,19 @@ type MentorFormDialogProps = {
 
 const INPUT_CLASS =
   "h-11 rounded-xl border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
+
+function MentorFieldError({ message }: { message?: string }) {
+  const shakeRef = useRef<HTMLParagraphElement>(null);
+  useAuthErrorShake(shakeRef, message);
+  if (!message) return null;
+  return (
+    <div className="t-input-wrap is-error">
+      <p ref={shakeRef} className="t-input is-error text-xs text-destructive">
+        <span className="t-error-msg">{message}</span>
+      </p>
+    </div>
+  );
+}
 
 export function MentorFormDialog({
   open,
@@ -88,7 +103,7 @@ export function MentorFormDialog({
                 {...register("fullName")}
               />
               {errors.fullName ? (
-                <p className="text-xs text-destructive">{errors.fullName.message}</p>
+                <MentorFieldError message={errors.fullName.message} />
               ) : null}
             </div>
 
@@ -103,7 +118,7 @@ export function MentorFormDialog({
                 {...register("email")}
               />
               {errors.email ? (
-                <p className="text-xs text-destructive">{errors.email.message}</p>
+                <MentorFieldError message={errors.email.message} />
               ) : null}
             </div>
 
@@ -116,7 +131,7 @@ export function MentorFormDialog({
                 {...register("phone")}
               />
               {errors.phone ? (
-                <p className="text-xs text-destructive">{errors.phone.message}</p>
+                <MentorFieldError message={errors.phone.message} />
               ) : null}
             </div>
           </DialogScrollBody>

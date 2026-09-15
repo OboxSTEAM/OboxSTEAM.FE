@@ -42,6 +42,7 @@ import {
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { expertUpsertSchema, uploadExpertAvatarSchema } from "@/lib/validations/experts";
 import { cn } from "@/lib/utils";
+import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 
 import { ExpertCredentialsEditor } from "./expert-credentials-editor";
 
@@ -668,6 +669,17 @@ function FormField({
 }
 
 function FieldError({ message }: { message?: string }) {
+  const shakeRef = useRef<HTMLParagraphElement>(null);
+  useAuthErrorShake(shakeRef, message);
   if (!message) return null;
-  return <p className="text-xs font-medium text-primary">{message}</p>;
+  return (
+    <div className="t-input-wrap is-error">
+      <p
+        ref={shakeRef}
+        className="t-input is-error text-xs font-medium text-primary"
+      >
+        <span className="t-error-msg">{message}</span>
+      </p>
+    </div>
+  );
 }

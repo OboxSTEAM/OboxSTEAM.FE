@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Flag, Check, Save, Plus, Trash, Link2 } from "lucide-react";
+import { Flag, Save, Plus, Trash, Link2 } from "lucide-react";
 
+import { SuccessCheckIcon } from "@/components/transitions/success-check-icon";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -380,7 +381,7 @@ export function MilestoneFormPanel({
         >
           {ok ? (
             <>
-              <Check className="size-4 animate-in zoom-in-50 duration-200" />
+              <SuccessCheckIcon className="text-white" size={16} />
               Đã lưu
             </>
           ) : (

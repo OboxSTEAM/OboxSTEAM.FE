@@ -22,7 +22,7 @@ function DialogBackdrop({
     <DialogPrimitive.Backdrop
       data-slot="dialog-backdrop"
       className={cn(
-        "fixed inset-0 z-50 bg-black/50 data-[ending-style]:opacity-0 data-[starting-style]:opacity-0",
+        "t-modal-backdrop fixed inset-0 z-50 bg-black/50",
         className,
       )}
       {...props}
@@ -45,9 +45,7 @@ function DialogPopup({
         <DialogPrimitive.Popup
           data-slot="dialog-popup"
           className={cn(
-            "relative z-50 grid w-full max-w-lg gap-4 rounded-2xl border border-border bg-popover p-6 shadow-lg outline-none",
-            "data-[ending-style]:scale-95 data-[ending-style]:opacity-0",
-            "data-[starting-style]:scale-95 data-[starting-style]:opacity-0",
+            "t-modal relative z-50 grid w-full max-w-lg gap-4 rounded-2xl border border-border bg-popover p-6 shadow-lg outline-none",
             className,
           )}
           {...props}

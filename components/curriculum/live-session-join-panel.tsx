@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Loader2, Video } from "lucide-react";
 
+import { useAuthTextSwap } from "@/components/auth/use-auth-text-swap";
 import { JoinCountdownHero } from "@/components/curriculum/join-countdown-hero";
 import { LiveJaasMeeting } from "@/components/curriculum/live-jaas-meeting";
 import {
@@ -49,6 +50,10 @@ function IdleJoinButton({
   variant: SessionJoinVariant;
   onJoin: () => void;
 }) {
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const text = busy ? "Đang vào lớp…" : label;
+  useAuthTextSwap(labelRef, text);
+
   return (
     <Button
       type="button"
@@ -61,7 +66,9 @@ function IdleJoinButton({
       ) : (
         <Video className="size-5" aria-hidden />
       )}
-      {busy ? "Đang vào lớp…" : label}
+      <span ref={labelRef} className="t-text-swap">
+        {text}
+      </span>
     </Button>
   );
 }

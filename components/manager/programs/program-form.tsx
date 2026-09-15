@@ -29,6 +29,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
+import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getProgramFrameworks,
@@ -107,12 +108,16 @@ const INPUT_CLS = "h-9 rounded-lg border-input bg-card text-sm text-foreground f
 const TEXTAREA_CLS = "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring resize-none placeholder:text-muted-foreground";
 
 function FieldError({ message }: { message?: string }) {
+  const shakeRef = useRef<HTMLParagraphElement>(null);
+  useAuthErrorShake(shakeRef, message);
   if (!message) return null;
   return (
-    <p className={ERR_CLS}>
-      <AlertCircle className="size-3 shrink-0" />
-      {message}
-    </p>
+    <div className="t-input-wrap is-error">
+      <p ref={shakeRef} className={cn(ERR_CLS, "t-input is-error")}>
+        <AlertCircle className="size-3 shrink-0" />
+        <span className="t-error-msg">{message}</span>
+      </p>
+    </div>
   );
 }
 

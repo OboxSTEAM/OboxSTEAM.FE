@@ -50,8 +50,6 @@ type ProgramEnrollPaymentDialogProps = {
   holdExpiresAt?: string | null;
 };
 
-const STEP_EASE = "motion-safe:ease-[cubic-bezier(0.16,1,0.3,1)]";
-
 function getParentDisplayName(parent: ParentLinkedStudent): string {
   if (parent.fullName?.trim()) return parent.fullName.trim();
   const local = parent.email.split("@")[0] ?? "PH";
@@ -65,35 +63,6 @@ function getParentInitials(parent: ParentLinkedStudent): string {
     return `${parts[0]![0] ?? ""}${parts[parts.length - 1]![0] ?? ""}`.toUpperCase();
   }
   return name.slice(0, 2).toUpperCase();
-}
-
-function PaymentStepPanel({
-  active,
-  from,
-  children,
-}: {
-  active: boolean;
-  from: "left" | "right";
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      aria-hidden={!active}
-      inert={!active ? true : undefined}
-      className={cn(
-        "motion-safe:transition-[opacity,transform] motion-safe:duration-300 motion-reduce:transition-none",
-        STEP_EASE,
-        active
-          ? "relative translate-x-0 opacity-100"
-          : cn(
-              "pointer-events-none absolute inset-x-0 top-0 opacity-0",
-              from === "right" ? "translate-x-6" : "-translate-x-6",
-            ),
-      )}
-    >
-      {children}
-    </div>
-  );
 }
 
 function PaymentOptionTile({
@@ -207,7 +176,6 @@ export function ProgramEnrollPaymentDialog({
     : `${priceParts.amount} ${priceParts.unit}`;
 
   const [step, setStep] = useState<PaymentStep>("choose");
-  const [panelFrom, setPanelFrom] = useState<"left" | "right">("right");
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [parents, setParents] = useState<ParentLinkedStudent[]>([]);
   const [parentsLoadState, setParentsLoadState] = useState<
@@ -219,7 +187,6 @@ export function ProgramEnrollPaymentDialog({
 
   const resetDialog = useCallback(() => {
     setStep("choose");
-    setPanelFrom("right");
     setIsCheckingOut(false);
     setSendingParentId(null);
   }, []);
@@ -233,12 +200,10 @@ export function ProgramEnrollPaymentDialog({
   );
 
   const goToChoose = useCallback(() => {
-    setPanelFrom("left");
     setStep("choose");
   }, []);
 
   const goToParent = useCallback(() => {
-    setPanelFrom("right");
     setStep("parent");
   }, []);
 
@@ -383,8 +348,16 @@ export function ProgramEnrollPaymentDialog({
           </div>
         </div>
 
-        <div className="relative px-6 py-5">
-          <PaymentStepPanel active={step === "choose"} from={panelFrom}>
+        <div
+          className="t-page-slide px-6 py-5"
+          data-page={step === "choose" ? "1" : "2"}
+        >
+          <section
+            className="t-page"
+            data-page-id="1"
+            aria-hidden={step !== "choose"}
+            inert={step !== "choose" ? true : undefined}
+          >
             <div className="grid grid-cols-2 gap-3">
               <PaymentOptionTile
                 title="Tự thanh toán"
@@ -405,12 +378,22 @@ export function ProgramEnrollPaymentDialog({
             {isCheckingOut ? (
               <p className="mt-4 flex items-center justify-center gap-2 text-xs text-[#6B6B6B]">
                 <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                Đang chuyển đến Stripe…
+                <span
+                  className="t-shimmer"
+                  data-text="Đang chuyển đến Stripe…"
+                >
+                  Đang chuyển đến Stripe…
+                </span>
               </p>
             ) : null}
-          </PaymentStepPanel>
+          </section>
 
-          <PaymentStepPanel active={step === "parent"} from={panelFrom}>
+          <section
+            className="t-page"
+            data-page-id="2"
+            aria-hidden={step !== "parent"}
+            inert={step !== "parent" ? true : undefined}
+          >
             {parentsLoadState === "loading" ? (
               <ParentListSkeleton />
             ) : parentsLoadState === "error" ? (
@@ -479,7 +462,7 @@ export function ProgramEnrollPaymentDialog({
                 </Link>
               </div>
             )}
-          </PaymentStepPanel>
+          </section>
         </div>
       </DialogPopup>
     </Dialog>

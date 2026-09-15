@@ -5,6 +5,7 @@ import {
   useCallback,
   useMemo,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
@@ -100,6 +101,7 @@ import {
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { waitMinSkeleton } from "@/lib/ui/min-skeleton-delay";
 import { cn } from "@/lib/utils";
 import {
   THEME_SELECT_TRIGGER,
@@ -1087,6 +1089,179 @@ function selToQuery(sel: SelectedNode): string {
     params.set("moduleId", sel.moduleId);
   }
   return params.toString();
+}
+
+function selPanelKey(sel: SelectedNode): string {
+  if (!sel) return "empty";
+  if (sel.kind === "program") return "program";
+  return selToQuery(sel) || sel.kind;
+}
+
+function SkelBar({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn("animate-pulse rounded-md bg-border/55", className)}
+      aria-hidden
+    />
+  );
+}
+
+/** Empty input chrome — bordered field shell so the skeleton reads as a form. */
+function SkelField({
+  labelWidth = "w-20",
+  className,
+}: {
+  labelWidth?: string;
+  className?: string;
+}) {
+  return (
+    <div className={cn("flex flex-col gap-1.5", className)}>
+      <SkelBar className={cn("h-3.5", labelWidth)} />
+      <div
+        className="flex h-9 items-center rounded-lg border bg-card px-3"
+        style={{ borderColor: W.border }}
+      >
+        <SkelBar className="h-3 w-2/3" />
+      </div>
+    </div>
+  );
+}
+
+function DetailFormSkeleton() {
+  return (
+    <div className="flex flex-col" aria-busy="true" aria-live="polite">
+      {/* Header — matches PHdr */}
+      <div
+        className="flex shrink-0 items-center gap-3 border-b px-5 py-4"
+        style={{ background: W.surface, borderColor: W.border }}
+      >
+        <div
+          className="flex size-9 shrink-0 items-center justify-center rounded-lg border"
+          style={{ background: "var(--card)", borderColor: W.border }}
+        >
+          <SkelBar className="size-4 rounded" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-2">
+          <SkelBar className="h-4 w-48 max-w-full" />
+          <SkelBar className="h-3 w-36 max-w-[70%]" />
+        </div>
+      </div>
+
+      <div className="space-y-6 p-5">
+        <div>
+          <SkelBar className="mb-3 h-3 w-28" />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Name + code row */}
+            <SkelField className="min-w-0" labelWidth="w-16" />
+            <SkelField className="min-w-0" labelWidth="w-20" />
+            <SkelField className="min-w-0" labelWidth="w-24" />
+            <SkelField className="min-w-0" labelWidth="w-28" />
+            {/* Description textarea */}
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <SkelBar className="h-3.5 w-14" />
+              <div
+                className="space-y-2.5 rounded-lg border bg-card p-3"
+                style={{ borderColor: W.border }}
+              >
+                <SkelBar className="h-3 w-full" />
+                <SkelBar className="h-3 w-[92%]" />
+                <SkelBar className="h-3 w-[70%]" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <SkelBar className="mb-3 h-3 w-24" />
+          <div
+            className="rounded-xl border p-4"
+            style={{ borderColor: W.border, background: W.surface }}
+          >
+            <div className="grid grid-cols-3 gap-3">
+              <SkelField labelWidth="w-16" />
+              <SkelField labelWidth="w-14" />
+              <SkelField labelWidth="w-20" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky action bar */}
+      <div
+        className="mt-auto flex shrink-0 justify-end gap-2 border-t px-5 py-3"
+        style={{ borderColor: W.border, background: W.surface }}
+      >
+        <div
+          className="h-9 w-20 animate-pulse rounded-lg border bg-card"
+          style={{ borderColor: W.border }}
+          aria-hidden
+        />
+        <div
+          className="h-9 w-28 animate-pulse rounded-lg bg-border/55"
+          aria-hidden
+        />
+      </div>
+
+      <span className="sr-only">Đang tải form…</span>
+    </div>
+  );
+}
+
+/**
+ * On tree selection change: show a form skeleton (feedback that the panel
+ * is switching) then reveal the new form. Holds prior min-height so the
+ * absolute tree column does not jump. No translate/panel-slide remount.
+ */
+function DetailPanelSwitcher({
+  selectionKey,
+  children,
+}: {
+  selectionKey: string;
+  children: React.ReactNode;
+}) {
+  const hostRef = useRef<HTMLDivElement>(null);
+  const [visibleKey, setVisibleKey] = useState(selectionKey);
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [holdMinHeight, setHoldMinHeight] = useState<number | undefined>();
+
+  useEffect(() => {
+    if (selectionKey === visibleKey) return;
+
+    const height = hostRef.current?.offsetHeight;
+    if (height && height > 0) setHoldMinHeight(height);
+    setIsSwitching(true);
+
+    const startedAt = Date.now();
+    let cancelled = false;
+
+    void (async () => {
+      await waitMinSkeleton(startedAt, 280);
+      if (cancelled) return;
+      setVisibleKey(selectionKey);
+      setIsSwitching(false);
+      requestAnimationFrame(() => setHoldMinHeight(undefined));
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectionKey, visibleKey]);
+
+  const showSkeleton = isSwitching || visibleKey !== selectionKey;
+
+  return (
+    <div
+      ref={hostRef}
+      className="min-w-0"
+      style={holdMinHeight ? { minHeight: holdMinHeight } : undefined}
+    >
+      {showSkeleton ? (
+        <DetailFormSkeleton />
+      ) : (
+        <div className="t-table-reveal is-revealed min-w-0">{children}</div>
+      )}
+    </div>
+  );
 }
 
 function movedItemNewOrder(currentIds: string[], orderedIds: string[]): number | null {
@@ -2391,7 +2566,11 @@ export function CurriculumSplitPanel({
         <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
           <ParentPathBreadcrumb parts={pathParts} />
         </div>
-        <div className="min-w-0">{detail()}</div>
+        <div className="min-w-0">
+          <DetailPanelSwitcher selectionKey={selPanelKey(sel)}>
+            {detail()}
+          </DetailPanelSwitcher>
+        </div>
       </div>
     </div>
 
