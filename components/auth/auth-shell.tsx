@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -12,6 +13,8 @@ import {
   type AuthPanelContent,
 } from "@/lib/auth/content";
 import { cn } from "@/lib/utils";
+
+import { useAuthTextSwap } from "./use-auth-text-swap";
 
 type AuthShellProps = {
   pageKey: AuthPageKey;
@@ -146,7 +149,11 @@ export function AuthFormHeader({
 
 export function AuthFieldError({ message }: { message?: string }) {
   if (!message) return null;
-  return <p className="text-xs text-destructive">{message}</p>;
+  return (
+    <p className="t-error-msg text-xs text-destructive" aria-live="polite">
+      {message}
+    </p>
+  );
 }
 
 export function AuthSubmitButton({
@@ -155,9 +162,14 @@ export function AuthSubmitButton({
   className,
 }: {
   isLoading: boolean;
-  children: React.ReactNode;
+  children: string;
   className?: string;
 }) {
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const idleLabel = children.trim();
+  const label = isLoading ? "Đang xử lý…" : idleLabel;
+  useAuthTextSwap(labelRef, label);
+
   return (
     <button
       type="submit"
@@ -167,7 +179,9 @@ export function AuthSubmitButton({
         className,
       )}
     >
-      {isLoading ? "Đang xử lý…" : children}
+      <span ref={labelRef} className="t-text-swap">
+        {label}
+      </span>
     </button>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef } from "react";
 import type { LucideIcon } from "lucide-react";
 import { GraduationCap, Users } from "lucide-react";
 
@@ -8,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 
 import { AuthFieldError } from "./auth-shell";
+import { useAuthErrorShake } from "./use-auth-error-shake";
 
 const REGISTER_ROLE_OPTIONS: {
   value: RegisterRole;
@@ -42,17 +44,22 @@ export function RegisterRolePicker({
   onBlur,
   error,
 }: RegisterRolePickerProps) {
+  const shakeRef = useRef<HTMLDivElement>(null);
+  useAuthErrorShake(shakeRef, error);
+  const hasError = Boolean(error);
+
   return (
-    <div className="space-y-2">
+    <div className={cn("t-input-wrap space-y-2", hasError && "is-error")}>
       <Label id="register-role-label" className="text-[#2D2D2D]">
         Vai trò
       </Label>
 
       <div
+        ref={shakeRef}
         role="radiogroup"
         aria-labelledby="register-role-label"
-        aria-invalid={error ? "true" : undefined}
-        className="grid grid-cols-2 gap-2"
+        aria-invalid={hasError ? "true" : undefined}
+        className={cn("t-input grid grid-cols-2 gap-2 rounded-xl", hasError && "is-error")}
         onBlur={onBlur}
       >
         {REGISTER_ROLE_OPTIONS.map((option) => {
