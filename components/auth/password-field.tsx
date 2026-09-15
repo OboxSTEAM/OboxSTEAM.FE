@@ -53,7 +53,18 @@ export function PasswordField({
           className="absolute top-1/2 right-3 z-10 -translate-y-1/2 text-[#6B6B6B] transition-colors hover:text-[#2D2D2D]"
           aria-label={visible ? "Ẩn mật khẩu" : "Hiện mật khẩu"}
         >
-          {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          <span
+            className="t-icon-swap size-4"
+            data-state={visible ? "b" : "a"}
+            aria-hidden
+          >
+            <span className="t-icon" data-icon="a">
+              <Eye className="size-4" />
+            </span>
+            <span className="t-icon" data-icon="b">
+              <EyeOff className="size-4" />
+            </span>
+          </span>
         </button>
       </div>
       <AuthFieldError message={error} />

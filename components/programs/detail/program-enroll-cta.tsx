@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 
+import { useAuthTextSwap } from "@/components/auth/use-auth-text-swap";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { WithdrawProgramEnrollmentControl } from "@/components/programs/withdraw-program-enrollment-control";
 import { useCurrentUser } from "@/hooks/use-current-user";
@@ -252,6 +253,11 @@ export function ProgramEnrollCta({
     isHero ? "h-11 px-6 text-sm" : "h-11 w-full text-sm",
   );
 
+  const enrollIdleLabel = isFree ? "Đăng ký miễn phí" : "Đăng ký chương trình";
+  const enrollBusyLabel = isEnrollingFree ? "Đang đăng ký…" : enrollIdleLabel;
+  const enrollLabelRef = useRef<HTMLSpanElement>(null);
+  useAuthTextSwap(enrollLabelRef, enrollBusyLabel);
+
   const subtextClassName = cn(
     "text-xs leading-relaxed text-[#6B6B6B]",
     isHero ? "" : "text-center",
@@ -377,15 +383,11 @@ export function ProgramEnrollCta({
         onClick={handleEnrollClick}
       >
         {isEnrollingFree ? (
-          <>
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-            Đang đăng ký…
-          </>
-        ) : isFree ? (
-          "Đăng ký miễn phí"
-        ) : (
-          "Đăng ký chương trình"
-        )}
+          <Loader2 className="size-4 animate-spin" aria-hidden />
+        ) : null}
+        <span ref={enrollLabelRef} className="t-text-swap">
+          {enrollBusyLabel}
+        </span>
       </Button>
     );
   };

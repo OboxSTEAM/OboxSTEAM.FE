@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ListTree, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
@@ -57,6 +57,11 @@ export function CurriculumShell({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [desktopNavOpen, setDesktopNavOpen] = useState(true);
   const [mainView, setMainView] = useState<CurriculumMainView>(initialView);
+  const [mindMapReady, setMindMapReady] = useState(initialView === "mind-map");
+
+  useEffect(() => {
+    if (mainView === "mind-map") setMindMapReady(true);
+  }, [mainView]);
 
   const flatAssignment = selectedAssignmentId
     ? findFlatAssignment(curriculum, selectedAssignmentId)
@@ -141,43 +146,68 @@ export function CurriculumShell({
               aria-expanded={desktopNavOpen}
               aria-controls="curriculum-desktop-nav"
             >
-              {desktopNavOpen ? (
-                <PanelLeftClose className="size-4" aria-hidden />
-              ) : (
-                <PanelLeftOpen className="size-4" aria-hidden />
-              )}
+              <span
+                className="t-icon-swap size-4"
+                data-state={desktopNavOpen ? "a" : "b"}
+                aria-hidden
+              >
+                <span className="t-icon" data-icon="a">
+                  <PanelLeftClose className="size-4" />
+                </span>
+                <span className="t-icon" data-icon="b">
+                  <PanelLeftOpen className="size-4" />
+                </span>
+              </span>
               {desktopNavOpen ? "Ẩn nội dung" : "Hiện nội dung"}
             </Button>
           </div>
 
-          <div className="min-h-0 flex-1">
-            {mainView === "mind-map" ? (
-              <CurriculumMindMapPanel
-                enrollmentId={curriculum.enrollmentId}
-                programId={curriculum.programId}
-                onOpenLesson={handleOpenLessonFromMap}
-                className="h-full"
-              />
-            ) : selectedAssignmentId && flatAssignment ? (
-              <AssignmentPanel
-                key={selectedAssignmentId}
-                curriculum={curriculum}
-                assignmentId={selectedAssignmentId}
-                flatAssignment={flatAssignment}
-                onCurriculumRefresh={onCurriculumRefresh}
-                programPrice={programPrice}
-              />
-            ) : (
-              <ActivityPanel
-                key={selectedActivityId ?? "empty"}
-                curriculum={curriculum}
-                selectedActivityId={selectedActivityId}
-                onSelectActivity={onSelectActivity}
-                onCurriculumRefresh={onCurriculumRefresh}
-                classSessions={classContext?.sessions ?? []}
-                classId={classContext?.classId ?? null}
-              />
-            )}
+          <div
+            className="t-page-slide min-h-0 flex-1"
+            data-page={mainView === "content" ? "1" : "2"}
+          >
+            <section
+              className="t-page h-full min-h-0"
+              data-page-id="1"
+              aria-hidden={mainView !== "content"}
+              inert={mainView !== "content" ? true : undefined}
+            >
+              {selectedAssignmentId && flatAssignment ? (
+                <AssignmentPanel
+                  key={selectedAssignmentId}
+                  curriculum={curriculum}
+                  assignmentId={selectedAssignmentId}
+                  flatAssignment={flatAssignment}
+                  onCurriculumRefresh={onCurriculumRefresh}
+                  programPrice={programPrice}
+                />
+              ) : (
+                <ActivityPanel
+                  key={selectedActivityId ?? "empty"}
+                  curriculum={curriculum}
+                  selectedActivityId={selectedActivityId}
+                  onSelectActivity={onSelectActivity}
+                  onCurriculumRefresh={onCurriculumRefresh}
+                  classSessions={classContext?.sessions ?? []}
+                  classId={classContext?.classId ?? null}
+                />
+              )}
+            </section>
+            <section
+              className="t-page h-full min-h-0"
+              data-page-id="2"
+              aria-hidden={mainView !== "mind-map"}
+              inert={mainView !== "mind-map" ? true : undefined}
+            >
+              {mindMapReady ? (
+                <CurriculumMindMapPanel
+                  enrollmentId={curriculum.enrollmentId}
+                  programId={curriculum.programId}
+                  onOpenLesson={handleOpenLessonFromMap}
+                  className="h-full"
+                />
+              ) : null}
+            </section>
           </div>
         </main>
       </div>

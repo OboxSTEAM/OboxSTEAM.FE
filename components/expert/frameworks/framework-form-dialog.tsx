@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
 import { ListChecks, Plus, Ruler, SlidersHorizontal, Trash2 } from "lucide-react";
 import { z } from "zod";
 
+import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -506,6 +507,14 @@ export function FrameworkFormDialog({
 }
 
 function FieldError({ message }: { message?: string }) {
+  const shakeRef = useRef<HTMLParagraphElement>(null);
+  useAuthErrorShake(shakeRef, message);
   if (!message) return null;
-  return <p className="text-xs font-medium text-primary">{message}</p>;
+  return (
+    <div className="t-input-wrap is-error">
+      <p ref={shakeRef} className="t-input is-error text-xs font-medium text-primary">
+        <span className="t-error-msg">{message}</span>
+      </p>
+    </div>
+  );
 }

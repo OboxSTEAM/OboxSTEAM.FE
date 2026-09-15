@@ -176,76 +176,91 @@ export function CurriculumMindMapPanel({
   };
 
   return (
-    <div className={cn("relative h-full min-h-0 w-full", className)}>
-      {state.isLoading ? <MindMapSkeleton className="h-full" /> : null}
+    <div
+      className={cn(
+        "t-skel relative h-full min-h-0 w-full",
+        !state.isLoading && "is-revealed",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "t-skel-skeleton min-h-full",
+          state.isLoading && "is-pulsing",
+        )}
+      >
+        <MindMapSkeleton className="h-full min-h-full" />
+      </div>
 
-      {!state.isLoading && state.loadError ? (
-        <div className="flex h-full flex-col items-center justify-center gap-3 px-6 text-center">
-          <p className="text-sm text-muted-foreground">{state.loadError}</p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setRetryKey((value) => value + 1)}
-          >
-            Thử lại
-          </Button>
-        </div>
-      ) : null}
+      <div className="t-skel-content min-h-full">
+        {!state.isLoading && state.loadError ? (
+          <div className="flex h-full min-h-full flex-col items-center justify-center gap-3 px-6 text-center">
+            <p className="text-sm text-muted-foreground">{state.loadError}</p>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRetryKey((value) => value + 1)}
+            >
+              Thử lại
+            </Button>
+          </div>
+        ) : null}
 
-      {!state.isLoading && !state.loadError && model ? (
-        <>
-          <MindMapCanvas
-            model={model}
-            expandedIds={state.expandedIds}
-            selectedNodeId={state.selectedNodeId}
-            onSelectNode={handleSelectNode}
-            onToggleExpand={handleToggleExpand}
-            className="h-full"
-          />
+        {!state.isLoading && !state.loadError && model ? (
+          <div className="relative h-full min-h-full">
+            <MindMapCanvas
+              model={model}
+              expandedIds={state.expandedIds}
+              selectedNodeId={state.selectedNodeId}
+              onSelectNode={handleSelectNode}
+              onToggleExpand={handleToggleExpand}
+              className="h-full"
+            />
 
-          <AnimatePresence mode="popLayout">
-            {selectedNode ? (
-              <motion.div
-                key={selectedNode.id}
-                className={cn(
-                  "pointer-events-none absolute z-20 flex items-start",
-                  "inset-x-3 bottom-3 max-sm:justify-center",
-                  "sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-[min(100%-2rem,20rem)]",
-                )}
-                initial={
-                  reduceMotion
-                    ? false
-                    : { opacity: 0, y: 24, x: 0 }
-                }
-                animate={{ opacity: 1, y: 0, x: 0 }}
-                exit={
-                  reduceMotion ? undefined : { opacity: 0, y: 16 }
-                }
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { type: "spring", stiffness: 360, damping: 32 }
-                }
-              >
-                <div className="pointer-events-auto w-full max-sm:max-w-md">
-                  <MindMapNodeInspector
-                    node={selectedNode}
-                    breadcrumb={breadcrumb}
-                    onClose={() =>
-                      setState((current) => ({
-                        ...current,
-                        selectedNodeId: null,
-                      }))
-                    }
-                    onOpenLesson={onOpenLesson}
-                  />
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </>
-      ) : null}
+            <AnimatePresence mode="popLayout">
+              {selectedNode ? (
+                <motion.div
+                  key={selectedNode.id}
+                  className={cn(
+                    "pointer-events-none absolute z-20 flex items-start",
+                    "inset-x-3 bottom-3 max-sm:justify-center",
+                    "sm:inset-x-auto sm:top-4 sm:right-4 sm:bottom-auto sm:w-[min(100%-2rem,20rem)]",
+                  )}
+                  initial={
+                    reduceMotion
+                      ? false
+                      : { opacity: 0, y: 24, x: 0 }
+                  }
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  exit={
+                    reduceMotion ? undefined : { opacity: 0, y: 16 }
+                  }
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : { type: "spring", stiffness: 360, damping: 32 }
+                  }
+                >
+                  <div className="pointer-events-auto w-full max-sm:max-w-md">
+                    <MindMapNodeInspector
+                      node={selectedNode}
+                      breadcrumb={breadcrumb}
+                      onClose={() =>
+                        setState((current) => ({
+                          ...current,
+                          selectedNodeId: null,
+                        }))
+                      }
+                      onOpenLesson={onOpenLesson}
+                    />
+                  </div>
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

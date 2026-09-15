@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -13,6 +13,7 @@ import {
   MessageSquareWarning,
 } from "lucide-react";
 
+import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -525,10 +526,7 @@ export function ExpertReviewDetail({ program }: ExpertReviewDetailProps) {
             </div>
 
             {formError ? (
-              <p className="flex items-start gap-1.5 text-xs font-medium text-primary">
-                <AlertCircle className="mt-px size-3.5 shrink-0" />
-                {formError}
-              </p>
+              <ReviewFormError message={formError} />
             ) : null}
 
             {isPendingReview ? null : (
@@ -567,6 +565,22 @@ export function ExpertReviewDetail({ program }: ExpertReviewDetailProps) {
           </section>
         </aside>
       </div>
+    </div>
+  );
+}
+
+function ReviewFormError({ message }: { message: string }) {
+  const shakeRef = useRef<HTMLParagraphElement>(null);
+  useAuthErrorShake(shakeRef, message);
+  return (
+    <div className="t-input-wrap is-error">
+      <p
+        ref={shakeRef}
+        className="t-input is-error flex items-start gap-1.5 text-xs font-medium text-primary"
+      >
+        <AlertCircle className="mt-px size-3.5 shrink-0" />
+        <span className="t-error-msg">{message}</span>
+      </p>
     </div>
   );
 }

@@ -165,8 +165,16 @@ export function RetakeCheckoutDialog({
           </div>
         </div>
 
-        <div className="px-6 py-5">
-          {step === "choose" ? (
+        <div
+          className="t-page-slide px-6 py-5"
+          data-page={step === "choose" ? "1" : "2"}
+        >
+          <section
+            className="t-page"
+            data-page-id="1"
+            aria-hidden={step !== "choose"}
+            inert={step !== "choose" ? true : undefined}
+          >
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -198,69 +206,83 @@ export function RetakeCheckoutDialog({
               {isCheckingOut ? (
                 <p className="col-span-2 flex items-center justify-center gap-2 text-xs text-learn-muted">
                   <Loader2 className="size-3.5 animate-spin" aria-hidden />
-                  Đang chuyển đến Stripe…
+                  <span
+                    className="t-shimmer"
+                    data-text="Đang chuyển đến Stripe…"
+                  >
+                    Đang chuyển đến Stripe…
+                  </span>
                 </p>
               ) : null}
             </div>
-          ) : parentsLoadState === "loading" ? (
-            <div className="space-y-2">
-              <div className="h-12 animate-pulse rounded-xl bg-learn-surface-2" />
-              <div className="h-12 animate-pulse rounded-xl bg-learn-surface-2" />
-            </div>
-          ) : parentsLoadState === "error" ? (
-            <div className="rounded-xl border border-learn-border px-4 py-5 text-center">
-              <p className="text-sm text-learn-muted">Không tải được phụ huynh.</p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={() => void loadParents()}
-              >
-                Thử lại
-              </Button>
-            </div>
-          ) : verifiedParents.length > 0 ? (
-            <ul className="max-h-[280px] space-y-2 overflow-y-auto">
-              {verifiedParents.map((parent) => (
-                <li key={parent.linkedUserId}>
-                  <button
-                    type="button"
-                    disabled={sendingParentId != null}
-                    onClick={() => void handleSendToParent(parent)}
-                    className="flex w-full items-center justify-between gap-3 rounded-xl border border-learn-border px-3 py-2.5 text-left hover:bg-learn-surface-2"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-learn-text-strong">
-                        {getParentDisplayName(parent)}
+          </section>
+
+          <section
+            className="t-page"
+            data-page-id="2"
+            aria-hidden={step !== "parent"}
+            inert={step !== "parent" ? true : undefined}
+          >
+            {parentsLoadState === "loading" ? (
+              <div className="space-y-2">
+                <div className="h-12 animate-pulse rounded-xl bg-learn-surface-2" />
+                <div className="h-12 animate-pulse rounded-xl bg-learn-surface-2" />
+              </div>
+            ) : parentsLoadState === "error" ? (
+              <div className="rounded-xl border border-learn-border px-4 py-5 text-center">
+                <p className="text-sm text-learn-muted">Không tải được phụ huynh.</p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="mt-3"
+                  onClick={() => void loadParents()}
+                >
+                  Thử lại
+                </Button>
+              </div>
+            ) : verifiedParents.length > 0 ? (
+              <ul className="max-h-[280px] space-y-2 overflow-y-auto">
+                {verifiedParents.map((parent) => (
+                  <li key={parent.linkedUserId}>
+                    <button
+                      type="button"
+                      disabled={sendingParentId != null}
+                      onClick={() => void handleSendToParent(parent)}
+                      className="flex w-full items-center justify-between gap-3 rounded-xl border border-learn-border px-3 py-2.5 text-left hover:bg-learn-surface-2"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-semibold text-learn-text-strong">
+                          {getParentDisplayName(parent)}
+                        </span>
+                        <span className="block truncate text-xs text-learn-muted">
+                          {parent.email}
+                        </span>
                       </span>
-                      <span className="block truncate text-xs text-learn-muted">
-                        {parent.email}
-                      </span>
-                    </span>
-                    {sendingParentId === parent.linkedUserId ? (
-                      <Loader2 className="size-4 animate-spin" aria-hidden />
-                    ) : (
-                      <Badge variant="secondary">Gửi</Badge>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <div className="rounded-xl border border-dashed border-learn-border px-4 py-5 text-center">
-              <Link2 className="mx-auto size-8 text-learn-primary/70" aria-hidden />
-              <p className="mt-2 text-sm font-semibold text-learn-text-strong">
-                Chưa có phụ huynh sẵn sàng
-              </p>
-              <Link
-                href="/profile"
-                className={cn(buttonVariants({ size: "sm" }), "mt-4 font-semibold")}
-              >
-                Mở hồ sơ cá nhân
-              </Link>
-            </div>
-          )}
+                      {sendingParentId === parent.linkedUserId ? (
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                      ) : (
+                        <Badge variant="secondary">Gửi</Badge>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-xl border border-dashed border-learn-border px-4 py-5 text-center">
+                <Link2 className="mx-auto size-8 text-learn-primary/70" aria-hidden />
+                <p className="mt-2 text-sm font-semibold text-learn-text-strong">
+                  Chưa có phụ huynh sẵn sàng
+                </p>
+                <Link
+                  href="/profile"
+                  className={cn(buttonVariants({ size: "sm" }), "mt-4 font-semibold")}
+                >
+                  Mở hồ sơ cá nhân
+                </Link>
+              </div>
+            )}
+          </section>
         </div>
       </DialogPopup>
     </Dialog>

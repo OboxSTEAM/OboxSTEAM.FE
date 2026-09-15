@@ -2,11 +2,11 @@
 
 import { useEffect, useRef, type InputHTMLAttributes, type ReactNode } from "react";
 
+import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import {
   generateEntityCode,
-  isShortEntityName,
   type EntityCodePrefix,
 } from "@/lib/curriculum/entity-code";
 
@@ -30,11 +30,20 @@ const W = {
 } as const;
 
 function FieldError({ msg }: { msg?: string }) {
-  return msg ? (
-    <p className="mt-1 text-xs font-semibold" style={{ color: W.primary }}>
-      {msg}
-    </p>
-  ) : null;
+  const shakeRef = useRef<HTMLParagraphElement>(null);
+  useAuthErrorShake(shakeRef, msg);
+  if (!msg) return null;
+  return (
+    <div className="t-input-wrap is-error">
+      <p
+        ref={shakeRef}
+        className="t-input is-error mt-1 text-xs font-semibold"
+        style={{ color: W.primary }}
+      >
+        <span className="t-error-msg">{msg}</span>
+      </p>
+    </div>
+  );
 }
 
 type NameWithAutoCodeProps = {
@@ -57,9 +66,8 @@ type NameWithAutoCodeProps = {
 };
 
 /**
- * Primary name + auto-generated mã.
- * Short names: mã sits beside the name on one aligned row.
- * Longer names: mã stacks below.
+ * Primary name + auto-generated mã in a fixed two-column row.
+ * Error shake targets the name input only so mã stays beside it.
  */
 export function NameWithAutoCode({
   nameLabel,
@@ -77,20 +85,36 @@ export function NameWithAutoCode({
 }: NameWithAutoCodeProps) {
   const onCodeChangeRef = useRef(onCodeChange);
   onCodeChangeRef.current = onCodeChange;
+  const nameInputRef = useRef<HTMLInputElement>(null);
+  const hasError = Boolean(nameError);
+  useAuthErrorShake(nameInputRef, nameError);
 
   useEffect(() => {
     if (lockCode || disabled) return;
     onCodeChangeRef.current(generateEntityCode(codePrefix, name));
   }, [name, lockCode, disabled, codePrefix]);
 
-  const sideBySide = isShortEntityName(name);
   const displayCode = code || generateEntityCode(codePrefix, name);
   const hint = lockCode ? "Mã đã lưu — không đổi khi sửa tên" : "Tự tạo từ tên";
 
-  const nameField = (
-    <>
-      <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+  return (
+    <div
+      className={cn(
+        "t-input-wrap grid grid-cols-[minmax(0,1fr)_minmax(10rem,16rem)] items-start gap-x-3 gap-y-1.5",
+        hasError && "is-error",
+      )}
+    >
+      <Label
+        className="text-sm font-semibold col-start-1 row-start-1"
+        style={{ color: W.textStrong }}
+      >
         {nameLabel} <span style={{ color: W.primary }}>*</span>
+      </Label>
+      <Label
+        className="text-sm font-semibold col-start-2 row-start-1"
+        style={{ color: W.textStrong }}
+      >
+        {codeLabel}
       </Label>
       <input
         type="text"
@@ -98,78 +122,48 @@ export function NameWithAutoCode({
         placeholder={namePlaceholder}
         disabled={disabled}
         onChange={(e) => onNameChange(e.target.value)}
-        className={cn(CURRICULUM_IN, disabled && "opacity-70")}
-        style={{ borderColor: nameError ? W.primary : W.border }}
+        aria-invalid={hasError}
         {...nameInputProps}
-      />
-      <FieldError msg={nameError} />
-    </>
-  );
-
-  const codeField = (
-    <>
-      <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-        {codeLabel}
-      </Label>
-      <div
+        ref={nameInputRef}
         className={cn(
-          "flex h-9 min-w-0 items-center truncate rounded-lg border border-dashed px-3 font-mono text-sm tabular-nums",
+          CURRICULUM_IN,
+          "t-input col-start-1 row-start-2 min-w-0",
+          hasError && "is-error",
           disabled && "opacity-70",
         )}
-        style={{ borderColor: W.border, color: W.muted, background: "var(--muted)" }}
+        style={{ borderColor: hasError ? W.primary : W.border }}
+      />
+      <div
+        className={cn(
+          "col-start-2 row-start-2 flex h-9 min-w-0 items-center truncate rounded-lg border border-dashed px-3 font-mono text-sm tabular-nums",
+          disabled && "opacity-70",
+        )}
+        style={{
+          borderColor: W.border,
+          color: W.muted,
+          background: "var(--muted)",
+        }}
         title={displayCode}
       >
         {displayCode}
       </div>
-      <p className="text-[11px] leading-snug" style={{ color: W.faint }}>
+      <div className="col-start-1 row-start-3 min-h-[1rem] min-w-0">
+        {hasError ? (
+          <p
+            className="t-error-msg text-xs font-semibold"
+            style={{ color: W.primary, opacity: 1, visibility: "visible" }}
+            aria-live="polite"
+          >
+            {nameError}
+          </p>
+        ) : null}
+      </div>
+      <p
+        className="col-start-2 row-start-3 text-[11px] leading-snug"
+        style={{ color: W.faint }}
+      >
         {hint}
       </p>
-    </>
-  );
-
-  if (sideBySide) {
-    return (
-      <div className="grid grid-cols-1 items-start gap-x-3 gap-y-1.5 sm:grid-cols-[minmax(0,1fr)_minmax(12rem,16rem)]">
-        <Label className="text-sm font-semibold sm:col-start-1 sm:row-start-1" style={{ color: W.textStrong }}>
-          {nameLabel} <span style={{ color: W.primary }}>*</span>
-        </Label>
-        <Label className="text-sm font-semibold sm:col-start-2 sm:row-start-1" style={{ color: W.textStrong }}>
-          {codeLabel}
-        </Label>
-        <input
-          type="text"
-          value={name}
-          placeholder={namePlaceholder}
-          disabled={disabled}
-          onChange={(e) => onNameChange(e.target.value)}
-          className={cn(CURRICULUM_IN, "sm:col-start-1 sm:row-start-2", disabled && "opacity-70")}
-          style={{ borderColor: nameError ? W.primary : W.border }}
-          {...nameInputProps}
-        />
-        <div
-          className={cn(
-            "flex h-9 min-w-0 items-center truncate rounded-lg border border-dashed px-3 font-mono text-sm tabular-nums sm:col-start-2 sm:row-start-2",
-            disabled && "opacity-70",
-          )}
-          style={{ borderColor: W.border, color: W.muted, background: "var(--muted)" }}
-          title={displayCode}
-        >
-          {displayCode}
-        </div>
-        <div className="min-h-[1rem] sm:col-start-1 sm:row-start-3">
-          <FieldError msg={nameError} />
-        </div>
-        <p className="text-[11px] leading-snug sm:col-start-2 sm:row-start-3" style={{ color: W.faint }}>
-          {hint}
-        </p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex flex-col gap-3">
-      <div className="space-y-1.5">{nameField}</div>
-      <div className="space-y-1.5">{codeField}</div>
     </div>
   );
 }

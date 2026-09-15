@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, ClipboardCheck, Loader2 } from "lucide-react";
+import { ClipboardCheck, Loader2 } from "lucide-react";
 
+import { SuccessCheckIcon } from "@/components/transitions/success-check-icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -81,7 +82,10 @@ export function StudentSessionCheckinPanel({
           className,
         )}
       >
-        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-learn-success" aria-hidden />
+        <SuccessCheckIcon
+          className="mt-0.5 shrink-0 text-learn-success"
+          size={20}
+        />
         <div>
           <p className="text-sm font-semibold text-learn-success">Đã check-in</p>
           <p className="mt-0.5 text-xs text-learn-muted">
