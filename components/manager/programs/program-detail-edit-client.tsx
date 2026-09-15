@@ -12,7 +12,6 @@ import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflo
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
-import { useSlidingTabs } from "@/components/transitions/use-sliding-tabs";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -45,24 +44,12 @@ function StepperTabBar({
   active: TabId;
   onChange: (id: TabId) => void;
 }) {
-  const { tabsRef, pillRef, syncPill } = useSlidingTabs();
-
-  useEffect(() => {
-    syncPill(true);
-  }, [active, syncPill]);
-
   return (
     <div
-      ref={tabsRef}
       role="tablist"
       aria-label="Các bước chỉnh sửa chương trình"
-      className="sticky top-0 z-30 flex items-center gap-0 border-b border-border bg-background px-6 pt-4"
+      className="sticky top-0 z-30 flex items-stretch gap-1 border-b border-border bg-background px-6"
     >
-      <span
-        ref={pillRef}
-        className="t-tabs-pill pointer-events-none absolute top-auto bottom-0 left-0 z-0 h-0.5 rounded-t-full bg-primary"
-        aria-hidden
-      />
       {TABS.map((tab, idx) => {
         const isActive = tab.id === active;
         return (
@@ -74,18 +61,18 @@ function StepperTabBar({
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
             className={cn(
-              "relative z-1 flex items-center gap-2 px-4 pb-3 text-sm font-medium transition-colors",
+              "-mb-px flex items-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors",
               isActive
-                ? "text-primary"
-                : "text-muted-foreground hover:text-foreground"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             <span
               className={cn(
-                "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold transition-colors",
+                "flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold tabular-nums transition-colors",
                 isActive
-                  ? "bg-primary text-white"
-                  : "bg-border text-muted-foreground"
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground",
               )}
             >
               {idx + 1}

@@ -40,6 +40,7 @@ import {
 } from "@/components/curriculum/structure-tree";
 
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -58,7 +59,6 @@ import {
   CompactNumberField,
   NameWithAutoCode,
 } from "@/components/manager/programs/curriculum-form-controls";
-import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import {
   type ProgramCohortLockClass,
@@ -1395,6 +1395,80 @@ function CourseActivityRows({
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   Cohort lock notice (manager curriculum edit)
+══════════════════════════════════════════════════════════════════════════════ */
+
+function cohortLockDescription(
+  blockingClasses: ProgramCohortLockClass[],
+  lockReason: string | null,
+): string {
+  if (blockingClasses.length === 0) {
+    return (
+      lockReason ??
+      "Không sửa khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên ghi danh."
+    );
+  }
+  if (blockingClasses[0]?.status === "InProgress") {
+    return `Có ${blockingClasses.length} lớp đang học. Chờ lớp hoàn thành rồi mới sửa/xóa khung chương trình.`;
+  }
+  return `Có ${blockingClasses.length} lớp đang tuyển sinh đã có học viên ghi danh.`;
+}
+
+function CohortLockBanner({
+  lockReason,
+  blockingClasses,
+}: {
+  lockReason: string | null;
+  blockingClasses: ProgramCohortLockClass[];
+}) {
+  return (
+    <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/80 bg-amber-50 px-3.5 py-3 text-amber-900">
+      <AlertTriangle className="mt-0.5 size-4 shrink-0" strokeWidth={2.25} aria-hidden />
+      <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className="rounded-md border-amber-400/50 bg-amber-100/80 px-2 py-0.5 text-[11px] font-semibold text-amber-900"
+          >
+            <Lock className="size-3" strokeWidth={2.5} aria-hidden />
+            Đang khóa
+          </Badge>
+          <p className="text-sm font-semibold">Khung chương trình</p>
+        </div>
+        <p className="mt-1 text-xs leading-relaxed text-amber-900/85">
+          {cohortLockDescription(blockingClasses, lockReason)}
+        </p>
+
+        {blockingClasses.length > 0 ? (
+          <ul className="mt-2.5 space-y-1.5">
+            {blockingClasses.map((item) => (
+              <li
+                key={item.id}
+                className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs"
+              >
+                <span className="min-w-0 font-medium text-amber-950">
+                  {item.name.trim() || "Lớp không tên"}
+                </span>
+                <span className="font-mono text-amber-900/65">
+                  {item.code.trim() || "—"}
+                </span>
+                <Link
+                  href={`/manager/classes/${item.id}`}
+                  className="inline-flex items-center gap-0.5 font-semibold text-[#0288D1] hover:underline"
+                >
+                  Xem lớp
+                  <ExternalLink className="size-3" aria-hidden />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
    MAIN: CurriculumSplitPanel
 ══════════════════════════════════════════════════════════════════════════════ */
 type CurriculumSplitPanelProps = {
@@ -2484,59 +2558,10 @@ export function CurriculumSplitPanel({
     <CurriculumMutateContext.Provider value={canMutate}>
     <div className="flex flex-col gap-3">
       {cohortLocked ? (
-        <div className="overflow-hidden rounded-xl border border-[#E94B3C]/35 bg-[#E94B3C]/8 shadow-[0_1px_0_rgba(233,75,60,0.12)]">
-          <div className="flex items-start gap-3 px-4 py-3.5">
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-[#E94B3C]/25 bg-[#E94B3C]/12 text-[#a82a1e]">
-              <Lock className="size-5" strokeWidth={2.25} />
-            </span>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-bold leading-snug text-[#a82a1e]">
-                Chương trình đang bị khóa chỉnh sửa
-              </p>
-              <p className="mt-1 text-xs leading-relaxed text-[#a82a1e]/90">
-                {blockingClasses.length > 0
-                  ? blockingClasses[0]?.status === "InProgress"
-                    ? `Có ${blockingClasses.length} lớp đang học. Chờ lớp hoàn thành rồi mới sửa/xóa khung chương trình.`
-                    : `Có ${blockingClasses.length} lớp đang tuyển sinh đã có học viên ghi danh.`
-                  : lockReason ??
-                    "Không sửa khung chương trình khi có lớp đang học hoặc lớp Open đã có học viên ghi danh."}
-              </p>
-            </div>
-          </div>
-
-          {blockingClasses.length > 0 ? (
-            <div className="border-t border-[#E94B3C]/20 bg-[color:color-mix(in_srgb,var(--card)_72%,transparent)] px-4 py-3">
-              <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.14em] text-[#a82a1e]/75">
-                Lớp đang khóa chương trình · {blockingClasses.length}
-              </p>
-              <ul className="space-y-2">
-                {blockingClasses.map((item) => (
-                  <li
-                    key={item.id}
-                    className="flex items-center gap-3 rounded-xl border border-[#E94B3C]/20 bg-card px-3 py-2.5 shadow-[0_1px_2px_rgba(45,43,39,0.04)]"
-                  >
-                    <ClassStatusBadge status={item.status} />
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground">
-                        {item.name.trim() || "Lớp không tên"}
-                      </p>
-                      <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
-                        {item.code.trim() || "—"}
-                      </p>
-                    </div>
-                    <Link
-                      href={`/manager/classes/${item.id}`}
-                      className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-[11px] font-semibold text-[#0d6e9c] transition-colors hover:bg-[#4FC3F7]/10 hover:text-[#0a5a80]"
-                    >
-                      Xem lớp
-                      <ExternalLink className="size-3" />
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-        </div>
+        <CohortLockBanner
+          lockReason={lockReason}
+          blockingClasses={blockingClasses}
+        />
       ) : null}
 
     <div
