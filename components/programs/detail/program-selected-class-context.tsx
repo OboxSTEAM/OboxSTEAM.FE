@@ -82,11 +82,18 @@ export function ProgramSelectedClassProvider({
   const [hold, setHold] = useState<ClassHold | null>(null);
   const [selectingClassId, setSelectingClassId] = useState<string | null>(null);
   const selectGenerationRef = useRef(0);
+  /** Avoid putting enrollment in effect deps (would release mid-checkout). */
+  const shouldForceReleaseRef = useRef(false);
 
   const holdState = useMemo(() => applyHoldState(hold), [hold]);
   const isHoldExpired = Boolean(
     hold?.holdExpiresAt && !holdState.hasValidHold,
   );
+
+  shouldForceReleaseRef.current =
+    enrollment?.status === "PendingPayment" ||
+    Boolean(hold?.programEnrollmentId?.trim()) ||
+    Boolean(getClassHold(programId)?.programEnrollmentId?.trim());
 
   useLayoutEffect(() => {
     setHold(null);
@@ -104,7 +111,8 @@ export function ProgramSelectedClassProvider({
     }
 
     if (stored) {
-      clearClassHold(programId);
+      // Local hold expired — still release BE PendingPayment (do not orphan).
+      void releaseProgramClassHoldOnExit(programId);
     }
 
     if (preferred) {
@@ -119,23 +127,28 @@ export function ProgramSelectedClassProvider({
   }, [programId]);
 
   useEffect(() => {
-    if (!hold?.holdExpiresAt || holdState.hasValidHold) return;
-    clearClassHold(programId);
-  }, [hold?.holdExpiresAt, holdState.hasValidHold, programId]);
-
-  useEffect(() => {
     if (!isStudent) return;
 
     const onPageHide = () => {
-      void releaseProgramClassHoldOnExit(programId, { keepalive: true });
+      void releaseProgramClassHoldOnExit(programId, {
+        keepalive: true,
+        forceRelease: shouldForceReleaseRef.current,
+      });
     };
 
     window.addEventListener("pagehide", onPageHide);
     return () => {
       window.removeEventListener("pagehide", onPageHide);
-      void releaseProgramClassHoldOnExit(programId);
+      void releaseProgramClassHoldOnExit(programId, {
+        forceRelease: shouldForceReleaseRef.current,
+      });
     };
   }, [isStudent, programId]);
+
+  useEffect(() => {
+    if (!hold?.holdExpiresAt || holdState.hasValidHold) return;
+    void releaseProgramClassHoldOnExit(programId);
+  }, [hold?.holdExpiresAt, hold?.classId, hold?.programEnrollmentId, holdState.hasValidHold, programId]);
 
   const selectClass = useCallback(
     async (classId: string) => {

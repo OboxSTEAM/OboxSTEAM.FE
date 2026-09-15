@@ -15,7 +15,12 @@ export type ScheduleTimedSession = {
   endTime: string;
   /** When present, Cancelled sessions are ignored. */
   status?: string | null;
+  /** When present, AssignmentWindow is ignored for meeting conflicts. */
+  sessionKind?: string | null;
 };
+
+/** Meeting slots only — assignment / multi-day windows are not seat conflicts. */
+const MAX_MEETING_SPAN_MS = 24 * 60 * 60 * 1000;
 
 export function overlaps(
   aStart: Date,
@@ -43,9 +48,20 @@ function isCancelledStatus(status: string | null | undefined): boolean {
   return status === "Cancelled";
 }
 
+function isTimedMeetingSlot(
+  start: Date,
+  end: Date,
+  sessionKind?: string | null,
+): boolean {
+  if (sessionKind === "AssignmentWindow") return false;
+  const spanMs = end.getTime() - start.getTime();
+  if (spanMs <= 0 || spanMs > MAX_MEETING_SPAN_MS) return false;
+  return true;
+}
+
 /**
  * First overlap between candidate sessions and the student's busy schedule.
- * Cancelled intervals/sessions are ignored.
+ * Cancelled intervals/sessions and non-meeting windows are ignored.
  */
 export function findBusyScheduleConflict(
   candidateSessions: ScheduleTimedSession[],
@@ -59,6 +75,7 @@ export function findBusyScheduleConflict(
     const cStart = parseApiDateTime(candidate.startTime);
     const cEnd = parseApiDateTime(candidate.endTime);
     if (!cStart || !cEnd) continue;
+    if (!isTimedMeetingSlot(cStart, cEnd, candidate.sessionKind)) continue;
 
     for (const busy of busyIntervals) {
       if (isCancelledStatus(busy.status)) continue;
@@ -66,6 +83,7 @@ export function findBusyScheduleConflict(
       const bStart = parseApiDateTime(busy.startTime);
       const bEnd = parseApiDateTime(busy.endTime);
       if (!bStart || !bEnd) continue;
+      if (!isTimedMeetingSlot(bStart, bEnd, busy.sessionKind)) continue;
       if (!overlaps(cStart, cEnd, bStart, bEnd)) continue;
 
       return {
@@ -106,6 +124,7 @@ export function getConflictingSessionIds(
     const cStart = parseApiDateTime(candidate.startTime);
     const cEnd = parseApiDateTime(candidate.endTime);
     if (!cStart || !cEnd) continue;
+    if (!isTimedMeetingSlot(cStart, cEnd, candidate.sessionKind)) continue;
 
     for (const busy of busyIntervals) {
       if (isCancelledStatus(busy.status)) continue;
@@ -113,6 +132,7 @@ export function getConflictingSessionIds(
       const bStart = parseApiDateTime(busy.startTime);
       const bEnd = parseApiDateTime(busy.endTime);
       if (!bStart || !bEnd) continue;
+      if (!isTimedMeetingSlot(bStart, bEnd, busy.sessionKind)) continue;
       if (!overlaps(cStart, cEnd, bStart, bEnd)) continue;
       ids.add(candidate.sessionId);
       break;

@@ -9,8 +9,21 @@ import {
 } from "@/lib/payment/seat-hold";
 import { clearPreferredClassId } from "@/lib/programs/preferred-class";
 
-function hasReleasableHold(programId: string): boolean {
+export type ReleaseClassHoldOnExitOptions = {
+  keepalive?: boolean;
+  /**
+   * When localStorage hold was cleared (e.g. expired) but BE still has
+   * PendingPayment — still call release-class-hold (idempotent).
+   */
+  forceRelease?: boolean;
+};
+
+function hasReleasableHold(
+  programId: string,
+  forceRelease = false,
+): boolean {
   if (isCheckoutRedirectPreserved(programId)) return false;
+  if (forceRelease) return true;
   const stored = getClassHold(programId);
   return Boolean(stored?.programEnrollmentId?.trim());
 }
@@ -33,8 +46,12 @@ export function clearLocalHoldAfterDirectCheckoutCancel(
 }
 
 /** Best-effort release during tab close / reload (`fetch` keepalive). */
-export function releaseProgramClassHoldKeepalive(programId: string): void {
-  if (typeof window === "undefined" || !hasReleasableHold(programId)) return;
+export function releaseProgramClassHoldKeepalive(
+  programId: string,
+  forceRelease = false,
+): void {
+  if (typeof window === "undefined") return;
+  if (!hasReleasableHold(programId, forceRelease)) return;
 
   const token = getAuthSession()?.accessToken;
   if (!token) return;
@@ -58,13 +75,15 @@ export function releaseProgramClassHoldKeepalive(programId: string): void {
 /** Release server hold when leaving program checkout (route change / unmount). */
 export async function releaseProgramClassHoldOnExit(
   programId: string,
-  options?: { keepalive?: boolean },
+  options?: ReleaseClassHoldOnExitOptions,
 ): Promise<void> {
+  const forceRelease = Boolean(options?.forceRelease);
+
   // Skip while redirecting to Stripe — hold must survive until checkout completes or BE cancel webhook.
-  if (!hasReleasableHold(programId)) return;
+  if (!hasReleasableHold(programId, forceRelease)) return;
 
   if (options?.keepalive) {
-    releaseProgramClassHoldKeepalive(programId);
+    releaseProgramClassHoldKeepalive(programId, forceRelease);
     return;
   }
 

@@ -1081,22 +1081,51 @@ function reasonForHttpStatus(
   return null;
 }
 
+function looksLikeErrorCode(value: string): boolean {
+  const trimmed = value.trim();
+  // Backend machine codes: FOO_BAR, HTTP409, E1234
+  return (
+    /^[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)+$/.test(trimmed) ||
+    /^[A-Z]{2,}\d+$/.test(trimmed)
+  );
+}
+
+/**
+ * Curated code → Vietnamese only. Never return raw machine codes to the UI.
+ */
+function translateKnownErrorCode(code: string | null | undefined): string | null {
+  if (!code?.trim()) return null;
+  const trimmed = code.trim();
+  const translated = translateApiMessage(trimmed);
+  if (!translated) return null;
+  // Unmapped SCREAMING_SNAKE codes pass through translateApiMessage unchanged.
+  if (translated === trimmed && looksLikeErrorCode(trimmed)) return null;
+  return translated;
+}
+
 function sanitizeApiMessage(message: string | null | undefined): string | null {
   if (!message) return null;
   const trimmed = message.trim();
   if (!trimmed || CLIENT_PLACEHOLDER_MESSAGES.has(trimmed)) return null;
   if (/^Request failed with status \d+/i.test(trimmed)) return null;
-  // Prefer Vietnamese; drop unmapped English so curated context reason wins.
-  return translateApiMessage(trimmed);
+
+  // Message field sometimes repeats the machine code — map or drop, never show raw.
+  if (looksLikeErrorCode(trimmed)) {
+    return translateKnownErrorCode(trimmed);
+  }
+
+  const translated = translateApiMessage(trimmed);
+  if (translated) return translated;
+
+  // Keep BE prose (Vietnamese already handled above; English kept as API response).
+  return trimmed;
 }
 
 function extractApiMessage(error: ApiRequestError | ApiResponseError): string | null {
   if (error instanceof ApiResponseError) {
-    if (error.code) {
-      const codeTranslated = translateApiMessage(error.code);
-      if (codeTranslated) return codeTranslated;
-    }
-    return sanitizeApiMessage(error.message);
+    const fromMessage = sanitizeApiMessage(error.message);
+    if (fromMessage) return fromMessage;
+    return translateKnownErrorCode(error.code);
   }
 
   const body = error.body as {
@@ -1106,14 +1135,13 @@ function extractApiMessage(error: ApiRequestError | ApiResponseError): string | 
     value?: { message?: string; code?: string };
   } | null;
 
-  const rawCode = body?.error?.code ?? body?.value?.code ?? body?.code;
-  if (rawCode) {
-    const codeTranslated = translateApiMessage(rawCode);
-    if (codeTranslated) return codeTranslated;
-  }
-
-  return sanitizeApiMessage(
+  const fromMessage = sanitizeApiMessage(
     body?.error?.message ?? body?.value?.message ?? body?.message,
+  );
+  if (fromMessage) return fromMessage;
+
+  return translateKnownErrorCode(
+    body?.error?.code ?? body?.value?.code ?? body?.code,
   );
 }
 
@@ -1381,8 +1409,8 @@ function fromNetworkError(): AppErrorState {
 
 /**
  * Normalize any thrown value into a three-part error for UI toasts.
- * Backend `error.message` is localized to Vietnamese when known; otherwise
- * curated context/`status` copy is used for `reason`.
+ * Prefers backend `error.message` (localized when known; English prose kept).
+ * Machine `error.code` only used via curated maps — never shown raw.
  */
 export function resolveAppError(
   error: unknown,
