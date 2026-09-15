@@ -7,6 +7,7 @@ import {
   ArrowRight,
   CalendarDays,
   Check,
+  Clock,
   History,
   MessageSquare,
   ShieldCheck,
@@ -293,7 +294,7 @@ export function ExpertScheduleManager() {
             {isLoading ? (
               <div className="space-y-4">
                 {[0, 1, 2].map((item) => (
-                  <Skeleton key={item} className="h-40 w-full rounded-2xl" />
+                  <Skeleton key={item} className="h-32 w-full rounded-2xl" />
                 ))}
               </div>
             ) : invites.length === 0 ? (
@@ -303,7 +304,7 @@ export function ExpertScheduleManager() {
                 description={view === "action" ? "Không có lời mời hoặc phản hồi sau buổi nào đang chờ bạn." : "Thử đổi chế độ xem, từ khóa hoặc bộ lọc trạng thái."}
               />
             ) : (
-              <ul className="space-y-4">
+              <ul className="space-y-3">
                 {invites.map((invite) => (
                   <InviteCard
                     key={invite.id}
@@ -345,26 +346,33 @@ function InviteCard({
     invite.sessionStartTime,
     invite.sessionEndTime,
   );
-  const needsAction = canRespondToInvite(invite) || needsFeedback(invite);
   const canGiveFeedback =
     needsFeedback(invite) ||
     (invite.status === "Accepted" &&
       invite.sessionStatus === "Completed" &&
       invite.mentorFeedback != null);
   const canRespond = canRespondToInvite(invite);
-  const stageLabel = needsFeedback(invite)
-    ? "Cần gửi phản hồi"
+  const awaitingFeedback = needsFeedback(invite);
+
+  const actionChip = awaitingFeedback
+    ? {
+        label: "Cần phản hồi",
+        Icon: MessageSquare,
+        className: "bg-primary/10 text-primary",
+      }
     : canRespond
-      ? "Chờ xác nhận"
+      ? {
+          label: "Chờ xác nhận",
+          Icon: Clock,
+          className: "bg-[#FDD835]/25 text-[#725D00] dark:text-[#fde047]",
+        }
       : invite.sessionStatus === "InProgress"
-        ? "Đang diễn ra"
-        : isUpcomingAccepted(invite)
-          ? "Sắp diễn ra"
-          : invite.sessionStatus === "Cancelled"
-            ? "Đã hủy"
-            : invite.status === "Declined"
-              ? "Đã từ chối"
-              : "Đã hoàn tất";
+        ? {
+            label: "Đang diễn ra",
+            Icon: Clock,
+            className: "bg-accent/15 text-[#0277BD]",
+          }
+        : null;
 
   const timeLabel = schedule.end
     ? `${schedule.start.time}–${schedule.end.time}`
@@ -375,112 +383,112 @@ function InviteCard({
       id={`engagement-${invite.id}`}
       className={cn(
         "rounded-2xl border border-border bg-card p-4 sm:p-5",
-        needsAction && "bg-muted/25",
-        isHighlighted && "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
+        isHighlighted &&
+          "ring-2 ring-primary/30 ring-offset-2 ring-offset-background",
       )}
     >
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 flex-1 gap-4">
-          <div className="flex w-[9.5rem] shrink-0 flex-col justify-center rounded-xl border border-border bg-background px-3.5 py-3 sm:w-[10.5rem]">
-            <p className="whitespace-nowrap font-mono text-lg font-bold tabular-nums tracking-tight text-foreground sm:text-xl">
-              {timeLabel}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:gap-5">
+        <div className="shrink-0 sm:w-[9.75rem] sm:border-r sm:border-border sm:pr-5">
+          <p className="font-mono text-xl font-bold tabular-nums tracking-tight text-foreground">
+            {timeLabel}
+          </p>
+          <p className="mt-1 text-sm font-semibold text-foreground">
+            {schedule.start.date}
+          </p>
+          {schedule.relative ? (
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              {schedule.relative}
             </p>
-            <p className="mt-1 text-sm font-semibold tabular-nums text-foreground">
-              {schedule.start.date}
-            </p>
-            {schedule.relative ? (
-              <p className="mt-2 w-fit rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
-                {schedule.relative}
+          ) : null}
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-1.5">
+                {actionChip ? (
+                  <Badge
+                    className={cn(
+                      "gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold",
+                      actionChip.className,
+                    )}
+                  >
+                    <actionChip.Icon
+                      className="size-3"
+                      strokeWidth={2.25}
+                      aria-hidden
+                    />
+                    {actionChip.label}
+                  </Badge>
+                ) : (
+                  <Badge
+                    className={cn(
+                      "rounded-md text-[11px] font-semibold",
+                      badge.className,
+                    )}
+                  >
+                    {badge.label}
+                  </Badge>
+                )}
+              </div>
+
+              <h3 className="mt-1.5 font-heading text-base font-bold text-foreground">
+                {invite.sessionTitle || "Buổi học chưa đặt tên"}
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                {invite.className || "Lớp chưa đặt tên"}
+                <span className="text-border"> · </span>
+                {CLASS_SESSION_KIND_LABELS[invite.sessionKind]}
+                <span className="text-border"> · </span>
+                {CLASS_SESSION_STATUS_LABELS[invite.sessionStatus]}
               </p>
+            </div>
+
+            {canRespond ? (
+              <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto">
+                <Button
+                  type="button"
+                  disabled={isBusy}
+                  onClick={() => void onRespond(invite, true)}
+                  className="h-9 gap-1.5 rounded-xl bg-foreground px-3.5 text-sm font-semibold text-background hover:bg-foreground/90"
+                >
+                  <Check className="size-4" />
+                  Nhận lời
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isBusy}
+                  onClick={() => void onRespond(invite, false)}
+                  className="h-9 gap-1.5 rounded-xl px-3.5 text-sm font-semibold"
+                >
+                  <X className="size-4" />
+                  Từ chối
+                </Button>
+              </div>
             ) : null}
           </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge
-                className={cn(
-                  "rounded-md text-[11px] font-semibold",
-                  needsAction
-                    ? "bg-primary/10 text-primary"
-                    : "bg-muted text-foreground",
-                )}
-              >
-                {stageLabel}
-              </Badge>
-              <Badge
-                className={cn(
-                  "rounded-md text-[11px] font-semibold",
-                  badge.className,
-                )}
-              >
-                {badge.label}
-              </Badge>
-            </div>
-
-            <h3 className="mt-2 font-heading text-base font-bold text-foreground">
-              {invite.sessionTitle || "Buổi học chưa đặt tên"}
-            </h3>
-
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-muted-foreground">
-              <span>{invite.className || "Lớp chưa đặt tên"}</span>
-              <span aria-hidden className="text-border">
-                ·
-              </span>
-              <span>{CLASS_SESSION_KIND_LABELS[invite.sessionKind]}</span>
-              <span aria-hidden className="text-border">
-                ·
-              </span>
-              <span>{CLASS_SESSION_STATUS_LABELS[invite.sessionStatus]}</span>
+          {canRespond && invite.scheduleConflictWarning ? (
+            <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+              <TriangleAlert className="mt-px size-3.5 shrink-0" />
+              {invite.scheduleConflictWarning}
             </p>
-          </div>
+          ) : null}
+
+          {canGiveFeedback ? (
+            <FeedbackForm
+              key={invite.mentorFeedbackAt ?? "draft"}
+              invite={invite}
+              isBusy={isBusy}
+              onSubmit={(comment, rating) =>
+                onSaveFeedback(invite, comment, rating)
+              }
+            />
+          ) : null}
         </div>
-
-        {canRespond ? (
-          <div className="grid w-full shrink-0 grid-cols-2 gap-2 sm:flex sm:w-auto">
-            <Button
-              type="button"
-              disabled={isBusy}
-              onClick={() => void onRespond(invite, true)}
-              className="h-10 gap-1.5 rounded-xl bg-foreground px-4 text-sm font-semibold text-background hover:bg-foreground/90"
-            >
-              <Check className="size-4" />
-              Nhận lời
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              disabled={isBusy}
-              onClick={() => void onRespond(invite, false)}
-              className="h-10 gap-1.5 rounded-xl border-border px-4 text-sm font-semibold"
-            >
-              <X className="size-4" />
-              Từ chối
-            </Button>
-          </div>
-        ) : null}
       </div>
-
-      {canRespond && invite.scheduleConflictWarning ? (
-        <p className="mt-4 flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 p-3 text-xs leading-relaxed text-amber-900 dark:text-amber-200">
-          <TriangleAlert className="mt-px size-4 shrink-0" />
-          {invite.scheduleConflictWarning}
-        </p>
-      ) : null}
-
-      {canGiveFeedback ? (
-        <FeedbackForm
-          key={invite.mentorFeedbackAt ?? "draft"}
-          invite={invite}
-          isBusy={isBusy}
-          onSubmit={(comment, rating) => onSaveFeedback(invite, comment, rating)}
-        />
-      ) : invite.status === "Accepted" &&
-        invite.sessionStatus !== "Cancelled" &&
-        invite.sessionStatus !== "Completed" ? (
-        <p className="mt-4 rounded-xl border border-dashed border-border bg-background/50 px-3 py-2.5 text-xs text-muted-foreground">
-          Nhận xét chuyên môn sẽ mở khi buổi học hoàn thành.
-        </p>
-      ) : null}
     </li>
   );
 }
@@ -502,11 +510,11 @@ function FeedbackForm({
   function handleSubmit() {
     const trimmed = comment.trim();
     if (!trimmed) {
-      setError("Vui lòng nhập nhận xét cho buổi học.");
+      setError("Vui lòng nhập nhận xét.");
       return;
     }
     if (rating < 1 || rating > 5) {
-      setError("Vui lòng chọn mức đánh giá từ 1 đến 5 sao.");
+      setError("Chọn đánh giá 1–5 sao.");
       return;
     }
     setError(null);
@@ -514,13 +522,25 @@ function FeedbackForm({
   }
 
   return (
-    <div className="mt-4 space-y-3 rounded-xl border border-border bg-background/60 p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h4 className="flex items-center gap-2 text-sm font-bold text-foreground">
-          <MessageSquare className="size-4 text-primary" />
-          Phản hồi cho mentor sau buổi
-        </h4>
-        <div className="flex items-center gap-1">
+    <div className="mt-3 space-y-2 border-t border-border pt-3">
+      <Textarea
+        rows={3}
+        value={comment}
+        onChange={(event) => setComment(event.target.value)}
+        disabled={isBusy}
+        placeholder="Điều tốt, điểm cần chỉnh, đề xuất buổi sau…"
+        aria-label={`Nhận xét cho buổi ${invite.sessionTitle || "học"}`}
+        className="min-h-[4.5rem] rounded-xl border-border bg-background"
+      />
+
+      {error ? <p className="text-xs font-medium text-primary">{error}</p> : null}
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <div
+          className="flex items-center rounded-lg border border-border bg-background px-2 py-1.5"
+          role="group"
+          aria-label="Đánh giá sao"
+        >
           {[1, 2, 3, 4, 5].map((value) => (
             <button
               key={value}
@@ -529,46 +549,27 @@ function FeedbackForm({
               onClick={() => setRating(value)}
               aria-label={`Đánh giá ${value} sao`}
               aria-pressed={rating === value}
-              className="rounded-md p-0.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
+              className="rounded p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:opacity-50"
             >
               <Star
                 className={cn(
                   "size-5",
                   value <= rating
                     ? "fill-[#FDD835] text-[#FDD835]"
-                    : "text-muted-foreground/40",
+                    : "text-muted-foreground/35",
                 )}
               />
             </button>
           ))}
         </div>
-      </div>
 
-      <Textarea
-        rows={3}
-        value={comment}
-        onChange={(event) => setComment(event.target.value)}
-        disabled={isBusy}
-        placeholder="Nêu điều đã diễn ra tốt, điểm mentor nên điều chỉnh và đề xuất cho buổi tiếp theo."
-        aria-label={`Nhận xét cho buổi ${invite.sessionTitle || "học"}`}
-        className="rounded-xl border-input bg-card"
-      />
-
-      {error ? <p className="text-xs font-medium text-primary">{error}</p> : null}
-
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[11px] text-muted-foreground">
-          {hasFeedback
-            ? "Nhận xét đã gửi — bạn có thể chỉnh sửa và lưu lại."
-            : "Đánh giá mức độ phối hợp và triển khai buổi học; phản hồi được chia sẻ với mentor và quản lý lớp."}
-        </p>
         <Button
           type="button"
           disabled={isBusy}
           onClick={handleSubmit}
-          className="h-10 w-full rounded-xl bg-primary px-5 text-sm font-semibold text-white hover:bg-primary/90 sm:w-auto"
+          className="h-9 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90"
         >
-          {isBusy ? "Đang lưu..." : hasFeedback ? "Cập nhật nhận xét" : "Gửi nhận xét"}
+          {isBusy ? "Đang lưu…" : hasFeedback ? "Cập nhật" : "Gửi nhận xét"}
         </Button>
       </div>
     </div>
