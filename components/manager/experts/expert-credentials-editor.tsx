@@ -8,10 +8,16 @@ import { Input } from "@/components/ui/input";
 import {
   addExpertDegree,
   addExpertPublication,
+  addMyExpertDegree,
+  addMyExpertPublication,
   deleteExpertDegree,
   deleteExpertPublication,
+  deleteMyExpertDegree,
+  deleteMyExpertPublication,
   updateExpertDegree,
   updateExpertPublication,
+  updateMyExpertDegree,
+  updateMyExpertPublication,
   type Expert,
   type ExpertCredentialDrafts,
   type ExpertDegree,
@@ -29,6 +35,8 @@ type ExpertCredentialsEditorProps = {
   drafts: ExpertCredentialDrafts;
   onDraftsChange: (drafts: ExpertCredentialDrafts) => void;
   onExpertChange: (expert: Expert) => void;
+  /** Use `/api/experts/me/...` instead of Admin `{expertId}` routes. */
+  selfService?: boolean;
 };
 
 function parseYear(value: string): number | undefined {
@@ -45,6 +53,7 @@ export function ExpertCredentialsEditor({
   drafts,
   onDraftsChange,
   onExpertChange,
+  selfService = false,
 }: ExpertCredentialsEditorProps) {
   const [degreeDraft, setDegreeDraft] = useState({
     title: "",
@@ -126,11 +135,13 @@ export function ExpertCredentialsEditor({
                   onSave={(input) =>
                     run(`degree-${degree.id}`, async () => {
                       try {
-                        const result = await updateExpertDegree(
-                          expert.id,
-                          degree.id,
-                          input,
-                        );
+                        const result = selfService
+                          ? await updateMyExpertDegree(degree.id, input)
+                          : await updateExpertDegree(
+                              expert.id,
+                              degree.id,
+                              input,
+                            );
                         const next = result?.data;
                         if (!next) return;
                         onExpertChange({
@@ -148,7 +159,11 @@ export function ExpertCredentialsEditor({
                   onDelete={() =>
                     run(`degree-${degree.id}`, async () => {
                       try {
-                        await deleteExpertDegree(expert.id, degree.id);
+                        if (selfService) {
+                          await deleteMyExpertDegree(degree.id);
+                        } else {
+                          await deleteExpertDegree(expert.id, degree.id);
+                        }
                         onExpertChange({
                           ...expert,
                           degrees: expert.degrees.filter(
@@ -227,11 +242,14 @@ export function ExpertCredentialsEditor({
               }
               void run("degree-new", async () => {
                 try {
-                  const result = await addExpertDegree(expert.id, {
+                  const payload = {
                     title: degreeDraft.title.trim(),
                     institution: degreeDraft.institution.trim(),
                     year: parseYear(degreeDraft.year),
-                  });
+                  };
+                  const result = selfService
+                    ? await addMyExpertDegree(payload)
+                    : await addExpertDegree(expert.id, payload);
                   const next = result?.data;
                   if (!next) return;
                   onExpertChange({
@@ -271,11 +289,16 @@ export function ExpertCredentialsEditor({
                   onSave={(input) =>
                     run(`pub-${publication.id}`, async () => {
                       try {
-                        const result = await updateExpertPublication(
-                          expert.id,
-                          publication.id,
-                          input,
-                        );
+                        const result = selfService
+                          ? await updateMyExpertPublication(
+                              publication.id,
+                              input,
+                            )
+                          : await updateExpertPublication(
+                              expert.id,
+                              publication.id,
+                              input,
+                            );
                         const next = result?.data;
                         if (!next) return;
                         onExpertChange({
@@ -293,7 +316,14 @@ export function ExpertCredentialsEditor({
                   onDelete={() =>
                     run(`pub-${publication.id}`, async () => {
                       try {
-                        await deleteExpertPublication(expert.id, publication.id);
+                        if (selfService) {
+                          await deleteMyExpertPublication(publication.id);
+                        } else {
+                          await deleteExpertPublication(
+                            expert.id,
+                            publication.id,
+                          );
+                        }
                         onExpertChange({
                           ...expert,
                           publications: expert.publications.filter(
@@ -389,12 +419,15 @@ export function ExpertCredentialsEditor({
               }
               void run("pub-new", async () => {
                 try {
-                  const result = await addExpertPublication(expert.id, {
+                  const payload = {
                     title: publicationDraft.title.trim(),
                     venue: publicationDraft.venue.trim() || null,
                     year: parseYear(publicationDraft.year),
                     url: publicationDraft.url.trim() || null,
-                  });
+                  };
+                  const result = selfService
+                    ? await addMyExpertPublication(payload)
+                    : await addExpertPublication(expert.id, payload);
                   const next = result?.data;
                   if (!next) return;
                   onExpertChange({

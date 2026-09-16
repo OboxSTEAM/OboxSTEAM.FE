@@ -21,7 +21,10 @@ export {
   expertPublicationRequestSchema,
   expertSortBySchema,
   expertUpsertSchema,
+  myExpertDegreeIdParamSchema,
+  myExpertPublicationIdParamSchema,
   updateExpertSchema,
+  updateMyExpertSchema,
   uploadExpertAvatarSchema,
   type CreateExpertInput,
   type ExpertDegreeRequestInput,
@@ -31,7 +34,10 @@ export {
   type ExpertProgramInput,
   type ExpertProgramParam,
   type ExpertPublicationRequestInput,
+  type MyExpertDegreeIdParam,
+  type MyExpertPublicationIdParam,
   type UpdateExpertInput,
+  type UpdateMyExpertInput,
   type UploadExpertAvatarInput,
 } from "./experts";
 export {

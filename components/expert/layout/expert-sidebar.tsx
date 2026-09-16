@@ -34,9 +34,12 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { ApiRequestError, getMyExpert } from "@/lib/api";
 import { clearAuthSession } from "@/lib/auth/session";
 import { EXPERT_NAV_GROUPS, isExpertNavItemActive } from "@/lib/expert/nav";
+import { getExpertAvatarUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 const LOGO_URL =
@@ -54,9 +57,37 @@ function getInitials(name?: string | null): string {
 export function ExpertSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { profile } = useCurrentUser();
+  const { profile, isAuthenticated, applyProfileUpdate } = useCurrentUser();
   const { isMobile, state } = useSidebar();
   const [navQuery, setNavQuery] = React.useState("");
+
+  const { data: myExpert } = useClientFetch({
+    enabled: isAuthenticated,
+    fetcher: async () => {
+      try {
+        const result = await getMyExpert();
+        return result?.data ?? null;
+      } catch (error) {
+        if (error instanceof ApiRequestError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    deps: [isAuthenticated],
+  });
+
+  const avatarUrl =
+    getExpertAvatarUrl(profile?.avatarUrl) ??
+    getExpertAvatarUrl(myExpert?.avatarUrl);
+
+  // Account/me can lag Expert.avatarUrl (legacy rows / sync gaps).
+  React.useEffect(() => {
+    if (!profile || getExpertAvatarUrl(profile.avatarUrl)) return;
+    const expertAvatar = getExpertAvatarUrl(myExpert?.avatarUrl);
+    if (!expertAvatar) return;
+    applyProfileUpdate({ ...profile, avatarUrl: expertAvatar });
+  }, [profile, myExpert?.avatarUrl, applyProfileUpdate]);
 
   const filteredGroups = React.useMemo(() => {
     const q = navQuery.trim().toLowerCase();
@@ -171,10 +202,11 @@ export function ExpertSidebar() {
                 }
               >
                 <Avatar className="size-8 rounded-lg">
-                  {profile?.avatarUrl ? (
+                  {avatarUrl ? (
                     <AvatarImage
-                      src={profile.avatarUrl}
-                      alt={profile.fullName ?? "Expert"}
+                      src={avatarUrl}
+                      alt={profile?.fullName ?? "Expert"}
+                      className="rounded-lg"
                     />
                   ) : null}
                   <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
@@ -205,10 +237,11 @@ export function ExpertSidebar() {
                   <DropdownMenuLabel className="p-0 font-normal">
                     <div className="flex items-center gap-2.5 px-2 py-1.5 text-left text-sm">
                       <Avatar className="size-8 rounded-lg">
-                        {profile?.avatarUrl ? (
+                        {avatarUrl ? (
                           <AvatarImage
-                            src={profile.avatarUrl}
-                            alt={profile.fullName ?? "Expert"}
+                            src={avatarUrl}
+                            alt={profile?.fullName ?? "Expert"}
+                            className="rounded-lg"
                           />
                         ) : null}
                         <AvatarFallback className="rounded-lg bg-primary/10 text-xs font-semibold text-primary">
@@ -229,11 +262,11 @@ export function ExpertSidebar() {
                 <DropdownMenuSeparator className="bg-border/60" />
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push("/profile")}
+                    onClick={() => router.push("/expert/profile")}
                     className="cursor-pointer gap-2 rounded-lg p-2 text-foreground focus:bg-muted focus:text-foreground not-data-[variant=destructive]:focus:**:!text-foreground"
                   >
                     <User className="size-4 !text-foreground" />
-                    Hồ sơ cá nhân
+                    Hồ sơ chuyên môn
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator className="bg-border/60" />

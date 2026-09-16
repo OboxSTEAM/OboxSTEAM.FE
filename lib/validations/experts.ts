@@ -134,6 +134,74 @@ export const createExpertSchema = expertUpsertSchema.extend({
 
 export const updateExpertSchema = expertUpsertSchema;
 
+/** Body for `PUT /api/experts/me` — no code / programs / email. */
+export const updateMyExpertSchema = z.object({
+  fullName: z
+    .string()
+    .trim()
+    .min(2, "Họ tên phải có ít nhất 2 ký tự.")
+    .max(255, "Họ tên không được quá 255 ký tự."),
+  title: z
+    .string()
+    .trim()
+    .max(255, "Chức danh không được quá 255 ký tự.")
+    .nullable()
+    .optional(),
+  organization: z
+    .string()
+    .trim()
+    .max(255, "Tổ chức không được quá 255 ký tự.")
+    .nullable()
+    .optional(),
+  bio: z
+    .string()
+    .trim()
+    .max(4000, "Giới thiệu không được quá 4000 ký tự.")
+    .nullable()
+    .optional(),
+  linkedInUrl: z
+    .string()
+    .trim()
+    .max(2048, "URL không được quá 2048 ký tự.")
+    .nullable()
+    .optional()
+    .refine(
+      (value) => value == null || value === "" || isHttpUrl(value),
+      "URL phải bắt đầu bằng http:// hoặc https://.",
+    ),
+  achievements: z
+    .string()
+    .trim()
+    .max(4000, "Thành tựu không được quá 4000 ký tự.")
+    .nullable()
+    .optional(),
+  specialization: z
+    .array(z.string().trim().min(1).max(80, "Mỗi chuyên môn tối đa 80 ký tự."))
+    .max(20, "Tối đa 20 chuyên môn.")
+    .nullable()
+    .optional(),
+  avatarUrl: z
+    .string()
+    .trim()
+    .max(2048, "URL không được quá 2048 ký tự.")
+    .nullable()
+    .optional()
+    .refine(
+      (value) => value == null || value === "" || isHttpUrl(value),
+      "URL phải bắt đầu bằng http:// hoặc https://.",
+    ),
+});
+
+/** Path params for `/api/experts/me/degrees/{degreeId}`. */
+export const myExpertDegreeIdParamSchema = z.object({
+  degreeId: z.string().uuid("ID bằng cấp không hợp lệ."),
+});
+
+/** Path params for `/api/experts/me/publications/{publicationId}`. */
+export const myExpertPublicationIdParamSchema = z.object({
+  publicationId: z.string().uuid("ID bài báo không hợp lệ."),
+});
+
 export const uploadExpertAvatarSchema = z.object({
   file: z
     .instanceof(File, { message: "Vui lòng chọn ảnh đại diện." })
@@ -150,7 +218,6 @@ export const uploadExpertAvatarSchema = z.object({
 
 export type UploadExpertAvatarInput = z.infer<typeof uploadExpertAvatarSchema>;
 
-
 export type ExpertListQuery = z.infer<typeof expertListQuerySchema>;
 export type ExpertIdParam = z.infer<typeof expertIdParamSchema>;
 export type ExpertProgramParam = z.infer<typeof expertProgramParamSchema>;
@@ -160,6 +227,11 @@ export type ExpertProgramAssignmentInput = z.infer<
 >;
 export type CreateExpertInput = z.infer<typeof createExpertSchema>;
 export type UpdateExpertInput = z.infer<typeof updateExpertSchema>;
+export type UpdateMyExpertInput = z.infer<typeof updateMyExpertSchema>;
+export type MyExpertDegreeIdParam = z.infer<typeof myExpertDegreeIdParamSchema>;
+export type MyExpertPublicationIdParam = z.infer<
+  typeof myExpertPublicationIdParamSchema
+>;
 export type ExpertDegreeRequestInput = z.infer<typeof expertDegreeRequestSchema>;
 export type ExpertPublicationRequestInput = z.infer<
   typeof expertPublicationRequestSchema

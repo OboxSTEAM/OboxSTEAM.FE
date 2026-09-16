@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Camera, ExternalLink, Save, UserRound } from "lucide-react";
+import { Camera, ChevronDown, ExternalLink, Save, UserRound } from "lucide-react";
 import { z } from "zod";
 
 import { useCurrentUser } from "@/components/providers/current-user-provider";
@@ -18,23 +18,46 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
+  ApiRequestError,
   EMPTY_CREDENTIAL_DRAFTS,
-  getExperts,
-  updateExpert,
-  uploadExpertAvatar,
+  getMyExpert,
+  updateMyExpert,
+  uploadMyExpertAvatar,
   type Expert,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { getExpertAvatarUrl, getExpertInitials } from "@/lib/programs/format";
-import { expertUpsertSchema, uploadExpertAvatarSchema } from "@/lib/validations/experts";
+import { cn } from "@/lib/utils";
+import {
+  updateMyExpertSchema,
+  uploadExpertAvatarSchema,
+} from "@/lib/validations/experts";
 
-const profileFormSchema = expertUpsertSchema.pick({
-  fullName: true,
-  title: true,
-  organization: true,
-  bio: true,
-  linkedInUrl: true,
-  achievements: true,
+/** Form fields — strings only; mapped to `UpdateMyExpertInput` on submit. */
+const profileFormSchema = z.object({
+  fullName: updateMyExpertSchema.shape.fullName,
+  title: z.string().trim().max(255, "Chức danh không được quá 255 ký tự."),
+  organization: z
+    .string()
+    .trim()
+    .max(255, "Tổ chức không được quá 255 ký tự."),
+  bio: z.string().trim().max(4000, "Giới thiệu không được quá 4000 ký tự."),
+  linkedInUrl: z
+    .string()
+    .trim()
+    .refine((value) => {
+      if (value === "") return true;
+      try {
+        const url = new URL(value);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch {
+        return false;
+      }
+    }, "URL phải bắt đầu bằng http:// hoặc https://."),
+  achievements: z
+    .string()
+    .trim()
+    .max(4000, "Thành tựu không được quá 4000 ký tự."),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -56,37 +79,38 @@ function toFormValues(expert: Expert): ProfileFormValues {
 }
 
 export function ExpertProfileManager() {
-  const { profile, isLoading: isProfileLoading } = useCurrentUser();
-  const email = profile?.email ?? "";
-  const userId = profile?.id ?? "";
+  const { isAuthenticated, isLoading: isProfileLoading, refresh } =
+    useCurrentUser();
 
-  const { data, isLoading: isExpertLoading } = useClientFetch({
-    enabled: email !== "",
-    fetcher: () => getExperts({ search: email, page: 1, pageSize: 20 }),
-    deps: [email],
+  const { data: fetchedExpert, isLoading: isExpertLoading } = useClientFetch({
+    enabled: isAuthenticated,
+    fetcher: async () => {
+      try {
+        const result = await getMyExpert();
+        return result?.data ?? null;
+      } catch (error) {
+        if (error instanceof ApiRequestError && error.status === 404) {
+          return null;
+        }
+        throw error;
+      }
+    },
+    deps: [isAuthenticated],
     onError: (error) => showAppErrorFromUnknown(error, "experts.profile"),
   });
-
-  const matchedExpert = useMemo(() => {
-    const items = data?.data?.items ?? [];
-    return (
-      items.find((item) => item.userId !== "" && item.userId === userId) ??
-      items.find(
-        (item) =>
-          item.email.toLocaleLowerCase() === email.toLocaleLowerCase() &&
-          email !== "",
-      ) ??
-      null
-    );
-  }, [data?.data?.items, email, userId]);
 
   const [expert, setExpert] = useState<Expert | null>(null);
   const [syncedExpertId, setSyncedExpertId] = useState<string | null>(null);
 
   // Adopt the freshly loaded profile without wiping in-page credential edits.
-  if (matchedExpert && matchedExpert.id !== syncedExpertId) {
-    setSyncedExpertId(matchedExpert.id);
-    setExpert(matchedExpert);
+  if (fetchedExpert && fetchedExpert.id !== syncedExpertId) {
+    setSyncedExpertId(fetchedExpert.id);
+    setExpert(fetchedExpert);
+  }
+
+  if (!isExpertLoading && fetchedExpert == null && syncedExpertId != null) {
+    setSyncedExpertId(null);
+    setExpert(null);
   }
 
   const isLoading = isProfileLoading || isExpertLoading;
@@ -113,13 +137,18 @@ export function ExpertProfileManager() {
           />
         ) : (
           <div className="grid gap-6 xl:grid-cols-[22rem_minmax(0,1fr)] xl:items-start">
-            <ProfileCard expert={expert} onExpertChange={setExpert} />
+            <ProfileCard
+              expert={expert}
+              onExpertChange={setExpert}
+              onAccountRefresh={refresh}
+            />
 
             <div className="space-y-6">
               <ProfileForm
                 key={expert.id}
                 expert={expert}
                 onExpertChange={setExpert}
+                onAccountRefresh={refresh}
               />
 
               <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
@@ -135,6 +164,7 @@ export function ExpertProfileManager() {
                   drafts={EMPTY_CREDENTIAL_DRAFTS}
                   onDraftsChange={() => undefined}
                   onExpertChange={setExpert}
+                  selfService
                 />
               </section>
             </div>
@@ -148,9 +178,11 @@ export function ExpertProfileManager() {
 function ProfileCard({
   expert,
   onExpertChange,
+  onAccountRefresh,
 }: {
   expert: Expert;
   onExpertChange: (expert: Expert) => void;
+  onAccountRefresh: () => Promise<unknown>;
 }) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -166,11 +198,12 @@ function ProfileCard({
 
     setIsUploading(true);
     try {
-      const result = await uploadExpertAvatar(expert.id, parsed.data.file);
-      const avatarUrl = result?.data?.avatarUrl;
-      if (avatarUrl) {
-        onExpertChange({ ...expert, avatarUrl });
+      const result = await uploadMyExpertAvatar(parsed.data.file);
+      const next = result?.data;
+      if (next) {
+        onExpertChange(next);
       }
+      await onAccountRefresh();
       showAppSuccess({ title: "Đã cập nhật ảnh đại diện" });
     } catch (error) {
       showAppErrorFromUnknown(error, "experts.upload-avatar");
@@ -262,35 +295,102 @@ function ProfileCard({
       </dl>
 
       {expert.programs.length > 0 ? (
-        <div className="mt-5 border-t border-border pt-5 text-left">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Hội đồng chương trình
+        <ProgramBoardSummary programs={expert.programs} />
+      ) : null}
+    </section>
+  );
+}
+
+function ProgramBoardSummary({
+  programs,
+}: {
+  programs: Expert["programs"];
+}) {
+  const [open, setOpen] = useState(false);
+  const count = programs.length;
+  const preview = programs
+    .slice(0, 2)
+    .map((program) => program.name || program.code)
+    .filter(Boolean)
+    .join(", ");
+  const more = count > 2 ? count - 2 : 0;
+
+  return (
+    <div
+      className="t-acc mt-5 border-t border-border pt-5 text-left"
+      data-open={open ? "true" : "false"}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((prev) => !prev)}
+        className={cn(
+          "t-acc-head group flex min-h-14 w-full items-center gap-3 rounded-xl border border-border bg-muted/40 px-3.5 py-3 text-left",
+          "outline-none transition-[background-color,border-color,box-shadow] duration-200",
+          "hover:border-border hover:bg-muted/70 hover:shadow-[0_2px_10px_rgba(45,45,45,0.05)]",
+          "focus-visible:ring-2 focus-visible:ring-ring/40",
+          open && "border-primary/20 bg-card shadow-[0_2px_10px_rgba(45,45,45,0.04)]",
+        )}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="font-heading text-sm font-bold tracking-tight text-foreground">
+              Hội đồng chương trình
+            </p>
+            <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-primary/10 px-2 font-mono text-xs font-bold tabular-nums text-primary">
+              {count}
+            </span>
+          </div>
+          <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+            {open
+              ? "Danh sách chương trình bạn đang đồng hành"
+              : `${preview}${more > 0 ? ` +${more}` : ""}`}
           </p>
-          <ul className="mt-2 space-y-1.5">
-            {expert.programs.map((program) => (
-              <li key={program.programId} className="text-sm text-foreground">
-                {program.name || program.code}
+        </div>
+        <span
+          className={cn(
+            "flex size-9 shrink-0 items-center justify-center rounded-full border border-border bg-card text-muted-foreground",
+            "transition-colors duration-200 group-hover:text-foreground",
+          )}
+          aria-hidden
+        >
+          <ChevronDown className="t-acc-chevron size-4" />
+        </span>
+      </button>
+
+      <div className="t-acc-panel">
+        <div className="t-acc-panel-inner">
+          <ul className="mt-3 space-y-2 rounded-xl border border-border bg-card p-3">
+            {programs.map((program) => (
+              <li
+                key={program.programId}
+                className="rounded-lg px-2.5 py-2 text-left transition-colors hover:bg-muted/50"
+              >
+                <p className="line-clamp-2 text-sm font-medium leading-snug text-foreground">
+                  {program.name || program.code}
+                </p>
                 {program.roleInBoard ? (
-                  <span className="text-muted-foreground">
-                    {" "}
-                    · {program.roleInBoard}
-                  </span>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {program.roleInBoard}
+                  </p>
                 ) : null}
               </li>
             ))}
           </ul>
         </div>
-      ) : null}
-    </section>
+      </div>
+    </div>
   );
 }
 
 function ProfileForm({
   expert,
   onExpertChange,
+  onAccountRefresh,
 }: {
   expert: Expert;
   onExpertChange: (expert: Expert) => void;
+  onAccountRefresh: () => Promise<unknown>;
 }) {
   const [specializationText, setSpecializationText] = useState(
     expert.specialization.join(", "),
@@ -315,20 +415,18 @@ function ProfileForm({
 
     setIsSaving(true);
     try {
-      const result = await updateExpert(expert.id, {
-        ...values,
-        code: expert.code,
-        avatarUrl: expert.avatarUrl,
+      const result = await updateMyExpert({
+        fullName: values.fullName,
+        title: values.title || null,
+        organization: values.organization || null,
+        bio: values.bio || null,
+        linkedInUrl: values.linkedInUrl || null,
+        achievements: values.achievements || null,
         specialization,
-        programs: expert.programs.map((program) => ({
-          programId: program.programId,
-          roleInBoard: program.roleInBoard,
-        })),
       });
       const next = result?.data;
-      onExpertChange(
-        next ?? { ...expert, ...values, specialization },
-      );
+      onExpertChange(next ?? { ...expert, ...values, specialization });
+      await onAccountRefresh();
       showAppSuccess({
         title: "Đã lưu hồ sơ",
         description: "Thông tin chuyên môn của bạn đã được cập nhật.",
