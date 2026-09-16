@@ -297,12 +297,12 @@ export function AssignmentFormPanel({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex h-full min-h-0 flex-col">
       <PHdr
         title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${assignmentToEdit!.title}` : "Tạo Bài tập mới"}
         sub="Bài tập thuộc học phần (module)"
       />
-      <fieldset disabled={disabled} className="min-w-0 space-y-6 border-0 p-5">
+      <fieldset disabled={disabled} className="min-h-0 min-w-0 flex-1 space-y-6 overflow-y-auto border-0 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
           <p className="mb-3 text-xs" style={{ color: W.muted }}>
