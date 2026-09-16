@@ -13,8 +13,11 @@ export const parentCheckoutPaymentValueSchema = createApiValueSchema(
   parentCheckoutSessionSchema,
 );
 export const paymentDetailValueSchema = createApiValueSchema(paymentSchema);
+// BE (ObjectApiResult) returns `data: null` for request-parent — the email is the
+// side effect; seat-hold data is only documented on checkout. Nullable avoids a
+// Zod parse failure on the success path (email sent but error toast shown).
 export const requestParentPaymentValueSchema = createApiValueSchema(
-  requestParentPaymentSessionSchema,
+  requestParentPaymentSessionSchema.nullable(),
 );
 
 export const checkoutPaymentResponseSchema = createApiResponseSchema(
