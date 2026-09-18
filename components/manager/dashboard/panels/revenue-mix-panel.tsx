@@ -22,7 +22,6 @@ import { gatewayFill, gatewayLabel } from "../chart-data";
 import {
   DonutAttentionChips,
   DonutDominantLine,
-  DonutStackBar,
   type DonutAttentionItem,
   type DonutInsightSlice,
 } from "../donut-insights";
@@ -160,7 +159,6 @@ export function RevenueMixPanel({
                 </PieChart>
               </div>
 
-              <DonutStackBar slices={slices} />
               <DonutDominantLine slices={slices} />
               <DonutAttentionChips items={mixAttention.slice(0, 2)} />
             </div>

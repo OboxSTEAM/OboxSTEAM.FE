@@ -51,6 +51,8 @@ export const topProgramEnrollmentSchema = z.object({
 export const mentorUtilizationSchema = z.object({
   mentorId: z.string().uuid(),
   mentorName: z.string().nullable(),
+  avatarUrl: z.string().nullable().optional(),
+  title: z.string().nullable().optional(),
   assigned: z.number().int(),
   pending: z.number().int(),
   max: z.number().int(),

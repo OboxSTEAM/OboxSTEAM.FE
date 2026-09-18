@@ -16,42 +16,6 @@ export type DonutAttentionItem = {
   tone?: "warn" | "info" | "neutral";
 };
 
-/** Mirrors the donut as a compact 100% stacked bar. */
-export function DonutStackBar({
-  slices,
-  className,
-}: {
-  slices: DonutInsightSlice[];
-  className?: string;
-}) {
-  if (slices.length === 0) return null;
-
-  return (
-    <div
-      className={cn(
-        "flex h-2 w-full overflow-hidden rounded-full bg-secondary",
-        className,
-      )}
-      role="img"
-      aria-label="Thanh tỷ trọng phân bổ"
-    >
-      {slices.map((slice) =>
-        slice.share > 0 ? (
-          <div
-            key={slice.key}
-            className="h-full min-w-0 transition-[width] duration-300"
-            style={{
-              width: `${slice.share}%`,
-              backgroundColor: slice.color,
-            }}
-            title={`${slice.label}: ${slice.share.toFixed(0)}%`}
-          />
-        ) : null,
-      )}
-    </div>
-  );
-}
-
 export function DonutDominantLine({
   slices,
   unitLabel,

@@ -16,7 +16,6 @@ import {
   classStatusAttention,
   DonutAttentionChips,
   DonutDominantLine,
-  DonutStackBar,
   enrollmentStatusAttention,
   type DonutInsightSlice,
 } from "../donut-insights";
@@ -201,7 +200,6 @@ export function StatusBreakdownPanel({
                 </PieChart>
               </div>
 
-              <DonutStackBar slices={slices} />
               <DonutDominantLine slices={slices} />
               <DonutAttentionChips items={attentionItems} />
             </div>

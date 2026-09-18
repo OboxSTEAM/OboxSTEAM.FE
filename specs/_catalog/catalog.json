@@ -571,6 +571,45 @@
         "description": "Honors date range, programId/moduleId/classId, classStatus, and pagination for mentor utilization. Other status filters are ignored."
       },
       {
+        "path": "/api/experts/me",
+        "method": "get",
+        "description": "Returns the full expert profile linked to the authenticated Expert user (degrees, publications, programs)."
+      },
+      {
+        "path": "/api/experts/me",
+        "method": "put",
+        "description": "Updates editable professional fields on the caller's own expert profile. Does not change code, email, userId, or program board membership."
+      },
+      {
+        "path": "/api/experts/me/avatar",
+        "method": "post",
+        "description": "Uploads a new avatar for the caller's expert profile and syncs User.AvatarUrl. Image only (.jpg, .jpeg, .png, .gif), max 5 MB."
+      },
+      {
+        "path": "/api/experts/me/degrees",
+        "method": "post"
+      },
+      {
+        "path": "/api/experts/me/degrees/{degreeId}",
+        "method": "put"
+      },
+      {
+        "path": "/api/experts/me/degrees/{degreeId}",
+        "method": "delete"
+      },
+      {
+        "path": "/api/experts/me/publications",
+        "method": "post"
+      },
+      {
+        "path": "/api/experts/me/publications/{publicationId}",
+        "method": "put"
+      },
+      {
+        "path": "/api/experts/me/publications/{publicationId}",
+        "method": "delete"
+      },
+      {
         "path": "/api/experts",
         "method": "get",
         "description": "Retrieve a paginated list of experts with optional search, filter, and sort options."
@@ -1180,7 +1219,7 @@
       {
         "path": "/api/programs/{id}/submit-review",
         "method": "post",
-        "description": "With a framework: the owner must have a login. Without a framework: at least one program-board expert with a login. Always PendingReview. Framework pre-check runs when FrameworkId is set; no framework is free-form board review."
+        "description": "Draft only. Always requires a responsible advisor with an active linked login (with or without a framework). Creates an immutable ProgramReviewSubmission, notifies the advisor, and moves to PendingReview. When a published FrameworkVersionId is pinned, framework pre-checks run; failures return machine codes ADVISOR_REQUIRED, ADVISOR_LOGIN_REQUIRED, MODULES_REQUIRED, FRAMEWORK_UNAVAILABLE, or FRAMEWORK_CHECK_FAILED."
       },
       {
         "path": "/api/programs/{id}/withdraw-review",
@@ -1200,12 +1239,12 @@
       {
         "path": "/api/programs/{id}/approve-review",
         "method": "post",
-        "description": "PendingReview → Approved. With a framework: only the framework owner. Without a framework: any one login expert on ProgramBoard. Scores are required when the attached framework has rubric criteria."
+        "description": "PendingReview → Approved. Only the assigned responsible advisor may approve. Unresolved RequiredChange threads (Open + Addressed) block approval (error code APPROVAL_BLOCKED). Submission concurrencyVersion is distinct from draft autosave tokens; stale tokens return 409. Scores are required when the attached framework has rubric criteria."
       },
       {
         "path": "/api/programs/{id}/request-changes",
         "method": "post",
-        "description": "PendingReview → Draft. Same actor as approve-review. Comment is required so the manager knows what to fix."
+        "description": "PendingReview → Draft (program unlocked for edit; timeline moves to Revision). Honors requiredChangeThreadIds and idempotent clientOperationId. Submission concurrencyVersion is distinct from draft autosave tokens; stale tokens return 409 SUBMISSION_CONCURRENCY_STALE. Carried RequiredChanges remain visible across the next submission."
       },
       {
         "path": "/api/programs/advisory-mine",
@@ -1213,7 +1252,18 @@
       },
       {
         "path": "/api/programs/{id}/advisory",
-        "method": "get"
+        "method": "get",
+        "description": "Includes collaborationContractVersion 2, capabilities, workflow timeline, approvalBlockingCount (Open+Addressed RequiredChanges), separate unreadNoteCount/unreadDiscussionCount, pendingSubmission/latestSubmission, and reviewActionsLocked. Discussion remains allowed when reviewActionsLocked is true."
+      },
+      {
+        "path": "/api/programs/{id}/advisory/timeline",
+        "method": "get",
+        "description": "Returns the server-derived six-stage advisory workflow. Viewing a stage does not change lifecycle state."
+      },
+      {
+        "path": "/api/programs/{id}/advisory/board",
+        "method": "get",
+        "description": "Returns the frozen curriculum tree, submission pins, revision summary, and framework highlights."
       },
       {
         "path": "/api/programs/{id}/framework-check",
@@ -1228,6 +1278,15 @@
         "method": "post"
       },
       {
+        "path": "/api/programs/{id}/advisory-threads/{threadId}",
+        "method": "get",
+        "description": "Returns the full AdvisoryThreadDto with ordered events and ordered messages so clients do not double-render MessageAdded events against a separate message list. Status PATCH also returns this full thread shape."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads/pins",
+        "method": "get"
+      },
+      {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/messages",
         "method": "get"
       },
@@ -1237,10 +1296,44 @@
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/status",
-        "method": "patch"
+        "method": "patch",
+        "description": "Returns the full AdvisoryThreadDto (ordered events, updated capability flags, concurrencyVersion). Requires concurrencyVersion; clientOperationId is idempotent. canAddress is only true while the program is Draft (curriculum editable)."
       },
       {
         "path": "/api/programs/{id}/advisory-read",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-references",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-references/{referenceId}",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/advisory-anchor-fields",
+        "method": "get",
+        "description": "Publishes the BE allowlist of targetType + fieldKey (+ label) values accepted for note anchors and advisory references. Unknown keys are rejected with 400 ADVISORY_ANCHOR_FIELD_INVALID."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}",
+        "method": "get"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-threads/{threadId}/read",
+        "method": "post"
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/read",
         "method": "post"
       },
       {
@@ -1608,6 +1701,9 @@
         "name": "ActivityResumeStateDto"
       },
       {
+        "name": "ActivitySnapshot"
+      },
+      {
         "name": "AddAdvisoryMessageRequest"
       },
       {
@@ -1618,6 +1714,48 @@
       },
       {
         "name": "AddProgramToExpertDto"
+      },
+      {
+        "name": "AdvisoryAnchorFieldDto"
+      },
+      {
+        "name": "AdvisoryAnchorFieldDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "AdvisoryAnchorFieldDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "AdvisoryBoardDto"
+      },
+      {
+        "name": "AdvisoryBoardDtoApiResult"
+      },
+      {
+        "name": "AdvisoryBoardDtoResponseDataContent"
+      },
+      {
+        "name": "AdvisoryBoardProgramDto"
+      },
+      {
+        "name": "AdvisoryCapabilitiesDto"
+      },
+      {
+        "name": "AdvisoryDiscussionMessageDto"
+      },
+      {
+        "name": "AdvisoryDiscussionMessageDtoApiResult"
+      },
+      {
+        "name": "AdvisoryDiscussionMessageDtoResponseDataContent"
+      },
+      {
+        "name": "AdvisoryDiscussionPageDto"
+      },
+      {
+        "name": "AdvisoryDiscussionPageDtoApiResult"
+      },
+      {
+        "name": "AdvisoryDiscussionPageDtoResponseDataContent"
       },
       {
         "name": "AdvisoryFeedbackCountsDto"
@@ -1653,6 +1791,15 @@
         "name": "AdvisoryParticipantDto"
       },
       {
+        "name": "AdvisoryReferenceDto"
+      },
+      {
+        "name": "AdvisoryReferenceDtoApiResult"
+      },
+      {
+        "name": "AdvisoryReferenceDtoResponseDataContent"
+      },
+      {
         "name": "AdvisoryThreadDto"
       },
       {
@@ -1666,6 +1813,33 @@
       },
       {
         "name": "AdvisoryThreadDtoResponseDataContent"
+      },
+      {
+        "name": "AdvisoryThreadEventDto"
+      },
+      {
+        "name": "AdvisoryThreadPinDto"
+      },
+      {
+        "name": "AdvisoryThreadPinSummaryDto"
+      },
+      {
+        "name": "AdvisoryThreadPinSummaryDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "AdvisoryThreadPinSummaryDtoIReadOnlyListResponseDataContent"
+      },
+      {
+        "name": "AdvisoryWorkflowStageDto"
+      },
+      {
+        "name": "AdvisoryWorkflowTimelineDto"
+      },
+      {
+        "name": "AdvisoryWorkflowTimelineDtoApiResult"
+      },
+      {
+        "name": "AdvisoryWorkflowTimelineDtoResponseDataContent"
       },
       {
         "name": "AffectedCurriculumLinkDto"
@@ -1729,6 +1903,9 @@
       },
       {
         "name": "AssignmentResponseDtoResponseDataContent"
+      },
+      {
+        "name": "AssignmentSnapshot"
       },
       {
         "name": "AssignmentSubmissionListItemDto"
@@ -2097,10 +2274,16 @@
         "name": "CourseResponseDtoResponseDataContent"
       },
       {
+        "name": "CourseSnapshot"
+      },
+      {
         "name": "CreateActivitiesRequestDto"
       },
       {
         "name": "CreateActivityProgressRequestDto"
+      },
+      {
+        "name": "CreateAdvisoryReferenceRequest"
       },
       {
         "name": "CreateAdvisoryThreadRequest"
@@ -2176,6 +2359,9 @@
       },
       {
         "name": "CurriculumReviewResponseDtoResponseDataContent"
+      },
+      {
+        "name": "CurriculumSnapshotDocument"
       },
       {
         "name": "DashboardLandingDto"
@@ -2388,6 +2574,9 @@
         "name": "FrameworkCheckItemDto"
       },
       {
+        "name": "FrameworkHighlightDto"
+      },
+      {
         "name": "FrameworkRubricCriterionRequest"
       },
       {
@@ -2553,6 +2742,9 @@
         "name": "MaterialResponseDtoResponseDataContent"
       },
       {
+        "name": "MaterialSnapshot"
+      },
+      {
         "name": "MediaAssetDto"
       },
       {
@@ -2664,6 +2856,9 @@
         "name": "MentorUtilizationDtoPagination"
       },
       {
+        "name": "MilestoneSnapshot"
+      },
+      {
         "name": "ModuleEnrollmentResponseDto"
       },
       {
@@ -2680,6 +2875,9 @@
       },
       {
         "name": "ModuleRetakeCheckoutRequestDto"
+      },
+      {
+        "name": "ModuleSnapshot"
       },
       {
         "name": "ModulesResponseDto"
@@ -2884,6 +3082,9 @@
         "name": "PortfolioSectionResponseDtoResponseDataContent"
       },
       {
+        "name": "PostAdvisoryDiscussionMessageRequest"
+      },
+      {
         "name": "ProblemDetails"
       },
       {
@@ -3040,6 +3241,9 @@
         "name": "ProgramReviewSubmissionSummaryDtoIReadOnlyListResponseDataContent"
       },
       {
+        "name": "ProgramSnapshot"
+      },
+      {
         "name": "ProgramsResponseDto"
       },
       {
@@ -3130,7 +3334,13 @@
         "name": "RebuyClassModuleProgressDto"
       },
       {
+        "name": "RecordAdvisoryDiscussionReadRequest"
+      },
+      {
         "name": "RecordAdvisoryReadRequest"
+      },
+      {
+        "name": "RecordAdvisoryThreadReadRequest"
       },
       {
         "name": "ReorderPortfolioItemEntryDto"
@@ -3470,6 +3680,9 @@
       },
       {
         "name": "UpdateModuleRequestDto"
+      },
+      {
+        "name": "UpdateMyExpertRequest"
       },
       {
         "name": "UpdatePortfolioItemRequestDto"

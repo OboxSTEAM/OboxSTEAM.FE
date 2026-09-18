@@ -4,7 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 
+import { getMentorInitials } from "@/components/mentors/mentor-profile-content";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { OperationsOverview } from "@/lib/api";
+import { getExpertAvatarUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 import { DashboardPanel, DashboardSectionTitle } from "../dashboard-panel";
@@ -17,23 +20,46 @@ type MentorLoadPanelProps = {
 type MentorRow = {
   mentorId: string;
   name: string;
+  title: string | null;
+  avatarUrl: string | null;
   assigned: number;
   pending: number;
   max: number;
   utilization: number;
 };
 
-function loadTone(utilization: number): {
-  bar: string;
+function loadBarClass(utilization: number): string {
+  if (utilization >= 0.9) return "bg-steam-science";
+  if (utilization >= 0.7) return "bg-steam-arts";
+  return "bg-steam-engineering";
+}
+
+function SummaryStat({
+  value,
+  label,
+  tone,
+}: {
+  value: string;
   label: string;
-} {
-  if (utilization >= 0.9) {
-    return { bar: "bg-steam-science", label: "text-steam-science" };
-  }
-  if (utilization >= 0.7) {
-    return { bar: "bg-steam-arts", label: "text-steam-arts" };
-  }
-  return { bar: "bg-steam-engineering", label: "text-steam-engineering" };
+  tone?: "warn" | "danger" | "neutral";
+}) {
+  return (
+    <div className="min-w-0 rounded-xl bg-secondary/70 px-3 py-2.5">
+      <p
+        className={cn(
+          "font-heading text-xl font-black tabular-nums tracking-tight sm:text-2xl",
+          tone === "danger" && "text-steam-science",
+          tone === "warn" && "text-steam-arts",
+          (!tone || tone === "neutral") && "text-foreground",
+        )}
+      >
+        {value}
+      </p>
+      <p className="mt-0.5 truncate text-[11px] font-medium text-muted-foreground">
+        {label}
+      </p>
+    </div>
+  );
 }
 
 export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
@@ -46,6 +72,8 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
         return {
           mentorId: mentor.mentorId,
           name: mentor.mentorName?.trim() || "Mentor",
+          title: mentor.title?.trim() || null,
+          avatarUrl: getExpertAvatarUrl(mentor.avatarUrl),
           assigned: mentor.assigned,
           pending: mentor.pending,
           max,
@@ -60,14 +88,14 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
       });
   }, [pagination.items]);
 
-  const totalAssigned = rows.reduce((sum, row) => sum + row.assigned, 0);
   const pendingTotal = rows.reduce((sum, row) => sum + row.pending, 0);
   const nearCapacityCount = rows.filter((row) => row.utilization >= 0.9).length;
   const avgUtilization =
     rows.length > 0
       ? rows.reduce((sum, row) => sum + row.utilization, 0) / rows.length
       : 0;
-  const totalKnown = pagination.totalCount > 0 ? pagination.totalCount : rows.length;
+  const totalKnown =
+    pagination.totalCount > 0 ? pagination.totalCount : rows.length;
   const hasMore = pagination.hasNext || totalKnown > rows.length;
 
   return (
@@ -83,59 +111,71 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
         </p>
       ) : (
         <div className="mt-3 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <span className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-semibold tabular-nums text-foreground">
-              TB {(avgUtilization * 100).toFixed(0)}%
-            </span>
-            <span className="rounded-lg bg-secondary px-2.5 py-1 text-[11px] font-semibold tabular-nums text-foreground">
-              {formatCount(totalAssigned)} lớp
-            </span>
-            {nearCapacityCount > 0 ? (
-              <span className="rounded-lg bg-steam-science/15 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-steam-science">
-                {formatCount(nearCapacityCount)} gần đầy
-              </span>
-            ) : null}
-            {pendingTotal > 0 ? (
-              <span className="rounded-lg bg-steam-arts/15 px-2.5 py-1 text-[11px] font-semibold tabular-nums text-steam-arts">
-                {formatCount(pendingTotal)} chờ duyệt
-              </span>
-            ) : null}
+          <div className="grid grid-cols-3 gap-2">
+            <SummaryStat
+              value={`${(avgUtilization * 100).toFixed(0)}%`}
+              label="TB tải"
+            />
+            <SummaryStat
+              value={formatCount(nearCapacityCount)}
+              label="Gần đầy"
+              tone={nearCapacityCount > 0 ? "danger" : "neutral"}
+            />
+            <SummaryStat
+              value={formatCount(pendingTotal)}
+              label="Chờ duyệt"
+              tone={pendingTotal > 0 ? "warn" : "neutral"}
+            />
           </div>
 
-          <ul className="max-h-[200px] space-y-2 overflow-y-auto overscroll-contain pr-1 sm:max-h-[240px] lg:max-h-[280px]">
-            {rows.map((row, index) => {
-              const tone = loadTone(row.utilization);
+          <ul className="max-h-[220px] space-y-3 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] sm:max-h-[260px] lg:max-h-[280px] [&::-webkit-scrollbar]:hidden">
+            {rows.map((row) => {
               const ratio = Math.min(100, row.utilization * 100);
               return (
-                <li key={row.mentorId} className="space-y-1.5">
-                  <div className="flex items-baseline justify-between gap-2 text-sm">
-                    <p className="min-w-0 truncate font-medium text-foreground">
-                      <span className="mr-1.5 hidden font-mono text-[10px] tabular-nums text-muted-foreground @min-[320px]/dash:inline">
-                        {String(index + 1).padStart(2, "0")}
-                      </span>
-                      {row.name}
-                    </p>
-                    <p className="shrink-0 tabular-nums text-[11px] text-muted-foreground sm:text-xs">
-                      {formatCount(row.assigned)}/{formatCount(row.max)}
-                      <span className={cn("ml-1.5 font-semibold", tone.label)}>
-                        {ratio.toFixed(0)}%
-                      </span>
-                      {row.pending > 0 ? (
-                        <span className="ml-1.5 font-semibold text-steam-arts">
-                          · {formatCount(row.pending)}
-                          <span className="hidden @min-[360px]/dash:inline"> chờ</span>
-                        </span>
+                <li key={row.mentorId}>
+                  <div className="flex items-start gap-3">
+                    <Avatar className="size-10 shrink-0">
+                      {row.avatarUrl ? (
+                        <AvatarImage src={row.avatarUrl} alt="" />
                       ) : null}
-                    </p>
-                  </div>
-                  <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-[width] duration-300",
-                        tone.bar,
-                      )}
-                      style={{ width: `${ratio}%` }}
-                    />
+                      <AvatarFallback className="bg-muted text-xs font-semibold text-muted-foreground">
+                        {getMentorInitials(row.name)}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground">
+                            {row.name}
+                          </p>
+                          {row.title ? (
+                            <p className="truncate text-[11px] text-muted-foreground">
+                              {row.title}
+                            </p>
+                          ) : null}
+                        </div>
+                        <p className="shrink-0 text-xs font-semibold tabular-nums text-foreground">
+                          {formatCount(row.assigned)}/{formatCount(row.max)}
+                        </p>
+                      </div>
+
+                      <div className="h-2 overflow-hidden rounded-full bg-secondary">
+                        <div
+                          className={cn(
+                            "h-full rounded-full transition-[width] duration-300",
+                            loadBarClass(row.utilization),
+                          )}
+                          style={{ width: `${ratio}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    {row.pending > 0 ? (
+                      <span className="mt-1 shrink-0 rounded-md bg-steam-arts/15 px-2 py-1 text-[10px] font-semibold tabular-nums text-steam-arts">
+                        {formatCount(row.pending)} chờ
+                      </span>
+                    ) : null}
                   </div>
                 </li>
               );
