@@ -31,7 +31,7 @@ export function ViewModeSwitch({
       role="tablist"
       aria-label="Chế độ xem lịch"
     >
-      <span className="t-tabs-pill top-1 h-[calc(100%-0.5rem)] rounded-lg shadow-sm" ref={pillRef} aria-hidden />
+      <span className="t-tabs-pill rounded-lg shadow-sm" ref={pillRef} aria-hidden />
       {(["week", "month"] as const).map((mode) => (
         <button
           key={mode}

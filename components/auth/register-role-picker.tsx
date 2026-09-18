@@ -70,14 +70,14 @@ export function RegisterRolePicker({
           aria-labelledby="register-role-label"
           aria-invalid={hasError ? "true" : undefined}
           className={cn(
-            "t-tabs w-full gap-1 rounded-xl bg-[#F3F4F6] p-1",
+            "t-tabs w-full items-stretch gap-1 rounded-xl bg-[#F3F4F6] p-1",
             "[--tabs-bar-bg:#F3F4F6] [--tabs-pill-bg:#ffffff]",
             "[--tabs-text-muted:#6B6B6B] [--tabs-text-active:#2D2D2D]",
           )}
           onBlur={onBlur}
         >
           <span
-            className="t-tabs-pill top-1 h-[calc(100%-0.5rem)] rounded-lg shadow-sm"
+            className="t-tabs-pill rounded-lg shadow-sm"
             ref={pillRef}
             aria-hidden
           />
@@ -94,7 +94,7 @@ export function RegisterRolePicker({
                 aria-selected={isSelected}
                 onClick={() => onChange(option.value)}
                 className={cn(
-                  "t-tab relative z-10 flex !h-auto min-h-11 flex-1 flex-col items-center gap-0.5 rounded-lg px-2 py-2 text-center",
+                  "t-tab relative z-10 flex !h-auto min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-lg px-2 py-2 text-center",
                   isSelected ? "text-[#2D2D2D]" : "text-[#6B6B6B]",
                 )}
               >

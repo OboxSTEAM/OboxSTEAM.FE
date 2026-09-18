@@ -2,10 +2,19 @@
 
 import { useCallback, useEffect, useRef, type RefObject } from "react";
 
+function applyPillGeometry(pill: HTMLElement, tab: HTMLElement) {
+  pill.style.transform = `translateX(${tab.offsetLeft}px)`;
+  pill.style.width = `${tab.offsetWidth}px`;
+  pill.style.height = `${tab.offsetHeight}px`;
+  pill.style.top = `${tab.offsetTop}px`;
+}
+
 /**
  * Sliding pill for `.t-tabs` — measures the active tab and writes
- * transform/width onto `.t-tabs-pill`. First sync (and resize) snaps
- * with no transition.
+ * transform/width/height/top onto `.t-tabs-pill`. First sync (and resize)
+ * snaps with no transition. Height/top matter for multi-line tabs
+ * (e.g. register role picker) where the CSS default 30px pill would float
+ * at the top of a taller bar.
  */
 export function useSlidingTabs(): {
   tabsRef: RefObject<HTMLDivElement | null>;
@@ -30,23 +39,32 @@ export function useSlidingTabs(): {
     if (!shouldAnimate) {
       const prev = pill.style.transition;
       pill.style.transition = "none";
-      pill.style.transform = `translateX(${tab.offsetLeft}px)`;
-      pill.style.width = `${tab.offsetWidth}px`;
+      applyPillGeometry(pill, tab);
       void pill.offsetWidth;
       pill.style.transition = prev;
       hasSyncedRef.current = true;
       return;
     }
 
-    pill.style.transform = `translateX(${tab.offsetLeft}px)`;
-    pill.style.width = `${tab.offsetWidth}px`;
+    applyPillGeometry(pill, tab);
   }, []);
 
   useEffect(() => {
     syncPill(false);
     const onResize = () => syncPill(false);
     window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+
+    const bar = tabsRef.current;
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" && bar
+        ? new ResizeObserver(() => syncPill(false))
+        : null;
+    if (bar && resizeObserver) resizeObserver.observe(bar);
+
+    return () => {
+      window.removeEventListener("resize", onResize);
+      resizeObserver?.disconnect();
+    };
   }, [syncPill]);
 
   return { tabsRef, pillRef, syncPill };

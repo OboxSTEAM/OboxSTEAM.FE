@@ -627,8 +627,10 @@
   transform: translateX(0);
   transition:
     transform var(--tabs-dur) var(--tabs-ease),
-    width var(--tabs-dur) var(--tabs-ease);
-  will-change: transform, width;
+    width var(--tabs-dur) var(--tabs-ease),
+    height var(--tabs-dur) var(--tabs-ease),
+    top var(--tabs-dur) var(--tabs-ease);
+  will-change: transform, width, height, top;
   z-index: 0;
   pointer-events: none;
 }
