@@ -6,12 +6,14 @@ import {
   addMediaTagSchema,
   classGalleryClassIdParamSchema,
   classGalleryQuerySchema,
+  mediaClassSessionIdParamSchema,
   mediaIdParamSchema,
   mediaListQuerySchema,
   mediaTagParamsSchema,
   mediaUploadQuerySchema,
   myGalleryQuerySchema,
   updateMediaTagVerificationSchema,
+  uploadClassMediaFileSchema,
   type AddMediaTagInput,
   type ClassGalleryQuery,
   type MediaListQuery,
@@ -25,6 +27,7 @@ import {
   deleteMediaResponseSchema,
   deleteMediaTagResponseSchema,
   getClassGalleryResponseSchema,
+  getMediaByClassSessionResponseSchema,
   getMediaByIdResponseSchema,
   getMediaListResponseSchema,
   getMediaProgressResponseSchema,
@@ -36,6 +39,7 @@ import {
   type DeleteMediaResult,
   type DeleteMediaTagResult,
   type GetClassGalleryResult,
+  type GetMediaByClassSessionResult,
   type GetMediaByIdResult,
   type GetMediaListResult,
   type GetMediaProgressResult,
@@ -64,6 +68,8 @@ export type {
   DeleteMediaTagResult,
   GetClassGalleryResponse,
   GetClassGalleryResult,
+  GetMediaByClassSessionResponse,
+  GetMediaByClassSessionResult,
   GetMediaByIdResponse,
   GetMediaByIdResult,
   GetMediaListResponse,
@@ -84,12 +90,14 @@ export type {
   AddMediaTagInput,
   ClassGalleryClassIdParam,
   ClassGalleryQuery,
+  MediaClassSessionIdParam,
   MediaIdParam,
   MediaListQuery,
   MediaTagParams,
   MediaUploadQuery,
   MyGalleryQuery,
   UpdateMediaTagVerificationInput,
+  UploadClassMediaFileInput,
 } from "@/lib/validations/media";
 
 const MEDIA_BASE = "/api/media";
@@ -289,6 +297,38 @@ export async function getMediaById(mediaId: string): Promise<GetMediaByIdResult>
   return requireApiValue(response.value);
 }
 
+/**
+ * `GET /api/media/class-session/{classSessionId}` — all media for a session
+ * (including tags). Used for offline session evidence after uploads go through
+ * `POST /api/media/upload`.
+ */
+export async function getMediaByClassSession(
+  classSessionId: string,
+): Promise<GetMediaByClassSessionResult> {
+  const { classSessionId: parsedId } = mediaClassSessionIdParamSchema.parse({
+    classSessionId,
+  });
+
+  try {
+    const response = await apiFetchParsed(
+      `${MEDIA_BASE}/class-session/${parsedId}`,
+      getMediaByClassSessionResponseSchema,
+      { method: "GET" },
+    );
+    assertApiSuccess(response);
+    return requireApiValue(response.value);
+  } catch (error) {
+    if (isUninitializedMediaStorageError(error)) {
+      return {
+        code: "OK",
+        message: "Chưa có media.",
+        data: [],
+      };
+    }
+    throw error;
+  }
+}
+
 /** `GET /api/media/{mediaId}/progress` — transcode % and pipeline status. */
 export async function getMediaProgress(
   mediaId: string,
@@ -310,8 +350,9 @@ export async function uploadClassMedia(
   query: MediaUploadQuery,
 ): Promise<UploadMediaResult> {
   const parsed = mediaUploadQuerySchema.parse(query);
+  const { file: parsedFile } = uploadClassMediaFileSchema.parse({ file });
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", parsedFile);
 
   const response = await apiFetchParsed(
     `${MEDIA_BASE}/upload${buildQueryString(parsed, mediaUploadQuerySchema)}`,

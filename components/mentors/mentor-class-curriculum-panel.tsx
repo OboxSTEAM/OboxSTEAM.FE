@@ -676,6 +676,7 @@ export function MentorClassCurriculumPanel({
                 <>
                   {isOfflineActivity ? (
                     <SessionEvidencePanel
+                      classId={classId}
                       sessionId={effectiveSessionId}
                       requireMediaEvidence={
                         selectedActivity.requireMediaEvidence

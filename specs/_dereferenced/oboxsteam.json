@@ -94038,6 +94038,14 @@
                                             "type": "string",
                                             "nullable": true
                                           },
+                                          "avatarUrl": {
+                                            "type": "string",
+                                            "nullable": true
+                                          },
+                                          "title": {
+                                            "type": "string",
+                                            "nullable": true
+                                          },
                                           "assigned": {
                                             "type": "integer",
                                             "format": "int32"
@@ -94723,6 +94731,14 @@
                                             "type": "string",
                                             "nullable": true
                                           },
+                                          "avatarUrl": {
+                                            "type": "string",
+                                            "nullable": true
+                                          },
+                                          "title": {
+                                            "type": "string",
+                                            "nullable": true
+                                          },
                                           "assigned": {
                                             "type": "integer",
                                             "format": "int32"
@@ -95405,6 +95421,14 @@
                                             "format": "uuid"
                                           },
                                           "mentorName": {
+                                            "type": "string",
+                                            "nullable": true
+                                          },
+                                          "avatarUrl": {
+                                            "type": "string",
+                                            "nullable": true
+                                          },
+                                          "title": {
                                             "type": "string",
                                             "nullable": true
                                           },
@@ -98629,6 +98653,14 @@
                                         "type": "string",
                                         "nullable": true
                                       },
+                                      "avatarUrl": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
                                       "assigned": {
                                         "type": "integer",
                                         "format": "int32"
@@ -98828,6 +98860,14 @@
                                         "type": "string",
                                         "nullable": true
                                       },
+                                      "avatarUrl": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
                                       "assigned": {
                                         "type": "integer",
                                         "format": "int32"
@@ -99024,6 +99064,14 @@
                                         "format": "uuid"
                                       },
                                       "mentorName": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "avatarUrl": {
+                                        "type": "string",
+                                        "nullable": true
+                                      },
+                                      "title": {
                                         "type": "string",
                                         "nullable": true
                                       },
@@ -339990,6 +340038,14 @@
                           "type": "string",
                           "nullable": true
                         },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "title": {
+                          "type": "string",
+                          "nullable": true
+                        },
                         "assigned": {
                           "type": "integer",
                           "format": "int32"
@@ -340650,6 +340706,14 @@
                                   "format": "uuid"
                                 },
                                 "mentorName": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "avatarUrl": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "title": {
                                   "type": "string",
                                   "nullable": true
                                 },
@@ -341327,6 +341391,14 @@
                               "format": "uuid"
                             },
                             "mentorName": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "avatarUrl": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "title": {
                               "type": "string",
                               "nullable": true
                             },
@@ -362176,6 +362248,14 @@
             "type": "string",
             "nullable": true
           },
+          "avatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "title": {
+            "type": "string",
+            "nullable": true
+          },
           "assigned": {
             "type": "integer",
             "format": "int32"
@@ -362204,6 +362284,14 @@
                   "format": "uuid"
                 },
                 "mentorName": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "avatarUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "title": {
                   "type": "string",
                   "nullable": true
                 },
@@ -367837,6 +367925,14 @@
                       "type": "string",
                       "nullable": true
                     },
+                    "avatarUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "title": {
+                      "type": "string",
+                      "nullable": true
+                    },
                     "assigned": {
                       "type": "integer",
                       "format": "int32"
@@ -368011,6 +368107,14 @@
                               "format": "uuid"
                             },
                             "mentorName": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "avatarUrl": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "title": {
                               "type": "string",
                               "nullable": true
                             },
@@ -368202,6 +368306,14 @@
                           "format": "uuid"
                         },
                         "mentorName": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "avatarUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "title": {
                           "type": "string",
                           "nullable": true
                         },

@@ -60,6 +60,20 @@ export const classGalleryPaginationValueSchema = z.object({
   data: paginatedClassGalleryMediaSchema,
 });
 
+/** Non-paginated list (`GET /api/media/class-session/{classSessionId}`). */
+export const mediaAssetListValueSchema = z.object({
+  code: z.string().nullish().transform((value) => value ?? "OK"),
+  message: z.string().nullish().transform((value) => value ?? ""),
+  data: z
+    .array(mediaAssetSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+});
+
+export const getMediaByClassSessionResponseSchema = createApiResponseSchema(
+  mediaAssetListValueSchema,
+);
+
 export const getMediaListResponseSchema = createApiResponseSchema(
   mediaAssetPaginationValueSchema,
 );
@@ -88,6 +102,12 @@ export const deleteMediaResponseSchema = createApiResponseSchema(
 export const deleteMediaTagResponseSchema = createApiResponseSchema(
   apiValueMessageOnlySchema,
 );
+
+export type GetMediaByClassSessionResponse = z.infer<
+  typeof getMediaByClassSessionResponseSchema
+>;
+export type GetMediaByClassSessionResult =
+  GetMediaByClassSessionResponse["value"];
 
 export type GetMediaListResponse = z.infer<typeof getMediaListResponseSchema>;
 export type GetMediaListResult = GetMediaListResponse["value"];

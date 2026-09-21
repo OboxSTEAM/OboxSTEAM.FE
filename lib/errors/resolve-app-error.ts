@@ -512,13 +512,14 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action: "Chọn lại buổi học hoặc thử tải lại sau vài giây.",
   },
   "classSessions.evidence.upload": {
-    title: "Không tải lên được ảnh minh chứng",
-    reason: "Tệp không hợp lệ (chỉ JPG/PNG) hoặc buổi học không cho phép.",
-    action: "Chọn ảnh nhỏ hơn 10 MB và thử lại.",
+    title: "Không tải lên được minh chứng",
+    reason:
+      "Tệp không hợp lệ (JPG/PNG hoặc MP4/MOV) hoặc buổi học không cho phép.",
+    action: "Chọn ảnh/video hợp lệ rồi thử lại.",
   },
   "classSessions.evidence.delete": {
-    title: "Không xóa được ảnh minh chứng",
-    reason: "Ảnh có thể đã bị xóa hoặc bạn không có quyền.",
+    title: "Không xóa được minh chứng",
+    reason: "Media có thể đã bị xóa hoặc bạn không có quyền.",
     action: "Tải lại danh sách minh chứng và thử lại.",
   },
   "classSessions.update": {

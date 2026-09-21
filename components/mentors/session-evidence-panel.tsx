@@ -8,25 +8,34 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import type { MediaAsset } from "@/lib/api/entities/media";
 import {
-  deleteSessionEvidence,
-  listSessionEvidence,
-  uploadSessionEvidence,
-} from "@/lib/api/class-sessions";
+  deleteMedia,
+  getMediaByClassSession,
+  uploadClassMedia,
+} from "@/lib/api/media";
+import { MEDIA_ACCEPT } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { uploadSessionEvidenceSchema } from "@/lib/validations/class-sessions";
+import { uploadClassMediaFileSchema } from "@/lib/validations/media";
 import { cn } from "@/lib/utils";
 
 type SessionEvidencePanelProps = {
+  classId: string;
   sessionId: string;
   requireMediaEvidence?: boolean;
   onCountChange?: (count: number) => void;
   className?: string;
 };
 
+function isVideoAsset(item: MediaAsset): boolean {
+  const type = (item.fileType ?? "").toLowerCase();
+  if (type.includes("video") || type === "mp4" || type === "mov") return true;
+  const href = (item.fileUrl ?? "").toLowerCase();
+  return href.endsWith(".mp4") || href.endsWith(".mov");
+}
+
 function validateEvidenceFiles(files: File[]): File[] {
   const valid: File[] = [];
   for (const file of files) {
-    const parsed = uploadSessionEvidenceSchema.safeParse({ file });
+    const parsed = uploadClassMediaFileSchema.safeParse({ file });
     if (parsed.success) {
       valid.push(file);
     } else {
@@ -49,27 +58,44 @@ function EvidenceThumbnail({
   if (!url) {
     return (
       <div className="flex aspect-square items-center justify-center rounded-xl border border-dashed border-border bg-muted/30 text-xs text-muted-foreground">
-        Không có URL
+        {item.isReady ? "Không có URL" : (item.statusLabel ?? "Đang xử lý…")}
       </div>
     );
   }
 
+  const video = isVideoAsset(item);
+
   return (
     <div className="group relative aspect-square overflow-hidden rounded-xl border border-border bg-muted/20">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={url}
-        alt="Minh chứng buổi học"
-        className="size-full object-cover"
-        loading="lazy"
-      />
+      {video ? (
+        <video
+          src={url}
+          className="size-full object-cover"
+          muted
+          preload="metadata"
+          playsInline
+        />
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={url}
+          alt="Minh chứng buổi học"
+          className="size-full object-cover"
+          loading="lazy"
+        />
+      )}
+      {!item.isReady && item.statusLabel ? (
+        <span className="absolute inset-x-0 bottom-0 truncate bg-black/55 px-1.5 py-0.5 text-[10px] text-white">
+          {item.statusLabel}
+        </span>
+      ) : null}
       <Button
         type="button"
         size="icon"
         variant="destructive"
         disabled={deleting}
         className="absolute top-2 right-2 size-8 opacity-0 shadow-sm transition-opacity group-hover:opacity-100 group-focus-within:opacity-100"
-        aria-label="Xóa ảnh minh chứng"
+        aria-label="Xóa minh chứng"
         onClick={onDelete}
       >
         {deleting ? (
@@ -83,6 +109,7 @@ function EvidenceThumbnail({
 }
 
 export function SessionEvidencePanel({
+  classId,
   sessionId,
   requireMediaEvidence = false,
   onCountChange,
@@ -99,7 +126,7 @@ export function SessionEvidencePanel({
     mutate,
   } = useClientFetch({
     enabled: Boolean(sessionId),
-    fetcher: async () => listSessionEvidence(sessionId),
+    fetcher: async () => getMediaByClassSession(sessionId),
     deps: [sessionId],
     onError: (error) =>
       showAppErrorFromUnknown(error, "classSessions.evidence.list"),
@@ -119,7 +146,10 @@ export function SessionEvidencePanel({
       setUploadingCount((count) => count + files.length);
       try {
         for (const file of files) {
-          const result = await uploadSessionEvidence(sessionId, file);
+          const result = await uploadClassMedia(file, {
+            classId,
+            classSessionId: sessionId,
+          });
           const uploaded = result?.data;
           if (uploaded) {
             mutate((prev) => {
@@ -136,8 +166,8 @@ export function SessionEvidencePanel({
           title: "Đã tải minh chứng",
           description:
             files.length === 1
-              ? "Ảnh đã được lưu cho buổi học."
-              : `Đã tải ${files.length} ảnh.`,
+              ? "File đã vào pipeline media (có thể dùng cho highlight)."
+              : `Đã tải ${files.length} file vào pipeline media.`,
         });
       } catch (error) {
         showAppErrorFromUnknown(error, "classSessions.evidence.upload");
@@ -146,14 +176,14 @@ export function SessionEvidencePanel({
         setUploadingCount((count) => Math.max(0, count - files.length));
       }
     },
-    [mutate, retry, sessionId],
+    [classId, mutate, retry, sessionId],
   );
 
   const handleDelete = useCallback(
     async (mediaId: string) => {
       setDeletingId(mediaId);
       try {
-        await deleteSessionEvidence(sessionId, mediaId);
+        await deleteMedia(mediaId);
         mutate((prev) => {
           const prevItems = prev?.data ?? [];
           return {
@@ -164,7 +194,7 @@ export function SessionEvidencePanel({
         });
         showAppSuccess({
           title: "Đã xóa minh chứng",
-          description: "Ảnh đã được gỡ khỏi buổi học.",
+          description: "Media đã được gỡ khỏi buổi học.",
         });
       } catch (error) {
         showAppErrorFromUnknown(error, "classSessions.evidence.delete");
@@ -172,7 +202,7 @@ export function SessionEvidencePanel({
         setDeletingId(null);
       }
     },
-    [mutate, sessionId],
+    [mutate],
   );
 
   const isUploading = uploadingCount > 0;
@@ -183,11 +213,11 @@ export function SessionEvidencePanel({
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground">Minh chứng buổi học</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Ảnh hiện trường JPG/PNG, tối đa 10 MB mỗi ảnh.
+            Ảnh JPG/PNG hoặc video MP4/MOV — hệ thống xử lý để AI tạo highlight sau này.
           </p>
           {requireMediaEvidence ? (
             <p className="mt-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-              Hoạt động này yêu cầu minh chứng — nên tải ảnh trước khi hoàn thành.
+              Hoạt động này yêu cầu minh chứng — nên tải file trước khi hoàn thành.
             </p>
           ) : null}
         </div>
@@ -195,7 +225,7 @@ export function SessionEvidencePanel({
           <input
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/jpg,.jpg,.jpeg,.png"
+            accept={MEDIA_ACCEPT}
             multiple
             className="sr-only"
             onChange={(event) => {
@@ -210,7 +240,7 @@ export function SessionEvidencePanel({
             type="button"
             size="sm"
             variant="outline"
-            disabled={isUploading || !sessionId}
+            disabled={isUploading || !sessionId || !classId}
             className="h-8 gap-1.5 rounded-md"
             onClick={() => inputRef.current?.click()}
           >
@@ -219,7 +249,7 @@ export function SessionEvidencePanel({
             ) : (
               <ImagePlus className="size-3.5" aria-hidden />
             )}
-            {isUploading ? "Đang tải…" : "Thêm ảnh"}
+            {isUploading ? "Đang tải…" : "Thêm media"}
           </Button>
         </div>
       </div>
@@ -233,7 +263,7 @@ export function SessionEvidencePanel({
           </div>
         ) : items.length === 0 ? (
           <p className="rounded-xl border border-dashed border-border bg-muted/20 px-4 py-6 text-center text-sm text-muted-foreground">
-            Chưa có ảnh minh chứng. Nhấn &quot;Thêm ảnh&quot; để tải lên.
+            Chưa có minh chứng. Nhấn &quot;Thêm media&quot; để tải ảnh hoặc video.
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

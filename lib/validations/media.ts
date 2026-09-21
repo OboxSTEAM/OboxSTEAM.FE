@@ -78,6 +78,39 @@ export const mediaUploadQuerySchema = z.object({
   classSessionId: z.string().uuid("ID buổi học không hợp lệ.").optional(),
 });
 
+const MEDIA_UPLOAD_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "video/mp4",
+  "video/quicktime",
+]);
+
+/**
+ * Multipart file for `POST /api/media/upload` (class media + session evidence).
+ * Images JPG/PNG and videos MP4/MOV — face tagging optional, pipeline still runs.
+ */
+export const uploadClassMediaFileSchema = z.object({
+  file: z
+    .instanceof(File, { message: "Vui lòng chọn ảnh hoặc video." })
+    .refine((file) => file.size > 0, "Tệp không hợp lệ.")
+    .refine(
+      (file) =>
+        MEDIA_UPLOAD_TYPES.has(file.type.toLowerCase()) ||
+        /\.(jpe?g|png|mp4|mov)$/i.test(file.name),
+      "Chỉ chấp nhận ảnh JPG/PNG hoặc video MP4/MOV.",
+    )
+    .refine(
+      (file) => file.size <= 200 * 1024 * 1024,
+      "File không được vượt quá 200 MB.",
+    ),
+});
+
+/** Path param for `GET /api/media/class-session/{classSessionId}`. */
+export const mediaClassSessionIdParamSchema = z.object({
+  classSessionId: z.string().uuid("ID buổi học không hợp lệ."),
+});
+
 /** Path param for media-scoped routes. */
 export const mediaIdParamSchema = z.object({
   mediaId: z.string().uuid("ID media không hợp lệ."),
@@ -106,6 +139,12 @@ export type ClassGalleryClassIdParam = z.infer<
 export type ClassGalleryQuery = z.infer<typeof classGalleryQuerySchema>;
 export type MyGalleryQuery = z.infer<typeof myGalleryQuerySchema>;
 export type MediaUploadQuery = z.infer<typeof mediaUploadQuerySchema>;
+export type UploadClassMediaFileInput = z.infer<
+  typeof uploadClassMediaFileSchema
+>;
+export type MediaClassSessionIdParam = z.infer<
+  typeof mediaClassSessionIdParamSchema
+>;
 export type MediaIdParam = z.infer<typeof mediaIdParamSchema>;
 export type MediaTagParams = z.infer<typeof mediaTagParamsSchema>;
 export type AddMediaTagInput = z.infer<typeof addMediaTagSchema>;

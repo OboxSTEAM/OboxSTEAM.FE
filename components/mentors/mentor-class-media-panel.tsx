@@ -52,6 +52,7 @@ import {
   processMediaTags,
   updateMediaTagVerification,
   uploadClassMedia,
+  type ClassSession,
   type ClassStudentRoster,
   type MediaAsset,
   type MediaProgress,
@@ -246,11 +247,39 @@ type VideoStatusFilter = "all" | MediaVideoStatus;
 type MentorClassMediaPanelProps = {
   classId: string;
   roster: ClassStudentRoster[];
+  /** Class sessions — used to label session-linked evidence vs class-only uploads. */
+  sessions?: ClassSession[];
 };
+
+function resolveMediaSourceLabel(
+  media: MediaAsset,
+  sessionById: Map<string, ClassSession>,
+): { kind: "class" | "session"; title: string; detail: string | null } {
+  if (!media.classSessionId) {
+    return {
+      kind: "class",
+      title: "Tải trực tiếp",
+      detail: "Không gắn buổi học",
+    };
+  }
+
+  const session = sessionById.get(media.classSessionId);
+  const sessionTitle =
+    session?.title?.trim() ||
+    (session ? formatApiDateTimeDisplay(session.startTime) : null) ||
+    "Buổi học";
+
+  return {
+    kind: "session",
+    title: "Minh chứng buổi học",
+    detail: sessionTitle,
+  };
+}
 
 export function MentorClassMediaPanel({
   classId,
   roster,
+  sessions = [],
 }: MentorClassMediaPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
@@ -303,6 +332,14 @@ export function MentorClassMediaPanel({
     }
     return map;
   }, [roster]);
+
+  const sessionById = useMemo(() => {
+    const map = new Map<string, ClassSession>();
+    for (const session of sessions) {
+      map.set(session.id, session);
+    }
+    return map;
+  }, [sessions]);
 
   const { data, isLoading, markLoading, retry } = useClientFetch({
     fetcher: async (): Promise<MediaListPage> => {
@@ -448,6 +485,10 @@ export function MentorClassMediaPanel({
         selectedMediaBase,
         progressById[selectedMediaBase.id],
       )
+    : null;
+
+  const selectedMediaSource = selectedMedia
+    ? resolveMediaSourceLabel(selectedMedia, sessionById)
     : null;
 
   const untaggedStudents = useMemo(() => {
@@ -751,6 +792,33 @@ export function MentorClassMediaPanel({
         ),
       },
       {
+        header: "Nguồn",
+        className: "min-w-[11rem] whitespace-normal",
+        render: (media) => {
+          const source = resolveMediaSourceLabel(media, sessionById);
+          return (
+            <div className="flex min-w-0 flex-col gap-0.5">
+              <Badge
+                variant="outline"
+                className={cn(
+                  "w-fit rounded-full text-[10px] font-semibold",
+                  source.kind === "session"
+                    ? "border-amber-500/40 bg-amber-500/10 text-amber-800 dark:text-amber-300"
+                    : "border-border bg-muted/40 text-muted-foreground",
+                )}
+              >
+                {source.title}
+              </Badge>
+              {source.detail ? (
+                <span className="truncate text-xs text-muted-foreground">
+                  {source.detail}
+                </span>
+              ) : null}
+            </div>
+          );
+        },
+      },
+      {
         header: "Thời gian",
         render: (media) => (
           <span className="whitespace-nowrap text-sm text-muted-foreground">
@@ -834,6 +902,7 @@ export function MentorClassMediaPanel({
       progressById,
       timedOutIds,
       rosterByStudentId,
+      sessionById,
     ],
   );
 
@@ -848,6 +917,10 @@ export function MentorClassMediaPanel({
             </p>
             <MediaWorkflowHelpPopover />
           </div>
+          <p className="basis-full text-xs text-muted-foreground">
+            Tổng hợp media tải trực tiếp và minh chứng từ buổi học — cùng pipeline
+            AI cho highlight.
+          </p>
 
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2">
@@ -1097,6 +1170,22 @@ export function MentorClassMediaPanel({
                     timedOut={Boolean(timedOutIds[selectedMedia.id])}
                     className="max-w-none"
                   />
+
+                  {selectedMediaSource ? (
+                    <div className="rounded-xl border border-border bg-muted/30 px-3 py-2.5">
+                      <p className="text-[11px] font-medium text-muted-foreground">
+                        Nguồn
+                      </p>
+                      <p className="mt-0.5 text-sm font-semibold text-foreground">
+                        {selectedMediaSource.title}
+                      </p>
+                      {selectedMediaSource.detail ? (
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {selectedMediaSource.detail}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
 
                   {isAiProcessing(selectedMedia) ? (
                     <div className="space-y-2 rounded-xl border border-border bg-muted/40 p-3">
