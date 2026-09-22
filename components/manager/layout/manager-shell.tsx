@@ -75,12 +75,14 @@ export function ManagerShell({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (!isHydrated || isLoading) return;
+    if (!isHydrated) return;
 
     if (!isAuthenticated) {
       router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
       return;
     }
+
+    if (isLoading) return;
     // Wait until profile is loaded before checking role. Wrong-role users go
     // to their own home (e.g. mentor → /mentor/classes), not always landing.
     if (profile && !canAccessManagerArea(profile.role)) {

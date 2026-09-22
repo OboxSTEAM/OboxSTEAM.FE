@@ -1,10 +1,6 @@
-import {
-  clearAuthSession,
-  getAuthSession,
-  persistAuthSession,
-} from "@/lib/auth/session";
+import { expireAuthSession, getAuthSession, persistAuthSession } from "@/lib/auth/session";
+import type { StoredAuthTokens } from "@/lib/auth/session";
 
-import { refreshTokenResponseSchema } from "../auth/schemas";
 import { getApiBaseUrl } from "../config";
 
 const AUTH_API_PREFIX = "/api/auth/";
@@ -13,6 +9,41 @@ let refreshInFlight: Promise<string | null> | null = null;
 
 function isDefinitiveRefreshFailure(status: number): boolean {
   return status === 400 || status === 401;
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object") return null;
+  return value as Record<string, unknown>;
+}
+
+function readNonEmptyString(value: unknown): string | null {
+  return typeof value === "string" && value.trim() ? value : null;
+}
+
+/**
+ * Refresh returns the same envelope as login (`value.data`), but the new
+ * refresh token may be omitted. Keep the stored 7-day refresh token in that case.
+ * A strict Zod parse used to reject the whole body and leave the expired access token in place.
+ */
+function readIssuedTokens(
+  json: unknown,
+  fallbackRefreshToken: string,
+): StoredAuthTokens | null {
+  const root = asRecord(json);
+  if (!root || root.isSuccess !== true) return null;
+
+  const value = asRecord(root.value);
+  if (!value) return null;
+
+  const data = asRecord(value.data) ?? value;
+  const accessToken = readNonEmptyString(data.accessToken);
+  if (!accessToken) return null;
+
+  const refreshToken =
+    readNonEmptyString(data.refreshToken) ?? fallbackRefreshToken;
+  if (!refreshToken) return null;
+
+  return { accessToken, refreshToken };
 }
 
 /** Bearer token from browser session (client-only). */
@@ -48,7 +79,10 @@ export async function refreshAuthTokens(): Promise<string | null> {
 
   refreshInFlight = (async () => {
     const session = getAuthSession();
-    if (!session?.refreshToken) return null;
+    if (!session?.refreshToken) {
+      if (session?.accessToken) expireAuthSession();
+      return null;
+    }
 
     try {
       const url = `${getApiBaseUrl()}${AUTH_API_PREFIX}refresh-token`;
@@ -67,18 +101,18 @@ export async function refreshAuthTokens(): Promise<string | null> {
 
       if (!response.ok) {
         if (isDefinitiveRefreshFailure(response.status)) {
-          clearAuthSession();
+          expireAuthSession();
         }
         return null;
       }
 
-      const parsed = refreshTokenResponseSchema.parse(json);
-      if (!parsed.isSuccess || parsed.value == null) {
-        clearAuthSession();
+      const issued = readIssuedTokens(json, session.refreshToken);
+      if (!issued) {
+        expireAuthSession();
         return null;
       }
 
-      const nextSession = persistAuthSession(parsed.value.data, session.user);
+      const nextSession = persistAuthSession(issued, session.user);
       return nextSession.accessToken;
     } catch {
       /* Transient network failure — keep session so a later retry can succeed. */

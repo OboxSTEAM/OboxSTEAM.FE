@@ -47,12 +47,14 @@ export function MentorShell({ children }: { children: React.ReactNode }) {
   const { profile, isAuthenticated, isHydrated, isLoading } = useCurrentUser();
 
   useEffect(() => {
-    if (!isHydrated || isLoading) return;
+    if (!isHydrated) return;
 
     if (!isAuthenticated) {
       router.replace(`/login?returnUrl=${encodeURIComponent(pathname)}`);
       return;
     }
+
+    if (isLoading) return;
 
     if (profile && !isMentorRole(profile.role)) {
       router.replace(getRoleHomePath(profile.role));

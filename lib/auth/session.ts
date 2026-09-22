@@ -5,6 +5,8 @@ const AUTH_STORAGE_KEY = "oboxsteam.auth";
 const REMEMBER_EMAIL_KEY = "oboxsteam.rememberEmail";
 
 export const AUTH_SESSION_CHANGED = "oboxsteam:auth-session-changed";
+/** Refresh token was rejected. Distinct from logout, which stays on the current page. */
+export const AUTH_SESSION_EXPIRED = "oboxsteam:auth-session-expired";
 
 export type StoredAuthTokens = {
   accessToken: string;
@@ -55,6 +57,14 @@ export function clearAuthSession(): void {
   clearParentProfilePending();
   resetAppThemeToLight();
   notifyAuthSessionChanged();
+}
+
+/** Refresh failed for good — drop the session and ask the app to open login. */
+export function expireAuthSession(): void {
+  const hadSession = getAuthSession() != null;
+  clearAuthSession();
+  if (!hadSession || typeof window === "undefined") return;
+  window.dispatchEvent(new Event(AUTH_SESSION_EXPIRED));
 }
 
 /** @deprecated Use clearAuthSession */

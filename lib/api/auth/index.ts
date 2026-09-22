@@ -45,38 +45,46 @@ export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 
 const AUTH_BASE = "/api/auth";
 
+const publicAuthFetch = { skipAuth: true, skipRefresh: true } as const;
+
 export const register = createApiPost({
   path: `${AUTH_BASE}/register`,
   input: registerSchema,
   value: registerValueSchema,
+  fetchOptions: publicAuthFetch,
 });
 
 export const verifyOtp = createApiPost({
   path: `${AUTH_BASE}/verify-otp`,
   input: verifyOtpSchema,
   value: verifyOtpValueSchema,
+  fetchOptions: publicAuthFetch,
 });
 
 export const login = createApiPost({
   path: `${AUTH_BASE}/login`,
   input: loginSchema,
   value: loginValueSchema,
+  fetchOptions: publicAuthFetch,
 });
 
 export const refreshToken = createApiPost({
   path: `${AUTH_BASE}/refresh-token`,
   input: refreshTokenSchema,
   value: refreshTokenValueSchema,
+  fetchOptions: publicAuthFetch,
 });
 
 export const sendResetLink = createApiPost({
   path: `${AUTH_BASE}/send-resetlink`,
   input: sendResetLinkSchema,
   value: sendResetLinkValueSchema,
+  fetchOptions: publicAuthFetch,
 });
 
 export const forgotPassword = createApiPost({
   path: `${AUTH_BASE}/forgot-password`,
   input: forgotPasswordSchema,
   value: forgotPasswordValueSchema,
+  fetchOptions: publicAuthFetch,
 });

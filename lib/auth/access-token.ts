@@ -2,8 +2,12 @@ import { refreshAuthTokens } from "@/lib/api/interceptors/auth";
 import { isAccessTokenExpired } from "@/lib/auth/jwt-payload";
 import { getAuthSession } from "@/lib/auth/session";
 
-/** Default skew — refresh ~60s before the 30-minute access JWT expires. */
-export const ACCESS_TOKEN_REFRESH_SKEW_MS = 60_000;
+/**
+ * Refresh this long before `exp`.
+ * Login access tokens last 30 minutes; a refresh issues a 1-hour access token.
+ * Two minutes leaves room for a slow refresh during a live demo.
+ */
+export const ACCESS_TOKEN_REFRESH_SKEW_MS = 120_000;
 
 export function getStoredAccessToken(): string | null {
   return getAuthSession()?.accessToken ?? null;

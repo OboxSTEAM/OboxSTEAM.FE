@@ -55,8 +55,8 @@ export function readJwtExpMs(token: string): number | null {
   return expSeconds == null ? null : expSeconds * 1000;
 }
 
-/** True when the token is within `skewMs` of expiry (default 60s). */
-export function isAccessTokenExpired(token: string, skewMs = 60_000): boolean {
+/** True when the token is within `skewMs` of expiry (default 2 minutes). */
+export function isAccessTokenExpired(token: string, skewMs = 120_000): boolean {
   const expMs = readJwtExpMs(token);
   if (expMs == null) return false;
   return Date.now() >= expMs - skewMs;
