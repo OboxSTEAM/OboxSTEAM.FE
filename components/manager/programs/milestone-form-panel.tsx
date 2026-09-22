@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Flag, Save, Plus, Trash, Link2 } from "lucide-react";
@@ -32,6 +32,7 @@ import {
   createResearchMilestoneSchema,
   updateResearchMilestoneSchema,
 } from "@/lib/validations/research-milestones";
+import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -68,6 +69,8 @@ type ActivityOption = { id: string; name: string };
 type MilestoneFormPanelProps = {
   moduleId: string;
   activityOptions: ActivityOption[];
+  /** Siblings in this module — create appends after the highest order. */
+  milestonesInModule?: { milestoneOrder: number }[];
   milestoneToEdit: ResearchMilestone | null;
   onSuccess: (milestone: ResearchMilestone) => void;
   /** Activity ids currently linked — the side rail draws from this, not a second tree copy. */
@@ -101,6 +104,7 @@ function emptyMinutes(value: unknown): number | null {
 export function MilestoneFormPanel({
   moduleId,
   activityOptions,
+  milestonesInModule = [],
   milestoneToEdit,
   onSuccess,
   onLinksChange,
@@ -119,12 +123,17 @@ export function MilestoneFormPanel({
   );
 
   const asg = milestoneToEdit?.assignment;
+  const nextMilestoneOrder = useMemo(() => {
+    const max = milestonesInModule.reduce((highest, item) => Math.max(highest, item.milestoneOrder), 0);
+    return max + 1;
+  }, [milestonesInModule]);
 
   const {
     register,
     handleSubmit,
     control,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -146,12 +155,12 @@ export function MilestoneFormPanel({
           timeLimitMinutes: asg?.timeLimitMinutes ?? null,
         }
       : {
-          code: "",
+          code: "MS",
           title: "",
           description: "",
-          milestoneOrder: 1,
+          milestoneOrder: nextMilestoneOrder,
           isCapstone: false,
-          assignmentCode: "",
+          assignmentCode: "ASG",
           assignmentTitle: "",
           assignmentDescription: "",
           assignmentType: "FileUpload",
@@ -163,6 +172,20 @@ export function MilestoneFormPanel({
   });
 
   const isQuiz = watch("assignmentType") === "Quiz";
+  const titleValue = watch("title") ?? "";
+  const codeValue = watch("code") ?? "";
+  const assignmentTitleValue = watch("assignmentTitle") ?? "";
+  const assignmentCodeValue = watch("assignmentCode") ?? "";
+
+  const setCode = useCallback(
+    (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
+  const setAssignmentCode = useCallback(
+    (next: string) =>
+      setValue("assignmentCode", next, { shouldValidate: true, shouldDirty: !isEdit }),
+    [setValue, isEdit],
+  );
 
   const onSubmit = async (data: FormValues) => {
     if (disabled) return;
@@ -173,7 +196,6 @@ export function MilestoneFormPanel({
         const res = await updateResearchMilestone(milestoneToEdit.id, {
           title: data.title,
           description: data.description || null,
-          milestoneOrder: Number(data.milestoneOrder),
           isCapstone: data.isCapstone,
           assignmentTitle: data.assignmentTitle,
           assignmentDescription: data.assignmentDescription || null,
@@ -188,7 +210,7 @@ export function MilestoneFormPanel({
           code: data.code,
           title: data.title,
           description: data.description || null,
-          milestoneOrder: Number(data.milestoneOrder),
+          milestoneOrder: nextMilestoneOrder,
           isCapstone: data.isCapstone,
           assignmentCode: data.assignmentCode,
           assignmentTitle: data.assignmentTitle,
@@ -243,35 +265,25 @@ export function MilestoneFormPanel({
         <section className="rounded-xl border p-4" style={{ borderColor: W.border, background: W.surface }}>
           <STitle>1 · Mốc nghiên cứu</STitle>
           <p className="mb-3 text-xs leading-5" style={{ color: W.muted }}>
-            Đây là giai đoạn trên module nghiên cứu: tên, thứ tự, và cờ tốt nghiệp.
+            Đây là giai đoạn trên module nghiên cứu: tên và cờ tốt nghiệp. Thứ tự lấy theo vị trí trên danh sách mốc.
           </p>
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Tiêu đề <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input type="text" placeholder="Ví dụ: Báo cáo giữa kỳ" {...register("title")} className={IN} style={{ borderColor: errors.title ? W.primary : W.border }} />
-              <FErr msg={errors.title?.message as string | undefined} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Mã milestone <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input
-                type="text"
-                placeholder="MS-01"
-                {...register("code")}
-                disabled={isEdit}
-                className={cn(IN, "font-mono", isEdit && "opacity-60")}
-                style={{ borderColor: errors.code ? W.primary : W.border }}
+            <div className="col-span-2">
+              <NameWithAutoCode
+                nameLabel="Tiêu đề"
+                codeLabel="Mã milestone"
+                codePrefix="MS"
+                name={titleValue}
+                code={codeValue}
+                lockCode={isEdit}
+                disabled={disabled}
+                namePlaceholder="Ví dụ: Báo cáo giữa kỳ"
+                nameError={errors.title?.message as string | undefined}
+                onNameChange={(value) =>
+                  setValue("title", value, { shouldValidate: true, shouldDirty: true })
+                }
+                onCodeChange={setCode}
               />
-              <FErr msg={errors.code?.message as string | undefined} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Thứ tự <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input type="number" {...register("milestoneOrder", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
             </div>
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
@@ -306,26 +318,22 @@ export function MilestoneFormPanel({
             Không phải bài tập của khóa học. Mỗi mốc có đúng một sản phẩm nộp, tạo cùng lúc với mốc.
           </p>
           <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2 space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Tiêu đề sản phẩm <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input type="text" placeholder="Ví dụ: Nộp báo cáo PDF" {...register("assignmentTitle")} className={IN} style={{ borderColor: errors.assignmentTitle ? W.primary : W.border }} />
-              <FErr msg={errors.assignmentTitle?.message as string | undefined} />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                Mã sản phẩm <span style={{ color: W.primary }}>*</span>
-              </Label>
-              <input
-                type="text"
-                placeholder="ASG-MS-01"
-                {...register("assignmentCode")}
-                disabled={isEdit}
-                className={cn(IN, "font-mono", isEdit && "opacity-60")}
-                style={{ borderColor: errors.assignmentCode ? W.primary : W.border }}
+            <div className="col-span-2">
+              <NameWithAutoCode
+                nameLabel="Tiêu đề sản phẩm"
+                codeLabel="Mã sản phẩm"
+                codePrefix="ASG"
+                name={assignmentTitleValue}
+                code={assignmentCodeValue}
+                lockCode={isEdit}
+                disabled={disabled}
+                namePlaceholder="Ví dụ: Nộp báo cáo PDF"
+                nameError={errors.assignmentTitle?.message as string | undefined}
+                onNameChange={(value) =>
+                  setValue("assignmentTitle", value, { shouldValidate: true, shouldDirty: true })
+                }
+                onCodeChange={setAssignmentCode}
               />
-              <FErr msg={errors.assignmentCode?.message as string | undefined} />
             </div>
             <div className="flex flex-col space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>

@@ -103,7 +103,6 @@ import {
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { waitMinSkeleton } from "@/lib/ui/min-skeleton-delay";
 import { cn } from "@/lib/utils";
 import {
   THEME_SELECT_TRIGGER,
@@ -267,13 +266,7 @@ function AssignmentDetailLoader({
     };
   }, [assignmentId, initial]);
 
-  if (loading) {
-    return (
-      <div className="p-5">
-        <div className="h-48 w-full animate-pulse rounded-xl" style={{ background: W.surface2 }} />
-      </div>
-    );
-  }
+  if (loading) return <DetailFormSkeleton />;
   if (failed || !assignment) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
@@ -302,6 +295,7 @@ function MilestoneDetailLoader({
   milestoneId,
   moduleId,
   activityOptions,
+  milestonesInModule,
   initial,
   onSuccess,
   onLinksChange,
@@ -310,6 +304,7 @@ function MilestoneDetailLoader({
   milestoneId: string;
   moduleId: string;
   activityOptions: { id: string; name: string }[];
+  milestonesInModule: { milestoneOrder: number }[];
   initial: ResearchMilestone | null;
   onSuccess: (m: ResearchMilestone) => void;
   onLinksChange?: (activityIds: string[]) => void;
@@ -345,13 +340,7 @@ function MilestoneDetailLoader({
     };
   }, [milestoneId, initial]);
 
-  if (loading) {
-    return (
-      <div className="p-5">
-        <div className="h-48 w-full animate-pulse rounded-xl" style={{ background: W.surface2 }} />
-      </div>
-    );
-  }
+  if (loading) return <DetailFormSkeleton />;
   if (failed || !milestone) {
     return (
       <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-center">
@@ -368,6 +357,7 @@ function MilestoneDetailLoader({
     <MilestoneFormPanel
       moduleId={moduleId}
       activityOptions={activityOptions}
+      milestonesInModule={milestonesInModule}
       milestoneToEdit={milestone}
       onSuccess={onSuccess}
       onLinksChange={onLinksChange}
@@ -1213,9 +1203,8 @@ function DetailFormSkeleton() {
 }
 
 /**
- * On tree selection change: show a form skeleton (feedback that the panel
- * is switching) then reveal the new form. Holds prior min-height so the
- * absolute tree column does not jump. No translate/panel-slide remount.
+ * Swap the detail form in place. Keeps the previous panel height for the
+ * fade so the page does not collapse when the next form is shorter or still loading.
  */
 function DetailPanelSwitcher({
   selectionKey,
@@ -1225,46 +1214,32 @@ function DetailPanelSwitcher({
   children: React.ReactNode;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
-  const [visibleKey, setVisibleKey] = useState(selectionKey);
-  const [isSwitching, setIsSwitching] = useState(false);
-  const [holdMinHeight, setHoldMinHeight] = useState<number | undefined>();
+  const prevHeight = useRef(0);
+  const [minHeight, setMinHeight] = useState<number | undefined>();
 
-  useEffect(() => {
-    if (selectionKey === visibleKey) return;
+  useLayoutEffect(() => {
+    const previous = prevHeight.current;
+    if (previous > 0) setMinHeight(previous);
+    else prevHeight.current = hostRef.current?.offsetHeight ?? 0;
 
-    const height = hostRef.current?.offsetHeight;
-    if (height && height > 0) setHoldMinHeight(height);
-    setIsSwitching(true);
+    const timeout = window.setTimeout(() => {
+      setMinHeight(undefined);
+      requestAnimationFrame(() => {
+        prevHeight.current = hostRef.current?.offsetHeight ?? prevHeight.current;
+      });
+    }, 220);
 
-    const startedAt = Date.now();
-    let cancelled = false;
-
-    void (async () => {
-      await waitMinSkeleton(startedAt, 280);
-      if (cancelled) return;
-      setVisibleKey(selectionKey);
-      setIsSwitching(false);
-      requestAnimationFrame(() => setHoldMinHeight(undefined));
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectionKey, visibleKey]);
-
-  const showSkeleton = isSwitching || visibleKey !== selectionKey;
+    return () => window.clearTimeout(timeout);
+  }, [selectionKey]);
 
   return (
     <div
       ref={hostRef}
-      className="min-w-0"
-      style={holdMinHeight ? { minHeight: holdMinHeight } : undefined}
+      key={selectionKey}
+      className="min-w-0 motion-safe:animate-in motion-safe:fade-in motion-safe:duration-200"
+      style={minHeight ? { minHeight } : undefined}
     >
-      {showSkeleton ? (
-        <DetailFormSkeleton />
-      ) : (
-        <div className="t-table-reveal is-revealed min-w-0">{children}</div>
-      )}
+      {children}
     </div>
   );
 }
@@ -1905,8 +1880,12 @@ export function CurriculumSplitPanel({
     [modules, onRefresh],
   );
 
+  const pinMainScrollRef = useRef<number | null>(null);
+
   const select = useCallback(
     (next: SelectedNode) => {
+      const scroller = document.querySelector("main.overflow-auto");
+      if (scroller instanceof HTMLElement) pinMainScrollRef.current = scroller.scrollTop;
       setSel(next);
       const qs = selToQuery(next);
       const nextUrl = qs ? `${pathname}?${qs}` : pathname;
@@ -1918,6 +1897,19 @@ export function CurriculumSplitPanel({
     },
     [pathname, router, searchParams],
   );
+
+  useLayoutEffect(() => {
+    const top = pinMainScrollRef.current;
+    if (top == null) return;
+    const scroller = document.querySelector("main.overflow-auto");
+    if (!(scroller instanceof HTMLElement)) return;
+    scroller.scrollTop = top;
+    const frame = requestAnimationFrame(() => {
+      scroller.scrollTop = top;
+      pinMainScrollRef.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [sel]);
 
   useEffect(() => {
     const next = parseSelFromSearch(searchParams, modules);
@@ -2209,6 +2201,7 @@ export function CurriculumSplitPanel({
         <MilestoneFormPanel
           moduleId={sel.moduleId}
           activityOptions={activityOptions}
+          milestonesInModule={milestonesByModule[sel.moduleId] ?? []}
           milestoneToEdit={null}
           onSuccess={(m) => {
             upsertMilestone(m);
@@ -2230,6 +2223,7 @@ export function CurriculumSplitPanel({
           milestoneId={sel.id}
           moduleId={sel.moduleId}
           activityOptions={activityOptions}
+          milestonesInModule={milestonesByModule[sel.moduleId] ?? []}
           initial={fromList}
           onSuccess={upsertMilestone}
           onLinksChange={(activityIds) =>

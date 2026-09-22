@@ -305,9 +305,12 @@ export function AssignmentFormPanel({
       <fieldset disabled={disabled} className="min-h-0 min-w-0 flex-1 space-y-6 overflow-y-auto border-0 p-5">
         <div>
           <STitle>Thông tin cơ bản</STitle>
-          <p className="mb-3 text-xs" style={{ color: W.muted }}>
+          <div
+            className="mb-3 rounded-lg border border-dashed px-3 py-2.5 text-xs"
+            style={{ borderColor: W.border, color: W.muted }}
+          >
             Lịch mở / hạn nộp do mentor thiết lập khi mở bài cho học viên — không cần nhập khi tạo khung bài tập.
-          </p>
+          </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
               <NameWithAutoCode

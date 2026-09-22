@@ -23,7 +23,11 @@ import {
   LIGHT_SELECT_ITEM,
   LIGHT_SELECT_TRIGGER,
 } from "@/components/programs/program-select-styles";
-import type { ProgramWithModules, ResearchMilestone } from "@/lib/api";
+import {
+  getResearchMilestonesByModule,
+  type ProgramWithModules,
+  type ResearchMilestone,
+} from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type CreateMilestoneDialogProps = {
@@ -41,6 +45,7 @@ export function CreateMilestoneDialog({
 }: CreateMilestoneDialogProps) {
   const [programId, setProgramId] = useState("");
   const [moduleId, setModuleId] = useState("");
+  const [milestonesInModule, setMilestonesInModule] = useState<ResearchMilestone[]>([]);
 
   useEffect(() => {
     if (!open) return;
@@ -73,6 +78,24 @@ export function CreateMilestoneDialog({
       setModuleId("");
     }
   }, [researchModules, moduleId]);
+
+  useEffect(() => {
+    if (!moduleId) {
+      setMilestonesInModule([]);
+      return;
+    }
+    let active = true;
+    getResearchMilestonesByModule(moduleId)
+      .then((res) => {
+        if (active) setMilestonesInModule(res?.data ?? []);
+      })
+      .catch(() => {
+        if (active) setMilestonesInModule([]);
+      });
+    return () => {
+      active = false;
+    };
+  }, [moduleId]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -177,6 +200,7 @@ export function CreateMilestoneDialog({
               key={moduleId}
               moduleId={moduleId}
               activityOptions={activityOptions}
+              milestonesInModule={milestonesInModule}
               milestoneToEdit={null}
               onSuccess={(milestone) => {
                 onCreated?.(milestone);

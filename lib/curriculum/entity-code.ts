@@ -1,5 +1,5 @@
 /** Prefixes for manager curriculum entity codes. */
-export type EntityCodePrefix = "PRG" | "MOD" | "CRS" | "ACT" | "ASG";
+export type EntityCodePrefix = "PRG" | "MOD" | "CRS" | "ACT" | "ASG" | "MS";
 
 const CODE_SLUG_MAX = 24;
 
