@@ -243,9 +243,17 @@ export function buildBoardTree(
       });
     }
 
+    const milestoneAssignmentIds = new Set(
+      mod.milestones.flatMap((milestone) =>
+        [milestone.assignmentId, milestone.assignment?.id].filter(
+          (id): id is string => Boolean(id),
+        ),
+      ),
+    );
     for (const assignment of [...mod.assignments].sort((a, b) =>
       (a.title || "").localeCompare(b.title || ""),
     )) {
+      if (milestoneAssignmentIds.has(assignment.id)) continue;
       nodes.push({
         key: `Assignment:${assignment.id}`,
         kind: "assignment",

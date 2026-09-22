@@ -58,6 +58,7 @@ import {
 } from "@/components/manager/programs/program-form";
 import { ActivityMaterialSection } from "@/components/manager/programs/activity-material-section";
 import { AssignmentFormPanel } from "@/components/manager/programs/assignment-form-panel";
+import { MilestoneRail, MilestoneRelationLines, useMilestoneRelationLines } from "@/components/curriculum/milestone-rail";
 import { MilestoneFormPanel } from "@/components/manager/programs/milestone-form-panel";
 import { QuestionBankSection } from "@/components/manager/programs/question-bank-section";
 import {
@@ -2309,60 +2310,19 @@ export function CurriculumSplitPanel({
   const showMilestoneRail = milestoneCount > 0;
   const structureWidth = showMilestoneRail ? 530 : 300;
   const stageRef = useRef<HTMLDivElement>(null);
-  const [relationLines, setRelationLines] = useState<
-    { key: string; x1: number; y1: number; x2: number; y2: number }[]
-  >([]);
   const activeMilestoneId = sel?.kind === "milestone" ? sel.id : null;
-
-  useLayoutEffect(() => {
-    const stage = stageRef.current;
-    if (!stage || !activeMilestoneId || !showMilestoneRail) {
-      setRelationLines([]);
-      return;
-    }
-    const measure = () => {
-      const origin = stage.getBoundingClientRect();
-      const card = stage.querySelector<HTMLElement>(
-        `[data-curriculum-anchor="milestone:${activeMilestoneId}"]`,
-      );
-      if (!card) {
-        setRelationLines([]);
-        return;
-      }
-      const cardBox = card.getBoundingClientRect();
-      const milestone = researchModules
-        .flatMap((mod) => milestonesByModule[mod.id] ?? [])
-        .find((item) => item.id === activeMilestoneId);
-      const ids = milestone ? activityIdsFor(milestone) : [];
-      const next = ids.flatMap((activityId) => {
-        const row = stage.querySelector<HTMLElement>(
-          `[data-curriculum-anchor="activity:${activityId}"]`,
-        );
-        if (!row) return [];
-        const box = row.getBoundingClientRect();
-        return [
-          {
-            key: activityId,
-            x1: box.right - origin.left,
-            y1: box.top + box.height / 2 - origin.top,
-            x2: cardBox.left - origin.left,
-            y2: cardBox.top + 28 - origin.top,
-          },
-        ];
-      });
-      setRelationLines(next);
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(stage);
-    return () => observer.disconnect();
-  }, [
-    activeMilestoneId,
-    activityIdsFor,
-    milestonesByModule,
-    researchModules,
-    showMilestoneRail,
-  ]);
+  const activeLinkIds = useMemo(() => {
+    if (!activeMilestoneId) return [] as string[];
+    const milestone = researchModules
+      .flatMap((mod) => milestonesByModule[mod.id] ?? [])
+      .find((item) => item.id === activeMilestoneId);
+    return milestone ? activityIdsFor(milestone) : [];
+  }, [activeMilestoneId, activityIdsFor, milestonesByModule, researchModules]);
+  const relationLines = useMilestoneRelationLines(
+    stageRef,
+    showMilestoneRail ? activeMilestoneId : null,
+    activeLinkIds,
+  );
 
   const structureTree = (
     <ul className="relative" role="list">
@@ -2711,142 +2671,49 @@ export function CurriculumSplitPanel({
           >
             <div className="min-w-0 p-2">{structureTree}</div>
             {showMilestoneRail ? (
-              <div
-                className="flex min-w-0 flex-col gap-3 border-l p-2"
-                style={{ borderColor: W.border, background: W.surface }}
-              >
-                {researchModules.map((mod) => {
-                  const milestoneList = [...(milestonesByModule[mod.id] ?? [])].sort(
-                    (a, b) => a.milestoneOrder - b.milestoneOrder,
-                  );
-                  return (
-                    <div key={mod.id} className="flex flex-col gap-2">
-                      <p className="px-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: W.faint }}>
-                        {mod.name}
-                      </p>
-                      {milestoneList.map((ms) => {
-                        const selected = sel?.kind === "milestone" && sel.id === ms.id;
-                        const assignmentTitle = ms.assignment?.title || "Chưa có sản phẩm nộp";
-                        return (
-                          <div
-                            key={ms.id}
-                            data-curriculum-anchor={`milestone:${ms.id}`}
-                            className="flex items-center gap-2 rounded-lg border p-2"
-                            style={{
-                              borderColor: selected
-                                ? "rgba(139,92,246,0.55)"
-                                : ms.isCapstone
-                                  ? "rgba(139,92,246,0.4)"
-                                  : W.border,
-                              background: selected ? "rgba(139,92,246,0.1)" : W.bg,
-                            }}
-                          >
-                            <span
-                              className="flex size-8 shrink-0 items-center justify-center rounded-md border"
-                              style={
-                                ms.isCapstone
-                                  ? { background: "#8b5cf6", borderColor: "#8b5cf6", color: "#fff" }
-                                  : {
-                                      background: "rgba(139,92,246,0.12)",
-                                      borderColor: "transparent",
-                                      color: "#8b5cf6",
-                                    }
-                              }
-                              aria-hidden
-                            >
-                              <Flag className="size-4" strokeWidth={2.25} />
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                select({ kind: "milestone", id: ms.id, moduleId: mod.id })
-                              }
-                              className="min-w-0 flex-1 text-left"
-                            >
-                              <span className="flex items-center gap-1.5">
-                                <span
-                                  className="truncate text-[12.5px] font-semibold"
-                                  style={{ color: W.textStrong }}
-                                >
-                                  {ms.title || ms.code || "Milestone"}
-                                </span>
-                              </span>
-                              <span className="mt-1 flex items-center gap-1.5">
-                                {ms.isCapstone ? (
-                                  <span
-                                    className="rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
-                                    style={{ background: "#8b5cf6" }}
-                                  >
-                                    Capstone
-                                  </span>
-                                ) : (
-                                  <span
-                                    className="text-[12px] font-bold tabular-nums"
-                                    style={{ color: "#8b5cf6" }}
-                                  >
-                                    Mốc {ms.milestoneOrder}
-                                  </span>
-                                )}
-                              </span>
-                              <span className="mt-0.5 block truncate text-[11px]" style={{ color: W.muted }}>
-                                {assignmentTitle}
-                              </span>
-                            </button>
-                            {canMutate ? (
-                              <button
-                                type="button"
-                                aria-label={`Xóa mốc ${ms.title || ms.code || ""}`}
-                                title="Xóa mốc"
-                                onClick={() =>
-                                  setDelTarget({
-                                    type: "milestone",
-                                    id: ms.id,
-                                    name: ms.title || "Milestone",
-                                    moduleId: mod.id,
-                                  })
-                                }
-                                className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                              >
-                                <Trash2 className="size-4" />
-                              </button>
-                            ) : null}
-                          </div>
-                        );
-                      })}
-                      {canMutate ? (
-                        <button
-                          type="button"
-                          onClick={() => select({ kind: "milestone-new", moduleId: mod.id })}
-                          className="rounded-lg border border-dashed px-2.5 py-2 text-left text-[11px] font-medium"
-                          style={{
-                            borderColor:
-                              sel?.kind === "milestone-new" && sel.moduleId === mod.id
-                                ? "#8b5cf6"
-                                : W.border,
-                            color: W.text,
-                          }}
-                        >
-                          Thêm milestone
-                        </button>
-                      ) : null}
-                    </div>
-                  );
-                })}
-              </div>
+              <MilestoneRail
+                groups={researchModules.map((mod) => ({
+                  moduleId: mod.id,
+                  moduleName: mod.name,
+                  items: [...(milestonesByModule[mod.id] ?? [])]
+                    .sort((a, b) => a.milestoneOrder - b.milestoneOrder)
+                    .map((ms) => ({
+                      id: ms.id,
+                      title: ms.title || ms.code || "Milestone",
+                      isCapstone: Boolean(ms.isCapstone),
+                      order: ms.milestoneOrder,
+                      assignmentTitle:
+                        ms.assignment?.title || "Chưa có sản phẩm nộp",
+                      activityIds: activityIdsFor(ms),
+                    })),
+                }))}
+                selectedId={activeMilestoneId}
+                onSelect={(item, moduleId) =>
+                  select({ kind: "milestone", id: item.id, moduleId })
+                }
+                onDelete={
+                  canMutate
+                    ? (item, moduleId) =>
+                        setDelTarget({
+                          type: "milestone",
+                          id: item.id,
+                          name: item.title,
+                          moduleId,
+                        })
+                    : undefined
+                }
+                onAdd={
+                  canMutate
+                    ? (moduleId) =>
+                        select({ kind: "milestone-new", moduleId })
+                    : undefined
+                }
+                addSelectedModuleId={
+                  sel?.kind === "milestone-new" ? sel.moduleId : null
+                }
+              />
             ) : null}
-            {relationLines.length > 0 ? (
-              <svg className="pointer-events-none absolute inset-0 h-full w-full">
-                {relationLines.map((line) => (
-                  <path
-                    key={line.key}
-                    d={`M ${line.x1} ${line.y1} C ${line.x1 + 24} ${line.y1}, ${line.x2 - 24} ${line.y2}, ${line.x2} ${line.y2}`}
-                    fill="none"
-                    stroke="#8b5cf6"
-                    strokeWidth="1.5"
-                  />
-                ))}
-              </svg>
-            ) : null}
+            <MilestoneRelationLines lines={relationLines} />
           </div>
         </div>
       </div>

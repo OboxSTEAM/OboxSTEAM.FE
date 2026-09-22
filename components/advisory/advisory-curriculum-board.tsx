@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, MessageSquarePlus } from "lucide-react";
 
 import { AdvisoryThreadPanel } from "@/components/advisory/advisory-thread-panel";
@@ -13,6 +13,12 @@ import {
   StructureTreeRow,
   type StructureNodeKind,
 } from "@/components/curriculum/structure-tree";
+import {
+  MilestoneRail,
+  MilestoneRelationLines,
+  useMilestoneRelationLines,
+  type MilestoneRailGroup,
+} from "@/components/curriculum/milestone-rail";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -146,12 +152,18 @@ function containsKey(nodes: NestedBoardNode[], key: string): boolean {
   return false;
 }
 
+function subtreeHasActivity(node: NestedBoardNode, ids: ReadonlySet<string>): boolean {
+  if (node.kind === "activity" && ids.has(node.targetId)) return true;
+  return node.children.some((child) => subtreeHasActivity(child, ids));
+}
+
 function AdvisoryStructureTreeRow({
   node,
   depth,
   isLast,
   selectedKey,
   pinMap,
+  linkedActivityIds,
   onSelect,
 }: {
   node: NestedBoardNode;
@@ -159,12 +171,15 @@ function AdvisoryStructureTreeRow({
   isLast: boolean;
   selectedKey: string | null;
   pinMap: Map<string, AdvisoryThreadPinSummary>;
+  linkedActivityIds: ReadonlySet<string>;
   onSelect: (key: string) => void;
 }) {
   const selected = selectedKey === node.key;
+  const children = node.children.filter((child) => child.kind !== "milestone");
   const forceOpen =
     selected ||
-    (selectedKey != null && containsKey(node.children, selectedKey));
+    (selectedKey != null && containsKey(node.children, selectedKey)) ||
+    subtreeHasActivity(node, linkedActivityIds);
   const summary = pinMap.get(pinSummaryKey(node.targetType, node.targetId));
 
   return (
@@ -177,6 +192,8 @@ function AdvisoryStructureTreeRow({
       meta={node.meta}
       defaultOpen={depth === 0}
       forceOpen={forceOpen}
+      anchorId={node.kind === "activity" ? `activity:${node.targetId}` : undefined}
+      linked={node.kind === "activity" && linkedActivityIds.has(node.targetId)}
       onSelect={() => onSelect(node.key)}
       trailing={
         summary && summary.total > 0 ? (
@@ -184,18 +201,126 @@ function AdvisoryStructureTreeRow({
         ) : undefined
       }
     >
-      {node.children.map((child, index) => (
+      {children.map((child, index) => (
         <AdvisoryStructureTreeRow
           key={child.key}
           node={child}
           depth={depth + 1}
-          isLast={index === node.children.length - 1}
+          isLast={index === children.length - 1}
           selectedKey={selectedKey}
           pinMap={pinMap}
+          linkedActivityIds={linkedActivityIds}
           onSelect={onSelect}
         />
       ))}
     </StructureTreeRow>
+  );
+}
+
+function milestoneGroupsFromTree(tree: BoardTreeNode[]): MilestoneRailGroup[] {
+  return tree
+    .filter((node) => node.kind === "module")
+    .map((mod) => ({
+      moduleId: mod.targetId,
+      moduleName: mod.label,
+      items: tree
+        .filter(
+          (node) =>
+            node.kind === "milestone" && node.module?.id === mod.targetId,
+        )
+        .map((node) => {
+          const milestone = node.milestone;
+          const activityIds =
+            milestone?.activityIds?.length
+              ? milestone.activityIds
+              : (milestone?.activities ?? []).map((activity) => activity.id);
+          return {
+            id: node.targetId,
+            title: milestone?.title || milestone?.code || node.label,
+            isCapstone: Boolean(milestone?.isCapstone),
+            order: milestone?.order ?? 0,
+            assignmentTitle:
+              milestone?.assignment?.title || "Chưa có sản phẩm nộp",
+            activityIds,
+          };
+        }),
+    }))
+    .filter((group) => group.items.length > 0);
+}
+
+function AdvisoryStructurePane({
+  tree,
+  nestedTree,
+  selectedKey,
+  pinMap,
+  onSelect,
+}: {
+  tree: BoardTreeNode[];
+  nestedTree: NestedBoardNode[];
+  selectedKey: string | null;
+  pinMap: Map<string, AdvisoryThreadPinSummary>;
+  onSelect: (key: string) => void;
+}) {
+  const stageRef = useRef<HTMLDivElement>(null);
+  const groups = useMemo(() => milestoneGroupsFromTree(tree), [tree]);
+  const selectedMilestone = tree.find(
+    (node) => node.kind === "milestone" && node.key === selectedKey,
+  );
+  const linkedActivityIds = useMemo(() => {
+    const milestone = selectedMilestone?.milestone;
+    const ids = milestone?.activityIds?.length
+      ? milestone.activityIds
+      : (milestone?.activities ?? []).map((activity) => activity.id);
+    return new Set(ids);
+  }, [selectedMilestone]);
+  const relationLines = useMilestoneRelationLines(
+    stageRef,
+    selectedMilestone?.targetId ?? null,
+    [...linkedActivityIds],
+  );
+
+  return (
+    <div
+      ref={stageRef}
+      className="relative grid min-h-full"
+      style={{
+        gridTemplateColumns:
+          groups.length > 0 ? "minmax(0,1fr) 210px" : "minmax(0,1fr)",
+      }}
+    >
+      <div className="min-w-0 p-2">
+        <CurriculumMutateContext.Provider value={false}>
+          <ul role="list">
+            {nestedTree.map((node, index) => (
+              <AdvisoryStructureTreeRow
+                key={node.key}
+                node={node}
+                depth={0}
+                isLast={index === nestedTree.length - 1}
+                selectedKey={selectedKey}
+                pinMap={pinMap}
+                linkedActivityIds={linkedActivityIds}
+                onSelect={onSelect}
+              />
+            ))}
+          </ul>
+        </CurriculumMutateContext.Provider>
+      </div>
+      {groups.length > 0 ? (
+        <MilestoneRail
+          groups={groups}
+          selectedId={selectedMilestone?.targetId ?? null}
+          onSelect={(item) => {
+            const node = tree.find(
+              (entry) =>
+                entry.kind === "milestone" && entry.targetId === item.id,
+            );
+            if (node) onSelect(node.key);
+          }}
+        />
+      ) : null}
+      <MilestoneRelationLines lines={relationLines} />
+    </div>
   );
 }
 
@@ -321,6 +446,95 @@ function FieldChangeCards({ items }: { items: SubmissionChangeItem[] }) {
   );
 }
 
+function assignmentTypeLabel(type: string | null | undefined): string {
+  if (type === "Quiz") return "Trắc nghiệm";
+  if (type === "Retrospective") return "Nhật ký phản tư";
+  if (type === "FileUpload") return "Nộp tệp";
+  return type || "—";
+}
+
+function AssignmentDetailFields({
+  assignment,
+  onCommentField,
+}: {
+  assignment: NonNullable<BoardTreeNode["assignment"]>;
+  onCommentField?: (fieldKey: string) => void;
+}) {
+  const isQuiz =
+    (assignment.assignmentType || "").toLowerCase().includes("quiz") ||
+    assignment.questionBankId != null ||
+    (assignment.questionCount ?? 0) > 0;
+
+  return (
+    <div className="space-y-3">
+      {assignment.description ? (
+        <div>
+          <p className="whitespace-pre-line text-sm text-foreground">
+            {assignment.description}
+          </p>
+          <TruncationHint truncated={assignment.descriptionIsTruncated} />
+        </div>
+      ) : null}
+      <dl>
+        <DetailRow label="Mã" value={assignment.code || "—"} />
+        <DetailRow
+          label="Loại nộp"
+          value={assignmentTypeLabel(assignment.assignmentType)}
+        />
+        <DetailRow
+          label="Điểm tối đa"
+          value={assignment.maxPoints}
+          onComment={() => onCommentField?.("maxPoints")}
+        />
+        <DetailRow
+          label="Điểm đạt"
+          value={assignment.passScore}
+          onComment={() => onCommentField?.("passScore")}
+        />
+        <DetailRow label="Số lần làm" value={assignment.maxAttempts} />
+        <DetailRow
+          label="Giới hạn thời gian"
+          value={
+            assignment.timeLimitMinutes != null
+              ? `${assignment.timeLimitMinutes} phút`
+              : "—"
+          }
+        />
+        <DetailRow
+          label="Bắt buộc để pass học phần"
+          value={assignment.isRequiredForModulePass ? "Có" : "Không"}
+        />
+      </dl>
+      {isQuiz ? (
+        <div className="rounded-xl border border-border bg-muted/20 p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Cấu hình quiz
+          </p>
+          <dl className="mt-1">
+            <DetailRow
+              label="Ngân hàng câu hỏi"
+              value={assignment.questionBankId ? "Đã gắn" : "—"}
+            />
+            <DetailRow label="Số câu" value={assignment.questionCount ?? "—"} />
+            <DetailRow
+              label="Xáo câu"
+              value={assignment.allowShuffle ? "Có" : "Không"}
+            />
+            <DetailRow
+              label="Xáo đáp án"
+              value={assignment.shuffleOptions ? "Có" : "Không"}
+            />
+            <DetailRow
+              label="Tỷ lệ độ khó"
+              value={`${assignment.easyPercent}/${assignment.mediumPercent}/${assignment.hardPercent}%`}
+            />
+          </dl>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 function NodeDetail({
   node,
   fieldChanges,
@@ -339,10 +553,6 @@ function NodeDetail({
   const course = node.course;
   const mod = node.module;
   const program = node.program;
-  const isQuiz =
-    (assignment?.assignmentType || "").toLowerCase().includes("quiz") ||
-    assignment?.questionBankId != null ||
-    (assignment?.questionCount ?? 0) > 0;
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -497,102 +707,68 @@ function NodeDetail({
         ) : null}
 
         {node.kind === "assignment" && assignment ? (
-          <div className="mt-4 space-y-3">
-            {assignment.description ? (
-              <div>
-                <p className="whitespace-pre-line text-sm text-foreground">
-                  {assignment.description}
-                </p>
-                <TruncationHint truncated={assignment.descriptionIsTruncated} />
-              </div>
-            ) : null}
-            <dl>
-              <DetailRow
-                label="Loại"
-                value={assignment.assignmentType || "—"}
-              />
-              <DetailRow
-                label="Điểm tối đa"
-                value={assignment.maxPoints}
-                onComment={() => onCommentField?.("maxPoints")}
-              />
-              <DetailRow
-                label="Đạt ≥"
-                value={assignment.passScore}
-                onComment={() => onCommentField?.("passScore")}
-              />
-              <DetailRow label="Số lần làm" value={assignment.maxAttempts} />
-              <DetailRow
-                label="Giới hạn thời gian"
-                value={
-                  assignment.timeLimitMinutes != null
-                    ? `${assignment.timeLimitMinutes} phút`
-                    : "—"
-                }
-              />
-              <DetailRow
-                label="Bắt buộc để pass học phần"
-                value={assignment.isRequiredForModulePass ? "Có" : "Không"}
-              />
-            </dl>
-            {isQuiz ? (
-              <div className="rounded-xl border border-border bg-muted/20 p-3">
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Cấu hình quiz
-                </p>
-                <dl className="mt-1">
-                  <DetailRow
-                    label="Ngân hàng câu hỏi"
-                    value={assignment.questionBankId ? "Đã gắn" : "—"}
-                  />
-                  <DetailRow
-                    label="Số câu"
-                    value={assignment.questionCount ?? "—"}
-                  />
-                  <DetailRow
-                    label="Xáo câu"
-                    value={assignment.allowShuffle ? "Có" : "Không"}
-                  />
-                  <DetailRow
-                    label="Xáo đáp án"
-                    value={assignment.shuffleOptions ? "Có" : "Không"}
-                  />
-                  <DetailRow
-                    label="Tỷ lệ độ khó"
-                    value={`${assignment.easyPercent}/${assignment.mediumPercent}/${assignment.hardPercent}%`}
-                  />
-                </dl>
-              </div>
-            ) : null}
+          <div className="mt-4">
+            <AssignmentDetailFields
+              assignment={assignment}
+              onCommentField={onCommentField}
+            />
           </div>
         ) : null}
 
         {node.kind === "milestone" && milestone ? (
-          <div className="mt-4 space-y-3">
-            {milestone.description ? (
-              <div>
-                <p className="whitespace-pre-line text-sm text-foreground">
-                  {milestone.description}
+          <div className="mt-4 space-y-5">
+            <section className="space-y-3">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                1 · Mốc nghiên cứu
+              </p>
+              {milestone.description ? (
+                <div>
+                  <p className="whitespace-pre-line text-sm text-foreground">
+                    {milestone.description}
+                  </p>
+                  <TruncationHint truncated={milestone.descriptionIsTruncated} />
+                </div>
+              ) : (
+                <p className="text-sm italic text-muted-foreground">
+                  Chưa có mô tả.
                 </p>
-                <TruncationHint truncated={milestone.descriptionIsTruncated} />
-              </div>
-            ) : null}
-            <dl>
-              <DetailRow
-                label="Loại"
-                value={milestone.isCapstone ? "Capstone" : "Milestone thường"}
-              />
-              <DetailRow
-                label="Assignment"
-                value={
-                  milestone.assignment?.title || milestone.assignmentId || "—"
-                }
-              />
-              <DetailRow
-                label="Hoạt động gắn"
-                value={milestone.activities.length || milestone.activityIds.length}
-              />
-            </dl>
+              )}
+              <dl>
+                <DetailRow label="Mã" value={milestone.code || "—"} />
+                <DetailRow
+                  label="Loại"
+                  value={milestone.isCapstone ? "Capstone" : "Milestone thường"}
+                />
+                <DetailRow
+                  label="Hoạt động gắn"
+                  value={milestone.activities.length || milestone.activityIds.length}
+                />
+              </dl>
+            </section>
+
+            <section className="space-y-3 border-t border-border pt-5">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                2 · Sản phẩm nộp đi kèm
+              </p>
+              <p className="text-xs leading-5 text-muted-foreground">
+                Không phải bài tập của khóa học. Mỗi mốc có đúng một sản phẩm nộp.
+              </p>
+              {milestone.assignment ? (
+                <>
+                  <p className="text-sm font-semibold text-foreground">
+                    {milestone.assignment.title || "Sản phẩm nộp"}
+                  </p>
+                  <AssignmentDetailFields
+                    assignment={milestone.assignment}
+                    onCommentField={onCommentField}
+                  />
+                </>
+              ) : (
+                <p className="text-sm italic text-muted-foreground">
+                  Chưa có sản phẩm nộp.
+                </p>
+              )}
+            </section>
           </div>
         ) : null}
 
@@ -892,31 +1068,30 @@ export function AdvisoryCurriculumBoard({
         </div>
       )}
 
-      <div className="hidden min-h-[560px] lg:grid lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(260px,0.9fr)]">
+      <div
+        className={cn(
+          "hidden min-h-[560px] lg:grid",
+          tree.some((node) => node.kind === "milestone")
+            ? "lg:grid-cols-[minmax(0,530px)_minmax(0,1fr)_minmax(260px,0.9fr)]"
+            : "lg:grid-cols-[minmax(0,300px)_minmax(0,1fr)_minmax(260px,0.9fr)]",
+        )}
+      >
         <nav
           className="flex flex-col overflow-hidden border-r border-border bg-card"
           aria-label="Cấu trúc curriculum"
         >
-          <StructureTreePanelHeader hint="Chọn mục để xem chi tiết và gắn góp ý" />
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
-            <CurriculumMutateContext.Provider value={false}>
-              <ul role="list">
-                {nestedTree.map((node, index) => (
-                  <AdvisoryStructureTreeRow
-                    key={node.key}
-                    node={node}
-                    depth={0}
-                    isLast={index === nestedTree.length - 1}
-                    selectedKey={activeSelectedKey}
-                    pinMap={pinMap}
-                    onSelect={(key) => {
-                      setSelectedKey(key);
-                      setComposer(null);
-                    }}
-                  />
-                ))}
-              </ul>
-            </CurriculumMutateContext.Provider>
+          <StructureTreePanelHeader hint="Mốc nằm cạnh cây và nối tới hoạt động của khóa" />
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+            <AdvisoryStructurePane
+              tree={tree}
+              nestedTree={nestedTree}
+              selectedKey={activeSelectedKey}
+              pinMap={pinMap}
+              onSelect={(key) => {
+                setSelectedKey(key);
+                setComposer(null);
+              }}
+            />
           </div>
         </nav>
 
@@ -1098,25 +1273,17 @@ export function AdvisoryCurriculumBoard({
           </div>
         ) : (
           <>
-            <div className="max-h-[320px] overflow-y-auto border-b border-border p-2">
-              <CurriculumMutateContext.Provider value={false}>
-                <ul role="list">
-                  {nestedTree.map((node, index) => (
-                    <AdvisoryStructureTreeRow
-                      key={node.key}
-                      node={node}
-                      depth={0}
-                      isLast={index === nestedTree.length - 1}
-                      selectedKey={activeSelectedKey}
-                      pinMap={pinMap}
-                      onSelect={(key) => {
-                        setSelectedKey(key);
-                        setComposer(null);
-                      }}
-                    />
-                  ))}
-                </ul>
-              </CurriculumMutateContext.Provider>
+            <div className="max-h-[420px] overflow-y-auto border-b border-border">
+              <AdvisoryStructurePane
+                tree={tree}
+                nestedTree={nestedTree}
+                selectedKey={activeSelectedKey}
+                pinMap={pinMap}
+                onSelect={(key) => {
+                  setSelectedKey(key);
+                  setComposer(null);
+                }}
+              />
             </div>
             {selected ? (
               <NodeDetail

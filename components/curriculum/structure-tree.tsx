@@ -193,6 +193,9 @@ export function StructureTreeRow({
   anchorId,
   /** Activity used by the milestone selected in the side rail. */
   linked,
+  /** Replaces the default title + meta stack (milestone cards). */
+  body,
+  iconOverride,
   children,
 }: {
   depth: number;
@@ -216,6 +219,8 @@ export function StructureTreeRow({
   trailing?: ReactNode;
   anchorId?: string;
   linked?: boolean;
+  body?: ReactNode;
+  iconOverride?: { color: string; bg: string; border?: string };
   children?: ReactNode;
 }) {
   const canMutate = useCurriculumMutate();
@@ -232,6 +237,11 @@ export function StructureTreeRow({
     setOpen(true);
   }
   const { Icon: NodeIcon, color: iconColor, bg: iconBg } = STRUCTURE_NODE_ICON[kind];
+  const resolvedIconColor = iconOverride?.color ?? iconColor;
+  const resolvedIconBg = iconOverride?.bg ?? iconBg;
+  const resolvedIconBorder =
+    iconOverride?.border ??
+    (selected ? "rgba(79,195,247,0.35)" : STRUCTURE_W.border);
 
   const handleToggle = (e: MouseEvent) => {
     e.stopPropagation();
@@ -286,9 +296,9 @@ export function StructureTreeRow({
           <span
             className="flex size-6 shrink-0 items-center justify-center rounded-[7px] border shadow-[0_1px_2px_rgba(45,43,39,0.06)]"
             style={{
-              background: iconBg,
-              borderColor: selected ? "rgba(79,195,247,0.35)" : STRUCTURE_W.border,
-              color: iconColor,
+              background: resolvedIconBg,
+              borderColor: resolvedIconBorder,
+              color: resolvedIconColor,
             }}
             aria-hidden
           >
@@ -303,25 +313,29 @@ export function StructureTreeRow({
             }}
             className="flex min-w-0 flex-1 flex-col py-1.5 pl-1.5 pr-2 text-left"
           >
-            <span
-              className={cn(
-                "truncate text-[12.5px] leading-snug",
-                selected ? "text-[#0d6e9c] dark:text-[#7dd3fc]" : "",
-              )}
-              style={{
-                color: selected ? undefined : STRUCTURE_W.text,
-                fontWeight: selected ? 600 : 500,
-              }}
-            >
-              {label}
-            </span>
-            {meta && (
-              <span
-                className="mt-0.5 truncate text-[10px]"
-                style={{ color: STRUCTURE_W.faint }}
-              >
-                {meta}
-              </span>
+            {body ?? (
+              <>
+                <span
+                  className={cn(
+                    "truncate text-[12.5px] leading-snug",
+                    selected ? "text-[#0d6e9c] dark:text-[#7dd3fc]" : "",
+                  )}
+                  style={{
+                    color: selected ? undefined : STRUCTURE_W.text,
+                    fontWeight: selected ? 600 : 500,
+                  }}
+                >
+                  {label}
+                </span>
+                {meta && (
+                  <span
+                    className="mt-0.5 truncate text-[10px]"
+                    style={{ color: STRUCTURE_W.faint }}
+                  >
+                    {meta}
+                  </span>
+                )}
+              </>
             )}
           </button>
 
