@@ -2700,15 +2700,27 @@ export function CurriculumSplitPanel({
                           <div
                             key={ms.id}
                             data-curriculum-anchor={`milestone:${ms.id}`}
-                            className="flex items-start gap-2 rounded-lg border p-2"
+                            className="flex items-center gap-2 rounded-lg border p-2"
                             style={{
-                              borderColor: selected ? "rgba(139,92,246,0.55)" : W.border,
+                              borderColor: selected
+                                ? "rgba(139,92,246,0.55)"
+                                : ms.isCapstone
+                                  ? "rgba(139,92,246,0.4)"
+                                  : W.border,
                               background: selected ? "rgba(139,92,246,0.1)" : W.bg,
                             }}
                           >
                             <span
                               className="flex size-8 shrink-0 items-center justify-center rounded-md border"
-                              style={{ borderColor: W.border, background: W.surface, color: "#8b5cf6" }}
+                              style={
+                                ms.isCapstone
+                                  ? { background: "#8b5cf6", borderColor: "#8b5cf6", color: "#fff" }
+                                  : {
+                                      background: "rgba(139,92,246,0.12)",
+                                      borderColor: "transparent",
+                                      color: "#8b5cf6",
+                                    }
+                              }
                               aria-hidden
                             >
                               <Flag className="size-4" strokeWidth={2.25} />
@@ -2718,16 +2730,34 @@ export function CurriculumSplitPanel({
                               onClick={() =>
                                 select({ kind: "milestone", id: ms.id, moduleId: mod.id })
                               }
-                              className="min-w-0 flex-1 py-0.5 text-left"
+                              className="min-w-0 flex-1 text-left"
                             >
-                              <span className="block truncate text-[12.5px] font-semibold" style={{ color: W.textStrong }}>
-                                {ms.title || ms.code || "Milestone"}
+                              <span className="flex items-center gap-1.5">
+                                <span
+                                  className="truncate text-[12.5px] font-semibold"
+                                  style={{ color: W.textStrong }}
+                                >
+                                  {ms.title || ms.code || "Milestone"}
+                                </span>
                               </span>
-                              <span className="mt-0.5 block truncate text-[10px]" style={{ color: W.faint }}>
-                                {ms.isCapstone ? "Capstone" : `Mốc ${ms.milestoneOrder}`}
-                                {ms.code ? ` · ${ms.code}` : ""}
+                              <span className="mt-1 flex items-center gap-1.5">
+                                {ms.isCapstone ? (
+                                  <span
+                                    className="rounded px-1.5 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white"
+                                    style={{ background: "#8b5cf6" }}
+                                  >
+                                    Capstone
+                                  </span>
+                                ) : (
+                                  <span
+                                    className="text-[12px] font-bold tabular-nums"
+                                    style={{ color: "#8b5cf6" }}
+                                  >
+                                    Mốc {ms.milestoneOrder}
+                                  </span>
+                                )}
                               </span>
-                              <span className="mt-1 block truncate text-[11px]" style={{ color: W.muted }}>
+                              <span className="mt-0.5 block truncate text-[11px]" style={{ color: W.muted }}>
                                 {assignmentTitle}
                               </span>
                             </button>
