@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowRight,
+  ArrowUpRight,
   BriefcaseBusiness,
   Eye,
   Link2Off,
@@ -20,7 +20,6 @@ import {
   type ExpertFormValues,
 } from "@/components/manager/experts/expert-form-dialog";
 import { AssignExistingExpertDialog } from "@/components/manager/programs/assign-existing-expert-dialog";
-import { ProgramAdvisorAssign } from "@/components/manager/programs/program-advisor-assign";
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -32,6 +31,7 @@ import {
   createExpert,
   getExpertById,
   getExperts,
+  getProgramFrameworkById,
   persistExpertCredentialDrafts,
   removeExpertFromProgram,
   syncExpertAfterMutation,
@@ -42,6 +42,7 @@ import {
   type ProgramWithModules,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import {
   getExpertAvatarUrl,
   getExpertInitials,
@@ -62,6 +63,31 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const experts = program.experts;
+  const attachInFlight = useRef(false);
+
+  useEffect(() => {
+    const frameworkId = program.frameworkId;
+    if (!frameworkId || attachInFlight.current) return;
+    attachInFlight.current = true;
+
+    void (async () => {
+      try {
+        const framework = await getProgramFrameworkById(frameworkId);
+        const expertId = framework?.data?.expertId;
+        if (!expertId) return;
+        if (experts.some((expert) => expert.expertId === expertId)) return;
+        await attachFrameworkAuthorToProgram(
+          program.id,
+          expertId,
+          experts.map((expert) => expert.expertId),
+        );
+        router.refresh();
+      } catch (error) {
+        attachInFlight.current = false;
+        showAppErrorFromUnknown(error, "experts.update");
+      }
+    })();
+  }, [experts, program.frameworkId, program.id, router]);
 
   const { data: expertsData, isLoading: isExpertsLoading } = useClientFetch({
     fetcher: () =>
@@ -183,9 +209,6 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
   }
 
   return (
-    <div className="space-y-6">
-      <ProgramAdvisorAssign program={program} />
-
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
       <header className="flex flex-col gap-4 border-b border-border bg-background/70 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -209,38 +232,27 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
           <Button
             type="button"
             onClick={openCreate}
-            aria-label="Tạo chuyên gia"
-            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl bg-primary px-0 text-sm font-semibold text-white transition-[width,padding,gap] duration-200 hover:w-48 hover:gap-2 hover:bg-primary/90 hover:px-4 active:scale-[0.98]"
+            className="h-10 gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-white hover:bg-primary/90"
           >
             <Plus className="size-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-32 group-hover:opacity-100">
-              Tạo chuyên gia
-            </span>
+            Tạo chuyên gia
           </Button>
           <Button
             type="button"
             variant="outline"
             onClick={() => setAssignOpen(true)}
-            aria-label="Gán chuyên gia có sẵn"
-            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl border-border bg-card px-0 text-sm font-semibold text-foreground transition-[width,padding,gap] duration-200 hover:w-64 hover:gap-2 hover:border-[#4FC3F7] hover:bg-[#4FC3F7]/8 hover:px-4"
+            className="h-10 gap-2 rounded-xl border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-muted"
           >
             <UserRoundPlus className="size-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-48 group-hover:opacity-100">
-              Gán chuyên gia có sẵn
-            </span>
+            Gán chuyên gia có sẵn
           </Button>
-          <Button
-            nativeButton={false}
-            render={<Link href="/manager/experts" />}
-            variant="outline"
-            aria-label="Quay về danh sách chuyên gia"
-            className="group h-10 w-10 gap-0 overflow-hidden rounded-xl border-border bg-card px-0 text-sm font-semibold text-foreground transition-[width,padding,gap] duration-200 hover:w-56 hover:gap-2 hover:px-4 hover:bg-muted"
+          <Link
+            href="/manager/experts"
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-dashed border-[#4FC3F7]/70 bg-[#4FC3F7]/10 px-4 text-sm font-semibold text-[#0D6E9C] dark:text-[#7dd3fc]"
           >
-            <ArrowRight className="size-4 shrink-0" />
-            <span className="max-w-0 overflow-hidden whitespace-nowrap opacity-0 transition-[max-width,opacity] duration-200 group-hover:max-w-44 group-hover:opacity-100">
-              Danh sách chuyên gia
-            </span>
-          </Button>
+            Mở trang danh sách chuyên gia
+            <ArrowUpRight className="size-4 shrink-0" />
+          </Link>
         </div>
       </header>
 
@@ -391,6 +403,5 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         }}
       />
     </section>
-    </div>
   );
 }

@@ -13,6 +13,7 @@ import {
 } from "@/components/manager/programs/program-form";
 import { createProgram } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 
 export default function CreateProgramPage() {
   const router = useRouter();
@@ -35,6 +36,18 @@ export default function CreateProgramPage() {
         ...body,
         file: options?.thumbnailFile ?? null,
       });
+      const created = response?.data;
+      if (created?.id && options?.frameworkExpertId) {
+        try {
+          await attachFrameworkAuthorToProgram(
+            created.id,
+            options.frameworkExpertId,
+            created.experts.map((expert) => expert.expertId),
+          );
+        } catch (attachError) {
+          showAppErrorFromUnknown(attachError, "experts.update");
+        }
+      }
       showAppSuccess({
         title: "Tạo thành công",
         description:

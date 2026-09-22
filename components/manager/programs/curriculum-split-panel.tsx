@@ -51,7 +51,11 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { ProgramForm } from "@/components/manager/programs/program-form";
+import {
+  ProgramForm,
+  type ProgramFormSubmitOptions,
+  type ProgramFormValues,
+} from "@/components/manager/programs/program-form";
 import { ActivityMaterialSection } from "@/components/manager/programs/activity-material-section";
 import { AssignmentFormPanel } from "@/components/manager/programs/assignment-form-panel";
 import { MilestoneFormPanel } from "@/components/manager/programs/milestone-form-panel";
@@ -109,6 +113,7 @@ import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
+import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
@@ -957,12 +962,26 @@ function ProgramInfoPanel({
   const [statusHost, setStatusHost] = useState<HTMLDivElement | null>(null);
   const { ok, flash } = useSuccessFlash();
 
-  const handleUpdate = async (values: any) => {
+  const handleUpdate = async (
+    values: ProgramFormValues,
+    options?: ProgramFormSubmitOptions,
+  ) => {
     if (disabled) return;
     setBusy(true);
     try {
       const res = await updateProgram(program.id, values);
       if (!res) throw new Error("Không có phản hồi từ hệ thống.");
+      if (options?.frameworkExpertId) {
+        try {
+          await attachFrameworkAuthorToProgram(
+            program.id,
+            options.frameworkExpertId,
+            program.experts.map((expert) => expert.expertId),
+          );
+        } catch (attachError) {
+          showAppErrorFromUnknown(attachError, "experts.update");
+        }
+      }
       flash();
       showAppSuccess({ title: "Cập nhật thành công", description: "Chương trình đã được cập nhật." });
       router.refresh(); onSuccess();

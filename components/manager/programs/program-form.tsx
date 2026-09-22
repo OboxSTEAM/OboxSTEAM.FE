@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import {
   Trash2,
   AlertCircle,
   ChevronDown,
+  Search,
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
@@ -52,6 +53,8 @@ export type ProgramFormValues = z.infer<typeof programUpsertSchema>;
 export type ProgramFormSubmitOptions = {
   /** Local file for `POST /api/programs` create-time thumbnail (ignored on edit). */
   thumbnailFile?: File | null;
+  /** Owner of the selected framework. Empty when no framework is chosen. */
+  frameworkExpertId?: string | null;
 };
 
 export type ProgramFormProps = {
@@ -139,7 +142,137 @@ function FormSectionTitle({
   );
 }
 
-// ── Framework guidelines ──────────────────────────────────────────────────
+function FrameworkPicker({
+  frameworks,
+  isLoading,
+  search,
+  onSearchChange,
+  value,
+  onChange,
+  programCategory,
+}: {
+  frameworks: ProgramFramework[];
+  isLoading: boolean;
+  search: string;
+  onSearchChange: (value: string) => void;
+  value: string;
+  onChange: (value: string) => void;
+  programCategory: string;
+}) {
+  return (
+    <div className="space-y-2">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
+        <Input
+          value={search}
+          onChange={(event) => onSearchChange(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") event.preventDefault();
+          }}
+          placeholder="Tìm theo tên khung, mô tả hoặc chuyên gia..."
+          aria-label="Tìm khung thẩm định"
+          className="h-9 rounded-lg border-input bg-card pl-9 text-sm"
+        />
+      </div>
+
+      <div className="max-h-72 space-y-2 overflow-y-auto pr-1">
+        <button
+          type="button"
+          onClick={() => onChange("")}
+          className={cn(
+            "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+            value
+              ? "border-border bg-card text-muted-foreground hover:bg-background"
+              : "border-[#4FC3F7] bg-[#4FC3F7]/8 font-semibold text-foreground",
+          )}
+        >
+          Không gắn khung
+          <span
+            className={cn(
+              "size-4 shrink-0 rounded-full border-2",
+              value
+                ? "border-input"
+                : "border-primary bg-primary shadow-[inset_0_0_0_3px_var(--card)]",
+            )}
+          />
+        </button>
+
+        {isLoading ? (
+          [0, 1, 2].map((item) => (
+            <div key={item} className="h-16 animate-pulse rounded-xl bg-muted" />
+          ))
+        ) : frameworks.length === 0 ? (
+          <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+            Không có khung phù hợp.
+          </p>
+        ) : (
+          frameworks.map((framework) => {
+            const selected = value === framework.id;
+            const categoryMeta = CATEGORIES.find(
+              (cat) => cat.value === framework.category,
+            );
+            const isOtherCategory = framework.category !== programCategory;
+            const summary =
+              framework.description.trim() || "Chưa có mô tả cho khung này.";
+            return (
+              <button
+                key={framework.id}
+                type="button"
+                onClick={() => onChange(framework.id)}
+                className={cn(
+                  "flex w-full items-start gap-3 rounded-xl border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                  selected
+                    ? "border-[#4FC3F7] bg-[#4FC3F7]/8"
+                    : "border-border bg-card hover:bg-background",
+                )}
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="flex flex-wrap items-center gap-2">
+                    <span className="truncate text-sm font-semibold text-foreground">
+                      {framework.name || "Khung chưa đặt tên"}
+                    </span>
+                    <span
+                      className="rounded-md px-1.5 py-0.5 text-[10px] font-semibold"
+                      style={{
+                        color: categoryMeta?.color ?? "inherit",
+                        background: `${categoryMeta?.color ?? "#4FC3F7"}22`,
+                      }}
+                    >
+                      {categoryMeta?.label ?? framework.category}
+                    </span>
+                    {isOtherCategory ? (
+                      <span className="text-[10px] font-medium text-muted-foreground">
+                        Khác lĩnh vực chương trình
+                      </span>
+                    ) : null}
+                  </span>
+                  <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted-foreground">
+                    {summary}
+                  </span>
+                  <span className="mt-1.5 block truncate text-xs text-foreground/80">
+                    Chuyên gia: {framework.expertName || "Chưa có tên"}
+                    {framework.criteria.length > 0
+                      ? ` · ${framework.criteria.length} tiêu chí`
+                      : ""}
+                  </span>
+                </span>
+                <span
+                  className={cn(
+                    "mt-1 size-4 shrink-0 rounded-full border-2",
+                    selected
+                      ? "border-primary bg-primary shadow-[inset_0_0_0_3px_var(--card)]"
+                      : "border-input",
+                  )}
+                />
+              </button>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 function FrameworkGuidelines({
   framework,
   isCategoryMismatch,
@@ -279,7 +412,7 @@ export function ProgramForm({
   const catColor = CATEGORIES.find((item) => item.value === category)?.color ?? "#4FC3F7";
   const displayThumbUrl = pendingThumbnailPreview || thumbUrl;
 
-  const { data: frameworksData } = useClientFetch({
+  const { data: frameworksData, isLoading: isFrameworksLoading } = useClientFetch({
     fetcher: () => getProgramFrameworks({ page: 1, pageSize: 100 }),
     deps: [],
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
@@ -288,13 +421,27 @@ export function ProgramForm({
   const frameworks = frameworksData?.data?.items ?? [];
   const selectedFramework =
     frameworks.find((item) => item.id === frameworkId) ?? null;
-  /** Soft filter: same-category first, others stay pickable below. */
-  const matchingFrameworks = frameworks.filter(
-    (item) => item.category === category,
-  );
-  const otherFrameworks = frameworks.filter(
-    (item) => item.category !== category,
-  );
+  const [frameworkSearch, setFrameworkSearch] = useState("");
+  const frameworkOptions = useMemo(() => {
+    const keyword = frameworkSearch.trim().toLocaleLowerCase("vi");
+    return frameworks
+      .filter((item) => !item.isArchived || item.id === frameworkId)
+      .filter((item) => {
+        if (!keyword) return true;
+        const categoryLabel =
+          CATEGORIES.find((cat) => cat.value === item.category)?.label ??
+          item.category;
+        return `${item.name} ${item.description} ${item.expertName} ${categoryLabel}`
+          .toLocaleLowerCase("vi")
+          .includes(keyword);
+      })
+      .sort((left, right) => {
+        const leftRank = left.category === category ? 0 : 1;
+        const rightRank = right.category === category ? 0 : 1;
+        if (leftRank !== rightRank) return leftRank - rightRank;
+        return left.name.localeCompare(right.name, "vi");
+      });
+  }, [category, frameworkId, frameworkSearch, frameworks]);
 
   const setCode = useCallback(
     (next: string) => setValue("code", next, { shouldValidate: true, shouldDirty: !isEdit }),
@@ -303,8 +450,13 @@ export function ProgramForm({
 
   const onFormSubmit = handleSubmit(
     async (data) => {
+      const frameworkExpertId = data.frameworkId
+        ? (frameworks.find((item) => item.id === data.frameworkId)?.expertId ??
+          null)
+        : null;
       await onSubmit(data, {
         thumbnailFile: isEdit ? null : pendingThumbnailFile,
+        frameworkExpertId,
       });
     },
     (validationErrors) => {
@@ -796,51 +948,15 @@ export function ProgramForm({
                 name="frameworkId"
                 control={control}
                 render={({ field }) => (
-                  <Select
-                    value={field.value ? field.value : "none"}
-                    onValueChange={(value) =>
-                      field.onChange(value === "none" ? "" : (value ?? ""))
-                    }
-                  >
-                    <SelectTrigger
-                      className={cn(
-                        LIGHT_SELECT_TRIGGER,
-                        "h-9 w-full rounded-lg border-input text-sm",
-                      )}
-                      aria-label="Khung thẩm định chuyên môn"
-                    >
-                      <span className="truncate">
-                        {selectedFramework
-                          ? selectedFramework.name
-                          : "Không gắn khung"}
-                      </span>
-                    </SelectTrigger>
-                    <SelectContent className={LIGHT_SELECT_CONTENT}>
-                      <SelectItem value="none" className={LIGHT_SELECT_ITEM}>
-                        Không gắn khung
-                      </SelectItem>
-                      {matchingFrameworks.map((item) => (
-                        <SelectItem
-                          key={item.id}
-                          value={item.id}
-                          className={LIGHT_SELECT_ITEM}
-                        >
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                      {otherFrameworks.map((item) => (
-                        <SelectItem
-                          key={item.id}
-                          value={item.id}
-                          className={LIGHT_SELECT_ITEM}
-                        >
-                          {item.name} ·{" "}
-                          {CATEGORIES.find((cat) => cat.value === item.category)
-                            ?.label ?? item.category}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <FrameworkPicker
+                    frameworks={frameworkOptions}
+                    isLoading={isFrameworksLoading}
+                    search={frameworkSearch}
+                    onSearchChange={setFrameworkSearch}
+                    value={field.value ?? ""}
+                    onChange={field.onChange}
+                    programCategory={category}
+                  />
                 )}
               />
               <FieldError message={errors.frameworkId?.message} />
