@@ -1004,6 +1004,7 @@ function ProgramInfoPanel({
           disabled={disabled}
           statusPortalHost={statusHost}
           frameworkVersionNumber={program.frameworkVersionNumber}
+          frameworkRequirements={program.status === "Draft" ? "prep" : "hidden"}
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",

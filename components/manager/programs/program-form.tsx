@@ -30,6 +30,7 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
+import { FrameworkRequirements } from "@/components/manager/programs/framework-requirements";
 import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
@@ -78,6 +79,13 @@ export type ProgramFormProps = {
   statusPortalHost?: HTMLElement | null;
   /** Pinned framework version on the program (display only). */
   frameworkVersionNumber?: number | null;
+  /**
+   * `inline` — show rules under the picker (create flow).
+   * `prep` — hide them once the saved framework is still selected; the draft
+   * page shows those rules above the curriculum editor.
+   * `hidden` — advisory has started; the pass/fail check replaces this list.
+   */
+  frameworkRequirements?: "inline" | "prep" | "hidden";
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -290,58 +298,12 @@ function FrameworkGuidelines({
     );
   }
 
-  const rules: string[] = [];
-  if (framework.minModules != null) {
-    rules.push(`Tối thiểu ${framework.minModules} học phần`);
-  }
-  if (framework.minOfflineSessions != null) {
-    rules.push(
-      `Tối thiểu ${framework.minOfflineSessions} mẫu hoạt động offline trong curriculum (không phải buổi lớp đã lên lịch)`,
-    );
-  }
-  if (framework.minLiveSessions != null) {
-    rules.push(
-      `Tối thiểu ${framework.minLiveSessions} mẫu hoạt động live trong curriculum (không phải buổi lớp đã lên lịch)`,
-    );
-  }
-  if (framework.requireCapstoneResearchMilestone) {
-    rules.push("Bắt buộc có mốc nghiên cứu / dự án tổng kết");
-  }
-
   return (
-    <div className="mt-2.5 rounded-lg border border-border bg-muted/40 p-3">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-        Yêu cầu của khung
-      </p>
-      {rules.length > 0 ? (
-        <ul className="mt-1.5 space-y-1">
-          {rules.map((rule) => (
-            <li
-              key={rule}
-              className="flex items-start gap-1.5 text-xs leading-relaxed text-foreground"
-            >
-              <span className="mt-1.5 size-1 shrink-0 rounded-full bg-primary" />
-              {rule}
-            </li>
-          ))}
-        </ul>
-      ) : (
-        <p className="mt-1.5 text-xs text-muted-foreground">
-          Khung này không đặt yêu cầu tối thiểu về cấu trúc.
-        </p>
-      )}
-      <p className="mt-2 text-[11px] text-muted-foreground">
-        {framework.criteria.length} tiêu chí rubric
-        {frameworkVersionNumber != null ? ` · Phiên bản v${frameworkVersionNumber}` : ""}
-        {" · "}Chuyên gia: {framework.expertName || "—"}
-      </p>
-      {isCategoryMismatch ? (
-        <p className="mt-2 flex items-start gap-1.5 text-[11px] font-medium text-primary">
-          <AlertCircle className="mt-px size-3 shrink-0" />
-          Khung này thuộc thể loại khác với chương trình — hãy kiểm tra lại.
-        </p>
-      ) : null}
-    </div>
+    <FrameworkRequirements
+      framework={framework}
+      frameworkVersionNumber={frameworkVersionNumber}
+      isCategoryMismatch={isCategoryMismatch}
+    />
   );
 }
 
@@ -355,6 +317,7 @@ export function ProgramForm({
   disabled = false,
   statusPortalHost = null,
   frameworkVersionNumber = null,
+  frameworkRequirements = "inline",
 }: ProgramFormProps) {
   const isEdit = Boolean(programId);
   const statusInPortal = isEdit && statusPortalHost != null;
@@ -960,14 +923,21 @@ export function ProgramForm({
                 )}
               />
               <FieldError message={errors.frameworkId?.message} />
-              <FrameworkGuidelines
-                framework={selectedFramework}
-                frameworkVersionNumber={frameworkVersionNumber}
-                isCategoryMismatch={
-                  selectedFramework != null &&
-                  selectedFramework.category !== category
-                }
-              />
+              {frameworkRequirements !== "hidden" &&
+              !(
+                frameworkRequirements === "prep" &&
+                Boolean(initialValues?.frameworkId) &&
+                (frameworkId ?? "") === initialValues?.frameworkId
+              ) ? (
+                <FrameworkGuidelines
+                  framework={selectedFramework}
+                  frameworkVersionNumber={frameworkVersionNumber}
+                  isCategoryMismatch={
+                    selectedFramework != null &&
+                    selectedFramework.category !== category
+                  }
+                />
+              ) : null}
             </div>
           </div>
         </div>

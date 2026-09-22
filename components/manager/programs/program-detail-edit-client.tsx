@@ -11,12 +11,14 @@ import { ManagerAdvisoryPanel } from "@/components/advisory/manager-advisory-pan
 import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
+import { FrameworkRequirements } from "@/components/manager/programs/framework-requirements";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getAdvisoryTimeline,
   getProgramAdvisoryWorkspace,
+  getProgramFrameworkById,
   type ProgramWithModules,
 } from "@/lib/api";
 import {
@@ -122,6 +124,15 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
   });
   const advisoryWorkspace = advisoryWorkspaceData?.data ?? null;
+  const prepFrameworkId =
+    program.status === "Draft" ? program.frameworkId : null;
+  const { data: prepFrameworkData } = useClientFetch({
+    enabled: prepFrameworkId != null,
+    fetcher: () => getProgramFrameworkById(prepFrameworkId!),
+    deps: [prepFrameworkId],
+    onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
+  });
+  const prepFramework = prepFrameworkData?.data ?? null;
   const { data: advisoryTimelineData } = useClientFetch({
     enabled: advisoryWorkspace != null,
     fetcher: () => getAdvisoryTimeline(program.id),
@@ -152,6 +163,8 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   /** Curriculum is frozen while the expert board reviews it. */
   const isReviewLocked =
     program.status === "PendingReview" || program.status === "Approved";
+  const showPrepRequirements =
+    program.status === "Draft" && program.frameworkId != null;
   const showAdvisoryPanel =
     program.status === "Draft" ||
     program.status === "PendingReview" ||
@@ -181,6 +194,20 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
         {activeTab === "curriculum" && (
           <div className="space-y-6">
+            {showPrepRequirements && prepFramework ? (
+              <FrameworkRequirements
+                variant="banner"
+                framework={prepFramework}
+                frameworkVersionNumber={
+                  program.frameworkVersionNumber ??
+                  prepFramework.currentVersionNumber
+                }
+                isCategoryMismatch={
+                  program.category != null &&
+                  prepFramework.category !== program.category
+                }
+              />
+            ) : null}
             {showAdvisoryPanel ? (
               <AdvisoryWorkflowTimeline
                 timeline={advisoryTimelineData?.data ?? advisoryWorkspace?.workflow}
