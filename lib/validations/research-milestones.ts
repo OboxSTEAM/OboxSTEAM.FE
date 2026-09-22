@@ -12,7 +12,7 @@ export const milestoneIdParamSchema = z.object({
 
 const milestoneAssignmentTypeSchema = z.enum(["Retrospective", "FileUpload", "Quiz"]);
 
-/** Body for `POST /api/modules/{moduleId}/research-milestones`. Dates use `dd/MM/yyyy HH:mm:ss`. */
+/** Body for `POST /api/modules/{moduleId}/research-milestones`. Open/due windows are not on this DTO. */
 export const createResearchMilestoneSchema = z.object({
   code: z.string().min(1, "Mã milestone là bắt buộc.").max(50, "Mã tối đa 50 ký tự."),
   title: z.string().min(1, "Tiêu đề milestone là bắt buộc.").max(255, "Tiêu đề tối đa 255 ký tự."),
@@ -28,10 +28,14 @@ export const createResearchMilestoneSchema = z.object({
   assignmentType: milestoneAssignmentTypeSchema,
   maxPoints: z.number().int().min(0, "Điểm tối đa không được âm."),
   passScore: z.number().min(0, "Điểm đạt không được âm."),
-  dueDate: z.string().nullable().optional(),
-  availableFrom: z.string().nullable().optional(),
-  availableUntil: z.string().nullable().optional(),
   maxAttempts: z.number().int().min(1, "Số lần nộp tối thiểu là 1."),
+  /** Quiz clock. Null for FileUpload and Retrospective. Minimum 1 when set. */
+  timeLimitMinutes: z
+    .number()
+    .int()
+    .min(1, "Thời lượng làm bài phải ít nhất 1 phút.")
+    .nullable()
+    .optional(),
 });
 
 /** Body for `PUT /api/research-milestones/{milestoneId}`. */
@@ -44,9 +48,12 @@ export const updateResearchMilestoneSchema = z.object({
   assignmentDescription: z.string().nullable().optional(),
   maxPoints: z.number().int().min(0, "Điểm tối đa không được âm.").nullable().optional(),
   passScore: z.number().min(0, "Điểm đạt không được âm.").nullable().optional(),
-  dueDate: z.string().nullable().optional(),
-  availableFrom: z.string().nullable().optional(),
-  availableUntil: z.string().nullable().optional(),
+  timeLimitMinutes: z
+    .number()
+    .int()
+    .min(1, "Thời lượng làm bài phải ít nhất 1 phút.")
+    .nullable()
+    .optional(),
 });
 
 /** Body for `POST /api/research-milestones/{milestoneId}/activities`. */

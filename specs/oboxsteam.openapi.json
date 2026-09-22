@@ -9135,6 +9135,136 @@
         }
       }
     },
+    "/api/class-sessions/checkin-by-token": {
+      "post": {
+        "tags": [
+          "ClassSessionCheckIn"
+        ],
+        "summary": "Check in by QR token or live code (scan-first)",
+        "description": "Student self check-in without a session id in the path. Body must contain exactly one of token (QR UUID) or code (6-digit). Resolves a live non-expired credential to the class session, then records attendance as Present. A 6-digit code must match exactly one live session — zero or multiple hits fail closed.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCheckInRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCheckInRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClassSessionCheckInRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAttendanceResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAttendanceResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionAttendanceResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/class-sessions/{id}/checkin": {
       "post": {
         "tags": [
@@ -17479,7 +17609,7 @@
           "Media"
         ],
         "summary": "Upload media to class",
-        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. Images are auto face-tagged immediately. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed.",
+        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. A face is not required. Images are auto face-tagged when a registered face matches; otherwise the image is stored with no tags. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed.",
         "parameters": [
           {
             "name": "classId",
@@ -42912,7 +43042,8 @@
             "maximum": 2147483647,
             "minimum": 1,
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false

@@ -28,6 +28,7 @@ export const milestoneAssignmentSchema = z
     availableFrom: z.string().nullable().optional(),
     availableUntil: z.string().nullable().optional(),
     maxAttempts: z.number().nullable().optional(),
+    timeLimitMinutes: z.number().nullable().optional(),
   })
   .passthrough();
 

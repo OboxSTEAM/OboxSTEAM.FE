@@ -34,9 +34,6 @@ import {
 } from "@/lib/validations/research-milestones";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
-import {
-  fromApiDateTimeToLocalInput,
-} from "@/lib/curriculum/datetime";
 
 const W = {
   surface: "var(--card)",
@@ -73,6 +70,8 @@ type MilestoneFormPanelProps = {
   activityOptions: ActivityOption[];
   milestoneToEdit: ResearchMilestone | null;
   onSuccess: (milestone: ResearchMilestone) => void;
+  /** Activity ids currently linked — the side rail draws from this, not a second tree copy. */
+  onLinksChange?: (activityIds: string[]) => void;
   /** Cohort lock — show values, block mutations. */
   disabled?: boolean;
 };
@@ -89,17 +88,22 @@ type FormValues = {
   assignmentType: "Retrospective" | "FileUpload" | "Quiz";
   maxPoints: number;
   passScore: number;
-  dueDate: string;
-  availableFrom: string;
-  availableUntil: string;
   maxAttempts: number;
+  timeLimitMinutes: number | null;
 };
+
+function emptyMinutes(value: unknown): number | null {
+  if (value === "" || value == null) return null;
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isNaN(n) ? null : n;
+}
 
 export function MilestoneFormPanel({
   moduleId,
   activityOptions,
   milestoneToEdit,
   onSuccess,
+  onLinksChange,
   disabled = false,
 }: MilestoneFormPanelProps) {
   const isEdit = !!milestoneToEdit;
@@ -120,6 +124,7 @@ export function MilestoneFormPanel({
     register,
     handleSubmit,
     control,
+    watch,
     formState: { errors },
   } = useForm<FormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -137,10 +142,8 @@ export function MilestoneFormPanel({
           assignmentType: (asg?.assignmentType as FormValues["assignmentType"]) || "FileUpload",
           maxPoints: asg?.maxPoints ?? 100,
           passScore: asg?.passScore ?? 50,
-          dueDate: fromApiDateTimeToLocalInput(asg?.dueDate),
-          availableFrom: fromApiDateTimeToLocalInput(asg?.availableFrom),
-          availableUntil: fromApiDateTimeToLocalInput(asg?.availableUntil),
           maxAttempts: asg?.maxAttempts ?? 1,
+          timeLimitMinutes: asg?.timeLimitMinutes ?? null,
         }
       : {
           code: "",
@@ -154,12 +157,12 @@ export function MilestoneFormPanel({
           assignmentType: "FileUpload",
           maxPoints: 100,
           passScore: 50,
-          dueDate: "",
-          availableFrom: "",
-          availableUntil: "",
           maxAttempts: 1,
+          timeLimitMinutes: null,
         },
   });
+
+  const isQuiz = watch("assignmentType") === "Quiz";
 
   const onSubmit = async (data: FormValues) => {
     if (disabled) return;
@@ -176,6 +179,7 @@ export function MilestoneFormPanel({
           assignmentDescription: data.assignmentDescription || null,
           maxPoints: Number(data.maxPoints),
           passScore: Number(data.passScore),
+          timeLimitMinutes: isQuiz ? data.timeLimitMinutes : null,
         });
         result = res?.data ?? null;
         showAppSuccess({ title: "Cập nhật thành công", description: `Milestone "${data.title}" đã lưu.` });
@@ -192,10 +196,8 @@ export function MilestoneFormPanel({
           assignmentType: data.assignmentType,
           maxPoints: Number(data.maxPoints),
           passScore: Number(data.passScore),
-          dueDate: null,
-          availableFrom: null,
-          availableUntil: null,
           maxAttempts: Number(data.maxAttempts),
+          timeLimitMinutes: isQuiz ? data.timeLimitMinutes : null,
         });
         result = res?.data ?? null;
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo milestone "${data.title}".` });
@@ -232,14 +234,17 @@ export function MilestoneFormPanel({
               : "Tạo Milestone nghiên cứu"}
           </p>
           <p className="text-xs mt-0.5 truncate" style={{ color: W.muted }}>
-            Mốc nghiên cứu kèm sản phẩm nộp
+            Một lần lưu tạo mốc và sản phẩm nộp đi kèm
           </p>
         </div>
       </div>
 
-      <fieldset disabled={disabled} className="min-h-0 min-w-0 flex-1 space-y-6 overflow-y-auto border-0 p-5">
-        <div>
-          <STitle>Thông tin milestone</STitle>
+      <fieldset disabled={disabled} className="min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto border-0 p-5">
+        <section className="rounded-xl border p-4" style={{ borderColor: W.border, background: W.surface }}>
+          <STitle>1 · Mốc nghiên cứu</STitle>
+          <p className="mb-3 text-xs leading-5" style={{ color: W.muted }}>
+            Đây là giai đoạn trên module nghiên cứu: tên, thứ tự, và cờ tốt nghiệp.
+          </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
@@ -285,10 +290,21 @@ export function MilestoneFormPanel({
               </Label>
             </div>
           </div>
+        </section>
+
+        <div className="flex items-center gap-3 px-1">
+          <span className="h-px flex-1" style={{ background: W.border }} />
+          <p className="shrink-0 text-center text-xs font-medium" style={{ color: W.muted }}>
+            Lưu xong, hệ thống tạo sản phẩm nộp bên dưới cho mốc này
+          </p>
+          <span className="h-px flex-1" style={{ background: W.border }} />
         </div>
 
-        <div>
-          <STitle>Sản phẩm nộp (deliverable)</STitle>
+        <section className="rounded-xl border p-4" style={{ borderColor: W.border }}>
+          <STitle>2 · Sản phẩm nộp đi kèm</STitle>
+          <p className="mb-3 text-xs leading-5" style={{ color: W.muted }}>
+            Không phải bài tập của khóa học. Mỗi mốc có đúng một sản phẩm nộp, tạo cùng lúc với mốc.
+          </p>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2 space-y-1.5">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
@@ -355,15 +371,37 @@ export function MilestoneFormPanel({
                 <input type="number" {...register("maxAttempts", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
               </div>
             )}
+            {isQuiz && (
+              <div className="space-y-1.5">
+                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                  Thời lượng làm bài (phút)
+                </Label>
+                <input
+                  type="number"
+                  min={1}
+                  placeholder="Không giới hạn"
+                  {...register("timeLimitMinutes", { setValueAs: emptyMinutes })}
+                  className={cn(IN, "font-mono")}
+                  style={{ borderColor: errors.timeLimitMinutes ? W.primary : W.border }}
+                />
+                <p className="text-xs" style={{ color: W.muted }}>
+                  Để trống nếu bài trắc nghiệm không tính giờ. Không áp dụng cho nộp tệp và nhật ký.
+                </p>
+                <FErr msg={errors.timeLimitMinutes?.message as string | undefined} />
+              </div>
+            )}
           </div>
-        </div>
+        </section>
 
         {isEdit && milestoneToEdit && (
           <MilestoneActivityLinker
             milestoneId={milestoneToEdit.id}
             linked={linkedActivities}
             options={unlinkedOptions}
-            onChange={setLinkedActivities}
+            onChange={(next) => {
+              setLinkedActivities(next);
+              onLinksChange?.(next.map((item) => item.activityId));
+            }}
             disabled={disabled}
           />
         )}

@@ -3,7 +3,6 @@
 import {
   createContext,
   useContext,
-  useEffect,
   useMemo,
   useState,
   type MouseEvent,
@@ -190,6 +189,10 @@ export function StructureTreeRow({
   onMoveDown,
   moveBusy = false,
   trailing,
+  /** DOM hook so a side rail can draw a relation line to this row. */
+  anchorId,
+  /** Activity used by the milestone selected in the side rail. */
+  linked,
   children,
 }: {
   depth: number;
@@ -211,6 +214,8 @@ export function StructureTreeRow({
   moveBusy?: boolean;
   /** Optional end-of-row markers (e.g. pin counts) — manager leaves empty. */
   trailing?: ReactNode;
+  anchorId?: string;
+  linked?: boolean;
   children?: ReactNode;
 }) {
   const canMutate = useCurriculumMutate();
@@ -223,11 +228,10 @@ export function StructureTreeRow({
   const showReorder = canMutate && (onMoveUp != null || onMoveDown != null);
   const hasBranch = childItems.length > 0;
   const [open, setOpen] = useState(defaultOpen || forceOpen);
+  if ((forceOpen || selected) && !open) {
+    setOpen(true);
+  }
   const { Icon: NodeIcon, color: iconColor, bg: iconBg } = STRUCTURE_NODE_ICON[kind];
-
-  useEffect(() => {
-    if (forceOpen || selected) setOpen(true);
-  }, [forceOpen, selected]);
 
   const handleToggle = (e: MouseEvent) => {
     e.stopPropagation();
@@ -243,12 +247,19 @@ export function StructureTreeRow({
       <StructureTreeGuides depth={depth} isLast={isLast} />
       <div className={cn("relative z-10", depth > 0 && "ml-3")}>
         <div
+          data-curriculum-anchor={anchorId}
           className="group/tr flex items-center gap-0.5 rounded-lg"
           style={{
-            background: selected ? "rgba(79,195,247,0.13)" : "transparent",
+            background: selected
+              ? "rgba(79,195,247,0.13)"
+              : linked
+                ? "rgba(139,92,246,0.12)"
+                : "transparent",
             border: selected
               ? "1px solid rgba(79,195,247,0.28)"
-              : "1px solid transparent",
+              : linked
+                ? "1px solid rgba(139,92,246,0.35)"
+                : "1px solid transparent",
           }}
         >
           {hasBranch ? (

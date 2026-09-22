@@ -5,6 +5,7 @@ import {
   useCallback,
   useMemo,
   useEffect,
+  useLayoutEffect,
   useRef,
   type ReactNode,
 } from "react";
@@ -19,6 +20,7 @@ import {
   ClipboardList,
   Flag,
   LayoutGrid,
+  Trash2,
   Check,
   Save,
   FolderPlus,
@@ -302,6 +304,7 @@ function MilestoneDetailLoader({
   activityOptions,
   initial,
   onSuccess,
+  onLinksChange,
   disabled = false,
 }: {
   milestoneId: string;
@@ -309,6 +312,7 @@ function MilestoneDetailLoader({
   activityOptions: { id: string; name: string }[];
   initial: ResearchMilestone | null;
   onSuccess: (m: ResearchMilestone) => void;
+  onLinksChange?: (activityIds: string[]) => void;
   disabled?: boolean;
 }) {
   const [milestone, setMilestone] = useState<ResearchMilestone | null>(initial);
@@ -366,6 +370,7 @@ function MilestoneDetailLoader({
       activityOptions={activityOptions}
       milestoneToEdit={milestone}
       onSuccess={onSuccess}
+      onLinksChange={onLinksChange}
       disabled={disabled}
     />
   );
@@ -1326,6 +1331,7 @@ function CourseActivityRows({
   setDelTarget,
   onReorder,
   moveBusy,
+  linkedIds,
 }: {
   course: Course;
   sel: SelectedNode;
@@ -1340,6 +1346,7 @@ function CourseActivityRows({
   >;
   onReorder: (courseId: string, orderedIds: string[]) => Promise<void>;
   moveBusy?: boolean;
+  linkedIds?: ReadonlySet<string>;
 }) {
   const acts = useMemo(
     () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
@@ -1382,6 +1389,8 @@ function CourseActivityRows({
               if (!next) return;
               void onReorder(course.id, next).catch(() => order.revert());
             }}
+            anchorId={`activity:${act.id}`}
+            linked={linkedIds?.has(act.id)}
             selected={sel?.kind === "activity" && sel.id === act.id}
             label={act.name}
             meta={activityMeta}
@@ -1696,9 +1705,21 @@ export function CurriculumSplitPanel({
     let active = true;
     ids.forEach((mid) => {
       getResearchMilestonesByModule(mid)
-        .then((res) => {
+        .then(async (res) => {
+          const items = res?.data ?? [];
+          const detailed = await Promise.all(
+            items.map(async (item) => {
+              if (item.activities != null) return item;
+              try {
+                const full = await getResearchMilestoneById(item.id);
+                return full?.data ?? item;
+              } catch {
+                return item;
+              }
+            }),
+          );
           if (active) {
-            setMilestonesByModule((prev) => ({ ...prev, [mid]: res?.data ?? [] }));
+            setMilestonesByModule((prev) => ({ ...prev, [mid]: detailed }));
           }
         })
         .catch(() => {
@@ -1710,7 +1731,22 @@ export function CurriculumSplitPanel({
     };
   }, [researchIdsKey]);
 
+  const [linkOverrides, setLinkOverrides] = useState<Record<string, string[]>>({});
+
+  const activityIdsFor = useCallback(
+    (milestone: ResearchMilestone) =>
+      linkOverrides[milestone.id] ??
+      (milestone.activities ?? []).map((item) => item.activityId),
+    [linkOverrides],
+  );
+
   const upsertMilestone = useCallback((milestone: ResearchMilestone) => {
+    setLinkOverrides((prev) => {
+      if (!(milestone.id in prev)) return prev;
+      const next = { ...prev };
+      delete next[milestone.id];
+      return next;
+    });
     setMilestonesByModule((prev) => {
       const list = prev[milestone.moduleId] ?? [];
       const next = list.some((m) => m.id === milestone.id)
@@ -2196,6 +2232,9 @@ export function CurriculumSplitPanel({
           activityOptions={activityOptions}
           initial={fromList}
           onSuccess={upsertMilestone}
+          onLinksChange={(activityIds) =>
+            setLinkOverrides((prev) => ({ ...prev, [sel.id]: activityIds }))
+          }
           disabled={cohortLocked}
         />
       );
@@ -2213,6 +2252,85 @@ export function CurriculumSplitPanel({
     upsertMilestone,
     cohortLocked,
     lockReason,
+  ]);
+
+  const linkedActivityIds = useMemo(() => {
+    if (sel?.kind !== "milestone") return new Set<string>();
+    const milestone = (milestonesByModule[sel.moduleId] ?? []).find(
+      (item) => item.id === sel.id,
+    );
+    if (!milestone) return new Set<string>();
+    return new Set(activityIdsFor(milestone));
+  }, [activityIdsFor, milestonesByModule, sel]);
+
+  const researchModules = useMemo(
+    () => orderedModules.filter((mod) => mod.moduleType === "Research"),
+    [orderedModules],
+  );
+  const milestoneCount = useMemo(
+    () =>
+      researchModules.reduce(
+        (count, mod) => count + (milestonesByModule[mod.id]?.length ?? 0),
+        0,
+      ),
+    [milestonesByModule, researchModules],
+  );
+  const showMilestoneRail = milestoneCount > 0;
+  const structureWidth = showMilestoneRail ? 530 : 300;
+  const stageRef = useRef<HTMLDivElement>(null);
+  const [relationLines, setRelationLines] = useState<
+    { key: string; x1: number; y1: number; x2: number; y2: number }[]
+  >([]);
+  const activeMilestoneId = sel?.kind === "milestone" ? sel.id : null;
+
+  useLayoutEffect(() => {
+    const stage = stageRef.current;
+    if (!stage || !activeMilestoneId || !showMilestoneRail) {
+      setRelationLines([]);
+      return;
+    }
+    const measure = () => {
+      const origin = stage.getBoundingClientRect();
+      const card = stage.querySelector<HTMLElement>(
+        `[data-curriculum-anchor="milestone:${activeMilestoneId}"]`,
+      );
+      if (!card) {
+        setRelationLines([]);
+        return;
+      }
+      const cardBox = card.getBoundingClientRect();
+      const milestone = researchModules
+        .flatMap((mod) => milestonesByModule[mod.id] ?? [])
+        .find((item) => item.id === activeMilestoneId);
+      const ids = milestone ? activityIdsFor(milestone) : [];
+      const next = ids.flatMap((activityId) => {
+        const row = stage.querySelector<HTMLElement>(
+          `[data-curriculum-anchor="activity:${activityId}"]`,
+        );
+        if (!row) return [];
+        const box = row.getBoundingClientRect();
+        return [
+          {
+            key: activityId,
+            x1: box.right - origin.left,
+            y1: box.top + box.height / 2 - origin.top,
+            x2: cardBox.left - origin.left,
+            y2: cardBox.top + 28 - origin.top,
+          },
+        ];
+      });
+      setRelationLines(next);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(stage);
+    return () => observer.disconnect();
+  }, [
+    activeMilestoneId,
+    activityIdsFor,
+    milestonesByModule,
+    researchModules,
+    showMilestoneRail,
   ]);
 
   const structureTree = (
@@ -2260,17 +2378,19 @@ export function CurriculumSplitPanel({
 
             const allAsg = sessionAssignments[mod.id] ?? [];
             const courseIdSet = new Set(courses.map((c) => c.id));
+            const milestoneAssignmentIds = new Set(
+              (milestonesByModule[mod.id] ?? [])
+                .map((ms) => ms.assignmentId ?? ms.assignment?.id)
+                .filter((id): id is string => Boolean(id)),
+            );
             const moduleAsgs = allAsg.filter(
-              (a) => !a.courseId || !courseIdSet.has(a.courseId),
+              (a) =>
+                (!a.courseId || !courseIdSet.has(a.courseId)) &&
+                !milestoneAssignmentIds.has(a.id),
             );
             const asgsForCourse = (courseId: string) =>
               allAsg.filter((a) => a.courseId === courseId);
-            const showMilestones = mod.moduleType === "Research";
-            const milestoneList = milestonesByModule[mod.id] ?? [];
-            const moduleEmpty =
-              courses.length === 0 &&
-              moduleAsgs.length === 0 &&
-              (!showMilestones || milestoneList.length === 0);
+            const moduleEmpty = courses.length === 0 && moduleAsgs.length === 0;
             const showModuleAdds =
               (sel?.kind === "module" && sel.id === mod.id) ||
               (sel?.kind === "course-new" && sel.moduleId === mod.id) ||
@@ -2364,6 +2484,9 @@ export function CurriculumSplitPanel({
                 <LayoutGroup id={`courses-${mod.id}`}>
                   {courses.map((course, cIdx) => {
                     const courseAsgs = asgsForCourse(course.id);
+                    const courseHasLink = (course.activities ?? []).some((activity) =>
+                      linkedActivityIds.has(activity.id),
+                    );
                     const courseForceOpen =
                       (sel?.kind === "course" && sel.id === course.id) ||
                       (sel?.kind === "activity" &&
@@ -2371,14 +2494,13 @@ export function CurriculumSplitPanel({
                       (sel?.kind === "activity-new" &&
                         sel.courseId === course.id) ||
                       (sel?.kind === "assignment" &&
-                        courseAsgs.some((a) => a.id === sel.id));
+                        courseAsgs.some((a) => a.id === sel.id)) ||
+                      courseHasLink;
                     const showCourseAdds =
                       courseForceOpen ||
                       (course.activities?.length ?? 0) === 0;
                     const hasModuleTail =
-                      moduleAsgs.length > 0 ||
-                      (showMilestones && milestoneList.length > 0) ||
-                      (canMutate && showModuleAdds);
+                      moduleAsgs.length > 0 || (canMutate && showModuleAdds);
                     const isLastCourse =
                       cIdx === courses.length - 1 && !hasModuleTail;
 
@@ -2421,6 +2543,7 @@ export function CurriculumSplitPanel({
                           setDelTarget={setDelTarget}
                           onReorder={handleActivityReorder}
                           moveBusy={reorderBusy}
+                          linkedIds={linkedActivityIds}
                         />
                         {courseAsgs.map((asg) =>
                           assignmentRow(asg, 3, false),
@@ -2450,44 +2573,6 @@ export function CurriculumSplitPanel({
 
                 {moduleAsgs.map((asg) => assignmentRow(asg, 2, false))}
 
-                {showMilestones
-                  ? milestoneList.map((ms, msIdx) => (
-                      <StructureTreeRow
-                        key={ms.id}
-                        depth={2}
-                        isLast={
-                          msIdx === milestoneList.length - 1 &&
-                          !(canMutate && showModuleAdds)
-                        }
-                        kind="milestone"
-                        selected={
-                          sel?.kind === "milestone" && sel.id === ms.id
-                        }
-                        label={ms.title || ms.code || "Milestone"}
-                        meta={
-                          ms.isCapstone
-                            ? "Capstone"
-                            : `Mốc ${ms.milestoneOrder}`
-                        }
-                        onSelect={() =>
-                          select({
-                            kind: "milestone",
-                            id: ms.id,
-                            moduleId: mod.id,
-                          })
-                        }
-                        onDelete={() =>
-                          setDelTarget({
-                            type: "milestone",
-                            id: ms.id,
-                            name: ms.title || "Milestone",
-                            moduleId: mod.id,
-                          })
-                        }
-                      />
-                    ))
-                  : null}
-
                 {canMutate && showModuleAdds ? (
                   <StructureAddTray>
                     <StructureAddLeafButton
@@ -2514,19 +2599,16 @@ export function CurriculumSplitPanel({
                         })
                       }
                     />
-                    {showMilestones ? (
+                    {mod.moduleType === "Research" &&
+                    (milestonesByModule[mod.id] ?? []).length === 0 ? (
                       <StructureAddLeafButton
                         label="Thêm milestone"
                         icon={Flag}
                         selected={
-                          sel?.kind === "milestone-new" &&
-                          sel.moduleId === mod.id
+                          sel?.kind === "milestone-new" && sel.moduleId === mod.id
                         }
                         onClick={() =>
-                          select({
-                            kind: "milestone-new",
-                            moduleId: mod.id,
-                          })
+                          select({ kind: "milestone-new", moduleId: mod.id })
                         }
                       />
                     ) : null}
@@ -2565,24 +2647,146 @@ export function CurriculumSplitPanel({
       ) : null}
 
     <div
-      className="relative grid min-h-[520px] grid-cols-[300px_minmax(0,1fr)] overflow-hidden rounded-xl border"
-      style={{ background: W.bg, borderColor: W.border }}
+      className="relative grid min-h-[520px] overflow-hidden rounded-xl border"
+      style={{
+        background: W.bg,
+        borderColor: W.border,
+        gridTemplateColumns: `${structureWidth}px minmax(0,1fr)`,
+      }}
     >
-      {/* Left rail: absolute so height follows the detail column; scrolls inside */}
       <div
-        className="absolute inset-y-0 left-0 z-10 flex w-[300px] flex-col overflow-hidden border-r"
-        style={{ borderColor: W.border, background: W.surface }}
+        className="absolute inset-y-0 left-0 z-10 flex flex-col overflow-hidden border-r"
+        style={{ borderColor: W.border, background: W.surface, width: structureWidth }}
       >
         <StructureTreePanelHeader
           hint={
             canMutate
-              ? "Chọn mục để thêm · mũi tên để đổi thứ tự"
+              ? showMilestoneRail
+                ? "Mốc nằm cạnh cây và nối tới hoạt động của khóa"
+                : "Chọn mục để thêm · mũi tên để đổi thứ tự"
               : "Chỉ xem — đang khóa chỉnh sửa"
           }
         />
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2">
-          {structureTree}
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+          <div
+            ref={stageRef}
+            className="relative grid min-h-full"
+            style={{
+              gridTemplateColumns: showMilestoneRail
+                ? "minmax(0,1fr) 210px"
+                : "minmax(0,1fr)",
+            }}
+          >
+            <div className="min-w-0 p-2">{structureTree}</div>
+            {showMilestoneRail ? (
+              <div
+                className="flex min-w-0 flex-col gap-3 border-l p-2"
+                style={{ borderColor: W.border, background: W.surface }}
+              >
+                {researchModules.map((mod) => {
+                  const milestoneList = [...(milestonesByModule[mod.id] ?? [])].sort(
+                    (a, b) => a.milestoneOrder - b.milestoneOrder,
+                  );
+                  return (
+                    <div key={mod.id} className="flex flex-col gap-2">
+                      <p className="px-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: W.faint }}>
+                        {mod.name}
+                      </p>
+                      {milestoneList.map((ms) => {
+                        const selected = sel?.kind === "milestone" && sel.id === ms.id;
+                        const assignmentTitle = ms.assignment?.title || "Chưa có sản phẩm nộp";
+                        return (
+                          <div
+                            key={ms.id}
+                            data-curriculum-anchor={`milestone:${ms.id}`}
+                            className="flex items-start gap-2 rounded-lg border p-2"
+                            style={{
+                              borderColor: selected ? "rgba(139,92,246,0.55)" : W.border,
+                              background: selected ? "rgba(139,92,246,0.1)" : W.bg,
+                            }}
+                          >
+                            <span
+                              className="flex size-8 shrink-0 items-center justify-center rounded-md border"
+                              style={{ borderColor: W.border, background: W.surface, color: "#8b5cf6" }}
+                              aria-hidden
+                            >
+                              <Flag className="size-4" strokeWidth={2.25} />
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                select({ kind: "milestone", id: ms.id, moduleId: mod.id })
+                              }
+                              className="min-w-0 flex-1 py-0.5 text-left"
+                            >
+                              <span className="block truncate text-[12.5px] font-semibold" style={{ color: W.textStrong }}>
+                                {ms.title || ms.code || "Milestone"}
+                              </span>
+                              <span className="mt-0.5 block truncate text-[10px]" style={{ color: W.faint }}>
+                                {ms.isCapstone ? "Capstone" : `Mốc ${ms.milestoneOrder}`}
+                                {ms.code ? ` · ${ms.code}` : ""}
+                              </span>
+                              <span className="mt-1 block truncate text-[11px]" style={{ color: W.muted }}>
+                                {assignmentTitle}
+                              </span>
+                            </button>
+                            {canMutate ? (
+                              <button
+                                type="button"
+                                aria-label={`Xóa mốc ${ms.title || ms.code || ""}`}
+                                title="Xóa mốc"
+                                onClick={() =>
+                                  setDelTarget({
+                                    type: "milestone",
+                                    id: ms.id,
+                                    name: ms.title || "Milestone",
+                                    moduleId: mod.id,
+                                  })
+                                }
+                                className="flex size-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              >
+                                <Trash2 className="size-4" />
+                              </button>
+                            ) : null}
+                          </div>
+                        );
+                      })}
+                      {canMutate ? (
+                        <button
+                          type="button"
+                          onClick={() => select({ kind: "milestone-new", moduleId: mod.id })}
+                          className="rounded-lg border border-dashed px-2.5 py-2 text-left text-[11px] font-medium"
+                          style={{
+                            borderColor:
+                              sel?.kind === "milestone-new" && sel.moduleId === mod.id
+                                ? "#8b5cf6"
+                                : W.border,
+                            color: W.text,
+                          }}
+                        >
+                          Thêm milestone
+                        </button>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+            {relationLines.length > 0 ? (
+              <svg className="pointer-events-none absolute inset-0 h-full w-full">
+                {relationLines.map((line) => (
+                  <path
+                    key={line.key}
+                    d={`M ${line.x1} ${line.y1} C ${line.x1 + 24} ${line.y1}, ${line.x2 - 24} ${line.y2}, ${line.x2} ${line.y2}`}
+                    fill="none"
+                    stroke="#8b5cf6"
+                    strokeWidth="1.5"
+                  />
+                ))}
+              </svg>
+            ) : null}
+          </div>
         </div>
       </div>
 
