@@ -43,6 +43,7 @@ export default function CreateProgramPage() {
             created.id,
             options.frameworkExpertId,
             created.experts.map((expert) => expert.expertId),
+            created.advisorExpertId,
           );
         } catch (attachError) {
           showAppErrorFromUnknown(attachError, "experts.update");

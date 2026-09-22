@@ -1,17 +1,18 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 
 import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
-import { ManagerAdvisoryPanel } from "@/components/advisory/manager-advisory-panel";
+import { ManagerAdvisoryPanel, AdvisoryCollaborateButton } from "@/components/advisory/manager-advisory-panel";
 import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
 import { FrameworkRequirements } from "@/components/manager/programs/framework-requirements";
+import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
@@ -106,6 +107,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
+  const [advisoryOpen, setAdvisoryOpen] = useState(false);
   const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
     locked: false,
     reason: null,
@@ -133,6 +135,34 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
   });
   const prepFramework = prepFrameworkData?.data ?? null;
+  const advisorAttachKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    const expertId = prepFramework?.expertId;
+    if (program.status !== "Draft" || !expertId) return;
+    const onBoard = program.experts.some((expert) => expert.expertId === expertId);
+    if (program.advisorExpertId === expertId && onBoard) return;
+
+    const key = `${program.id}:${expertId}:${program.advisorExpertId ?? ""}`;
+    if (advisorAttachKey.current === key) return;
+    advisorAttachKey.current = key;
+
+    void (async () => {
+      try {
+        await attachFrameworkAuthorToProgram(
+          program.id,
+          expertId,
+          program.experts.map((expert) => expert.expertId),
+          program.advisorExpertId,
+        );
+        router.refresh();
+      } catch (error) {
+        advisorAttachKey.current = null;
+        showAppErrorFromUnknown(error, "programs.advisor");
+      }
+    })();
+  }, [prepFramework?.expertId, program, router]);
+
   const { data: advisoryTimelineData } = useClientFetch({
     enabled: advisoryWorkspace != null,
     fetcher: () => getAdvisoryTimeline(program.id),
@@ -212,6 +242,21 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
               <AdvisoryWorkflowTimeline
                 timeline={advisoryTimelineData?.data ?? advisoryWorkspace?.workflow}
                 participants={advisoryWorkspace?.participants}
+                action={
+                  <AdvisoryCollaborateButton
+                    expanded={advisoryOpen}
+                    outstandingCount={
+                      advisoryWorkspace?.approvalBlockingCount ??
+                      advisoryWorkspace?.workflow?.outstandingRequirementCount ??
+                      0
+                    }
+                    unreadTotal={
+                      (advisoryWorkspace?.unreadDiscussionCount ?? 0) +
+                      (advisoryWorkspace?.unreadNoteCount ?? 0)
+                    }
+                    onClick={() => setAdvisoryOpen((open) => !open)}
+                  />
+                }
               />
             ) : null}
             <div className="w-full">
@@ -234,7 +279,13 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
               </Suspense>
             </div>
             {showAdvisoryPanel ? (
-              <ManagerAdvisoryPanel program={program} workspace={advisoryWorkspace} />
+              <ManagerAdvisoryPanel
+                program={program}
+                workspace={advisoryWorkspace}
+                isOpen={advisoryOpen}
+                onOpenChange={setAdvisoryOpen}
+                hideLauncher
+              />
             ) : null}
           </div>
         )}

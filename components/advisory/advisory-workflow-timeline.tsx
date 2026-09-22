@@ -1,6 +1,7 @@
 "use client";
 
 import { ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
 
 import {
   ExpertWorkflowRail,
@@ -36,6 +37,8 @@ type AdvisoryWorkflowTimelineProps = {
   timeline: AdvisoryWorkflowTimeline | null | undefined;
   participants?: AdvisoryParticipant[];
   onStageSelect?: (stage: AdvisoryWorkflowStageKey) => void;
+  /** Sits in the status row, beside the outstanding-requirement count. */
+  action?: ReactNode;
   className?: string;
 };
 
@@ -56,14 +59,16 @@ export function AdvisoryWorkflowTimeline({
   timeline,
   participants = [],
   onStageSelect,
+  action,
   className,
 }: AdvisoryWorkflowTimelineProps) {
   if (!timeline || timeline.stages.length === 0) {
     return (
-      <div className={cn("rounded-xl border border-dashed border-border p-3", className)}>
+      <div className={cn("flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed border-border p-3", className)}>
         <p className="text-xs text-muted-foreground">
           Chưa có dữ liệu tiến trình advisory từ máy chủ.
         </p>
+        {action}
       </div>
     );
   }
@@ -100,9 +105,12 @@ export function AdvisoryWorkflowTimeline({
             </span>
           </p>
         </div>
-        <Badge variant="outline" className="rounded-md text-[11px]">
-          {timeline.outstandingRequirementCount} yêu cầu còn lại
-        </Badge>
+        <div className="flex flex-wrap items-center gap-2">
+          {action}
+          <Badge variant="outline" className="rounded-md text-[11px]">
+            {timeline.outstandingRequirementCount} yêu cầu còn lại
+          </Badge>
+        </div>
       </div>
 
       <div className="hidden sm:block">

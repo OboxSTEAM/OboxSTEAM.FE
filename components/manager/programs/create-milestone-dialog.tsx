@@ -66,9 +66,14 @@ export function CreateMilestoneDialog({
     const mod = program?.modules?.find((m) => m.id === moduleId);
     if (!mod) return [];
     return (mod.courses ?? []).flatMap((course) =>
-      (course.activities ?? []).map((a) => ({
-        id: a.id,
-        name: a.name,
+      (course.activities ?? []).map((activity) => ({
+        id: activity.id,
+        name: activity.name,
+        code: activity.code,
+        activityType: activity.activityType,
+        description: activity.description,
+        durationMinutes: activity.durationMinutes,
+        courseName: course.name,
       })),
     );
   }, [programs, programId, moduleId]);

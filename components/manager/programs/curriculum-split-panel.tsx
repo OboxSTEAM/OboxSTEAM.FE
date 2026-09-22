@@ -977,6 +977,7 @@ function ProgramInfoPanel({
             program.id,
             options.frameworkExpertId,
             program.experts.map((expert) => expert.expertId),
+            program.advisorExpertId,
           );
         } catch (attachError) {
           showAppErrorFromUnknown(attachError, "experts.update");
@@ -2214,9 +2215,17 @@ export function CurriculumSplitPanel({
     }
     if (sel.kind === "milestone-new") {
       const mod = modules.find((m) => m.id === sel.moduleId);
-      const activityOptions = (mod?.courses ?? [])
-        .flatMap((c) => c.activities ?? [])
-        .map((a) => ({ id: a.id, name: a.name }));
+      const activityOptions = (mod?.courses ?? []).flatMap((course) =>
+        (course.activities ?? []).map((activity) => ({
+          id: activity.id,
+          name: activity.name,
+          code: activity.code,
+          activityType: activity.activityType,
+          description: activity.description,
+          durationMinutes: activity.durationMinutes,
+          courseName: course.name,
+        })),
+      );
       return (
         <MilestoneFormPanel
           moduleId={sel.moduleId}
@@ -2232,9 +2241,17 @@ export function CurriculumSplitPanel({
     }
     if (sel.kind === "milestone") {
       const mod = modules.find((m) => m.id === sel.moduleId);
-      const activityOptions = (mod?.courses ?? [])
-        .flatMap((c) => c.activities ?? [])
-        .map((a) => ({ id: a.id, name: a.name }));
+      const activityOptions = (mod?.courses ?? []).flatMap((course) =>
+        (course.activities ?? []).map((activity) => ({
+          id: activity.id,
+          name: activity.name,
+          code: activity.code,
+          activityType: activity.activityType,
+          description: activity.description,
+          durationMinutes: activity.durationMinutes,
+          courseName: course.name,
+        })),
+      );
       const fromList =
         (milestonesByModule[sel.moduleId] ?? []).find((m) => m.id === sel.id) ?? null;
       return (

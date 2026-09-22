@@ -3,10 +3,11 @@
 import { useCallback, useMemo, useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Flag, Save, Plus, Trash, Link2 } from "lucide-react";
+import { Flag, Save, Plus, Trash, Link2, Search } from "lucide-react";
 
 import { SuccessCheckIcon } from "@/components/transitions/success-check-icon";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -33,6 +34,7 @@ import {
   updateResearchMilestoneSchema,
 } from "@/lib/validations/research-milestones";
 import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
+import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -64,7 +66,15 @@ function FErr({ msg }: { msg?: string }) {
   ) : null;
 }
 
-type ActivityOption = { id: string; name: string };
+export type ActivityOption = {
+  id: string;
+  name: string;
+  code?: string | null;
+  activityType?: keyof typeof ACTIVITY_TYPE_LABELS;
+  description?: string | null;
+  durationMinutes?: number | null;
+  courseName?: string | null;
+};
 
 type MilestoneFormPanelProps = {
   moduleId: string;
@@ -459,6 +469,20 @@ function MilestoneActivityLinker({
   const [picked, setPicked] = useState("");
   const [required, setRequired] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const visibleOptions = useMemo(() => {
+    const keyword = search.trim().toLocaleLowerCase("vi");
+    return options.filter((option) => {
+      if (!keyword) return true;
+      const typeLabel = option.activityType
+        ? ACTIVITY_TYPE_LABELS[option.activityType]
+        : "";
+      return `${option.name} ${option.code ?? ""} ${option.courseName ?? ""} ${option.description ?? ""} ${typeLabel}`
+        .toLocaleLowerCase("vi")
+        .includes(keyword);
+    });
+  }, [options, search]);
 
   async function handleLink() {
     if (!picked) return;
@@ -535,39 +559,102 @@ function MilestoneActivityLinker({
       )}
 
       {!disabled && options.length > 0 ? (
-        <div className="flex items-end gap-2">
-          <div className="min-w-0 flex-1">
-            <Select value={picked || "none"} onValueChange={(v) => setPicked(!v || v === "none" ? "" : v)}>
-              <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
-                <span className="truncate">
-                  {picked ? options.find((o) => o.id === picked)?.name ?? "Chọn hoạt động" : "Chọn hoạt động"}
-                </span>
-              </SelectTrigger>
-              <SelectContent className={THEME_SELECT_CONTENT}>
-                <SelectItem value="none" className={THEME_SELECT_ITEM}>
-                  Chọn hoạt động
-                </SelectItem>
-                {options.map((o) => (
-                  <SelectItem key={o.id} value={o.id} className={THEME_SELECT_ITEM}>
-                    {o.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="space-y-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") event.preventDefault();
+              }}
+              placeholder="Tìm theo tên, mã, khóa học hoặc hình thức..."
+              aria-label="Tìm hoạt động để liên kết"
+              className="h-9 rounded-lg border-input bg-card pl-9 text-sm"
+            />
           </div>
-          <label className="flex items-center gap-1.5 pb-2 text-xs font-medium" style={{ color: W.muted }}>
-            <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} className="border-input bg-background data-checked:border-primary" />
-            Bắt buộc
-          </label>
-          <Button
-            type="button"
-            onClick={handleLink}
-            disabled={busy || !picked}
-            className="h-9 gap-1.5 rounded-lg bg-[#4FC3F7] px-3 text-sm font-semibold text-white hover:bg-[#3bb4ea]"
-          >
-            <Plus className="size-4" />
-            Gắn
-          </Button>
+          <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
+            {visibleOptions.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                Không có hoạt động phù hợp.
+              </p>
+            ) : (
+              visibleOptions.map((option) => {
+                const selected = picked === option.id;
+                const typeLabel = option.activityType
+                  ? ACTIVITY_TYPE_LABELS[option.activityType]
+                  : null;
+                const summary =
+                  option.description?.trim() || "Chưa có mô tả cho hoạt động này.";
+                const meta = [
+                  option.code,
+                  option.courseName,
+                  option.durationMinutes != null
+                    ? `${option.durationMinutes} phút`
+                    : null,
+                ]
+                  .filter(Boolean)
+                  .join(" · ");
+                return (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={() => setPicked(option.id)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-xl border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                      selected
+                        ? "border-[#4FC3F7] bg-[#4FC3F7]/8"
+                        : "border-border bg-card hover:bg-background",
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">
+                          {option.name || "Hoạt động chưa đặt tên"}
+                        </span>
+                        {typeLabel ? (
+                          <span className="rounded-md bg-[#4FC3F7]/15 px-1.5 py-0.5 text-[10px] font-semibold text-[#0D6E9C] dark:text-[#7dd3fc]">
+                            {typeLabel}
+                          </span>
+                        ) : null}
+                      </span>
+                      <span className="mt-1 line-clamp-2 block text-xs leading-5 text-muted-foreground">
+                        {summary}
+                      </span>
+                      {meta ? (
+                        <span className="mt-1.5 block truncate text-xs text-foreground/80">
+                          {meta}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span
+                      className={cn(
+                        "mt-1 size-4 shrink-0 rounded-full border-2",
+                        selected
+                          ? "border-primary bg-primary shadow-[inset_0_0_0_3px_var(--card)]"
+                          : "border-input",
+                      )}
+                    />
+                  </button>
+                );
+              })
+            )}
+          </div>
+          <div className="flex flex-wrap items-center justify-end gap-3">
+            <label className="flex items-center gap-1.5 text-xs font-medium" style={{ color: W.muted }}>
+              <Checkbox checked={required} onCheckedChange={(v) => setRequired(v === true)} className="border-input bg-background data-checked:border-primary" />
+              Bắt buộc
+            </label>
+            <Button
+              type="button"
+              onClick={handleLink}
+              disabled={busy || !picked}
+              className="h-9 gap-1.5 rounded-lg bg-[#4FC3F7] px-3 text-sm font-semibold text-white hover:bg-[#3bb4ea]"
+            >
+              <Plus className="size-4" />
+              Gắn
+            </Button>
+          </div>
         </div>
       ) : !disabled ? (
         <p className="text-xs" style={{ color: W.faint }}>

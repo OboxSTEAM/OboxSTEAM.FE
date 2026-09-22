@@ -22,6 +22,8 @@ type ManagerAdvisoryPanelProps = {
   defaultOpen?: boolean;
   isOpen?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Launcher lives in the advisory status bar instead of the viewport corner. */
+  hideLauncher?: boolean;
 };
 
 export function ManagerAdvisoryPanel({
@@ -31,6 +33,7 @@ export function ManagerAdvisoryPanel({
   defaultOpen = false,
   isOpen: controlledIsOpen,
   onOpenChange,
+  hideLauncher = false,
 }: ManagerAdvisoryPanelProps) {
   const [internalIsOpen, setInternalIsOpen] = useState(defaultOpen);
   const isControlled = controlledIsOpen !== undefined;
@@ -155,7 +158,7 @@ export function ManagerAdvisoryPanel({
       ) : null}
 
       {/* Floating Messenger Launcher Pill */}
-      {!isOpen ? (
+      {!hideLauncher && !isOpen ? (
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -192,5 +195,39 @@ export function ManagerAdvisoryPanel({
         </button>
       ) : null}
     </>
+  );
+}
+
+export function AdvisoryCollaborateButton({
+  outstandingCount,
+  unreadTotal,
+  expanded,
+  onClick,
+}: {
+  outstandingCount: number;
+  unreadTotal: number;
+  expanded: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-expanded={expanded}
+      aria-label={expanded ? "Đóng trao đổi với chuyên gia" : "Mở trao đổi với chuyên gia"}
+      className="inline-flex h-9 items-center gap-2 rounded-xl border border-border bg-background px-3 text-xs font-bold text-foreground"
+    >
+      <MessageSquare className="size-3.5 text-primary" />
+      Cộng tác Advisory
+      {outstandingCount > 0 ? (
+        <Badge className="rounded-full bg-amber-600 px-1.5 py-0 text-[10px] font-bold text-white">
+          {outstandingCount}
+        </Badge>
+      ) : unreadTotal > 0 ? (
+        <Badge className="rounded-full bg-primary px-1.5 py-0 text-[10px] font-bold text-primary-foreground">
+          {unreadTotal}
+        </Badge>
+      ) : null}
+    </button>
   );
 }

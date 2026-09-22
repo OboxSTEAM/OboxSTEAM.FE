@@ -75,11 +75,14 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         const framework = await getProgramFrameworkById(frameworkId);
         const expertId = framework?.data?.expertId;
         if (!expertId) return;
-        if (experts.some((expert) => expert.expertId === expertId)) return;
+        const alreadyOnBoard = experts.some((expert) => expert.expertId === expertId);
+        const alreadyAdvisor = program.advisorExpertId === expertId;
+        if (alreadyOnBoard && alreadyAdvisor) return;
         await attachFrameworkAuthorToProgram(
           program.id,
           expertId,
           experts.map((expert) => expert.expertId),
+          program.advisorExpertId,
         );
         router.refresh();
       } catch (error) {
@@ -87,7 +90,7 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         showAppErrorFromUnknown(error, "experts.update");
       }
     })();
-  }, [experts, program.frameworkId, program.id, router]);
+  }, [experts, program.advisorExpertId, program.frameworkId, program.id, router]);
 
   const { data: expertsData, isLoading: isExpertsLoading } = useClientFetch({
     fetcher: () =>
