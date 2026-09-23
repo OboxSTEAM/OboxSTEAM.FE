@@ -32,6 +32,11 @@ type ScoreDraft = {
   comment: string;
 };
 
+export type RequiredChangeSummary = {
+  id: string;
+  label: string;
+};
+
 type ReviewAssessmentPanelProps = {
   programId: string;
   programName: string;
@@ -41,7 +46,8 @@ type ReviewAssessmentPanelProps = {
   criteria: RubricSnapshotCriterion[];
   canDecide: boolean;
   blockingChangeCount?: number;
-  requiredChangeThreadIds?: string[];
+  requiredChanges?: RequiredChangeSummary[];
+  onSubmissionStale?: () => void;
   onDecisionComplete?: () => void;
 };
 
@@ -56,16 +62,17 @@ export function ReviewAssessmentPanel({
   criteria,
   canDecide,
   blockingChangeCount = 0,
-  requiredChangeThreadIds = [],
+  requiredChanges = [],
+  onSubmissionStale,
   onDecisionComplete,
 }: ReviewAssessmentPanelProps) {
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
   const [overallComment, setOverallComment] = useState("");
   const [changesComment, setChangesComment] = useState("");
+  const [showNotes, setShowNotes] = useState(false);
   const [showChangesReason, setShowChangesReason] = useState(false);
-  const [concurrencyVersion, setConcurrencyVersion] = useState(
-    initialConcurrencyVersion,
-  );
+  const [submissionConcurrencyVersion, setSubmissionConcurrencyVersion] =
+    useState(initialConcurrencyVersion);
   const [formError, setFormError] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<
     "approve" | "request-changes" | null
@@ -74,6 +81,7 @@ export function ReviewAssessmentPanel({
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydratedRef = useRef(false);
   const dirtyRef = useRef(false);
+  const draftVersionRef = useRef<string | null>(null);
 
   const { data: draftData, isLoading: isDraftLoading, retry: retryDraft } =
     useClientFetch({
@@ -82,6 +90,10 @@ export function ReviewAssessmentPanel({
       deps: [programId, submissionId],
       onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.draft"),
     });
+
+  useEffect(() => {
+    setSubmissionConcurrencyVersion(initialConcurrencyVersion);
+  }, [initialConcurrencyVersion]);
 
   useEffect(() => {
     if (hydratedRef.current || !draftData?.data) return;
@@ -95,14 +107,17 @@ export function ReviewAssessmentPanel({
     }
     setScores(nextScores);
     setOverallComment(draft.overallComment ?? "");
-    setConcurrencyVersion(draft.concurrencyVersion);
+    draftVersionRef.current = draft.concurrencyVersion;
     dirtyRef.current = false;
     hydratedRef.current = true;
+    if (draft.overallComment?.trim() || draft.scores.some((item) => item.comment?.trim())) {
+      setShowNotes(true);
+    }
   }, [draftData]);
 
-  const totalMaxScore = criteria.reduce((t, c) => t + c.maxScore, 0);
-  const scoredCount = criteria.filter((c) => {
-    const raw = scores[c.id]?.score?.trim() ?? "";
+  const totalMaxScore = criteria.reduce((total, criterion) => total + criterion.maxScore, 0);
+  const scoredCount = criteria.filter((criterion) => {
+    const raw = scores[criterion.id]?.score?.trim() ?? "";
     return raw !== "" && Number.isInteger(Number(raw));
   }).length;
   const totalScore = criteria.reduce((total, criterion) => {
@@ -120,7 +135,8 @@ export function ReviewAssessmentPanel({
   }
 
   const persistDraft = useCallback(async () => {
-    if (!canDecide || !dirtyRef.current) return;
+    const draftToken = draftVersionRef.current;
+    if (!canDecide || !dirtyRef.current || !draftToken) return;
     const invalidCriterion = criteria.find((criterion) => {
       const raw = scores[criterion.id]?.score.trim() ?? "";
       if (raw === "") return false;
@@ -141,10 +157,9 @@ export function ReviewAssessmentPanel({
         const draft = scores[criterion.id];
         const raw = draft?.score.trim() ?? "";
         if (raw === "") continue;
-        const value = Number(raw);
         collected.push({
           criterionId: criterion.id,
-          score: value,
+          score: Number(raw),
           comment: draft?.comment.trim() || null,
         });
       }
@@ -152,18 +167,19 @@ export function ReviewAssessmentPanel({
       const result = await saveReviewDraft(programId, submissionId, {
         scores: collected.length > 0 ? collected : null,
         overallComment: overallComment.trim() || null,
-        concurrencyVersion,
+        concurrencyVersion: draftToken,
       });
       if (result?.data?.concurrencyVersion) {
-        setConcurrencyVersion(result.data.concurrencyVersion);
+        draftVersionRef.current = result.data.concurrencyVersion;
       }
       setFormError(null);
     } catch (error) {
       dirtyRef.current = true;
       if (error instanceof ApiRequestError && error.status === 409) {
+        draftVersionRef.current = null;
+        hydratedRef.current = false;
         showAppErrorFromUnknown(error, "expert.advisory.draft");
         retryDraft();
-        hydratedRef.current = false;
       } else {
         showAppErrorFromUnknown(error, "expert.advisory.draft");
       }
@@ -175,7 +191,6 @@ export function ReviewAssessmentPanel({
     criteria,
     scores,
     overallComment,
-    concurrencyVersion,
     programId,
     submissionId,
     retryDraft,
@@ -190,7 +205,7 @@ export function ReviewAssessmentPanel({
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-    }, [scores, overallComment, canDecide, persistDraft]);
+  }, [scores, overallComment, canDecide, persistDraft]);
 
   function collectScores(requireAll: boolean): ReviewCriterionScoreRequestInput[] | null {
     const collected: ReviewCriterionScoreRequestInput[] = [];
@@ -221,6 +236,15 @@ export function ReviewAssessmentPanel({
     return collected;
   }
 
+  function handleDecisionConflict(error: unknown, context: "expert.review.approve" | "expert.review.requestChanges") {
+    if (error instanceof ApiRequestError && error.status === 409) {
+      showAppErrorFromUnknown(error, "expert.advisory.draft");
+      onSubmissionStale?.();
+      return;
+    }
+    showAppErrorFromUnknown(error, context);
+  }
+
   async function handleApprove() {
     const collected = collectScores(criteria.length > 0);
     if (collected == null) return;
@@ -229,7 +253,7 @@ export function ReviewAssessmentPanel({
     try {
       await approveProgramReview(programId, {
         submissionId,
-        concurrencyVersion,
+        concurrencyVersion: submissionConcurrencyVersion,
         comment: overallComment.trim() || null,
         scores: collected.length > 0 ? collected : null,
       });
@@ -239,22 +263,24 @@ export function ReviewAssessmentPanel({
       });
       onDecisionComplete?.();
     } catch (error) {
-      if (error instanceof ApiRequestError && error.status === 409) {
-        showAppErrorFromUnknown(error, "expert.advisory.draft");
-        retryDraft();
-        hydratedRef.current = false;
-      } else {
-        showAppErrorFromUnknown(error, "expert.review.approve");
-      }
+      handleDecisionConflict(error, "expert.review.approve");
     } finally {
       setPendingAction(null);
     }
   }
 
+  function buildChangesComment(): string {
+    const typed = changesComment.trim();
+    if (typed) return typed;
+    if (requiredChanges.length === 0) return "";
+    return requiredChanges.map((change) => change.label).join("\n");
+  }
+
   async function handleRequestChanges() {
-    const comment = changesComment.trim();
+    const comment = buildChangesComment();
     if (!comment) {
-      setFormError("Vui lòng nhập lý do cần chỉnh sửa.");
+      setFormError("Vui lòng nhập nội dung Manager cần chỉnh sửa.");
+      setShowChangesReason(true);
       return;
     }
     const collected = collectScores(false);
@@ -265,10 +291,10 @@ export function ReviewAssessmentPanel({
     try {
       await requestProgramChanges(programId, {
         submissionId,
-        concurrencyVersion,
-        comment,
-        scores: collected && collected.length > 0 ? collected : null,
-        requiredChangeThreadIds,
+        concurrencyVersion: submissionConcurrencyVersion,
+        comment: comment || null,
+        scores: collected.length > 0 ? collected : null,
+        requiredChangeThreadIds: requiredChanges.map((change) => change.id),
         clientOperationId: crypto.randomUUID(),
       });
       showAppSuccess({
@@ -278,16 +304,23 @@ export function ReviewAssessmentPanel({
       setChangesComment("");
       onDecisionComplete?.();
     } catch (error) {
-      if (error instanceof ApiRequestError && error.status === 409) {
-        showAppErrorFromUnknown(error, "expert.advisory.draft");
-        retryDraft();
-        hydratedRef.current = false;
-      } else {
-        showAppErrorFromUnknown(error, "expert.review.requestChanges");
-      }
+      handleDecisionConflict(error, "expert.review.requestChanges");
     } finally {
       setPendingAction(null);
     }
+  }
+
+  function handleSendBackClick() {
+    if (requiredChanges.length === 0 && !showChangesReason) {
+      setShowChangesReason(true);
+      return;
+    }
+    if (requiredChanges.length === 0 && !changesComment.trim()) {
+      setFormError("Vui lòng nhập nội dung Manager cần chỉnh sửa.");
+      return;
+    }
+    setFormError(null);
+    setPendingAction("request-changes");
   }
 
   const isBusy = pendingAction !== null;
@@ -295,6 +328,7 @@ export function ReviewAssessmentPanel({
   const rubricComplete = criteria.length === 0 || scoredCount === criteria.length;
   const canApprove =
     canDecide && isPending && rubricComplete && blockingChangeCount === 0;
+  const hasPinnedChanges = requiredChanges.length > 0;
 
   return (
     <div className="space-y-5">
@@ -305,10 +339,7 @@ export function ReviewAssessmentPanel({
           ] ?? submissionStatus}
         </Badge>
         {isSaving ? (
-          <span
-            className="t-shimmer text-[11px]"
-            data-text="Đang lưu nháp…"
-          >
+          <span className="t-shimmer text-[11px]" data-text="Đang lưu nháp…">
             Đang lưu nháp…
           </span>
         ) : canDecide && isPending ? (
@@ -323,49 +354,6 @@ export function ReviewAssessmentPanel({
         </span>
       </div>
 
-      <div className="rounded-2xl border border-border bg-background/65 p-4">
-        <p className="text-sm font-bold text-foreground">
-          Mức độ sẵn sàng cho quyết định
-        </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-3">
-          <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-sm">
-            <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-            <div>
-              <p className="font-semibold text-foreground">Hồ sơ đã tải</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">Đúng lần nộp đang chờ</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-sm">
-            {rubricComplete ? (
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-            ) : (
-              <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-600" />
-            )}
-            <div>
-              <p className="font-semibold text-foreground">Rubric {scoredCount}/{criteria.length}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {rubricComplete ? "Đã chấm đủ tiêu chí" : "Cần hoàn tất trước khi duyệt"}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-2 rounded-xl bg-card p-3 text-sm">
-            {blockingChangeCount === 0 ? (
-              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-            ) : (
-              <AlertCircle className="mt-0.5 size-4 shrink-0 text-primary" />
-            )}
-            <div>
-              <p className="font-semibold text-foreground">Yêu cầu bắt buộc</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {blockingChangeCount === 0
-                  ? "Không còn nội dung chờ xác minh"
-                  : `${blockingChangeCount} nội dung chưa xác minh`}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {isDraftLoading ? (
         <div className="space-y-3">
           <Skeleton className="h-20 w-full rounded-xl" />
@@ -373,7 +361,7 @@ export function ReviewAssessmentPanel({
         </div>
       ) : criteria.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
-          Khung chưa có tiêu chí rubric. Ghi nhận xét tổng quan bên dưới.
+          Khung chưa có tiêu chí rubric. Có thể phê duyệt hoặc gửi yêu cầu chỉnh sửa bên dưới.
         </p>
       ) : (
         <div className="space-y-3">
@@ -395,81 +383,110 @@ export function ReviewAssessmentPanel({
                         {criterion.description}
                       </p>
                     ) : null}
-                    {criterion.evidenceGuidance ? (
-                      <p className="mt-1 text-xs italic text-muted-foreground">
-                        Gợi ý minh chứng: {criterion.evidenceGuidance}
-                      </p>
-                    ) : null}
                   </div>
                   <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
-                    {hasScore ? `${raw}/${criterion.maxScore}` : `Chưa đánh giá /${criterion.maxScore}`}
+                    {hasScore ? `${raw}/${criterion.maxScore}` : `/${criterion.maxScore}`}
                   </span>
                 </div>
                 <Input
                   value={scores[criterion.id]?.score ?? ""}
-                  onChange={(e) => updateScore(criterion.id, { score: e.target.value })}
+                  onChange={(event) => updateScore(criterion.id, { score: event.target.value })}
                   inputMode="numeric"
                   placeholder={`0 – ${criterion.maxScore}`}
                   aria-label={`Điểm cho tiêu chí ${criterion.name}`}
                   disabled={!canDecide || isBusy}
                   className="h-10 rounded-lg border-input bg-card text-sm"
                 />
-                <Input
-                  value={scores[criterion.id]?.comment ?? ""}
-                  onChange={(e) => updateScore(criterion.id, { comment: e.target.value })}
-                  placeholder="Nhận xét cho tiêu chí (không bắt buộc)"
-                  disabled={!canDecide || isBusy}
-                  className="h-10 rounded-lg border-input bg-card text-sm"
-                />
+                {showNotes ? (
+                  <Input
+                    value={scores[criterion.id]?.comment ?? ""}
+                    onChange={(event) =>
+                      updateScore(criterion.id, { comment: event.target.value })
+                    }
+                    placeholder="Nhận xét cho tiêu chí (không bắt buộc)"
+                    aria-label={`Nhận xét cho tiêu chí ${criterion.name}`}
+                    disabled={!canDecide || isBusy}
+                    className="h-10 rounded-lg border-input bg-card text-sm"
+                  />
+                ) : null}
               </div>
             );
           })}
 
-          {criteria.length > 0 ? (
-            <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3">
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Tổng điểm
-              </span>
-              <span className="font-mono text-sm font-bold text-foreground">
-                {scoredCount > 0 ? `${totalScore}/${totalMaxScore}` : "Chưa đánh giá"}
-              </span>
-            </div>
-          ) : null}
+          <div className="flex items-center justify-between rounded-xl bg-muted px-4 py-3">
+            <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Tổng điểm
+            </span>
+            <span className="font-mono text-sm font-bold text-foreground">
+              {scoredCount > 0 ? `${totalScore}/${totalMaxScore}` : "Chưa đánh giá"}
+            </span>
+          </div>
         </div>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="assessment-overall">Nhận xét tổng quan</Label>
-        <Textarea
-          id="assessment-overall"
-          rows={3}
-          value={overallComment}
-          onChange={(e) => {
-            dirtyRef.current = true;
-            setOverallComment(e.target.value);
-          }}
-          disabled={!canDecide || isBusy}
-          className="rounded-xl border-input bg-card"
-        />
-      </div>
+      {canDecide && isPending ? (
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setShowNotes((open) => !open)}
+          className="h-9 px-2 text-xs font-semibold text-muted-foreground"
+        >
+          {showNotes ? "Ẩn nhận xét" : "Thêm nhận xét"}
+        </Button>
+      ) : null}
+
+      {showNotes ? (
+        <div className="space-y-2">
+          <Label htmlFor="assessment-overall">Nhận xét tổng quan</Label>
+          <Textarea
+            id="assessment-overall"
+            rows={3}
+            value={overallComment}
+            onChange={(event) => {
+              dirtyRef.current = true;
+              setOverallComment(event.target.value);
+            }}
+            disabled={!canDecide || isBusy}
+            placeholder="Ghi chú kèm quyết định phê duyệt (không bắt buộc)."
+            className="rounded-xl border-input bg-card"
+          />
+        </div>
+      ) : null}
 
       {canDecide && isPending ? (
         <>
-          {showChangesReason ? <div className="space-y-2 rounded-xl border border-primary/25 bg-primary/5 p-4">
-            <Label htmlFor="assessment-changes">
-              Yêu cầu Manager cần xử lý
-              <span className="ml-1 text-primary">*</span>
-            </Label>
-            <Textarea
-              id="assessment-changes"
-              rows={3}
-              value={changesComment}
-              onChange={(e) => setChangesComment(e.target.value)}
-              disabled={isBusy}
-              placeholder="Nêu rõ nội dung cần sửa, lý do chuyên môn và dấu hiệu để xác minh ở lần nộp tiếp theo."
-              className="rounded-xl border-input bg-card"
-            />
-          </div> : null}
+          {hasPinnedChanges ? (
+            <div className="space-y-2 rounded-xl border border-border bg-background/60 p-4">
+              <p className="text-sm font-semibold text-foreground">
+                Yêu cầu đã ghim trên curriculum
+              </p>
+              <ul className="space-y-1.5 text-sm text-muted-foreground">
+                {requiredChanges.map((change) => (
+                  <li key={change.id} className="leading-5">
+                    {change.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+
+          {showChangesReason && !hasPinnedChanges ? (
+            <div className="space-y-2 rounded-xl border border-primary/25 bg-primary/5 p-4">
+              <Label htmlFor="assessment-changes">
+                Manager cần sửa gì
+                <span className="ml-1 text-primary">*</span>
+              </Label>
+              <Textarea
+                id="assessment-changes"
+                rows={3}
+                value={changesComment}
+                onChange={(event) => setChangesComment(event.target.value)}
+                disabled={isBusy}
+                placeholder="Nêu nội dung cần sửa để Manager xử lý ở lần nộp tiếp theo."
+                className="rounded-xl border-input bg-card"
+              />
+            </div>
+          ) : null}
 
           {formError ? (
             <p className="flex items-start gap-1.5 text-xs font-medium text-primary">
@@ -481,7 +498,10 @@ export function ReviewAssessmentPanel({
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
               type="button"
-              onClick={() => setPendingAction("approve")}
+              onClick={() => {
+                if (collectScores(criteria.length > 0) == null) return;
+                setPendingAction("approve");
+              }}
               disabled={isBusy || !canApprove}
               className="h-11 flex-1 gap-2 rounded-xl bg-[#7CB342] font-semibold text-white hover:bg-[#7CB342]/90"
             >
@@ -491,28 +511,22 @@ export function ReviewAssessmentPanel({
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                if (!showChangesReason) {
-                  setShowChangesReason(true);
-                  return;
-                }
-                if (!changesComment.trim()) {
-                  setFormError("Vui lòng mô tả nội dung Manager cần chỉnh sửa.");
-                  return;
-                }
-    setPendingAction("request-changes");
-              }}
+              onClick={handleSendBackClick}
               disabled={isBusy}
               className="h-11 flex-1 gap-2 rounded-xl border-primary/40 font-semibold text-primary"
             >
               <MessageSquareWarning className="size-4" />
-              {showChangesReason ? "Xác nhận gửi yêu cầu" : "Soạn yêu cầu chỉnh sửa"}
+              {showChangesReason && !hasPinnedChanges
+                ? "Xác nhận gửi về manager"
+                : "Gửi về manager"}
             </Button>
           </div>
 
           {!canApprove ? (
             <p className="text-xs leading-5 text-muted-foreground">
-              Phê duyệt chỉ mở khi rubric đã được chấm đủ và mọi yêu cầu bắt buộc đã được chuyên gia xác minh.
+              {blockingChangeCount > 0
+                ? `Còn ${blockingChangeCount} yêu cầu chưa xác minh. Phê duyệt mở khi rubric đã chấm đủ và các yêu cầu đó đã được xác minh.`
+                : "Phê duyệt mở khi mọi tiêu chí rubric đã được chấm."}
             </p>
           ) : null}
 
@@ -531,7 +545,7 @@ export function ReviewAssessmentPanel({
             onOpenChange={(open) => {
               if (!open) setPendingAction(null);
             }}
-            title="Yêu cầu chỉnh sửa?"
+            title="Gửi về manager?"
             description="Chương trình sẽ trả về Manager để chỉnh sửa curriculum."
             confirmLabel="Gửi yêu cầu"
             onConfirm={handleRequestChanges}

@@ -33,6 +33,8 @@ type AdvisoryThreadPanelProps = {
   isManager: boolean;
   reviewActionsLocked?: boolean;
   canReplyToNotes?: boolean;
+  /** Pending review round. Carried threads still store the earlier submission id. */
+  verificationSubmissionId?: string | null;
   onThreadUpdated?: () => void;
 };
 
@@ -54,6 +56,7 @@ export function AdvisoryThreadPanel({
   thread,
   reviewActionsLocked = false,
   canReplyToNotes = true,
+  verificationSubmissionId = null,
   onThreadUpdated,
 }: AdvisoryThreadPanelProps) {
   const { profile } = useCurrentUser();
@@ -142,7 +145,9 @@ export function AdvisoryThreadPanel({
         concurrencyVersion: activeThread.concurrencyVersion,
         resolutionKind: status === "Resolved" ? resolutionKind ?? null : null,
         verifiedAgainstSubmissionId:
-          status === "Resolved" ? activeThread.submissionId : null,
+          status === "Resolved"
+            ? verificationSubmissionId || activeThread.submissionId
+            : null,
         clientOperationId: crypto.randomUUID(),
       });
       showAppSuccess({

@@ -28,8 +28,9 @@ export const requestCurriculumChangesSchema = z.object({
   comment: z
     .string()
     .trim()
-    .min(1, "Vui lòng nhập lý do cần chỉnh sửa.")
-    .max(4000, "Nhận xét không được quá 4000 ký tự."),
+    .max(4000, "Nhận xét không được quá 4000 ký tự.")
+    .nullish()
+    .transform((value) => value || null),
   scores: z.array(reviewCriterionScoreRequestSchema).optional().nullable(),
   requiredChangeThreadIds: z.array(z.string().uuid()).max(100).optional().nullable(),
   clientOperationId: z.string().trim().max(100).optional().nullable(),

@@ -39,6 +39,7 @@ import {
   type ProgramWithModules,
 } from "@/lib/api";
 import { parseRubricSnapshot } from "@/lib/advisory/parse-snapshot";
+import { selectVisibleAdvisoryThreads } from "@/lib/advisory/visible-threads";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   REVIEW_SUBMISSION_STATUS_LABELS,
@@ -144,15 +145,15 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   });
 
   const { data: threadsData, retry: retryThreads } = useClientFetch({
-    fetcher: () =>
-      getAdvisoryThreads(program.id, {
-        submissionId: activeSubmissionId ?? undefined,
-      }),
+    fetcher: () => getAdvisoryThreads(program.id),
     deps: [program.id, activeSubmissionId],
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
   });
 
-  const threads = threadsData?.data ?? [];
+  const threads = useMemo(
+    () => selectVisibleAdvisoryThreads(threadsData?.data ?? [], activeSubmissionId),
+    [threadsData?.data, activeSubmissionId],
+  );
   const hasSelectedThreadInList = threadId != null && threads.some(
     (thread) => thread.id === threadId,
   );
@@ -192,7 +193,11 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
   });
 
-  const { data: submissionData, isLoading: isSubmissionLoading } = useClientFetch({
+  const {
+    data: submissionData,
+    isLoading: isSubmissionLoading,
+    retry: retrySubmission,
+  } = useClientFetch({
     enabled: activeSubmissionId != null,
     fetcher: () =>
       activeSubmissionId
@@ -260,6 +265,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
   );
 
   function refreshAdvisorySurfaces() {
+    retryWorkspace();
     retryThreads();
     retryBoard();
     retryPins();
@@ -388,6 +394,10 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               board={board}
               programId={program.id}
               pinSummaries={pinSummaries}
+              threads={threads}
+              verificationSubmissionId={
+                workspace?.pendingSubmission?.id ?? activeSubmissionId
+              }
               selectedThread={selectedThread}
               frameworkCheck={frameworkCheck}
               isFrameworkCheckLoading={isCheckLoading}
@@ -431,7 +441,14 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
                   criteria={rubricCriteria}
                   canDecide={canDecideLatest}
                    blockingChangeCount={workspace?.approvalBlockingCount ?? 0}
-                   requiredChangeThreadIds={openRequiredChanges.map((thread) => thread.id)}
+                   requiredChanges={openRequiredChanges.map((thread) => ({
+                     id: thread.id,
+                     label:
+                       thread.targetLabel.trim() ||
+                       thread.latestMessagePreview.trim() ||
+                       "Yêu cầu chỉnh sửa",
+                   }))}
+                  onSubmissionStale={retrySubmission}
                   onDecisionComplete={() => {
                     retryWorkspace();
                     retryThreads();

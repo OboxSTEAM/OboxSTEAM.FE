@@ -29,6 +29,7 @@ import type {
   AdvisoryCapabilities,
   AdvisoryTargetType,
   AdvisoryThread,
+  AdvisoryThreadPin,
   AdvisoryThreadPinSummary,
   AdvisoryThreadType,
   CreateAdvisoryThreadInput,
@@ -67,6 +68,9 @@ type AdvisoryCurriculumBoardProps = {
   board: AdvisoryBoard | null;
   programId: string;
   pinSummaries?: AdvisoryThreadPinSummary[];
+  /** Unresolved threads, including ones carried from an earlier submission. */
+  threads?: AdvisoryThread[];
+  verificationSubmissionId?: string | null;
   selectedThread?: AdvisoryThread | null;
   frameworkCheck?: FrameworkCheck | null;
   isFrameworkCheckLoading?: boolean;
@@ -896,6 +900,8 @@ export function AdvisoryCurriculumBoard({
   board,
   programId,
   pinSummaries = [],
+  threads = [],
+  verificationSubmissionId = null,
   selectedThread = null,
   frameworkCheck = null,
   isFrameworkCheckLoading = false,
@@ -943,8 +949,37 @@ export function AdvisoryCurriculumBoard({
     for (const summary of pinSummaries) {
       map.set(pinSummaryKey(summary.targetType, summary.targetId), summary);
     }
+    const carried = new Map<
+      string,
+      { targetType: AdvisoryThread["targetType"]; targetId: string; open: number; total: number }
+    >();
+    for (const thread of threads) {
+      if (thread.type !== "RequiredChange" || thread.status === "Resolved" || !thread.targetId) {
+        continue;
+      }
+      const key = pinSummaryKey(thread.targetType, thread.targetId);
+      const row = carried.get(key) ?? {
+        targetType: thread.targetType,
+        targetId: thread.targetId,
+        open: 0,
+        total: 0,
+      };
+      row.total += 1;
+      if (thread.status === "Open") row.open += 1;
+      carried.set(key, row);
+    }
+    for (const [key, row] of carried) {
+      const current = map.get(key);
+      map.set(key, {
+        targetType: row.targetType,
+        targetId: row.targetId,
+        openRequired: Math.max(current?.openRequired ?? 0, row.open),
+        openSuggestions: current?.openSuggestions ?? 0,
+        total: Math.max(current?.total ?? 0, row.total),
+      });
+    }
     return map;
-  }, [pinSummaries]);
+  }, [pinSummaries, threads]);
 
   const selected = tree.find((node) => node.key === activeSelectedKey) ?? tree[0] ?? null;
 
@@ -958,13 +993,37 @@ export function AdvisoryCurriculumBoard({
   }, [board, selected, showChanges]);
 
   const nodePins = useMemo(() => {
-    if (!board || !selected) return [];
-    return board.threadPins.filter(
+    if (!selected) return [];
+    const fromBoard = (board?.threadPins ?? []).filter(
       (pin) =>
         pin.targetType === selected.targetType &&
         pin.targetId === selected.targetId,
     );
-  }, [board, selected]);
+    const seen = new Set(fromBoard.map((pin) => pin.threadId));
+    const carried: AdvisoryThreadPin[] = threads
+      .filter(
+        (thread) =>
+          thread.type === "RequiredChange" &&
+          thread.status !== "Resolved" &&
+          thread.targetType === selected.targetType &&
+          thread.targetId === selected.targetId &&
+          !seen.has(thread.id),
+      )
+      .map((thread) => ({
+        threadId: thread.id,
+        submissionId: thread.submissionId,
+        targetType: thread.targetType,
+        targetId: thread.targetId,
+        type: thread.type,
+        status: thread.status,
+        messageCount: thread.messageCount,
+        authorName: thread.authorName,
+        lastMessagePreview: thread.latestMessagePreview,
+        lastMessageAt: thread.lastMessageAt,
+        targetLabel: thread.targetLabel,
+      }));
+    return [...fromBoard, ...carried];
+  }, [board, selected, threads]);
 
   const changeCounts = board?.changeSummary
     ? {
@@ -1165,6 +1224,7 @@ export function AdvisoryCurriculumBoard({
                   isManager={false}
                   reviewActionsLocked={reviewActionsLocked}
                   canReplyToNotes={capabilities?.canReplyToNotes !== false}
+                  verificationSubmissionId={verificationSubmissionId ?? board.submissionId}
                   onThreadUpdated={onThreadUpdated}
                 />
               </div>
@@ -1268,6 +1328,7 @@ export function AdvisoryCurriculumBoard({
               isManager={false}
               reviewActionsLocked={reviewActionsLocked}
               canReplyToNotes={capabilities?.canReplyToNotes !== false}
+              verificationSubmissionId={verificationSubmissionId ?? board?.submissionId}
               onThreadUpdated={onThreadUpdated}
             />
           </div>

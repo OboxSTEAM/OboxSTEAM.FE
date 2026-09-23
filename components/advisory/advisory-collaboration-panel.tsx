@@ -15,6 +15,7 @@ import {
   type AdvisoryCapabilities,
   type AdvisoryReference,
 } from "@/lib/api";
+import { selectVisibleAdvisoryThreads } from "@/lib/advisory/visible-threads";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -47,15 +48,15 @@ export function AdvisoryCollaborationPanel({
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(initialThreadId);
 
   const { data, isLoading, retry } = useClientFetch({
-    fetcher: () =>
-      getAdvisoryThreads(programId, {
-        submissionId: submissionId ?? undefined,
-      }),
+    fetcher: () => getAdvisoryThreads(programId),
     deps: [programId, submissionId],
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.threads"),
   });
 
-  const threads = useMemo(() => data?.data ?? [], [data?.data]);
+  const threads = useMemo(
+    () => selectVisibleAdvisoryThreads(data?.data ?? [], submissionId),
+    [data?.data, submissionId],
+  );
   const selectedThread = threads.find((thread) => thread.id === selectedThreadId) ?? null;
   const hasOutstanding = threads.some(
     (thread) => thread.type === "RequiredChange" && thread.status !== "Resolved",
@@ -131,7 +132,7 @@ export function AdvisoryCollaborationPanel({
               selectedThreadId={selectedThreadId}
               onSelect={setSelectedThreadId}
               isLoading={isLoading}
-              emptyMessage="Chưa có góp ý nào cho lần nộp này."
+              emptyMessage="Chưa có yêu cầu hoặc góp ý cần xử lý."
             />
           </div>
           <div className="min-h-0 overflow-hidden">
@@ -142,6 +143,7 @@ export function AdvisoryCollaborationPanel({
               isManager={capabilities?.canEditCurriculum === true}
               reviewActionsLocked={reviewActionsLocked}
               canReplyToNotes={capabilities?.canReplyToNotes !== false}
+              verificationSubmissionId={submissionId}
               onThreadUpdated={retry}
             />
           </div>
