@@ -434,6 +434,12 @@ export default function ManagerProgramsPage() {
                 </Button>
               ) : null}
             </div>
+            {status === "Active" ? (
+              <p className="text-xs leading-5 text-muted-foreground">
+                Đang mở chỉ hiện chương trình có lớp Standard đang tuyển và còn ghế.
+                Lớp còn Chờ mentor nằm ở Tất cả trạng thái.
+              </p>
+            ) : null}
           </div>
 
           {/* Table content list */}

@@ -197,6 +197,7 @@ function buildProgramReviewsQuery(params?: ProgramReviewsQuery): string {
   return buildQueryString(params, programReviewsQuerySchema);
 }
 
+/** `status=Active` applies the enrollable-class filter. Other statuses, and a missing status, do not. */
 export async function getPrograms(
   params?: ProgramListQuery,
 ): Promise<GetProgramsResult> {

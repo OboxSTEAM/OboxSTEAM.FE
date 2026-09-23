@@ -24339,7 +24339,7 @@
           "Program"
         ],
         "summary": "Get all programs",
-        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options.",
+        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options. When status=Active (student catalog), only programs with at least one Standard Open class that still has seats are returned — same enrollability rule as open-classes and tuition checkout.",
         "parameters": [
           {
             "name": "search",
@@ -24428,7 +24428,7 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional)",
+            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional). Active also requires an enrollable Open Standard class with seats.",
             "schema": {
               "enum": [
                 "Draft",
@@ -24736,7 +24736,7 @@
           "Program"
         ],
         "summary": "Get all programs with modules",
-        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options.",
+        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options. When status=Active, only programs with at least one Standard Open class that still has seats are returned.",
         "parameters": [
           {
             "name": "search",
@@ -24825,7 +24825,7 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional)",
+            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional). Active also requires an enrollable Open Standard class with seats.",
             "schema": {
               "enum": [
                 "Draft",

@@ -147,6 +147,11 @@ export function getProgramEnrollmentClosedMessage(
   return "Chương trình hiện không nhận đăng ký.";
 }
 
+/**
+ * Public catalog (`Khám phá STEAM`). `status=Active` is required:
+ * the API then returns only programs with a Standard class that is Open and still has seats.
+ * Omitting `status` returns every lifecycle state, including Active programs with no enrollable class.
+ */
 export const DEFAULT_PROGRAM_QUERY: ProgramListQuery = {
   page: 1,
   pageSize: 8,
