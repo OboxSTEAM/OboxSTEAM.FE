@@ -16,12 +16,15 @@ import { SKILL_CATEGORY_LABELS } from "@/lib/mentors/skill-labels";
 import { cn } from "@/lib/utils";
 
 const CATEGORY_CHIP: Record<SkillCategory, string> = {
-  Science: "border-[#E94B3C]/25 bg-[#E94B3C]/10 text-[#C62828]",
-  Technology: "border-[#7CB342]/30 bg-[#7CB342]/12 text-[#558B2F]",
-  Engineering: "border-[#4FC3F7]/35 bg-[#4FC3F7]/12 text-[#0277BD]",
-  Arts: "border-[#FDD835]/40 bg-[#FDD835]/20 text-[#8A7200]",
-  Math: "border-[#7E57C2]/30 bg-[#7E57C2]/12 text-[#5E35B1]",
-  SoftSkill: "border-[#E5E5E0] bg-[#F5F5F0] text-[#6B6B6B]",
+  Science:
+    "border-[#E94B3C]/25 bg-[#E94B3C]/10 text-[#C62828] dark:text-[#ff8a80]",
+  Technology:
+    "border-[#7CB342]/30 bg-[#7CB342]/12 text-[#558B2F] dark:text-[#c5e1a5]",
+  Engineering:
+    "border-[#4FC3F7]/35 bg-[#4FC3F7]/12 text-[#0277BD] dark:text-[#81d4fa]",
+  Arts: "border-[#FDD835]/40 bg-[#FDD835]/20 text-[#8A7200] dark:text-[#ffe082]",
+  Math: "border-[#7E57C2]/30 bg-[#7E57C2]/12 text-[#5E35B1] dark:text-[#d1c4e9]",
+  SoftSkill: "border-border bg-muted text-muted-foreground",
 };
 
 const CATEGORY_DOT: Record<SkillCategory, string> = {
@@ -278,8 +281,9 @@ export function SkillMultiSelect({
                       onClick={() => toggle(skill.id)}
                       className={cn(
                         "flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors",
-                        "hover:bg-muted/50",
-                        isSelected && "bg-[#FAFAF5]",
+                        isSelected
+                          ? "bg-primary/10 hover:bg-primary/15"
+                          : "hover:bg-muted/70",
                       )}
                     >
                       <span

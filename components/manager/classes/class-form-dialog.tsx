@@ -25,6 +25,7 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
+import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
 import { SkillMultiSelect } from "@/components/skills/skill-multi-select";
 import type { Class } from "@/lib/api/entities/class";
 import type { Program } from "@/lib/api/entities/program";
@@ -113,6 +114,8 @@ export function ClassFormDialog({
     control,
     register,
     reset,
+    setValue,
+    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<ClassFormValues>({
@@ -123,6 +126,9 @@ export function ClassFormDialog({
   useEffect(() => {
     if (open) reset(toDefaultValues(classItem, defaultProgramId));
   }, [classItem, defaultProgramId, open, reset]);
+
+  const classNameValue = watch("name");
+  const classCodeValue = watch("code");
 
   async function handleFormSubmit(values: ClassFormValues) {
     const startDate = toApiDateTimeFromLocalInput(values.startDate);
@@ -176,32 +182,30 @@ export function ClassFormDialog({
                 Thông tin lớp
               </h3>
               <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  id="code"
-                  label="Mã lớp"
-                  required
-                  error={errors.code?.message}
-                >
-                  <Input
-                    id="code"
-                    placeholder="CLS-STEAM-01"
-                    {...register("code")}
-                    className={cn(INPUT_CLASS, "font-mono")}
+                <div className="sm:col-span-2">
+                  <NameWithAutoCode
+                    nameLabel="Tên lớp"
+                    codeLabel="Mã lớp"
+                    codePrefix="CLS"
+                    name={classNameValue}
+                    code={classCodeValue}
+                    lockCode={!isCreate}
+                    disabled={isSubmitting}
+                    namePlaceholder="Lớp STEAM sáng tạo A"
+                    nameError={errors.name?.message}
+                    onNameChange={(value) =>
+                      setValue("name", value, { shouldValidate: true, shouldDirty: true })
+                    }
+                    onCodeChange={(value) =>
+                      setValue("code", value, { shouldValidate: true, shouldDirty: true })
+                    }
                   />
-                </FormField>
-                <FormField
-                  id="name"
-                  label="Tên lớp"
-                  required
-                  error={errors.name?.message}
-                >
-                  <Input
-                    id="name"
-                    placeholder="Lớp STEAM sáng tạo A"
-                    {...register("name")}
-                    className={INPUT_CLASS}
-                  />
-                </FormField>
+                  {errors.code?.message ? (
+                    <p className="mt-1 text-xs font-medium text-primary">
+                      {errors.code.message}
+                    </p>
+                  ) : null}
+                </div>
                 <FormField
                   id="programId"
                   label="Chương trình"
@@ -272,7 +276,7 @@ export function ClassFormDialog({
                 </FormField>
                 <FormField
                   id="minHoursBeforeAssignmentJoin"
-                  label="Giờ tối thiểu trước khi vào bài tập"
+                  label="Số giờ tối thiểu để vào bài tập"
                   error={errors.minHoursBeforeAssignmentJoin?.message}
                 >
                   <Input
@@ -284,6 +288,9 @@ export function ClassFormDialog({
                     className={cn(INPUT_CLASS, "font-mono")}
                   />
                 </FormField>
+                <p className="rounded-lg border border-dashed border-border bg-muted/40 px-2.5 py-1.5 text-[11px] leading-4 text-muted-foreground sm:col-span-2">
+                  Vào muộn: chỉ làm bài khi còn đủ số giờ này trước hạn nộp.
+                </p>
               </div>
             </section>
 
