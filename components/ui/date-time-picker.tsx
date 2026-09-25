@@ -198,23 +198,35 @@ export function DateTimePicker({
     [gridStart],
   );
 
-  const slots = useMemo(() => {
-    if (isDateOnly) return [];
-    const list: Array<{ h: number; m: number; label: string }> = [];
-    for (let mins = 0; mins < 24 * 60; mins += minuteStep) {
-      const h = Math.floor(mins / 60);
-      const m = mins % 60;
-      list.push({ h, m, label: `${pad(h)}:${pad(m)}` });
-    }
+  const minuteOptions = useMemo(() => {
+    if (isDateOnly) return [] as number[];
+    const step = Math.max(1, Math.min(30, minuteStep));
+    const list: number[] = [];
+    for (let m = 0; m < 60; m += step) list.push(m);
     return list;
   }, [isDateOnly, minuteStep]);
 
-  const selectedSlotRef = useRef<HTMLButtonElement>(null);
+  const hourOptions = useMemo(
+    () => (isDateOnly ? [] : Array.from({ length: 24 }, (_, h) => h)),
+    [isDateOnly],
+  );
+
+  const [draftHour, setDraftHour] = useState<number | null>(null);
+  const [draftMinute, setDraftMinute] = useState<number | null>(null);
+
   useEffect(() => {
-    if (open && !isDateOnly && selectedSlotRef.current) {
-      selectedSlotRef.current.scrollIntoView({ block: "center" });
-    }
-  }, [open, isDateOnly]);
+    if (!open || isDateOnly) return;
+    setDraftHour(selected?.getHours() ?? reference?.getHours() ?? defaultHour);
+    setDraftMinute(selected?.getMinutes() ?? null);
+  }, [open, isDateOnly, selected, reference, defaultHour]);
+
+  const hourSlotRef = useRef<HTMLButtonElement>(null);
+  const minuteSlotRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open || isDateOnly) return;
+    hourSlotRef.current?.scrollIntoView({ block: "center" });
+    minuteSlotRef.current?.scrollIntoView({ block: "center" });
+  }, [open, isDateOnly, draftHour, draftMinute]);
 
   function isDayLocked(day: Date): boolean {
     const dayStart = startOfDay(day);
@@ -247,6 +259,20 @@ export function DateTimePicker({
     }
     if (maxDate && candidate.getTime() > maxDate.getTime()) return true;
     return false;
+  }
+
+  function timeBaseDay(): Date {
+    return selected ?? reference ?? minDate ?? today;
+  }
+
+  function isHourLocked(h: number): boolean {
+    const base = timeBaseDay();
+    return minuteOptions.every((m) => isTimeLocked(base, h, m));
+  }
+
+  function isMinuteOptionLocked(h: number | null, m: number): boolean {
+    if (h == null) return false;
+    return isTimeLocked(timeBaseDay(), h, m);
   }
 
   function clampToBounds(date: Date): Date {
@@ -303,14 +329,39 @@ export function DateTimePicker({
     onChange(toLocalInput(next));
   }
 
-  function handlePickTime(h: number, m: number) {
-    const base = selected ?? reference ?? minDate ?? today;
+  function commitTime(h: number, m: number) {
+    const base = timeBaseDay();
     if (isTimeLocked(base, h, m)) return;
     const next = clampToBounds(
       new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, m),
     );
     onChange(toLocalInput(next));
     setOpen(false);
+  }
+
+  function handlePickHour(h: number) {
+    if (isHourLocked(h)) return;
+    setDraftHour(h);
+    const nextMinute =
+      draftMinute != null && !isMinuteOptionLocked(h, draftMinute)
+        ? draftMinute
+        : minuteOptions.find((m) => !isMinuteOptionLocked(h, m)) ?? null;
+    setDraftMinute(nextMinute);
+    if (nextMinute != null && selected) {
+      const base = timeBaseDay();
+      const next = clampToBounds(
+        new Date(base.getFullYear(), base.getMonth(), base.getDate(), h, nextMinute),
+      );
+      onChange(toLocalInput(next));
+    }
+  }
+
+  function handlePickMinute(m: number) {
+    const h = draftHour ?? selected?.getHours() ?? defaultHour;
+    if (isMinuteOptionLocked(h, m)) return;
+    setDraftHour(h);
+    setDraftMinute(m);
+    commitTime(h, m);
   }
 
   function jumpToUsefulMonth() {
@@ -342,8 +393,11 @@ export function DateTimePicker({
   })();
 
   const showLegend = Boolean(minDate || reference);
-  const timeBase = selected ?? today;
   const TriggerIcon = isDateOnly ? Calendar : CalendarClock;
+  const activeHour = draftHour;
+  const activeMinute = draftMinute;
+  const referenceHour = reference?.getHours() ?? null;
+  const referenceMinute = reference?.getMinutes() ?? null;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -517,45 +571,108 @@ export function DateTimePicker({
           </div>
 
           {!isDateOnly ? (
-            <div className="flex w-[100px] flex-col border-l border-border bg-muted/20 py-3 pl-2 pr-2">
-              <p className="mb-1.5 px-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                Giờ
-              </p>
-              <div className="max-h-[260px] space-y-0.5 overflow-y-auto overscroll-contain pr-0.5 [scrollbar-gutter:stable]">
-                {slots.map((slot) => {
-                  const locked = isTimeLocked(timeBase, slot.h, slot.m);
-                  const isSelected =
-                    selected != null &&
-                    selected.getHours() === slot.h &&
-                    selected.getMinutes() === slot.m;
-                  return (
-                    <button
-                      key={slot.label}
-                      ref={isSelected ? selectedSlotRef : undefined}
-                      type="button"
-                      disabled={locked}
-                      onClick={() => handlePickTime(slot.h, slot.m)}
-                      className={cn(
-                        "w-full rounded-lg px-2 py-1.5 text-center text-xs font-medium tabular-nums transition-[background-color,color,opacity] duration-150",
-                        locked &&
-                          "cursor-not-allowed text-muted-foreground/30 line-through",
-                        !locked &&
-                          isSelected &&
-                          "bg-primary font-semibold text-white shadow-sm shadow-primary/20",
-                        !locked &&
-                          !isSelected &&
-                          "text-foreground hover:bg-muted",
-                      )}
-                    >
-                      {slot.label}
-                    </button>
-                  );
-                })}
-              </div>
+            <div className="flex border-l border-border">
+              <DateTimeColumn
+                label="Giờ"
+                values={hourOptions}
+                active={activeHour}
+                reference={
+                  referenceHour != null && referenceHour !== activeHour
+                    ? referenceHour
+                    : null
+                }
+                isLocked={isHourLocked}
+                activeRef={hourSlotRef}
+                onPick={handlePickHour}
+              />
+              <div className="w-px self-stretch bg-border" aria-hidden />
+              <DateTimeColumn
+                label="Phút"
+                values={minuteOptions}
+                active={activeMinute}
+                reference={
+                  referenceMinute != null &&
+                  activeHour === referenceHour &&
+                  referenceMinute !== activeMinute
+                    ? referenceMinute
+                    : null
+                }
+                isLocked={(m) => isMinuteOptionLocked(activeHour, m)}
+                activeRef={minuteSlotRef}
+                onPick={handlePickMinute}
+                muted={activeHour == null}
+              />
             </div>
           ) : null}
         </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function DateTimeColumn({
+  label,
+  values,
+  active,
+  reference,
+  isLocked,
+  activeRef,
+  onPick,
+  muted = false,
+}: {
+  label: string;
+  values: number[];
+  active: number | null;
+  reference: number | null;
+  isLocked: (value: number) => boolean;
+  activeRef: React.RefObject<HTMLButtonElement | null>;
+  onPick: (value: number) => void;
+  muted?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex w-[72px] flex-col bg-muted/20 py-3",
+        muted && "opacity-70",
+      )}
+    >
+      <p className="mb-1.5 px-1 text-center text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="max-h-[260px] space-y-0.5 overflow-y-auto overscroll-contain px-1.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {values.map((value) => {
+          const locked = isLocked(value);
+          const isSelected = active === value;
+          const isReference = reference === value && !isSelected;
+          return (
+            <button
+              key={value}
+              ref={isSelected ? activeRef : undefined}
+              type="button"
+              disabled={locked}
+              onClick={() => onPick(value)}
+              className={cn(
+                "w-full rounded-lg px-1.5 py-1.5 text-center text-xs font-medium tabular-nums transition-[background-color,color,opacity,box-shadow] duration-150",
+                locked &&
+                  "cursor-not-allowed text-muted-foreground/30 line-through",
+                !locked &&
+                  isSelected &&
+                  "bg-primary font-semibold text-white shadow-sm shadow-primary/20",
+                !locked &&
+                  !isSelected &&
+                  isReference &&
+                  "font-semibold text-[#0d6e9c] ring-1 ring-inset ring-[#4FC3F7]",
+                !locked &&
+                  !isSelected &&
+                  !isReference &&
+                  "text-foreground hover:bg-muted",
+              )}
+            >
+              {pad(value)}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

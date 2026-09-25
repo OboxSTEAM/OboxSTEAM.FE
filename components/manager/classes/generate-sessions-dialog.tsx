@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { CalendarClock, Sparkles } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,8 @@ import {
   DialogTitle,
   dialogScrollFormClassName,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimePicker } from "@/components/ui/time-picker";
 import { generateClassSessions } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
@@ -85,7 +85,6 @@ export function GenerateSessionsDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     control,
-    register,
     handleSubmit,
     reset,
     watch,
@@ -101,6 +100,8 @@ export function GenerateSessionsDialog({
   });
 
   const selectedDays = watch("daysOfWeek");
+  const sessionStartTimeValue = watch("sessionStartTime");
+  const sessionEndTimeValue = watch("sessionEndTime");
 
   useEffect(() => {
     if (open) {
@@ -219,18 +220,43 @@ export function GenerateSessionsDialog({
                 Khung giờ UTC (End chỉ cho assignment)
               </Label>
               <div className="flex items-center gap-2">
-                <Input
-                  type="time"
-                  step={60}
-                  {...register("sessionStartTime")}
-                  className="h-10 rounded-lg"
+                <Controller
+                  control={control}
+                  name="sessionStartTime"
+                  render={({ field }) => (
+                    <TimePicker
+                      id="sessionStartTime"
+                      ariaLabel="Giờ bắt đầu UTC"
+                      placeholder="Bắt đầu"
+                      value={field.value ?? ""}
+                      max={sessionEndTimeValue || undefined}
+                      invalid={!!errors.sessionStartTime}
+                      disabled={isSubmitting}
+                      onChange={field.onChange}
+                      className="h-10 rounded-lg"
+                    />
+                  )}
                 />
-                <span className="text-muted-foreground">→</span>
-                <Input
-                  type="time"
-                  step={60}
-                  {...register("sessionEndTime")}
-                  className="h-10 rounded-lg"
+                <span className="shrink-0 text-muted-foreground">→</span>
+                <Controller
+                  control={control}
+                  name="sessionEndTime"
+                  render={({ field }) => (
+                    <TimePicker
+                      id="sessionEndTime"
+                      ariaLabel="Giờ kết thúc UTC"
+                      placeholder="Kết thúc"
+                      value={field.value ?? ""}
+                      min={sessionStartTimeValue || undefined}
+                      minExclusive
+                      referenceTime={sessionStartTimeValue || undefined}
+                      referenceLabel="Bắt đầu"
+                      invalid={!!errors.sessionEndTime}
+                      disabled={isSubmitting}
+                      onChange={field.onChange}
+                      className="h-10 rounded-lg"
+                    />
+                  )}
                 />
               </div>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
