@@ -29,7 +29,7 @@ export function ManagerRevisionChecklist({
   );
   if (required.length === 0 && suggestions.length === 0) return null;
   const done = fixedRequiredCount;
-  const total = outstandingRequiredCount + fixedRequiredCount;
+  const total = outstandingRequiredCount;
 
   function openThread(thread: AdvisoryThread) {
     const query = selToQuery(threadToSelection(thread));

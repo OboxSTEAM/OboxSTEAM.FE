@@ -18,7 +18,6 @@ import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getAdvisoryThreads,
-  getAdvisoryTimeline,
   getProgramAdvisoryWorkspace,
   getProgramFrameworkById,
   type ProgramWithModules,
@@ -108,6 +107,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
+  const [submitRequest, setSubmitRequest] = useState(0);
   const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
     locked: false,
     reason: null,
@@ -170,12 +170,6 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
   });
   const advisoryThreads = advisoryThreadsData?.data ?? [];
-  const { data: advisoryTimelineData } = useClientFetch({
-    enabled: advisoryWorkspace != null,
-    fetcher: () => getAdvisoryTimeline(program.id),
-    deps: [program.id, advisoryWorkspace != null],
-    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
-  });
 
   useEffect(() => {
     let cancelled = false;
@@ -225,9 +219,15 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
             hasFramework={program.frameworkId != null}
             hasAdvisor={program.advisorExpertId != null}
             moduleCount={program.modules.length}
-            outstandingRequiredCount={advisoryWorkspace?.outstandingRequiredCount ?? 0}
+            openRequiredCount={advisoryWorkspace?.openRequiredChangeCount ?? 0}
+            addressedRequiredCount={advisoryWorkspace?.addressedRequiredChangeCount ?? 0}
             reviewRound={advisoryWorkspace?.workflow?.round ?? 0}
-            onChanged={() => router.refresh()}
+            submitRequest={submitRequest}
+            onChanged={() => {
+              retryAdvisoryWorkspace();
+              retryAdvisoryThreads();
+              router.refresh();
+            }}
           />
         </div>
 
@@ -249,7 +249,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
             ) : null}
             {showAdvisoryPanel ? (
               <AdvisoryWorkflowTimeline
-                timeline={advisoryTimelineData?.data ?? advisoryWorkspace?.workflow}
+                timeline={advisoryWorkspace?.workflow}
                 participants={advisoryWorkspace?.participants}
               />
             ) : null}
@@ -258,8 +258,9 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
                 threads={advisoryThreads}
                 fixedRequiredCount={advisoryWorkspace?.fixedRequiredCount ?? 0}
                 outstandingRequiredCount={advisoryWorkspace?.outstandingRequiredCount ?? 0}
-                canResubmit={(advisoryWorkspace?.outstandingRequiredCount ?? 0) === 0
-                  && (advisoryWorkspace?.fixedRequiredCount ?? 0) > 0}
+                canResubmit={(advisoryWorkspace?.openRequiredChangeCount ?? 0) === 0
+                  && (advisoryWorkspace?.addressedRequiredChangeCount ?? 0) > 0}
+                onResubmit={() => setSubmitRequest((value) => value + 1)}
               />
             ) : null}
             <div className="w-full">

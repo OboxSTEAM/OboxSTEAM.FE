@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AlertCircle,
   CheckCircle2,
-  MessageSquareWarning,
 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
@@ -18,7 +17,6 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   approveProgramReview,
   getReviewDraft,
-  requestProgramChanges,
   saveReviewDraft,
   type ReviewCriterionScoreRequestInput,
 } from "@/lib/api";
@@ -66,15 +64,11 @@ export function ReviewAssessmentPanel({
 }: ReviewAssessmentPanelProps) {
   const [scores, setScores] = useState<Record<string, ScoreDraft>>({});
   const [overallComment, setOverallComment] = useState("");
-  const [changesComment, setChangesComment] = useState("");
   const [showNotes, setShowNotes] = useState(false);
-  const [showChangesReason, setShowChangesReason] = useState(false);
   const [submissionConcurrencyVersion, setSubmissionConcurrencyVersion] =
     useState(initialConcurrencyVersion);
   const [formError, setFormError] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<
-    "approve" | "request-changes" | null
-  >(null);
+  const [pendingAction, setPendingAction] = useState<"approve" | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hydratedRef = useRef(false);
@@ -267,57 +261,20 @@ export function ReviewAssessmentPanel({
     }
   }
 
-  async function handleRequestChanges() {
-    const comment = changesComment.trim();
-    if (requiredChanges.length === 0 && !comment) {
-      setFormError("Vui lòng nhập nội dung Manager cần chỉnh sửa.");
-      setShowChangesReason(true);
-      return;
-    }
-    const collected = collectScores(false);
-    if (collected == null) return;
-
-    setFormError(null);
-    setPendingAction("request-changes");
-    try {
-      await requestProgramChanges(programId, {
-        submissionId,
-        concurrencyVersion: submissionConcurrencyVersion,
-        comment: comment || null,
-        scores: collected.length > 0 ? collected : null,
-        clientOperationId: crypto.randomUUID(),
-      });
-      showAppSuccess({
-        title: "Đã gửi yêu cầu chỉnh sửa",
-        description: `“${programName}” được trả về cho Manager để chỉnh sửa.`,
-      });
-      setChangesComment("");
-      onDecisionComplete?.();
-    } catch (error) {
-      handleDecisionConflict(error, "expert.review.requestChanges");
-    } finally {
-      setPendingAction(null);
-    }
-  }
-
-  function handleSendBackClick() {
-    if (requiredChanges.length === 0 && !showChangesReason) {
-      setShowChangesReason(true);
-      return;
-    }
-    if (requiredChanges.length === 0 && !changesComment.trim()) {
-      setFormError("Vui lòng nhập nội dung Manager cần chỉnh sửa.");
-      return;
-    }
-    setFormError(null);
-    setPendingAction("request-changes");
-  }
-
   const isBusy = pendingAction !== null;
   const isPending = submissionStatus === "Pending";
   const rubricComplete = criteria.length === 0 || scoredCount === criteria.length;
-  const canApprove = canDecide && isPending && rubricComplete;
-  const hasPinnedChanges = requiredChanges.length > 0;
+  const belowHalf = criteria.filter((criterion) => {
+    const raw = scores[criterion.id]?.score?.trim() ?? "";
+    if (raw === "" || !Number.isInteger(Number(raw))) return false;
+    return Number(raw) * 2 < criterion.maxScore;
+  });
+  const canApprove =
+    canDecide &&
+    isPending &&
+    rubricComplete &&
+    belowHalf.length === 0 &&
+    requiredChanges.length === 0;
 
   return (
     <div className="space-y-5">
@@ -350,13 +307,14 @@ export function ReviewAssessmentPanel({
         </div>
       ) : criteria.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
-          Khung chưa có tiêu chí rubric. Có thể phê duyệt hoặc gửi yêu cầu chỉnh sửa bên dưới.
+          Khung chưa có tiêu chí rubric. Có thể phê duyệt bên dưới.
         </p>
       ) : (
         <div className="space-y-3">
           {criteria.map((criterion) => {
             const raw = scores[criterion.id]?.score?.trim() ?? "";
             const hasScore = raw !== "" && Number.isInteger(Number(raw));
+            const isLow = hasScore && Number(raw) * 2 < criterion.maxScore;
             return (
               <div
                 key={criterion.id}
@@ -377,6 +335,11 @@ export function ReviewAssessmentPanel({
                     {hasScore ? `${raw}/${criterion.maxScore}` : `/${criterion.maxScore}`}
                   </span>
                 </div>
+                {isLow ? (
+                  <p className="text-xs font-medium text-primary">
+                    Dưới một nửa mức tối đa. Hãy gắn bắt buộc sửa rồi trả về manager.
+                  </p>
+                ) : null}
                 <Input
                   value={scores[criterion.id]?.score ?? ""}
                   onChange={(event) => updateScore(criterion.id, { score: event.target.value })}
@@ -444,37 +407,10 @@ export function ReviewAssessmentPanel({
 
       {canDecide && isPending ? (
         <>
-          {hasPinnedChanges ? (
-            <div className="space-y-2 rounded-xl border border-border bg-background/60 p-4">
-              <p className="text-sm font-semibold text-foreground">
-                Yêu cầu đã ghim trên curriculum
-              </p>
-              <ul className="space-y-1.5 text-sm text-muted-foreground">
-                {requiredChanges.map((change) => (
-                  <li key={change.id} className="leading-5">
-                    {change.label}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ) : null}
-
-          {showChangesReason && !hasPinnedChanges ? (
-            <div className="space-y-2 rounded-xl border border-primary/25 bg-primary/5 p-4">
-              <Label htmlFor="assessment-changes">
-                Manager cần sửa gì
-                <span className="ml-1 text-primary">*</span>
-              </Label>
-              <Textarea
-                id="assessment-changes"
-                rows={3}
-                value={changesComment}
-                onChange={(event) => setChangesComment(event.target.value)}
-                disabled={isBusy}
-                placeholder="Nêu nội dung cần sửa để Manager xử lý ở lần nộp tiếp theo."
-                className="rounded-xl border-input bg-card"
-              />
-            </div>
+          {requiredChanges.length > 0 ? (
+            <p className="text-xs leading-5 text-muted-foreground">
+              Còn mục bắt buộc sửa chưa chấp nhận. Phê duyệt chỉ mở khi mọi mục đã được chấp nhận.
+            </p>
           ) : null}
 
           {formError ? (
@@ -497,23 +433,15 @@ export function ReviewAssessmentPanel({
               <CheckCircle2 className="size-4" />
               Phê duyệt
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSendBackClick}
-              disabled={isBusy}
-              className="h-11 flex-1 gap-2 rounded-xl border-primary/40 font-semibold text-primary"
-            >
-              <MessageSquareWarning className="size-4" />
-              {showChangesReason && !hasPinnedChanges
-                ? "Xác nhận trả về"
-                : "Trả về chỉnh sửa"}
-            </Button>
           </div>
 
           {!rubricComplete ? (
             <p className="text-xs leading-5 text-muted-foreground">
               Phê duyệt mở khi mọi tiêu chí rubric đã được chấm.
+            </p>
+          ) : belowHalf.length > 0 ? (
+            <p className="text-xs leading-5 text-muted-foreground">
+              Điểm còn thấp nên chưa phê duyệt được. Quay lại nhận xét, gắn bắt buộc sửa, rồi trả về manager.
             </p>
           ) : null}
 
@@ -523,25 +451,9 @@ export function ReviewAssessmentPanel({
               if (!open) setPendingAction(null);
             }}
             title="Phê duyệt chương trình?"
-            description={
-              requiredChanges.length > 0
-                ? `Phê duyệt sẽ chấp nhận ${requiredChanges.length} mục chưa xong: ${requiredChanges
-                    .map((item) => item.label)
-                    .join(", ")}.`
-                : `Xác nhận phê duyệt “${programName}” với điểm rubric hiện tại.`
-            }
+            description={`Xác nhận phê duyệt “${programName}” với điểm rubric hiện tại.`}
             confirmLabel="Phê duyệt"
             onConfirm={handleApprove}
-          />
-          <ConfirmDialog
-            isOpen={pendingAction === "request-changes"}
-            onOpenChange={(open) => {
-              if (!open) setPendingAction(null);
-            }}
-            title="Trả về chỉnh sửa?"
-            description="Các mục chưa được chấp nhận sẽ trở lại trạng thái Cần sửa."
-            confirmLabel="Gửi yêu cầu"
-            onConfirm={handleRequestChanges}
           />
         </>
       ) : !canDecide ? (

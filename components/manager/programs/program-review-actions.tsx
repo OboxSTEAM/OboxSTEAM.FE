@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   CheckCircle2,
@@ -77,8 +77,10 @@ type ProgramReviewActionsProps = {
   hasFramework: boolean;
   hasAdvisor?: boolean;
   moduleCount: number;
-  outstandingRequiredCount?: number;
+  openRequiredCount?: number;
+  addressedRequiredCount?: number;
   reviewRound?: number;
+  submitRequest?: number;
   onChanged?: () => void;
 };
 
@@ -88,8 +90,10 @@ export function ProgramReviewActions({
   hasFramework,
   hasAdvisor = false,
   moduleCount,
-  outstandingRequiredCount = 0,
+  openRequiredCount = 0,
+  addressedRequiredCount = 0,
   reviewRound = 0,
+  submitRequest = 0,
   onChanged,
 }: ProgramReviewActionsProps) {
   const router = useRouter();
@@ -117,9 +121,18 @@ export function ProgramReviewActions({
   }
 
   const canSubmit =
-    status === "Draft" && moduleCount > 0 && outstandingRequiredCount === 0;
-  const submitLabel =
-    reviewRound > 1 ? `Gửi lại thẩm định (lần ${reviewRound})` : "Gửi thẩm định";
+    status === "Draft" && moduleCount > 0 && openRequiredCount === 0;
+  const isResubmit = addressedRequiredCount > 0 || reviewRound > 1;
+  const submitLabel = isResubmit
+    ? reviewRound > 1
+      ? `Gửi lại thẩm định (lần ${reviewRound})`
+      : "Gửi lại thẩm định"
+    : "Gửi thẩm định";
+
+  useEffect(() => {
+    if (submitRequest < 1 || !canSubmit) return;
+    setPendingAction("submit");
+  }, [submitRequest, canSubmit]);
 
   return (
     <>
@@ -157,6 +170,12 @@ export function ProgramReviewActions({
               : ""}
             {status === "Draft" && !hasAdvisor
               ? " Nên gán chuyên gia phụ trách trước khi gửi thẩm định."
+              : ""}
+            {status === "Draft" && openRequiredCount > 0
+              ? ` Còn ${openRequiredCount} mục chưa đánh dấu Đã sửa.`
+              : ""}
+            {status === "Draft" && openRequiredCount === 0 && isResubmit
+              ? " Các mục đã sửa. Gửi lại để chuyên gia chấp nhận."
               : ""}
           </p>
         </div>

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { AdvisoryCurriculumBoard } from "@/components/advisory/advisory-curriculum-board";
+import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import { FrameworkCheckPanel } from "@/components/advisory/framework-check-panel";
 import { ReviewAssessmentPanel } from "@/components/advisory/review-assessment-panel";
 import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
@@ -25,11 +26,11 @@ import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
   createAdvisoryThread,
+  requestProgramChanges,
   getAdvisoryBoard,
   getAdvisoryThread,
   getAdvisoryThreadPins,
   getAdvisoryThreads,
-  getAdvisoryTimeline,
   getFrameworkVersion,
   getProgramAdvisoryWorkspace,
   getProgramFrameworkCheck,
@@ -62,6 +63,21 @@ type ProgramAdvisoryWorkspaceProps = {
   program: ProgramWithModules;
 };
 
+function summarizeReturnComment(
+  threads: { targetLabel: string; latestMessagePreview: string }[],
+): string {
+  const lines = threads.map((thread) => {
+    const target = thread.targetLabel.trim() || "Mục chương trình";
+    const note = thread.latestMessagePreview.trim();
+    return note ? `${target}: ${note}` : target;
+  });
+  const text =
+    lines.length > 0
+      ? `Các mục bắt buộc sửa:\n${lines.join("\n")}`
+      : "Có mục bắt buộc sửa cần manager xử lý.";
+  return text.slice(0, 4000);
+}
+
 function normalizeWorkspaceTab(raw: string | null): WorkspaceTab {
   if (raw === "assessment") return "assessment";
   return "content";
@@ -93,7 +109,10 @@ function useWorkspaceParams() {
 
 export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspaceProps) {
   const { tab, threadId, submissionId, rawTab, setParams } = useWorkspaceParams();
+  const router = useRouter();
   const [isCreatingThread, setIsCreatingThread] = useState(false);
+  const [isReturning, setIsReturning] = useState(false);
+  const [confirmReturn, setConfirmReturn] = useState(false);
   const { profile } = useCurrentUser();
 
   const { data: workspaceData, retry: retryWorkspace } = useClientFetch({
@@ -110,16 +129,6 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     workspace?.pendingSubmission?.id ??
     workspace?.latestSubmission?.id ??
     null;
-
-  const { data: timelineData, retry: retryTimeline } = useClientFetch({
-    enabled: workspace != null,
-    fetcher: () => getAdvisoryTimeline(program.id),
-    deps: [program.id],
-    initialData: workspace?.workflow
-      ? { code: "OK", message: "", data: workspace.workflow }
-      : null,
-    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
-  });
 
   const { data: frameworkCheckData, isLoading: isCheckLoading } = useClientFetch({
     fetcher: () => getProgramFrameworkCheck(program.id),
@@ -252,7 +261,6 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     retryThreads();
     retryBoard();
     retryPins();
-    retryTimeline();
   }
 
   async function handleCreateThread(input: Parameters<typeof createAdvisoryThread>[1]) {
@@ -290,6 +298,33 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     (thread) =>
       thread.type === "RequiredChange" && thread.status !== "Resolved",
   );
+  const canConclude = canDecideLatest && outstandingRequired.length === 0;
+  const blockRubric = canDecideLatest && outstandingRequired.length > 0;
+
+  async function handleReturnToManager() {
+    if (!activeSubmissionId || !selectedSubmission) return;
+    setIsReturning(true);
+    try {
+      await requestProgramChanges(program.id, {
+        submissionId: activeSubmissionId,
+        concurrencyVersion: selectedSubmission.concurrencyVersion,
+        comment: summarizeReturnComment(outstandingRequired),
+        clientOperationId: crypto.randomUUID(),
+      });
+      showAppSuccess({
+        title: "Đã trả về manager",
+        description: "Manager chỉnh các mục bắt buộc sửa, rồi gửi lại thẩm định.",
+      });
+      setConfirmReturn(false);
+      refreshAdvisorySurfaces();
+      retrySubmission();
+      router.refresh();
+    } catch (error) {
+      showAppErrorFromUnknown(error, "expert.review.requestChanges");
+    } finally {
+      setIsReturning(false);
+    }
+  }
   const advisorRoleLabel = isResponsibleAdvisor
     ? "Chuyên gia chịu trách nhiệm"
     : "Chuyên gia hội đồng";
@@ -321,7 +356,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
         }
       >
         <AdvisoryWorkflowTimeline
-          timeline={timelineData?.data ?? workspace?.workflow}
+          timeline={workspace?.workflow}
           participants={workspace?.participants}
         />
         <div className="flex flex-wrap gap-2 border-t border-border/70 pt-3" role="tablist" aria-label="Khu vực workspace">
@@ -333,7 +368,11 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
               variant={tab === step.value ? "default" : "outline"}
               role="tab"
               aria-selected={tab === step.value}
-              onClick={() => setParams({ tab: step.value, thread: null })}
+              disabled={step.value === "assessment" && blockRubric}
+              onClick={() => {
+                if (step.value === "assessment" && blockRubric) return;
+                setParams({ tab: step.value, thread: null });
+              }}
               className="h-8 rounded-lg text-xs"
             >
               {step.label}
@@ -374,17 +413,40 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
             </details>
             <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card/95 px-3 py-2 backdrop-blur">
               <p className="text-sm font-medium text-foreground">
-                {outstandingRequired.length} bắt buộc sửa chưa chấp nhận
+                {outstandingRequired.length > 0
+                  ? `${outstandingRequired.length} bắt buộc sửa chưa chấp nhận`
+                  : "Chưa có mục bắt buộc sửa đang mở"}
               </p>
-              <Button
-                type="button"
-                size="sm"
-                className="h-8 rounded-lg text-xs font-semibold"
-                onClick={() => setParams({ tab: "assessment", thread: null })}
-              >
-                Kết luận
-              </Button>
+              {outstandingRequired.length > 0 ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 rounded-lg text-xs font-semibold"
+                  disabled={!canDecideLatest || isReturning}
+                  onClick={() => setConfirmReturn(true)}
+                >
+                  Trả về manager
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  className="h-8 rounded-lg text-xs font-semibold"
+                  disabled={!canConclude}
+                  onClick={() => setParams({ tab: "assessment", thread: null })}
+                >
+                  Kết luận
+                </Button>
+              )}
             </div>
+            <ConfirmDialog
+              isOpen={confirmReturn}
+              onOpenChange={setConfirmReturn}
+              title="Trả về manager?"
+              description="Các mục bắt buộc sửa chưa chấp nhận sẽ về trạng thái Cần sửa. Manager sửa xong rồi gửi lại, lúc đó bạn mới chấp nhận từng mục."
+              confirmLabel="Trả về manager"
+              onConfirm={handleReturnToManager}
+            />
             <AdvisoryCurriculumBoard
               board={board}
               programId={program.id}
@@ -415,6 +477,10 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
           <TabsContent value="assessment" className="mt-0">
             {isSubmissionLoading ? (
               <Skeleton className="h-64 w-full rounded-2xl" />
+            ) : blockRubric ? (
+              <p className="rounded-2xl border border-dashed border-border p-10 text-center text-sm text-muted-foreground">
+                Rubric chỉ mở khi mọi mục bắt buộc sửa đã được chấp nhận. Hãy gắn nhận xét trên chương trình, rồi bấm Trả về manager.
+              </p>
             ) : activeSubmissionId && selectedSubmission ? (
               <section className="rounded-2xl border border-border bg-card p-6 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
                 <header className="mb-5 flex flex-wrap items-center gap-2">
@@ -446,6 +512,8 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
                   onDecisionComplete={() => {
                     retryWorkspace();
                     retryThreads();
+                    retrySubmission();
+                    router.refresh();
                   }}
                 />
               </section>

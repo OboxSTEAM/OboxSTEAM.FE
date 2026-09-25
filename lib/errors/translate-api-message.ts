@@ -18,6 +18,14 @@ const EXACT_VI: Record<string, string> = {
     "Kiểm tra đối sánh khung năng lực chưa đạt. Vui lòng kiểm tra lại cấu trúc chương trình.",
   APPROVAL_BLOCKED:
     "Còn mục bắt buộc sửa chưa được chấp nhận.",
+  ACCEPT_REQUIRES_FIXED:
+    "Chỉ chấp nhận mục manager đã đánh dấu Đã sửa.",
+  ACCEPT_REQUIRES_RESUBMIT:
+    "Chấp nhận chỉ mở sau khi manager gửi lại thẩm định.",
+  RUBRIC_SCORE_BELOW_HALF:
+    "Điểm dưới một nửa mức tối đa. Hãy gắn bắt buộc sửa và trả về manager.",
+  "The Comment field is required.":
+    "Cần có nội dung nhận xét trước khi trả về manager.",
   REQUIRED_CHANGES_NOT_FIXED:
     "Còn mục bắt buộc sửa chưa đánh dấu Đã sửa. Hãy xử lý hết trước khi gửi lại thẩm định.",
   SUBMISSION_CONCURRENCY_STALE:
@@ -162,6 +170,18 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
   {
     pattern: /APPROVAL_BLOCKED|unresolved RequiredChange/i,
     vi: "Còn mục bắt buộc sửa chưa được chấp nhận.",
+  },
+  {
+    pattern: /ACCEPT_REQUIRES_FIXED/i,
+    vi: "Chỉ chấp nhận mục manager đã đánh dấu Đã sửa.",
+  },
+  {
+    pattern: /ACCEPT_REQUIRES_RESUBMIT/i,
+    vi: "Chấp nhận chỉ mở sau khi manager gửi lại thẩm định.",
+  },
+  {
+    pattern: /RUBRIC_SCORE_BELOW_HALF|below half/i,
+    vi: "Điểm dưới một nửa mức tối đa. Hãy gắn bắt buộc sửa và trả về manager.",
   },
   {
     pattern: /REQUIRED_CHANGES_NOT_FIXED/i,

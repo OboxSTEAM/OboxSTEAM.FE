@@ -1302,7 +1302,7 @@
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/actions",
         "method": "post",
-        "description": "MarkFixed (manager, open required change, Draft), Acknowledge (manager or author, open suggestion), or Accept (responsible advisor, open or fixed required change). Returns the full thread. clientOperationId is idempotent. Waive is not an action."
+        "description": "MarkFixed (manager, open required change, Draft), Acknowledge (manager or author, open suggestion), or Accept (responsible advisor, Addressed required change while the program is PendingReview). Returns the full thread. clientOperationId is idempotent. Waive is not an action."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/status",
