@@ -20,6 +20,7 @@ import {
   getAdvisoryThreads,
   getProgramAdvisoryWorkspace,
   getProgramFrameworkById,
+  getProgramFrameworkCheck,
   type ProgramWithModules,
 } from "@/lib/api";
 import {
@@ -108,6 +109,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
   const [submitRequest, setSubmitRequest] = useState(0);
+  const [curriculumRevision, setCurriculumRevision] = useState(0);
   const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
     locked: false,
     reason: null,
@@ -115,6 +117,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   });
 
   const handleSilentSync = useCallback(() => {
+    setCurriculumRevision((revision) => revision + 1);
     router.refresh();
   }, [router]);
 
@@ -135,6 +138,12 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
   });
   const prepFramework = prepFrameworkData?.data ?? null;
+  const { data: frameworkCheckData, isLoading: isFrameworkCheckLoading } = useClientFetch({
+    enabled: program.status === "Draft" && program.frameworkId != null,
+    fetcher: () => getProgramFrameworkCheck(program.id),
+    deps: [program.id, program.frameworkId, program.updatedAt, curriculumRevision],
+    onError: (error) => showAppErrorFromUnknown(error, "programs.framework-check"),
+  });
   const advisorAttachKey = useRef<string | null>(null);
 
   useEffect(() => {
@@ -245,6 +254,8 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
                   program.category != null &&
                   prepFramework.category !== program.category
                 }
+                check={frameworkCheckData?.data ?? null}
+                isCheckLoading={isFrameworkCheckLoading}
               />
             ) : null}
             {showAdvisoryPanel ? (
@@ -268,6 +279,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
                 <CurriculumSplitPanel
                   program={program}
                   onRefresh={() => {
+                    setCurriculumRevision((revision) => revision + 1);
                     router.refresh();
                   }}
                   cohortLocked={isReviewLocked || cohortLock.locked}
