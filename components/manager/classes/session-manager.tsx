@@ -721,6 +721,7 @@ function SessionManagerInner() {
         }}
         session={evidenceSession}
         onEditSession={openEditSession}
+        onInviteExpert={setInviteSession}
       />
 
       <InviteSessionExpertDialog

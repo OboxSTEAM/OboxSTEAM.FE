@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Image from "next/image";
-import { Images, MapPin, Pencil } from "lucide-react";
+import { Images, MapPin, Pencil, UserPlus } from "lucide-react";
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
@@ -32,6 +32,7 @@ type SessionEvidenceGalleryDrawerProps = {
   onOpenChange: (open: boolean) => void;
   session: ClassSession | null;
   onEditSession?: (session: ClassSession) => void;
+  onInviteExpert?: (session: ClassSession) => void;
   className?: string;
 };
 
@@ -71,11 +72,16 @@ export function SessionEvidenceGalleryDrawer({
   onOpenChange,
   session,
   onEditSession,
+  onInviteExpert,
   className,
 }: SessionEvidenceGalleryDrawerProps) {
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const sessionId = session?.id ?? "";
+  const canInviteExpert =
+    session?.sessionKind === "Offline" &&
+    session.status === "Scheduled" &&
+    !!onInviteExpert;
 
   const {
     data: evidenceEnvelope,
@@ -137,20 +143,39 @@ export function SessionEvidenceGalleryDrawer({
                   </p>
                 ) : null}
               </div>
-              {session && onEditSession ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 shrink-0 gap-1.5 rounded-lg text-xs"
-                  onClick={() => {
-                    handleOpenChange(false);
-                    onEditSession(session);
-                  }}
-                >
-                  <Pencil className="size-3" />
-                  Sửa buổi
-                </Button>
+              {session && (onEditSession || canInviteExpert) ? (
+                <div className="flex shrink-0 flex-wrap items-center gap-1.5">
+                  {canInviteExpert ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      aria-label="Mời chuyên gia đồng hành"
+                      className="size-8 rounded-lg border-[#4FC3F7]/60 text-[#0D6E9C] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:text-[#7dd3fc]"
+                      onClick={() => {
+                        handleOpenChange(false);
+                        onInviteExpert(session);
+                      }}
+                    >
+                      <UserPlus className="size-4" />
+                    </Button>
+                  ) : null}
+                  {onEditSession ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 rounded-lg text-xs"
+                      onClick={() => {
+                        handleOpenChange(false);
+                        onEditSession(session);
+                      }}
+                    >
+                      <Pencil className="size-3" />
+                      Sửa buổi
+                    </Button>
+                  ) : null}
+                </div>
               ) : null}
             </div>
             <SheetClose />

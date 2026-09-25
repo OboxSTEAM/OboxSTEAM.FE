@@ -8,11 +8,13 @@ import {
   Plus,
   Sparkles,
   Trash2,
+  UserPlus,
   X,
 } from "lucide-react";
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { GenerateSessionsDialog } from "@/components/manager/classes/generate-sessions-dialog";
+import { InviteSessionExpertDialog } from "@/components/manager/classes/invite-session-expert-dialog";
 import { SessionCalendar } from "@/components/manager/classes/session-calendar";
 import { SessionEvidenceGalleryDrawer } from "@/components/manager/classes/session-evidence-gallery-drawer";
 import {
@@ -145,6 +147,7 @@ export function ClassSchedulePanel({
   );
   const [deleteTarget, setDeleteTarget] = useState<ClassSession | null>(null);
   const [evidenceSession, setEvidenceSession] = useState<ClassSession | null>(null);
+  const [inviteSession, setInviteSession] = useState<ClassSession | null>(null);
   const [generateOpen, setGenerateOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{
@@ -350,43 +353,60 @@ export function ClassSchedulePanel({
     },
     {
       header: "Thao tác",
-      className: "w-24 text-right",
-      render: (session) => (
-        <div className="flex justify-end gap-1">
-          {session.sessionKind === "Offline" ? (
+      className: "w-28 text-right",
+      render: (session) => {
+        const canInviteExpert =
+          session.sessionKind === "Offline" && session.status === "Scheduled";
+
+        return (
+          <div className="flex justify-end gap-1">
+            {canInviteExpert ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => setInviteSession(session)}
+                aria-label={`Mời chuyên gia đồng hành ${session.title}`}
+                className="size-8 rounded-lg border-[#4FC3F7]/60 text-[#0D6E9C] hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:text-[#7dd3fc]"
+              >
+                <UserPlus className="size-4" />
+              </Button>
+            ) : null}
+            {session.sessionKind === "Offline" ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => openEvidenceGallery(session)}
+                aria-label={`Xem minh chứng ${session.title}`}
+                className="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <Images className="size-4" />
+              </Button>
+            ) : null}
             <Button
               type="button"
               variant="ghost"
               size="icon"
-              onClick={() => openEvidenceGallery(session)}
-              aria-label={`Xem minh chứng ${session.title}`}
+              onClick={() => openEditSession(session)}
+              aria-label={`Sửa ${session.title}`}
               className="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
             >
-              <Images className="size-4" />
+              <Pencil className="size-4" />
             </Button>
-          ) : null}
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => openEditSession(session)}
-            aria-label={`Sửa ${session.title}`}
-            className="size-8 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            <Pencil className="size-4" />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={() => setDeleteTarget(session)}
-            aria-label={`Xóa ${session.title}`}
-            className="size-8 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
-          >
-            <Trash2 className="size-4" />
-          </Button>
-        </div>
-      ),
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setDeleteTarget(session)}
+              aria-label={`Xóa ${session.title}`}
+              className="size-8 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
@@ -643,6 +663,16 @@ export function ClassSchedulePanel({
         }}
         session={evidenceSession}
         onEditSession={openEditSession}
+        onInviteExpert={setInviteSession}
+      />
+
+      <InviteSessionExpertDialog
+        isOpen={inviteSession !== null}
+        onOpenChange={(open) => {
+          if (!open) setInviteSession(null);
+        }}
+        session={inviteSession}
+        programId={programId ?? undefined}
       />
     </div>
   );
