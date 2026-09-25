@@ -33,6 +33,15 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { NodeFeedbackStrip } from "@/components/advisory/node-feedback-strip";
+import { AdvisoryPinBadge } from "@/components/advisory/advisory-pin-badge";
+import {
+  buildAdvisoryPinMap,
+  selToQuery,
+  type SelectedNode,
+} from "@/lib/advisory/manager-target";
+import type { AdvisoryCapabilities, AdvisoryThread } from "@/lib/api";
+
 import {
   CurriculumMutateContext,
   StructureAddLeafButton,
@@ -150,20 +159,7 @@ const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
 };
 
-/* ─── Selected node ─────────────────────────────────────────────────────────── */
-type SelectedNode =
-  | { kind: "program" }
-  | { kind: "module-new" }
-  | { kind: "module"; id: string }
-  | { kind: "course-new"; moduleId: string }
-  | { kind: "course"; id: string; moduleId: string }
-  | { kind: "activity-new"; courseId: string }
-  | { kind: "activity"; id: string; courseId: string }
-  | { kind: "assignment-new"; moduleId: string }
-  | { kind: "assignment"; id: string; moduleId: string }
-  | { kind: "milestone-new"; moduleId: string }
-  | { kind: "milestone"; id: string; moduleId: string }
-  | null;
+/* ─── Selected node lives in lib/advisory/manager-target.ts ─── */
 
 /* ─── Micro helpers ─────────────────────────────────────────────────────────── */
 function STitle({ children }: { children: React.ReactNode }) {
@@ -633,8 +629,7 @@ function CourseFormPanel({ moduleId, courseToEdit, coursesInModule, onSuccess, d
           }
           onCodeChange={setCode}
         />
-        <div className="space-y-1.5">
-          <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả</Label>
+        <div className="space-y-1.5" data-advisory-field="description">
           <textarea rows={4} placeholder="Mô tả tóm tắt nội dung..." {...register("description")} disabled={disabled} className={cn(CURRICULUM_TEXTAREA, disabled && "opacity-70")} style={{ borderColor: W.border }} />
         </div>
 
@@ -844,7 +839,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
                 )} />
               </div>
             </div>
-            <div className="flex flex-1 flex-col space-y-1.5">
+            <div className="flex flex-1 flex-col space-y-1.5" data-advisory-field="description">
               <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>Mô tả hoạt động</Label>
               <textarea placeholder="Nhập hướng dẫn chi tiết..." {...register("description")} disabled={disabled} className={cn(CURRICULUM_TEXTAREA, "min-h-28 flex-1", disabled && "opacity-70")} style={{ borderColor: W.border }} />
             </div>
@@ -852,7 +847,7 @@ function ActivityFormPanel({ courseId, activityToEdit, activitiesInCourse, onSuc
 
           {actType !== "SelfPaced" && (
             <>
-              <div className="col-span-2">
+              <div className="col-span-2" data-advisory-field="durationMinutes">
                 <CompactNumberField
                   label="Thời lượng (phút)"
                   required
@@ -1066,46 +1061,6 @@ function ParentPathBreadcrumb({
       ))}
     </nav>
   );
-}
-
-function selToQuery(sel: SelectedNode): string {
-  if (!sel || sel.kind === "program") return "";
-  const params = new URLSearchParams();
-  if (sel.kind === "module-new") {
-    params.set("node", "module-new");
-  } else if (sel.kind === "module") {
-    params.set("node", "module");
-    params.set("id", sel.id);
-  } else if (sel.kind === "course-new") {
-    params.set("node", "course-new");
-    params.set("moduleId", sel.moduleId);
-  } else if (sel.kind === "course") {
-    params.set("node", "course");
-    params.set("id", sel.id);
-    params.set("moduleId", sel.moduleId);
-  } else if (sel.kind === "activity-new") {
-    params.set("node", "activity-new");
-    params.set("courseId", sel.courseId);
-  } else if (sel.kind === "activity") {
-    params.set("node", "activity");
-    params.set("id", sel.id);
-    params.set("courseId", sel.courseId);
-  } else if (sel.kind === "assignment-new") {
-    params.set("node", "assignment-new");
-    params.set("moduleId", sel.moduleId);
-  } else if (sel.kind === "assignment") {
-    params.set("node", "assignment");
-    params.set("id", sel.id);
-    params.set("moduleId", sel.moduleId);
-  } else if (sel.kind === "milestone-new") {
-    params.set("node", "milestone-new");
-    params.set("moduleId", sel.moduleId);
-  } else if (sel.kind === "milestone") {
-    params.set("node", "milestone");
-    params.set("id", sel.id);
-    params.set("moduleId", sel.moduleId);
-  }
-  return params.toString();
 }
 
 function selPanelKey(sel: SelectedNode): string {
@@ -1329,6 +1284,7 @@ function CourseActivityRows({
   onReorder,
   moveBusy,
   linkedIds,
+  pinMap,
 }: {
   course: Course;
   sel: SelectedNode;
@@ -1344,6 +1300,7 @@ function CourseActivityRows({
   onReorder: (courseId: string, orderedIds: string[]) => Promise<void>;
   moveBusy?: boolean;
   linkedIds?: ReadonlySet<string>;
+  pinMap?: Map<string, { openRequired: number; suggestions: number; accepted: boolean }>;
 }) {
   const acts = useMemo(
     () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
@@ -1392,6 +1349,7 @@ function CourseActivityRows({
             label={act.name}
             meta={activityMeta}
             onSelect={() => select({ kind: "activity", id: act.id, courseId: course.id })}
+            trailing={<AdvisoryPinBadge counts={pinMap?.get(`activity:${act.id}`)} />}
             onDelete={() => setDelTarget({ type: "activity", id: act.id, name: act.name })}
           />
         );
@@ -1480,10 +1438,12 @@ function CohortLockBanner({
 type CurriculumSplitPanelProps = {
   program: ProgramWithModules;
   onRefresh: () => void;
-  /** When true, program metadata + curriculum mutations are blocked (cohort lock). */
   cohortLocked?: boolean;
   lockReason?: string | null;
   blockingClasses?: ProgramCohortLockClass[];
+  advisoryThreads?: AdvisoryThread[];
+  advisoryCapabilities?: AdvisoryCapabilities;
+  onAdvisoryChanged?: () => void;
 };
 
 
@@ -1595,6 +1555,9 @@ export function CurriculumSplitPanel({
   cohortLocked = false,
   lockReason = null,
   blockingClasses = [],
+  advisoryThreads = [],
+  advisoryCapabilities,
+  onAdvisoryChanged,
 }: CurriculumSplitPanelProps) {
   const canMutate = !cohortLocked;
   const router = useRouter();
@@ -1603,6 +1566,10 @@ export function CurriculumSplitPanel({
   const modules = useMemo(
     () => [...(program.modules || [])].sort((a, b) => a.moduleOrder - b.moduleOrder),
     [program.modules],
+  );
+  const advisoryPins = useMemo(
+    () => buildAdvisoryPinMap(advisoryThreads),
+    [advisoryThreads],
   );
 
   const [sel, setSel] = useState<SelectedNode>(() => {
@@ -2335,6 +2302,7 @@ export function CurriculumSplitPanel({
         label={program.name}
         meta={program.code}
         onSelect={() => select({ kind: "program" })}
+        trailing={<AdvisoryPinBadge counts={advisoryPins.get("program")} />}
       >
         <LayoutGroup id="curriculum-modules">
           {orderedModules.map((mod, mIdx) => {
@@ -2412,6 +2380,7 @@ export function CurriculumSplitPanel({
                     moduleId: mod.id,
                   })
                 }
+                trailing={<AdvisoryPinBadge counts={advisoryPins.get(`assignment:${asg.id}`)} />}
                 onDelete={() =>
                   setDelTarget({
                     type: "assignment",
@@ -2468,6 +2437,7 @@ export function CurriculumSplitPanel({
                 label={mod.name}
                 meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
                 onSelect={() => select({ kind: "module", id: mod.id })}
+                trailing={<AdvisoryPinBadge counts={advisoryPins.get(`module:${mod.id}`)} />}
                 onDelete={() =>
                   setDelTarget({ type: "module", id: mod.id, name: mod.name })
                 }
@@ -2519,6 +2489,7 @@ export function CurriculumSplitPanel({
                             moduleId: mod.id,
                           })
                         }
+                        trailing={<AdvisoryPinBadge counts={advisoryPins.get(`course:${course.id}`)} />}
                         onDelete={() =>
                           setDelTarget({
                             type: "course",
@@ -2535,6 +2506,7 @@ export function CurriculumSplitPanel({
                           onReorder={handleActivityReorder}
                           moveBusy={reorderBusy}
                           linkedIds={linkedActivityIds}
+                          pinMap={advisoryPins}
                         />
                         {courseAsgs.map((asg) =>
                           assignmentRow(asg, 3, false),
@@ -2723,6 +2695,14 @@ export function CurriculumSplitPanel({
         <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
           <ParentPathBreadcrumb parts={pathParts} />
         </div>
+        <NodeFeedbackStrip
+          programId={program.id}
+          selection={sel}
+          threads={advisoryThreads}
+          capabilities={advisoryCapabilities}
+          readOnly={program.status === "PendingReview"}
+          onChanged={onAdvisoryChanged}
+        />
         <div className="min-w-0">
           <DetailPanelSwitcher selectionKey={selPanelKey(sel)}>
             {detail()}

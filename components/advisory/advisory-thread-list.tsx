@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { MessageSquare } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -7,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AdvisoryThread } from "@/lib/api";
 import {
-  ADVISORY_THREAD_STATUS_LABELS,
   ADVISORY_THREAD_TYPE_LABELS,
   ADVISORY_TARGET_TYPE_LABELS,
+  getThreadStatusLabel,
 } from "@/lib/expert/advisory-labels";
 import { cn } from "@/lib/utils";
+
+type ThreadFilter = "all" | "RequiredChange" | "Suggestion";
 
 type AdvisoryThreadListProps = {
   threads: AdvisoryThread[];
@@ -19,6 +22,7 @@ type AdvisoryThreadListProps = {
   onSelect: (threadId: string) => void;
   isLoading?: boolean;
   emptyMessage?: string;
+  showFilters?: boolean;
 };
 
 function formatRelativeTime(iso: string): string {
@@ -37,8 +41,10 @@ export function AdvisoryThreadList({
   selectedThreadId,
   onSelect,
   isLoading = false,
-  emptyMessage = "Chưa có luồng trao đổi.",
+  emptyMessage = "Chưa có nhận xét.",
+  showFilters = true,
 }: AdvisoryThreadListProps) {
+  const [filter, setFilter] = useState<ThreadFilter>("all");
   if (isLoading) {
     return (
       <div className="space-y-2 p-3">
@@ -56,14 +62,47 @@ export function AdvisoryThreadList({
     );
   }
 
-  const sorted = [...threads].sort(
-    (left, right) =>
-      new Date(right.lastMessageAt).getTime() -
-      new Date(left.lastMessageAt).getTime(),
-  );
+  const sorted = [...threads]
+    .filter((thread) => filter === "all" || thread.type === filter || thread.type === "General")
+    .sort((left, right) => {
+      if (left.type === "General") return -1;
+      if (right.type === "General") return 1;
+      return (
+        new Date(right.lastMessageAt).getTime() -
+        new Date(left.lastMessageAt).getTime()
+      );
+    });
 
   return (
-    <ul className="divide-y divide-border" role="listbox" aria-label="Luồng trao đổi">
+    <div>
+      {showFilters ? (
+        <div className="flex gap-1 border-b border-border p-2">
+          {(
+            [
+              ["all", "Tất cả"],
+              ["RequiredChange", "Bắt buộc sửa"],
+              ["Suggestion", "Gợi ý"],
+            ] as const
+          ).map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              size="sm"
+              variant={filter === value ? "default" : "ghost"}
+              className="h-7 rounded-lg px-2 text-[11px]"
+              onClick={() => setFilter(value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      ) : null}
+      {sorted.length === 0 ? (
+        <p className="px-4 py-10 text-center text-sm text-muted-foreground">
+          {emptyMessage}
+        </p>
+      ) : (
+    <ul className="divide-y divide-border" role="listbox" aria-label="Nhận xét">
       {sorted.map((thread) => {
         const isSelected = thread.id === selectedThreadId;
         const isRequired = thread.type === "RequiredChange";
@@ -106,7 +145,7 @@ export function AdvisoryThreadList({
                       variant="outline"
                       className="rounded-md border-border text-[10px] font-medium text-muted-foreground"
                     >
-                      {ADVISORY_THREAD_STATUS_LABELS[thread.status]}
+                      {getThreadStatusLabel(thread.type, thread.status)}
                     </Badge>
                   </div>
                   <p className="mt-1 truncate text-sm font-medium text-foreground">
@@ -129,5 +168,7 @@ export function AdvisoryThreadList({
         );
       })}
     </ul>
+      )}
+    </div>
   );
 }

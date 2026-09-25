@@ -4,7 +4,7 @@ import { useMemo, useRef, useState, type ReactNode } from "react";
 import { AlertCircle, ArrowLeft, MessageSquarePlus } from "lucide-react";
 
 import { AdvisoryThreadPanel } from "@/components/advisory/advisory-thread-panel";
-import { AdvisoryDiscussionPanel } from "@/components/advisory/advisory-discussion-panel";
+import { AdvisoryThreadList } from "@/components/advisory/advisory-thread-list";
 import { FrameworkCheckPanel } from "@/components/advisory/framework-check-panel";
 import {
   CurriculumMutateContext,
@@ -29,7 +29,6 @@ import type {
   AdvisoryCapabilities,
   AdvisoryTargetType,
   AdvisoryThread,
-  AdvisoryThreadPin,
   AdvisoryThreadPinSummary,
   AdvisoryThreadType,
   CreateAdvisoryThreadInput,
@@ -44,10 +43,6 @@ import {
   type BoardTreeNode,
   type NestedBoardNode,
 } from "@/lib/advisory/board-tree";
-import {
-  ADVISORY_THREAD_TYPE_LABELS,
-  ADVISORY_THREAD_STATUS_LABELS,
-} from "@/lib/expert/advisory-labels";
 import {
   openMaterialSignedPreview,
   pickMaterialPreviewUrl,
@@ -811,6 +806,27 @@ function InlineComposer({
   const [threadType, setThreadType] = useState<AdvisoryThreadType>("Suggestion");
   const [error, setError] = useState<string | null>(null);
 
+  const typeOptions: {
+    value: AdvisoryThreadType;
+    title: string;
+    description: string;
+  }[] = [
+    {
+      value: "Suggestion",
+      title: "Gợi ý",
+      description: "Không chặn phê duyệt. Manager chỉ cần ghi nhận.",
+    },
+    ...(canCreateRequiredChange
+      ? [
+          {
+            value: "RequiredChange" as const,
+            title: "Bắt buộc sửa",
+            description: "Manager phải sửa và bạn chấp nhận trước khi duyệt.",
+          },
+        ]
+      : []),
+  ];
+
   async function handleSubmit() {
     const trimmed = message.trim();
     if (!trimmed) {
@@ -834,41 +850,74 @@ function InlineComposer({
       <div className="flex items-center gap-2">
         <MessageSquarePlus className="size-4 text-primary" />
         <p className="text-sm font-semibold text-foreground">
-          Góp ý · {selection.label}
+          Nhận xét · {selection.label}
         </p>
       </div>
       {selection.anchorField ? (
         <p className="text-xs text-muted-foreground">
-          Neo trường: {selection.anchorField}
+          Trường: {selection.anchorField}
         </p>
       ) : null}
-      <div className="flex flex-wrap gap-2">
-        <Button
-          type="button"
-          size="sm"
-          variant={threadType === "Suggestion" ? "default" : "outline"}
-          className="h-8 rounded-lg text-xs"
-          onClick={() => setThreadType("Suggestion")}
+      <fieldset className="space-y-2">
+        <legend className="sr-only">Loại nhận xét</legend>
+        <div
+          className="space-y-2"
+          role="radiogroup"
+          aria-label="Loại nhận xét"
         >
-          Góp ý
-        </Button>
-        {canCreateRequiredChange ? (
-          <Button
-            type="button"
-            size="sm"
-            variant={threadType === "RequiredChange" ? "default" : "outline"}
-            className="h-8 rounded-lg text-xs"
-            onClick={() => setThreadType("RequiredChange")}
-          >
-            Yêu cầu chỉnh sửa
-          </Button>
-        ) : null}
-      </div>
+          {typeOptions.map((option) => {
+            const isSelected = threadType === option.value;
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="radio"
+                aria-checked={isSelected}
+                disabled={isCreating}
+                onClick={() => setThreadType(option.value)}
+                className={cn(
+                  "flex w-full cursor-pointer items-start gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
+                  "disabled:pointer-events-none disabled:opacity-50",
+                  isSelected
+                    ? "border-primary bg-primary/5"
+                    : "border-border bg-card hover:bg-muted/40",
+                )}
+              >
+                <span
+                  className={cn(
+                    "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border",
+                    isSelected
+                      ? "border-primary"
+                      : "border-muted-foreground/40",
+                  )}
+                  aria-hidden
+                >
+                  <span
+                    className={cn(
+                      "size-2 rounded-full bg-primary transition-opacity",
+                      isSelected ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                </span>
+                <span>
+                  <span className="font-semibold text-foreground">
+                    {option.title}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {option.description}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </fieldset>
       <Textarea
         rows={3}
         value={message}
         onChange={(event) => setMessage(event.target.value)}
-        placeholder="Mô tả góp ý cụ thể…"
+        placeholder="Mô tả nhận xét cụ thể…"
         disabled={isCreating}
         className="rounded-xl border-input bg-background"
       />
@@ -880,7 +929,7 @@ function InlineComposer({
           disabled={isCreating}
           onClick={() => void handleSubmit()}
         >
-          {isCreating ? "Đang gửi…" : "Gửi góp ý"}
+          {isCreating ? "Đang gửi…" : "Gửi nhận xét"}
         </Button>
         <Button
           type="button"
@@ -901,7 +950,7 @@ export function AdvisoryCurriculumBoard({
   programId,
   pinSummaries = [],
   threads = [],
-  verificationSubmissionId = null,
+  verificationSubmissionId: _verificationSubmissionId = null,
   selectedThread = null,
   frameworkCheck = null,
   isFrameworkCheckLoading = false,
@@ -921,7 +970,6 @@ export function AdvisoryCurriculumBoard({
   const [showChanges, setShowChanges] = useState(true);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [composer, setComposer] = useState<AdvisoryBoardSelection | null>(null);
-  const [sidebarTab, setSidebarTab] = useState<"notes" | "discussion">("notes");
 
   const tree = useMemo(
     () => (board ? buildBoardTree(board, { includeRemovedGhosts: showChanges }) : []),
@@ -991,39 +1039,6 @@ export function AdvisoryCurriculumBoard({
       selected.targetId,
     );
   }, [board, selected, showChanges]);
-
-  const nodePins = useMemo(() => {
-    if (!selected) return [];
-    const fromBoard = (board?.threadPins ?? []).filter(
-      (pin) =>
-        pin.targetType === selected.targetType &&
-        pin.targetId === selected.targetId,
-    );
-    const seen = new Set(fromBoard.map((pin) => pin.threadId));
-    const carried: AdvisoryThreadPin[] = threads
-      .filter(
-        (thread) =>
-          thread.type === "RequiredChange" &&
-          thread.status !== "Resolved" &&
-          thread.targetType === selected.targetType &&
-          thread.targetId === selected.targetId &&
-          !seen.has(thread.id),
-      )
-      .map((thread) => ({
-        threadId: thread.id,
-        submissionId: thread.submissionId,
-        targetType: thread.targetType,
-        targetId: thread.targetId,
-        type: thread.type,
-        status: thread.status,
-        messageCount: thread.messageCount,
-        authorName: thread.authorName,
-        lastMessagePreview: thread.latestMessagePreview,
-        lastMessageAt: thread.lastMessageAt,
-        targetLabel: thread.targetLabel,
-      }));
-    return [...fromBoard, ...carried];
-  }, [board, selected, threads]);
 
   const changeCounts = board?.changeSummary
     ? {
@@ -1170,39 +1185,10 @@ export function AdvisoryCurriculumBoard({
         </div>
 
         <aside className="flex flex-col overflow-hidden bg-muted/10">
-          <div className="grid grid-cols-2 gap-1 border-b border-border bg-card p-2" role="tablist" aria-label="Kênh cộng tác">
-            <button
-              type="button"
-              role="tab"
-              aria-selected={sidebarTab === "notes"}
-              onClick={() => setSidebarTab("notes")}
-              className={cn(
-                "h-8 rounded-lg text-xs font-semibold",
-                sidebarTab === "notes" ? "bg-primary/10 text-primary" : "text-muted-foreground",
-              )}
-            >
-              Góp ý {nodePins.length > 0 ? `(${nodePins.length})` : ""}
-            </button>
-            <button
-              type="button"
-              role="tab"
-              aria-selected={sidebarTab === "discussion"}
-              onClick={() => setSidebarTab("discussion")}
-              className={cn(
-                "h-8 rounded-lg text-xs font-semibold",
-                sidebarTab === "discussion" ? "bg-primary/10 text-primary" : "text-muted-foreground",
-              )}
-            >
-              Trao đổi
-            </button>
+          <div className="border-b border-border bg-card px-4 py-3">
+            <p className="text-sm font-bold text-foreground">Nhận xét</p>
           </div>
-          {sidebarTab === "discussion" ? (
-            <AdvisoryDiscussionPanel
-              programId={programId}
-              capabilities={capabilities}
-              className="min-h-0 flex-1 rounded-none border-0"
-            />
-          ) : selectedThread ? (
+          {selectedThread ? (
             <>
               <div className="flex items-center gap-2 border-b border-border px-3 py-2">
                 <Button
@@ -1213,7 +1199,7 @@ export function AdvisoryCurriculumBoard({
                   onClick={() => onCloseThread?.()}
                 >
                   <ArrowLeft className="size-3.5" />
-                  Góp ý
+                  Nhận xét
                 </Button>
               </div>
               <div className="min-h-0 flex-1 overflow-hidden">
@@ -1223,55 +1209,27 @@ export function AdvisoryCurriculumBoard({
                   isAdvisor={isAdvisor}
                   isManager={false}
                   reviewActionsLocked={reviewActionsLocked}
-                  canReplyToNotes={capabilities?.canReplyToNotes !== false}
-                  verificationSubmissionId={verificationSubmissionId ?? board.submissionId}
+                  canReply={capabilities?.canReply !== false}
                   onThreadUpdated={onThreadUpdated}
                 />
               </div>
             </>
           ) : (
             <>
-              <div className="border-b border-border px-4 py-3">
-                <p className="text-sm font-bold text-foreground">Góp ý trên mục</p>
-                <p className="text-xs text-muted-foreground">
-                  Pin theo node · trả lời và xác minh ngay tại board
-                </p>
-              </div>
-              <div className="flex-1 overflow-y-auto p-3">
-                {nodePins.length === 0 ? (
-                  <p className="rounded-xl border border-dashed border-border p-4 text-center text-xs text-muted-foreground">
-                    Chưa có góp ý trên mục này.
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {nodePins.map((pin) => (
-                      <button
-                        key={pin.threadId}
-                        type="button"
-                        onClick={() => {
-                          setSidebarTab("notes");
-                          onOpenThread?.(pin.threadId);
-                        }}
-                        className="w-full rounded-xl border border-border bg-card px-3 py-2 text-left hover:bg-muted/40"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Badge
-                            variant="outline"
-                            className="rounded-md text-[10px]"
-                          >
-                            {ADVISORY_THREAD_TYPE_LABELS[pin.type]}
-                          </Badge>
-                          <span className="text-[11px] text-muted-foreground">
-                            {ADVISORY_THREAD_STATUS_LABELS[pin.status]}
-                          </span>
-                        </div>
-                        <p className="mt-1 line-clamp-3 text-sm text-foreground">
-                          {pin.lastMessagePreview || "Xem chi tiết"}
-                        </p>
-                      </button>
-                    ))}
-                  </div>
-                )}
+              <div className="min-h-0 flex-1 overflow-y-auto">
+                <AdvisoryThreadList
+                  threads={threads.filter((thread) => {
+                    if (!selected) return thread.type === "General";
+                    if (thread.type === "General") return selected.targetType === "Program";
+                    return (
+                      thread.targetType === selected.targetType &&
+                      thread.targetId === selected.targetId
+                    );
+                  })}
+                  selectedThreadId={null}
+                  onSelect={(threadId) => onOpenThread?.(threadId)}
+                  emptyMessage="Chưa có nhận xét trên mục này."
+                />
               </div>
               {canAdvise && selected && !composer ? (
                 <div className="border-t border-border p-3">
@@ -1281,7 +1239,7 @@ export function AdvisoryCurriculumBoard({
                     className="h-9 w-full rounded-lg text-xs font-semibold"
                     onClick={() => openComposer(selected)}
                   >
-                    Góp ý trên mục này
+                    Gửi nhận xét trên mục này
                   </Button>
                 </div>
               ) : null}
@@ -1327,8 +1285,7 @@ export function AdvisoryCurriculumBoard({
               isAdvisor={isAdvisor}
               isManager={false}
               reviewActionsLocked={reviewActionsLocked}
-              canReplyToNotes={capabilities?.canReplyToNotes !== false}
-              verificationSubmissionId={verificationSubmissionId ?? board?.submissionId}
+              canReply={capabilities?.canReply !== false}
               onThreadUpdated={onThreadUpdated}
             />
           </div>
@@ -1361,7 +1318,7 @@ export function AdvisoryCurriculumBoard({
                   className="h-10 w-full rounded-xl"
                   onClick={() => openComposer(selected)}
                 >
-                  Góp ý trên mục này
+                  Gửi nhận xét trên mục này
                 </Button>
               </div>
             ) : null}

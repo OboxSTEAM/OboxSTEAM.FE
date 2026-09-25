@@ -13,23 +13,22 @@ import type {
   AdvisoryWorkflowStageKey,
   AdvisoryWorkflowTimeline,
 } from "@/lib/api";
+import { getAdvisoryNextActionLabel } from "@/lib/expert/advisory-labels";
 import { cn } from "@/lib/utils";
 
 const STAGE_LABELS: Record<AdvisoryWorkflowStageKey, string> = {
-  Preparation: "Chuẩn bị",
+  Preparation: "Soạn thảo",
   Review: "Thẩm định",
   Revision: "Chỉnh sửa",
-  Verification: "Xác minh",
-  AwaitingPublication: "Chờ xuất bản",
+  AwaitingPublication: "Đã duyệt",
   Published: "Đã xuất bản",
 };
 
 const STAGE_DETAILS: Record<AdvisoryWorkflowStageKey, string> = {
-  Preparation: "Manager hoàn thiện curriculum và chuẩn bị lần nộp.",
-  Review: "Chuyên gia đang thẩm định snapshot đã nộp.",
-  Revision: "Manager xử lý các yêu cầu chỉnh sửa còn tồn đọng.",
-  Verification: "Chuyên gia xác minh các thay đổi đã được xử lý.",
-  AwaitingPublication: "Hồ sơ đã được duyệt và chờ xuất bản.",
+  Preparation: "Manager hoàn thiện chương trình trước khi gửi thẩm định.",
+  Review: "Chuyên gia thẩm định lần nộp hiện tại.",
+  Revision: "Manager xử lý các mục bắt buộc sửa.",
+  AwaitingPublication: "Đã duyệt và chờ xuất bản.",
   Published: "Chương trình đã được xuất bản.",
 };
 
@@ -78,7 +77,10 @@ export function AdvisoryWorkflowTimeline({
     : "Chưa xác định";
   const responsibility = responsibilityLabel(timeline, participants);
   const steps: ExpertWorkflowStep[] = timeline.stages.map((stage) => ({
-    label: STAGE_LABELS[stage.key],
+    label:
+      stage.key === "Review" && timeline.round > 0
+        ? `Thẩm định · lần ${timeline.round}`
+        : STAGE_LABELS[stage.key],
     detail: STAGE_DETAILS[stage.key],
     state:
       stage.state === "completed"
@@ -108,10 +110,16 @@ export function AdvisoryWorkflowTimeline({
         <div className="flex flex-wrap items-center gap-2">
           {action}
           <Badge variant="outline" className="rounded-md text-[11px]">
-            {timeline.outstandingRequirementCount} yêu cầu còn lại
+            {timeline.outstandingRequirementCount} bắt buộc sửa còn lại
           </Badge>
         </div>
       </div>
+      {timeline.nextAction?.code ? (
+        <p className="mb-3 text-sm text-foreground">
+          <span className="font-semibold">Việc của bạn: </span>
+          {getAdvisoryNextActionLabel(timeline.nextAction.code)}
+        </p>
+      ) : null}
 
       <div className="hidden sm:block">
         <ExpertWorkflowRail

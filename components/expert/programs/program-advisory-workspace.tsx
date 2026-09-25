@@ -43,32 +43,19 @@ import { selectVisibleAdvisoryThreads } from "@/lib/advisory/visible-threads";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   REVIEW_SUBMISSION_STATUS_LABELS,
+  getAdvisoryNextActionLabel,
 } from "@/lib/expert/advisory-labels";
 import { PROGRAM_STATUS_LABELS } from "@/lib/programs/constants";
 import { cn } from "@/lib/utils";
 
-type WorkspaceTab = "overview" | "content" | "assessment";
+type WorkspaceTab = "content" | "assessment";
 
 const WORKSPACE_STEPS: {
   value: WorkspaceTab;
   label: string;
-  detail: string;
 }[] = [
-  {
-    value: "overview",
-    label: "Hồ sơ chương trình",
-    detail: "Hiểu mục tiêu, kết quả và trách nhiệm cố vấn của bạn.",
-  },
-  {
-    value: "content",
-    label: "Curriculum board",
-    detail: "Đọc snapshot, xem diff và pin góp ý ngay trên cây chương trình.",
-  },
-  {
-    value: "assessment",
-    label: "Quyết định chính thức",
-    detail: "Chấm rubric và kết thúc lần nộp thẩm định.",
-  },
+  { value: "content", label: "Xem & nhận xét" },
+  { value: "assessment", label: "Kết luận thẩm định" },
 ];
 
 type ProgramAdvisoryWorkspaceProps = {
@@ -76,12 +63,8 @@ type ProgramAdvisoryWorkspaceProps = {
 };
 
 function normalizeWorkspaceTab(raw: string | null): WorkspaceTab {
-  if (raw === "content" || raw === "assessment" || raw === "overview") {
-    return raw;
-  }
-  // Legacy inbox deep links → board (thread query param still opens the panel).
-  if (raw === "discussion") return "content";
-  return "overview";
+  if (raw === "assessment") return "assessment";
+  return "content";
 }
 
 function useWorkspaceParams() {
@@ -279,7 +262,7 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
         ...input,
         submissionId: input.submissionId ?? activeSubmissionId,
       });
-      showAppSuccess({ title: "Đã gửi góp ý" });
+      showAppSuccess({ title: "Đã gửi nhận xét" });
       refreshAdvisorySurfaces();
       if (result?.data?.id) {
         setParams({ tab: "content", thread: result.data.id });
@@ -303,21 +286,16 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
     submission?.status === "Pending" &&
     submission.id === workspace?.latestSubmission?.id &&
     workspace?.status === "PendingReview";
-  const addressedRequiredCount = threads.filter(
+  const outstandingRequired = threads.filter(
     (thread) =>
-      thread.type === "RequiredChange" && thread.status === "Addressed",
-  ).length;
+      thread.type === "RequiredChange" && thread.status !== "Resolved",
+  );
   const advisorRoleLabel = isResponsibleAdvisor
     ? "Chuyên gia chịu trách nhiệm"
     : "Chuyên gia hội đồng";
-
-  const nextActionLabel = canDecideLatest
-    ? "Đối chiếu hồ sơ và hoàn tất quyết định"
-    : addressedRequiredCount > 0
-      ? `Xác minh ${addressedRequiredCount} nội dung Manager đã sửa`
-      : workspace?.canAdvise
-        ? "Đọc hồ sơ và gửi góp ý theo nội dung"
-        : "Theo dõi tiến trình chương trình";
+  const nextActionLabel = getAdvisoryNextActionLabel(
+    workspace?.workflow?.nextAction.code ?? "",
+  );
 
   return (
     <div className="flex flex-col gap-6">
@@ -376,20 +354,37 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
             setParams({ tab: value as WorkspaceTab, thread: null })
           }
         >
-          <TabsContent value="overview" className="mt-0">
-            <OverviewTab
-              program={program}
-              workspace={workspace}
-              frameworkCheck={frameworkCheck}
-              isCheckLoading={isCheckLoading}
-              openRequiredChanges={openRequiredChanges}
-              openSuggestions={openSuggestions}
-              feedbackCounts={feedbackCounts}
-              onOpenThread={(id) => setParams({ tab: "content", thread: id })}
-            />
-          </TabsContent>
-
-          <TabsContent value="content" className="mt-0">
+          <TabsContent value="content" className="mt-0 space-y-4">
+            <details className="rounded-2xl border border-border bg-card px-4 py-3">
+              <summary className="cursor-pointer text-sm font-semibold text-foreground">
+                Hồ sơ chương trình
+              </summary>
+              <div className="pt-4">
+                <OverviewTab
+                  program={program}
+                  workspace={workspace}
+                  frameworkCheck={frameworkCheck}
+                  isCheckLoading={isCheckLoading}
+                  openRequiredChanges={openRequiredChanges}
+                  openSuggestions={openSuggestions}
+                  feedbackCounts={feedbackCounts}
+                  onOpenThread={(id) => setParams({ tab: "content", thread: id })}
+                />
+              </div>
+            </details>
+            <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border bg-card/95 px-3 py-2 backdrop-blur">
+              <p className="text-sm font-medium text-foreground">
+                {outstandingRequired.length} bắt buộc sửa chưa chấp nhận
+              </p>
+              <Button
+                type="button"
+                size="sm"
+                className="h-8 rounded-lg text-xs font-semibold"
+                onClick={() => setParams({ tab: "assessment", thread: null })}
+              >
+                Kết luận
+              </Button>
+            </div>
             <AdvisoryCurriculumBoard
               board={board}
               programId={program.id}
@@ -440,13 +435,12 @@ export function ProgramAdvisoryWorkspace({ program }: ProgramAdvisoryWorkspacePr
                    concurrencyVersion={selectedSubmission.concurrencyVersion}
                   criteria={rubricCriteria}
                   canDecide={canDecideLatest}
-                   blockingChangeCount={workspace?.approvalBlockingCount ?? 0}
-                   requiredChanges={openRequiredChanges.map((thread) => ({
+                   requiredChanges={outstandingRequired.map((thread) => ({
                      id: thread.id,
                      label:
                        thread.targetLabel.trim() ||
                        thread.latestMessagePreview.trim() ||
-                       "Yêu cầu chỉnh sửa",
+                       "Bắt buộc sửa",
                    }))}
                   onSubmissionStale={retrySubmission}
                   onDecisionComplete={() => {
@@ -578,7 +572,7 @@ function OverviewTab({
                 {suggestionCount}
               </p>
               <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
-                Góp ý mở
+                Gợi ý
               </p>
             </div>
             <div>
@@ -591,7 +585,7 @@ function OverviewTab({
                 {requiredCount}
               </p>
               <p className="mt-1.5 text-[11px] font-medium text-muted-foreground">
-                Yêu cầu chỉnh sửa
+                Bắt buộc sửa
               </p>
             </div>
           </div>
@@ -634,7 +628,7 @@ function OverviewTab({
             </ul>
           ) : (
             <p className="mt-4 border-t border-border pt-3 text-sm text-muted-foreground">
-              Chưa có góp ý hoặc yêu cầu chỉnh sửa đang mở.
+              Chưa có nhận xét đang mở.
             </p>
           )}
         </section>

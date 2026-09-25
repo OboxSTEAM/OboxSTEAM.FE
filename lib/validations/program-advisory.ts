@@ -63,8 +63,8 @@ export const addAdvisoryMessageSchema = z.object({
   concurrencyVersion: z.string().uuid().optional().nullable(),
 });
 
-export const updateAdvisoryThreadStatusSchema = z.object({
-  status: advisoryThreadStatusSchema,
+export const advisoryThreadActionRequestSchema = z.object({
+  action: z.enum(["MarkFixed", "Acknowledge", "Accept"]),
   message: z
     .string()
     .trim()
@@ -72,9 +72,6 @@ export const updateAdvisoryThreadStatusSchema = z.object({
     .optional()
     .nullable(),
   concurrencyVersion: z.string().uuid().optional().nullable(),
-  resolutionKind: z.enum(["Verified", "Waived"]).optional().nullable(),
-  verifiedAgainstSubmissionId: z.string().uuid().optional().nullable(),
-  correctionReferenceIds: z.array(z.string().uuid()).max(10).optional().nullable(),
   clientOperationId: z.string().trim().max(100).optional().nullable(),
 });
 
@@ -94,28 +91,7 @@ export const createAdvisoryReferenceSchema = z.object({
   quoteSuffix: z.string().trim().max(500).optional().nullable(),
 });
 
-export const advisoryDiscussionQuerySchema = z.object({
-  before: z.string().trim().min(1).optional(),
-  after: z.string().trim().min(1).optional(),
-  pageSize: z.number().int().min(1).max(100).optional(),
-});
-
-export const postAdvisoryDiscussionMessageSchema = z.object({
-  text: z
-    .string()
-    .trim()
-    .min(1, "Vui lòng nhập nội dung trao đổi.")
-    .max(10000, "Nội dung không được quá 10.000 ký tự."),
-  referenceIds: z.array(z.string().uuid()).max(10).optional().default([]),
-  clientMessageId: z.string().trim().min(1).max(100),
-});
-
 export const recordAdvisoryThreadReadSchema = z.object({
-  lastDisplayedSequence: z.number().int().min(0),
-  cursor: z.string().trim().optional().nullable(),
-});
-
-export const recordAdvisoryDiscussionReadSchema = z.object({
   lastDisplayedSequence: z.number().int().min(0),
   cursor: z.string().trim().optional().nullable(),
 });
@@ -142,24 +118,15 @@ export type AdvisoryThreadsQuery = z.infer<typeof advisoryThreadsQuerySchema>;
 export type AdvisoryBoardQuery = z.infer<typeof advisoryBoardQuerySchema>;
 export type AdvisoryPinsQuery = z.infer<typeof advisoryPinsQuerySchema>;
 export type AddAdvisoryMessageInput = z.infer<typeof addAdvisoryMessageSchema>;
-export type UpdateAdvisoryThreadStatusInput = z.infer<
-  typeof updateAdvisoryThreadStatusSchema
+export type AdvisoryThreadActionInput = z.infer<
+  typeof advisoryThreadActionRequestSchema
 >;
 export type RecordAdvisoryReadInput = z.infer<typeof recordAdvisoryReadSchema>;
 export type CreateAdvisoryReferenceInput = z.infer<
   typeof createAdvisoryReferenceSchema
 >;
-export type AdvisoryDiscussionQuery = z.infer<
-  typeof advisoryDiscussionQuerySchema
->;
-export type PostAdvisoryDiscussionMessageInput = z.infer<
-  typeof postAdvisoryDiscussionMessageSchema
->;
 export type RecordAdvisoryThreadReadInput = z.infer<
   typeof recordAdvisoryThreadReadSchema
->;
-export type RecordAdvisoryDiscussionReadInput = z.infer<
-  typeof recordAdvisoryDiscussionReadSchema
 >;
 export type SaveProgramReviewDraftInput = z.infer<
   typeof saveProgramReviewDraftSchema

@@ -45,7 +45,6 @@ type ReviewAssessmentPanelProps = {
   concurrencyVersion: string;
   criteria: RubricSnapshotCriterion[];
   canDecide: boolean;
-  blockingChangeCount?: number;
   requiredChanges?: RequiredChangeSummary[];
   onSubmissionStale?: () => void;
   onDecisionComplete?: () => void;
@@ -61,7 +60,6 @@ export function ReviewAssessmentPanel({
   concurrencyVersion: initialConcurrencyVersion,
   criteria,
   canDecide,
-  blockingChangeCount = 0,
   requiredChanges = [],
   onSubmissionStale,
   onDecisionComplete,
@@ -269,16 +267,9 @@ export function ReviewAssessmentPanel({
     }
   }
 
-  function buildChangesComment(): string {
-    const typed = changesComment.trim();
-    if (typed) return typed;
-    if (requiredChanges.length === 0) return "";
-    return requiredChanges.map((change) => change.label).join("\n");
-  }
-
   async function handleRequestChanges() {
-    const comment = buildChangesComment();
-    if (!comment) {
+    const comment = changesComment.trim();
+    if (requiredChanges.length === 0 && !comment) {
       setFormError("Vui lòng nhập nội dung Manager cần chỉnh sửa.");
       setShowChangesReason(true);
       return;
@@ -294,7 +285,6 @@ export function ReviewAssessmentPanel({
         concurrencyVersion: submissionConcurrencyVersion,
         comment: comment || null,
         scores: collected.length > 0 ? collected : null,
-        requiredChangeThreadIds: requiredChanges.map((change) => change.id),
         clientOperationId: crypto.randomUUID(),
       });
       showAppSuccess({
@@ -326,8 +316,7 @@ export function ReviewAssessmentPanel({
   const isBusy = pendingAction !== null;
   const isPending = submissionStatus === "Pending";
   const rubricComplete = criteria.length === 0 || scoredCount === criteria.length;
-  const canApprove =
-    canDecide && isPending && rubricComplete && blockingChangeCount === 0;
+  const canApprove = canDecide && isPending && rubricComplete;
   const hasPinnedChanges = requiredChanges.length > 0;
 
   return (
@@ -517,16 +506,14 @@ export function ReviewAssessmentPanel({
             >
               <MessageSquareWarning className="size-4" />
               {showChangesReason && !hasPinnedChanges
-                ? "Xác nhận gửi về manager"
-                : "Gửi về manager"}
+                ? "Xác nhận trả về"
+                : "Trả về chỉnh sửa"}
             </Button>
           </div>
 
-          {!canApprove ? (
+          {!rubricComplete ? (
             <p className="text-xs leading-5 text-muted-foreground">
-              {blockingChangeCount > 0
-                ? `Còn ${blockingChangeCount} yêu cầu chưa xác minh. Phê duyệt mở khi rubric đã chấm đủ và các yêu cầu đó đã được xác minh.`
-                : "Phê duyệt mở khi mọi tiêu chí rubric đã được chấm."}
+              Phê duyệt mở khi mọi tiêu chí rubric đã được chấm.
             </p>
           ) : null}
 
@@ -536,7 +523,13 @@ export function ReviewAssessmentPanel({
               if (!open) setPendingAction(null);
             }}
             title="Phê duyệt chương trình?"
-            description={`Xác nhận phê duyệt “${programName}” với điểm rubric hiện tại.`}
+            description={
+              requiredChanges.length > 0
+                ? `Phê duyệt sẽ chấp nhận ${requiredChanges.length} mục chưa xong: ${requiredChanges
+                    .map((item) => item.label)
+                    .join(", ")}.`
+                : `Xác nhận phê duyệt “${programName}” với điểm rubric hiện tại.`
+            }
             confirmLabel="Phê duyệt"
             onConfirm={handleApprove}
           />
@@ -545,8 +538,8 @@ export function ReviewAssessmentPanel({
             onOpenChange={(open) => {
               if (!open) setPendingAction(null);
             }}
-            title="Gửi về manager?"
-            description="Chương trình sẽ trả về Manager để chỉnh sửa curriculum."
+            title="Trả về chỉnh sửa?"
+            description="Các mục chưa được chấp nhận sẽ trở lại trạng thái Cần sửa."
             confirmLabel="Gửi yêu cầu"
             onConfirm={handleRequestChanges}
           />

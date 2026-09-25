@@ -27058,7 +27058,7 @@
           "Program"
         ],
         "summary": "Advisory workspace summary for a program",
-        "description": "Includes collaborationContractVersion 2, capabilities, workflow timeline, approvalBlockingCount (Open+Addressed RequiredChanges), separate unreadNoteCount/unreadDiscussionCount, pendingSubmission/latestSubmission, and reviewActionsLocked. Discussion remains allowed when reviewActionsLocked is true.",
+        "description": "Includes collaborationContractVersion 3, capabilities, a 5-stage workflow timeline with round and nextAction, outstandingRequiredCount, fixedRequiredCount, and unreadNoteCount (notes plus the general thread).",
         "parameters": [
           {
             "name": "id",
@@ -27294,7 +27294,8 @@
             "schema": {
               "enum": [
                 "Suggestion",
-                "RequiredChange"
+                "RequiredChange",
+                "General"
               ],
               "type": "string"
             }
@@ -27606,13 +27607,83 @@
         }
       }
     },
+    "/api/programs/{id}/advisory-threads/{threadId}/actions": {
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Perform one advisory thread action",
+        "description": "MarkFixed (manager, open required change, Draft), Acknowledge (manager or author, open suggestion), or Accept (responsible advisor, open or fixed required change). Returns the full thread. clientOperationId is idempotent. Waive is not an action.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisoryThreadActionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisoryThreadActionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvisoryThreadActionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvisoryThreadDtoApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/programs/{id}/advisory-threads/{threadId}/status": {
       "patch": {
         "tags": [
           "Program"
         ],
         "summary": "Update advisory thread status",
-        "description": "Returns the full AdvisoryThreadDto (ordered events, updated capability flags, concurrencyVersion). Requires concurrencyVersion; clientOperationId is idempotent. canAddress is only true while the program is Draft (curriculum editable).",
+        "description": "Obsolete. Use POST .../actions. Waive is rejected. Returns the full AdvisoryThreadDto.",
         "parameters": [
           {
             "name": "id",
@@ -27673,7 +27744,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/advisory-read": {
@@ -27938,7 +28010,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -27996,7 +28069,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/advisory-discussion/messages/{messageId}": {
@@ -28046,7 +28120,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/advisory-threads/{threadId}/read": {
@@ -28175,7 +28250,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/review-submissions": {
@@ -36562,10 +36638,7 @@
           "canCreateRequiredChange": {
             "type": "boolean"
           },
-          "canDiscuss": {
-            "type": "boolean"
-          },
-          "canReplyToNotes": {
+          "canReply": {
             "type": "boolean"
           },
           "canEditCurriculum": {
@@ -36966,6 +37039,20 @@
         },
         "additionalProperties": false
       },
+      "AdvisoryNextActionDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "forRole": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AdvisoryParticipantDto": {
         "type": "object",
         "properties": {
@@ -37113,6 +37200,59 @@
         },
         "additionalProperties": false
       },
+      "AdvisoryTargetPathDto": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadActionRequest": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "enum": [
+              "MarkFixed",
+              "Acknowledge",
+              "Accept"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clientOperationId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AdvisoryThreadDto": {
         "type": "object",
         "properties": {
@@ -37166,7 +37306,8 @@
           "type": {
             "enum": [
               "Suggestion",
-              "RequiredChange"
+              "RequiredChange",
+              "General"
             ],
             "type": "string"
           },
@@ -37236,16 +37377,17 @@
             "type": "string",
             "nullable": true
           },
-          "canAddress": {
-            "type": "boolean"
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           },
-          "canResolve": {
-            "type": "boolean"
+          "targetPath": {
+            "$ref": "#/components/schemas/AdvisoryTargetPathDto"
           },
-          "canReopen": {
-            "type": "boolean"
-          },
-          "canWaive": {
+          "targetExists": {
             "type": "boolean"
           },
           "events": {
@@ -37450,7 +37592,8 @@
           "type": {
             "enum": [
               "Suggestion",
-              "RequiredChange"
+              "RequiredChange",
+              "General"
             ],
             "type": "string"
           },
@@ -37588,7 +37731,6 @@
               "Preparation",
               "Review",
               "Revision",
-              "Verification",
               "AwaitingPublication",
               "Published"
             ],
@@ -37615,6 +37757,13 @@
           "outstandingRequirementCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "round": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAction": {
+            "$ref": "#/components/schemas/AdvisoryNextActionDto"
           },
           "stages": {
             "type": "array",
@@ -42166,7 +42315,8 @@
           "type": {
             "enum": [
               "Suggestion",
-              "RequiredChange"
+              "RequiredChange",
+              "General"
             ],
             "type": "string"
           },
@@ -50036,25 +50186,17 @@
             },
             "nullable": true
           },
-          "canAdvise": {
-            "type": "boolean"
-          },
-          "canDecide": {
-            "type": "boolean"
-          },
-          "canEditCurriculum": {
-            "type": "boolean"
-          },
-          "canAssignAdvisor": {
-            "type": "boolean"
-          },
           "capabilities": {
             "$ref": "#/components/schemas/AdvisoryCapabilitiesDto"
           },
           "workflow": {
             "$ref": "#/components/schemas/AdvisoryWorkflowTimelineDto"
           },
-          "approvalBlockingCount": {
+          "outstandingRequiredCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fixedRequiredCount": {
             "type": "integer",
             "format": "int32"
           },
@@ -50067,10 +50209,6 @@
             "format": "int32"
           },
           "unreadNoteCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unreadDiscussionCount": {
             "type": "integer",
             "format": "int32"
           },
@@ -52834,14 +52972,6 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ReviewCriterionScoreRequest"
-            },
-            "nullable": true
-          },
-          "requiredChangeThreadIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
             },
             "nullable": true
           },

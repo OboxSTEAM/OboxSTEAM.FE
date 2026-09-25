@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { Input } from "@/components/ui/input";
+import { PriceInput } from "@/components/forms/price-input";
 import {
   Collapsible,
   CollapsibleContent,
@@ -965,36 +966,34 @@ export function ProgramForm({
           <CollapsibleContent className="space-y-6 pt-5">
             <div>
               <FormSectionTitle>Học phí</FormSectionTitle>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <label className={LBL}>
-                    Học phí (VND) <span className="text-primary">*</span>
-                  </label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-muted-foreground">₫</span>
-                    <Input
+              <div className="max-w-md">
+                <label className={LBL} htmlFor="price">
+                  Học phí <span className="text-primary">*</span>
+                </label>
+                <Controller
+                  name="price"
+                  control={control}
+                  render={({ field }) => (
+                    <PriceInput
                       id="price"
-                      type="number"
-                      placeholder="0"
-                      {...register("price", { valueAsNumber: true })}
-                      aria-invalid={!!errors.price}
-                      className={cn(INPUT_CLS, "pl-7 font-mono", errors.price && "border-primary")}
+                      name={field.name}
+                      value={Number.isFinite(field.value) ? field.value : 0}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      invalid={!!errors.price}
                     />
-                  </div>
-                  <FieldError message={errors.price?.message} />
-                </div>
-                <div className="flex items-end pb-1.5">
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    Học phí nhập bằng VND. Không cần thêm ký hiệu đơn vị tiền tệ.
-                  </p>
-                </div>
+                  )}
+                />
+                <FieldError message={errors.price?.message} />
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  Chạm nút cộng nhanh để cộng thêm vào học phí hiện tại.
+                </p>
               </div>
             </div>
 
             <hr className="border-border" />
 
-            <div>
-              <FormSectionTitle>Kỹ năng đạt được</FormSectionTitle>
+            <div data-advisory-field="skillsGained">
               <div>
                 <label className={LBL}>
                   Kỹ năng đạt được <span className="text-primary">*</span>

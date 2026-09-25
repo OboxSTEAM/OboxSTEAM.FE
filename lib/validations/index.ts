@@ -107,8 +107,8 @@ export {
   assignProgramAdvisorSchema,
   createAdvisoryThreadSchema,
   recordAdvisoryReadSchema,
+  advisoryThreadActionRequestSchema,
   saveProgramReviewDraftSchema,
-  updateAdvisoryThreadStatusSchema,
   type AddAdvisoryMessageInput,
   type AdvisoryBoardQuery,
   type AdvisoryMineQuery,
@@ -118,7 +118,7 @@ export {
   type CreateAdvisoryThreadInput,
   type RecordAdvisoryReadInput,
   type SaveProgramReviewDraftInput,
-  type UpdateAdvisoryThreadStatusInput,
+  type AdvisoryThreadActionInput,
 } from "./program-advisory";
 export {
   createProgramFrameworkSchema,

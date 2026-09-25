@@ -27,6 +27,13 @@ export const advisoryTargetTypeSchema = z.enum([
 export const advisoryThreadTypeSchema = z.enum([
   "Suggestion",
   "RequiredChange",
+  "General",
+]);
+
+export const advisoryThreadActionSchema = z.enum([
+  "MarkFixed",
+  "Acknowledge",
+  "Accept",
 ]);
 
 export const advisoryThreadStatusSchema = z.enum([
@@ -55,7 +62,6 @@ const advisoryWorkflowStageKeys = [
   "Preparation",
   "Review",
   "Revision",
-  "Verification",
   "AwaitingPublication",
   "Published",
 ] as const;
@@ -77,11 +83,21 @@ export const advisoryWorkflowResponsibleRoleSchema = z.enum([
 export const advisoryCapabilitiesSchema = z.object({
   canCreateSuggestion: z.boolean().optional().default(false),
   canCreateRequiredChange: z.boolean().optional().default(false),
-  canDiscuss: z.boolean().optional().default(false),
-  canReplyToNotes: z.boolean().optional().default(false),
+  canReply: z.boolean().optional().default(false),
   canEditCurriculum: z.boolean().optional().default(false),
   canAssignAdvisor: z.boolean().optional().default(false),
   canDecide: z.boolean().optional().default(false),
+});
+
+export const advisoryNextActionSchema = z.object({
+  code: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
+  forRole: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
 });
 
 export const advisoryWorkflowStageSchema = z.object({
@@ -102,12 +118,18 @@ export const advisoryWorkflowTimelineSchema = z.object({
   outstandingRequirementCount: z.number().int().nullish().transform(
     (value) => value ?? 0,
   ),
+  round: z.number().int().nullish().transform((value) => value ?? 0),
+  nextAction: advisoryNextActionSchema.nullish().transform(
+    (value) => value ?? { code: "", forRole: "" },
+  ),
   stages: z
     .array(advisoryWorkflowStageSchema)
     .nullish()
     .transform((value) => value ?? []),
 });
 
+export type AdvisoryThreadAction = z.infer<typeof advisoryThreadActionSchema>;
+export type AdvisoryNextAction = z.infer<typeof advisoryNextActionSchema>;
 export type AdvisoryCapabilities = z.infer<typeof advisoryCapabilitiesSchema>;
 export type AdvisoryWorkflowStageKey = z.infer<
   typeof advisoryWorkflowStageKeySchema
@@ -216,17 +238,16 @@ export const programAdvisoryWorkspaceSchema = z.object({
     .array(advisoryParticipantSchema)
     .nullish()
     .transform((value) => value ?? []),
-  canAdvise: z.boolean().optional().default(false),
-  canDecide: z.boolean().optional().default(false),
-  canEditCurriculum: z.boolean().optional().default(false),
-  canAssignAdvisor: z.boolean().optional().default(false),
   capabilities: advisoryCapabilitiesSchema.nullish().transform(
     (value) => value ?? advisoryCapabilitiesSchema.parse({}),
   ),
   workflow: advisoryWorkflowTimelineSchema.nullish().transform(
     (value) => value ?? null,
   ),
-  approvalBlockingCount: z.number().int().nullish().transform(
+  outstandingRequiredCount: z.number().int().nullish().transform(
+    (value) => value ?? 0,
+  ),
+  fixedRequiredCount: z.number().int().nullish().transform(
     (value) => value ?? 0,
   ),
   openRequiredChangeCount: z.number().int().nullish().transform(
@@ -236,9 +257,6 @@ export const programAdvisoryWorkspaceSchema = z.object({
     (value) => value ?? 0,
   ),
   unreadNoteCount: z.number().int().nullish().transform((value) => value ?? 0),
-  unreadDiscussionCount: z.number().int().nullish().transform(
-    (value) => value ?? 0,
-  ),
   pendingSubmission: programReviewSubmissionSummarySchema.nullish().transform(
     (value) => value ?? null,
   ),
@@ -321,10 +339,28 @@ export const advisoryThreadSchema = z.object({
   latestActivitySequence: z.number().int().nullish().transform(
     (value) => value ?? 0,
   ),
-  canAddress: z.boolean().nullish().transform((value) => value ?? false),
-  canResolve: z.boolean().nullish().transform((value) => value ?? false),
-  canReopen: z.boolean().nullish().transform((value) => value ?? false),
-  canWaive: z.boolean().nullish().transform((value) => value ?? false),
+  originSubmissionNumber: z.number().int().nullish().transform(
+    (value) => value ?? null,
+  ),
+  originReviewRoundIntent: z
+    .enum(["InitialReview", "RevisionVerification"])
+    .nullish()
+    .transform((value) => value ?? null),
+  originRoundLabel: z.string().nullish().transform((value) => value ?? null),
+  availableActions: z
+    .array(advisoryThreadActionSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  targetPath: z
+    .object({
+      moduleId: optionalUuidSchema,
+      courseId: optionalUuidSchema,
+      activityId: optionalUuidSchema,
+      assignmentId: optionalUuidSchema,
+    })
+    .nullish()
+    .transform((value) => value ?? null),
+  targetExists: z.boolean().nullish().transform((value) => value ?? true),
   events: z
     .array(advisoryThreadEventSchema)
     .nullish()

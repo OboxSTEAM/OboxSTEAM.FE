@@ -77697,6 +77697,904 @@
         }
       }
     },
+    "/api/class-sessions/checkin-by-token": {
+      "post": {
+        "tags": [
+          "ClassSessionCheckIn"
+        ],
+        "summary": "Check in by QR token or live code (scan-first)",
+        "description": "Student self check-in without a session id in the path. Body must contain exactly one of token (QR UUID) or code (6-digit). Resolves a live non-expired credential to the class session, then records attendance as Present. A 6-digit code must match exactly one live session — zero or multiple hits fail closed.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "code": {
+                    "maxLength": 6,
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "code": {
+                    "maxLength": 6,
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "code": {
+                    "maxLength": 6,
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "studentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "moduleEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "status": {
+                              "enum": [
+                                "Expected",
+                                "Present",
+                                "Absent",
+                                "Excused",
+                                "Late"
+                              ],
+                              "type": "string"
+                            },
+                            "checkedInAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "leftAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "participationMinutes": {
+                              "type": "integer",
+                              "format": "int32",
+                              "nullable": true
+                            },
+                            "recordedBy": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "updatedAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "studentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "moduleEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "status": {
+                              "enum": [
+                                "Expected",
+                                "Present",
+                                "Absent",
+                                "Excused",
+                                "Late"
+                              ],
+                              "type": "string"
+                            },
+                            "checkedInAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "leftAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "participationMinutes": {
+                              "type": "integer",
+                              "format": "int32",
+                              "nullable": true
+                            },
+                            "recordedBy": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "updatedAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "classSessionId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "studentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "moduleEnrollmentId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "status": {
+                              "enum": [
+                                "Expected",
+                                "Present",
+                                "Absent",
+                                "Excused",
+                                "Late"
+                              ],
+                              "type": "string"
+                            },
+                            "checkedInAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "leftAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "participationMinutes": {
+                              "type": "integer",
+                              "format": "int32",
+                              "nullable": true
+                            },
+                            "recordedBy": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "updatedAt": {
+                              "type": "string",
+                              "nullable": true,
+                              "example": "15/06/2026 14:30:00"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/class-sessions/{id}/checkin": {
       "post": {
         "tags": [
@@ -137566,7 +138464,7 @@
           "Media"
         ],
         "summary": "Upload media to class",
-        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. Images are auto face-tagged immediately. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed.",
+        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. A face is not required. Images are auto face-tagged when a registered face matches; otherwise the image is stored with no tags. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed.",
         "parameters": [
           {
             "name": "classId",
@@ -207344,7 +208242,7 @@
           "Program"
         ],
         "summary": "Get all programs",
-        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options.",
+        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options. When status=Active (student catalog), only programs with at least one Standard Open class that still has seats are returned — same enrollability rule as open-classes and tuition checkout.",
         "parameters": [
           {
             "name": "search",
@@ -207433,7 +208331,7 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional)",
+            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional). Active also requires an enrollable Open Standard class with seats.",
             "schema": {
               "enum": [
                 "Draft",
@@ -210540,7 +211438,7 @@
           "Program"
         ],
         "summary": "Get all programs with modules",
-        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options.",
+        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options. When status=Active, only programs with at least one Standard Open class that still has seats are returned.",
         "parameters": [
           {
             "name": "search",
@@ -210629,7 +211527,7 @@
           {
             "name": "status",
             "in": "query",
-            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional)",
+            "description": "Filter by program status: Draft, PendingReview, Approved, Active, Inactive (optional). Active also requires an enrollable Open Standard class with seats.",
             "schema": {
               "enum": [
                 "Draft",
@@ -234094,14 +234992,6 @@
                     },
                     "nullable": true
                   },
-                  "requiredChangeThreadIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "nullable": true
-                  },
                   "clientOperationId": {
                     "type": "string",
                     "nullable": true
@@ -234150,14 +235040,6 @@
                     },
                     "nullable": true
                   },
-                  "requiredChangeThreadIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "nullable": true
-                  },
                   "clientOperationId": {
                     "type": "string",
                     "nullable": true
@@ -234203,14 +235085,6 @@
                         }
                       },
                       "additionalProperties": false
-                    },
-                    "nullable": true
-                  },
-                  "requiredChangeThreadIds": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
                     },
                     "nullable": true
                   },
@@ -235683,7 +236557,7 @@
           "Program"
         ],
         "summary": "Advisory workspace summary for a program",
-        "description": "Includes collaborationContractVersion 2, capabilities, workflow timeline, approvalBlockingCount (Open+Addressed RequiredChanges), separate unreadNoteCount/unreadDiscussionCount, pendingSubmission/latestSubmission, and reviewActionsLocked. Discussion remains allowed when reviewActionsLocked is true.",
+        "description": "Includes collaborationContractVersion 3, capabilities, a 5-stage workflow timeline with round and nextAction, outstandingRequiredCount, fixedRequiredCount, and unreadNoteCount (notes plus the general thread).",
         "parameters": [
           {
             "name": "id",
@@ -235791,18 +236665,6 @@
                               },
                               "nullable": true
                             },
-                            "canAdvise": {
-                              "type": "boolean"
-                            },
-                            "canDecide": {
-                              "type": "boolean"
-                            },
-                            "canEditCurriculum": {
-                              "type": "boolean"
-                            },
-                            "canAssignAdvisor": {
-                              "type": "boolean"
-                            },
                             "capabilities": {
                               "type": "object",
                               "properties": {
@@ -235812,10 +236674,7 @@
                                 "canCreateRequiredChange": {
                                   "type": "boolean"
                                 },
-                                "canDiscuss": {
-                                  "type": "boolean"
-                                },
-                                "canReplyToNotes": {
+                                "canReply": {
                                   "type": "boolean"
                                 },
                                 "canEditCurriculum": {
@@ -235838,7 +236697,6 @@
                                     "Preparation",
                                     "Review",
                                     "Revision",
-                                    "Verification",
                                     "AwaitingPublication",
                                     "Published"
                                   ],
@@ -235865,6 +236723,24 @@
                                 "outstandingRequirementCount": {
                                   "type": "integer",
                                   "format": "int32"
+                                },
+                                "round": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "nextAction": {
+                                  "type": "object",
+                                  "properties": {
+                                    "code": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "forRole": {
+                                      "type": "string",
+                                      "nullable": true
+                                    }
+                                  },
+                                  "additionalProperties": false
                                 },
                                 "stages": {
                                   "type": "array",
@@ -235897,7 +236773,11 @@
                               },
                               "additionalProperties": false
                             },
-                            "approvalBlockingCount": {
+                            "outstandingRequiredCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "fixedRequiredCount": {
                               "type": "integer",
                               "format": "int32"
                             },
@@ -235910,10 +236790,6 @@
                               "format": "int32"
                             },
                             "unreadNoteCount": {
-                              "type": "integer",
-                              "format": "int32"
-                            },
-                            "unreadDiscussionCount": {
                               "type": "integer",
                               "format": "int32"
                             },
@@ -236179,18 +237055,6 @@
                               },
                               "nullable": true
                             },
-                            "canAdvise": {
-                              "type": "boolean"
-                            },
-                            "canDecide": {
-                              "type": "boolean"
-                            },
-                            "canEditCurriculum": {
-                              "type": "boolean"
-                            },
-                            "canAssignAdvisor": {
-                              "type": "boolean"
-                            },
                             "capabilities": {
                               "type": "object",
                               "properties": {
@@ -236200,10 +237064,7 @@
                                 "canCreateRequiredChange": {
                                   "type": "boolean"
                                 },
-                                "canDiscuss": {
-                                  "type": "boolean"
-                                },
-                                "canReplyToNotes": {
+                                "canReply": {
                                   "type": "boolean"
                                 },
                                 "canEditCurriculum": {
@@ -236226,7 +237087,6 @@
                                     "Preparation",
                                     "Review",
                                     "Revision",
-                                    "Verification",
                                     "AwaitingPublication",
                                     "Published"
                                   ],
@@ -236253,6 +237113,24 @@
                                 "outstandingRequirementCount": {
                                   "type": "integer",
                                   "format": "int32"
+                                },
+                                "round": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "nextAction": {
+                                  "type": "object",
+                                  "properties": {
+                                    "code": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "forRole": {
+                                      "type": "string",
+                                      "nullable": true
+                                    }
+                                  },
+                                  "additionalProperties": false
                                 },
                                 "stages": {
                                   "type": "array",
@@ -236285,7 +237163,11 @@
                               },
                               "additionalProperties": false
                             },
-                            "approvalBlockingCount": {
+                            "outstandingRequiredCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "fixedRequiredCount": {
                               "type": "integer",
                               "format": "int32"
                             },
@@ -236298,10 +237180,6 @@
                               "format": "int32"
                             },
                             "unreadNoteCount": {
-                              "type": "integer",
-                              "format": "int32"
-                            },
-                            "unreadDiscussionCount": {
                               "type": "integer",
                               "format": "int32"
                             },
@@ -236567,18 +237445,6 @@
                               },
                               "nullable": true
                             },
-                            "canAdvise": {
-                              "type": "boolean"
-                            },
-                            "canDecide": {
-                              "type": "boolean"
-                            },
-                            "canEditCurriculum": {
-                              "type": "boolean"
-                            },
-                            "canAssignAdvisor": {
-                              "type": "boolean"
-                            },
                             "capabilities": {
                               "type": "object",
                               "properties": {
@@ -236588,10 +237454,7 @@
                                 "canCreateRequiredChange": {
                                   "type": "boolean"
                                 },
-                                "canDiscuss": {
-                                  "type": "boolean"
-                                },
-                                "canReplyToNotes": {
+                                "canReply": {
                                   "type": "boolean"
                                 },
                                 "canEditCurriculum": {
@@ -236614,7 +237477,6 @@
                                     "Preparation",
                                     "Review",
                                     "Revision",
-                                    "Verification",
                                     "AwaitingPublication",
                                     "Published"
                                   ],
@@ -236641,6 +237503,24 @@
                                 "outstandingRequirementCount": {
                                   "type": "integer",
                                   "format": "int32"
+                                },
+                                "round": {
+                                  "type": "integer",
+                                  "format": "int32"
+                                },
+                                "nextAction": {
+                                  "type": "object",
+                                  "properties": {
+                                    "code": {
+                                      "type": "string",
+                                      "nullable": true
+                                    },
+                                    "forRole": {
+                                      "type": "string",
+                                      "nullable": true
+                                    }
+                                  },
+                                  "additionalProperties": false
                                 },
                                 "stages": {
                                   "type": "array",
@@ -236673,7 +237553,11 @@
                               },
                               "additionalProperties": false
                             },
-                            "approvalBlockingCount": {
+                            "outstandingRequiredCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "fixedRequiredCount": {
                               "type": "integer",
                               "format": "int32"
                             },
@@ -236686,10 +237570,6 @@
                               "format": "int32"
                             },
                             "unreadNoteCount": {
-                              "type": "integer",
-                              "format": "int32"
-                            },
-                            "unreadDiscussionCount": {
                               "type": "integer",
                               "format": "int32"
                             },
@@ -236916,7 +237796,6 @@
                                 "Preparation",
                                 "Review",
                                 "Revision",
-                                "Verification",
                                 "AwaitingPublication",
                                 "Published"
                               ],
@@ -236943,6 +237822,24 @@
                             "outstandingRequirementCount": {
                               "type": "integer",
                               "format": "int32"
+                            },
+                            "round": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "nextAction": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "forRole": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
                             "stages": {
                               "type": "array",
@@ -237022,7 +237919,6 @@
                                 "Preparation",
                                 "Review",
                                 "Revision",
-                                "Verification",
                                 "AwaitingPublication",
                                 "Published"
                               ],
@@ -237049,6 +237945,24 @@
                             "outstandingRequirementCount": {
                               "type": "integer",
                               "format": "int32"
+                            },
+                            "round": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "nextAction": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "forRole": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
                             "stages": {
                               "type": "array",
@@ -237128,7 +238042,6 @@
                                 "Preparation",
                                 "Review",
                                 "Revision",
-                                "Verification",
                                 "AwaitingPublication",
                                 "Published"
                               ],
@@ -237155,6 +238068,24 @@
                             "outstandingRequirementCount": {
                               "type": "integer",
                               "format": "int32"
+                            },
+                            "round": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "nextAction": {
+                              "type": "object",
+                              "properties": {
+                                "code": {
+                                  "type": "string",
+                                  "nullable": true
+                                },
+                                "forRole": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
                             "stages": {
                               "type": "array",
@@ -238045,7 +238976,8 @@
                                   "type": {
                                     "enum": [
                                       "Suggestion",
-                                      "RequiredChange"
+                                      "RequiredChange",
+                                      "General"
                                     ],
                                     "type": "string"
                                   },
@@ -239169,7 +240101,8 @@
                                   "type": {
                                     "enum": [
                                       "Suggestion",
-                                      "RequiredChange"
+                                      "RequiredChange",
+                                      "General"
                                     ],
                                     "type": "string"
                                   },
@@ -240293,7 +241226,8 @@
                                   "type": {
                                     "enum": [
                                       "Suggestion",
-                                      "RequiredChange"
+                                      "RequiredChange",
+                                      "General"
                                     ],
                                     "type": "string"
                                   },
@@ -241064,7 +241998,8 @@
             "schema": {
               "enum": [
                 "Suggestion",
-                "RequiredChange"
+                "RequiredChange",
+                "General"
               ],
               "type": "string"
             }
@@ -241154,7 +242089,8 @@
                               "type": {
                                 "enum": [
                                   "Suggestion",
-                                  "RequiredChange"
+                                  "RequiredChange",
+                                  "General"
                                 ],
                                 "type": "string"
                               },
@@ -241224,16 +242160,40 @@
                                 "type": "string",
                                 "nullable": true
                               },
-                              "canAddress": {
-                                "type": "boolean"
+                              "availableActions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "nullable": true
                               },
-                              "canResolve": {
-                                "type": "boolean"
+                              "targetPath": {
+                                "type": "object",
+                                "properties": {
+                                  "moduleId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "courseId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "activityId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "assignmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
                               },
-                              "canReopen": {
-                                "type": "boolean"
-                              },
-                              "canWaive": {
+                              "targetExists": {
                                 "type": "boolean"
                               },
                               "events": {
@@ -241457,7 +242417,8 @@
                               "type": {
                                 "enum": [
                                   "Suggestion",
-                                  "RequiredChange"
+                                  "RequiredChange",
+                                  "General"
                                 ],
                                 "type": "string"
                               },
@@ -241527,16 +242488,40 @@
                                 "type": "string",
                                 "nullable": true
                               },
-                              "canAddress": {
-                                "type": "boolean"
+                              "availableActions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "nullable": true
                               },
-                              "canResolve": {
-                                "type": "boolean"
+                              "targetPath": {
+                                "type": "object",
+                                "properties": {
+                                  "moduleId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "courseId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "activityId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "assignmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
                               },
-                              "canReopen": {
-                                "type": "boolean"
-                              },
-                              "canWaive": {
+                              "targetExists": {
                                 "type": "boolean"
                               },
                               "events": {
@@ -241760,7 +242745,8 @@
                               "type": {
                                 "enum": [
                                   "Suggestion",
-                                  "RequiredChange"
+                                  "RequiredChange",
+                                  "General"
                                 ],
                                 "type": "string"
                               },
@@ -241830,16 +242816,40 @@
                                 "type": "string",
                                 "nullable": true
                               },
-                              "canAddress": {
-                                "type": "boolean"
+                              "availableActions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "nullable": true
                               },
-                              "canResolve": {
-                                "type": "boolean"
+                              "targetPath": {
+                                "type": "object",
+                                "properties": {
+                                  "moduleId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "courseId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "activityId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "assignmentId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  }
+                                },
+                                "additionalProperties": false
                               },
-                              "canReopen": {
-                                "type": "boolean"
-                              },
-                              "canWaive": {
+                              "targetExists": {
                                 "type": "boolean"
                               },
                               "events": {
@@ -242037,7 +243047,8 @@
                   "type": {
                     "enum": [
                       "Suggestion",
-                      "RequiredChange"
+                      "RequiredChange",
+                      "General"
                     ],
                     "type": "string"
                   },
@@ -242096,7 +243107,8 @@
                   "type": {
                     "enum": [
                       "Suggestion",
-                      "RequiredChange"
+                      "RequiredChange",
+                      "General"
                     ],
                     "type": "string"
                   },
@@ -242155,7 +243167,8 @@
                   "type": {
                     "enum": [
                       "Suggestion",
-                      "RequiredChange"
+                      "RequiredChange",
+                      "General"
                     ],
                     "type": "string"
                   },
@@ -242266,7 +243279,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -242336,16 +243350,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -242565,7 +243603,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -242635,16 +243674,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -242864,7 +243927,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -242934,16 +243998,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -243199,7 +244287,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -243269,16 +244358,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -243498,7 +244611,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -243568,16 +244682,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -243797,7 +244935,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -243867,16 +245006,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -244847,13 +246010,1112 @@
         }
       }
     },
+    "/api/programs/{id}/advisory-threads/{threadId}/actions": {
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Perform one advisory thread action",
+        "description": "MarkFixed (manager, open required change, Draft), Acknowledge (manager or author, open suggestion), or Accept (responsible advisor, open or fixed required change). Returns the full thread. clientOperationId is idempotent. Waive is not an action.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "threadId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "MarkFixed",
+                      "Acknowledge",
+                      "Accept"
+                    ],
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "concurrencyVersion": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "clientOperationId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "text/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "MarkFixed",
+                      "Acknowledge",
+                      "Accept"
+                    ],
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "concurrencyVersion": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "clientOperationId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "MarkFixed",
+                      "Acknowledge",
+                      "Accept"
+                    ],
+                    "type": "string"
+                  },
+                  "message": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "concurrencyVersion": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "clientOperationId": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "programId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "submissionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "authorUserId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "authorName": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "targetType": {
+                              "enum": [
+                                "Program",
+                                "Module",
+                                "Course",
+                                "Activity",
+                                "Assignment",
+                                "ResearchMilestone",
+                                "Material",
+                                "RubricCriterion"
+                              ],
+                              "type": "string"
+                            },
+                            "targetId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "targetLabel": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "targetContext": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "type": {
+                              "enum": [
+                                "Suggestion",
+                                "RequiredChange",
+                                "General"
+                              ],
+                              "type": "string"
+                            },
+                            "status": {
+                              "enum": [
+                                "Open",
+                                "Addressed",
+                                "Resolved"
+                              ],
+                              "type": "string"
+                            },
+                            "anchorKind": {
+                              "enum": [
+                                "Node",
+                                "Field",
+                                "Quote"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "anchorField": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "anchorQuote": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "latestMessagePreview": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "lastMessageAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "messageCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "concurrencyVersion": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "latestActivitySequence": {
+                              "type": "integer",
+                              "format": "int64"
+                            },
+                            "originSubmissionNumber": {
+                              "type": "integer",
+                              "format": "int32",
+                              "nullable": true
+                            },
+                            "originReviewRoundIntent": {
+                              "enum": [
+                                "InitialReview",
+                                "RevisionVerification"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "originRoundLabel": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
+                            },
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "targetExists": {
+                              "type": "boolean"
+                            },
+                            "events": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "threadId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "sequence": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                  },
+                                  "eventType": {
+                                    "enum": [
+                                      "Created",
+                                      "MessageAdded",
+                                      "StatusChanged",
+                                      "CorrectionSubmitted",
+                                      "VerificationRecorded",
+                                      "WaiverRecorded"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "actorUserId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "Open",
+                                      "Addressed",
+                                      "Resolved"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "newStatus": {
+                                    "enum": [
+                                      "Open",
+                                      "Addressed",
+                                      "Resolved"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "resolutionKind": {
+                                    "enum": [
+                                      "Verified",
+                                      "Waived"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "verifiedAgainstSubmissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "correctionReferenceIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "nullable": true
+                                  },
+                                  "operationId": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
+                            "messages": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "threadId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "authorUserId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "authorName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "programId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "submissionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "authorUserId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "authorName": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "targetType": {
+                              "enum": [
+                                "Program",
+                                "Module",
+                                "Course",
+                                "Activity",
+                                "Assignment",
+                                "ResearchMilestone",
+                                "Material",
+                                "RubricCriterion"
+                              ],
+                              "type": "string"
+                            },
+                            "targetId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "targetLabel": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "targetContext": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "type": {
+                              "enum": [
+                                "Suggestion",
+                                "RequiredChange",
+                                "General"
+                              ],
+                              "type": "string"
+                            },
+                            "status": {
+                              "enum": [
+                                "Open",
+                                "Addressed",
+                                "Resolved"
+                              ],
+                              "type": "string"
+                            },
+                            "anchorKind": {
+                              "enum": [
+                                "Node",
+                                "Field",
+                                "Quote"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "anchorField": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "anchorQuote": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "latestMessagePreview": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "lastMessageAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "messageCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "concurrencyVersion": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "latestActivitySequence": {
+                              "type": "integer",
+                              "format": "int64"
+                            },
+                            "originSubmissionNumber": {
+                              "type": "integer",
+                              "format": "int32",
+                              "nullable": true
+                            },
+                            "originReviewRoundIntent": {
+                              "enum": [
+                                "InitialReview",
+                                "RevisionVerification"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "originRoundLabel": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
+                            },
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "targetExists": {
+                              "type": "boolean"
+                            },
+                            "events": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "threadId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "sequence": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                  },
+                                  "eventType": {
+                                    "enum": [
+                                      "Created",
+                                      "MessageAdded",
+                                      "StatusChanged",
+                                      "CorrectionSubmitted",
+                                      "VerificationRecorded",
+                                      "WaiverRecorded"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "actorUserId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "Open",
+                                      "Addressed",
+                                      "Resolved"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "newStatus": {
+                                    "enum": [
+                                      "Open",
+                                      "Addressed",
+                                      "Resolved"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "resolutionKind": {
+                                    "enum": [
+                                      "Verified",
+                                      "Waived"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "verifiedAgainstSubmissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "correctionReferenceIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "nullable": true
+                                  },
+                                  "operationId": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
+                            "messages": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "threadId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "authorUserId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "authorName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isSuccess": {
+                      "type": "boolean"
+                    },
+                    "value": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "programId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "submissionId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "authorUserId": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "authorName": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "targetType": {
+                              "enum": [
+                                "Program",
+                                "Module",
+                                "Course",
+                                "Activity",
+                                "Assignment",
+                                "ResearchMilestone",
+                                "Material",
+                                "RubricCriterion"
+                              ],
+                              "type": "string"
+                            },
+                            "targetId": {
+                              "type": "string",
+                              "format": "uuid",
+                              "nullable": true
+                            },
+                            "targetLabel": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "targetContext": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "type": {
+                              "enum": [
+                                "Suggestion",
+                                "RequiredChange",
+                                "General"
+                              ],
+                              "type": "string"
+                            },
+                            "status": {
+                              "enum": [
+                                "Open",
+                                "Addressed",
+                                "Resolved"
+                              ],
+                              "type": "string"
+                            },
+                            "anchorKind": {
+                              "enum": [
+                                "Node",
+                                "Field",
+                                "Quote"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "anchorField": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "anchorQuote": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "latestMessagePreview": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "lastMessageAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "example": "15/06/2026 14:30:00"
+                            },
+                            "messageCount": {
+                              "type": "integer",
+                              "format": "int32"
+                            },
+                            "concurrencyVersion": {
+                              "type": "string",
+                              "format": "uuid"
+                            },
+                            "latestActivitySequence": {
+                              "type": "integer",
+                              "format": "int64"
+                            },
+                            "originSubmissionNumber": {
+                              "type": "integer",
+                              "format": "int32",
+                              "nullable": true
+                            },
+                            "originReviewRoundIntent": {
+                              "enum": [
+                                "InitialReview",
+                                "RevisionVerification"
+                              ],
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "originRoundLabel": {
+                              "type": "string",
+                              "nullable": true
+                            },
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
+                            },
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
+                            },
+                            "targetExists": {
+                              "type": "boolean"
+                            },
+                            "events": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "threadId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "sequence": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                  },
+                                  "eventType": {
+                                    "enum": [
+                                      "Created",
+                                      "MessageAdded",
+                                      "StatusChanged",
+                                      "CorrectionSubmitted",
+                                      "VerificationRecorded",
+                                      "WaiverRecorded"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "actorUserId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "priorStatus": {
+                                    "enum": [
+                                      "Open",
+                                      "Addressed",
+                                      "Resolved"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "newStatus": {
+                                    "enum": [
+                                      "Open",
+                                      "Addressed",
+                                      "Resolved"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "resolutionKind": {
+                                    "enum": [
+                                      "Verified",
+                                      "Waived"
+                                    ],
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "verifiedAgainstSubmissionId": {
+                                    "type": "string",
+                                    "format": "uuid",
+                                    "nullable": true
+                                  },
+                                  "correctionReferenceIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "format": "uuid"
+                                    },
+                                    "nullable": true
+                                  },
+                                  "operationId": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
+                            "messages": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "threadId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "authorUserId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "authorName": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "createdAt": {
+                                    "type": "string",
+                                    "example": "15/06/2026 14:30:00"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "message": {
+                          "type": "string",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/programs/{id}/advisory-threads/{threadId}/status": {
       "patch": {
         "tags": [
           "Program"
         ],
         "summary": "Update advisory thread status",
-        "description": "Returns the full AdvisoryThreadDto (ordered events, updated capability flags, concurrencyVersion). Requires concurrencyVersion; clientOperationId is idempotent. canAddress is only true while the program is Draft (curriculum editable).",
+        "description": "Obsolete. Use POST .../actions. Waive is rejected. Returns the full AdvisoryThreadDto.",
         "parameters": [
           {
             "name": "id",
@@ -245103,7 +247365,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -245173,16 +247436,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -245402,7 +247689,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -245472,16 +247760,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -245701,7 +248013,8 @@
                             "type": {
                               "enum": [
                                 "Suggestion",
-                                "RequiredChange"
+                                "RequiredChange",
+                                "General"
                               ],
                               "type": "string"
                             },
@@ -245771,16 +248084,40 @@
                               "type": "string",
                               "nullable": true
                             },
-                            "canAddress": {
-                              "type": "boolean"
+                            "availableActions": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "nullable": true
                             },
-                            "canResolve": {
-                              "type": "boolean"
+                            "targetPath": {
+                              "type": "object",
+                              "properties": {
+                                "moduleId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "courseId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "activityId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                },
+                                "assignmentId": {
+                                  "type": "string",
+                                  "format": "uuid",
+                                  "nullable": true
+                                }
+                              },
+                              "additionalProperties": false
                             },
-                            "canReopen": {
-                              "type": "boolean"
-                            },
-                            "canWaive": {
+                            "targetExists": {
                               "type": "boolean"
                             },
                             "events": {
@@ -245931,7 +248268,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/advisory-read": {
@@ -248014,7 +250352,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       },
       "post": {
         "tags": [
@@ -248636,7 +250975,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/advisory-discussion/messages/{messageId}": {
@@ -249193,7 +251533,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/advisory-threads/{threadId}/read": {
@@ -249610,7 +251951,8 @@
               }
             }
           }
-        }
+        },
+        "deprecated": true
       }
     },
     "/api/programs/{id}/review-submissions": {
@@ -288669,7 +291011,8 @@
                     "maximum": 2147483647,
                     "minimum": 1,
                     "type": "integer",
-                    "format": "int32"
+                    "format": "int32",
+                    "nullable": true
                   }
                 },
                 "additionalProperties": false
@@ -288746,7 +291089,8 @@
                     "maximum": 2147483647,
                     "minimum": 1,
                     "type": "integer",
-                    "format": "int32"
+                    "format": "int32",
+                    "nullable": true
                   }
                 },
                 "additionalProperties": false
@@ -288823,7 +291167,8 @@
                     "maximum": 2147483647,
                     "minimum": 1,
                     "type": "integer",
-                    "format": "int32"
+                    "format": "int32",
+                    "nullable": true
                   }
                 },
                 "additionalProperties": false
@@ -312465,7 +314810,8 @@
                 "type": {
                   "enum": [
                     "Suggestion",
-                    "RequiredChange"
+                    "RequiredChange",
+                    "General"
                   ],
                   "type": "string"
                 },
@@ -313567,7 +315913,8 @@
                         "type": {
                           "enum": [
                             "Suggestion",
-                            "RequiredChange"
+                            "RequiredChange",
+                            "General"
                           ],
                           "type": "string"
                         },
@@ -314683,7 +317030,8 @@
                     "type": {
                       "enum": [
                         "Suggestion",
-                        "RequiredChange"
+                        "RequiredChange",
+                        "General"
                       ],
                       "type": "string"
                     },
@@ -315037,10 +317385,7 @@
           "canCreateRequiredChange": {
             "type": "boolean"
           },
-          "canDiscuss": {
-            "type": "boolean"
-          },
-          "canReplyToNotes": {
+          "canReply": {
             "type": "boolean"
           },
           "canEditCurriculum": {
@@ -316678,6 +319023,20 @@
         },
         "additionalProperties": false
       },
+      "AdvisoryNextActionDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "forRole": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AdvisoryParticipantDto": {
         "type": "object",
         "properties": {
@@ -317022,6 +319381,59 @@
         },
         "additionalProperties": false
       },
+      "AdvisoryTargetPathDto": {
+        "type": "object",
+        "properties": {
+          "moduleId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "courseId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "activityId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "assignmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdvisoryThreadActionRequest": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "enum": [
+              "MarkFixed",
+              "Acknowledge",
+              "Accept"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "concurrencyVersion": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "clientOperationId": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "AdvisoryThreadDto": {
         "type": "object",
         "properties": {
@@ -317075,7 +319487,8 @@
           "type": {
             "enum": [
               "Suggestion",
-              "RequiredChange"
+              "RequiredChange",
+              "General"
             ],
             "type": "string"
           },
@@ -317145,16 +319558,40 @@
             "type": "string",
             "nullable": true
           },
-          "canAddress": {
-            "type": "boolean"
+          "availableActions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
           },
-          "canResolve": {
-            "type": "boolean"
+          "targetPath": {
+            "type": "object",
+            "properties": {
+              "moduleId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "courseId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "activityId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              },
+              "assignmentId": {
+                "type": "string",
+                "format": "uuid",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
-          "canReopen": {
-            "type": "boolean"
-          },
-          "canWaive": {
+          "targetExists": {
             "type": "boolean"
           },
           "events": {
@@ -317352,7 +319789,8 @@
                   "type": {
                     "enum": [
                       "Suggestion",
-                      "RequiredChange"
+                      "RequiredChange",
+                      "General"
                     ],
                     "type": "string"
                   },
@@ -317422,16 +319860,40 @@
                     "type": "string",
                     "nullable": true
                   },
-                  "canAddress": {
-                    "type": "boolean"
+                  "availableActions": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "nullable": true
                   },
-                  "canResolve": {
-                    "type": "boolean"
+                  "targetPath": {
+                    "type": "object",
+                    "properties": {
+                      "moduleId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "courseId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "activityId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      },
+                      "assignmentId": {
+                        "type": "string",
+                        "format": "uuid",
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": false
                   },
-                  "canReopen": {
-                    "type": "boolean"
-                  },
-                  "canWaive": {
+                  "targetExists": {
                     "type": "boolean"
                   },
                   "events": {
@@ -317651,7 +320113,8 @@
                     "type": {
                       "enum": [
                         "Suggestion",
-                        "RequiredChange"
+                        "RequiredChange",
+                        "General"
                       ],
                       "type": "string"
                     },
@@ -317721,16 +320184,40 @@
                       "type": "string",
                       "nullable": true
                     },
-                    "canAddress": {
-                      "type": "boolean"
+                    "availableActions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "nullable": true
                     },
-                    "canResolve": {
-                      "type": "boolean"
+                    "targetPath": {
+                      "type": "object",
+                      "properties": {
+                        "moduleId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "courseId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "activityId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        },
+                        "assignmentId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "nullable": true
+                        }
+                      },
+                      "additionalProperties": false
                     },
-                    "canReopen": {
-                      "type": "boolean"
-                    },
-                    "canWaive": {
+                    "targetExists": {
                       "type": "boolean"
                     },
                     "events": {
@@ -317946,7 +320433,8 @@
                 "type": {
                   "enum": [
                     "Suggestion",
-                    "RequiredChange"
+                    "RequiredChange",
+                    "General"
                   ],
                   "type": "string"
                 },
@@ -318016,16 +320504,40 @@
                   "type": "string",
                   "nullable": true
                 },
-                "canAddress": {
-                  "type": "boolean"
+                "availableActions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "nullable": true
                 },
-                "canResolve": {
-                  "type": "boolean"
+                "targetPath": {
+                  "type": "object",
+                  "properties": {
+                    "moduleId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "courseId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "activityId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    },
+                    "assignmentId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "nullable": true
+                    }
+                  },
+                  "additionalProperties": false
                 },
-                "canReopen": {
-                  "type": "boolean"
-                },
-                "canWaive": {
+                "targetExists": {
                   "type": "boolean"
                 },
                 "events": {
@@ -318222,7 +320734,8 @@
               "type": {
                 "enum": [
                   "Suggestion",
-                  "RequiredChange"
+                  "RequiredChange",
+                  "General"
                 ],
                 "type": "string"
               },
@@ -318292,16 +320805,40 @@
                 "type": "string",
                 "nullable": true
               },
-              "canAddress": {
-                "type": "boolean"
+              "availableActions": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "nullable": true
               },
-              "canResolve": {
-                "type": "boolean"
+              "targetPath": {
+                "type": "object",
+                "properties": {
+                  "moduleId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "courseId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "activityId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  },
+                  "assignmentId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
               },
-              "canReopen": {
-                "type": "boolean"
-              },
-              "canWaive": {
+              "targetExists": {
                 "type": "boolean"
               },
               "events": {
@@ -318549,7 +321086,8 @@
           "type": {
             "enum": [
               "Suggestion",
-              "RequiredChange"
+              "RequiredChange",
+              "General"
             ],
             "type": "string"
           },
@@ -318780,7 +321318,6 @@
               "Preparation",
               "Review",
               "Revision",
-              "Verification",
               "AwaitingPublication",
               "Published"
             ],
@@ -318807,6 +321344,24 @@
           "outstandingRequirementCount": {
             "type": "integer",
             "format": "int32"
+          },
+          "round": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAction": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "nullable": true
+              },
+              "forRole": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "additionalProperties": false
           },
           "stages": {
             "type": "array",
@@ -318864,7 +321419,6 @@
                       "Preparation",
                       "Review",
                       "Revision",
-                      "Verification",
                       "AwaitingPublication",
                       "Published"
                     ],
@@ -318891,6 +321445,24 @@
                   "outstandingRequirementCount": {
                     "type": "integer",
                     "format": "int32"
+                  },
+                  "round": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "nextAction": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "forRole": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": false
                   },
                   "stages": {
                     "type": "array",
@@ -318962,7 +321534,6 @@
                   "Preparation",
                   "Review",
                   "Revision",
-                  "Verification",
                   "AwaitingPublication",
                   "Published"
                 ],
@@ -318989,6 +321560,24 @@
               "outstandingRequirementCount": {
                 "type": "integer",
                 "format": "int32"
+              },
+              "round": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "forRole": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
               },
               "stages": {
                 "type": "array",
@@ -337229,7 +339818,8 @@
           "type": {
             "enum": [
               "Suggestion",
-              "RequiredChange"
+              "RequiredChange",
+              "General"
             ],
             "type": "string"
           },
@@ -338216,7 +340806,8 @@
             "maximum": 2147483647,
             "minimum": 1,
             "type": "integer",
-            "format": "int32"
+            "format": "int32",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -374256,18 +376847,6 @@
             },
             "nullable": true
           },
-          "canAdvise": {
-            "type": "boolean"
-          },
-          "canDecide": {
-            "type": "boolean"
-          },
-          "canEditCurriculum": {
-            "type": "boolean"
-          },
-          "canAssignAdvisor": {
-            "type": "boolean"
-          },
           "capabilities": {
             "type": "object",
             "properties": {
@@ -374277,10 +376856,7 @@
               "canCreateRequiredChange": {
                 "type": "boolean"
               },
-              "canDiscuss": {
-                "type": "boolean"
-              },
-              "canReplyToNotes": {
+              "canReply": {
                 "type": "boolean"
               },
               "canEditCurriculum": {
@@ -374303,7 +376879,6 @@
                   "Preparation",
                   "Review",
                   "Revision",
-                  "Verification",
                   "AwaitingPublication",
                   "Published"
                 ],
@@ -374330,6 +376905,24 @@
               "outstandingRequirementCount": {
                 "type": "integer",
                 "format": "int32"
+              },
+              "round": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "nextAction": {
+                "type": "object",
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "forRole": {
+                    "type": "string",
+                    "nullable": true
+                  }
+                },
+                "additionalProperties": false
               },
               "stages": {
                 "type": "array",
@@ -374362,7 +376955,11 @@
             },
             "additionalProperties": false
           },
-          "approvalBlockingCount": {
+          "outstandingRequiredCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fixedRequiredCount": {
             "type": "integer",
             "format": "int32"
           },
@@ -374375,10 +376972,6 @@
             "format": "int32"
           },
           "unreadNoteCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "unreadDiscussionCount": {
             "type": "integer",
             "format": "int32"
           },
@@ -374622,18 +377215,6 @@
                     },
                     "nullable": true
                   },
-                  "canAdvise": {
-                    "type": "boolean"
-                  },
-                  "canDecide": {
-                    "type": "boolean"
-                  },
-                  "canEditCurriculum": {
-                    "type": "boolean"
-                  },
-                  "canAssignAdvisor": {
-                    "type": "boolean"
-                  },
                   "capabilities": {
                     "type": "object",
                     "properties": {
@@ -374643,10 +377224,7 @@
                       "canCreateRequiredChange": {
                         "type": "boolean"
                       },
-                      "canDiscuss": {
-                        "type": "boolean"
-                      },
-                      "canReplyToNotes": {
+                      "canReply": {
                         "type": "boolean"
                       },
                       "canEditCurriculum": {
@@ -374669,7 +377247,6 @@
                           "Preparation",
                           "Review",
                           "Revision",
-                          "Verification",
                           "AwaitingPublication",
                           "Published"
                         ],
@@ -374696,6 +377273,24 @@
                       "outstandingRequirementCount": {
                         "type": "integer",
                         "format": "int32"
+                      },
+                      "round": {
+                        "type": "integer",
+                        "format": "int32"
+                      },
+                      "nextAction": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "forRole": {
+                            "type": "string",
+                            "nullable": true
+                          }
+                        },
+                        "additionalProperties": false
                       },
                       "stages": {
                         "type": "array",
@@ -374728,7 +377323,11 @@
                     },
                     "additionalProperties": false
                   },
-                  "approvalBlockingCount": {
+                  "outstandingRequiredCount": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "fixedRequiredCount": {
                     "type": "integer",
                     "format": "int32"
                   },
@@ -374741,10 +377340,6 @@
                     "format": "int32"
                   },
                   "unreadNoteCount": {
-                    "type": "integer",
-                    "format": "int32"
-                  },
-                  "unreadDiscussionCount": {
                     "type": "integer",
                     "format": "int32"
                   },
@@ -375002,18 +377597,6 @@
                 },
                 "nullable": true
               },
-              "canAdvise": {
-                "type": "boolean"
-              },
-              "canDecide": {
-                "type": "boolean"
-              },
-              "canEditCurriculum": {
-                "type": "boolean"
-              },
-              "canAssignAdvisor": {
-                "type": "boolean"
-              },
               "capabilities": {
                 "type": "object",
                 "properties": {
@@ -375023,10 +377606,7 @@
                   "canCreateRequiredChange": {
                     "type": "boolean"
                   },
-                  "canDiscuss": {
-                    "type": "boolean"
-                  },
-                  "canReplyToNotes": {
+                  "canReply": {
                     "type": "boolean"
                   },
                   "canEditCurriculum": {
@@ -375049,7 +377629,6 @@
                       "Preparation",
                       "Review",
                       "Revision",
-                      "Verification",
                       "AwaitingPublication",
                       "Published"
                     ],
@@ -375076,6 +377655,24 @@
                   "outstandingRequirementCount": {
                     "type": "integer",
                     "format": "int32"
+                  },
+                  "round": {
+                    "type": "integer",
+                    "format": "int32"
+                  },
+                  "nextAction": {
+                    "type": "object",
+                    "properties": {
+                      "code": {
+                        "type": "string",
+                        "nullable": true
+                      },
+                      "forRole": {
+                        "type": "string",
+                        "nullable": true
+                      }
+                    },
+                    "additionalProperties": false
                   },
                   "stages": {
                     "type": "array",
@@ -375108,7 +377705,11 @@
                 },
                 "additionalProperties": false
               },
-              "approvalBlockingCount": {
+              "outstandingRequiredCount": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "fixedRequiredCount": {
                 "type": "integer",
                 "format": "int32"
               },
@@ -375121,10 +377722,6 @@
                 "format": "int32"
               },
               "unreadNoteCount": {
-                "type": "integer",
-                "format": "int32"
-              },
-              "unreadDiscussionCount": {
                 "type": "integer",
                 "format": "int32"
               },
@@ -388412,14 +391009,6 @@
                 }
               },
               "additionalProperties": false
-            },
-            "nullable": true
-          },
-          "requiredChangeThreadIds": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uuid"
             },
             "nullable": true
           },

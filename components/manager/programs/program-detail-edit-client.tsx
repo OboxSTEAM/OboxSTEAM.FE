@@ -7,7 +7,7 @@ import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
-import { ManagerAdvisoryPanel, AdvisoryCollaborateButton } from "@/components/advisory/manager-advisory-panel";
+import { ManagerRevisionChecklist } from "@/components/advisory/manager-revision-checklist";
 import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
@@ -17,6 +17,7 @@ import { ProgramReviewsManager } from "@/components/manager/programs/program-rev
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
+  getAdvisoryThreads,
   getAdvisoryTimeline,
   getProgramAdvisoryWorkspace,
   getProgramFrameworkById,
@@ -107,7 +108,6 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
   const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
   const [activeTab, setActiveTab] = useState<TabId>("curriculum");
-  const [advisoryOpen, setAdvisoryOpen] = useState(false);
   const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
     locked: false,
     reason: null,
@@ -120,7 +120,7 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
 
   useCurriculumSync(program.id, handleSilentSync);
 
-  const { data: advisoryWorkspaceData } = useClientFetch({
+  const { data: advisoryWorkspaceData, retry: retryAdvisoryWorkspace } = useClientFetch({
     fetcher: () => getProgramAdvisoryWorkspace(program.id),
     deps: [program.id],
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
@@ -163,6 +163,13 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     })();
   }, [prepFramework?.expertId, program, router]);
 
+  const { data: advisoryThreadsData, retry: retryAdvisoryThreads } = useClientFetch({
+    enabled: advisoryWorkspace != null,
+    fetcher: () => getAdvisoryThreads(program.id),
+    deps: [program.id, advisoryWorkspace != null],
+    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
+  });
+  const advisoryThreads = advisoryThreadsData?.data ?? [];
   const { data: advisoryTimelineData } = useClientFetch({
     enabled: advisoryWorkspace != null,
     fetcher: () => getAdvisoryTimeline(program.id),
@@ -218,6 +225,8 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
             hasFramework={program.frameworkId != null}
             hasAdvisor={program.advisorExpertId != null}
             moduleCount={program.modules.length}
+            outstandingRequiredCount={advisoryWorkspace?.outstandingRequiredCount ?? 0}
+            reviewRound={advisoryWorkspace?.workflow?.round ?? 0}
             onChanged={() => router.refresh()}
           />
         </div>
@@ -242,21 +251,15 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
               <AdvisoryWorkflowTimeline
                 timeline={advisoryTimelineData?.data ?? advisoryWorkspace?.workflow}
                 participants={advisoryWorkspace?.participants}
-                action={
-                  <AdvisoryCollaborateButton
-                    expanded={advisoryOpen}
-                    outstandingCount={
-                      advisoryWorkspace?.approvalBlockingCount ??
-                      advisoryWorkspace?.workflow?.outstandingRequirementCount ??
-                      0
-                    }
-                    unreadTotal={
-                      (advisoryWorkspace?.unreadDiscussionCount ?? 0) +
-                      (advisoryWorkspace?.unreadNoteCount ?? 0)
-                    }
-                    onClick={() => setAdvisoryOpen((open) => !open)}
-                  />
-                }
+              />
+            ) : null}
+            {showAdvisoryPanel && program.status === "Draft" ? (
+              <ManagerRevisionChecklist
+                threads={advisoryThreads}
+                fixedRequiredCount={advisoryWorkspace?.fixedRequiredCount ?? 0}
+                outstandingRequiredCount={advisoryWorkspace?.outstandingRequiredCount ?? 0}
+                canResubmit={(advisoryWorkspace?.outstandingRequiredCount ?? 0) === 0
+                  && (advisoryWorkspace?.fixedRequiredCount ?? 0) > 0}
               />
             ) : null}
             <div className="w-full">
@@ -275,18 +278,15 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
                       : cohortLock.reason
                   }
                   blockingClasses={cohortLock.blockingClasses}
+                  advisoryThreads={advisoryThreads}
+                  advisoryCapabilities={advisoryWorkspace?.capabilities}
+                  onAdvisoryChanged={() => {
+                    retryAdvisoryThreads();
+                    retryAdvisoryWorkspace();
+                  }}
                 />
               </Suspense>
             </div>
-            {showAdvisoryPanel ? (
-              <ManagerAdvisoryPanel
-                program={program}
-                workspace={advisoryWorkspace}
-                isOpen={advisoryOpen}
-                onOpenChange={setAdvisoryOpen}
-                hideLauncher
-              />
-            ) : null}
           </div>
         )}
 

@@ -52,14 +52,14 @@ const ACTION_COPY: Record<
     title: "Gửi thẩm định chương trình?",
     description:
       "Chương trình sẽ chuyển sang trạng thái Chờ duyệt và khung nội dung bị khóa cho tới khi chuyên gia phản hồi.",
-    confirmLabel: "Gửi duyệt",
+    confirmLabel: "Gửi thẩm định",
     success: "Đã gửi chương trình cho hội đồng thẩm định.",
   },
   withdraw: {
     title: "Rút chương trình khỏi hàng chờ?",
     description:
       "Chương trình trở về trạng thái Bản nháp để bạn tiếp tục chỉnh sửa khung nội dung.",
-    confirmLabel: "Rút duyệt",
+    confirmLabel: "Rút yêu cầu thẩm định",
     success: "Đã rút chương trình về bản nháp.",
   },
   publish: {
@@ -77,6 +77,8 @@ type ProgramReviewActionsProps = {
   hasFramework: boolean;
   hasAdvisor?: boolean;
   moduleCount: number;
+  outstandingRequiredCount?: number;
+  reviewRound?: number;
   onChanged?: () => void;
 };
 
@@ -86,6 +88,8 @@ export function ProgramReviewActions({
   hasFramework,
   hasAdvisor = false,
   moduleCount,
+  outstandingRequiredCount = 0,
+  reviewRound = 0,
   onChanged,
 }: ProgramReviewActionsProps) {
   const router = useRouter();
@@ -112,7 +116,10 @@ export function ProgramReviewActions({
     }
   }
 
-  const canSubmit = status === "Draft" && moduleCount > 0;
+  const canSubmit =
+    status === "Draft" && moduleCount > 0 && outstandingRequiredCount === 0;
+  const submitLabel =
+    reviewRound > 1 ? `Gửi lại thẩm định (lần ${reviewRound})` : "Gửi thẩm định";
 
   return (
     <>
@@ -158,7 +165,7 @@ export function ProgramReviewActions({
           {status === "Draft" ? (
             <ActionButton
               icon={Send}
-              label="Gửi duyệt"
+              label={submitLabel}
               disabled={!canSubmit || isBusy}
               onClick={() => setPendingAction("submit")}
             />
@@ -167,7 +174,7 @@ export function ProgramReviewActions({
           {status === "PendingReview" ? (
             <ActionButton
               icon={Undo2}
-              label="Rút duyệt"
+              label="Rút yêu cầu thẩm định"
               variant="outline"
               disabled={isBusy}
               onClick={() => setPendingAction("withdraw")}
@@ -184,7 +191,7 @@ export function ProgramReviewActions({
               />
               <ActionButton
                 icon={Undo2}
-                label="Rút duyệt"
+                label="Rút yêu cầu thẩm định"
                 variant="outline"
                 disabled={isBusy}
                 onClick={() => setPendingAction("withdraw")}

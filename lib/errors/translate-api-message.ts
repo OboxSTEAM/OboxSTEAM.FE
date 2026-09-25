@@ -17,7 +17,9 @@ const EXACT_VI: Record<string, string> = {
   FRAMEWORK_CHECK_FAILED:
     "Kiểm tra đối sánh khung năng lực chưa đạt. Vui lòng kiểm tra lại cấu trúc chương trình.",
   APPROVAL_BLOCKED:
-    "Còn yêu cầu chỉnh sửa bắt buộc (Required Change) chưa được giải quyết dứt điểm.",
+    "Còn mục bắt buộc sửa chưa được chấp nhận.",
+  REQUIRED_CHANGES_NOT_FIXED:
+    "Còn mục bắt buộc sửa chưa đánh dấu Đã sửa. Hãy xử lý hết trước khi gửi lại thẩm định.",
   SUBMISSION_CONCURRENCY_STALE:
     "Dữ liệu thẩm định đã được cập nhật bởi thao tác khác. Vui lòng tải lại trang.",
   ADVISORY_ANCHOR_FIELD_INVALID:
@@ -159,7 +161,11 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
   },
   {
     pattern: /APPROVAL_BLOCKED|unresolved RequiredChange/i,
-    vi: "Còn yêu cầu chỉnh sửa bắt buộc (Required Change) chưa được giải quyết dứt điểm.",
+    vi: "Còn mục bắt buộc sửa chưa được chấp nhận.",
+  },
+  {
+    pattern: /REQUIRED_CHANGES_NOT_FIXED/i,
+    vi: "Còn mục bắt buộc sửa chưa đánh dấu Đã sửa. Hãy xử lý hết trước khi gửi lại thẩm định.",
   },
   {
     pattern: /SUBMISSION_CONCURRENCY_STALE|concurrency.*stale/i,

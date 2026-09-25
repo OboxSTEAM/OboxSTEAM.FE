@@ -32,7 +32,6 @@ export const requestCurriculumChangesSchema = z.object({
     .nullish()
     .transform((value) => value || null),
   scores: z.array(reviewCriterionScoreRequestSchema).optional().nullable(),
-  requiredChangeThreadIds: z.array(z.string().uuid()).max(100).optional().nullable(),
   clientOperationId: z.string().trim().max(100).optional().nullable(),
 });
 

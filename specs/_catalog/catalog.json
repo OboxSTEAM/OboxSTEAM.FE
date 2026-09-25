@@ -446,6 +446,11 @@
         "description": "Generates a fresh QR token and 6-digit fallback code for the session. The pair expires after 60 seconds — call again to rotate. Only the assigned mentor (or Manager/Admin) may generate."
       },
       {
+        "path": "/api/class-sessions/checkin-by-token",
+        "method": "post",
+        "description": "Student self check-in without a session id in the path. Body must contain exactly one of token (QR UUID) or code (6-digit). Resolves a live non-expired credential to the class session, then records attendance as Present. A 6-digit code must match exactly one live session — zero or multiple hits fail closed."
+      },
+      {
         "path": "/api/class-sessions/{id}/checkin",
         "method": "post",
         "description": "Student self check-in using the QR token (mobile scan) or the 6-digit fallback code (web manual entry). Records attendance as Present."
@@ -805,7 +810,7 @@
       {
         "path": "/api/media/upload",
         "method": "post",
-        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. Images are auto face-tagged immediately. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed."
+        "description": "Uploads an image (.jpg, .jpeg, .png) or video (.mp4, .mov) for a class. classId is required; classSessionId is optional and must belong to that class. A face is not required. Images are auto face-tagged when a registered face matches; otherwise the image is stored with no tags. Videos: raw upload + MediaConvert submit in one request; AWS SNS webhooks complete transcode and start Rekognition. Call POST /api/media/{mediaId}/process-tags to poll face tags if webhooks are delayed."
       },
       {
         "path": "/api/media",
@@ -1149,7 +1154,7 @@
       {
         "path": "/api/programs",
         "method": "get",
-        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options."
+        "description": "Retrieve a paginated list of program information without modules. Supports search, filter, and sort options. When status=Active (student catalog), only programs with at least one Standard Open class that still has seats are returned — same enrollability rule as open-classes and tuition checkout."
       },
       {
         "path": "/api/programs",
@@ -1159,7 +1164,7 @@
       {
         "path": "/api/programs/with-modules",
         "method": "get",
-        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options."
+        "description": "Retrieve a paginated list of programs including their modules. Supports search, filter, and sort options. When status=Active, only programs with at least one Standard Open class that still has seats are returned."
       },
       {
         "path": "/api/programs/{id}/curriculum",
@@ -1253,7 +1258,7 @@
       {
         "path": "/api/programs/{id}/advisory",
         "method": "get",
-        "description": "Includes collaborationContractVersion 2, capabilities, workflow timeline, approvalBlockingCount (Open+Addressed RequiredChanges), separate unreadNoteCount/unreadDiscussionCount, pendingSubmission/latestSubmission, and reviewActionsLocked. Discussion remains allowed when reviewActionsLocked is true."
+        "description": "Includes collaborationContractVersion 3, capabilities, a 5-stage workflow timeline with round and nextAction, outstandingRequiredCount, fixedRequiredCount, and unreadNoteCount (notes plus the general thread)."
       },
       {
         "path": "/api/programs/{id}/advisory/timeline",
@@ -1295,9 +1300,14 @@
         "method": "post"
       },
       {
+        "path": "/api/programs/{id}/advisory-threads/{threadId}/actions",
+        "method": "post",
+        "description": "MarkFixed (manager, open required change, Draft), Acknowledge (manager or author, open suggestion), or Accept (responsible advisor, open or fixed required change). Returns the full thread. clientOperationId is idempotent. Waive is not an action."
+      },
+      {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/status",
         "method": "patch",
-        "description": "Returns the full AdvisoryThreadDto (ordered events, updated capability flags, concurrencyVersion). Requires concurrencyVersion; clientOperationId is idempotent. canAddress is only true while the program is Draft (curriculum editable)."
+        "description": "Obsolete. Use POST .../actions. Waive is rejected. Returns the full AdvisoryThreadDto."
       },
       {
         "path": "/api/programs/{id}/advisory-read",
@@ -1788,6 +1798,9 @@
         "name": "AdvisoryMineItemDtoPaginationResponseDataContent"
       },
       {
+        "name": "AdvisoryNextActionDto"
+      },
+      {
         "name": "AdvisoryParticipantDto"
       },
       {
@@ -1798,6 +1811,12 @@
       },
       {
         "name": "AdvisoryReferenceDtoResponseDataContent"
+      },
+      {
+        "name": "AdvisoryTargetPathDto"
+      },
+      {
+        "name": "AdvisoryThreadActionRequest"
       },
       {
         "name": "AdvisoryThreadDto"

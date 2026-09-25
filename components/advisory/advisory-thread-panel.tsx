@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle2, CircleSlash2, Loader2, RotateCcw, Send } from "lucide-react";
+import { CheckCircle2, Loader2, Send } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,16 +13,18 @@ import {
   addAdvisoryMessage,
   getAdvisoryMessages,
   getAdvisoryThread,
+  performAdvisoryThreadAction,
   recordAdvisoryThreadRead,
-  updateAdvisoryThreadStatus,
   type AdvisoryThread,
-  type AdvisoryThreadStatus,
+  type AdvisoryThreadAction,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
-  ADVISORY_THREAD_STATUS_LABELS,
+  ADVISORY_THREAD_ACTION_LABELS,
   ADVISORY_THREAD_TYPE_LABELS,
   ADVISORY_TARGET_TYPE_LABELS,
+  describeAdvisoryEvent,
+  getThreadStatusLabel,
 } from "@/lib/expert/advisory-labels";
 import { cn } from "@/lib/utils";
 
@@ -32,9 +34,8 @@ type AdvisoryThreadPanelProps = {
   isAdvisor: boolean;
   isManager: boolean;
   reviewActionsLocked?: boolean;
-  canReplyToNotes?: boolean;
-  /** Pending review round. Carried threads still store the earlier submission id. */
-  verificationSubmissionId?: string | null;
+  canReply?: boolean;
+  compact?: boolean;
   onThreadUpdated?: () => void;
 };
 
@@ -55,8 +56,8 @@ export function AdvisoryThreadPanel({
   programId,
   thread,
   reviewActionsLocked = false,
-  canReplyToNotes = true,
-  verificationSubmissionId = null,
+  canReply = true,
+  compact = false,
   onThreadUpdated,
 }: AdvisoryThreadPanelProps) {
   const { profile } = useCurrentUser();
@@ -67,7 +68,6 @@ export function AdvisoryThreadPanel({
   }>({ threadId: null, text: "" });
   const [isSending, setIsSending] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-  const [actionMessage, setActionMessage] = useState("");
 
   const { data, isLoading, mutate } = useClientFetch({
     enabled: thread != null,
@@ -103,7 +103,7 @@ export function AdvisoryThreadPanel({
   }
 
   async function handleSendReply() {
-    if (!activeThread || !canReplyToNotes) return;
+    if (!activeThread || !canReply) return;
     const trimmed = reply.trim();
     if (!trimmed) return;
 
@@ -132,29 +132,18 @@ export function AdvisoryThreadPanel({
     }
   }
 
-  async function handleStatusChange(
-    status: AdvisoryThreadStatus,
-    resolutionKind?: "Verified" | "Waived",
-  ) {
+  async function handleAction(action: AdvisoryThreadAction) {
     if (!activeThread) return;
     setIsUpdatingStatus(true);
     try {
-      await updateAdvisoryThreadStatus(programId, activeThread.id, {
-        status,
-        message: actionMessage.trim() || null,
+      await performAdvisoryThreadAction(programId, activeThread.id, {
+        action,
         concurrencyVersion: activeThread.concurrencyVersion,
-        resolutionKind: status === "Resolved" ? resolutionKind ?? null : null,
-        verifiedAgainstSubmissionId:
-          status === "Resolved"
-            ? verificationSubmissionId || activeThread.submissionId
-            : null,
         clientOperationId: crypto.randomUUID(),
       });
       showAppSuccess({
-        title: "Đã cập nhật trạng thái",
-        description: ADVISORY_THREAD_STATUS_LABELS[status],
+        title: ADVISORY_THREAD_ACTION_LABELS[action],
       });
-      setActionMessage("");
       retryDetail();
       onThreadUpdated?.();
     } catch (error) {
@@ -172,14 +161,12 @@ export function AdvisoryThreadPanel({
     );
   }
 
-  const canAddress = activeThread.canAddress && !reviewActionsLocked;
-  const canResolve = activeThread.canResolve && !reviewActionsLocked;
-  const canReopen = activeThread.canReopen && !reviewActionsLocked;
-  const canWaive = activeThread.canWaive && !reviewActionsLocked;
-  const showActionForm = canAddress || canResolve || canReopen || canWaive;
+  const primaryAction = reviewActionsLocked
+    ? null
+    : (activeThread.availableActions[0] ?? null);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className={cn("flex flex-col", compact ? "min-h-0" : "h-full")}>
       <header className="border-b border-border px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <Badge
@@ -192,7 +179,7 @@ export function AdvisoryThreadPanel({
             {ADVISORY_THREAD_TYPE_LABELS[activeThread.type]}
           </Badge>
           <Badge variant="outline" className="rounded-md text-[11px]">
-            {ADVISORY_THREAD_STATUS_LABELS[activeThread.status]}
+            {getThreadStatusLabel(activeThread.type, activeThread.status)}
           </Badge>
         </div>
         <p className="mt-1 text-sm font-semibold text-foreground">
@@ -203,71 +190,21 @@ export function AdvisoryThreadPanel({
         ) : null}
 
         <div className="mt-3 flex flex-wrap gap-2">
-          {canAddress ? (
+          {primaryAction ? (
             <Button
               type="button"
               size="sm"
-              variant="outline"
               disabled={isUpdatingStatus}
-              onClick={() => void handleStatusChange("Addressed")}
+              onClick={() => void handleAction(primaryAction)}
               className="h-8 gap-1.5 rounded-lg text-xs font-semibold"
             >
               <CheckCircle2 className="size-3.5" />
-              Đánh dấu đã xử lý
+              {ADVISORY_THREAD_ACTION_LABELS[primaryAction]}
             </Button>
-          ) : null}
-          {canResolve ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isUpdatingStatus}
-              onClick={() => void handleStatusChange("Resolved", "Verified")}
-              className="h-8 gap-1.5 rounded-lg text-xs font-semibold"
-            >
-              <CheckCircle2 className="size-3.5" />
-              Xác minh
-            </Button>
-          ) : null}
-          {canWaive ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isUpdatingStatus}
-              onClick={() => void handleStatusChange("Resolved", "Waived")}
-              className="h-8 gap-1.5 rounded-lg text-xs font-semibold"
-            >
-              <CircleSlash2 className="size-3.5" />
-              Miễn trừ
-            </Button>
-          ) : null}
-          {canReopen ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              disabled={isUpdatingStatus}
-              onClick={() => void handleStatusChange("Open")}
-              className="h-8 gap-1.5 rounded-lg text-xs font-semibold"
-            >
-              <RotateCcw className="size-3.5" />
-              Mở lại
-            </Button>
-          ) : null}
-          {showActionForm ? (
-            <Textarea
-              rows={2}
-              value={actionMessage}
-              onChange={(event) => setActionMessage(event.target.value)}
-              placeholder="Ghi chú xử lý hoặc lý do miễn trừ (không bắt buộc)…"
-              disabled={isUpdatingStatus}
-              className="basis-full min-h-[56px] rounded-lg border-input bg-background text-xs"
-            />
           ) : null}
           {reviewActionsLocked ? (
             <p className="basis-full text-[11px] text-muted-foreground">
-              Thao tác review đang bị khóa; Discussion vẫn khả dụng.
+              Đang chờ chuyên gia thẩm định.
             </p>
           ) : null}
         </div>
@@ -334,22 +271,20 @@ export function AdvisoryThreadPanel({
           })
         )}
         {activeThread.events
-          .filter((event) => event.eventType !== "MessageAdded")
+          .filter((event) => event.eventType !== "MessageAdded" && event.eventType !== "Created")
           .map((event) => (
-            <article
+            <p
               key={event.id}
-              className="mx-auto w-fit max-w-[90%] rounded-lg border border-dashed border-border bg-muted/30 px-3 py-1.5 text-center text-[11px] text-muted-foreground"
+              className="text-center text-[11px] text-muted-foreground"
             >
-              <span className="font-semibold text-foreground">Hoạt động</span>
-              <span className="mx-1">·</span>
-              {event.message || event.eventType}
-            </article>
+              {describeAdvisoryEvent(event)}
+            </p>
           ))}
       </div>
 
       <footer className="border-t border-border p-4">
-        {!canReplyToNotes ? (
-          <p className="text-xs text-muted-foreground">Bạn chỉ có quyền xem ghi chú trong ngữ cảnh này.</p>
+        {!canReply ? (
+          <p className="text-xs text-muted-foreground">Bạn chỉ có quyền xem nhận xét trong ngữ cảnh này.</p>
         ) : (
           <div className="flex gap-2">
             <Textarea
