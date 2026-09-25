@@ -7,6 +7,10 @@ import { CalendarRange, Sparkles, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
+  DateTimePicker,
+  formatLocalInputDisplay,
+} from "@/components/ui/date-time-picker";
+import {
   Dialog,
   DialogClose,
   DialogDescription,
@@ -129,6 +133,10 @@ export function ClassFormDialog({
 
   const classNameValue = watch("name");
   const classCodeValue = watch("code");
+  const startDateValue = watch("startDate");
+  const minStartLocal = requiresLeadTime
+    ? getMinClassStartLocalInput()
+    : undefined;
 
   async function handleFormSubmit(values: ClassFormValues) {
     const startDate = toApiDateTimeFromLocalInput(values.startDate);
@@ -336,20 +344,34 @@ export function ClassFormDialog({
                   required
                   error={errors.startDate?.message}
                 >
-                  <Input
-                    id="startDate"
-                    type="datetime-local"
-                    min={requiresLeadTime ? getMinClassStartLocalInput() : undefined}
-                    {...register("startDate")}
-                    className={INPUT_CLASS}
+                  <Controller
+                    control={control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <DateTimePicker
+                        id="startDate"
+                        ariaLabel="Ngày bắt đầu"
+                        placeholder="Chọn ngày bắt đầu"
+                        value={field.value ?? ""}
+                        min={minStartLocal}
+                        invalid={!!errors.startDate}
+                        disabled={isSubmitting}
+                        onChange={field.onChange}
+                      />
+                    )}
                   />
-                  {isCreate ? (
+                  {isCreate || requiresLeadTime ? (
                     <p className="text-xs text-muted-foreground">
-                      Phải cách hôm nay ít nhất {CLASS_CREATE_LEAD_DAYS} ngày.
+                      Phải cách hôm nay ít nhất {CLASS_CREATE_LEAD_DAYS} ngày
+                      {minStartLocal
+                        ? ` (từ ${formatLocalInputDisplay(minStartLocal)})`
+                        : ""}
+                      .
                     </p>
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      Đổi ngày có thể bị từ chối nếu buổi học hiện có nằm ngoài khoảng mới.
+                      Đổi ngày có thể bị từ chối nếu buổi học hiện có nằm ngoài
+                      khoảng mới.
                     </p>
                   )}
                 </FormField>
@@ -359,12 +381,36 @@ export function ClassFormDialog({
                   required
                   error={errors.endDate?.message}
                 >
-                  <Input
-                    id="endDate"
-                    type="datetime-local"
-                    {...register("endDate")}
-                    className={INPUT_CLASS}
+                  <Controller
+                    control={control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <DateTimePicker
+                        id="endDate"
+                        ariaLabel="Ngày kết thúc"
+                        placeholder="Chọn ngày kết thúc"
+                        value={field.value ?? ""}
+                        min={startDateValue || undefined}
+                        minExclusive
+                        referenceDate={startDateValue || undefined}
+                        referenceLabel="Bắt đầu"
+                        invalid={!!errors.endDate}
+                        disabled={isSubmitting}
+                        onChange={field.onChange}
+                      />
+                    )}
                   />
+                  {startDateValue ? (
+                    <p className="text-xs text-muted-foreground">
+                      Phải sau ngày bắt đầu (
+                      {formatLocalInputDisplay(startDateValue)}). Ngày trước
+                      mốc này bị khóa trên lịch.
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Chọn ngày bắt đầu trước để khóa khoảng kết thúc.
+                    </p>
+                  )}
                 </FormField>
                 <FormField
                   id="scheduleSummary"

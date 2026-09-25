@@ -6,6 +6,7 @@ import { Check, Inbox, RotateCcw, X } from "lucide-react";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Dialog,
   DialogDescription,
@@ -25,7 +26,10 @@ import {
   rejectAssessmentRecoveryRequest,
   type AssessmentRecoveryRequest,
 } from "@/lib/api";
-import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
+import {
+  formatApiDateTimeDisplay,
+  toApiDateTimeFromLocalInput,
+} from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -58,8 +62,10 @@ export function AssessmentRecoveryQueue() {
     try {
       await approveAssessmentRecoveryRequest(approveTarget.id, {
         extraAttemptsGranted: extraAttempts,
-        personalDueDate: personalDueDate.trim() || null,
-        personalAvailableUntil: personalAvailableUntil.trim() || null,
+        personalDueDate: toApiDateTimeFromLocalInput(personalDueDate),
+        personalAvailableUntil: toApiDateTimeFromLocalInput(
+          personalAvailableUntil,
+        ),
         mentorNote: mentorNote.trim() || null,
       });
       showAppSuccess({ title: "Đã duyệt yêu cầu làm lại" });
@@ -249,22 +255,30 @@ export function AssessmentRecoveryQueue() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="due-date">Hạn nộp cá nhân (tuỳ chọn)</Label>
-              <Input
+              <DateTimePicker
                 id="due-date"
-                type="datetime-local"
+                ariaLabel="Hạn nộp cá nhân"
+                placeholder="Chọn hạn nộp"
                 value={personalDueDate}
-                onChange={(event) => setPersonalDueDate(event.target.value)}
+                max={personalAvailableUntil || undefined}
+                allowClear
+                disabled={busyId != null}
+                onChange={setPersonalDueDate}
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="available-until">Mở đến (tuỳ chọn)</Label>
-              <Input
+              <DateTimePicker
                 id="available-until"
-                type="datetime-local"
+                ariaLabel="Mở đến"
+                placeholder="Chọn hạn mở"
                 value={personalAvailableUntil}
-                onChange={(event) =>
-                  setPersonalAvailableUntil(event.target.value)
-                }
+                min={personalDueDate || undefined}
+                referenceDate={personalDueDate || undefined}
+                referenceLabel="Hạn nộp"
+                allowClear
+                disabled={busyId != null}
+                onChange={setPersonalAvailableUntil}
               />
             </div>
             <div className="space-y-1.5">

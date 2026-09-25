@@ -12,7 +12,6 @@ import {
 } from "react";
 import { Reorder, useDragControls, useReducedMotion } from "motion/react";
 import {
-  Calendar,
   Eye,
   EyeOff,
   GripVertical,
@@ -52,6 +51,7 @@ import {
 } from "@/components/portfolio/reactbits/video-gallery";
 import { RichText } from "@/components/portfolio/render/rich-text";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   Dialog,
   DialogClose,
@@ -637,12 +637,11 @@ function ItemCardEditable({
       : "border-[#D0D0C8] bg-white/70 text-[#2D2D2D] placeholder:text-[#6B6B6B]/70",
   );
 
-  const dateInputClass = cn(
-    fieldInputClass,
-    "w-full pr-8",
-    // Hide native indicator — Lucide icon below is theme-aware and always visible.
-    "[&::-webkit-calendar-picker-indicator]:absolute [&::-webkit-calendar-picker-indicator]:inset-y-0 [&::-webkit-calendar-picker-indicator]:right-0 [&::-webkit-calendar-picker-indicator]:w-8 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-0",
-    resolved.isDark && "[color-scheme:dark]",
+  const datePickerClass = cn(
+    "h-8 rounded-lg border-dashed px-2 text-xs shadow-none",
+    resolved.isDark
+      ? "border-[#FAFAF5]/20 bg-white/5 text-[#FAFAF5] hover:border-[#FAFAF5]/35 [&_svg]:text-[#FAFAF5]/70"
+      : "border-[#D0D0C8] bg-white/70 text-[#2D2D2D] hover:border-[#B8B8B0] [&_svg]:text-[#6B6B6B]",
   );
 
   const setMediaAssets = (next: PortfolioMediaAsset[]) => {
@@ -863,28 +862,24 @@ function ItemCardEditable({
 
             {!isAuto ? (
               <div className="grid shrink-0 grid-cols-1 gap-2 min-[420px]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] min-[420px]:items-center">
-                <div className="relative min-w-0">
+                <div className="min-w-0">
                   <label className="sr-only" htmlFor={`${item.id}-start`}>
                     Ngày bắt đầu
                   </label>
-                  <Input
+                  <DateTimePicker
                     id={`${item.id}-start`}
-                    type="date"
+                    mode="date"
+                    ariaLabel="Ngày bắt đầu"
+                    placeholder="Ngày bắt đầu"
                     value={toDateInputValue(item.startDate)}
-                    onChange={(event) =>
+                    max={toDateInputValue(item.endDate) || undefined}
+                    allowClear
+                    onChange={(next) =>
                       onPatchItemText(item.id, {
-                        startDate: fromDateInputValue(event.target.value),
+                        startDate: fromDateInputValue(next),
                       })
                     }
-                    className={dateInputClass}
-                    aria-label="Ngày bắt đầu"
-                  />
-                  <Calendar
-                    aria-hidden
-                    className={cn(
-                      "pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2",
-                      resolved.isDark ? "text-[#FAFAF5]" : "text-[#6B6B6B]",
-                    )}
+                    className={datePickerClass}
                   />
                 </div>
                 <span
@@ -896,28 +891,26 @@ function ItemCardEditable({
                 >
                   –
                 </span>
-                <div className="relative min-w-0">
+                <div className="min-w-0">
                   <label className="sr-only" htmlFor={`${item.id}-end`}>
                     Ngày kết thúc
                   </label>
-                  <Input
+                  <DateTimePicker
                     id={`${item.id}-end`}
-                    type="date"
+                    mode="date"
+                    ariaLabel="Ngày kết thúc"
+                    placeholder="Ngày kết thúc"
                     value={toDateInputValue(item.endDate)}
-                    onChange={(event) =>
+                    min={toDateInputValue(item.startDate) || undefined}
+                    referenceDate={toDateInputValue(item.startDate) || undefined}
+                    referenceLabel="Bắt đầu"
+                    allowClear
+                    onChange={(next) =>
                       onPatchItemText(item.id, {
-                        endDate: fromDateInputValue(event.target.value),
+                        endDate: fromDateInputValue(next),
                       })
                     }
-                    className={dateInputClass}
-                    aria-label="Ngày kết thúc"
-                  />
-                  <Calendar
-                    aria-hidden
-                    className={cn(
-                      "pointer-events-none absolute right-2 top-1/2 size-3.5 -translate-y-1/2",
-                      resolved.isDark ? "text-[#FAFAF5]" : "text-[#6B6B6B]",
-                    )}
+                    className={datePickerClass}
                   />
                 </div>
               </div>

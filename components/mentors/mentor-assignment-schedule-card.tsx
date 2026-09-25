@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { CalendarClock } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Label } from "@/components/ui/label";
 import { updateAssignment, type AssignmentDetail } from "@/lib/api";
 import {
@@ -31,7 +31,7 @@ export function MentorAssignmentScheduleCard({
   onUpdated,
 }: MentorAssignmentScheduleCardProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, handleSubmit, reset } = useForm<ScheduleFormValues>({
+  const { control, handleSubmit, reset, watch } = useForm<ScheduleFormValues>({
     defaultValues: {
       availableFrom: fromApiDateTimeToLocalInput(assignment.availableFrom),
       availableUntil: fromApiDateTimeToLocalInput(assignment.availableUntil),
@@ -39,13 +39,22 @@ export function MentorAssignmentScheduleCard({
     },
   });
 
+  const availableFromValue = watch("availableFrom");
+  const availableUntilValue = watch("availableUntil");
+
   useEffect(() => {
     reset({
       availableFrom: fromApiDateTimeToLocalInput(assignment.availableFrom),
       availableUntil: fromApiDateTimeToLocalInput(assignment.availableUntil),
       dueDate: fromApiDateTimeToLocalInput(assignment.dueDate),
     });
-  }, [assignment.id, assignment.availableFrom, assignment.availableUntil, assignment.dueDate, reset]);
+  }, [
+    assignment.id,
+    assignment.availableFrom,
+    assignment.availableUntil,
+    assignment.dueDate,
+    reset,
+  ]);
 
   async function onSubmit(values: ScheduleFormValues) {
     setIsSubmitting(true);
@@ -81,8 +90,8 @@ export function MentorAssignmentScheduleCard({
             Mở bài cho học viên
           </h3>
           <p className="text-xs text-muted-foreground">
-            Thiết lập khung thời gian mở / đóng và hạn nộp. Manager chỉ tạo khung bài tập;
-            mentor quyết định khi nào học viên được làm.
+            Thiết lập khung thời gian mở / đóng và hạn nộp. Manager chỉ tạo khung
+            bài tập; mentor quyết định khi nào học viên được làm.
           </p>
         </div>
       </div>
@@ -118,32 +127,73 @@ export function MentorAssignmentScheduleCard({
         </p>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="grid gap-3 sm:grid-cols-2">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="grid gap-3 sm:grid-cols-2"
+      >
         <div className="space-y-1.5">
           <Label htmlFor={`avail-from-${assignment.id}`}>Mở từ</Label>
-          <Input
-            id={`avail-from-${assignment.id}`}
-            type="datetime-local"
-            {...register("availableFrom")}
-            className="h-10 rounded-lg"
+          <Controller
+            control={control}
+            name="availableFrom"
+            render={({ field }) => (
+              <DateTimePicker
+                id={`avail-from-${assignment.id}`}
+                ariaLabel="Mở từ"
+                placeholder="Chọn ngày mở"
+                value={field.value ?? ""}
+                max={availableUntilValue || undefined}
+                allowClear
+                disabled={isSubmitting}
+                onChange={field.onChange}
+                className="h-10 rounded-lg"
+              />
+            )}
           />
         </div>
         <div className="space-y-1.5">
           <Label htmlFor={`avail-until-${assignment.id}`}>Đóng lúc</Label>
-          <Input
-            id={`avail-until-${assignment.id}`}
-            type="datetime-local"
-            {...register("availableUntil")}
-            className="h-10 rounded-lg"
+          <Controller
+            control={control}
+            name="availableUntil"
+            render={({ field }) => (
+              <DateTimePicker
+                id={`avail-until-${assignment.id}`}
+                ariaLabel="Đóng lúc"
+                placeholder="Chọn ngày đóng"
+                value={field.value ?? ""}
+                min={availableFromValue || undefined}
+                minExclusive
+                referenceDate={availableFromValue || undefined}
+                referenceLabel="Mở từ"
+                allowClear
+                disabled={isSubmitting}
+                onChange={field.onChange}
+                className="h-10 rounded-lg"
+              />
+            )}
           />
         </div>
         <div className="space-y-1.5 sm:col-span-2">
           <Label htmlFor={`due-${assignment.id}`}>Hạn nộp</Label>
-          <Input
-            id={`due-${assignment.id}`}
-            type="datetime-local"
-            {...register("dueDate")}
-            className="h-10 rounded-lg"
+          <Controller
+            control={control}
+            name="dueDate"
+            render={({ field }) => (
+              <DateTimePicker
+                id={`due-${assignment.id}`}
+                ariaLabel="Hạn nộp"
+                placeholder="Chọn hạn nộp"
+                value={field.value ?? ""}
+                min={availableFromValue || undefined}
+                referenceDate={availableFromValue || undefined}
+                referenceLabel="Mở từ"
+                allowClear
+                disabled={isSubmitting}
+                onChange={field.onChange}
+                className="h-10 rounded-lg"
+              />
+            )}
           />
         </div>
         <div className="flex justify-end sm:col-span-2">

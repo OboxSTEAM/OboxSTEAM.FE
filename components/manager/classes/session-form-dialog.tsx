@@ -67,7 +67,7 @@ import {
 } from "@/lib/validations/classes";
 import { cn } from "@/lib/utils";
 
-import { DateTimePicker } from "./date-time-picker";
+import { DateTimePicker } from "@/components/ui/date-time-picker";
 import {
   parseSessionCoordinateFields,
   SessionCoordinatesPicker,
@@ -259,6 +259,7 @@ export function SessionFormDialog({
   const selectedActivityId = watch("activityId") ?? "";
   const selectedAssignmentId = watch("assignmentId") ?? "";
   const sessionKind = watch("sessionKind") ?? "LiveOnline";
+  const startTimeValue = watch("startTime") ?? "";
   const isActivitySession = Boolean(selectedActivityId.trim());
   const isAssignmentSession = Boolean(selectedAssignmentId.trim());
   /** Soft preference only — both venue modes stay available. */
@@ -844,6 +845,10 @@ export function SessionFormDialog({
                           ariaLabel="Kết thúc"
                           placeholder="Kết thúc"
                           value={field.value ?? ""}
+                          min={startTimeValue || undefined}
+                          minExclusive
+                          referenceDate={startTimeValue || undefined}
+                          referenceLabel="Bắt đầu"
                           invalid={!!errors.endTime}
                           disabled={isActivitySession || !isAssignmentSession}
                           onChange={
