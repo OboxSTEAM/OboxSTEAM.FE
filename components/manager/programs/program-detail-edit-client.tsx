@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 
 import { ClassManager } from "@/components/manager/classes/class-manager";
@@ -39,6 +39,13 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "reviews",     label: "Đánh giá",             icon: Star },
   { id: "classes",     label: "Lớp",                  icon: GraduationCap },
 ];
+
+const TAB_IDS = new Set<TabId>(TABS.map((tab) => tab.id));
+
+function parseProgramTab(value: string | null): TabId {
+  if (value && TAB_IDS.has(value as TabId)) return value as TabId;
+  return "curriculum";
+}
 
 // ─── Stepper Tab Bar ──────────────────────────────────────────────────────────
 function StepperTabBar({
@@ -103,11 +110,15 @@ type ProgramDetailEditClientProps = {
   program: ProgramWithModules;
 };
 
-export function ProgramDetailEditClient({ program: initialProgram }: ProgramDetailEditClientProps) {
+function ProgramDetailEditClientInner({
+  program: initialProgram,
+}: ProgramDetailEditClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
   const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
-  const [activeTab, setActiveTab] = useState<TabId>("curriculum");
+  const activeTab = parseProgramTab(searchParams.get("tab"));
   const [submitRequest, setSubmitRequest] = useState(0);
   const [curriculumRevision, setCurriculumRevision] = useState(0);
   const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
@@ -115,6 +126,21 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
     reason: null,
     blockingClasses: [],
   });
+
+  function setActiveTab(id: TabId) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (id === "curriculum") {
+      params.delete("tab");
+    } else {
+      params.set("tab", id);
+      params.delete("node");
+      params.delete("id");
+      params.delete("moduleId");
+      params.delete("courseId");
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
 
   const handleSilentSync = useCallback(() => {
     setCurriculumRevision((revision) => revision + 1);
@@ -327,5 +353,13 @@ export function ProgramDetailEditClient({ program: initialProgram }: ProgramDeta
         )}
       </div>
     </div>
+  );
+}
+
+export function ProgramDetailEditClient(props: ProgramDetailEditClientProps) {
+  return (
+    <Suspense fallback={<CurriculumPanelFallback />}>
+      <ProgramDetailEditClientInner {...props} />
+    </Suspense>
   );
 }

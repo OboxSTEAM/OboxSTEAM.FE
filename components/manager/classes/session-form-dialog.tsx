@@ -85,7 +85,7 @@ const SESSION_KIND_DERIVED_LABELS: Record<
 > = {
   LiveOnline: "Buổi học (Online)",
   Offline: "Ngoại khóa (Offline)",
-  AssignmentWindow: "Cửa sổ nộp bài",
+  AssignmentWindow: "Nộp bài tập",
 };
 
 const ACTIVITY_LINK_PREFIX = "activity:";
@@ -732,7 +732,7 @@ export function SessionFormDialog({
                           </SelectGroup>
                           <SelectSeparator />
                           <SelectGroup>
-                            <SelectLabel>Cửa sổ nộp bài tập</SelectLabel>
+                            <SelectLabel>Nộp bài tập</SelectLabel>
                             {assignmentOptions.length === 0 ? (
                               <SelectItem
                                 value="__empty_assignment"

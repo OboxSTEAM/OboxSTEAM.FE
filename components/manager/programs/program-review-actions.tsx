@@ -33,16 +33,17 @@ const STATUS_TONE: Record<ProgramStatus, string> = {
   Inactive: "bg-primary/10 text-primary",
 };
 
-const STATUS_HINT: Record<ProgramStatus, string> = {
-  Draft:
-    "Hoàn thiện khung chương trình rồi gửi hội đồng chuyên gia thẩm định.",
-  PendingReview:
-    "Chương trình đang chờ chuyên gia thẩm định — khung nội dung tạm khóa chỉnh sửa.",
-  Approved:
-    "Hội đồng đã phê duyệt. Xuất bản để mở chương trình cho phụ huynh và học viên.",
-  Active: "Chương trình đang mở tuyển sinh.",
-  Inactive: "Chương trình đã ngừng hoạt động.",
-};
+	const STATUS_HINT: Record<ProgramStatus, string> = {
+	  Draft:
+	    "Hoàn thiện khung chương trình rồi gửi hội đồng chuyên gia thẩm định.",
+	  PendingReview:
+	    "Chương trình đang chờ chuyên gia thẩm định — khung nội dung tạm khóa chỉnh sửa.",
+	  Approved:
+	    "Hội đồng đã phê duyệt. Xuất bản để tạo lớp và buổi học.",
+	  Active:
+	    "Chương trình đã xuất bản — có thể tạo lớp và buổi học. Tuyển sinh mở ở từng lớp (trạng thái Đang tuyển sinh).",
+	  Inactive: "Chương trình đã ngừng hoạt động.",
+	};
 
 const ACTION_COPY: Record<
   LifecycleAction,
@@ -62,13 +63,13 @@ const ACTION_COPY: Record<
     confirmLabel: "Rút yêu cầu thẩm định",
     success: "Đã rút chương trình về bản nháp.",
   },
-  publish: {
-    title: "Xuất bản chương trình?",
-    description:
-      "Chương trình sẽ chuyển sang trạng thái Đang mở và hiển thị công khai cho phụ huynh.",
-    confirmLabel: "Xuất bản",
-    success: "Chương trình đã được xuất bản.",
-  },
+	  publish: {
+	    title: "Xuất bản chương trình?",
+	    description:
+	      "Chương trình sẽ chuyển sang trạng thái Đang mở. Sau đó bạn có thể tạo lớp và buổi học; tuyển sinh mở riêng từng lớp.",
+	    confirmLabel: "Xuất bản",
+	    success: "Chương trình đã được xuất bản.",
+	  },
 };
 
 type ProgramReviewActionsProps = {
@@ -218,12 +219,12 @@ export function ProgramReviewActions({
             </>
           ) : null}
 
-          {status === "Active" ? (
-            <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#7CB342]/12 px-3.5 py-2 text-xs font-semibold text-[#33691e] dark:text-[#a5d66f]">
-              <CheckCircle2 className="size-4" />
-              Đang mở tuyển sinh
-            </span>
-          ) : null}
+	          {status === "Active" ? (
+	            <span className="inline-flex items-center gap-1.5 rounded-xl bg-[#7CB342]/12 px-3.5 py-2 text-xs font-semibold text-[#33691e] dark:text-[#a5d66f]">
+	              <CheckCircle2 className="size-4" />
+	              Đã xuất bản
+	            </span>
+	          ) : null}
         </div>
       </section>
 

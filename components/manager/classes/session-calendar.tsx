@@ -281,7 +281,7 @@ export function SessionCalendar({
           />
         ) : null}
 
-        <div className="min-h-0 min-w-0 flex-1 overflow-auto">
+        <div className="no-scrollbar min-h-0 min-w-0 flex-1 overflow-auto overscroll-contain">
           {view === "month" ? (
             <MonthGrid
               anchor={anchor}
@@ -717,7 +717,7 @@ function TimeGrid({
     <div
       ref={scrollRef}
       className={cn(
-        "relative overflow-auto",
+        "no-scrollbar relative overflow-auto overscroll-contain",
         compact
           ? "max-h-[calc(100dvh-11rem)] min-h-[20rem]"
           : "max-h-[600px]",

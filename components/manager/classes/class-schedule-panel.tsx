@@ -585,7 +585,7 @@ export function ClassSchedulePanel({
                 />
               </div>
             ) : selectedDay ? (
-              <div className="overflow-x-auto p-4">
+              <div className="no-scrollbar overflow-x-auto p-4 [&_[data-slot=table-container]]:no-scrollbar">
                 <ManagerDataTable
                   columns={columns}
                   data={dayFiltered}
@@ -593,7 +593,7 @@ export function ClassSchedulePanel({
                 />
               </div>
             ) : (
-              <div className="max-h-[36rem] space-y-4 overflow-y-auto p-4">
+              <div className="no-scrollbar max-h-[36rem] space-y-4 overflow-y-auto overscroll-contain p-4 [&_[data-slot=table-container]]:no-scrollbar">
                 {weekGroups.map((group) => (
                   <div key={group.key} className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

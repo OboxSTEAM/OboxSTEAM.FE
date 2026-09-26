@@ -73,8 +73,9 @@ export function ManagerHeader({
         } else if (prevSegment === "classes") {
           const { getClassById } = await import("@/lib/api");
           const res = await getClassById(id);
-          if (res?.data?.name) {
-            setResolvedLabels((prev) => ({ ...prev, [id]: res.data.name }));
+          const className = res?.data?.name?.trim() || res?.data?.code?.trim();
+          if (className) {
+            setResolvedLabels((prev) => ({ ...prev, [id]: className }));
           }
         }
       } catch (err) {

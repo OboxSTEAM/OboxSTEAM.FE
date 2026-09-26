@@ -20,7 +20,7 @@ import {
   dialogScrollFormClassName,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { TimePicker } from "@/components/ui/time-picker";
+import { TimePicker, formatTimeLabel, parseTimeToMinutes } from "@/components/ui/time-picker";
 import { generateClassSessions } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
@@ -229,10 +229,29 @@ export function GenerateSessionsDialog({
                       ariaLabel="Giờ bắt đầu UTC"
                       placeholder="Bắt đầu"
                       value={field.value ?? ""}
-                      max={sessionEndTimeValue || undefined}
                       invalid={!!errors.sessionStartTime}
                       disabled={isSubmitting}
-                      onChange={field.onChange}
+                      onChange={(next) => {
+                        field.onChange(next);
+                        const startMins = parseTimeToMinutes(next);
+                        const endMins = parseTimeToMinutes(
+                          sessionEndTimeValue ?? "",
+                        );
+                        // Don't lock start by end — bump end when start crosses it.
+                        if (
+                          startMins != null &&
+                          endMins != null &&
+                          endMins <= startMins
+                        ) {
+                          const bumped = Math.min(
+                            startMins + 120,
+                            23 * 60 + 59,
+                          );
+                          setValue("sessionEndTime", formatTimeLabel(bumped), {
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
                       className="h-10 rounded-lg"
                     />
                   )}

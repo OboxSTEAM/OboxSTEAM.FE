@@ -117,6 +117,7 @@ import {
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
 import { invalidateClassSessions } from "@/lib/classes/session-invalidate-bus";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { managerClassDetailHref } from "@/lib/manager/class-paths";
 import { cn } from "@/lib/utils";
 import {
   THEME_SELECT_TRIGGER,
@@ -1381,9 +1382,11 @@ function cohortLockDescription(
 }
 
 function CohortLockBanner({
+  programId,
   lockReason,
   blockingClasses,
 }: {
+  programId: string;
   lockReason: string | null;
   blockingClasses: ProgramCohortLockClass[];
 }) {
@@ -1419,7 +1422,7 @@ function CohortLockBanner({
                   {item.code.trim() || "—"}
                 </span>
                 <Link
-                  href={`/manager/classes/${item.id}`}
+                  href={managerClassDetailHref(item.id, { programId })}
                   className="inline-flex items-center gap-0.5 font-semibold text-[#0288D1] hover:underline"
                 >
                   Xem lớp
@@ -2606,6 +2609,7 @@ export function CurriculumSplitPanel({
     <div className="flex flex-col gap-3">
       {cohortLocked ? (
         <CohortLockBanner
+          programId={program.id}
           lockReason={lockReason}
           blockingClasses={blockingClasses}
         />

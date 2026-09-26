@@ -44,6 +44,7 @@ import {
   type ClassLifecycleAction,
 } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { managerClassDetailHref } from "@/lib/manager/class-paths";
 
 type SortValue =
   | "createdAt-desc"
@@ -90,6 +91,17 @@ type ClassManagerProps = {
   fixedProgramId?: string;
   embedded?: boolean;
 };
+
+function classHref(
+  classId: string,
+  programId: string | undefined,
+  tab?: "lich-hoc",
+) {
+  return managerClassDetailHref(classId, {
+    programId: programId ?? null,
+    tab,
+  });
+}
 
 export function ClassManager({
   fixedProgramId,
@@ -272,7 +284,7 @@ export function ClassManager({
         const pending = classItem.pendingMentorRequestCount ?? 0;
         return (
           <Link
-            href={`/manager/classes/${classItem.id}`}
+            href={classHref(classItem.id, fixedProgramId)}
             className={
               pending > 0
                 ? "inline-flex items-center rounded-full border border-[#4FC3F7]/25 bg-[#4FC3F7]/15 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-[#0D6E9C] transition-colors hover:bg-[#4FC3F7]/25"
@@ -314,7 +326,7 @@ export function ClassManager({
               variant="ghost"
               size="icon"
               nativeButton={false}
-              render={<Link href={`/manager/classes/${classItem.id}`} />}
+              render={<Link href={classHref(classItem.id, fixedProgramId)} />}
               aria-label={`Xem ${classItem.name}`}
               className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C]"
             >
@@ -327,7 +339,7 @@ export function ClassManager({
               nativeButton={false}
               render={
                 <Link
-                  href={`/manager/classes/${classItem.id}?tab=lich-hoc`}
+                  href={classHref(classItem.id, fixedProgramId, "lich-hoc")}
                 />
               }
               aria-label={`Lịch học ${classItem.name}`}

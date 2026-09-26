@@ -436,3 +436,14 @@
   text-align: justify;
 }
 
+/* Hide scrollbars but keep overflow scroll (beats global *::-webkit-scrollbar). */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none !important;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+

@@ -50,6 +50,10 @@ import {
 } from "@/lib/classes/lifecycle";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  managerClassDetailHref,
+  managerClassListHref,
+} from "@/lib/manager/class-paths";
 
 function getInitials(name: string | null | undefined): string {
   if (!name?.trim()) return "HV";
@@ -75,12 +79,15 @@ function parseTab(value: string | null): ClassDetailTab {
 
 type ClassDetailProps = {
   classId: string;
+  /** When set, URLs stay under Chương trình → program → lớp. */
+  programId?: string;
 };
 
-function ClassDetailInner({ classId }: ClassDetailProps) {
+function ClassDetailInner({ classId, programId }: ClassDetailProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tab = parseTab(searchParams.get("tab"));
+  const listHref = managerClassListHref(programId);
 
   const [formOpen, setFormOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -90,11 +97,11 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
     const params = new URLSearchParams(searchParams.toString());
     if (next === "tong-quan") params.delete("tab");
     else params.set("tab", next);
+    const base = managerClassDetailHref(classId, { programId });
     const qs = params.toString();
-    router.replace(
-      qs ? `/manager/classes/${classId}?${qs}` : `/manager/classes/${classId}`,
-      { scroll: false },
-    );
+    router.replace(qs ? `${base.split("?")[0]}?${qs}` : base.split("?")[0], {
+      scroll: false,
+    });
   }
 
   const { data, isLoading, retry } = useClientFetch({
@@ -254,7 +261,7 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
             type="button"
             variant="outline"
             nativeButton={false}
-            render={<Link href="/manager/classes" />}
+            render={<Link href={listHref} />}
             className="h-11 gap-2 rounded-xl border-border"
           >
             <ArrowLeft className="size-4" />
@@ -271,29 +278,6 @@ function ClassDetailInner({ classId }: ClassDetailProps) {
         title={classItem.name || classItem.code}
         description={`Mã ${classItem.code} · ${programName}`}
       >
-        <Button
-          type="button"
-          variant="outline"
-          nativeButton={false}
-          render={<Link href="/manager/classes" />}
-          className="h-11 gap-2 rounded-xl border-border"
-        >
-          <ArrowLeft className="size-4" />
-          Danh sách
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          nativeButton={false}
-          render={
-            <Link href={`/manager/sessions?classId=${classItem.id}`} />
-          }
-          className="h-11 gap-2 rounded-xl border-border"
-          title="Mở lịch tổng (nhiều lớp)"
-        >
-          <CalendarDays className="size-4" />
-          Hub lịch
-        </Button>
         <Button
           type="button"
           variant="outline"
@@ -478,7 +462,7 @@ function MetaCard({
   );
 }
 
-export function ClassDetail({ classId }: ClassDetailProps) {
+export function ClassDetail({ classId, programId }: ClassDetailProps) {
   return (
     <Suspense
       fallback={
@@ -489,7 +473,7 @@ export function ClassDetail({ classId }: ClassDetailProps) {
         </div>
       }
     >
-      <ClassDetailInner classId={classId} />
+      <ClassDetailInner classId={classId} programId={programId} />
     </Suspense>
   );
 }
