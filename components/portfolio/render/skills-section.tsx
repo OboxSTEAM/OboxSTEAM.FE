@@ -14,7 +14,7 @@ import { getCertificateVerifyHref } from "@/lib/certificates/format";
 import { SKILL_CATEGORY_LABELS } from "@/lib/mentors/skill-labels";
 import { cn } from "@/lib/utils";
 
-const CATEGORY_ORDER: SkillCategory[] = [
+export const SKILL_CATEGORY_ORDER: SkillCategory[] = [
   "Science",
   "Technology",
   "Engineering",
@@ -23,7 +23,7 @@ const CATEGORY_ORDER: SkillCategory[] = [
   "SoftSkill",
 ];
 
-const CATEGORY_DOT: Record<SkillCategory, string> = {
+export const SKILL_CATEGORY_DOT: Record<SkillCategory, string> = {
   Science: "bg-[#E94B3C]",
   Technology: "bg-[#7CB342]",
   Engineering: "bg-[#4FC3F7]",
@@ -53,10 +53,13 @@ function SkillChip({
   skill,
   isDark,
   emphasized = false,
+  showPin = false,
 }: {
   skill: PortfolioSkill;
   isDark: boolean;
   emphasized?: boolean;
+  /** Editor only. Preview and the published page never show the pin mark. */
+  showPin?: boolean;
 }) {
   const name = skill.skill.name?.trim() || "Kỹ năng";
   const category = skill.skill.category;
@@ -72,9 +75,11 @@ function SkillChip({
             : "border-[#E5E5E0] bg-white text-[#2D2D2D]",
         )}
       >
-        <span className={cn("size-2 shrink-0 rounded-full", CATEGORY_DOT[category])} />
+        <span className={cn("size-2 shrink-0 rounded-full", SKILL_CATEGORY_DOT[category])} />
         <span className="truncate">{name}</span>
-        {skill.isPinned ? <Pin className="size-3 shrink-0 opacity-70" /> : null}
+        {showPin && skill.isPinned ? (
+          <Pin className="size-3 shrink-0 opacity-70" />
+        ) : null}
         <span className="shrink-0 opacity-50">{skill.evidenceCount}</span>
       </PopoverTrigger>
       <PopoverContent className="w-72">
@@ -141,11 +146,17 @@ export function SkillsSection({
       {pinned.length > 0 ? (
         <div className="flex flex-wrap gap-2">
           {pinned.map((skill) => (
-            <SkillChip key={skill.skillId} skill={skill} isDark={isDark} emphasized />
+            <SkillChip
+              key={skill.skillId}
+              skill={skill}
+              isDark={isDark}
+              emphasized
+              showPin={showHidden}
+            />
           ))}
         </div>
       ) : null}
-      {CATEGORY_ORDER.map((category) => {
+      {SKILL_CATEGORY_ORDER.map((category) => {
         const group = visible.filter((skill) => skill.skill.category === category);
         if (group.length === 0) return null;
         return (
@@ -158,7 +169,12 @@ export function SkillsSection({
             </p>
             <div className="flex flex-wrap gap-1.5">
               {group.map((skill) => (
-                <SkillChip key={skill.skillId} skill={skill} isDark={isDark} />
+                <SkillChip
+                  key={skill.skillId}
+                  skill={skill}
+                  isDark={isDark}
+                  showPin={showHidden}
+                />
               ))}
             </div>
           </div>
