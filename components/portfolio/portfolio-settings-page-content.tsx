@@ -15,6 +15,7 @@ import { PortfolioToolbar } from "@/components/portfolio/editor/portfolio-toolba
 import { DesignPanel } from "@/components/portfolio/editor/panels/design-panel";
 import { GalleryPanel } from "@/components/portfolio/editor/panels/gallery-panel";
 import { ItemsPanel } from "@/components/portfolio/editor/panels/items-panel";
+import { SkillsPanel } from "@/components/portfolio/editor/panels/skills-panel";
 import { LinksPanel } from "@/components/portfolio/editor/panels/links-panel";
 import { HighlightWorkspace } from "@/components/portfolio/editor/highlight/highlight-workspace";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,7 @@ import {
   reorderPortfolioSections,
   syncPortfolioItems,
   updateMyPortfolio,
+  updateMyPortfolioSkills,
   updatePortfolioItem,
   updatePortfolioSection,
 } from "@/lib/api/portfolios";
@@ -72,7 +74,11 @@ import {
   PORTFOLIO_SECTION_KIND_LABELS,
   PORTFOLIO_SECTIONS,
 } from "@/lib/portfolio/constants";
-import { nullIfEmptyHtml, preferAlignedHtml } from "@/lib/portfolio/sanitize-html";
+import {
+  nullIfEmptyHtml,
+  preferAlignedHtml,
+  stripPortfolioHtmlText,
+} from "@/lib/portfolio/sanitize-html";
 
 const PANEL_TITLES: Record<PortfolioPanelId, string> = {
   design: "Thiết kế & Font",
@@ -80,6 +86,7 @@ const PANEL_TITLES: Record<PortfolioPanelId, string> = {
   gallery: "Thư viện media",
   highlight: "Highlight video",
   links: "Liên kết ngoài",
+  skills: "Kỹ năng đạt được",
 };
 
 type PendingDelete =
@@ -121,6 +128,15 @@ function isItemTextDirty(draftItem: PortfolioItem, baseItem: PortfolioItem): boo
     mediaAssetsSignature(draftItem.mediaAssets) !==
     mediaAssetsSignature(baseItem.mediaAssets)
   );
+}
+
+function skillsSignature(skills: Portfolio["skills"] | null | undefined): string {
+  return (skills ?? [])
+    .map(
+      (skill) =>
+        `${skill.skillId}:${skill.isVisible}:${skill.isPinned}:${skill.displayOrder}`,
+    )
+    .join("|");
 }
 
 function toMediaAssetRefs(item: PortfolioItem) {
@@ -344,6 +360,7 @@ export function PortfolioSettingsPageContent() {
       const base = baseById.get(item.id);
       if (base && isItemTextDirty(item, base)) return true;
     }
+    if (skillsSignature(draft.skills) !== skillsSignature(baseline.skills)) return true;
     return false;
   }, [draft, baseline]);
 
@@ -511,8 +528,24 @@ export function PortfolioSettingsPageContent() {
       }
 
       const updatedById = new Map(updatedItems.map((item) => [item.id, item]));
+      let savedSkills = currentDraft.skills ?? base.skills ?? [];
+      if (
+        skillsSignature(currentDraft.skills) !==
+        skillsSignature(currentBaseline.skills)
+      ) {
+        const skillsResult = await updateMyPortfolioSkills({
+          skills: (currentDraft.skills ?? []).map((skill) => ({
+            skillId: skill.skillId,
+            isVisible: skill.isVisible,
+            isPinned: skill.isPinned,
+            displayOrder: skill.displayOrder,
+          })),
+        });
+        savedSkills = skillsResult.data ?? savedSkills;
+      }
       const final: Portfolio = {
         ...base,
+        skills: savedSkills,
         items: (base.items ?? []).map(
           (item) => updatedById.get(item.id) ?? item,
         ),
@@ -759,7 +792,7 @@ export function PortfolioSettingsPageContent() {
       (entry) => entry.id === sectionId,
     );
     const label =
-      section?.title ||
+      stripPortfolioHtmlText(section?.title) ||
       (section
         ? PORTFOLIO_SECTION_KIND_LABELS[section.kind] || section.kind
         : "section này");
@@ -1013,7 +1046,7 @@ export function PortfolioSettingsPageContent() {
         ...dynamic.map((section) => ({
           id: section.id,
           label:
-            section.title ||
+            stripPortfolioHtmlText(section.title) ||
             PORTFOLIO_SECTION_KIND_LABELS[section.kind] ||
             section.kind,
           isVisible: section.isVisible,
@@ -1229,6 +1262,12 @@ export function PortfolioSettingsPageContent() {
                 onCreateGallerySection={() => handleAddSection("Gallery")}
                 onImportToSection={handleImportClassGalleryToSection}
                 onAttachPortfolioMedia={handleAttachPortfolioMediaToSection}
+              />
+            ) : null}
+            {activePanel === "skills" ? (
+              <SkillsPanel
+                skills={draft.skills ?? []}
+                onChange={(skills) => patchDraft({ skills })}
               />
             ) : null}
             {activePanel === "highlight" ? (

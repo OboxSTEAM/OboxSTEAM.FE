@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { skillSummarySchema } from "@/lib/api/entities/skill";
+
 import { programExpertSchema } from "@/lib/api/entities/expert";
 import { moduleSchema } from "@/lib/api/entities/module";
 
@@ -55,6 +57,10 @@ export const programSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? ""),
+  skills: z
+    .array(skillSummarySchema)
+    .nullish()
+    .transform((value) => value ?? []),
   rating: z.number().nullable(),
   totalReviews: z.number(),
   thumbnailUrl: z.string().nullable(),

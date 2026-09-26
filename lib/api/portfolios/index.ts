@@ -19,6 +19,7 @@ import {
   updatePortfolioPublicationSchema,
   updatePortfolioSchema,
   updatePortfolioSectionSchema,
+  updatePortfolioSkillsSchema,
   updatePortfolioSubdomainSchema,
 } from "@/lib/validations/portfolios";
 import type {
@@ -33,6 +34,7 @@ import type {
   UpdatePortfolioItemInput,
   UpdatePortfolioPublicationInput,
   UpdatePortfolioSectionInput,
+  UpdatePortfolioSkillsInput,
   UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
 import {
@@ -60,6 +62,7 @@ import {
   updatePortfolioPublicationResponseSchema,
   updatePortfolioResponseSchema,
   updatePortfolioSectionResponseSchema,
+  updatePortfolioSkillsResponseSchema,
   updatePortfolioSubdomainResponseSchema,
   uploadPortfolioMediaResponseSchema,
   type CheckPortfolioSubdomainAvailabilityResult,
@@ -81,6 +84,7 @@ import {
   type UpdatePortfolioPublicationResult,
   type UpdatePortfolioResult,
   type UpdatePortfolioSectionResult,
+  type UpdatePortfolioSkillsResult,
   type UpdatePortfolioSubdomainResult,
   type UploadPortfolioMediaResult,
 } from "./schemas";
@@ -124,6 +128,8 @@ export type {
   UpdatePortfolioResult,
   UpdatePortfolioSectionResponse,
   UpdatePortfolioSectionResult,
+  UpdatePortfolioSkillsResponse,
+  UpdatePortfolioSkillsResult,
   UpdatePortfolioSubdomainResponse,
   UpdatePortfolioSubdomainResult,
   UploadPortfolioMediaResponse,
@@ -181,6 +187,7 @@ export type {
   UpdatePortfolioItemInput,
   UpdatePortfolioPublicationInput,
   UpdatePortfolioSectionInput,
+  UpdatePortfolioSkillsInput,
   UpdatePortfolioSubdomainInput,
 } from "@/lib/validations/portfolios";
 
@@ -235,6 +242,20 @@ export async function updateMyPortfolio(
     `${PORTFOLIOS_BASE}/me`,
     updatePortfolioResponseSchema,
     { method: "PUT", body: wireBody },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/portfolios/me/skills` — replace visibility, pin, and order. */
+export async function updateMyPortfolioSkills(
+  input: UpdatePortfolioSkillsInput,
+): Promise<UpdatePortfolioSkillsResult> {
+  const body = updatePortfolioSkillsSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PORTFOLIOS_BASE}/me/skills`,
+    updatePortfolioSkillsResponseSchema,
+    { method: "PUT", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

@@ -58,6 +58,7 @@ export const programUpsertSchema = z.object({
   level: programLevelSchema,
   estimatedDuration: z.string().min(1, "Thời lượng dự kiến là bắt buộc."),
   skillsGained: z.string().min(1, "Kỹ năng đạt được là bắt buộc."),
+  skillIds: z.array(z.string().uuid("ID kỹ năng không hợp lệ.")).optional(),
   thumbnailUrl: z.string().url("URL ảnh thumbnail không hợp lệ.").or(z.literal("")).nullable().optional(),
   status: programStatusSchema,
   price: z.number().min(0, "Giá không được âm."),

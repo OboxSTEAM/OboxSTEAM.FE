@@ -41,6 +41,7 @@ import {
   type ProgramWithModules,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { SkillMultiSelect } from "@/components/skills/skill-multi-select";
 import { programUpsertSchema, uploadProgramThumbnailSchema } from "@/lib/validations/programs";
 import { cn } from "@/lib/utils";
 import {
@@ -361,6 +362,7 @@ export function ProgramForm({
       level:             initialValues?.level             ?? "Beginner",
       estimatedDuration: initialValues?.estimatedDuration ?? "",
       skillsGained:      initialValues?.skillsGained      ?? "",
+      skillIds:          initialValues?.skillIds ?? [],
       thumbnailUrl:      initialValues?.thumbnailUrl      ?? "",
       status:            initialValues?.status            ?? "Draft",
       price:             initialValues?.price             ?? 0,
@@ -1007,6 +1009,23 @@ export function ProgramForm({
                   className={cn(TEXTAREA_CLS, errors.skillsGained && "border-primary")}
                 />
                 <FieldError message={errors.skillsGained?.message} />
+              </div>
+              <div className="mt-4">
+                <label className={LBL}>Kỹ năng trong danh mục STEAM</label>
+                <Controller
+                  name="skillIds"
+                  control={control}
+                  render={({ field }) => (
+                    <SkillMultiSelect
+                      value={field.value ?? []}
+                      onChange={field.onChange}
+                      knownSkills={[]}
+                    />
+                  )}
+                />
+                <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+                  Gắn kỹ năng danh mục để portfolio học viên hiện đúng nhóm STEAM khi hoàn thành chương trình.
+                </p>
               </div>
             </div>
           </CollapsibleContent>

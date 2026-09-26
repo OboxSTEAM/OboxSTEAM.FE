@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { Clapperboard, Images, Link2, Palette, LayoutList, X } from "lucide-react";
+import { Clapperboard, Images, Link2, Palette, LayoutList, Sparkles, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,7 +10,8 @@ export type PortfolioPanelId =
   | "items"
   | "links"
   | "gallery"
-  | "highlight";
+  | "highlight"
+  | "skills";
 
 const RAIL_ITEMS: Array<{
   id: PortfolioPanelId;
@@ -19,6 +20,7 @@ const RAIL_ITEMS: Array<{
 }> = [
   { id: "design", label: "Thiết kế", icon: Palette },
   { id: "items", label: "Mục", icon: LayoutList },
+  { id: "skills", label: "Kỹ năng", icon: Sparkles },
   { id: "gallery", label: "Thư viện", icon: Images },
   { id: "highlight", label: "Highlight", icon: Clapperboard },
   { id: "links", label: "Liên kết", icon: Link2 },

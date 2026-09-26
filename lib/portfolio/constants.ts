@@ -180,7 +180,8 @@ export const PORTFOLIO_SECTION_KIND_LABELS: Record<string, string> = {
   LinksGroup: "Nhóm liên kết",
   RichText: "Khối văn bản",
   Gallery: "Thư viện ảnh",
-  Embed: "Nhúng",
+  Embed: "Sản phẩm tương tác",
+  SkillsGroup: "Kỹ năng đạt được",
 };
 
 export const RESERVED_PORTFOLIO_SUBDOMAINS = [

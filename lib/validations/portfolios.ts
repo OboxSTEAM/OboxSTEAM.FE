@@ -63,6 +63,21 @@ export const updatePortfolioSubdomainSchema = z.object({
   subdomain: z.string().max(100, "Subdomain tối đa 100 ký tự.").nullable().optional(),
 });
 
+/** Body for `PUT /api/portfolios/me/skills`. Replaces curation; students cannot add skills. */
+export const updatePortfolioSkillsSchema = z.object({
+  skills: z
+    .array(
+      z.object({
+        skillId: z.string().uuid("ID kỹ năng không hợp lệ."),
+        isVisible: z.boolean(),
+        isPinned: z.boolean(),
+        displayOrder: z.number().int().min(0),
+      }),
+    )
+    .nullable()
+    .optional(),
+});
+
 /** Body for `PUT /api/portfolios/me/publication`. */
 export const updatePortfolioPublicationSchema = z.object({
   isPublished: z.boolean(),
@@ -197,6 +212,7 @@ export type PortfolioMediaAssetRef = z.infer<typeof portfolioMediaAssetRefSchema
 export type UpdatePortfolioInput = z.infer<typeof updatePortfolioSchema>;
 export type UpdatePortfolioSubdomainInput = z.infer<typeof updatePortfolioSubdomainSchema>;
 export type UpdatePortfolioPublicationInput = z.infer<typeof updatePortfolioPublicationSchema>;
+export type UpdatePortfolioSkillsInput = z.infer<typeof updatePortfolioSkillsSchema>;
 export type CreatePortfolioItemInput = z.infer<typeof createPortfolioItemSchema>;
 export type UpdatePortfolioItemInput = z.infer<typeof updatePortfolioItemSchema>;
 export type ReorderPortfolioItemsInput = z.infer<typeof reorderPortfolioItemsSchema>;

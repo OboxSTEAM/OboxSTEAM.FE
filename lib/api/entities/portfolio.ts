@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { skillSummarySchema } from "@/lib/api/entities/skill";
+
 /** Map FE PascalCase enum → BE camelCase wire value (`Sm` → `sm`). */
 export function toPortfolioEnumWire(value: string): string {
   return value.charAt(0).toLowerCase() + value.slice(1);
@@ -54,6 +56,7 @@ export const portfolioSectionKindSchema = z.enum([
   "RichText",
   "Gallery",
   "Embed",
+  "SkillsGroup",
 ]);
 
 /** Per-slot component overrides stored in `theme.settingsJson`. */
@@ -231,8 +234,44 @@ export const portfolioItemSchema = z.object({
   moduleEnrollmentId: z.string().uuid().nullable(),
   submissionId: z.string().uuid().nullable(),
   appendixSections: z.array(portfolioAppendixItemSchema).nullable(),
+  certificateId: z.string().uuid().nullish().transform((value) => value ?? null),
+  certificateCode: z.string().nullish().transform((value) => value ?? null),
+  verificationUrl: z.string().nullish().transform((value) => value ?? null),
+  pdfUrl: z.string().nullish().transform((value) => value ?? null),
+  issuedAt: z.string().nullish().transform((value) => value ?? null),
+  finalGrade: z.number().nullish().transform((value) => value ?? null),
+  skills: z
+    .array(skillSummarySchema)
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
+});
+
+export const skillEvidenceTypeSchema = z.enum(["Program", "Certificate", "Capstone"]);
+
+export const skillEvidenceSchema = z.object({
+  type: skillEvidenceTypeSchema,
+  programId: z.string().uuid().nullish().transform((value) => value ?? null),
+  programName: z.string().nullish().transform((value) => value ?? null),
+  certificateCode: z.string().nullish().transform((value) => value ?? null),
+  verificationUrl: z.string().nullish().transform((value) => value ?? null),
+  portfolioItemId: z.string().uuid().nullish().transform((value) => value ?? null),
+  achievedAt: z.string().nullish().transform((value) => value ?? ""),
+});
+
+export const portfolioSkillSchema = z.object({
+  skillId: z.string().uuid(),
+  skill: skillSummarySchema,
+  firstAchievedAt: z.string(),
+  evidenceCount: z.number().int(),
+  evidences: z
+    .array(skillEvidenceSchema)
+    .nullish()
+    .transform((value) => value ?? []),
+  isVisible: z.boolean(),
+  isPinned: z.boolean(),
+  displayOrder: z.number().int(),
 });
 
 export const portfolioSectionSchema = z.object({
@@ -281,6 +320,10 @@ export const portfolioSchema = z.object({
   links: z.array(portfolioLinkSchema).nullable(),
   items: z.array(portfolioItemSchema).nullable(),
   sections: z.array(portfolioSectionSchema).nullable(),
+  skills: z
+    .array(portfolioSkillSchema)
+    .nullish()
+    .transform((value) => value ?? []),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });
@@ -298,6 +341,10 @@ export const publicPortfolioSchema = z.object({
   links: z.array(portfolioLinkSchema).nullable(),
   items: z.array(portfolioItemSchema).nullable(),
   sections: z.array(portfolioSectionSchema).nullable(),
+  skills: z
+    .array(portfolioSkillSchema)
+    .nullish()
+    .transform((value) => value ?? []),
 });
 
 export const subdomainAvailabilitySchema = z.object({
@@ -327,6 +374,8 @@ export type PortfolioMediaUpload = z.infer<typeof portfolioMediaUploadSchema>;
 export type ImportClassGalleryMediaResultData = z.infer<
   typeof importClassGalleryMediaResultSchema
 >;
+export type SkillEvidence = z.infer<typeof skillEvidenceSchema>;
+export type PortfolioSkill = z.infer<typeof portfolioSkillSchema>;
 export type PortfolioItem = z.infer<typeof portfolioItemSchema>;
 export type PortfolioSection = z.infer<typeof portfolioSectionSchema>;
 export type Portfolio = z.infer<typeof portfolioSchema>;

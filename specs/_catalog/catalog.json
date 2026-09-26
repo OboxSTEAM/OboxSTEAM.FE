@@ -1142,9 +1142,14 @@
         "description": "Updates display order for the provided section ids."
       },
       {
+        "path": "/api/portfolios/me/skills",
+        "method": "put",
+        "description": "Replaces visibility, pin, and order for every achieved skill. Students cannot add skills that are not already achieved. At most 6 skills can be pinned."
+      },
+      {
         "path": "/api/portfolios/me/sync",
         "method": "post",
-        "description": "Idempotently imports certificates, graded capstone projects, and completed highlight reels."
+        "description": "Idempotently imports certificates and graded capstone projects, backfills the Skills section, and refreshes achieved skills without dropping curation."
       },
       {
         "path": "/api/portfolios/by-subdomain/{subdomain}",
@@ -3101,6 +3106,15 @@
         "name": "PortfolioSectionResponseDtoResponseDataContent"
       },
       {
+        "name": "PortfolioSkillDto"
+      },
+      {
+        "name": "PortfolioSkillDtoListApiResult"
+      },
+      {
+        "name": "PortfolioSkillDtoListResponseDataContent"
+      },
+      {
         "name": "PostAdvisoryDiscussionMessageRequest"
       },
       {
@@ -3533,6 +3547,9 @@
         "name": "SessionAttendanceResponseDtoResponseDataContent"
       },
       {
+        "name": "SkillEvidenceDto"
+      },
+      {
         "name": "SkillSummaryDto"
       },
       {
@@ -3576,6 +3593,9 @@
       },
       {
         "name": "StudentScheduleIntervalDtoListResponseDataContent"
+      },
+      {
+        "name": "StudentSkillDto"
       },
       {
         "name": "SubdomainAvailabilityResponseDto"
@@ -3714,6 +3734,12 @@
       },
       {
         "name": "UpdatePortfolioSectionRequestDto"
+      },
+      {
+        "name": "UpdatePortfolioSkillEntryDto"
+      },
+      {
+        "name": "UpdatePortfolioSkillsRequestDto"
       },
       {
         "name": "UpdatePortfolioSubdomainRequestDto"

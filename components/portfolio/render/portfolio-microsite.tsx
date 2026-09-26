@@ -21,18 +21,25 @@ import {
   TimelineEntry,
   TimelineList,
 } from "@/components/portfolio/render/items-layout";
+import { PortfolioItemMedia } from "@/components/portfolio/render/portfolio-item-media";
 import { RichText } from "@/components/portfolio/render/rich-text";
+import { EmbedLinkCard, SafeEmbedFrame } from "@/components/portfolio/render/safe-embed-frame";
+import { ItemSkillChips, SkillsSection } from "@/components/portfolio/render/skills-section";
 import type {
   Portfolio,
   PortfolioItem,
   PortfolioLink,
   PortfolioMediaAsset,
   PortfolioSection,
+  PortfolioSkill,
   PortfolioTheme,
   PublicPortfolio,
 } from "@/lib/api/entities/portfolio";
 import { parseSectionSettingsJson } from "@/lib/api/entities/portfolio";
+import { getCertificateVerifyHref } from "@/lib/certificates/format";
 import { getReadableTextColor } from "@/lib/portfolio/color-utils";
+import { parseEmbedSource, stripEmbedSource } from "@/lib/portfolio/embed-providers";
+import { stripPortfolioHtmlText } from "@/lib/portfolio/sanitize-html";
 import {
   normalizeSectionOrder,
   PORTFOLIO_ITEM_TYPE_LABELS,
@@ -64,6 +71,7 @@ export type PortfolioMicrositeData = {
   links: PortfolioLink[] | null;
   items: PortfolioItem[] | null;
   sections?: PortfolioSection[] | null;
+  skills?: PortfolioSkill[] | null;
 };
 
 export function toPortfolioMicrositeData(
@@ -81,6 +89,7 @@ export function toPortfolioMicrositeData(
     links: portfolio.links,
     items: portfolio.items,
     sections: portfolio.sections ?? null,
+    skills: "skills" in portfolio ? portfolio.skills ?? null : null,
   };
 }
 
@@ -116,16 +125,6 @@ function visibleSections(
 
 function hasHtmlTags(value: string): boolean {
   return /<[^>]+>/.test(value);
-}
-
-function looksLikeUrl(value: string): boolean {
-  const trimmed = value.trim();
-  return /^https?:\/\//i.test(trimmed) || /^www\./i.test(trimmed);
-}
-
-function normalizeEmbedUrl(value: string): string {
-  const trimmed = value.trim();
-  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
 
 function resolveGalleryVariant(
@@ -210,25 +209,6 @@ function ItemBody({ item, isDark }: { item: PortfolioItem; isDark: boolean }) {
   );
 }
 
-function ItemMediaRow({ assets }: { assets: PortfolioMediaAsset[] }) {
-  const sorted = [...assets].sort((a, b) => a.displayOrder - b.displayOrder);
-  if (sorted.length === 0) return null;
-
-  return (
-    <div className="mt-3 flex flex-wrap gap-2">
-      {sorted.map((asset, index) => (
-        // eslint-disable-next-line @next/next/no-img-element -- arbitrary remote media URLs
-        <img
-          key={asset.id ?? `${asset.url}-${index}`}
-          src={asset.url!}
-          alt={asset.caption ?? ""}
-          className="h-16 w-16 rounded-lg object-cover"
-        />
-      ))}
-    </div>
-  );
-}
-
 function ItemCard({
   item,
   resolved,
@@ -251,6 +231,13 @@ function ItemCard({
         radiusClass={getPresetPersonality(resolved.templateId).cardRadiusClass}
         className="h-full"
       >
+      <div className="mb-3" id={`portfolio-item-${item.id}`}>
+        <PortfolioItemMedia
+          assets={itemMediaSources(item)}
+          itemType={item.itemType}
+          isDark={resolved.isDark}
+        />
+      </div>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <p
           className="font-mono text-[11px] uppercase tracking-[0.16em]"
@@ -258,6 +245,11 @@ function ItemCard({
         >
           {PORTFOLIO_ITEM_TYPE_LABELS[item.itemType] ?? item.itemType}
         </p>
+        {item.finalGrade != null ? (
+          <span className="rounded-full bg-[#7CB342]/20 px-2 py-0.5 text-[10px] font-semibold text-[#7CB342]">
+            Điểm {item.finalGrade.toFixed(1)}
+          </span>
+        ) : null}
         {item.isFeatured ? (
           <span
             className="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
@@ -315,6 +307,16 @@ function ItemCard({
         </div>
       ) : null}
 
+      {item.programName || item.moduleName ? (
+        <p className={cn("mt-1 text-xs", resolved.isDark ? "text-[#FAFAF5]/55" : "text-[#6B6B6B]")}>
+          {[item.programName, item.moduleName].filter(Boolean).join(" › ")}
+        </p>
+      ) : null}
+
+      <div className="mt-2">
+        <ItemSkillChips skills={item.skills ?? []} isDark={resolved.isDark} />
+      </div>
+
       {dateRange && !isTimelineLayout(layoutStyle) ? (
         <p
           className={cn(
@@ -327,7 +329,6 @@ function ItemCard({
       ) : null}
 
       <ItemBody item={item} isDark={resolved.isDark} />
-      <ItemMediaRow assets={itemMediaSources(item)} />
 
       {item.mentorEndorsement ? (
         <blockquote
@@ -337,11 +338,22 @@ function ItemCard({
           )}
           style={{ borderColor: resolved.accentColor }}
         >
+          <span className="mb-1 block text-[11px] font-semibold not-italic uppercase tracking-wide">
+            Nhận xét của mentor
+          </span>
           {item.mentorEndorsement}
         </blockquote>
       ) : null}
 
-      {item.externalUrl ? (
+      {parseEmbedSource(item.externalUrl) ? (
+        <div className="mt-3">
+          <SafeEmbedFrame
+            spec={parseEmbedSource(item.externalUrl)!}
+            title={item.title}
+            isDark={resolved.isDark}
+          />
+        </div>
+      ) : item.externalUrl ? (
         <a
           href={item.externalUrl}
           target="_blank"
@@ -350,6 +362,28 @@ function ItemCard({
           style={{ color: resolved.primaryColor }}
         >
           Xem liên kết
+        </a>
+      ) : null}
+      {item.pdfUrl ? (
+        <a
+          href={item.pdfUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 mr-3 inline-flex text-sm font-semibold underline-offset-4 hover:underline"
+          style={{ color: resolved.primaryColor }}
+        >
+          Xem chứng chỉ
+        </a>
+      ) : null}
+      {item.verificationUrl || item.certificateCode ? (
+        <a
+          href={item.verificationUrl ?? getCertificateVerifyHref(item.certificateCode ?? "")}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex text-sm font-semibold underline-offset-4 hover:underline"
+          style={{ color: resolved.primaryColor }}
+        >
+          Xác minh
         </a>
       ) : null}
       </PortfolioCardShell>
@@ -641,35 +675,23 @@ function EmbedSection({
   section: PortfolioSection;
   resolved: ResolvedPortfolioTheme;
 }) {
-  const content = section.contentHtml?.trim();
+  const content = stripEmbedSource(section.contentHtml ?? "");
   if (!content) return null;
+  const spec = parseEmbedSource(content);
 
   return (
     <section className="space-y-3">
       {section.title ? (
         <SectionHeading title={section.title} resolved={resolved} />
       ) : null}
-      {looksLikeUrl(content) ? (
-        <div className="space-y-3">
-          <iframe
-            src={normalizeEmbedUrl(content)}
-            title={section.title ?? "Nhúng nội dung"}
-            className={cn(
-              "h-64 w-full rounded-xl border",
-              resolved.isDark ? "border-[#FAFAF5]/15" : "border-[#E5E5E0]",
-            )}
-          />
-          <a
-            href={normalizeEmbedUrl(content)}
-            target="_blank"
-            rel="noreferrer"
-            className="inline-flex text-sm font-medium text-[#4FC3F7] underline-offset-4 hover:underline"
-          >
-            Mở liên kết
-          </a>
-        </div>
+      {spec ? (
+        <SafeEmbedFrame
+          spec={spec}
+          title={stripPortfolioHtmlText(section.title) || "Sản phẩm tương tác"}
+          isDark={resolved.isDark}
+        />
       ) : (
-        <RichText html={content} />
+        <EmbedLinkCard href={content.startsWith("http") ? content : `https://${content}`} isDark={resolved.isDark} />
       )}
     </section>
   );
@@ -681,6 +703,7 @@ function renderDynamicSection(
   projectItems: PortfolioItem[],
   activityItems: PortfolioItem[],
   links: PortfolioLink[],
+  skills: PortfolioSkill[],
 ): ReactNode {
   switch (section.kind) {
     case "ProjectsGroup":
@@ -713,6 +736,17 @@ function renderDynamicSection(
       return <GallerySection section={section} resolved={resolved} />;
     case "Embed":
       return <EmbedSection section={section} resolved={resolved} />;
+    case "SkillsGroup":
+      return (
+        <section className="space-y-4">
+          <SectionHeading title={section.title ?? "Kỹ năng đạt được"} resolved={resolved} />
+          <SkillsSection
+            skills={skills}
+            isDark={resolved.isDark}
+            primaryColor={resolved.primaryColor}
+          />
+        </section>
+      );
     default:
       return null;
   }
@@ -810,6 +844,7 @@ export function PortfolioMicrosite({
                 projectItems,
                 activityItems,
                 links,
+                data.skills ?? [],
               );
               if (!content) return null;
 

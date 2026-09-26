@@ -1006,7 +1006,9 @@ function ProgramInfoPanel({
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",
             level: program.level, estimatedDuration: program.estimatedDuration,
-            skillsGained: program.skillsGained, thumbnailUrl: program.thumbnailUrl || "",
+            skillsGained: program.skillsGained,
+            skillIds: program.skills.map((skill) => skill.id),
+            thumbnailUrl: program.thumbnailUrl || "",
             status: program.status, price: program.price,
             frameworkId: program.frameworkId ?? "",
           }}

@@ -335,7 +335,7 @@ export function RichTextEditor({
               ? cn(
                   "min-h-[3.75rem] max-w-full px-2 py-1.5 text-sm leading-relaxed text-inherit [font:inherit]",
                   maxHeightClass
-                    ? cn(maxHeightClass, "h-full overflow-y-auto")
+                    ? cn(maxHeightClass, "overflow-y-auto")
                     : null,
                 )
               : "min-h-[4.5rem] rounded-xl border border-border bg-card px-3.5 py-3 text-[15px] text-foreground",

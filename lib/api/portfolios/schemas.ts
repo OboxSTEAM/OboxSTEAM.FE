@@ -6,6 +6,7 @@ import {
   portfolioMediaUploadSchema,
   portfolioSchema,
   portfolioSectionSchema,
+  portfolioSkillSchema,
   publicPortfolioSchema,
   subdomainAvailabilitySchema,
 } from "@/lib/api/entities/portfolio";
@@ -26,6 +27,9 @@ export const importClassGalleryMediaValueSchema = createApiValueSchema(
   importClassGalleryMediaResultSchema,
 );
 export const publicPortfolioValueSchema = createApiValueSchema(publicPortfolioSchema);
+export const portfolioSkillListValueSchema = createApiValueSchema(
+  z.array(portfolioSkillSchema).nullable(),
+);
 export const subdomainAvailabilityValueSchema = createApiValueSchema(
   subdomainAvailabilitySchema,
 );
@@ -84,6 +88,9 @@ export const checkPortfolioSubdomainAvailabilityResponseSchema = createApiRespon
 export const getPublicPortfolioBySubdomainResponseSchema = createApiResponseSchema(
   publicPortfolioValueSchema,
 );
+export const updatePortfolioSkillsResponseSchema = createApiResponseSchema(
+  portfolioSkillListValueSchema,
+);
 
 export type GetMyPortfolioResponse = z.infer<typeof getMyPortfolioResponseSchema>;
 export type CreatePortfolioResponse = z.infer<typeof createPortfolioResponseSchema>;
@@ -119,6 +126,9 @@ export type CheckPortfolioSubdomainAvailabilityResponse = z.infer<
 >;
 export type GetPublicPortfolioBySubdomainResponse = z.infer<
   typeof getPublicPortfolioBySubdomainResponseSchema
+>;
+export type UpdatePortfolioSkillsResponse = z.infer<
+  typeof updatePortfolioSkillsResponseSchema
 >;
 
 export type GetMyPortfolioResult = NonNullable<GetMyPortfolioResponse["value"]>;
@@ -169,4 +179,7 @@ export type CheckPortfolioSubdomainAvailabilityResult = NonNullable<
 >;
 export type GetPublicPortfolioBySubdomainResult = NonNullable<
   GetPublicPortfolioBySubdomainResponse["value"]
+>;
+export type UpdatePortfolioSkillsResult = NonNullable<
+  UpdatePortfolioSkillsResponse["value"]
 >;

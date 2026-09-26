@@ -24,6 +24,7 @@ import {
   type PortfolioSection,
 } from "@/lib/api";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { stripPortfolioHtmlText } from "@/lib/portfolio/sanitize-html";
 import { isImageFile, isVideoFile } from "@/lib/media/file-kind";
 import {
   setClassMediaDragData,
@@ -474,14 +475,15 @@ export function GalleryPanel({
         >
           <SelectTrigger className={selectTriggerClass}>
             <span className="truncate">
-              {gallerySections.find((section) => section.id === effectiveTarget)
-                ?.title?.trim() || "Thư viện ảnh"}
+              {stripPortfolioHtmlText(
+                gallerySections.find((section) => section.id === effectiveTarget)?.title,
+              ) || "Thư viện ảnh"}
             </span>
           </SelectTrigger>
           <SelectContent className={selectContentClass}>
             {gallerySections.map((section) => (
               <SelectItem key={section.id} value={section.id}>
-                {section.title?.trim() || "Thư viện ảnh"}
+                {stripPortfolioHtmlText(section.title) || "Thư viện ảnh"}
               </SelectItem>
             ))}
           </SelectContent>

@@ -24181,13 +24181,143 @@
         }
       }
     },
+    "/api/portfolios/me/skills": {
+      "put": {
+        "tags": [
+          "Portfolio"
+        ],
+        "summary": "Replace portfolio skill curation",
+        "description": "Replaces visibility, pin, and order for every achieved skill. Students cannot add skills that are not already achieved. At most 6 skills can be pinned.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePortfolioSkillsRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePortfolioSkillsRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePortfolioSkillsRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSkillDtoListApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSkillDtoListApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PortfolioSkillDtoListApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/portfolios/me/sync": {
       "post": {
         "tags": [
           "Portfolio"
         ],
         "summary": "Sync auto-imported portfolio items",
-        "description": "Idempotently imports certificates, graded capstone projects, and completed highlight reels.",
+        "description": "Idempotently imports certificates and graded capstone projects, backfills the Skills section, and refreshes achieved skills without dropping curation.",
         "responses": {
           "200": {
             "description": "OK",
@@ -24567,6 +24697,13 @@
                   },
                   "SkillsGained": {
                     "type": "string"
+                  },
+                  "SkillIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
                   },
                   "ThumbnailUrl": {
                     "type": "string"
@@ -42990,7 +43127,8 @@
               "LinksGroup",
               "RichText",
               "Gallery",
-              "Embed"
+              "Embed",
+              "SkillsGroup"
             ],
             "type": "string"
           },
@@ -49648,6 +49786,40 @@
             },
             "nullable": true
           },
+          "certificateId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "certificateCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "verificationUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "pdfUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "issuedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          },
+          "finalGrade": {
+            "type": "number",
+            "format": "double",
+            "nullable": true
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillSummaryDto"
+            },
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "example": "15/06/2026 14:30:00"
@@ -49953,6 +50125,13 @@
             },
             "nullable": true
           },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSkillDto"
+            },
+            "nullable": true
+          },
           "createdAt": {
             "type": "string",
             "example": "15/06/2026 14:30:00"
@@ -50011,7 +50190,8 @@
               "LinksGroup",
               "RichText",
               "Gallery",
-              "Embed"
+              "Embed",
+              "SkillsGroup"
             ],
             "type": "string"
           },
@@ -50082,6 +50262,65 @@
           },
           "data": {
             "$ref": "#/components/schemas/PortfolioSectionResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioSkillDto": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/StudentSkillDto"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "isVisible": {
+                "type": "boolean"
+              },
+              "isPinned": {
+                "type": "boolean"
+              },
+              "displayOrder": {
+                "type": "integer",
+                "format": "int32"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      },
+      "PortfolioSkillDtoListApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/PortfolioSkillDtoListResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PortfolioSkillDtoListResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSkillDto"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -50329,6 +50568,13 @@
           },
           "programName": {
             "type": "string",
+            "nullable": true
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillSummaryDto"
+            },
             "nullable": true
           },
           "modules": {
@@ -51160,6 +51406,13 @@
             "type": "string",
             "nullable": true
           },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillSummaryDto"
+            },
+            "nullable": true
+          },
           "rating": {
             "type": "number",
             "format": "double",
@@ -51896,6 +52149,13 @@
             "type": "string",
             "nullable": true
           },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillSummaryDto"
+            },
+            "nullable": true
+          },
           "rating": {
             "type": "number",
             "format": "double",
@@ -52131,6 +52391,13 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PortfolioSectionResponseDto"
+            },
+            "nullable": true
+          },
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PortfolioSkillDto"
             },
             "nullable": true
           }
@@ -54240,6 +54507,46 @@
         },
         "additionalProperties": false
       },
+      "SkillEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "Program",
+              "Certificate",
+              "Capstone"
+            ],
+            "type": "string"
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "programName": {
+            "type": "string",
+            "nullable": true
+          },
+          "certificateCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "verificationUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "portfolioItemId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "achievedAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
       "SkillSummaryDto": {
         "type": "object",
         "properties": {
@@ -54628,6 +54935,34 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/StudentScheduleIntervalDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "StudentSkillDto": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "skill": {
+            "$ref": "#/components/schemas/SkillSummaryDto"
+          },
+          "firstAchievedAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "evidenceCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "evidences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SkillEvidenceDto"
             },
             "nullable": true
           }
@@ -56154,6 +56489,39 @@
         },
         "additionalProperties": false
       },
+      "UpdatePortfolioSkillEntryDto": {
+        "type": "object",
+        "properties": {
+          "skillId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "isVisible": {
+            "type": "boolean"
+          },
+          "isPinned": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpdatePortfolioSkillsRequestDto": {
+        "type": "object",
+        "properties": {
+          "skills": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdatePortfolioSkillEntryDto"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "UpdatePortfolioSubdomainRequestDto": {
         "type": "object",
         "properties": {
@@ -56276,6 +56644,14 @@
           },
           "skillsGained": {
             "type": "string",
+            "nullable": true
+          },
+          "skillIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
             "nullable": true
           },
           "thumbnailUrl": {

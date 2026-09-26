@@ -401,6 +401,11 @@ export async function createProgram(
     formData.append(key, text);
   }
 
+  for (const skillId of fields.skillIds ?? []) {
+    formData.append("data.SkillIds", skillId);
+    formData.append("SkillIds", skillId);
+  }
+
   if (file) {
     formData.append("file", file);
   }
