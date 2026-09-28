@@ -26,6 +26,8 @@ import {
 import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
+import { EnrollmentReviewAction } from "./enrollment-review-action";
+
 type EnrollmentCardProps = {
   enrollment: ProgramEnrollment;
   className?: string;
@@ -212,16 +214,23 @@ export function EnrollmentCard({
             <ArrowRight className="size-4" aria-hidden />
           </Link>
         ) : isCompleted ? (
-          <Link
-            href={learnHref}
-            className={cn(
-              buttonVariants({ size: "sm" }),
-              "inline-flex gap-1.5 font-semibold",
-            )}
-          >
-            Xem lại khóa học
-            <ArrowRight className="size-4" aria-hidden />
-          </Link>
+          <>
+            <Link
+              href={learnHref}
+              className={cn(
+                buttonVariants({ size: "sm" }),
+                "inline-flex gap-1.5 font-semibold",
+              )}
+            >
+              Xem lại khóa học
+              <ArrowRight className="size-4" aria-hidden />
+            </Link>
+            <EnrollmentReviewAction
+              programId={enrollment.programId}
+              programName={enrollment.name}
+              reviewId={enrollment.reviewId}
+            />
+          </>
         ) : enrollment.status === "Failed" ||
           enrollment.status === "Dropped" ? (
           <Link

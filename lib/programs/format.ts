@@ -1,7 +1,33 @@
+import { parseApiDateTime } from "@/lib/api/datetime";
 import type { ProgramExpert } from "@/lib/api/entities/expert";
 import type { Program } from "@/lib/api/entities/program";
 
 import { PROGRAM_LEVEL_LABELS } from "./constants";
+
+const REVIEW_DATE_FORMATTER = new Intl.DateTimeFormat("vi-VN", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+});
+
+/** Formats review timestamps; accepts ISO and legacy `dd/MM/yyyy HH:mm:ss`. */
+export function formatReviewDate(value: string | null | undefined): string {
+  const date = parseApiDateTime(value);
+  if (!date) return value ?? "";
+  return REVIEW_DATE_FORMATTER.format(date);
+}
+
+/** True when the review was edited after creation (BE sets `updatedAt` on edit). */
+export function isReviewEdited(review: {
+  createdAt: string;
+  updatedAt: string | null;
+}): boolean {
+  if (!review.updatedAt) return false;
+  const created = parseApiDateTime(review.createdAt);
+  const updated = parseApiDateTime(review.updatedAt);
+  if (!created || !updated) return false;
+  return updated.getTime() - created.getTime() > 1000;
+}
 
 export function parseProgramSkills(skillsGained: string): string[] {
   return skillsGained

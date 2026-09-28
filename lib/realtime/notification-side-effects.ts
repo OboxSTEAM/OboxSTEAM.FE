@@ -19,6 +19,8 @@ const CURRICULUM_SOFT_SYNC_TYPES = new Set<NotificationType>([
   "ModuleCompleted",
   "ModuleFailed",
   "ActivityCompleted",
+  // Sent on enrollment → Completed; learn page re-resolves status and opens the review prompt.
+  "ProgramReviewRequested",
 ]);
 
 const MEDIA_SYNC_TYPES = new Set<NotificationType>([

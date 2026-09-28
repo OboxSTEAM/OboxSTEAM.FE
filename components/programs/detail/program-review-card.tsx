@@ -1,30 +1,32 @@
+import type { ReactNode } from "react";
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { ProgramReview } from "@/lib/api/programs";
+import {
+  formatReviewDate,
+  getExpertInitials,
+  isReviewEdited,
+} from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 import { StarRating } from "./star-rating";
 
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
-function formatReviewDate(iso: string): string {
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(new Date(iso));
-}
-
 type ProgramReviewCardProps = {
   review: ProgramReview;
   className?: string;
+  /** Owner actions (edit/delete) rendered at the top-right. */
+  actions?: ReactNode;
+  /** Replaces the student name, e.g. "Đánh giá của bạn". */
+  heading?: string;
 };
 
-export function ProgramReviewCard({ review, className }: ProgramReviewCardProps) {
+export function ProgramReviewCard({
+  review,
+  className,
+  actions,
+  heading,
+}: ProgramReviewCardProps) {
+  const displayName = review.studentName || "Học viên";
   return (
     <article
       className={cn(
@@ -38,21 +40,25 @@ export function ProgramReviewCard({ review, className }: ProgramReviewCardProps)
             <AvatarImage src={review.studentAvatarUrl} alt="" />
           ) : null}
           <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
-            {getInitials(review.studentName)}
+            {getExpertInitials(displayName)}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-            <p className="text-sm font-semibold text-[#2D2D2D]">
-              {review.studentName}
-            </p>
-            <time
-              dateTime={review.createdAt}
-              className="text-xs text-[#6B6B6B] tabular-nums"
-            >
-              {formatReviewDate(review.createdAt)}
-            </time>
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+              <p className="text-sm font-semibold text-[#2D2D2D]">
+                {heading ?? displayName}
+              </p>
+              <time
+                dateTime={review.createdAt}
+                className="text-xs text-[#6B6B6B] tabular-nums"
+              >
+                {formatReviewDate(review.createdAt)}
+                {isReviewEdited(review) ? " · đã chỉnh sửa" : null}
+              </time>
+            </div>
+            {actions ? <div className="flex shrink-0 gap-1">{actions}</div> : null}
           </div>
 
           <div className="mt-1">

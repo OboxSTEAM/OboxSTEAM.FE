@@ -33,6 +33,7 @@ import {
 import { showAppErrorFromUnknown } from "@/lib/errors";
 
 import { CurriculumShell } from "./curriculum-shell";
+import { ProgramCompletionReviewPrompt } from "./program-completion-review-prompt";
 
 type CurriculumLearnContentProps = {
   programId: string;
@@ -306,9 +307,23 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       activityId: selectedActivityId,
       assignmentId: selectedAssignmentId,
     });
+
+    // Catch the Active → Completed flip mid-session so the review prompt can open.
+    if (enrollment?.status === "Active") {
+      try {
+        const latest = await resolveActiveProgramEnrollment(programId);
+        if (latest && latest.status !== enrollment.status) {
+          setEnrollment(latest);
+        }
+      } catch {
+        // Non-critical; the prompt will show on the next visit.
+      }
+    }
   }, [
     curriculum,
+    enrollment,
     loadCurriculum,
+    programId,
     selectedActivityId,
     selectedAssignmentId,
   ]);
@@ -416,6 +431,11 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         classContext={classContext}
         initialView={initialView}
         programPrice={enrollment.price}
+      />
+
+      <ProgramCompletionReviewPrompt
+        programId={programId}
+        enrollment={enrollment}
       />
 
       <ClassPickerDialog

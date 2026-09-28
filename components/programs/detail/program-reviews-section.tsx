@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { ProgramPagination } from "@/components/programs/program-pagination";
+import { ProgramMyReviewPanel } from "@/components/programs/reviews/program-my-review-panel";
 import {
   LIGHT_SELECT_CONTENT,
   LIGHT_SELECT_ITEM,
@@ -81,9 +83,12 @@ export function ProgramReviewsSection({
   totalReviews,
   initialData,
 }: ProgramReviewsSectionProps) {
+  const router = useRouter();
   const [query, setQuery] = useState<ProgramReviewsQuery>(
     DEFAULT_PROGRAM_REVIEWS_QUERY,
   );
+  /** Bumped after the student's own review changes — the server-seeded page is stale then. */
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const isInitialQuery = useMemo(
     () =>
@@ -95,15 +100,21 @@ export function ProgramReviewsSection({
   );
 
   const { data, isLoading, hasError, markLoading, retry } = useClientFetch({
-    enabled: !isInitialQuery,
+    enabled: !isInitialQuery || refreshKey > 0,
     initialData,
     fetcher: async () => {
       const result = await getProgramReviews(programId, query);
       return result?.data ?? null;
     },
-    deps: [programId, query],
+    deps: [programId, query, refreshKey],
     onError: (error) => showAppErrorFromUnknown(error, "programs.reviews"),
   });
+
+  const handleOwnReviewChanged = useCallback(() => {
+    markLoading();
+    setRefreshKey((key) => key + 1);
+    router.refresh();
+  }, [markLoading, router]);
 
   const handleSortChange = useCallback(
     (sortId: string | null) => {
@@ -181,6 +192,11 @@ export function ProgramReviewsSection({
           </SelectContent>
         </Select>
       </div>
+
+      <ProgramMyReviewPanel
+        programId={programId}
+        onChanged={handleOwnReviewChanged}
+      />
 
       {hasError ? (
         <div className="py-10 text-center">

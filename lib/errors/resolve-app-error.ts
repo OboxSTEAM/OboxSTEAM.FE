@@ -150,6 +150,26 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Đánh giá có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
     action: "Tải lại danh sách đánh giá và thử lại.",
   },
+  "programs.reviews.mine": {
+    title: "Không tải được đánh giá của bạn",
+    reason: "Máy chủ tạm thời không phản hồi hoặc phiên đăng nhập đã hết hạn.",
+    action: "Tải lại trang hoặc đăng nhập lại rồi thử tiếp.",
+  },
+  "programs.reviews.create": {
+    title: "Không gửi được đánh giá",
+    reason: "Thông tin đánh giá chưa hợp lệ hoặc máy chủ từ chối yêu cầu.",
+    action: "Kiểm tra số sao và nhận xét rồi thử lại.",
+  },
+  "programs.reviews.update": {
+    title: "Không cập nhật được đánh giá",
+    reason: "Đánh giá có thể đã bị xóa hoặc thông tin chưa hợp lệ.",
+    action: "Tải lại trang và thử lại.",
+  },
+  "programs.reviews.deleteOwn": {
+    title: "Không xóa được đánh giá",
+    reason: "Đánh giá có thể đã bị xóa hoặc máy chủ từ chối yêu cầu.",
+    action: "Tải lại trang và thử lại.",
+  },
   "programs.expert": {
     title: "Không tải được thông tin chuyên gia",
     reason: "Chuyên gia không tồn tại hoặc máy chủ tạm thời không phản hồi.",
@@ -1383,6 +1403,59 @@ function mapHttpStatusToError(
   return null;
 }
 
+/** BE machine codes for student review mutations — curated copy beats BE prose. */
+const PROGRAM_REVIEW_CODE_ERRORS: Record<string, AppErrorState> = {
+  REVIEW_NOT_ELIGIBLE: {
+    title: "Chưa thể đánh giá",
+    reason: "Bạn chỉ có thể đánh giá sau khi hoàn thành chương trình.",
+    action: "Hoàn thành chương trình rồi quay lại để chia sẻ cảm nhận.",
+  },
+  REVIEW_ALREADY_EXISTS: {
+    title: "Bạn đã đánh giá chương trình này",
+    reason: "Mỗi học viên chỉ có một đánh giá cho mỗi chương trình.",
+    action: "Tải lại trang để sửa đánh giá hiện có.",
+  },
+  REVIEW_REMOVED_BY_MODERATOR: {
+    title: "Không thể đánh giá lại",
+    reason: "Đánh giá trước của bạn đã bị quản lý gỡ bỏ.",
+    action: "Liên hệ hỗ trợ OboxSTEAM nếu bạn cho rằng đây là nhầm lẫn.",
+  },
+  REVIEW_COMMENT_INVALID: {
+    title: "Nhận xét chưa hợp lệ",
+    reason: "Nhận xét chỉ được chứa văn bản thuần và tối đa 2000 ký tự.",
+    action: "Xóa thẻ HTML hoặc rút gọn nhận xét rồi gửi lại.",
+  },
+};
+
+function extractApiErrorCode(error: unknown): string | null {
+  if (error instanceof ApiResponseError) {
+    return error.code?.trim() || null;
+  }
+  if (error instanceof ApiRequestError) {
+    const body = error.body as {
+      error?: { code?: string | null };
+      value?: { code?: string | null };
+      code?: string | null;
+    } | null;
+    return (
+      body?.error?.code?.trim() ||
+      body?.value?.code?.trim() ||
+      body?.code?.trim() ||
+      null
+    );
+  }
+  return null;
+}
+
+function resolveProgramReviewCodeError(
+  error: unknown,
+  context: AppErrorContext,
+): AppErrorState | null {
+  if (!context.startsWith("programs.reviews.")) return null;
+  const code = extractApiErrorCode(error);
+  return code ? (PROGRAM_REVIEW_CODE_ERRORS[code] ?? null) : null;
+}
+
 function fromZodError(error: ZodError): AppErrorState {
   const first = error.issues[0];
   const path = first?.path?.length ? first.path.join(".") : null;
@@ -1417,6 +1490,9 @@ export function resolveAppError(
   error: unknown,
   context: AppErrorContext = "generic",
 ): AppErrorState {
+  const reviewCodeError = resolveProgramReviewCodeError(error, context);
+  if (reviewCodeError) return reviewCodeError;
+
   if (error instanceof ApiResponseError) {
     const mapped = mapHttpStatusToError(
       400,

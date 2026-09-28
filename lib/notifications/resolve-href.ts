@@ -242,6 +242,9 @@ export function resolveNotificationHref(
       if (isParent) return parentProgressHref(payload);
       return programId ? `/programs/${programId}` : null;
 
+    case "ProgramReviewRequested":
+      return programId ? `/programs/${programId}?review=1` : "/courses";
+
     case "ProgramActivated":
     case "ProgramWithdrawn":
     case "PaymentSucceeded":

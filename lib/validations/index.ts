@@ -89,6 +89,15 @@ export {
   type UploadProgramThumbnailInput,
 } from "./programs";
 export {
+  createProgramReviewSchema,
+  PROGRAM_REVIEW_COMMENT_MAX,
+  programReviewFormSchema,
+  updateProgramReviewSchema,
+  type CreateProgramReviewInput,
+  type ProgramReviewFormValues,
+  type UpdateProgramReviewInput,
+} from "./program-reviews";
+export {
   approveCurriculumReviewSchema,
   programReviewQueueQuerySchema,
   requestCurriculumChangesSchema,

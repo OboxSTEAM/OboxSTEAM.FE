@@ -9,7 +9,10 @@ import {
   programWithModulesSchema,
 } from "@/lib/api/entities/program";
 import { rebuyClassCatalogSchema } from "@/lib/api/entities/rebuy-class-catalog";
-import { programReviewSchema } from "@/lib/api/entities/review";
+import {
+  myProgramReviewSchema,
+  programReviewSchema,
+} from "@/lib/api/entities/review";
 import { curriculumReviewSchema } from "@/lib/api/entities/curriculum-review";
 import { programReviewQueueItemSchema } from "@/lib/api/entities/program-review-queue";
 import { createApiResponseSchema, createApiValueSchema, apiValueMessageOnlySchema } from "@/lib/api/schemas";
@@ -59,6 +62,12 @@ export const getProgramReviewsResponseSchema = createApiResponseSchema(
 );
 export const deleteProgramReviewResponseSchema = createApiResponseSchema(
   programDeleteValueSchema,
+);
+export const programReviewMutationResponseSchema = createApiResponseSchema(
+  createApiValueSchema(programReviewSchema),
+);
+export const getMyProgramReviewResponseSchema = createApiResponseSchema(
+  createApiValueSchema(myProgramReviewSchema),
 );
 
 export const programCurriculumValueSchema = createApiValueSchema(programCurriculumSchema);
@@ -139,6 +148,14 @@ export type DeleteProgramReviewResponse = z.infer<
   typeof deleteProgramReviewResponseSchema
 >;
 export type DeleteProgramReviewResult = DeleteProgramReviewResponse["value"];
+export type ProgramReviewMutationResponse = z.infer<
+  typeof programReviewMutationResponseSchema
+>;
+export type ProgramReviewMutationResult = ProgramReviewMutationResponse["value"];
+export type GetMyProgramReviewResponse = z.infer<
+  typeof getMyProgramReviewResponseSchema
+>;
+export type GetMyProgramReviewResult = GetMyProgramReviewResponse["value"];
 export type GetProgramCurriculumResponse = z.infer<
   typeof getProgramCurriculumResponseSchema
 >;

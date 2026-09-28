@@ -9,6 +9,7 @@ import {
   Link2,
   Repeat,
   Sparkles,
+  Star,
   User,
   Users,
   Video,
@@ -29,6 +30,7 @@ export type NotificationTypeGroup =
   | "grading"
   | "media"
   | "highlight"
+  | "review"
   | "other";
 
 type TypeStyle = {
@@ -99,6 +101,11 @@ const STYLE: Record<NotificationTypeGroup, Omit<TypeStyle, "group">> = {
     wrapClassName: "bg-[#FFF8E1] text-[#8A7200]",
     iconClassName: "text-[#FDD835]",
   },
+  review: {
+    icon: Star,
+    wrapClassName: "bg-[#FFF8E1] text-[#8A7200]",
+    iconClassName: "fill-[#FDD835] text-[#FDD835]",
+  },
   other: {
     icon: Bell,
     wrapClassName: "bg-[#F5F5F0] text-[#6B6B6B]",
@@ -123,6 +130,7 @@ const TYPE_GROUP: Record<NotificationType, NotificationTypeGroup> = {
   ModuleRetakeInitiated: "redelivery",
   PendingPaymentExpired: "payment",
   ActivityCompleted: "progress",
+  ProgramReviewRequested: "review",
   PaymentSucceeded: "payment",
   PaymentFailed: "payment",
   PaymentCancelled: "payment",

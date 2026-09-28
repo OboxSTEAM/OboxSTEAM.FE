@@ -34,6 +34,11 @@ import {
   getReviewSortOptionId,
   PROGRAM_REVIEW_SORT_OPTIONS,
 } from "@/lib/programs/constants";
+import {
+  formatReviewDate,
+  getExpertInitials,
+  isReviewEdited,
+} from "@/lib/programs/format";
 
 type ProgramReviewsManagerProps = {
   programId: string;
@@ -41,23 +46,6 @@ type ProgramReviewsManagerProps = {
   programRating: number | null;
   totalReviews: number;
 };
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
-}
-
-function formatReviewDate(iso: string): string {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return iso;
-  return new Intl.DateTimeFormat("vi-VN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
 
 function getReviewSortLabel(sortId: string): string {
   return (
@@ -97,6 +85,8 @@ type ManagerReviewCardProps = {
 };
 
 function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
+  const displayName = review.studentName || "Học viên";
+
   return (
     <article className="flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-[0_2px_12px_rgba(45,45,45,0.04)]">
       <div className="flex gap-3">
@@ -105,7 +95,7 @@ function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
             <AvatarImage src={review.studentAvatarUrl} alt="" />
           ) : null}
           <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
-            {getInitials(review.studentName)}
+            {getExpertInitials(displayName)}
           </AvatarFallback>
         </Avatar>
 
@@ -113,13 +103,14 @@ function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="truncate text-sm font-semibold text-foreground">
-                {review.studentName}
+                {displayName}
               </p>
               <time
                 dateTime={review.createdAt}
                 className="text-xs text-muted-foreground tabular-nums"
               >
                 {formatReviewDate(review.createdAt)}
+                {isReviewEdited(review) ? " · đã chỉnh sửa" : null}
               </time>
             </div>
 
@@ -128,7 +119,7 @@ function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
               variant="ghost"
               size="icon"
               onClick={() => onDelete(review)}
-              aria-label={`Xóa đánh giá của ${review.studentName}`}
+              aria-label={`Xóa đánh giá của ${displayName}`}
               className="size-8 shrink-0 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
             >
               <Trash2 className="size-4" aria-hidden />

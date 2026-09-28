@@ -41,6 +41,12 @@ export const programEnrollmentSchema = z.object({
   priorEndReason: programEnrollmentEndReasonSchema.nullable(),
   isSuperseded: z.boolean(),
   supersededByEnrollmentId: z.string().uuid().nullable(),
+  /** Student's active program review, if any. */
+  reviewId: z
+    .string()
+    .uuid()
+    .nullish()
+    .transform((value) => value ?? null),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   code: z.string().nullable(),

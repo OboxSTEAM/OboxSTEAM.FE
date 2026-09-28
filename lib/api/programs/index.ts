@@ -20,10 +20,20 @@ import {
   type ProgramReviewQueueQuery,
   type RequestCurriculumChangesInput,
 } from "@/lib/validations/curriculum-reviews";
+import {
+  createProgramReviewSchema,
+  updateProgramReviewSchema,
+  type CreateProgramReviewInput,
+  type UpdateProgramReviewInput,
+} from "@/lib/validations/program-reviews";
 
 import {
   deleteProgramResponseSchema,
   deleteProgramReviewResponseSchema,
+  getMyProgramReviewResponseSchema,
+  programReviewMutationResponseSchema,
+  type GetMyProgramReviewResult,
+  type ProgramReviewMutationResult,
   getProgramByIdResponseSchema,
   getProgramCurriculumResponseSchema,
   getProgramOpenClassesResponseSchema,
@@ -68,6 +78,10 @@ export type {
   DeleteProgramResult,
   DeleteProgramReviewResponse,
   DeleteProgramReviewResult,
+  GetMyProgramReviewResponse,
+  GetMyProgramReviewResult,
+  ProgramReviewMutationResponse,
+  ProgramReviewMutationResult,
   GetProgramByIdResponse,
   GetProgramByIdResult,
   GetProgramCurriculumResponse,
@@ -148,7 +162,16 @@ export type {
   ProgramCurriculum,
 } from "@/lib/api/entities/curriculum";
 
-export type { ProgramReview } from "@/lib/api/entities/review";
+export type {
+  MyProgramReview,
+  ProgramReview,
+  ProgramReviewEligibilityReason,
+} from "@/lib/api/entities/review";
+
+export type {
+  CreateProgramReviewInput,
+  UpdateProgramReviewInput,
+} from "@/lib/validations/program-reviews";
 
 export type { Paginated } from "@/lib/api/entities/pagination";
 
@@ -339,6 +362,64 @@ export async function getProgramReviews(
     `${PROGRAMS_BASE}/${programId}/reviews${buildProgramReviewsQuery(params)}`,
     getProgramReviewsResponseSchema,
     { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `GET /api/programs/{programId}/reviews/me` — student-only review state
+ * (`canReview`, `reason`, own active `review`).
+ */
+export async function getMyProgramReview(
+  programId: string,
+): Promise<GetMyProgramReviewResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/reviews/me`,
+    getMyProgramReviewResponseSchema,
+    { method: "GET" },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/programs/{programId}/reviews` — Completed students only.
+ * Errors: 403 REVIEW_NOT_ELIGIBLE / REVIEW_REMOVED_BY_MODERATOR,
+ * 409 REVIEW_ALREADY_EXISTS, 400 REVIEW_COMMENT_INVALID.
+ */
+export async function createProgramReview(
+  programId: string,
+  input: CreateProgramReviewInput,
+): Promise<ProgramReviewMutationResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = createProgramReviewSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/reviews`,
+    programReviewMutationResponseSchema,
+    { method: "POST", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/** `PUT /api/programs/{programId}/reviews/{reviewId}` — owner only; `""` clears the comment. */
+export async function updateProgramReview(
+  programId: string,
+  reviewId: string,
+  input: UpdateProgramReviewInput,
+): Promise<ProgramReviewMutationResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const { reviewId: parsedReviewId } = reviewIdParamSchema.parse({ reviewId });
+  const body = updateProgramReviewSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/reviews/${parsedReviewId}`,
+    programReviewMutationResponseSchema,
+    { method: "PUT", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

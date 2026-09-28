@@ -19,6 +19,7 @@ export const notificationTypeSchema = z.enum([
   "ModuleRetakeInitiated",
   "PendingPaymentExpired",
   "ActivityCompleted",
+  "ProgramReviewRequested",
   "PaymentSucceeded",
   "PaymentFailed",
   "PaymentCancelled",

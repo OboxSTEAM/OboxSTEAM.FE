@@ -31107,7 +31107,7 @@
           "ProgramReview"
         ],
         "summary": "Create a program review",
-        "description": "Allows an enrolled student to submit a star rating and optional comment for a program they are enrolled in. One review per student per program.",
+        "description": "Allows a student who completed the program to submit a star rating (1-5) and an optional plain-text comment (trimmed, max 2000 characters, empty stored as null). One active review per student per program. Error codes: 403 REVIEW_NOT_ELIGIBLE (no Completed enrollment), 409 REVIEW_ALREADY_EXISTS (an active review exists), 403 REVIEW_REMOVED_BY_MODERATOR (a moderator removed the previous review), 400 REVIEW_COMMENT_INVALID (HTML or too long).",
         "parameters": [
           {
             "name": "programId",
@@ -31399,13 +31399,135 @@
         }
       }
     },
+    "/api/programs/{programId}/reviews/me": {
+      "get": {
+        "tags": [
+          "ProgramReview"
+        ],
+        "summary": "Get my review state for a program",
+        "description": "Returns whether the current student can review the program (canReview), why not (reason: NotEnrolled, NotCompleted, AlreadyReviewed, RemovedByModerator, or null), and the student's active review when one exists.",
+        "parameters": [
+          {
+            "name": "programId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProgramReviewResponseDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProgramReviewResponseDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyProgramReviewResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/programs/{programId}/reviews/{reviewId}": {
       "put": {
         "tags": [
           "ProgramReview"
         ],
         "summary": "Update a program review",
-        "description": "Allows the review owner to update their star rating or comment. Both fields are optional (partial update).",
+        "description": "Allows the review owner to update their star rating or comment. Both fields are optional (partial update). A null comment leaves it unchanged; an empty or whitespace comment clears it. 400 REVIEW_COMMENT_INVALID when the comment contains HTML or is too long.",
         "parameters": [
           {
             "name": "programId",
@@ -31573,7 +31695,7 @@
           "ProgramReview"
         ],
         "summary": "Delete a program review",
-        "description": "Soft-deletes a review. The review owner, Admin, or Manager may call this endpoint.",
+        "description": "Soft-deletes a review. The review owner, Admin, or Manager may call this endpoint. After an Admin or Manager removes a review, the student cannot create a new one for the program; after the owner deletes it, they may review again.",
         "parameters": [
           {
             "name": "programId",
@@ -48065,6 +48187,60 @@
         },
         "additionalProperties": false
       },
+      "MyProgramReviewResponseDto": {
+        "type": "object",
+        "properties": {
+          "canReview": {
+            "type": "boolean"
+          },
+          "reason": {
+            "enum": [
+              "NotEnrolled",
+              "NotCompleted",
+              "AlreadyReviewed",
+              "RemovedByModerator"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "review": {
+            "$ref": "#/components/schemas/ProgramReviewResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MyProgramReviewResponseDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/MyProgramReviewResponseDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MyProgramReviewResponseDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/MyProgramReviewResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
       "NotificationDto": {
         "type": "object",
         "properties": {
@@ -48094,6 +48270,7 @@
               "ModuleRetakeInitiated",
               "PendingPaymentExpired",
               "ActivityCompleted",
+              "ProgramReviewRequested",
               "PaymentSucceeded",
               "PaymentFailed",
               "PaymentCancelled",
@@ -50873,6 +51050,11 @@
             "type": "boolean"
           },
           "supersededByEnrollmentId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reviewId": {
             "type": "string",
             "format": "uuid",
             "nullable": true

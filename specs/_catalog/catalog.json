@@ -1493,7 +1493,7 @@
       {
         "path": "/api/programs/{programId}/reviews",
         "method": "post",
-        "description": "Allows an enrolled student to submit a star rating and optional comment for a program they are enrolled in. One review per student per program."
+        "description": "Allows a student who completed the program to submit a star rating (1-5) and an optional plain-text comment (trimmed, max 2000 characters, empty stored as null). One active review per student per program. Error codes: 403 REVIEW_NOT_ELIGIBLE (no Completed enrollment), 409 REVIEW_ALREADY_EXISTS (an active review exists), 403 REVIEW_REMOVED_BY_MODERATOR (a moderator removed the previous review), 400 REVIEW_COMMENT_INVALID (HTML or too long)."
       },
       {
         "path": "/api/programs/{programId}/reviews",
@@ -1501,14 +1501,19 @@
         "description": "Retrieve a paginated list of reviews for the specified program. Supports sorting by createdAt (default) or starRating."
       },
       {
+        "path": "/api/programs/{programId}/reviews/me",
+        "method": "get",
+        "description": "Returns whether the current student can review the program (canReview), why not (reason: NotEnrolled, NotCompleted, AlreadyReviewed, RemovedByModerator, or null), and the student's active review when one exists."
+      },
+      {
         "path": "/api/programs/{programId}/reviews/{reviewId}",
         "method": "put",
-        "description": "Allows the review owner to update their star rating or comment. Both fields are optional (partial update)."
+        "description": "Allows the review owner to update their star rating or comment. Both fields are optional (partial update). A null comment leaves it unchanged; an empty or whitespace comment clears it. 400 REVIEW_COMMENT_INVALID when the comment contains HTML or is too long."
       },
       {
         "path": "/api/programs/{programId}/reviews/{reviewId}",
         "method": "delete",
-        "description": "Soft-deletes a review. The review owner, Admin, or Manager may call this endpoint."
+        "description": "Soft-deletes a review. The review owner, Admin, or Manager may call this endpoint. After an Admin or Manager removes a review, the student cannot create a new one for the program; after the owner deletes it, they may review again."
       },
       {
         "path": "/api/question-banks",
@@ -2920,6 +2925,15 @@
       },
       {
         "name": "ModulesResponseDtoResponseDataContent"
+      },
+      {
+        "name": "MyProgramReviewResponseDto"
+      },
+      {
+        "name": "MyProgramReviewResponseDtoApiResult"
+      },
+      {
+        "name": "MyProgramReviewResponseDtoResponseDataContent"
       },
       {
         "name": "NotificationDto"
