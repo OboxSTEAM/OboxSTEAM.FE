@@ -30,11 +30,11 @@ export function ProgramReviewCard({
   const displayName = review.studentName || "Học viên";
   return (
     <article className={cn("flex gap-3", className)}>
-      <Avatar size="sm" className="size-9 shrink-0">
+      <Avatar size="lg" className="shrink-0">
         {review.studentAvatarUrl ? (
           <AvatarImage src={review.studentAvatarUrl} alt="" />
         ) : null}
-        <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
+        <AvatarFallback className="bg-[#F5F5F0] text-sm font-semibold text-[#6B6B6B]">
           {getExpertInitials(displayName)}
         </AvatarFallback>
       </Avatar>

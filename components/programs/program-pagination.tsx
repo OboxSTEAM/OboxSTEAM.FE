@@ -1,5 +1,7 @@
 "use client";
 
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import {
   Pagination,
@@ -38,15 +40,14 @@ const PAGE_THEME_CLASS: Record<
     navButton: "min-w-9 border-transparent bg-transparent text-white/50 hover:bg-white/8 hover:text-white",
   },
   light: {
-    wrapper:
-      "rounded-xl border border-border bg-card px-2 py-1.5 shadow-sm",
-    link: "min-w-10 h-9 border border-border bg-card text-foreground font-medium shadow-sm hover:border-foreground/20 hover:bg-muted",
+    wrapper: "",
+    link: "size-9 min-w-9 rounded-lg text-sm font-medium text-[#6B6B6B] tabular-nums hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
     active:
-      "min-w-10 h-9 border border-primary bg-primary text-primary-foreground font-semibold shadow-sm hover:bg-primary/90 hover:text-primary-foreground",
+      "bg-primary font-semibold text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground",
     disabled:
-      "border-border bg-muted text-muted-foreground/45 cursor-not-allowed shadow-none hover:bg-muted hover:border-border",
+      "cursor-not-allowed text-[#C4C4BE] hover:bg-transparent hover:text-[#C4C4BE] disabled:opacity-100",
     navButton:
-      "h-9 min-w-[4.5rem] border border-border bg-card px-3 font-semibold text-foreground shadow-sm hover:border-foreground/20 hover:bg-muted",
+      "h-9 gap-1 rounded-lg px-2.5 text-sm font-medium text-[#6B6B6B] hover:bg-[#F5F5F0] hover:text-[#2D2D2D]",
   },
 };
 
@@ -83,7 +84,7 @@ export function ProgramPagination({
 
   return (
     <Pagination className={cn("mt-10", className)}>
-      <PaginationContent className={cn("gap-1.5", themeClass.wrapper)}>
+      <PaginationContent className={cn("gap-1", themeClass.wrapper)}>
         <PaginationItem>
           <Button
             type="button"
@@ -97,7 +98,8 @@ export function ProgramPagination({
             )}
             aria-label="Trang trước"
           >
-            Trước
+            <ChevronLeft className="size-4" aria-hidden />
+            <span className="hidden sm:inline">Trước</span>
           </Button>
         </PaginationItem>
 
@@ -133,7 +135,8 @@ export function ProgramPagination({
             )}
             aria-label="Trang sau"
           >
-            Sau
+            <span className="hidden sm:inline">Sau</span>
+            <ChevronRight className="size-4" aria-hidden />
           </Button>
         </PaginationItem>
       </PaginationContent>

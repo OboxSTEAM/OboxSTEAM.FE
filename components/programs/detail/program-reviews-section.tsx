@@ -58,7 +58,7 @@ function ReviewSkeletonList({
     <ul className="divide-y divide-[#EFEFEA]" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
         <li key={index} className="flex gap-3 py-4">
-          <Skeleton className="size-9 shrink-0 rounded-full" />
+          <Skeleton className="size-10 shrink-0 rounded-full" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-36" />
             <Skeleton className="h-3.5 w-44" />
