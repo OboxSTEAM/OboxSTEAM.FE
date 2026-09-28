@@ -12,7 +12,7 @@ import {
   type ProgramReview,
   type ProgramWithModules,
 } from "@/lib/api/programs";
-import { DEFAULT_PROGRAM_REVIEWS_QUERY } from "@/lib/programs/constants";
+import { PUBLIC_PROGRAM_REVIEWS_QUERY } from "@/lib/programs/constants";
 import { programIdParamSchema } from "@/lib/validations/programs";
 
 type ProgramDetailPageProps = {
@@ -25,7 +25,7 @@ async function loadProgramDetail(id: string): Promise<{
 }> {
   const [programResult, reviewsResult] = await Promise.all([
     getProgramById(id),
-    getProgramReviews(id, DEFAULT_PROGRAM_REVIEWS_QUERY),
+    getProgramReviews(id, PUBLIC_PROGRAM_REVIEWS_QUERY),
   ]);
 
   const program = programResult?.data;

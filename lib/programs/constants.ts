@@ -201,6 +201,12 @@ export const DEFAULT_PROGRAM_REVIEWS_QUERY: ProgramReviewsQuery = {
   isDescending: true,
 };
 
+/** Public program detail page — compact list; manager moderation keeps the default size. */
+export const PUBLIC_PROGRAM_REVIEWS_QUERY: ProgramReviewsQuery = {
+  ...DEFAULT_PROGRAM_REVIEWS_QUERY,
+  pageSize: 4,
+};
+
 export function getReviewSortOptionId(query: ProgramReviewsQuery): string {
   const match = PROGRAM_REVIEW_SORT_OPTIONS.find(
     (option) =>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Trash2 } from "lucide-react";
+import { Lock, Pencil, ShieldAlert, Trash2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import { ProgramReviewCard } from "@/components/programs/detail/program-review-card";
@@ -76,7 +76,7 @@ export function ProgramMyReviewPanel({
 
   if (isLoading && !data) {
     return (
-      <div className="mt-4 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-4">
+      <div className="mt-4 rounded-lg bg-[#FAFAF5] p-4">
         <Skeleton className="h-4 w-48" />
         <Skeleton className="mt-3 h-9 w-56" />
       </div>
@@ -87,7 +87,8 @@ export function ProgramMyReviewPanel({
 
   if (data.reason === "NotCompleted") {
     return (
-      <p className="mt-4 rounded-xl border border-dashed border-[#E5E5E0] bg-[#FAFAF5] px-4 py-3 text-sm text-[#6B6B6B]">
+      <p className="mt-4 flex items-center gap-2 text-sm text-[#6B6B6B]">
+        <Lock className="size-4 shrink-0 text-[#9E9E98]" aria-hidden />
         Hoàn thành chương trình để chia sẻ đánh giá của bạn.
       </p>
     );
@@ -95,7 +96,8 @@ export function ProgramMyReviewPanel({
 
   if (data.reason === "RemovedByModerator") {
     return (
-      <p className="mt-4 rounded-xl border border-dashed border-[#E5E5E0] bg-[#FAFAF5] px-4 py-3 text-sm text-[#6B6B6B]">
+      <p className="mt-4 flex items-start gap-2 text-sm text-[#6B6B6B]">
+        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#E94B3C]" aria-hidden />
         Đánh giá trước của bạn đã bị quản lý gỡ bỏ. Liên hệ hỗ trợ nếu bạn cần
         giải thích thêm.
       </p>
@@ -107,11 +109,11 @@ export function ProgramMyReviewPanel({
   const showForm = canReview || isEditing;
 
   return (
-    <div className="mt-4 rounded-xl border border-[#E5E5E0] bg-[#FAFAF5] p-4 sm:p-5">
+    <div className="mt-4 rounded-lg bg-[#FAFAF5] p-4">
       <h3
         ref={headingRef}
         tabIndex={-1}
-        className="font-heading text-base font-semibold text-[#2D2D2D] outline-none"
+        className="text-sm font-semibold text-[#2D2D2D] outline-none"
       >
         {review ? "Đánh giá của bạn" : "Bạn đã hoàn thành chương trình này"}
       </h3>

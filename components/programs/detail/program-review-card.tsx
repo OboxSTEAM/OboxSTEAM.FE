@@ -16,10 +16,11 @@ type ProgramReviewCardProps = {
   className?: string;
   /** Owner actions (edit/delete) rendered at the top-right. */
   actions?: ReactNode;
-  /** Replaces the student name, e.g. "Đánh giá của bạn". */
+  /** Replaces the student name, e.g. "Bạn". */
   heading?: string;
 };
 
+/** Flat review row — the parent list owns borders/dividers. */
 export function ProgramReviewCard({
   review,
   className,
@@ -28,28 +29,24 @@ export function ProgramReviewCard({
 }: ProgramReviewCardProps) {
   const displayName = review.studentName || "Học viên";
   return (
-    <article
-      className={cn(
-        "flex h-full flex-col rounded-xl border border-[#E5E5E0] bg-white p-4 shadow-[0_2px_12px_rgba(45,45,45,0.04)]",
-        className,
-      )}
-    >
-      <div className="flex gap-3">
-        <Avatar size="sm" className="mt-0.5 size-9 shrink-0">
-          {review.studentAvatarUrl ? (
-            <AvatarImage src={review.studentAvatarUrl} alt="" />
-          ) : null}
-          <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
-            {getExpertInitials(displayName)}
-          </AvatarFallback>
-        </Avatar>
+    <article className={cn("flex gap-3", className)}>
+      <Avatar size="sm" className="size-9 shrink-0">
+        {review.studentAvatarUrl ? (
+          <AvatarImage src={review.studentAvatarUrl} alt="" />
+        ) : null}
+        <AvatarFallback className="bg-[#F5F5F0] text-xs font-medium text-[#6B6B6B]">
+          {getExpertInitials(displayName)}
+        </AvatarFallback>
+      </Avatar>
 
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-              <p className="text-sm font-semibold text-[#2D2D2D]">
-                {heading ?? displayName}
-              </p>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-[#2D2D2D]">
+              {heading ?? displayName}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+              <StarRating rating={review.starRating} size={15} />
               <time
                 dateTime={review.createdAt}
                 className="text-xs text-[#6B6B6B] tabular-nums"
@@ -58,23 +55,16 @@ export function ProgramReviewCard({
                 {isReviewEdited(review) ? " · đã chỉnh sửa" : null}
               </time>
             </div>
-            {actions ? <div className="flex shrink-0 gap-1">{actions}</div> : null}
           </div>
-
-          <div className="mt-1">
-            <StarRating rating={review.starRating} size={12} />
-          </div>
+          {actions ? <div className="-mr-2 -mt-1 flex shrink-0">{actions}</div> : null}
         </div>
-      </div>
 
-      {review.comment ? (
-        <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-[#6B6B6B]">
-          <span className="font-serif text-lg leading-none text-[#E5E5E0]" aria-hidden>
-            &ldquo;
-          </span>
-          {review.comment}
-        </blockquote>
-      ) : null}
+        {review.comment ? (
+          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-[#4A4A4A]">
+            {review.comment}
+          </p>
+        ) : null}
+      </div>
     </article>
   );
 }

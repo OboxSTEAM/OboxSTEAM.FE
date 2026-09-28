@@ -27,9 +27,9 @@ import {
   type ProgramReviewsQuery,
 } from "@/lib/api/programs";
 import {
-  DEFAULT_PROGRAM_REVIEWS_QUERY,
   getReviewSortOptionId,
   PROGRAM_REVIEW_SORT_OPTIONS,
+  PUBLIC_PROGRAM_REVIEWS_QUERY,
 } from "@/lib/programs/constants";
 
 import { ProgramReviewCard } from "./program-review-card";
@@ -49,31 +49,24 @@ function getReviewSortLabel(sortId: string): string {
   );
 }
 
-function ReviewSkeleton() {
+function ReviewSkeletonList({
+  count = PUBLIC_PROGRAM_REVIEWS_QUERY.pageSize ?? 4,
+}: {
+  count?: number;
+}) {
   return (
-    <div className="flex gap-3 py-4">
-      <Skeleton className="size-6 shrink-0 rounded-full" />
-      <div className="flex-1 space-y-2">
-        <Skeleton className="h-4 w-40" />
-        <Skeleton className="h-3 w-24" />
-        <Skeleton className="h-3 w-full" />
-      </div>
-    </div>
-  );
-}
-
-function ReviewSkeletonList({ count = 4 }: { count?: number }) {
-  return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <ul className="divide-y divide-[#EFEFEA]" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
-        <div
-          key={index}
-          className="rounded-xl border border-[#E5E5E0] bg-white p-4"
-        >
-          <ReviewSkeleton />
-        </div>
+        <li key={index} className="flex gap-3 py-4">
+          <Skeleton className="size-9 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-3.5 w-44" />
+            <Skeleton className="h-3.5 w-full" />
+          </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
@@ -85,17 +78,17 @@ export function ProgramReviewsSection({
 }: ProgramReviewsSectionProps) {
   const router = useRouter();
   const [query, setQuery] = useState<ProgramReviewsQuery>(
-    DEFAULT_PROGRAM_REVIEWS_QUERY,
+    PUBLIC_PROGRAM_REVIEWS_QUERY,
   );
   /** Bumped after the student's own review changes — the server-seeded page is stale then. */
   const [refreshKey, setRefreshKey] = useState(0);
 
   const isInitialQuery = useMemo(
     () =>
-      query.page === DEFAULT_PROGRAM_REVIEWS_QUERY.page &&
-      query.pageSize === DEFAULT_PROGRAM_REVIEWS_QUERY.pageSize &&
-      query.sortBy === DEFAULT_PROGRAM_REVIEWS_QUERY.sortBy &&
-      query.isDescending === DEFAULT_PROGRAM_REVIEWS_QUERY.isDescending,
+      query.page === PUBLIC_PROGRAM_REVIEWS_QUERY.page &&
+      query.pageSize === PUBLIC_PROGRAM_REVIEWS_QUERY.pageSize &&
+      query.sortBy === PUBLIC_PROGRAM_REVIEWS_QUERY.sortBy &&
+      query.isDescending === PUBLIC_PROGRAM_REVIEWS_QUERY.isDescending,
     [query],
   );
 
@@ -127,7 +120,7 @@ export function ProgramReviewsSection({
 
       markLoading();
       setQuery({
-        ...DEFAULT_PROGRAM_REVIEWS_QUERY,
+        ...PUBLIC_PROGRAM_REVIEWS_QUERY,
         sortBy: option.sortBy,
         isDescending: option.isDescending,
       });
@@ -150,24 +143,29 @@ export function ProgramReviewsSection({
   const reviews = data?.items ?? [];
 
   return (
-    <div className="space-y-0 rounded-xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
-      <h2 className="font-heading text-lg font-semibold text-[#2D2D2D]">
-        Học viên nói gì về chương trình
-      </h2>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-b border-[#E5E5E0] pb-4">
-        <div className="flex items-center gap-2.5">
-          {programRating != null ? (
-            <>
-              <span className="font-heading text-xl font-bold text-[#2D2D2D] tabular-nums">
+    <div className="rounded-xl border border-[#E5E5E0] bg-white px-5 py-5 sm:px-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="font-heading text-lg font-semibold text-[#2D2D2D]">
+            Học viên nói gì về chương trình
+          </h2>
+          <div className="mt-2 flex items-center gap-3">
+            {programRating != null ? (
+              <span className="font-heading text-3xl font-bold leading-none text-[#2D2D2D] tabular-nums">
                 {programRating.toFixed(1)}
               </span>
-              <StarRating rating={programRating} size={14} />
-            </>
-          ) : null}
-          <span className="text-sm text-[#6B6B6B]">
-            {totalReviews.toLocaleString("vi-VN")} đánh giá
-          </span>
+            ) : null}
+            <div className="flex flex-col gap-1">
+              {programRating != null ? (
+                <StarRating rating={programRating} size={18} />
+              ) : null}
+              <span className="text-xs text-[#6B6B6B]">
+                {totalReviews > 0
+                  ? `${totalReviews.toLocaleString("vi-VN")} đánh giá`
+                  : "Chưa có đánh giá"}
+              </span>
+            </div>
+          </div>
         </div>
 
         <Select value={sortId} onValueChange={handleSortChange}>
@@ -214,20 +212,22 @@ export function ProgramReviewsSection({
           </Button>
         </div>
       ) : isLoading ? (
-        <div className="pt-2">
+        <div className="mt-4 border-t border-[#EFEFEA]">
           <ReviewSkeletonList />
         </div>
       ) : reviews.length === 0 ? (
-        <p className="py-10 text-center text-sm text-[#6B6B6B]">
+        <p className="mt-4 border-t border-[#EFEFEA] pt-6 text-center text-sm text-[#6B6B6B]">
           Chưa có đánh giá nào — hãy là người đầu tiên sau khi hoàn thành
           chương trình.
         </p>
       ) : (
-        <div className="grid gap-4 pt-4 sm:grid-cols-2">
+        <ul className="mt-4 divide-y divide-[#EFEFEA] border-t border-[#EFEFEA]">
           {reviews.map((review) => (
-            <ProgramReviewCard key={review.id} review={review} />
+            <li key={review.id} className="py-4 last:pb-0">
+              <ProgramReviewCard review={review} />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {data && !hasError && !isLoading && (
@@ -238,7 +238,7 @@ export function ProgramReviewsSection({
           hasNext={data.hasNext}
           onPageChange={handlePageChange}
           theme="light"
-          className="border-t border-[#E5E5E0] pt-2"
+          className="mt-4 border-t border-[#EFEFEA] pt-2"
         />
       )}
     </div>
