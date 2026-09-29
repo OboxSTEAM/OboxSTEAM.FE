@@ -193,7 +193,7 @@ export function ManagerSidebar({ onOpenSearch }: ManagerSidebarProps) {
         ))}
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-border/60 p-3">
+      <SidebarFooter className="border-t border-border/60 p-3 group-data-[collapsible=icon]:px-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <DropdownMenu>
@@ -201,7 +201,7 @@ export function ManagerSidebar({ onOpenSearch }: ManagerSidebarProps) {
                 render={
                   <SidebarMenuButton
                     size="lg"
-                    className="w-full text-left transition-all duration-200 hover:bg-muted data-[state=open]:bg-muted"
+                    className="w-full text-left transition-all duration-200 hover:bg-muted data-[state=open]:bg-muted group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:justify-center"
                   />
                 }
               >
