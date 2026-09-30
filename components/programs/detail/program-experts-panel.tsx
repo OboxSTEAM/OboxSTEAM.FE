@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { ShieldCheck } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,48 @@ function ExpertRow({
   );
 }
 
+function LeadExpertCard({
+  expert,
+  onExpertClick,
+}: {
+  expert: ProgramExpert;
+  onExpertClick?: (expert: ProgramExpert) => void;
+}) {
+  const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
+
+  return (
+    <button
+      type="button"
+      onClick={() => onExpertClick?.(expert)}
+      className="mt-4 flex w-full gap-3 rounded-lg border border-[#4FC3F7]/50 bg-[#4FC3F7]/6 p-3 text-left transition-colors hover:bg-[#4FC3F7]/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]/40"
+      aria-label={`Xem thông tin ${expert.fullName}, chuyên gia phụ trách chương trình`}
+    >
+      <Avatar className="size-12 shrink-0 border-2 border-[#4FC3F7] ring-2 ring-[#4FC3F7]/20">
+        {avatarUrl ? <AvatarImage src={avatarUrl} alt="" /> : null}
+        <AvatarFallback className="bg-white text-sm font-semibold text-[#0D6E9C]">
+          {getExpertInitials(expert.fullName)}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="min-w-0 flex-1 space-y-0.5">
+        <p className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-[#0D6E9C]">
+          <ShieldCheck className="size-3" aria-hidden />
+          Chuyên gia phụ trách
+        </p>
+        <p className="font-heading text-sm font-semibold text-[#2D2D2D]">
+          {expert.fullName}
+        </p>
+        <p className="text-xs text-[#6B6B6B]">
+          {[expert.title, expert.organization].filter(Boolean).join(" · ")}
+        </p>
+        <p className="text-xs leading-relaxed text-[#6B6B6B]">
+          Tác giả khung chương trình và cố vấn nội dung.
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export function ProgramExpertsPanel({
   program,
   className,
@@ -78,10 +121,15 @@ export function ProgramExpertsPanel({
     return null;
   }
 
-  const visibleExperts = showAll
-    ? experts
-    : experts.slice(0, VISIBLE_EXPERT_LIMIT);
-  const hiddenCount = experts.length - VISIBLE_EXPERT_LIMIT;
+  const lead =
+    experts.find((expert) => expert.expertId === program.advisorExpertId) ?? null;
+  const coTeachers = lead
+    ? experts.filter((expert) => expert.expertId !== lead.expertId)
+    : experts;
+  const visibleCoTeachers = showAll
+    ? coTeachers
+    : coTeachers.slice(0, VISIBLE_EXPERT_LIMIT);
+  const hiddenCount = coTeachers.length - VISIBLE_EXPERT_LIMIT;
 
   return (
     <aside
@@ -94,25 +142,38 @@ export function ProgramExpertsPanel({
         Chuyên gia
       </h2>
 
-      <ul className="mt-4 space-y-2">
-        {visibleExperts.map((expert) => (
-          <ExpertRow
-            key={expert.expertId}
-            expert={expert}
-            onExpertClick={onExpertClick}
-          />
-        ))}
-      </ul>
+      {lead ? (
+        <LeadExpertCard expert={lead} onExpertClick={onExpertClick} />
+      ) : null}
 
-      {!showAll && hiddenCount > 0 ? (
-        <Button
-          type="button"
-          variant="link"
-          className="mt-3 h-auto p-0 text-sm text-[#4FC3F7]"
-          onClick={() => setShowAll(true)}
-        >
-          Xem tất cả {experts.length} chuyên gia
-        </Button>
+      {coTeachers.length > 0 ? (
+        <div className={lead ? "mt-5" : "mt-4"}>
+          {lead ? (
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-[#6B6B6B]">
+              Chuyên gia đồng giảng
+            </h3>
+          ) : null}
+          <ul className={cn("space-y-2", lead && "mt-2")}>
+            {visibleCoTeachers.map((expert) => (
+              <ExpertRow
+                key={expert.expertId}
+                expert={expert}
+                onExpertClick={onExpertClick}
+              />
+            ))}
+          </ul>
+
+          {!showAll && hiddenCount > 0 ? (
+            <Button
+              type="button"
+              variant="link"
+              className="mt-3 h-auto p-0 text-sm text-[#4FC3F7]"
+              onClick={() => setShowAll(true)}
+            >
+              Xem tất cả {coTeachers.length} chuyên gia đồng giảng
+            </Button>
+          ) : null}
+        </div>
       ) : null}
 
       <div className="mt-5 border-t border-[#E5E5E0] pt-4">
