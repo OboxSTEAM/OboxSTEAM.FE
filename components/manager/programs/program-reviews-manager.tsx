@@ -5,6 +5,7 @@ import { Star, Trash2 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/manager/shared/confirm-dialog";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
+import { ProgramReviewCard } from "@/components/programs/detail/program-review-card";
 import { StarRating } from "@/components/programs/detail/star-rating";
 import { ProgramPagination } from "@/components/programs/program-pagination";
 import {
@@ -12,7 +13,6 @@ import {
   LIGHT_SELECT_ITEM,
   LIGHT_SELECT_TRIGGER,
 } from "@/components/programs/program-select-styles";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -34,12 +34,6 @@ import {
   getReviewSortOptionId,
   PROGRAM_REVIEW_SORT_OPTIONS,
 } from "@/lib/programs/constants";
-import {
-  formatReviewDate,
-  getExpertInitials,
-  isReviewEdited,
-} from "@/lib/programs/format";
-
 type ProgramReviewsManagerProps = {
   programId: string;
   programName: string;
@@ -54,96 +48,42 @@ function getReviewSortLabel(sortId: string): string {
   );
 }
 
-function ReviewCardSkeleton() {
-  return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="flex gap-3">
-        <Skeleton className="size-9 shrink-0 rounded-full" />
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-3 w-24" />
-          <Skeleton className="h-3 w-full" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function ReviewSkeletonList({ count = 4 }: { count?: number }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <ul className="divide-y divide-border" aria-hidden>
       {Array.from({ length: count }, (_, index) => (
-        <ReviewCardSkeleton key={index} />
+        <li key={index} className="flex gap-3 py-4">
+          <Skeleton className="size-10 shrink-0 rounded-full" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-4 w-36" />
+            <Skeleton className="h-3.5 w-44" />
+            <Skeleton className="h-3.5 w-full" />
+          </div>
+        </li>
       ))}
-    </div>
+    </ul>
   );
 }
 
-type ManagerReviewCardProps = {
+type DeleteReviewButtonProps = {
   review: ProgramReview;
   onDelete: (review: ProgramReview) => void;
 };
 
-function ManagerReviewCard({ review, onDelete }: ManagerReviewCardProps) {
+function DeleteReviewButton({ review, onDelete }: DeleteReviewButtonProps) {
   const displayName = review.studentName || "Học viên";
 
   return (
-    <article className="flex h-full flex-col rounded-xl border border-border bg-card p-4 shadow-[0_2px_12px_rgba(45,45,45,0.04)]">
-      <div className="flex gap-3">
-        <Avatar size="sm" className="mt-0.5 size-9 shrink-0">
-          {review.studentAvatarUrl ? (
-            <AvatarImage src={review.studentAvatarUrl} alt="" />
-          ) : null}
-          <AvatarFallback className="bg-muted text-xs font-medium text-muted-foreground">
-            {getExpertInitials(displayName)}
-          </AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-foreground">
-                {displayName}
-              </p>
-              <time
-                dateTime={review.createdAt}
-                className="text-xs text-muted-foreground tabular-nums"
-              >
-                {formatReviewDate(review.createdAt)}
-                {isReviewEdited(review) ? " · đã chỉnh sửa" : null}
-              </time>
-            </div>
-
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => onDelete(review)}
-              aria-label={`Xóa đánh giá của ${displayName}`}
-              className="size-8 shrink-0 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
-            >
-              <Trash2 className="size-4" aria-hidden />
-            </Button>
-          </div>
-
-          <div className="mt-1">
-            <StarRating rating={review.starRating} size={12} />
-          </div>
-        </div>
-      </div>
-
-      {review.comment ? (
-        <blockquote className="mt-3 flex-1 text-sm leading-relaxed text-muted-foreground">
-          <span
-            className="font-serif text-lg leading-none text-border"
-            aria-hidden
-          >
-            &ldquo;
-          </span>
-          {review.comment}
-        </blockquote>
-      ) : null}
-    </article>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      onClick={() => onDelete(review)}
+      aria-label={`Xóa đánh giá của ${displayName}`}
+      className="size-8 shrink-0 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
+    >
+      <Trash2 className="size-4" aria-hidden />
+    </Button>
   );
 }
 
@@ -230,7 +170,7 @@ export function ProgramReviewsManager({
               <span className="font-heading text-xl font-bold text-foreground tabular-nums">
                 {programRating.toFixed(1)}
               </span>
-              <StarRating rating={programRating} size={14} />
+              <StarRating rating={programRating} size={14} tone="adaptive" />
             </>
           ) : null}
           <span className="text-sm text-muted-foreground">
@@ -279,9 +219,7 @@ export function ProgramReviewsManager({
           </Button>
         </div>
       ) : isLoading ? (
-        <div className="pt-4">
-          <ReviewSkeletonList />
-        </div>
+        <ReviewSkeletonList />
       ) : reviews.length === 0 ? (
         <div className="pt-6">
           <ManagerEmptyState
@@ -291,15 +229,22 @@ export function ProgramReviewsManager({
           />
         </div>
       ) : (
-        <div className="grid gap-4 pt-4 sm:grid-cols-2">
+        <ul className="divide-y divide-border">
           {reviews.map((review) => (
-            <ManagerReviewCard
-              key={review.id}
-              review={review}
-              onDelete={setDeleteTarget}
-            />
+            <li key={review.id} className="py-4 last:pb-0">
+              <ProgramReviewCard
+                review={review}
+                tone="adaptive"
+                actions={
+                  <DeleteReviewButton
+                    review={review}
+                    onDelete={setDeleteTarget}
+                  />
+                }
+              />
+            </li>
           ))}
-        </div>
+        </ul>
       )}
 
       {data && !hasError && !isLoading ? (

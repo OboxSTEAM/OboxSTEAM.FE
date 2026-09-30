@@ -7,6 +7,8 @@ type StarRatingProps = {
   max?: number;
   size?: number;
   className?: string;
+  /** `adaptive` follows the app theme; `light` is for always-light surfaces. */
+  tone?: "light" | "adaptive";
 };
 
 /** Read-only stars with fractional fill (e.g. 4.2 → four full + a 20% star). */
@@ -15,6 +17,7 @@ export function StarRating({
   max = 5,
   size = 14,
   className,
+  tone = "light",
 }: StarRatingProps) {
   const clamped = Math.max(0, Math.min(max, rating));
   const label = Number.isInteger(clamped) ? clamped : clamped.toFixed(1);
@@ -37,7 +40,12 @@ export function StarRating({
             <Star
               size={size}
               strokeWidth={1.5}
-              className="absolute inset-0 fill-[#EDEDE8] text-[#DADAD3]"
+              className={cn(
+                "absolute inset-0",
+                tone === "adaptive"
+                  ? "fill-muted text-border"
+                  : "fill-[#EDEDE8] text-[#DADAD3]",
+              )}
             />
             {fill > 0 ? (
               <span
