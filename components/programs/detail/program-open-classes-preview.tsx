@@ -203,7 +203,7 @@ export function ProgramOpenClassesPreview({
   onAvailabilityChange,
   className,
 }: ProgramOpenClassesPreviewProps) {
-  const { classes, isLoading, hasError, hasOpenSeats, refresh } =
+  const { classes, isLoading, hasError, hasOpenSeats, refresh, refreshSilent } =
     useProgramOpenClasses(programId);
   const {
     selectedClassId,
@@ -212,6 +212,7 @@ export function ProgramOpenClassesPreview({
     isHoldExpired,
     selectingClassId,
     selectClass,
+    holdReleaseCount,
   } = useProgramSelectedClass();
   const { isAuthenticated, isHydrated, profile } = useCurrentUser();
   const isStudent =
@@ -224,6 +225,11 @@ export function ProgramOpenClassesPreview({
   useEffect(() => {
     onAvailabilityChange?.(hasOpenSeats, isLoading);
   }, [hasOpenSeats, isLoading, onAvailabilityChange]);
+
+  useEffect(() => {
+    if (holdReleaseCount === 0) return;
+    void refreshSilent(null);
+  }, [holdReleaseCount, refreshSilent]);
 
   useEffect(() => {
     if (!isStudent) {

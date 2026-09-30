@@ -19,6 +19,7 @@ import {
   PROGRAM_LEVEL_LABELS,
 } from "@/lib/programs/constants";
 import {
+  canRebuyCompletedEnrollment,
   getEnrollmentDisplayStatusLabel,
   getEnrollmentRebuyHint,
   getProgramLearnHref,
@@ -26,6 +27,7 @@ import {
 import { getProgramThumbnailUrl } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
+import { EnrollmentRebuyAction } from "./enrollment-rebuy-action";
 import { EnrollmentReviewAction } from "./enrollment-review-action";
 
 type EnrollmentCardProps = {
@@ -33,6 +35,8 @@ type EnrollmentCardProps = {
   className?: string;
   /** Set for above-the-fold thumbnails (LCP). */
   priority?: boolean;
+  /** Reload the list (e.g. rebuy found a live enrollment). */
+  onEnrollmentsChanged?: () => void;
 };
 
 function formatEnrollmentDate(iso: string | null): string {
@@ -92,6 +96,7 @@ export function EnrollmentCard({
   enrollment,
   className,
   priority = false,
+  onEnrollmentsChanged,
 }: EnrollmentCardProps) {
   const priceParts = getProgramPriceParts(enrollment.price ?? 0);
   const isPendingPayment = enrollment.status === "PendingPayment";
@@ -225,6 +230,12 @@ export function EnrollmentCard({
               Xem lại khóa học
               <ArrowRight className="size-4" aria-hidden />
             </Link>
+            {canRebuyCompletedEnrollment(enrollment) ? (
+              <EnrollmentRebuyAction
+                programId={enrollment.programId}
+                onUnavailable={onEnrollmentsChanged}
+              />
+            ) : null}
             <EnrollmentReviewAction
               programId={enrollment.programId}
               programName={enrollment.name}

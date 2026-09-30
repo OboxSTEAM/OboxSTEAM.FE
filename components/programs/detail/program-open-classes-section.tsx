@@ -1,5 +1,7 @@
 "use client";
 
+import { usesRebuyClassCatalog } from "@/lib/programs/enrollments";
+
 import { useProgramEnrollmentLookup } from "./program-enrollment-lookup";
 import { ProgramOpenClassesPreview } from "./program-open-classes-preview";
 
@@ -21,20 +23,26 @@ export function ProgramOpenClassesSection({
     );
   }
 
-  if (
-    enrollment?.status === "Failed" ||
-    enrollment?.status === "Dropped"
-  ) {
+  if (usesRebuyClassCatalog(enrollment)) {
+    const isCompletedRebuy =
+      enrollment?.status === "Completed" ||
+      enrollment?.priorStatus === "Completed";
+
     return (
       <div className="rounded-xl border border-[#E5E5E0] bg-white p-6 shadow-[0_4px_20px_rgba(45,45,45,0.04)]">
         <h3 className="font-heading text-lg font-semibold text-[#2D2D2D]">
-          Đăng ký lại chương trình
+          {isCompletedRebuy ? "Học lại chương trình" : "Đăng ký lại chương trình"}
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-[#6B6B6B]">
-          Ghi danh trước đã kết thúc. Dùng nút{" "}
-          <span className="font-semibold text-[#2D2D2D]">Đăng ký lại</span> để
-          xem lớp phù hợp và phí thanh toán (50% trong 1 tháng; sau đó giá đầy
-          đủ, chỉ lớp Open).
+          {isCompletedRebuy
+            ? "Bạn đã hoàn thành chương trình này. "
+            : "Ghi danh trước đã kết thúc. "}
+          Dùng nút{" "}
+          <span className="font-semibold text-[#2D2D2D]">
+            {isCompletedRebuy ? "Học lại" : "Đăng ký lại"}
+          </span>{" "}
+          để xem lớp phù hợp và phí thanh toán (50% trong 1 tháng; sau đó giá
+          đầy đủ).
         </p>
       </div>
     );

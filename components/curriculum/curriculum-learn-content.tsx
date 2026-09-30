@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import { ClassPickerDialog } from "@/components/classes/class-picker-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import {
   getClassEnrollmentsByProgramEnrollment,
@@ -31,6 +32,8 @@ import {
   resolveInitialActivityId,
 } from "@/lib/curriculum/helpers";
 import { showAppErrorFromUnknown } from "@/lib/errors";
+import { canRebuyCompletedEnrollment } from "@/lib/programs/enrollments";
+import { cn } from "@/lib/utils";
 
 import { CurriculumShell } from "./curriculum-shell";
 import { ProgramCompletionReviewPrompt } from "./program-completion-review-prompt";
@@ -96,6 +99,31 @@ async function resolveClassEnrollmentKind(
     return match?.kind;
   } catch {
     return undefined;
+  }
+}
+
+/** Most recent class the student attended in this enrollment (Completed enrollments have no active class). */
+async function resolveLastClassEnrollment(
+  programEnrollmentId: string,
+): Promise<{ classId: string; classEnrollmentId: string } | null> {
+  try {
+    const result = await getClassEnrollmentsByProgramEnrollment(
+      programEnrollmentId,
+      { page: 1, pageSize: 100 },
+    );
+    const items = result?.data?.items ?? [];
+    const attended = items.filter(
+      (item) => item.status === "Completed" || item.status === "Active",
+    );
+    const candidates = attended.length > 0 ? attended : items;
+    const latest = [...candidates].sort((a, b) =>
+      (b.enrolledAt ?? b.createdAt).localeCompare(a.enrolledAt ?? a.createdAt),
+    )[0];
+    return latest
+      ? { classId: latest.class.id, classEnrollmentId: latest.id }
+      : null;
+  } catch {
+    return null;
   }
 }
 
@@ -219,6 +247,22 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       const classId = enrollmentClassResult?.data?.classId ?? null;
       const classEnrollmentId =
         enrollmentClassResult?.data?.classEnrollmentId ?? null;
+
+      if (!classId && activeEnrollment.status !== "Active") {
+        // Completed: review content read-only — never join a class (rebuy is "Học lại").
+        const pastClass = await resolveLastClassEnrollment(activeEnrollment.id);
+        await Promise.all([
+          loadCurriculum(activeEnrollment.id, seed),
+          pastClass
+            ? loadClassContext(
+                pastClass.classId,
+                activeEnrollment.id,
+                pastClass.classEnrollmentId,
+              ).catch(() => setClassContext(null))
+            : setClassContext(null),
+        ]);
+        return;
+      }
 
       if (!classId) {
         setCurriculum(null);
@@ -386,7 +430,34 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
     return <LearnSkeleton />;
   }
 
-  if (!curriculum || !classContext) {
+  const canUseClassPicker = enrollment.status === "Active";
+
+  if (!curriculum && !canUseClassPicker) {
+    return (
+      <div className="learn-shell flex min-h-dvh items-center justify-center bg-learn-bg px-4 pt-14 sm:pt-16">
+        <div className="max-w-lg rounded-2xl border border-learn-border bg-learn-surface p-6 text-center shadow-sm">
+          <p className="font-heading text-lg font-semibold text-learn-text-strong">
+            Bạn đã hoàn thành chương trình này
+          </p>
+          <p className="mt-2 text-sm text-learn-muted">
+            {canRebuyCompletedEnrollment(enrollment)
+              ? "Muốn học lại? Chọn lớp mới và thanh toán lại chương trình (giảm 50% nếu trong 1 tháng kể từ ngày hoàn thành)."
+              : "Lớp học của lần ghi danh này đã đóng."}
+          </p>
+          <Link
+            href={`/programs/${programId}`}
+            className={cn(buttonVariants(), "mt-5")}
+          >
+            {canRebuyCompletedEnrollment(enrollment)
+              ? "Học lại"
+              : "Về trang chương trình"}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!curriculum || (canUseClassPicker && !classContext)) {
     return (
       <>
         <div className="learn-shell flex min-h-dvh items-center justify-center bg-learn-bg px-4 pt-14 sm:pt-16">
@@ -438,14 +509,16 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         enrollment={enrollment}
       />
 
-      <ClassPickerDialog
-        open={isClassPickerOpen}
-        onOpenChange={setIsClassPickerOpen}
-        programId={programId}
-        programEnrollmentId={enrollment.id}
-        programName={enrollment.name ?? undefined}
-        onEnrolled={(classId) => void handleClassEnrolled(classId)}
-      />
+      {canUseClassPicker ? (
+        <ClassPickerDialog
+          open={isClassPickerOpen}
+          onOpenChange={setIsClassPickerOpen}
+          programId={programId}
+          programEnrollmentId={enrollment.id}
+          programName={enrollment.name ?? undefined}
+          onEnrolled={(classId) => void handleClassEnrolled(classId)}
+        />
+      ) : null}
     </>
   );
 }

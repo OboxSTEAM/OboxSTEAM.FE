@@ -48,6 +48,12 @@ type ProgramEnrollPaymentDialogProps = {
   payBlocked?: boolean;
   /** Active hold from select-class (required before checkout). */
   holdExpiresAt?: string | null;
+  /** Shows a badge next to the price (e.g. "Giảm 50%"). */
+  priceBadge?: string | null;
+  /** User closed the dialog without paying — not fired after parent request or Stripe redirect. */
+  onDismiss?: () => void;
+  /** Renders "Đổi lớp"; caller reopens its class picker. */
+  onChangeClass?: () => void;
 };
 
 function getParentDisplayName(parent: ParentLinkedStudent): string {
@@ -168,6 +174,9 @@ export function ProgramEnrollPaymentDialog({
   price,
   payBlocked = false,
   holdExpiresAt = null,
+  priceBadge = null,
+  onDismiss,
+  onChangeClass,
 }: ProgramEnrollPaymentDialogProps) {
   const selectedClassContext = useOptionalProgramSelectedClass();
   const priceParts = getProgramPriceParts(price);
@@ -191,13 +200,29 @@ export function ProgramEnrollPaymentDialog({
     setSendingParentId(null);
   }, []);
 
+  const closeDialog = useCallback(() => {
+    resetDialog();
+    onOpenChange(false);
+  }, [onOpenChange, resetDialog]);
+
   const handleOpenChange = useCallback(
     (nextOpen: boolean) => {
-      if (!nextOpen) resetDialog();
-      onOpenChange(nextOpen);
+      if (nextOpen) {
+        onOpenChange(true);
+        return;
+      }
+      // Checkout request in flight — releasing now could race the Stripe redirect.
+      if (isCheckingOut) return;
+      closeDialog();
+      onDismiss?.();
     },
-    [onOpenChange, resetDialog],
+    [closeDialog, isCheckingOut, onDismiss, onOpenChange],
   );
+
+  const handleChangeClass = useCallback(() => {
+    closeDialog();
+    onChangeClass?.();
+  }, [closeDialog, onChangeClass]);
 
   const goToChoose = useCallback(() => {
     setStep("choose");
@@ -289,7 +314,7 @@ export function ProgramEnrollPaymentDialog({
           result?.message?.trim() ||
           `Email thanh toán đã gửi tới ${parent.email}. Ghế/link hết hạn sau 5 phút.`,
       });
-      handleOpenChange(false);
+      closeDialog();
     } catch (error) {
       const renewed = await handleHoldExpiredAtCheckout(error);
       if (!renewed) {
@@ -328,6 +353,11 @@ export function ProgramEnrollPaymentDialog({
                 {step === "choose" ? (
                   <span className="shrink-0 rounded-full bg-[#E94B3C]/10 px-2.5 py-1 text-xs font-semibold text-[#E94B3C]">
                     {priceLabel}
+                  </span>
+                ) : null}
+                {step === "choose" && priceBadge ? (
+                  <span className="shrink-0 rounded-full bg-[#7CB342]/15 px-2.5 py-1 text-xs font-semibold text-[#2d5016]">
+                    {priceBadge}
                   </span>
                 ) : null}
               </div>
@@ -374,6 +404,21 @@ export function ProgramEnrollPaymentDialog({
                 onClick={goToParent}
               />
             </div>
+
+            {onChangeClass ? (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="text-[#6B6B6B] hover:text-[#2D2D2D]"
+                  disabled={isCheckingOut}
+                  onClick={handleChangeClass}
+                >
+                  Đổi lớp
+                </Button>
+              </div>
+            ) : null}
 
             {isCheckingOut ? (
               <p className="mt-4 flex items-center justify-center gap-2 text-xs text-[#6B6B6B]">

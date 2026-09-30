@@ -13,10 +13,18 @@ export type ProgramDetailEnrollmentCta =
       subtext: string;
     }
   | {
-      kind: "continue" | "review";
+      kind: "continue";
       href: string;
       label: string;
       subtext: string;
+    }
+  | {
+      kind: "review";
+      href: string;
+      label: string;
+      subtext: string;
+      /** Completed + not superseded — also offer "Học lại" (rebuy). */
+      canRebuy: boolean;
     }
   | {
       kind: "complete-payment";
@@ -29,6 +37,12 @@ export type ProgramDetailEnrollmentCta =
       subtext: string;
     };
 
+const LIVE_ENROLLMENT_STATUSES = new Set<ProgramEnrollmentStatus>([
+  "PendingPayment",
+  "Active",
+  "Deferred",
+]);
+
 export function findEnrollmentForProgram(
   enrollments: ProgramEnrollment[],
   programId: string,
@@ -37,8 +51,12 @@ export function findEnrollmentForProgram(
     (enrollment) => enrollment.programId === programId,
   );
   if (matches.length === 0) return null;
+  const current = matches.filter((enrollment) => !enrollment.isSuperseded);
   return (
-    matches.find((enrollment) => !enrollment.isSuperseded) ?? matches[0] ?? null
+    current.find((enrollment) => LIVE_ENROLLMENT_STATUSES.has(enrollment.status)) ??
+    current[0] ??
+    matches[0] ??
+    null
   );
 }
 
@@ -59,6 +77,25 @@ export function showsEnrollmentProgress(
     enrollment != null &&
     (enrollment.status === "Active" || enrollment.status === "Completed")
   );
+}
+
+/** Completed program can be bought again ("Học lại") until a newer attempt supersedes it. */
+export function canRebuyCompletedEnrollment(
+  enrollment: ProgramEnrollment | null | undefined,
+): boolean {
+  return enrollment?.status === "Completed" && !enrollment.isSuperseded;
+}
+
+/** Enrollment should pick classes from `rebuy-classes` instead of first-purchase open classes. */
+export function usesRebuyClassCatalog(
+  enrollment: ProgramEnrollment | null | undefined,
+): boolean {
+  if (!enrollment) return false;
+  if (enrollment.status === "Failed" || enrollment.status === "Dropped") {
+    return true;
+  }
+  if (enrollment.status === "PendingPayment") return enrollment.isRebuy;
+  return canRebuyCompletedEnrollment(enrollment);
 }
 
 export const PROGRAM_DETAIL_ENROLLMENTS_LOOKUP_QUERY: MyProgramEnrollmentsQuery = {
@@ -86,6 +123,13 @@ export function resolveProgramDetailEnrollmentCta(
 
   switch (enrollment.status) {
     case "PendingPayment":
+      if (enrollment.isRebuy) {
+        return {
+          kind: "rebuy",
+          label: "Hoàn tất thanh toán",
+          subtext: "Chọn lại lớp để giữ chỗ 5 phút rồi thanh toán.",
+        };
+      }
       return {
         kind: "complete-payment",
         label: "Hoàn tất thanh toán",
@@ -102,7 +146,10 @@ export function resolveProgramDetailEnrollmentCta(
         kind: "review",
         href: getProgramLearnHref(enrollment.programId),
         label: "Xem lại khóa học",
-        subtext: "Xem lại nội dung chương trình.",
+        subtext: canRebuyCompletedEnrollment(enrollment)
+          ? "Xem lại nội dung, hoặc học lại với lớp mới (giảm 50% nếu trong 1 tháng kể từ ngày hoàn thành)."
+          : "Xem lại nội dung chương trình.",
+        canRebuy: canRebuyCompletedEnrollment(enrollment),
       };
     case "Active":
       return {
@@ -158,6 +205,12 @@ export function getEnrollmentRebuyHint(
   enrollment: ProgramEnrollment,
 ): string | null {
   if (!enrollment.isRebuy) return null;
+
+  if (enrollment.priorStatus === "Completed") {
+    return enrollment.attemptNumber >= 2
+      ? `Lần học thứ ${enrollment.attemptNumber}`
+      : "Đang học lại chương trình này";
+  }
 
   const prior =
     enrollment.priorEndReason != null

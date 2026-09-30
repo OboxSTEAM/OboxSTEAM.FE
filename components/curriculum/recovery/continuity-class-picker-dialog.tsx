@@ -29,6 +29,10 @@ type ContinuityClassPickerDialogProps = {
   onRetryLoad?: () => void;
   title?: string;
   description?: string;
+  /** Shown when the catalog has no classes at all. */
+  emptyMessage?: string;
+  /** Rebuy: show `checkoutAmount` + "Giảm 50%" when `withinRebuyWindow`. */
+  showCheckoutSummary?: boolean;
 };
 
 function classKindLabel(item: RebuyClass): string {
@@ -57,6 +61,8 @@ export function ContinuityClassPickerDialog({
   onRetryLoad,
   title = "Chọn lớp học lại",
   description,
+  emptyMessage = "Hiện chưa có lớp phù hợp. Đóng và thử lại sau — bạn vẫn ở trạng thái Active.",
+  showCheckoutSummary = false,
 }: ContinuityClassPickerDialogProps) {
   const classes = catalog?.classes ?? [];
   const eligible = useMemo(
@@ -96,6 +102,22 @@ export function ContinuityClassPickerDialog({
             <DialogDescription className="text-sm leading-relaxed text-learn-muted">
               {defaultDescription}
             </DialogDescription>
+            {showCheckoutSummary && catalog != null ? (
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <span className="text-sm text-learn-muted">Số tiền thanh toán</span>
+                <span className="font-heading text-base font-semibold text-learn-text-strong tabular-nums">
+                  {amountLabel}
+                </span>
+                {catalog.withinRebuyWindow ? (
+                  <Badge
+                    variant="outline"
+                    className="border-learn-success/40 bg-learn-success/10 font-semibold text-learn-text-strong"
+                  >
+                    Giảm 50%
+                  </Badge>
+                ) : null}
+              </div>
+            ) : null}
           </DialogHeader>
         </div>
 
@@ -123,8 +145,7 @@ export function ContinuityClassPickerDialog({
             </div>
           ) : eligible.length === 0 && ineligible.length === 0 ? (
             <p className="py-8 text-center text-sm text-learn-muted">
-              Hiện chưa có lớp phù hợp. Đóng và thử lại sau — bạn vẫn ở trạng thái
-              Active.
+              {emptyMessage}
             </p>
           ) : (
             <div className="space-y-4">

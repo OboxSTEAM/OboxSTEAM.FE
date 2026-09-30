@@ -401,6 +401,7 @@ export function MyCoursesPageContent() {
                     key={enrollment.id}
                     enrollment={enrollment}
                     priority={priority}
+                    onEnrollmentsChanged={retry}
                   />
                 );
               }
@@ -414,6 +415,7 @@ export function MyCoursesPageContent() {
                     enrollment={enrollment}
                     className="h-auto rounded-none border-0 shadow-none"
                     priority={priority}
+                    onEnrollmentsChanged={retry}
                   />
                   <EnrollmentInvoicesSection
                     invoices={programInvoices}

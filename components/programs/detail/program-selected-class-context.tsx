@@ -18,6 +18,7 @@ import { showAppErrorFromUnknown } from "@/lib/errors";
 import {
   clearClassHold,
   getClassHold,
+  getHoldRemainingMs,
   isClassHoldActive,
   saveClassHold,
   type ClassHold,
@@ -38,6 +39,10 @@ type ProgramSelectedClassContextValue = {
   isHoldExpired: boolean;
   selectingClassId: string | null;
   selectClass: (classId: string) => Promise<void>;
+  /** Cancel before Stripe redirect — frees the seat server-side immediately. */
+  releaseHold: () => Promise<void>;
+  /** Increments after a hold is released server-side (expiry or cancel) — refetch seat counts. */
+  holdReleaseCount: number;
 };
 
 const ProgramSelectedClassContext =
@@ -45,6 +50,7 @@ const ProgramSelectedClassContext =
 
 function applyHoldState(
   hold: ClassHold | null,
+  now: number,
 ): Pick<
   ProgramSelectedClassContextValue,
   "selectedClassId" | "programEnrollmentId" | "holdExpiresAt" | "hasValidHold"
@@ -58,7 +64,7 @@ function applyHoldState(
     };
   }
 
-  const active = isClassHoldActive(hold);
+  const active = isClassHoldActive(hold, now);
   return {
     selectedClassId: hold.classId,
     programEnrollmentId: active ? hold.programEnrollmentId : null,
@@ -85,10 +91,19 @@ export function ProgramSelectedClassProvider({
   /** Avoid putting enrollment in effect deps (would release mid-checkout). */
   const shouldForceReleaseRef = useRef(false);
 
-  const holdState = useMemo(() => applyHoldState(hold), [hold]);
-  const isHoldExpired = Boolean(
-    hold?.holdExpiresAt && !holdState.hasValidHold,
-  );
+  /** Re-evaluated by the expiry timer — `hasValidHold` must flip without user input. */
+  const [now, setNow] = useState(() => Date.now());
+  const [hasExpiredNotice, setHasExpiredNotice] = useState(false);
+  const [holdReleaseCount, setHoldReleaseCount] = useState(0);
+
+  const holdState = useMemo(() => applyHoldState(hold, now), [hold, now]);
+  /** Completed (not superseded) may rebuy; only a live or superseded attempt blocks select-class. */
+  const blocksClassSelection =
+    enrollment?.status === "Active" ||
+    (enrollment?.status === "Completed" && enrollment.isSuperseded);
+  const isHoldExpired =
+    hasExpiredNotice ||
+    Boolean(hold?.holdExpiresAt && !holdState.hasValidHold);
 
   shouldForceReleaseRef.current =
     enrollment?.status === "PendingPayment" ||
@@ -98,6 +113,7 @@ export function ProgramSelectedClassProvider({
   useLayoutEffect(() => {
     setHold(null);
     setSelectingClassId(null);
+    setHasExpiredNotice(false);
     selectGenerationRef.current += 1;
   }, [programId]);
 
@@ -146,9 +162,38 @@ export function ProgramSelectedClassProvider({
   }, [isStudent, programId]);
 
   useEffect(() => {
+    if (!hold?.holdExpiresAt) return;
+    const timer = window.setTimeout(
+      () => setNow(Date.now()),
+      getHoldRemainingMs(hold.holdExpiresAt) + 250,
+    );
+    return () => window.clearTimeout(timer);
+  }, [hold?.holdExpiresAt]);
+
+  useEffect(() => {
     if (!hold?.holdExpiresAt || holdState.hasValidHold) return;
-    void releaseProgramClassHoldOnExit(programId);
-  }, [hold?.holdExpiresAt, hold?.classId, hold?.programEnrollmentId, holdState.hasValidHold, programId]);
+
+    let cancelled = false;
+    void releaseProgramClassHoldOnExit(programId, {
+      forceRelease: Boolean(hold.programEnrollmentId?.trim()),
+    }).then(() => {
+      if (cancelled) return;
+      setHold(null);
+      setHasExpiredNotice(true);
+      setHoldReleaseCount((count) => count + 1);
+      refreshEnrollment();
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    hold?.holdExpiresAt,
+    hold?.programEnrollmentId,
+    holdState.hasValidHold,
+    programId,
+    refreshEnrollment,
+  ]);
 
   const selectClass = useCallback(
     async (classId: string) => {
@@ -172,10 +217,7 @@ export function ProgramSelectedClassProvider({
         return;
       }
 
-      if (
-        enrollment?.status === "Active" ||
-        enrollment?.status === "Completed"
-      ) {
+      if (blocksClassSelection) {
         showAppErrorFromUnknown(
           new Error("Bạn đã ghi danh chương trình này."),
           "programs.selectClass",
@@ -201,6 +243,7 @@ export function ProgramSelectedClassProvider({
           programEnrollmentId: session.programEnrollmentId,
         };
         setHold(nextHold);
+        setHasExpiredNotice(false);
         saveClassHold(programId, nextHold);
         refreshEnrollment();
       } catch (error) {
@@ -221,8 +264,17 @@ export function ProgramSelectedClassProvider({
         }
       }
     },
-    [enrollment?.status, hold, isStudent, programId, refreshEnrollment],
+    [blocksClassSelection, hold, isStudent, programId, refreshEnrollment],
   );
+
+  const releaseHold = useCallback(async () => {
+    selectGenerationRef.current += 1;
+    setSelectingClassId(null);
+    setHold(null);
+    await releaseProgramClassHoldOnExit(programId, { forceRelease: true });
+    setHoldReleaseCount((count) => count + 1);
+    refreshEnrollment();
+  }, [programId, refreshEnrollment]);
 
   const value = useMemo<ProgramSelectedClassContextValue>(
     () => ({
@@ -230,8 +282,17 @@ export function ProgramSelectedClassProvider({
       isHoldExpired,
       selectingClassId,
       selectClass,
+      releaseHold,
+      holdReleaseCount,
     }),
-    [holdState, isHoldExpired, selectClass, selectingClassId],
+    [
+      holdReleaseCount,
+      holdState,
+      isHoldExpired,
+      releaseHold,
+      selectClass,
+      selectingClassId,
+    ],
   );
 
   return (

@@ -283,7 +283,7 @@ export function ProgramEnrollCta({
     }
 
     if (enrollmentCta.kind === "continue" || enrollmentCta.kind === "review") {
-      return (
+      const learnLink = (
         <Link
           href={enrollmentCta.href}
           className={cn(buttonVariants(), buttonClassName)}
@@ -291,6 +291,28 @@ export function ProgramEnrollCta({
           {enrollmentCta.label}
         </Link>
       );
+
+      if (
+        enrollmentCta.kind === "review" &&
+        enrollmentCta.canRebuy &&
+        isOpenForEnrollment
+      ) {
+        return (
+          <div className={cn("flex gap-2", isHero ? "flex-wrap" : "flex-col")}>
+            {learnLink}
+            <Button
+              type="button"
+              variant="outline"
+              className={cn(buttonClassName, "border-[#E5E5E0]")}
+              onClick={() => setRebuyOpen(true)}
+            >
+              Học lại
+            </Button>
+          </div>
+        );
+      }
+
+      return learnLink;
     }
 
     if (enrollmentCta.kind === "rebuy") {
@@ -445,12 +467,12 @@ export function ProgramEnrollCta({
         />
       ) : null}
 
-      {enrollmentCta.kind === "rebuy" ? (
+      {isStudent ? (
         <ProgramRebuyDialog
           open={rebuyOpen}
           onOpenChange={setRebuyOpen}
           programId={programId}
-          programPrice={price}
+          onUnavailable={refresh}
         />
       ) : null}
     </>

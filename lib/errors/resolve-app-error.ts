@@ -115,11 +115,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     action: "Tải lại trang và thử lại. Liên hệ hỗ trợ nếu lỗi lặp lại.",
   },
   "programs.rebuy": {
-    title: "Không tải được lớp đăng ký lại",
+    title: "Không tải được lớp học lại",
     reason:
-      "Bạn có thể vẫn đang Active, hoặc máy chủ tạm thời không phản hồi.",
-    action:
-      "Nếu đang học, dùng học lại lớp (continuity). Nếu đã dừng, thử tải lại trang.",
+      "Bạn có thể đang có ghi danh còn hiệu lực cho chương trình này, hoặc máy chủ tạm thời không phản hồi.",
+    action: "Tải lại trang để cập nhật trạng thái khóa học rồi thử lại.",
   },
   "programs.create": {
     title: "Không tạo được chương trình",

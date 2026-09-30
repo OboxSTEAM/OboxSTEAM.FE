@@ -20,6 +20,10 @@ type UseProgramOpenClassesResult = {
   hasError: boolean;
   hasOpenSeats: boolean;
   refresh: (preferredClassId?: string | null) => Promise<OpenEnrollmentClass[]>;
+  /** Refetch without the loading skeleton (seat counts after a hold release). */
+  refreshSilent: (
+    preferredClassId?: string | null,
+  ) => Promise<OpenEnrollmentClass[]>;
 };
 
 /**
@@ -124,5 +128,6 @@ export function useProgramOpenClasses(
     hasError,
     hasOpenSeats: classes.some((item) => item.seatsRemaining > 0),
     refresh,
+    refreshSilent,
   };
 }

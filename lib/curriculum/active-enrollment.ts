@@ -24,10 +24,16 @@ export async function resolveActiveProgramEnrollment(
     throw new Error("Program enrollments response missing data.");
   }
 
+  const gated = enrollmentsResult.data.items.filter(
+    (item) =>
+      item.programId === programId && ENROLLMENT_GATE_STATUSES.has(item.status),
+  );
+
+  // After a rebuy the new Active attempt must win over the old Completed row.
   return (
-    enrollmentsResult.data.items.find(
-      (item) =>
-        item.programId === programId && ENROLLMENT_GATE_STATUSES.has(item.status),
-    ) ?? null
+    gated.find((item) => item.status === "Active" && !item.isSuperseded) ??
+    gated.find((item) => !item.isSuperseded) ??
+    gated[0] ??
+    null
   );
 }

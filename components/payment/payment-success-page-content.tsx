@@ -98,6 +98,9 @@ export function PaymentSuccessPageContent() {
   const [programThumbnailUrl, setProgramThumbnailUrl] = useState<string | null>(
     null,
   );
+  const [rebuyAttemptNumber, setRebuyAttemptNumber] = useState<number | null>(
+    null,
+  );
 
   const cachedRole = session?.user?.role;
   const isParent =
@@ -198,6 +201,11 @@ export function PaymentSuccessPageContent() {
           setProgramId(enrollment.programId);
           setProgramName(enrollment.name);
           setProgramThumbnailUrl(enrollment.thumbnailUrl);
+          setRebuyAttemptNumber(
+            enrollment.isRebuy && enrollment.attemptNumber >= 2
+              ? enrollment.attemptNumber
+              : null,
+          );
           clearProgramCheckoutHold(enrollment.programId);
         }
       } catch (error) {
@@ -286,8 +294,13 @@ export function PaymentSuccessPageContent() {
       illustrationSrc={PAYMENT_SUCCESS_ILLUSTRATION_URL}
       illustrationAlt="Minh họa thanh toán thành công"
     >
-      <div className="mb-6 flex justify-center lg:justify-start">
+      <div className="mb-6 flex flex-wrap items-center justify-center gap-3 lg:justify-start">
         <SuccessCheckIcon className="text-[#7CB342]" size={56} />
+        {rebuyAttemptNumber != null ? (
+          <span className="rounded-full border border-[#4FC3F7]/45 bg-[#E8F7FD] px-3 py-1 text-xs font-semibold text-[#1565c0]">
+            Lần học thứ {rebuyAttemptNumber}
+          </span>
+        ) : null}
       </div>
       <PaymentInvoiceCard
         payment={payment}
