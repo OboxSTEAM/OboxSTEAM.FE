@@ -2,12 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {
-  AlertTriangle,
-  ChevronRight,
-  Clock,
-  Loader2,
-} from "lucide-react";
+import { AlertTriangle, CalendarDays, Clock, Loader2 } from "lucide-react";
 
 import { SeatHoldCountdown } from "@/components/payment/seat-hold-countdown";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +19,7 @@ import { findBusyConflictLabel } from "@/lib/classes/schedule-conflict";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
+import { OpenClassWeekDialog } from "./open-class-week-dialog";
 import { useProgramSelectedClass } from "./program-selected-class-context";
 
 type ProgramOpenClassesPreviewProps = {
@@ -52,6 +48,7 @@ function OpenClassCard({
   isSelecting,
   hasValidHold,
   conflictLabel,
+  busyIntervals,
   onSelect,
 }: {
   item: OpenEnrollmentClass;
@@ -59,10 +56,12 @@ function OpenClassCard({
   isSelecting: boolean;
   hasValidHold: boolean;
   conflictLabel: string | null;
+  busyIntervals: StudentScheduleInterval[] | null;
   onSelect: () => void;
 }) {
   const noSeats = item.seatsRemaining <= 0;
   const isDisabled = noSeats || isSelecting || conflictLabel != null;
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const scheduleLabel =
     item.scheduleSummary?.trim() ||
     formatClassDateRange(item.startDate, item.endDate);
@@ -183,16 +182,25 @@ function OpenClassCard({
           ) : null}
 
           <div className="mt-2.5 flex items-center justify-end">
-            <Link
-              href="/schedule"
-              className="inline-flex shrink-0 items-center gap-0.5 text-xs font-semibold text-[#0288D1] hover:underline"
+            <button
+              type="button"
+              className="inline-flex shrink-0 items-center gap-1 text-xs font-semibold text-[#0288D1] hover:underline"
+              aria-haspopup="dialog"
+              onClick={() => setIsCalendarOpen(true)}
             >
-              Xem lịch học
-              <ChevronRight className="size-3.5" aria-hidden />
-            </Link>
+              <CalendarDays className="size-3.5" aria-hidden />
+              Xem lịch học lớp
+            </button>
           </div>
         </div>
       </div>
+
+      <OpenClassWeekDialog
+        open={isCalendarOpen}
+        onOpenChange={setIsCalendarOpen}
+        item={item}
+        busyIntervals={busyIntervals}
+      />
     </div>
   );
 }
@@ -347,6 +355,7 @@ export function ProgramOpenClassesPreview({
                   hasValidHold && selectedClassId === item.classId
                 }
                 conflictLabel={conflictByClassId.get(item.classId) ?? null}
+                busyIntervals={isStudent ? busyIntervals : null}
                 onSelect={() => void handleSelect(item.classId)}
               />
             </li>

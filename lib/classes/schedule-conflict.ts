@@ -142,6 +142,38 @@ export function getConflictingSessionIds(
   return ids;
 }
 
+/** Busy interval ids (`classSessionId`) that overlap any candidate meeting session. */
+export function getConflictingBusyIds(
+  candidateSessions: ScheduleTimedSession[],
+  busyIntervals: StudentScheduleInterval[],
+  options?: { excludeClassId?: string },
+): Set<string> {
+  const excludeClassId = options?.excludeClassId;
+  const ids = new Set<string>();
+  const candidates = candidateSessions.flatMap((candidate) => {
+    if (isCancelledStatus(candidate.status)) return [];
+    const start = parseApiDateTime(candidate.startTime);
+    const end = parseApiDateTime(candidate.endTime);
+    if (!start || !end) return [];
+    if (!isTimedMeetingSlot(start, end, candidate.sessionKind)) return [];
+    return [{ start, end }];
+  });
+
+  for (const busy of busyIntervals) {
+    if (isCancelledStatus(busy.status)) continue;
+    if (excludeClassId && busy.classId === excludeClassId) continue;
+    const bStart = parseApiDateTime(busy.startTime);
+    const bEnd = parseApiDateTime(busy.endTime);
+    if (!bStart || !bEnd) continue;
+    if (!isTimedMeetingSlot(bStart, bEnd, busy.sessionKind)) continue;
+    if (candidates.some((c) => overlaps(c.start, c.end, bStart, bEnd))) {
+      ids.add(busy.classSessionId);
+    }
+  }
+
+  return ids;
+}
+
 /**
  * Find first overlap between a candidate class session and the student's busy
  * schedule. Cancelled sessions on either side are ignored.
