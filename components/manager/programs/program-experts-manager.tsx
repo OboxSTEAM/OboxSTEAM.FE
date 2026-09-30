@@ -10,8 +10,10 @@ import {
   Link2Off,
   Pencil,
   Plus,
+  ShieldCheck,
   UserRoundPlus,
   UserRoundSearch,
+  UsersRound,
 } from "lucide-react";
 
 import { ExpertProfileDialog } from "@/components/experts/expert-profile-dialog";
@@ -63,6 +65,11 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAssigning, setIsAssigning] = useState(false);
   const experts = program.experts;
+  const advisor =
+    experts.find((expert) => expert.expertId === program.advisorExpertId) ?? null;
+  const coTeachers = advisor
+    ? experts.filter((expert) => expert.expertId !== advisor.expertId)
+    : experts;
   const attachInFlight = useRef(false);
 
   useEffect(() => {
@@ -270,90 +277,53 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
           />
         </div>
       ) : (
-        <div className="grid gap-px bg-border md:grid-cols-2">
-          {experts.map((expert) => {
-            const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
-            return (
-              <article
-                key={expert.expertId}
-                className="group flex min-w-0 items-start gap-4 bg-card p-6 transition-colors hover:bg-background/70"
-              >
-                <Avatar className="size-14 shrink-0 border border-border">
-                  {avatarUrl ? (
-                    <AvatarImage src={avatarUrl} alt={expert.fullName} />
-                  ) : null}
-                  <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-sm font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
-                    {getExpertInitials(expert.fullName)}
-                  </AvatarFallback>
-                </Avatar>
+        <div className="flex flex-col">
+          {advisor ? (
+            <div className="border-b border-border bg-[#4FC3F7]/6 p-4 sm:p-5">
+              <ExpertCard
+                expert={advisor}
+                variant="advisor"
+                isEditLoading={loadingExpertId === advisor.expertId}
+                onView={() => setSelectedExpertId(advisor.expertId)}
+                onEdit={() => void openEdit(advisor.expertId)}
+              />
+            </div>
+          ) : null}
 
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <h3 className="truncate font-heading text-sm font-bold text-foreground">
-                        {expert.fullName || "Chưa cập nhật tên"}
-                      </h3>
-                      <p className="mt-1 truncate text-xs text-muted-foreground">
-                        {[expert.title, expert.organization].filter(Boolean).join(" · ") ||
-                          "Chưa cập nhật chức danh"}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setSelectedExpertId(expert.expertId)}
-                        aria-label={`Xem hồ sơ ${expert.fullName}`}
-                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
-                      >
-                        <Eye className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        disabled={loadingExpertId === expert.expertId}
-                        onClick={() => void openEdit(expert.expertId)}
-                        aria-label={`Sửa ${expert.fullName}`}
-                        className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
-                      >
-                        <Pencil className="size-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setRemoveTarget(expert)}
-                        aria-label={`Gỡ ${expert.fullName} khỏi chương trình`}
-                        className="size-9 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Link2Off className="size-4" />
-                      </Button>
-                    </div>
-                  </div>
+          <div className="flex items-center justify-between gap-3 border-b border-border bg-background/70 px-6 py-3">
+            <div className="flex items-center gap-2">
+              <UsersRound className="size-4 text-muted-foreground" />
+              <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                Chuyên gia đồng giảng
+              </h3>
+              <span className="text-xs text-muted-foreground">
+                ({coTeachers.length})
+              </span>
+            </div>
+            <p className="hidden text-xs text-muted-foreground sm:block">
+              Chỉ hỗ trợ giảng dạy trong buổi học, không có quyền cố vấn hay duyệt nội dung.
+            </p>
+          </div>
 
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className="rounded-md border-border font-mono text-[10px] text-muted-foreground"
-                    >
-                      {expert.code || "CHƯA CÓ MÃ"}
-                    </Badge>
-                    {expert.roleInBoard ? (
-                      <Badge className="rounded-md bg-[#FDD835]/20 text-[11px] font-semibold text-[#725D00]">
-                        {expert.roleInBoard}
-                      </Badge>
-                    ) : (
-                      <span className="text-xs italic text-muted-foreground">
-                        Chưa cập nhật vai trò
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </article>
-            );
-          })}
+          {coTeachers.length === 0 ? (
+            <p className="bg-card px-6 py-5 text-sm italic text-muted-foreground">
+              Chưa có chuyên gia đồng giảng. Dùng “Gán chuyên gia có sẵn” để thêm.
+            </p>
+          ) : (
+            <div className="grid gap-px bg-border md:grid-cols-2">
+              {coTeachers.map((expert) => (
+                <ExpertCard
+                  key={expert.expertId}
+                  expert={expert}
+                  variant="member"
+                  isEditLoading={loadingExpertId === expert.expertId}
+                  onView={() => setSelectedExpertId(expert.expertId)}
+                  onEdit={() => void openEdit(expert.expertId)}
+                  onRemove={() => setRemoveTarget(expert)}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -406,5 +376,125 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
         }}
       />
     </section>
+  );
+}
+
+type ExpertCardProps = {
+  expert: ProgramExpert;
+  variant: "advisor" | "member";
+  isEditLoading: boolean;
+  onView: () => void;
+  onEdit: () => void;
+  /** Omitted for the advisor: they are re-attached from the framework and required for submit-review. */
+  onRemove?: () => void;
+};
+
+function ExpertCard({
+  expert,
+  variant,
+  isEditLoading,
+  onView,
+  onEdit,
+  onRemove,
+}: ExpertCardProps) {
+  const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
+  const isAdvisor = variant === "advisor";
+
+  return (
+    <article
+      className={
+        isAdvisor
+          ? "group flex min-w-0 items-start gap-5 rounded-xl border border-[#4FC3F7]/50 bg-card p-5 shadow-[0_4px_18px_rgba(13,110,156,0.08)]"
+          : "group flex min-w-0 items-start gap-4 bg-card p-6 transition-colors hover:bg-background/70"
+      }
+    >
+      <Avatar
+        className={
+          isAdvisor
+            ? "size-16 shrink-0 border-2 border-[#4FC3F7] ring-4 ring-[#4FC3F7]/15"
+            : "size-14 shrink-0 border border-border"
+        }
+      >
+        {avatarUrl ? <AvatarImage src={avatarUrl} alt={expert.fullName} /> : null}
+        <AvatarFallback className="bg-[#4FC3F7]/12 font-heading text-sm font-bold text-[#0D6E9C] dark:text-[#7dd3fc]">
+          {getExpertInitials(expert.fullName)}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="min-w-0 flex-1">
+        {isAdvisor ? (
+          <p className="mb-1.5 inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-[#0D6E9C] dark:text-[#7dd3fc]">
+            <ShieldCheck className="size-3.5" />
+            Cố vấn phụ trách · Tác giả khung
+          </p>
+        ) : null}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3
+              className={`truncate font-heading font-bold text-foreground ${isAdvisor ? "text-base" : "text-sm"}`}
+            >
+              {expert.fullName || "Chưa cập nhật tên"}
+            </h3>
+            <p className="mt-1 truncate text-xs text-muted-foreground">
+              {[expert.title, expert.organization].filter(Boolean).join(" · ") ||
+                "Chưa cập nhật chức danh"}
+            </p>
+          </div>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onView}
+              aria-label={`Xem hồ sơ ${expert.fullName}`}
+              className="size-9 rounded-lg text-muted-foreground hover:bg-[#4FC3F7]/10 hover:text-[#0D6E9C] dark:hover:text-[#7dd3fc]"
+            >
+              <Eye className="size-4" />
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              disabled={isEditLoading}
+              onClick={onEdit}
+              aria-label={`Sửa ${expert.fullName}`}
+              className="size-9 rounded-lg text-muted-foreground hover:bg-[#FDD835]/25 hover:text-[#8A7200] dark:hover:text-[#fde047]"
+            >
+              <Pencil className="size-4" />
+            </Button>
+            {onRemove ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={onRemove}
+                aria-label={`Gỡ ${expert.fullName} khỏi chương trình`}
+                className="size-9 rounded-lg text-primary hover:bg-primary/10 hover:text-primary"
+              >
+                <Link2Off className="size-4" />
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Badge
+            variant="outline"
+            className="rounded-md border-border font-mono text-[10px] text-muted-foreground"
+          >
+            {expert.code || "CHƯA CÓ MÃ"}
+          </Badge>
+          {isAdvisor ? (
+            <span className="text-xs text-muted-foreground">
+              Cố vấn và duyệt nội dung chương trình, gán tự động từ khung chương trình.
+            </span>
+          ) : (
+            <Badge className="rounded-md bg-[#FDD835]/20 text-[11px] font-semibold text-[#725D00]">
+              {expert.roleInBoard || "Đồng giảng"}
+            </Badge>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
