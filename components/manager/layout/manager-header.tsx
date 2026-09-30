@@ -28,7 +28,6 @@ const PATH_LABELS: Record<string, string> = {
   "question-bank": "Ngân hàng câu hỏi",
   milestones: "Milestone nghiên cứu",
   classes: "Lớp học",
-  redelivery: "Học lại lớp",
   sessions: "Lịch học",
   attendance: "Điểm danh",
   assignments: "Bài tập",

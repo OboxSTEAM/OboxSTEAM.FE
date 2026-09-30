@@ -6,7 +6,6 @@ import {
   FileQuestion,
   GraduationCap,
   LayoutDashboard,
-  RefreshCw,
   Target,
   Upload,
   Users,
@@ -58,11 +57,6 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         label: "Lịch học",
         href: "/manager/sessions",
         icon: CalendarDays,
-      },
-      {
-        label: "Học lại lớp",
-        href: "/manager/redelivery",
-        icon: RefreshCw,
       },
       {
         label: "Chuyên gia",
