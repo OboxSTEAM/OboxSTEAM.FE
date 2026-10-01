@@ -16,14 +16,6 @@ import {
   type AssignProgramAdvisorInput,
 } from "@/lib/validations/programs";
 import {
-  approveCurriculumReviewSchema,
-  programReviewQueueQuerySchema,
-  requestCurriculumChangesSchema,
-  type ApproveCurriculumReviewInput,
-  type ProgramReviewQueueQuery,
-  type RequestCurriculumChangesInput,
-} from "@/lib/validations/curriculum-reviews";
-import {
   createProgramReviewSchema,
   updateProgramReviewSchema,
   type CreateProgramReviewInput,
@@ -63,15 +55,8 @@ import {
   type ReleaseProgramClassHoldResult,
   type UpdateProgramResult,
   type UploadProgramThumbnailResult,
-  type GetCurriculumReviewsResult,
-  type CurriculumReviewMutationResult,
   type ProgramLifecycleResult,
-  type GetReviewQueueResult,
-  type GetProgramReviewQueueResult,
-  getCurriculumReviewsResponseSchema,
-  curriculumReviewMutationResponseSchema,
   programLifecycleResponseSchema,
-  getProgramReviewQueueResponseSchema,
 } from "./schemas";
 
 export type {
@@ -107,35 +92,12 @@ export type {
   UpdateProgramResult,
   UploadProgramThumbnailResponse,
   UploadProgramThumbnailResult,
-  GetCurriculumReviewsResponse,
-  GetCurriculumReviewsResult,
-  CurriculumReviewMutationResponse,
-  CurriculumReviewMutationResult,
   ProgramLifecycleResponse,
   ProgramLifecycleResult,
-  GetReviewQueueResponse,
-  GetReviewQueueResult,
-  GetProgramReviewQueueResponse,
-  GetProgramReviewQueueResult,
 } from "./schemas";
 
 export type { AssignProgramAdvisorInput } from "@/lib/validations/programs";
 export type AssignProgramAdvisorResult = ProgramLifecycleResult;
-
-export type {
-  ApproveCurriculumReviewInput,
-  ProgramReviewQueueQuery,
-  RequestCurriculumChangesInput,
-  ReviewCriterionScoreRequestInput,
-} from "@/lib/validations/curriculum-reviews";
-
-export type {
-  CurriculumReview,
-  CurriculumReviewDecision,
-  ReviewCriterionScore,
-} from "@/lib/api/entities/curriculum-review";
-
-export type { ProgramReviewQueueItem } from "@/lib/api/entities/program-review-queue";
 
 export type {
   Module,
@@ -580,57 +542,6 @@ export async function deleteProgram(id: string): Promise<DeleteProgramResult> {
   return requireApiValue(response.value);
 }
 
-export async function getProgramReviewQueue(
-  params?: ProgramReviewQueueQuery,
-): Promise<GetReviewQueueResult> {
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/review-queue${buildQueryString(params, programReviewQueueQuerySchema)}`,
-    getProgramReviewQueueResponseSchema,
-    { method: "GET" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function getCurriculumReviews(
-  programId: string,
-): Promise<GetCurriculumReviewsResult> {
-  const { id } = programIdParamSchema.parse({ id: programId });
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/curriculum-reviews`,
-    getCurriculumReviewsResponseSchema,
-    { method: "GET" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function submitProgramReview(
-  programId: string,
-): Promise<ProgramLifecycleResult> {
-  const { id } = programIdParamSchema.parse({ id: programId });
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/submit-review`,
-    programLifecycleResponseSchema,
-    { method: "POST" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function withdrawProgramReview(
-  programId: string,
-): Promise<ProgramLifecycleResult> {
-  const { id } = programIdParamSchema.parse({ id: programId });
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/withdraw-review`,
-    programLifecycleResponseSchema,
-    { method: "POST" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
 export async function publishProgram(
   programId: string,
 ): Promise<ProgramLifecycleResult> {
@@ -659,128 +570,3 @@ export async function assignProgramAdvisor(
   assertApiSuccess(response);
   return requireApiValue(response.value);
 }
-
-export async function approveProgramReview(
-  programId: string,
-  input: ApproveCurriculumReviewInput = {},
-): Promise<CurriculumReviewMutationResult> {
-  const { id } = programIdParamSchema.parse({ id: programId });
-  const body = approveCurriculumReviewSchema.parse(input);
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/approve-review`,
-    curriculumReviewMutationResponseSchema,
-    { method: "POST", body },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function requestProgramChanges(
-  programId: string,
-  input: RequestCurriculumChangesInput,
-): Promise<CurriculumReviewMutationResult> {
-  const { id } = programIdParamSchema.parse({ id: programId });
-  const body = requestCurriculumChangesSchema.parse(input);
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/request-changes`,
-    curriculumReviewMutationResponseSchema,
-    { method: "POST", body },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export {
-  addAdvisoryMessage,
-  createAdvisoryReference,
-  createAdvisoryThread,
-  getAdvisoryAnchorFields,
-  getAdvisoryBoard,
-  getAdvisoryMessages,
-  getAdvisoryMine,
-  getAdvisoryReference,
-  getAdvisoryThread,
-  getAdvisoryThreadPins,
-  getAdvisoryThreads,
-  getAdvisoryTimeline,
-  getProgramAdvisoryWorkspace,
-  getProgramFrameworkCheck,
-  getReviewDraft,
-  getReviewSubmission,
-  getReviewSubmissionChanges,
-  getReviewSubmissions,
-  recordAdvisoryRead,
-  recordAdvisoryThreadRead,
-  saveReviewDraft,
-  performAdvisoryThreadAction,
-} from "./advisory";
-
-export type {
-  ActivitySnapshot,
-  AddAdvisoryMessageInput,
-  AdvisoryAnchorField,
-  AdvisoryAnchorKind,
-  AdvisoryCapabilities,
-  AdvisoryBoard,
-  AdvisoryBoardQuery,
-  AdvisoryFeedbackCounts,
-  AdvisoryMessage,
-  AdvisoryMessageMutationResult,
-  AdvisoryMineItem,
-  AdvisoryMineQuery,
-  AdvisoryParticipant,
-  AdvisoryPinsQuery,
-  AdvisoryTargetType,
-  AdvisoryThread,
-  AdvisoryThreadAction,
-  AdvisoryThreadEvent,
-  AdvisoryThreadMutationResult,
-  AdvisoryThreadPin,
-  AdvisoryThreadPinSummary,
-  AdvisoryThreadStatus,
-  AdvisoryThreadType,
-  AdvisoryThreadsQuery,
-  AdvisoryReference,
-  AdvisoryReferenceResult,
-  AdvisoryWorkflowStage,
-  AdvisoryWorkflowStageKey,
-  AdvisoryWorkflowStageState,
-  AdvisoryWorkflowTimeline,
-  AssignmentSnapshot,
-  CourseSnapshot,
-  CreateAdvisoryThreadInput,
-  CreateAdvisoryReferenceInput,
-  CurriculumSnapshotDocument,
-  FrameworkCheck,
-  FrameworkHighlight,
-  GetAdvisoryBoardResult,
-  GetAdvisoryAnchorFieldsResult,
-  GetAdvisoryMessagesResult,
-  GetAdvisoryMineResult,
-  GetAdvisoryThreadResult,
-  GetAdvisoryTimelineResult,
-  GetAdvisoryThreadPinsResult,
-  GetAdvisoryThreadsResult,
-  GetFrameworkCheckResult,
-  GetProgramAdvisoryWorkspaceResult,
-  GetReviewDraftResult,
-  GetReviewSubmissionDetailResult,
-  GetReviewSubmissionsResult,
-  GetSubmissionChangesResult,
-  MaterialSnapshot,
-  MilestoneSnapshot,
-  ModuleSnapshot,
-  ProgramAdvisoryWorkspace,
-  ProgramReviewDraft,
-  ProgramReviewSubmissionDetail,
-  ProgramReviewSubmissionSummary,
-  RecordAdvisoryReadInput,
-  RecordAdvisoryReadResult,
-  RecordAdvisoryThreadReadInput,
-  RecordAdvisoryCursorResult,
-  ReviewSubmissionStatus,
-  SaveProgramReviewDraftInput,
-  SubmissionChangeItem,
-  SubmissionChanges,
-  AdvisoryThreadActionInput,
-} from "./advisory";

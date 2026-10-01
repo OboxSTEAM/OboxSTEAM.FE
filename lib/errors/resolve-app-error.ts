@@ -218,50 +218,10 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Tệp không hợp lệ, quá lớn, hoặc máy chủ từ chối tải lên.",
     action: "Chọn ảnh JPG/PNG dưới 5 MB và thử lại.",
   },
-  "expert.review.queue": {
-    title: "Không tải được hàng chờ duyệt",
-    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
-    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
-  },
-  "expert.review.detail": {
-    title: "Không tải được hồ sơ thẩm định",
-    reason: "Chương trình có thể đã được duyệt hoặc rút khỏi hàng chờ.",
-    action: "Quay lại hàng chờ và mở lại chương trình.",
-  },
-  "expert.review.approve": {
-    title: "Không phê duyệt được chương trình",
-    reason: "Chương trình không còn ở trạng thái chờ duyệt hoặc điểm rubric chưa hợp lệ.",
-    action: "Tải lại trang, kiểm tra điểm từng tiêu chí rồi thử lại.",
-  },
-  "expert.review.requestChanges": {
-    title: "Không gửi được yêu cầu chỉnh sửa",
-    reason: "Nhận xét chưa hợp lệ hoặc chương trình không còn chờ duyệt.",
-    action: "Nhập nhận xét cụ thể rồi gửi lại.",
-  },
   "expert.advisory.mine": {
     title: "Không tải được danh sách chương trình phụ trách",
     reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
     action: "Kiểm tra mạng và thử tải lại sau vài giây.",
-  },
-  "expert.advisory.workspace": {
-    title: "Không tải được không gian thẩm định",
-    reason: "Chương trình có thể đã thay đổi quyền truy cập hoặc không còn tồn tại.",
-    action: "Quay lại danh sách và mở lại chương trình.",
-  },
-  "expert.advisory.threads": {
-    title: "Không tải được luồng trao đổi",
-    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
-    action: "Thử tải lại trang sau vài giây.",
-  },
-  "expert.advisory.draft": {
-    title: "Không lưu được nháp thẩm định",
-    reason: "Phiên bản nháp đã thay đổi ở nơi khác hoặc dữ liệu không hợp lệ.",
-    action: "Tải lại trang và thử lưu lại.",
-  },
-  "expert.advisory.decide": {
-    title: "Không gửi được quyết định thẩm định",
-    reason: "Lần nộp đã thay đổi hoặc điểm rubric chưa hợp lệ.",
-    action: "Tải lại trang, kiểm tra điểm và thử lại.",
   },
   "advisory.mine": {
     title: "Không tải được danh sách chương trình tư vấn",
@@ -1031,8 +991,6 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "experts.delete",
   "experts.credentials",
   "experts.upload-avatar",
-  "expert.review.approve",
-  "expert.review.requestChanges",
   "frameworks.create",
   "frameworks.update",
   "frameworks.delete",

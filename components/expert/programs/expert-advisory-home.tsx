@@ -11,7 +11,7 @@ import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useClientFetch } from "@/hooks/use-client-fetch";
-import { getAdvisoryMine, type AdvisoryMineItem, type ProgramStatus } from "@/lib/api";
+import { getMyAdvisoryPrograms, type AdvisoryProgramItem, type ProgramStatus } from "@/lib/api";
 import { PIN_STATUS_BADGE_CLASSES } from "@/lib/advisory/pin-actions";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown } from "@/lib/errors";
@@ -34,13 +34,13 @@ const FILTER_OPTIONS: {
   { value: "Inactive", label: "Ngừng hoạt động", status: "Inactive" },
 ];
 
-const APPROVAL_COPY: Record<AdvisoryMineItem["approvalState"], { label: string; tone: string }> = {
+const APPROVAL_COPY: Record<AdvisoryProgramItem["approvalState"], { label: string; tone: string }> = {
   None: { label: "Chưa chấp thuận", tone: "text-muted-foreground" },
   Approved: { label: "Đã chấp thuận", tone: "text-emerald-700 dark:text-emerald-300" },
   Revoked: { label: "Chấp thuận đã bị huỷ", tone: "text-amber-800 dark:text-amber-300" },
 };
 
-const COLUMNS: ColumnDef<AdvisoryMineItem>[] = [
+const COLUMNS: ColumnDef<AdvisoryProgramItem>[] = [
   {
     header: "Chương trình",
     render: (item) => (
@@ -160,7 +160,7 @@ export function ExpertAdvisoryHome() {
 
   const { data, isLoading, markLoading } = useClientFetch({
     fetcher: () =>
-      getAdvisoryMine({
+      getMyAdvisoryPrograms({
         page,
         pageSize: PAGE_SIZE,
         status: filterConfig?.status,
@@ -170,16 +170,16 @@ export function ExpertAdvisoryHome() {
     onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.mine"),
   });
 
-  const totalPages = data?.data?.totalPages ?? 1;
-  const totalCount = data?.data?.totalCount ?? 0;
+  const totalPages = data?.totalPages ?? 1;
+  const totalCount = data?.totalCount ?? 0;
   const programs = useMemo(() => {
-    const items = data?.data?.items ?? [];
+    const items = data?.items ?? [];
     const keyword = search.trim().toLocaleLowerCase("vi");
     if (!keyword) return items;
     return items.filter((item) =>
       `${item.name} ${item.code}`.toLocaleLowerCase("vi").includes(keyword),
     );
-  }, [data?.data?.items, search]);
+  }, [data?.items, search]);
 
   const isFiltered = filter !== "all" || search !== "";
 

@@ -171,8 +171,6 @@ const ACTIVITY_PREFIX: Record<string, string> = {
   SelfPaced: "Tự học", LiveOnline: "Online", Offline: "Offline", OfflineClass: "Offline",
 };
 
-/* ─── Selected node lives in lib/advisory/manager-target.ts ─── */
-
 /* ─── Micro helpers ─────────────────────────────────────────────────────────── */
 function STitle({ children }: { children: React.ReactNode }) {
   return <p className="text-[10px] font-bold uppercase tracking-widest mb-3" style={{ color: W.faint }}>{children}</p>;

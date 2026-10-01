@@ -101,36 +101,6 @@ export {
   type UpdateProgramReviewInput,
 } from "./program-reviews";
 export {
-  approveCurriculumReviewSchema,
-  programReviewQueueQuerySchema,
-  requestCurriculumChangesSchema,
-  reviewCriterionScoreRequestSchema,
-  type ApproveCurriculumReviewInput,
-  type ProgramReviewQueueQuery,
-  type RequestCurriculumChangesInput,
-  type ReviewCriterionScoreRequestInput,
-} from "./curriculum-reviews";
-export {
-  addAdvisoryMessageSchema,
-  advisoryBoardQuerySchema,
-  advisoryMineQuerySchema,
-  advisoryPinsQuerySchema,
-  advisoryThreadsQuerySchema,
-  createAdvisoryThreadSchema,
-  recordAdvisoryReadSchema,
-  advisoryThreadActionRequestSchema,
-  saveProgramReviewDraftSchema,
-  type AddAdvisoryMessageInput,
-  type AdvisoryBoardQuery,
-  type AdvisoryMineQuery,
-  type AdvisoryPinsQuery,
-  type AdvisoryThreadsQuery,
-  type CreateAdvisoryThreadInput,
-  type RecordAdvisoryReadInput,
-  type SaveProgramReviewDraftInput,
-  type AdvisoryThreadActionInput,
-} from "./program-advisory";
-export {
   advisoryProgramsQuerySchema,
   APPROVAL_COMMENT_MAX_LENGTH,
   approveProgramSchema,
