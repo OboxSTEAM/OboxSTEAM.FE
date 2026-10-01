@@ -3,11 +3,6 @@
 import * as React from "react";
 import dynamic from "next/dynamic";
 import {
-  Banknote,
-  CheckSquare,
-  Clock,
-  RotateCcw,
-  Target,
   Users,
   Wallet,
 } from "lucide-react";
@@ -16,15 +11,22 @@ import { buttonVariants } from "@/components/ui/button";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import { useCurrentUser } from "@/hooks/use-current-user";
 import {
+  getClassMentorRequests,
   getDashboardLanding,
+  type ClassMentorRequest,
   type DashboardLanding,
   type DashboardRange,
 } from "@/lib/api";
+import { managerClassDetailHref } from "@/lib/manager/class-paths";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
-import { deltaPercent, toPercentValue } from "./chart-data";
+import {
+  deltaPercent,
+} from "./chart-data";
+import { AttendanceSummaryCard } from "./attendance-summary-card";
 import { DashboardActionQueue } from "./dashboard-action-queue";
+import { PassRateByProgramCard } from "./pass-rate-by-program-card";
 import { DashboardGroupHeading } from "./dashboard-panel";
 import { DashboardRangeTabs } from "./dashboard-range-tabs";
 import {
@@ -54,17 +56,17 @@ const TopProgramsPanel = dynamic(
   { ssr: false, loading: () => <PanelSkeleton className="h-[320px]" /> },
 );
 
+const ProgramRevenuePanel = dynamic(
+  () =>
+    import("./panels/program-revenue-panel").then((m) => m.ProgramRevenuePanel),
+  { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
+);
+
 const StatusBreakdownPanel = dynamic(
   () =>
     import("./panels/status-breakdown-panel").then(
       (m) => m.StatusBreakdownPanel,
     ),
-  { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
-);
-
-const RevenueMixPanel = dynamic(
-  () =>
-    import("./panels/revenue-mix-panel").then((m) => m.RevenueMixPanel),
   { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
 );
 
@@ -74,11 +76,60 @@ const MentorLoadPanel = dynamic(
   { ssr: false, loading: () => <PanelSkeleton className="h-[300px]" /> },
 );
 
-function buildActionItems(landing: DashboardLanding): AttentionItem[] {
-  const items: AttentionItem[] = [];
-  const { operations, assessment, revenue } = landing;
+type PendingMentorClass = {
+  classId: string;
+  className: string;
+  classCode: string;
+  requestCount: number;
+};
 
-  if (operations.pendingMentorRequestsCount > 0) {
+function groupPendingMentorClasses(
+  requests: ClassMentorRequest[],
+): PendingMentorClass[] {
+  const byClass = new Map<string, PendingMentorClass>();
+
+  for (const request of requests) {
+    const existing = byClass.get(request.classId);
+    if (existing) {
+      existing.requestCount += 1;
+      continue;
+    }
+
+    byClass.set(request.classId, {
+      classId: request.classId,
+      className: request.className?.trim() || "Lớp chưa đặt tên",
+      classCode: request.classCode?.trim() || "",
+      requestCount: 1,
+    });
+  }
+
+  return [...byClass.values()];
+}
+
+function buildActionItems(
+  landing: DashboardLanding,
+  pendingClasses: PendingMentorClass[],
+  includeMentorFallback: boolean,
+): AttentionItem[] {
+  const items: AttentionItem[] = [];
+  const { operations, revenue } = landing;
+
+  if (pendingClasses.length > 0) {
+    for (const pendingClass of pendingClasses) {
+      const requestLabel = `${formatCount(pendingClass.requestCount)} yêu cầu`;
+      items.push({
+        id: `mentor-pending-${pendingClass.classId}`,
+        title: pendingClass.className,
+        detail: pendingClass.classCode
+          ? `${pendingClass.classCode} · ${requestLabel}`
+          : requestLabel,
+        href: managerClassDetailHref(pendingClass.classId),
+        status: "Phê duyệt",
+        tone: "danger",
+        priority: 1,
+      });
+    }
+  } else if (includeMentorFallback && operations.pendingMentorRequestsCount > 0) {
     items.push({
       id: "mentor-pending",
       title: "Mentor chờ duyệt",
@@ -87,18 +138,6 @@ function buildActionItems(landing: DashboardLanding): AttentionItem[] {
       status: "Cần làm",
       tone: "danger",
       priority: 1,
-    });
-  }
-
-  if (assessment.gradingBacklogCount > 0) {
-    items.push({
-      id: "grading-backlog",
-      title: "Bài nộp chờ chấm",
-      detail: `${formatCount(assessment.gradingBacklogCount)} bài · quá ${formatCount(assessment.gradingBacklogThresholdHours)} giờ`,
-      href: "/manager/assignments",
-      status: "Cần làm",
-      tone: "warn",
-      priority: 2,
     });
   }
 
@@ -154,6 +193,26 @@ export function ManagerDashboard() {
     },
   });
 
+  const pendingMentorCount = data?.operations.pendingMentorRequestsCount ?? 0;
+  const {
+    data: pendingMentorData,
+    isLoading: isPendingMentorsLoading,
+    hasError: hasPendingMentorsError,
+  } = useClientFetch({
+    enabled: pendingMentorCount > 0,
+    minSkeletonMs: 0,
+    fetcher: () =>
+      getClassMentorRequests({
+        status: "Pending",
+        page: 1,
+        pageSize: Math.min(Math.max(pendingMentorCount, 1), 100),
+      }),
+    deps: [pendingMentorCount],
+    onError: (err) => {
+      showAppErrorFromUnknown(err, "classMentorRequests.list");
+    },
+  });
+
   if (isLoading && !data) {
     return <DashboardSkeleton />;
   }
@@ -178,8 +237,20 @@ export function ManagerDashboard() {
     );
   }
 
-  const { enrollment, revenue, assessment, operations } = data;
-  const actionItems = buildActionItems(data);
+  const { enrollment, revenue, operations } = data;
+  const pendingClasses = groupPendingMentorClasses(
+    pendingMentorData?.data?.items ?? [],
+  );
+  const isMentorQueueLoading =
+    pendingMentorCount > 0 &&
+    isPendingMentorsLoading &&
+    pendingClasses.length === 0;
+  const actionItems = buildActionItems(
+    data,
+    isMentorQueueLoading ? [] : pendingClasses,
+    !isMentorQueueLoading &&
+      (hasPendingMentorsError || pendingClasses.length === 0),
+  );
 
   const revenueDelta = deltaPercent(
     revenue.revenueInRange,
@@ -189,24 +260,6 @@ export function ManagerDashboard() {
     enrollment.newEnrollmentsInRange,
     enrollment.newEnrollmentsInPreviousRange,
   );
-  const attendanceDelta = deltaPercent(
-    toPercentValue(operations.averageAttendanceRate, operations.rateUnit),
-    toPercentValue(
-      operations.averageAttendanceRateInPreviousRange,
-      operations.rateUnit,
-    ),
-  );
-  const passRateDelta = deltaPercent(
-    toPercentValue(assessment.passRate, assessment.rateUnit),
-    toPercentValue(assessment.passRateInPreviousRange, assessment.rateUnit),
-  );
-
-  const attendanceRate = toPercentValue(
-    operations.averageAttendanceRate,
-    operations.rateUnit,
-  );
-  const passRate = toPercentValue(assessment.passRate, assessment.rateUnit);
-  const hasPendingPayments = revenue.pendingPaymentRequestsCount > 0;
 
   return (
     <div className="mx-auto w-full min-w-0 max-w-[1400px] space-y-5 bg-background px-4 py-4 sm:space-y-6 sm:px-5 sm:py-5 lg:px-6 lg:py-6">
@@ -230,14 +283,19 @@ export function ManagerDashboard() {
         />
       </header>
 
-      <DashboardActionQueue items={actionItems} />
+      <DashboardActionQueue
+        items={actionItems}
+        pendingClassSlots={
+          isMentorQueueLoading ? Math.min(pendingMentorCount, 4) : 0
+        }
+      />
 
       <section className="min-w-0 space-y-3" aria-labelledby="business-group-heading">
         <div id="business-group-heading">
-          <DashboardGroupHeading title="Kinh doanh và tuyển sinh" />
+          <DashboardGroupHeading title="Doanh thu và tuyển sinh" />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
           <KpiStatCard
             label={revenueTitleForRange(range)}
             hint="So với kỳ trước"
@@ -254,29 +312,6 @@ export function ManagerDashboard() {
             }}
           />
           <KpiStatCard
-            label="Thanh toán chờ"
-            hint={`${formatCount(revenue.pendingPaymentRequestsCount)} yêu cầu`}
-            value={revenue.pendingPaymentRequestsAmount}
-            href="/manager/programs"
-            icon={Banknote}
-            accentClassName="text-steam-arts"
-            tintClassName={
-              hasPendingPayments ? "bg-steam-arts/8" : undefined
-            }
-            alert={hasPendingPayments}
-            footnote={
-              hasPendingPayments
-                ? "Cần theo dõi để hoàn tất đăng ký"
-                : "Không có khoản chờ"
-            }
-            format={{
-              style: "currency",
-              currency: "VND",
-              maximumFractionDigits: 0,
-              notation: "compact",
-            }}
-          />
-          <KpiStatCard
             label="Đăng ký mới"
             hint="Trong kỳ đã chọn"
             value={enrollment.newEnrollmentsInRange}
@@ -285,20 +320,6 @@ export function ManagerDashboard() {
             accentClassName="text-steam-science"
             delta={enrollmentDelta}
           />
-          <KpiStatCard
-            label="Hoàn tiền"
-            hint="Trong kỳ đã chọn"
-            value={revenue.refundedAmount}
-            href="/manager/programs"
-            icon={RotateCcw}
-            accentClassName="text-steam-engineering"
-            format={{
-              style: "currency",
-              currency: "VND",
-              maximumFractionDigits: 0,
-              notation: "compact",
-            }}
-          />
         </div>
 
         <TrendPanel
@@ -306,19 +327,17 @@ export function ManagerDashboard() {
           isLoading={isLoading}
           enrollment={enrollment}
           revenue={revenue}
-          assessment={assessment}
-          operations={operations}
         />
 
-        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-5">
-          <div className="min-w-0 xl:col-span-2">
-            <RevenueMixPanel
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+          <div className="min-w-0">
+            <ProgramRevenuePanel
               revenue={revenue}
               isLoading={isLoading}
               revealSignature={range}
             />
           </div>
-          <div className="min-w-0 xl:col-span-3">
+          <div className="min-w-0">
             <TopProgramsPanel
               enrollment={enrollment}
               revenue={revenue}
@@ -334,55 +353,15 @@ export function ManagerDashboard() {
           <DashboardGroupHeading title="Chất lượng giảng dạy" />
         </div>
 
-        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-3">
-          <KpiStatCard
-            label="Điểm danh"
-            hint="Tỷ lệ có mặt trung bình"
-            value={attendanceRate}
-            href="/manager/attendance"
-            icon={CheckSquare}
-            accentClassName="text-steam-arts"
-            delta={attendanceDelta}
-            format={{ maximumFractionDigits: 1 }}
-            suffix="%"
-          />
-          <KpiStatCard
-            label="Tỷ lệ đạt"
-            hint="Trong kỳ đã chọn"
-            value={passRate}
-            href="/manager/assignments"
-            icon={Target}
-            accentClassName="text-steam-mathematics"
-            delta={passRateDelta}
-            format={{ maximumFractionDigits: 1 }}
-            suffix="%"
-          />
-          <KpiStatCard
-            label="Thời gian chấm bài trung bình"
-            hint="Giờ mỗi bài"
-            value={assessment.averageGradingTurnaroundHours}
-            href="/manager/assignments"
-            icon={Clock}
-            accentClassName="text-steam-engineering"
-            format={{ maximumFractionDigits: 1 }}
-            suffix="h"
-          />
+        <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2">
+          <AttendanceSummaryCard />
+          <PassRateByProgramCard items={enrollment.programEnrollmentsByStatus} />
         </div>
 
-        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2">
+        <div className="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2 xl:items-stretch">
           <MentorLoadPanel operations={operations} />
           <StatusBreakdownPanel
             datasets={[
-              {
-                key: "enrollment",
-                label: "Tuyển sinh",
-                title: "Tuyển sinh theo trạng thái",
-                description: "Tỷ trọng đăng ký chương trình trong hệ thống",
-                items: enrollment.programEnrollmentsByStatus,
-                kind: "enrollment",
-                href: "/manager/programs",
-                linkLabel: "Quản lý chương trình",
-              },
               {
                 key: "class",
                 label: "Lớp học",

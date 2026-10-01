@@ -49,6 +49,27 @@ const SUBMISSION_STATUS_ORDER = [
   "ReturnedForRevision",
 ] as const;
 
+/** End-of-program pass rate across every program: Completed / (Completed + Failed). */
+export function programEndPassRate(items: StatusCount[]): {
+  rate: number;
+  passed: number;
+  finished: number;
+} {
+  const countOf = (status: string) =>
+    items.reduce(
+      (sum, item) => (item.status === status ? sum + item.count : sum),
+      0,
+    );
+  const passed = countOf("Completed");
+  const finished = passed + countOf("Failed");
+
+  return {
+    rate: finished > 0 ? (passed / finished) * 100 : 0,
+    passed,
+    finished,
+  };
+}
+
 export const PAYMENT_GATEWAY_VI: Record<string, string> = {
   VnPay: "VNPay",
   Stripe: "Stripe",

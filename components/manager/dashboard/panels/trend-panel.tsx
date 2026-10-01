@@ -13,10 +13,8 @@ import { XAxis } from "@/components/charts/x-axis";
 import { YAxis } from "@/components/charts/y-axis";
 import { useContainerWidth } from "@/hooks/use-container-narrow";
 import type {
-  AssessmentOverview,
   DashboardRange,
   EnrollmentOverview,
-  OperationsOverview,
   RevenueOverview,
   TrendSeries,
 } from "@/lib/api";
@@ -27,7 +25,6 @@ import {
   deltaPercent,
   formatterFor,
   STEAM_FILL,
-  toPercentValue,
   trendGranularityLabel,
   trendSeriesToChartData,
 } from "../chart-data";
@@ -37,7 +34,7 @@ import {
 } from "../dashboard-panel";
 import { prefersReducedMotion } from "../dashboard-utils";
 
-type TrendKey = "enrollment" | "revenue" | "submissions" | "attendance";
+type TrendKey = "enrollment" | "revenue";
 
 const TREND_OPTIONS: {
   key: TrendKey;
@@ -46,8 +43,6 @@ const TREND_OPTIONS: {
 }[] = [
   { key: "enrollment", label: "Đăng ký", fill: STEAM_FILL.engineering },
   { key: "revenue", label: "Doanh thu", fill: STEAM_FILL.technology },
-  { key: "submissions", label: "Bài nộp", fill: STEAM_FILL.science },
-  { key: "attendance", label: "Điểm danh", fill: STEAM_FILL.mathematics },
 ];
 
 type TrendPanelProps = {
@@ -55,8 +50,6 @@ type TrendPanelProps = {
   isLoading: boolean;
   enrollment: EnrollmentOverview;
   revenue: RevenueOverview;
-  assessment: AssessmentOverview;
-  operations: OperationsOverview;
 };
 
 function seriesFor(
@@ -66,10 +59,6 @@ function seriesFor(
   switch (key) {
     case "revenue":
       return props.revenue.revenueTrend;
-    case "submissions":
-      return props.assessment.submissionsTrend;
-    case "attendance":
-      return props.operations.attendanceTrend;
     case "enrollment":
     default:
       return props.enrollment.enrollmentTrend;
@@ -79,7 +68,7 @@ function seriesFor(
 function summaryFor(
   key: TrendKey,
   props: Omit<TrendPanelProps, "range" | "isLoading">,
-): { value: number; delta: number | null; suffix?: string } {
+): { value: number; delta: number | null } {
   switch (key) {
     case "revenue":
       return {
@@ -89,29 +78,6 @@ function summaryFor(
           props.revenue.revenueInPreviousRange,
         ),
       };
-    case "submissions":
-      return {
-        value: props.assessment.submissionsInRange,
-        delta: deltaPercent(
-          props.assessment.submissionsInRange,
-          props.assessment.submissionsInPreviousRange,
-        ),
-      };
-    case "attendance": {
-      const current = toPercentValue(
-        props.operations.averageAttendanceRate,
-        props.operations.rateUnit,
-      );
-      const previous = toPercentValue(
-        props.operations.averageAttendanceRateInPreviousRange,
-        props.operations.rateUnit,
-      );
-      return {
-        value: current,
-        delta: deltaPercent(current, previous),
-        suffix: "%",
-      };
-    }
     case "enrollment":
     default:
       return {
@@ -172,14 +138,12 @@ export function TrendPanel({
   isLoading,
   enrollment,
   revenue,
-  assessment,
-  operations,
 }: TrendPanelProps) {
   const [active, setActive] = React.useState<TrendKey>("enrollment");
   const reducedMotion = prefersReducedMotion();
   const bodyRef = React.useRef<HTMLDivElement>(null);
   const width = useContainerWidth(bodyRef);
-  const overview = { enrollment, revenue, assessment, operations };
+  const overview = { enrollment, revenue };
   const series = seriesFor(active, overview);
   const summary = summaryFor(active, overview);
   const data = trendSeriesToChartData(series);
@@ -219,7 +183,6 @@ export function TrendPanel({
                 locales="vi-VN"
                 className="tabular-nums"
               />
-              {summary.suffix}
             </p>
             {summary.delta != null ? (
               <span
@@ -245,7 +208,7 @@ export function TrendPanel({
         <div
           role="group"
           aria-label="Chọn chuỗi xu hướng"
-          className="grid w-full grid-cols-2 gap-1 rounded-xl border border-border bg-background p-1 @min-[560px]/dash:w-auto @min-[560px]/dash:min-w-[280px] @min-[560px]/dash:grid-cols-4"
+          className="grid w-full grid-cols-2 gap-1 rounded-xl border border-border bg-background p-1 @min-[560px]/dash:w-auto @min-[560px]/dash:min-w-[220px]"
         >
           {TREND_OPTIONS.map((option) => {
             const selected = option.key === active;

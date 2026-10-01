@@ -3,9 +3,9 @@ import type { ClassStatus } from "@/lib/api/entities/class";
 import type { ClassSessionStatus } from "@/lib/api/entities/class-session";
 import type { SessionAttendanceStatus } from "@/lib/api/entities/session-attendance";
 import {
-  ATTENDANCE_STATUS_LABELS,
   CLASS_SESSION_STATUS_LABELS,
   CLASS_STATUS_LABELS,
+  formatAttendanceStatusLabel,
 } from "@/lib/classes/constants";
 import { cn } from "@/lib/utils";
 
@@ -89,12 +89,14 @@ export function ClassSessionStatusBadge({
 
 export function AttendanceStatusBadge({
   status,
+  sessionStatus,
 }: {
   status: SessionAttendanceStatus;
+  sessionStatus?: ClassSessionStatus | null;
 }) {
   return (
     <StatusPill
-      label={ATTENDANCE_STATUS_LABELS[status]}
+      label={formatAttendanceStatusLabel(status, sessionStatus)}
       className={ATTENDANCE_STATUS_STYLES[status]}
     />
   );

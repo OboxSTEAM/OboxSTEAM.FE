@@ -121,9 +121,9 @@ export function TopProgramsPanel({
         </div>
       </div>
 
-      <div className="mt-3 min-h-0 min-w-0 flex-1">
+      <div className="mt-3 flex min-h-0 min-w-0 flex-1 flex-col">
         {isLoading ? (
-          <ul className="flex h-full min-h-[200px] flex-col justify-center gap-3.5" aria-hidden>
+          <ul className="flex flex-col gap-3" aria-hidden>
             {Array.from({ length: 5 }).map((_, index) => (
               <li key={index} className="space-y-1.5">
                 <div className="h-4 animate-pulse rounded bg-border/70" />
@@ -132,11 +132,11 @@ export function TopProgramsPanel({
             ))}
           </ul>
         ) : rows.length === 0 ? (
-          <div className="flex h-full min-h-[200px] items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground sm:min-h-[220px]">
+          <div className="flex min-h-28 items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
             Chưa có dữ liệu
           </div>
         ) : (
-          <ul className="flex h-full min-h-[200px] flex-col justify-center gap-3.5 sm:min-h-[220px] sm:gap-4">
+          <ul className="flex h-full flex-col justify-between gap-3">
             {rows.map((row) => (
               <li key={row.programId} className="min-w-0">
                 <div className="mb-1.5 flex min-w-0 items-baseline justify-between gap-3">

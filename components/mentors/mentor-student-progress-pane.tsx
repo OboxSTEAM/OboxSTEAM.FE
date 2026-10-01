@@ -30,8 +30,9 @@ import {
   type AssignmentSubmissionStatus,
   type ClassActivityStudentProgressItem,
   type ClassAssignmentStudentProgressItem,
-  type SessionAttendanceStatus,
+  type ClassSessionStatus,
 } from "@/lib/api";
+import { formatAttendanceStatusLabel } from "@/lib/classes/constants";
 import { formatApiDateTimeDisplay } from "@/lib/curriculum/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -42,6 +43,8 @@ type MentorStudentProgressPaneProps = {
   targetId: string;
   /** When kind=activity, enable force-complete (test) actions. */
   enableForceComplete?: boolean;
+  /** Linked class session — used so closed sessions don't read as "chờ điểm danh". */
+  sessionStatus?: ClassSessionStatus | null;
   onProgressMutated?: () => void;
   className?: string;
 };
@@ -57,14 +60,6 @@ const SUBMISSION_STATUS_LABEL: Record<AssignmentSubmissionStatus, string> = {
   TurnedIn: "Đã nộp",
   Graded: "Đã chấm",
   ReturnedForRevision: "Trả sửa",
-};
-
-const ATTENDANCE_STATUS_LABEL: Record<SessionAttendanceStatus, string> = {
-  Expected: "Chờ",
-  Present: "Có mặt",
-  Absent: "Vắng",
-  Excused: "Có phép",
-  Late: "Muộn",
 };
 
 function getInitials(name: string | null | undefined): string {
@@ -247,6 +242,7 @@ export function MentorStudentProgressPane({
   kind,
   targetId,
   enableForceComplete = false,
+  sessionStatus = null,
   onProgressMutated,
   className,
 }: MentorStudentProgressPaneProps) {
@@ -387,7 +383,10 @@ export function MentorStudentProgressPane({
           className: "w-28 text-xs text-muted-foreground",
           render: (student) =>
             student.attendanceStatus
-              ? ATTENDANCE_STATUS_LABEL[student.attendanceStatus]
+              ? formatAttendanceStatusLabel(
+                  student.attendanceStatus,
+                  sessionStatus,
+                )
               : "—",
         },
         {
@@ -434,7 +433,7 @@ export function MentorStudentProgressPane({
             ]
           : []),
       ],
-      [bulkForceBusy, enableForceComplete, forceCompletingId],
+      [bulkForceBusy, enableForceComplete, forceCompletingId, sessionStatus],
     );
 
   const assignmentColumns: ColumnDef<ClassAssignmentStudentProgressItem>[] =

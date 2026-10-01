@@ -90,10 +90,6 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
 
   const pendingTotal = rows.reduce((sum, row) => sum + row.pending, 0);
   const nearCapacityCount = rows.filter((row) => row.utilization >= 0.9).length;
-  const avgUtilization =
-    rows.length > 0
-      ? rows.reduce((sum, row) => sum + row.utilization, 0) / rows.length
-      : 0;
   const totalKnown =
     pagination.totalCount > 0 ? pagination.totalCount : rows.length;
   const hasMore = pagination.hasNext || totalKnown > rows.length;
@@ -102,7 +98,7 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
     <DashboardPanel className="h-full">
       <DashboardSectionTitle
         title="Khối lượng giảng dạy của mentor"
-        description="Xếp theo mức tải · ưu tiên mentor gần đầy và có yêu cầu chờ"
+        description="Số lớp đã gán trên sức chứa tối đa"
       />
 
       {rows.length === 0 ? (
@@ -111,11 +107,7 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
         </p>
       ) : (
         <div className="mt-3 space-y-3">
-          <div className="grid grid-cols-3 gap-2">
-            <SummaryStat
-              value={`${(avgUtilization * 100).toFixed(0)}%`}
-              label="TB tải"
-            />
+          <div className="grid grid-cols-2 gap-2">
             <SummaryStat
               value={formatCount(nearCapacityCount)}
               label="Gần đầy"
@@ -128,7 +120,7 @@ export function MentorLoadPanel({ operations }: MentorLoadPanelProps) {
             />
           </div>
 
-          <ul className="max-h-[220px] space-y-3 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] sm:max-h-[260px] lg:max-h-[280px] [&::-webkit-scrollbar]:hidden">
+          <ul className="max-h-[200px] space-y-3 overflow-y-auto overscroll-contain [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {rows.map((row) => {
               const ratio = Math.min(100, row.utilization * 100);
               return (

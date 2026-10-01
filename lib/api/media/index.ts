@@ -376,7 +376,7 @@ export async function deleteMedia(mediaId: string): Promise<DeleteMediaResult> {
   return requireApiValue(response.value);
 }
 
-/** `POST /api/media/{mediaId}/process-tags` — poll/restart video face tagging. */
+/** `POST /api/media/{mediaId}/process-tags` — poll/restart face tagging for images and videos. */
 export async function processMediaTags(
   mediaId: string,
 ): Promise<ProcessMediaTagsResult> {

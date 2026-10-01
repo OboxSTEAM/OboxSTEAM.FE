@@ -12,7 +12,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { ClassSession } from "@/lib/api";
 import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
-import { canGenerateSessionCheckinQr } from "@/lib/classes/session-helpers";
+import {
+  canGenerateSessionCheckinQr,
+  effectiveSessionStatus,
+} from "@/lib/classes/session-helpers";
 import { parseApiDateTime } from "@/lib/curriculum/datetime";
 import { cn } from "@/lib/utils";
 
@@ -48,10 +51,8 @@ function formatDayLabel(date: Date): string {
 }
 
 function isPastSession(session: ClassSession, now: number): boolean {
-  if (session.status === "Completed" || session.status === "Cancelled") {
-    return true;
-  }
-  if (session.status === "InProgress") return false;
+  const status = effectiveSessionStatus(session, new Date(now));
+  if (status === "Completed" || status === "Cancelled") return true;
   const end = parseApiDateTime(session.endTime);
   return end ? end.getTime() < now : false;
 }
@@ -241,7 +242,9 @@ export function MentorClassSessionsPanel({
                         </span>
                       </td>
                       <td className="align-middle px-2 py-1.5">
-                        <ClassSessionStatusBadge status={session.status} />
+                        <ClassSessionStatusBadge
+                          status={effectiveSessionStatus(session)}
+                        />
                       </td>
                       <td className="align-middle px-3 py-1.5 text-right">
                         <div className="flex items-center justify-end gap-1">

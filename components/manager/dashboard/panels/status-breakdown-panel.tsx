@@ -131,7 +131,7 @@ export function StatusBreakdownPanel({
         ) : null}
       </div>
 
-      <div ref={bodyRef} className="mt-3 min-w-0 flex-1">
+      <div ref={bodyRef} className="mt-3 flex min-h-0 min-w-0 flex-1 items-center">
         {slices.length === 0 && !isLoading ? (
           <div className="flex h-[200px] items-center justify-center rounded-xl border border-dashed border-border text-sm text-muted-foreground">
             Chưa có dữ liệu phân bổ
@@ -140,9 +140,9 @@ export function StatusBreakdownPanel({
           <div
             key={`${revealSignature}-${active.key}`}
             className={cn(
-              "flex gap-4",
+              "flex w-full gap-4",
               sideBySide
-                ? "flex-row items-start gap-4 sm:gap-5"
+                ? "flex-row items-center gap-4 sm:gap-5"
                 : "flex-col items-center",
             )}
           >

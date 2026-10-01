@@ -1,17 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 import {
   Dialog,
   DialogClose,
   DialogDescription,
-  DialogHeader,
-  DialogPopup,
+  DialogScrollBody,
+  DialogScrollHeader,
+  DialogScrollPopup,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { OpenEnrollmentClass, StudentScheduleInterval } from "@/lib/api";
+import type { StudentScheduleInterval } from "@/lib/api";
+import type { ClassSessionKind } from "@/lib/api/entities/class-session";
 import { parseApiDateTime } from "@/lib/api/datetime";
 import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
 import {
@@ -21,11 +23,30 @@ import {
 } from "@/lib/classes/schedule-conflict";
 import { cn } from "@/lib/utils";
 
+export type WeekScheduleSession = {
+  sessionId: string;
+  title: string | null;
+  startTime: string;
+  endTime: string;
+  sessionKind?: ClassSessionKind | null;
+  status?: string | null;
+};
+
+/** Class identity plus its sessions — student recruiting classes and mentor board classes. */
+export type WeekScheduleClass = {
+  classId: string;
+  code: string | null;
+  name: string | null;
+  mentorName: string | null;
+  startDate: string;
+  sessions: WeekScheduleSession[];
+};
+
 type OpenClassWeekDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  item: OpenEnrollmentClass;
-  /** Student's current schedule; `null` when conflicts can't be checked (guest / non-student). */
+  item: WeekScheduleClass;
+  /** Occupied intervals; `null` when conflicts can't be checked. */
   busyIntervals: StudentScheduleInterval[] | null;
 };
 
@@ -36,26 +57,32 @@ export function OpenClassWeekDialog({
   item,
   busyIntervals,
 }: OpenClassWeekDialogProps) {
-  const cohortLabel = item.code?.trim() || item.name?.trim() || "";
+  const classCode = item.code?.trim() || "";
+  const className = item.name?.trim() || "Lớp tuyển sinh";
+  const mentorName = item.mentorName?.trim() || "";
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogPopup className="max-w-3xl gap-3 p-4 sm:p-5">
-        <DialogHeader className="pr-8">
-          <DialogTitle className="flex items-center gap-2 text-base">
-            <CalendarDays className="size-4 shrink-0 text-[#0288D1]" />
-            Lịch học lớp{cohortLabel ? ` ${cohortLabel}` : ""}
-          </DialogTitle>
-          <DialogDescription className="text-xs">
-            {item.name?.trim() || "Lớp tuyển sinh"}
-            {item.mentorName?.trim()
-              ? ` · Mentor ${item.mentorName.trim()}`
-              : ""}
-          </DialogDescription>
-        </DialogHeader>
-        <DialogClose />
-        <WeekSchedule item={item} busyIntervals={busyIntervals} />
-      </DialogPopup>
+      <DialogScrollPopup className="max-w-xl">
+        <DialogScrollHeader className="space-y-1">
+          <p className="inline-flex items-center gap-1.5 font-mono text-[11px] font-semibold tracking-wide text-[#6B6B6B] uppercase">
+            <CalendarDays className="size-3.5 shrink-0 text-[#0288D1]" aria-hidden />
+            {classCode || "Lịch học"}
+          </p>
+          <DialogTitle className="text-lg leading-snug">{className}</DialogTitle>
+          {mentorName ? (
+            <DialogDescription>Mentor {mentorName}</DialogDescription>
+          ) : (
+            <DialogDescription className="sr-only">
+              Lịch các buổi của lớp
+            </DialogDescription>
+          )}
+          <DialogClose />
+        </DialogScrollHeader>
+        <DialogScrollBody className="pt-4">
+          <WeekSchedule item={item} busyIntervals={busyIntervals} />
+        </DialogScrollBody>
+      </DialogScrollPopup>
     </Dialog>
   );
 }
@@ -78,11 +105,14 @@ function WeekSchedule({
   const canGoPrev = !!firstEntry && weekStart > startOfWeek(firstEntry.start);
   const canGoNext = !!lastEntry && weekStart < startOfWeek(lastEntry.start);
 
-  const days = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const weekEnd = addDays(weekStart, 7);
   const weekEntries = entries.filter(
     (entry) => entry.start >= weekStart && entry.start < weekEnd,
   );
+
+  const conflictCount = weekEntries.filter(
+    (entry) => entry.conflicts.length > 0,
+  ).length;
 
   return (
     <div className="space-y-3">
@@ -106,66 +136,30 @@ function WeekSchedule({
             <ChevronRight className="size-4" aria-hidden />
           </WeekNavButton>
         </div>
-        <ul className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#6B6B6B]">
-          <LegendItem className="border-[#4FC3F7]/50 bg-[#E8F7FD]">
-            Buổi học của lớp
-          </LegendItem>
-          {busyIntervals != null ? (
-            <LegendItem className="border-[#E94B3C]/50 bg-[#FFF0EE]">
-              Trùng lịch của bạn
-            </LegendItem>
-          ) : null}
-        </ul>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 border-t border-[#E5E5E0] pt-3 sm:grid-cols-7 sm:gap-1.5">
-        {days.map((day, index) => {
-          const dayEntries = weekEntries.filter((entry) =>
-            isSameDay(entry.start, day),
-          );
-          const hasConflict = dayEntries.some(
-            (entry) => entry.conflicts.length > 0,
-          );
-          const isToday = isSameDay(day, today);
-          return (
-            <div
-              key={day.toISOString()}
-              className={cn(
-                "flex min-w-0 flex-col gap-1 sm:min-h-28",
-                dayEntries.length === 0 && "hidden sm:flex",
-              )}
-            >
-              <p
-                className={cn(
-                  "mb-0.5 flex items-center gap-1 text-[11px] font-semibold sm:justify-center",
-                  hasConflict ? "text-[#a82a1e]" : "text-[#6B6B6B]",
-                )}
-              >
-                {WEEKDAY_LABELS[index]}
-                <span
-                  className={cn(
-                    "tabular-nums",
-                    isToday && "rounded-md bg-[#0288D1] px-1 text-white",
-                  )}
-                >
-                  {day.getDate()}/{day.getMonth() + 1}
-                </span>
-              </p>
-              {dayEntries.map((entry) => (
-                <WeekEntryChip key={entry.key} entry={entry} />
-              ))}
-            </div>
-          );
-        })}
+        {conflictCount > 0 ? (
+          <p className="rounded-md bg-[#FFF0EE] px-2 py-1 text-xs font-semibold text-[#a82a1e]">
+            {conflictCount} buổi trùng lịch
+          </p>
+        ) : null}
       </div>
 
       {weekEntries.length === 0 ? (
-        <p className="text-center text-xs text-[#6B6B6B]">
+        <p className="border-t border-[#E5E5E0] pt-3 text-center text-sm text-[#6B6B6B]">
           {entries.length === 0
             ? "Lớp chưa có buổi học trên lịch."
             : "Tuần này không có buổi học."}
         </p>
-      ) : null}
+      ) : (
+        <ul className="space-y-2 border-t border-[#E5E5E0] pt-3">
+          {weekEntries.map((entry) => (
+            <WeekEntryRow
+              key={entry.key}
+              entry={entry}
+              isToday={isSameDay(entry.start, today)}
+            />
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
@@ -179,7 +173,7 @@ function WeekNavButton({
   label: string;
   disabled: boolean;
   onClick: () => void;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -194,48 +188,63 @@ function WeekNavButton({
   );
 }
 
-function LegendItem({
-  className,
-  children,
+function WeekEntryRow({
+  entry,
+  isToday,
 }: {
-  className: string;
-  children: React.ReactNode;
+  entry: WeekEntry;
+  isToday: boolean;
 }) {
-  return (
-    <li className="inline-flex items-center gap-1.5">
-      <span className={cn("size-2.5 rounded-sm border", className)} aria-hidden />
-      {children}
-    </li>
-  );
-}
-
-function WeekEntryChip({ entry }: { entry: WeekEntry }) {
   const timeLabel = entry.isWindow
     ? CLASS_SESSION_KIND_LABELS.AssignmentWindow
     : formatTimeRange(entry.start, entry.end);
-  const conflictClasses = [
-    ...new Set(entry.conflicts.map((conflict) => conflict.classLabel)),
-  ];
-  const hasConflict = conflictClasses.length > 0;
+  const hasConflict = entry.conflicts.length > 0;
+  const weekday = WEEKDAY_LABELS[(entry.start.getDay() + 6) % 7];
+  const dateLabel = `${entry.start.getDate()}/${entry.start.getMonth() + 1}`;
 
   return (
-    <div
-      title={`${timeLabel} · ${entry.title}`}
+    <li
       className={cn(
-        "min-w-0 rounded-md px-1.5 py-1 text-[11px] leading-tight",
+        "rounded-xl border px-3 py-2.5",
         hasConflict
-          ? "bg-[#FFF0EE] text-[#a82a1e]"
-          : "bg-[#E8F7FD] text-[#0277BD]",
+          ? "border-[#E94B3C]/30 bg-[#FFF0EE]"
+          : "border-[#4FC3F7]/50 bg-[#E8F7FD]",
       )}
     >
-      <p className="font-semibold tabular-nums">{timeLabel}</p>
-      <p className="truncate">{entry.title}</p>
-      {hasConflict ? (
-        <p className="mt-0.5 font-semibold break-words">
-          Trùng lớp {conflictClasses.join(", ")}
+      <div className="grid grid-cols-[4.75rem_auto] items-baseline gap-x-3 sm:grid-cols-[4.75rem_auto_minmax(0,1fr)]">
+        <p className="text-sm font-semibold text-[#6B6B6B]">
+          {weekday}{" "}
+          <span
+            className={cn(
+              "tabular-nums text-[#2D2D2D]",
+              isToday && "rounded-md bg-[#0288D1] px-1 text-white",
+            )}
+          >
+            {dateLabel}
+          </span>
         </p>
+        <p className="text-sm font-semibold tabular-nums text-[#2D2D2D]">
+          {timeLabel}
+        </p>
+        <p className="col-span-2 mt-0.5 text-sm text-[#2D2D2D] sm:col-span-1 sm:mt-0 sm:truncate">
+          {entry.title}
+        </p>
+      </div>
+      {hasConflict ? (
+        <ul className="mt-1.5 space-y-0.5">
+          {entry.conflicts.map((conflict, index) => (
+            <li
+              key={`${conflict.classLabel}-${conflict.start.toISOString()}-${index}`}
+              className="text-xs leading-snug text-[#a82a1e]"
+            >
+              Trùng với {conflict.classLabel}
+              {" · "}
+              {formatTimeRange(conflict.start, conflict.end)}
+            </li>
+          ))}
+        </ul>
       ) : null}
-    </div>
+    </li>
   );
 }
 
@@ -260,7 +269,7 @@ type WeekEntry = {
 };
 
 function buildWeekEntries(
-  item: OpenEnrollmentClass,
+  item: WeekScheduleClass,
   busyIntervals: StudentScheduleInterval[],
 ): WeekEntry[] {
   const options = { excludeClassId: item.classId };
@@ -315,7 +324,7 @@ function buildWeekEntries(
 /** First conflicting session, else next upcoming session, else first session, else class start. */
 function resolveInitialDate(
   entries: WeekEntry[],
-  item: OpenEnrollmentClass,
+  item: WeekScheduleClass,
   today: Date,
 ): Date {
   const pick =

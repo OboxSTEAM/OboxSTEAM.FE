@@ -26,24 +26,38 @@ function toneClass(tone: AttentionItem["tone"]) {
 
 type DashboardActionQueueProps = {
   items: AttentionItem[];
+  /** Skeleton rows while pending mentor classes are still loading. */
+  pendingClassSlots?: number;
 };
 
 /** Actionable work queue — each row links to the page that can resolve it. */
-export function DashboardActionQueue({ items }: DashboardActionQueueProps) {
+export function DashboardActionQueue({
+  items,
+  pendingClassSlots = 0,
+}: DashboardActionQueueProps) {
+  const showEmpty = items.length === 0 && pendingClassSlots === 0;
+
   return (
     <DashboardPanel>
       <DashboardSectionTitle
         title="Cần xử lý ngay"
-        description="Mentor chờ duyệt · bài chờ chấm · thanh toán chờ"
+        description="Mentor chờ duyệt theo lớp · thanh toán chờ"
       />
 
-      {items.length === 0 ? (
+      {showEmpty ? (
         <p className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground">
           <CheckCircle2 className="size-4 text-steam-technology" aria-hidden />
           Không có việc cần xử lý ngay.
         </p>
       ) : (
         <ul className="mt-3 space-y-2">
+          {pendingClassSlots > 0
+            ? Array.from({ length: pendingClassSlots }).map((_, index) => (
+                <li key={`pending-class-skeleton-${index}`}>
+                  <div className="h-14 animate-pulse rounded-xl bg-border/60" />
+                </li>
+              ))
+            : null}
           {items.map((item) => (
             <li key={item.id}>
               <Link

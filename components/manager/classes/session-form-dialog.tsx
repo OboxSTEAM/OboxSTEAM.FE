@@ -264,6 +264,8 @@ export function SessionFormDialog({
   const isAssignmentSession = Boolean(selectedAssignmentId.trim());
   /** Soft preference only — both venue modes stay available. */
   const prefersPlace = sessionKind === "Offline";
+  /** Create flow does not collect a Google Meet link for live online sessions. */
+  const omitOnlineMeetingUrl = !session && sessionKind === "LiveOnline";
   const [extraVenueOpen, setExtraVenueOpen] = useState(false);
   const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
   const [assignmentOptions, setAssignmentOptions] = useState<AssignmentOption[]>(
@@ -400,6 +402,8 @@ export function SessionFormDialog({
     const activityId = values.activityId?.trim() || null;
     const assignmentId = values.assignmentId?.trim() || null;
     const isAssignmentSession = Boolean(assignmentId);
+    const omitMeetingUrl =
+      !session && (values.sessionKind ?? "LiveOnline") === "LiveOnline";
 
     const payload: ClassSessionFormSubmitPayload = {
       moduleId: values.moduleId,
@@ -410,7 +414,7 @@ export function SessionFormDialog({
       startTime,
       location: values.location?.trim() || null,
       ...parseSessionCoordinateFields(values.latitude, values.longitude),
-      meetingUrl: values.meetingUrl?.trim() || null,
+      meetingUrl: omitMeetingUrl ? null : values.meetingUrl?.trim() || null,
       requiresAttendance: values.requiresAttendance,
       status: values.status,
     };
@@ -882,22 +886,26 @@ export function SessionFormDialog({
 
               <div className="sm:col-span-2 space-y-3">
                 <div className="flex items-center gap-2">
-                  {prefersPlace ? (
+                  {prefersPlace || omitOnlineMeetingUrl ? (
                     <MapPin className="size-4 text-primary" aria-hidden />
                   ) : (
                     <Video className="size-4 text-primary" aria-hidden />
                   )}
                   <p className="font-heading text-sm font-bold text-foreground">
-                    {prefersPlace ? "Địa điểm" : "Link buổi học"}
+                    {prefersPlace || omitOnlineMeetingUrl
+                      ? "Địa điểm"
+                      : "Link buổi học"}
                   </p>
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {prefersPlace
                     ? "Offline ưu tiên tìm địa chỉ / tọa độ. Bạn vẫn có thể thêm link họp nếu cần."
-                    : "LiveOnline ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
+                    : omitOnlineMeetingUrl
+                      ? "Địa điểm là tuỳ chọn khi tạo buổi online."
+                      : "LiveOnline ưu tiên link vào lớp. Bạn vẫn có thể thêm địa điểm nếu cần."}
                 </p>
 
-                {prefersPlace ? (
+                {prefersPlace || omitOnlineMeetingUrl ? (
                   <SessionCoordinatesPicker
                     latitude={watch("latitude") ?? ""}
                     longitude={watch("longitude") ?? ""}
@@ -929,6 +937,7 @@ export function SessionFormDialog({
                   </FormField>
                 )}
 
+                {omitOnlineMeetingUrl ? null : (
                 <Collapsible
                   open={extraVenueOpen}
                   onOpenChange={setExtraVenueOpen}
@@ -986,6 +995,7 @@ export function SessionFormDialog({
                     )}
                   </CollapsibleContent>
                 </Collapsible>
+                )}
               </div>
 
               <div className="flex items-end pb-2">

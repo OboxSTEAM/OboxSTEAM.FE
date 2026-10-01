@@ -23,9 +23,14 @@ import {
   SelectItem,
   SelectTrigger,
 } from "@/components/ui/select";
-import type { ClassSessionStudent, SessionAttendanceStatus } from "@/lib/api";
+import type {
+  ClassSessionStatus,
+  ClassSessionStudent,
+  SessionAttendanceStatus,
+} from "@/lib/api";
 import {
   ATTENDANCE_STATUS_LABELS,
+  formatAttendanceStatusLabel,
   MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES,
 } from "@/lib/classes/constants";
 import { formatParticipationMinutes } from "@/lib/classes/session-helpers";
@@ -49,6 +54,7 @@ type MentorActivityAttendancePanelProps = {
   isCompletingActivity?: boolean;
   requireMediaEvidence?: boolean;
   evidenceCount?: number;
+  sessionStatus?: ClassSessionStatus | null;
   onStatusChange: (
     student: ClassSessionStudent,
     status: SessionAttendanceStatus,
@@ -63,6 +69,7 @@ export function MentorActivityAttendancePanel({
   isCompletingActivity = false,
   requireMediaEvidence = false,
   evidenceCount = 0,
+  sessionStatus = null,
   onStatusChange,
   onCompleteActivity,
 }: MentorActivityAttendancePanelProps) {
@@ -118,7 +125,10 @@ export function MentorActivityAttendancePanel({
         header: "Trạng thái",
         className: "w-36",
         render: (student) => (
-          <AttendanceStatusBadge status={student.attendanceStatus} />
+          <AttendanceStatusBadge
+            status={student.attendanceStatus}
+            sessionStatus={sessionStatus}
+          />
         ),
       },
       {
@@ -148,8 +158,10 @@ export function MentorActivityAttendancePanel({
           >
             <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
               <span className="truncate">
-                {ATTENDANCE_STATUS_LABELS[student.attendanceStatus] ??
-                  "Chọn trạng thái"}
+                {formatAttendanceStatusLabel(
+                  student.attendanceStatus,
+                  sessionStatus,
+                )}
               </span>
             </SelectTrigger>
             <SelectContent
@@ -168,7 +180,7 @@ export function MentorActivityAttendancePanel({
         ),
       },
     ],
-    [isCompletingActivity, onStatusChange, updatingStudentId],
+    [isCompletingActivity, onStatusChange, sessionStatus, updatingStudentId],
   );
 
   return (

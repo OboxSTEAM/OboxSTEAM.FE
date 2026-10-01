@@ -121,9 +121,10 @@ function canManuallyTag(media: MediaAsset): boolean {
   return media.isReady || media.videoStatus === "Failed";
 }
 
-/** Re-run face tagging after the pipeline finished (or failed). */
+/** Re-run face tagging after the pipeline finished (or failed). Images and videos. */
 function canRescanAi(media: MediaAsset): boolean {
   if (isAiProcessing(media)) return false;
+  if (isImageFile(media.fileType, media.fileUrl)) return true;
   if (!isVideoFile(media.fileType, media.fileUrl)) return false;
   return (
     media.isReady ||

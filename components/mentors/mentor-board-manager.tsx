@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
+  AlertTriangle,
   CalendarDays,
   CheckCircle2,
   Clock3,
@@ -14,6 +15,10 @@ import {
 
 import { ClassDateRange } from "@/components/classes/class-date-range";
 import { ClassScheduleSummary } from "@/components/classes/class-schedule-summary";
+import {
+  OpenClassWeekDialog,
+  type WeekScheduleClass,
+} from "@/components/programs/detail/open-class-week-dialog";
 import { ClassStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
@@ -41,12 +46,19 @@ import {
   getMyMentorSkills,
   getPrograms,
   type ClassMentorRequest,
+  type ClassSession,
   type MentorBoardClass,
+  type StudentScheduleInterval,
 } from "@/lib/api";
 import type { SkillSummary } from "@/lib/api/entities/skill";
 import { isMentorBoardClass } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
+
+import {
+  useMentorBoardSchedule,
+  type BoardClassSessions,
+} from "./use-mentor-board-schedule";
 
 type SortValue = "startDate-asc" | "startDate-desc" | "name-asc";
 
@@ -100,7 +112,11 @@ function BoardCardSkeleton() {
 type BoardClassCardProps = {
   classItem: MentorBoardClass;
   mySkillIds: Set<string>;
+  conflictLabel: string | null;
+  isSchedulePending: boolean;
+  scheduleUnavailable: boolean;
   onApply: (classItem: MentorBoardClass) => void;
+  onViewSchedule: (classItem: MentorBoardClass) => void;
   onViewRequests?: () => void;
 };
 
@@ -168,7 +184,11 @@ function RequiredSkillChips({
 function BoardClassCard({
   classItem,
   mySkillIds,
+  conflictLabel,
+  isSchedulePending,
+  scheduleUnavailable,
   onApply,
+  onViewSchedule,
   onViewRequests,
 }: BoardClassCardProps) {
   const displayName = classItem.name?.trim() || classItem.code?.trim() || "Lớp học";
@@ -233,7 +253,27 @@ function BoardClassCard({
         </div>
       ) : null}
 
-      <div className="mt-auto pt-5">
+      {conflictLabel ? (
+        <p className="mt-3 flex items-start gap-2 text-xs leading-relaxed text-[#a82a1e]">
+          <AlertTriangle className="mt-px size-3.5 shrink-0" aria-hidden />
+          {conflictLabel}
+        </p>
+      ) : scheduleUnavailable && !isSchedulePending ? (
+        <p className="mt-3 text-xs text-muted-foreground">
+          Chưa kiểm tra được trùng lịch.
+        </p>
+      ) : null}
+
+      <div className="mt-auto space-y-2 pt-5">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onViewSchedule(classItem)}
+          className="h-10 w-full rounded-lg"
+        >
+          <CalendarDays className="size-4" />
+          Xem lịch học lớp
+        </Button>
         {classItem.hasPendingRequestFromMe ? (
           <div className="flex flex-col gap-2 sm:flex-row">
             <Button
@@ -259,11 +299,16 @@ function BoardClassCard({
         ) : (
           <Button
             type="button"
+            disabled={isSchedulePending || conflictLabel != null}
             onClick={() => onApply(classItem)}
             className="h-10 w-full rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90"
           >
             <Send className="size-4" />
-            Đăng ký dạy lớp
+            {isSchedulePending
+              ? "Đang kiểm tra lịch…"
+              : conflictLabel
+                ? "Trùng lịch"
+                : "Đăng ký dạy lớp"}
           </Button>
         )}
       </div>
@@ -522,6 +567,9 @@ export function MentorBoardManager({
   const [sort, setSort] = useState<SortValue>("startDate-asc");
   const [page, setPage] = useState(1);
   const [applyTarget, setApplyTarget] = useState<MentorBoardClass | null>(null);
+  const [scheduleTarget, setScheduleTarget] = useState<MentorBoardClass | null>(
+    null,
+  );
   const [previewRequest, setPreviewRequest] = useState<ClassMentorRequest | null>(
     null,
   );
@@ -613,6 +661,13 @@ export function MentorBoardManager({
   const classes = (boardData?.data?.items ?? []).filter((item) =>
     isMentorBoardClass(item.status),
   );
+  const {
+    busyIntervals,
+    conflictByClassId,
+    sessionsFor,
+    isSchedulePending,
+    scheduleUnavailable,
+  } = useMentorBoardSchedule(classes.map((item) => item.id));
   const boardPagination = boardData?.data;
   const myRequests = mineData?.data?.items ?? [];
 
@@ -677,6 +732,11 @@ export function MentorBoardManager({
 
   async function handleApplyConfirm() {
     if (!applyTarget || !isMentorBoardClass(applyTarget.status)) return;
+    const conflict = conflictByClassId.get(applyTarget.id);
+    if (conflict) {
+      showAppErrorFromUnknown(new Error(conflict), "classMentorRequests.create");
+      return;
+    }
     setIsSubmitting(true);
     try {
       await createClassMentorRequest({
@@ -782,7 +842,13 @@ export function MentorBoardManager({
                     key={item.classItem.id}
                     classItem={item.classItem}
                     mySkillIds={mySkillIds}
+                    conflictLabel={
+                      conflictByClassId.get(item.classItem.id) ?? null
+                    }
+                    isSchedulePending={isSchedulePending(item.classItem.id)}
+                    scheduleUnavailable={scheduleUnavailable(item.classItem.id)}
                     onApply={setApplyTarget}
+                    onViewSchedule={setScheduleTarget}
                     onViewRequests={onViewRequests}
                   />
                 ),
@@ -806,6 +872,20 @@ export function MentorBoardManager({
           </>
         )}
       </div>
+
+      <MentorBoardScheduleDialog
+        classItem={scheduleTarget}
+        sessions={
+          scheduleTarget ? sessionsFor(scheduleTarget.id) : null
+        }
+        isLoading={
+          scheduleTarget != null && isSchedulePending(scheduleTarget.id)
+        }
+        busyIntervals={busyIntervals}
+        onOpenChange={(open) => {
+          if (!open) setScheduleTarget(null);
+        }}
+      />
 
       <Dialog
         open={applyTarget != null}
@@ -866,7 +946,11 @@ export function MentorBoardManager({
             </DialogClose>
             <Button
               type="button"
-              disabled={isSubmitting}
+              disabled={
+                isSubmitting ||
+                (applyTarget != null &&
+                  conflictByClassId.get(applyTarget.id) != null)
+              }
               onClick={handleApplyConfirm}
               className="rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"
             >
@@ -886,4 +970,77 @@ export function MentorBoardManager({
       />
     </div>
   );
+}
+
+function MentorBoardScheduleDialog({
+  classItem,
+  sessions,
+  isLoading,
+  busyIntervals,
+  onOpenChange,
+}: {
+  classItem: MentorBoardClass | null;
+  sessions: BoardClassSessions | null;
+  isLoading: boolean;
+  busyIntervals: StudentScheduleInterval[] | null;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const open = classItem != null;
+  const ready = sessions?.status === "ready" ? sessions.sessions : null;
+
+  if (classItem && ready && !isLoading) {
+    return (
+      <OpenClassWeekDialog
+        open={open}
+        onOpenChange={onOpenChange}
+        item={toWeekScheduleClass(classItem, ready)}
+        busyIntervals={busyIntervals}
+      />
+    );
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogPopup className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
+            {classItem?.name?.trim() || classItem?.code?.trim() || "Lịch học lớp"}
+          </DialogTitle>
+          <DialogDescription>
+            {isLoading
+              ? "Đang tải các buổi của lớp."
+              : "Không tải được lịch lớp. Thử lại sau."}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogClose />
+        {isLoading ? (
+          <div className="space-y-2 py-2">
+            <Skeleton className="h-14 w-full rounded-xl" />
+            <Skeleton className="h-14 w-full rounded-xl" />
+          </div>
+        ) : null}
+      </DialogPopup>
+    </Dialog>
+  );
+}
+
+function toWeekScheduleClass(
+  classItem: MentorBoardClass,
+  sessions: ClassSession[],
+): WeekScheduleClass {
+  return {
+    classId: classItem.id,
+    code: classItem.code,
+    name: classItem.name,
+    mentorName: null,
+    startDate: classItem.startDate,
+    sessions: sessions.map((session) => ({
+      sessionId: session.id,
+      title: session.title,
+      startTime: session.startTime,
+      endTime: session.endTime,
+      sessionKind: session.sessionKind,
+      status: session.status,
+    })),
+  };
 }

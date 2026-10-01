@@ -99,10 +99,6 @@ export const uploadClassMediaFileSchema = z.object({
         MEDIA_UPLOAD_TYPES.has(file.type.toLowerCase()) ||
         /\.(jpe?g|png|mp4|mov)$/i.test(file.name),
       "Chỉ chấp nhận ảnh JPG/PNG hoặc video MP4/MOV.",
-    )
-    .refine(
-      (file) => file.size <= 200 * 1024 * 1024,
-      "File không được vượt quá 200 MB.",
     ),
 });
 

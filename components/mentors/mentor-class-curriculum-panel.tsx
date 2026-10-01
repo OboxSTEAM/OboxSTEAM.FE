@@ -23,6 +23,7 @@ import { MentorStudentProgressPane } from "@/components/mentors/mentor-student-p
 import { LiveSessionJoinPanel } from "@/components/curriculum/live-session-join-panel";
 import { SessionCheckinQrDialog } from "@/components/mentors/session-checkin-qr-dialog";
 import { SessionEvidencePanel } from "@/components/mentors/session-evidence-panel";
+import { ClassSessionStatusBadge } from "@/components/manager/classes/class-status-badge";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,6 +50,7 @@ import {
 } from "@/lib/api";
 import {
   canGenerateSessionCheckinQr,
+  effectiveSessionStatus,
   formatClassSessionSchedule,
   getNextSessionForActivity,
   getSessionsForActivity,
@@ -311,12 +313,22 @@ export function MentorClassCurriculumPanel({
     setSessionId(next);
   }, [selectedActivity, activitySessions, sessions, sessionId]);
 
+  const resolvedSessionId =
+    sessionId && activitySessions.some((session) => session.id === sessionId)
+      ? sessionId
+      : !selectedActivity
+        ? ""
+        : getNextSessionForActivity(sessions, selectedActivity.id)?.id ||
+          activitySessions.find((session) => session.requiresAttendance)?.id ||
+          activitySessions[0]?.id ||
+          "";
+
   const effectiveSessionId =
     selection?.kind === "activity" &&
     selectedActivity &&
     (selectedActivity.activityType === "LiveOnline" ||
       selectedActivity.activityType === "Offline")
-      ? sessionId
+      ? resolvedSessionId
       : "";
 
   useEffect(() => {
@@ -338,6 +350,9 @@ export function MentorClassCurriculumPanel({
   const selectedSession =
     activitySessions.find((session) => session.id === effectiveSessionId) ??
     null;
+  const displayedSessionStatus = selectedSession
+    ? effectiveSessionStatus(selectedSession)
+    : null;
 
   useEffect(() => {
     setEvidenceCount(0);
@@ -579,6 +594,9 @@ export function MentorClassCurriculumPanel({
                         <p className="text-[11px] font-bold tracking-[0.12em] text-primary uppercase">
                           Thời gian buổi học
                         </p>
+                        {selectedSession ? (
+                          <ClassSessionStatusBadge status={displayedSessionStatus!} />
+                        ) : null}
                         {sessionSchedule.relative ? (
                           <span className="rounded-md bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary sm:ml-auto">
                             {sessionSchedule.relative}
@@ -667,6 +685,7 @@ export function MentorClassCurriculumPanel({
                 classId={classId}
                 kind="activity"
                 targetId={selectedActivity.id}
+                sessionStatus={displayedSessionStatus}
                 enableForceComplete
                 onProgressMutated={retryCurriculumProgress}
               />
@@ -689,6 +708,7 @@ export function MentorClassCurriculumPanel({
                     isLoading={isAttendanceLoading}
                     updatingStudentId={updatingAttendanceId}
                     isCompletingActivity={isMentorCompleting}
+                    sessionStatus={displayedSessionStatus}
                     requireMediaEvidence={
                       isOfflineActivity
                         ? selectedActivity.requireMediaEvidence

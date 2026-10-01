@@ -7,15 +7,32 @@ const ACTIVE_SESSION_STATUSES = new Set<ClassSessionStatus>([
 ]);
 
 /**
+ * Session rows stay `InProgress` after the clock passes `endTime` until the
+ * backend closes them. Once the slot is over, show the same "Hoàn thành"
+ * the mentor already recorded on the activity.
+ */
+export function effectiveSessionStatus(
+  session: Pick<ClassSession, "status" | "endTime">,
+  now = new Date(),
+): ClassSessionStatus {
+  if (session.status === "Completed" || session.status === "Cancelled") {
+    return session.status;
+  }
+  if (session.status !== "InProgress") return session.status;
+  const endMs = parseApiDateTime(session.endTime)?.getTime();
+  if (endMs != null && endMs <= now.getTime()) return "Completed";
+  return session.status;
+}
+
+/**
  * QR check-in tokens are Offline (on-site) only.
  * LiveOnline and AssignmentWindow use manual roster updates instead.
  */
 export function canGenerateSessionCheckinQr(session: ClassSession): boolean {
   if (session.sessionKind !== "Offline") return false;
   if (!session.requiresAttendance) return false;
-  return (
-    session.status !== "Completed" && session.status !== "Cancelled"
-  );
+  const status = effectiveSessionStatus(session);
+  return status !== "Completed" && status !== "Cancelled";
 }
 
 export function getSessionsForActivity(

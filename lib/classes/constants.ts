@@ -35,6 +35,23 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
   Late: "Đi muộn",
 };
 
+/**
+ * After the session is closed, `Expected` is an unmarked roll — not a session
+ * still waiting to start. Keep the stored value; only the label changes.
+ */
+export function formatAttendanceStatusLabel(
+  status: SessionAttendanceStatus,
+  sessionStatus?: ClassSessionStatus | null,
+): string {
+  if (
+    status === "Expected" &&
+    (sessionStatus === "Completed" || sessionStatus === "Cancelled")
+  ) {
+    return "Chưa điểm danh";
+  }
+  return ATTENDANCE_STATUS_LABELS[status];
+}
+
 /** Attendance statuses eligible for `mentor-complete-bulk` after điểm danh. */
 export const MENTOR_COMPLETE_ELIGIBLE_ATTENDANCE_STATUSES: ReadonlySet<SessionAttendanceStatus> =
   new Set(["Present", "Late", "Excused"]);

@@ -64,6 +64,8 @@ export interface PieSliceProps {
   hoverEffect?: PieSliceHoverEffect;
   /** Distance in pixels for hover effect (translate distance or grow amount). Defaults to PieChart's hoverOffset */
   hoverOffset?: number;
+  /** Called when the slice hitbox is clicked. */
+  onSelect?: () => void;
   /** Additional CSS class */
   className?: string;
 }
@@ -328,6 +330,7 @@ export const PieSlice = memo(function PieSlice({
   showGlow = true,
   hoverEffect = "translate",
   hoverOffset: hoverOffsetProp,
+  onSelect,
 }: PieSliceProps) {
   const {
     arcs,
@@ -498,6 +501,7 @@ export const PieSlice = memo(function PieSlice({
         fill="transparent"
         onMouseEnter={() => setHoveredIndex(index)}
         onMouseLeave={() => setHoveredIndex(null)}
+        onClick={onSelect}
       />
 
       {/* Visible slice - animates based on hover effect, no pointer events */}
