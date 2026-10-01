@@ -665,6 +665,13 @@ export function ResearchSubmissionPanel({
           "Chưa đủ điều kiện để nộp mốc này.",
         ),
       ) ?? [];
+  const currentSubmissionStatus =
+    submission?.status ?? milestoneProgress?.submissionStatus ?? null;
+  const shouldShowBlockReason =
+    !canSubmitProgress &&
+    !isRetaking &&
+    blockReasons.length > 0 &&
+    (currentSubmissionStatus === null || isEditableStatus(currentSubmissionStatus));
   const requiredActivities = milestoneProgress?.requiredActivities ?? [];
 
   const validateFile = useCallback((file: File): boolean => {
@@ -1121,7 +1128,7 @@ export function ResearchSubmissionPanel({
         {description ? (
           <p className="line-clamp-2 text-sm leading-relaxed text-learn-muted">{description}</p>
         ) : null}
-        {requiredTotal > 0 || (!canSubmitProgress && blockReasons.length > 0) ? (
+        {requiredTotal > 0 || shouldShowBlockReason ? (
           <div className="flex flex-wrap items-center gap-2">
             {requiredTotal > 0 ? (
               <span
@@ -1135,7 +1142,7 @@ export function ResearchSubmissionPanel({
                 {satisfiedCount}/{requiredTotal} hoạt động sẵn sàng
               </span>
             ) : null}
-            {!canSubmitProgress && blockReasons[0] ? (
+            {shouldShowBlockReason ? (
               <span className="text-[11px] text-learn-primary">{blockReasons[0]}</span>
             ) : null}
           </div>

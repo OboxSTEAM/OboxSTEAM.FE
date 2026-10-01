@@ -99,7 +99,11 @@ const EXACT_VI: Record<string, string> = {
   "Payment failed.": "Thanh toán thất bại.",
   "Payment link expired.": "Liên kết thanh toán đã hết hạn.",
   "Assignment is not available yet.": "Bài tập chưa mở.",
+  "Assignment is not yet available.": "Bài tập chưa mở.",
+  "Assignment is no longer available.": "Bài tập đã đóng, không còn nhận bài nộp.",
   "Assignment is past due.": "Bài tập đã quá hạn nộp.",
+  "Milestone is locked.": "Mốc nghiên cứu chưa mở khóa.",
+  "Submission is pending mentor review.": "Bài nộp đang chờ mentor chấm điểm.",
   "Maximum attempts reached.": "Đã hết số lần làm bài.",
   "Quiz time has expired.": "Thời gian làm bài đã hết.",
   "Submission is locked.": "Chưa đủ điều kiện để nộp bài.",
@@ -206,6 +210,10 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
   {
     pattern: /mentor has not opened/i,
     vi: "Mentor chưa mở cửa sổ nộp bài.",
+  },
+  {
+    pattern: /Required activity '.+' is not completed/i,
+    vi: "Còn hoạt động bắt buộc chưa hoàn thành.",
   },
   {
     pattern: /invalid (or )?expired token/i,
