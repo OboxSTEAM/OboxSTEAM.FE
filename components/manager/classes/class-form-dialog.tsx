@@ -228,6 +228,9 @@ export function ClassFormDialog({
                       const selectedProgram = programs.find(
                         (item) => item.id === field.value,
                       );
+                      const selectablePrograms = programs.filter(
+                        (item) => item.status === "Active" || item.id === field.value,
+                      );
                       return (
                         <Select
                           value={field.value || null}
@@ -250,7 +253,12 @@ export function ClassFormDialog({
                             </span>
                           </SelectTrigger>
                           <SelectContent className={LIGHT_SELECT_CONTENT}>
-                            {programs.map((program) => (
+                            {selectablePrograms.length === 0 && !isProgramsLoading ? (
+                              <p className="px-3 py-2 text-xs text-muted-foreground">
+                                Chưa có chương trình nào đang mở. Xuất bản chương trình trước khi tạo lớp.
+                              </p>
+                            ) : null}
+                            {selectablePrograms.map((program) => (
                               <SelectItem
                                 key={program.id}
                                 value={program.id}

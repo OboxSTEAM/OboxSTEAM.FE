@@ -91,6 +91,11 @@ export const programSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? ""),
+  curriculumVersion: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
   experts: z

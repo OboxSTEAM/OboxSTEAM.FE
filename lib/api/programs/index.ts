@@ -3,6 +3,7 @@ import { z } from "zod";
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
+  assignProgramAdvisorSchema,
   createProgramRequestSchema,
   programIdParamSchema,
   programListQuerySchema,
@@ -11,6 +12,7 @@ import {
   selectProgramClassSchema,
   updateProgramSchema,
   uploadProgramThumbnailSchema,
+  type AssignProgramAdvisorInput,
 } from "@/lib/validations/programs";
 import {
   approveCurriculumReviewSchema,
@@ -115,6 +117,9 @@ export type {
   GetProgramReviewQueueResponse,
   GetProgramReviewQueueResult,
 } from "./schemas";
+
+export type { AssignProgramAdvisorInput } from "@/lib/validations/programs";
+export type AssignProgramAdvisorResult = ProgramLifecycleResult;
 
 export type {
   ApproveCurriculumReviewInput,
@@ -508,6 +513,8 @@ export async function updateProgram(
   const parsed = updateProgramSchema.parse(input);
   const body = {
     ...parsed,
+    // PUT only toggles Active ↔ Inactive; other lifecycle moves go through approval/publish.
+    status: parsed.status === "Active" || parsed.status === "Inactive" ? parsed.status : undefined,
     frameworkId: parsed.frameworkId || null,
     frameworkVersionId: parsed.frameworkVersionId || null,
   };
@@ -617,6 +624,22 @@ export async function publishProgram(
   return requireApiValue(response.value);
 }
 
+/** `PUT /api/programs/{id}/advisor` — Draft or Approved only; on Approved the approval is revoked. */
+export async function assignProgramAdvisor(
+  programId: string,
+  input: AssignProgramAdvisorInput,
+): Promise<AssignProgramAdvisorResult> {
+  const { id } = programIdParamSchema.parse({ id: programId });
+  const body = assignProgramAdvisorSchema.parse(input);
+  const response = await apiFetchParsed(
+    `${PROGRAMS_BASE}/${id}/advisor`,
+    programLifecycleResponseSchema,
+    { method: "PUT", body },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
 export async function approveProgramReview(
   programId: string,
   input: ApproveCurriculumReviewInput = {},
@@ -649,7 +672,6 @@ export async function requestProgramChanges(
 
 export {
   addAdvisoryMessage,
-  assignProgramAdvisor,
   createAdvisoryReference,
   createAdvisoryThread,
   getAdvisoryAnchorFields,
@@ -704,8 +726,6 @@ export type {
   AdvisoryWorkflowStageKey,
   AdvisoryWorkflowStageState,
   AdvisoryWorkflowTimeline,
-  AssignProgramAdvisorInput,
-  AssignProgramAdvisorResult,
   AssignmentSnapshot,
   CourseSnapshot,
   CreateAdvisoryThreadInput,

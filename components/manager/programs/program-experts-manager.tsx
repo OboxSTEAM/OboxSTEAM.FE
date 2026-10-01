@@ -44,7 +44,10 @@ import {
   type ProgramWithModules,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
-import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
+import {
+  attachFrameworkAuthorToProgram,
+  needsFrameworkAuthorAttach,
+} from "@/lib/programs/attach-framework-author";
 import {
   getExpertAvatarUrl,
   getExpertInitials,
@@ -81,23 +84,20 @@ export function ProgramExpertsManager({ program }: ProgramExpertsManagerProps) {
       try {
         const framework = await getProgramFrameworkById(frameworkId);
         const expertId = framework?.data?.expertId;
-        if (!expertId) return;
-        const alreadyOnBoard = experts.some((expert) => expert.expertId === expertId);
-        const alreadyAdvisor = program.advisorExpertId === expertId;
-        if (alreadyOnBoard && alreadyAdvisor) return;
-        await attachFrameworkAuthorToProgram(
-          program.id,
-          expertId,
-          experts.map((expert) => expert.expertId),
-          program.advisorExpertId,
-        );
+        const attachOptions = {
+          status: program.status,
+          assignedExpertIds: experts.map((expert) => expert.expertId),
+          advisorExpertId: program.advisorExpertId,
+        };
+        if (!needsFrameworkAuthorAttach(expertId, attachOptions)) return;
+        await attachFrameworkAuthorToProgram(program.id, expertId, attachOptions);
         router.refresh();
       } catch (error) {
         attachInFlight.current = false;
         showAppErrorFromUnknown(error, "experts.update");
       }
     })();
-  }, [experts, program.advisorExpertId, program.frameworkId, program.id, router]);
+  }, [experts, program.advisorExpertId, program.frameworkId, program.id, program.status, router]);
 
   const { data: expertsData, isLoading: isExpertsLoading } = useClientFetch({
     fetcher: () =>

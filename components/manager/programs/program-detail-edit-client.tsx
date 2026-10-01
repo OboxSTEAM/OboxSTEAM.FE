@@ -184,12 +184,11 @@ function ProgramDetailEditClientInner({
 
     void (async () => {
       try {
-        await attachFrameworkAuthorToProgram(
-          program.id,
-          expertId,
-          program.experts.map((expert) => expert.expertId),
-          program.advisorExpertId,
-        );
+        await attachFrameworkAuthorToProgram(program.id, expertId, {
+          status: program.status,
+          assignedExpertIds: program.experts.map((expert) => expert.expertId),
+          advisorExpertId: program.advisorExpertId,
+        });
         router.refresh();
       } catch (error) {
         advisorAttachKey.current = null;

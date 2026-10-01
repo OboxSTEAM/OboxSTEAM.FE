@@ -144,16 +144,16 @@ export const MANAGER_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
 
 export const EXPERT_ACCOUNT_NAV_ITEMS: AccountNavItem[] = [
   {
-    label: "Duyệt chương trình",
-    href: "/expert/reviews",
+    label: "Chương trình phụ trách",
+    href: "/expert/programs",
     icon: ClipboardCheck,
-    description: "Hàng chờ duyệt curriculum",
+    description: "Trao đổi & chấp thuận chương trình",
   },
   {
     label: "Khung chương trình",
     href: "/expert/frameworks",
     icon: BookOpen,
-    description: "Blueprint & tiêu chí rubric",
+    description: "Blueprint & quy tắc tự động",
   },
   {
     label: "Lịch đồng hành",

@@ -76,6 +76,7 @@ export {
   type ModuleIdParam,
 } from "./curriculum";
 export {
+  assignProgramAdvisorSchema,
   createProgramSchema,
   createProgramRequestSchema,
   programIdParamSchema,
@@ -86,6 +87,7 @@ export {
   programUpsertSchema,
   updateProgramSchema,
   uploadProgramThumbnailSchema,
+  type AssignProgramAdvisorInput,
   type UploadProgramThumbnailInput,
 } from "./programs";
 export {
@@ -113,7 +115,6 @@ export {
   advisoryMineQuerySchema,
   advisoryPinsQuerySchema,
   advisoryThreadsQuerySchema,
-  assignProgramAdvisorSchema,
   createAdvisoryThreadSchema,
   recordAdvisoryReadSchema,
   advisoryThreadActionRequestSchema,
@@ -123,7 +124,6 @@ export {
   type AdvisoryMineQuery,
   type AdvisoryPinsQuery,
   type AdvisoryThreadsQuery,
-  type AssignProgramAdvisorInput,
   type CreateAdvisoryThreadInput,
   type RecordAdvisoryReadInput,
   type SaveProgramReviewDraftInput,

@@ -340,8 +340,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "programs.advisor": {
     title: "Không gán được chuyên gia phụ trách",
-    reason: "Chuyên gia không thuộc hội đồng hoặc trạng thái chương trình không cho phép.",
-    action: "Gán chuyên gia vào hội đồng trước, hoặc rút duyệt nếu đang chờ thẩm định.",
+    reason: "Chỉ đổi được chuyên gia phụ trách khi chương trình là Bản nháp hoặc Đã chấp thuận.",
+    action: "Gán chuyên gia vào hội đồng trước. Với chương trình đã xuất bản, hãy liên hệ quản trị viên.",
   },
   "programs.advisory": {
     title: "Không thực hiện được thao tác advisory",
@@ -1510,8 +1510,8 @@ const ADVISORY_CODE_ERRORS: Record<string, AppErrorState> = {
   },
   APPROVAL_BLOCKED: {
     title: "Chưa thể chấp thuận",
-    reason: "Vẫn còn ghim góp ý chưa được xử lý.",
-    action: "Xử lý hoặc đóng các ghim đang mở rồi chấp thuận lại.",
+    reason: "Vẫn còn mục cần sửa đang mở.",
+    action: "Xử lý hoặc gỡ ghim các mục cần sửa rồi chấp thuận lại.",
   },
   FRAMEWORK_CHECK_FAILED: {
     title: "Chương trình chưa đạt yêu cầu khung",

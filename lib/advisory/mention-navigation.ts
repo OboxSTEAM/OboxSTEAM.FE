@@ -1,4 +1,4 @@
-import { selToQuery, type SelectedNode } from "@/lib/advisory/manager-target";
+import { selToQuery, type SelectedNode } from "@/lib/curriculum/selection";
 import type { CurriculumTargetType } from "@/lib/api/advisory-chat/schemas";
 
 /** Location fields needed to open a component; `MentionTarget` satisfies this. */

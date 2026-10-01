@@ -17,10 +17,6 @@ export const advisoryMineQuerySchema = z.object({
   unreadOnly: z.boolean().optional(),
 });
 
-export const assignProgramAdvisorSchema = z.object({
-  advisorExpertId: z.string().uuid("ID chuyên gia phụ trách không hợp lệ."),
-});
-
 export const createAdvisoryThreadSchema = z.object({
   targetType: advisoryTargetTypeSchema,
   targetId: z.string().uuid().optional().nullable(),
@@ -108,9 +104,6 @@ export const saveProgramReviewDraftSchema = z.object({
 });
 
 export type AdvisoryMineQuery = z.infer<typeof advisoryMineQuerySchema>;
-export type AssignProgramAdvisorInput = z.infer<
-  typeof assignProgramAdvisorSchema
->;
 export type CreateAdvisoryThreadInput = z.infer<
   typeof createAdvisoryThreadSchema
 >;

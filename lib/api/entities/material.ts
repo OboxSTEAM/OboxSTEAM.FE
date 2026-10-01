@@ -16,7 +16,10 @@ export const curriculumMaterialSummarySchema = z.object({
 export const activityMaterialSchema = z.object({
   id: z.string(),
   activityId: z.string(),
-  title: z.string(),
+  title: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   materialType: materialTypeSchema,
   fileUrl: z.string().nullable(),
   fileSizeBytes: z.number().nullable(),
@@ -32,7 +35,10 @@ export const activityMaterialSchema = z.object({
 export const materialSchema = z.object({
   id: z.string(),
   activityId: z.string(),
-  title: z.string(),
+  title: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   materialType: materialTypeSchema,
   fileUrl: z
     .string()

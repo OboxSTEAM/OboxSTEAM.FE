@@ -398,6 +398,17 @@ export function resolveNotificationHref(
       }
       return managerProgramHref(programId);
 
+    case "CurriculumApprovalRequested":
+    case "CurriculumApprovalRevoked":
+    case "AdvisoryDiscussionMessage":
+    case "AdvisoryMentionPinned":
+      if (!programId) {
+        if (isExpert) return "/expert/programs";
+        if (isManager) return "/manager/programs";
+        return null;
+      }
+      return isExpert ? expertProgramHref(programId) : managerProgramHref(programId);
+
     case "ClassSessionExpertInvited":
     case "ClassSessionExpertInvitationWithdrawn":
     case "ClassSessionExpertFeedbackRequested":

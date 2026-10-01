@@ -108,11 +108,16 @@ const LEVELS = [
 
 const STATUSES = [
   { value: "Draft",         label: "Bản nháp",        dot: "#9e9e9e" },
-  { value: "PendingReview", label: "Chờ duyệt",       dot: "#4FC3F7" },
-  { value: "Approved",      label: "Đã duyệt",        dot: "#7E57C2" },
+  { value: "PendingReview", label: "Bản nháp",        dot: "#9e9e9e" },
+  { value: "Approved",      label: "Đã chấp thuận",   dot: "#7E57C2" },
   { value: "Active",        label: "Đang mở",         dot: "#7CB342" },
   { value: "Inactive",      label: "Ngừng hoạt động", dot: "#E94B3C" },
 ] as const;
+
+/** Only published programs can be toggled from the form; earlier stages move via approval/publish. */
+const TOGGLEABLE_STATUSES = STATUSES.filter(
+  (status) => status.value === "Active" || status.value === "Inactive",
+);
 
 // ── Field styles ──────────────────────────────────────────────────────────
 const LBL = "text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wider";
@@ -416,10 +421,13 @@ export function ProgramForm({
 
   const onFormSubmit = handleSubmit(
     async (data) => {
-      const frameworkExpertId = data.frameworkId
-        ? (frameworks.find((item) => item.id === data.frameworkId)?.expertId ??
-          null)
-        : null;
+      const isFrameworkChanged =
+        !isEdit || (data.frameworkId ?? "") !== (initialValues?.frameworkId ?? "");
+      const frameworkExpertId =
+        data.frameworkId && isFrameworkChanged
+          ? (frameworks.find((item) => item.id === data.frameworkId)?.expertId ??
+            null)
+          : null;
       await onSubmit(data, {
         thumbnailFile: isEdit ? null : pendingThumbnailFile,
         frameworkExpertId,
@@ -493,53 +501,63 @@ export function ProgramForm({
     <Controller
       name="status"
       control={control}
-      render={({ field }) => (
-        <Select
-          value={field.value}
-          onValueChange={field.onChange}
-          disabled={disabled || isLoading}
-        >
-          <SelectTrigger
-            className={cn(
-              LIGHT_SELECT_TRIGGER,
-              "h-8 w-[10.5rem] rounded-lg border-input text-xs",
-              errors.status && "border-primary",
-            )}
-            aria-label="Trạng thái chương trình"
-          >
-            <span className="flex min-w-0 items-center gap-2 truncate">
-              {(() => {
-                const stat = STATUSES.find((s) => s.value === field.value);
-                if (stat) {
-                  return (
-                    <>
-                      <span
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ background: stat.dot }}
-                      />
-                      {stat.label}
-                    </>
-                  );
-                }
-                return field.value;
-              })()}
+      render={({ field }) => {
+        const current = STATUSES.find((s) => s.value === field.value);
+        if (field.value !== "Active" && field.value !== "Inactive") {
+          return (
+            <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">
+              <span
+                className="size-1.5 rounded-full"
+                style={{ background: current?.dot ?? "#9e9e9e" }}
+              />
+              {current?.label ?? field.value}
             </span>
-          </SelectTrigger>
-          <SelectContent className={LIGHT_SELECT_CONTENT}>
-            {STATUSES.map((s) => (
-              <SelectItem key={s.value} value={s.value} className={LIGHT_SELECT_ITEM}>
-                <span className="flex items-center gap-2">
-                  <span
-                    className="size-2 shrink-0 rounded-full"
-                    style={{ background: s.dot }}
-                  />
-                  {s.label}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      )}
+          );
+        }
+        return (
+          <Select
+            value={field.value}
+            onValueChange={field.onChange}
+            disabled={disabled || isLoading}
+          >
+            <SelectTrigger
+              className={cn(
+                LIGHT_SELECT_TRIGGER,
+                "h-8 w-[10.5rem] rounded-lg border-input text-xs",
+                errors.status && "border-primary",
+              )}
+              aria-label="Trạng thái chương trình"
+            >
+              <span className="flex min-w-0 items-center gap-2 truncate">
+                {current ? (
+                  <>
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ background: current.dot }}
+                    />
+                    {current.label}
+                  </>
+                ) : (
+                  field.value
+                )}
+              </span>
+            </SelectTrigger>
+            <SelectContent className={LIGHT_SELECT_CONTENT}>
+              {TOGGLEABLE_STATUSES.map((s) => (
+                <SelectItem key={s.value} value={s.value} className={LIGHT_SELECT_ITEM}>
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{ background: s.dot }}
+                    />
+                    {s.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      }}
     />
   ) : (
     <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2.5 py-1 text-[11px] font-semibold text-muted-foreground">

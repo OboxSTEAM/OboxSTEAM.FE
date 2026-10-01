@@ -35,11 +35,8 @@ import Link from "next/link";
 
 import { NodeFeedbackStrip } from "@/components/advisory/node-feedback-strip";
 import { AdvisoryPinBadge } from "@/components/advisory/advisory-pin-badge";
-import {
-  buildAdvisoryPinMap,
-  selToQuery,
-  type SelectedNode,
-} from "@/lib/advisory/manager-target";
+import { buildAdvisoryPinMap } from "@/lib/advisory/manager-target";
+import { selToQuery, type SelectedNode } from "@/lib/curriculum/selection";
 import type { AdvisoryCapabilities, AdvisoryThread } from "@/lib/api";
 
 import {
@@ -970,12 +967,11 @@ function ProgramInfoPanel({
       if (!res) throw new Error("Không có phản hồi từ hệ thống.");
       if (options?.frameworkExpertId) {
         try {
-          await attachFrameworkAuthorToProgram(
-            program.id,
-            options.frameworkExpertId,
-            program.experts.map((expert) => expert.expertId),
-            program.advisorExpertId,
-          );
+          await attachFrameworkAuthorToProgram(program.id, options.frameworkExpertId, {
+            status: program.status,
+            assignedExpertIds: program.experts.map((expert) => expert.expertId),
+            advisorExpertId: program.advisorExpertId,
+          });
         } catch (attachError) {
           showAppErrorFromUnknown(attachError, "experts.update");
         }

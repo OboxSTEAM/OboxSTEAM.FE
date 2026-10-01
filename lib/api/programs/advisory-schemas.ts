@@ -18,7 +18,6 @@ import {
   programReviewSubmissionSummarySchema,
   submissionChangesSchema,
 } from "@/lib/api/entities/program-advisory";
-import { programSchema } from "@/lib/api/entities/program";
 import { createApiResponseSchema, createApiValueSchema } from "@/lib/api/schemas";
 
 export const getAdvisoryMineResponseSchema = createApiResponseSchema(
@@ -105,10 +104,6 @@ export const getAdvisoryAnchorFieldsResponseSchema = createApiResponseSchema(
   createApiValueSchema(z.array(advisoryAnchorFieldSchema)),
 );
 
-export const assignProgramAdvisorResponseSchema = createApiResponseSchema(
-  createApiValueSchema(programSchema),
-);
-
 export type GetAdvisoryMineResult = z.infer<
   typeof getAdvisoryMineResponseSchema
 >["value"];
@@ -171,7 +166,4 @@ export type GetReviewDraftResult = z.infer<
 >["value"];
 export type GetAdvisoryAnchorFieldsResult = z.infer<
   typeof getAdvisoryAnchorFieldsResponseSchema
->["value"];
-export type AssignProgramAdvisorResult = z.infer<
-  typeof assignProgramAdvisorResponseSchema
 >["value"];

@@ -92,6 +92,11 @@ export const notificationTypeSchema = z.enum([
   "AdvisoryFeedbackPublished",
   "AdvisoryReply",
   "AdvisoryCorrectionAddressed",
+  // Advisory chat + one-time approval
+  "CurriculumApprovalRequested",
+  "CurriculumApprovalRevoked",
+  "AdvisoryDiscussionMessage",
+  "AdvisoryMentionPinned",
 ]);
 export const notificationSchema = z.object({
   id: z.string().uuid(),

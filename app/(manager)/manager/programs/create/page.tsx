@@ -39,12 +39,11 @@ export default function CreateProgramPage() {
       const created = response?.data;
       if (created?.id && options?.frameworkExpertId) {
         try {
-          await attachFrameworkAuthorToProgram(
-            created.id,
-            options.frameworkExpertId,
-            created.experts.map((expert) => expert.expertId),
-            created.advisorExpertId,
-          );
+          await attachFrameworkAuthorToProgram(created.id, options.frameworkExpertId, {
+            status: created.status,
+            assignedExpertIds: created.experts.map((expert) => expert.expertId),
+            advisorExpertId: created.advisorExpertId,
+          });
         } catch (attachError) {
           showAppErrorFromUnknown(attachError, "experts.update");
         }

@@ -7,6 +7,7 @@ import { AdvisoryComposer } from "@/components/advisory-chat/advisory-composer";
 import { useAdvisoryChat } from "@/components/advisory-chat/advisory-chat-provider";
 import { AdvisoryMessageList } from "@/components/advisory-chat/advisory-message-list";
 import { AdvisoryPinPanel } from "@/components/advisory-chat/advisory-pin-panel";
+import { CurriculumChangesPanel } from "@/components/advisory-chat/changes/curriculum-changes-panel";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetPopup, SheetTitle } from "@/components/ui/sheet";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -18,7 +19,7 @@ import { cn } from "@/lib/utils";
 type AdvisoryChatSidebarProps = {
   /** Rendered under the composer (approval bar). */
   footer?: ReactNode;
-  /** Content of the "Thay đổi" tab; the tab is hidden when omitted. */
+  /** Overrides the "Thay đổi" tab content (defaults to `CurriculumChangesPanel` when `hasChangesView`). */
   changesPanel?: ReactNode;
   className?: string;
 };
@@ -94,7 +95,7 @@ function ChatPanel({
     hasChangesView,
   } = useAdvisoryChat();
 
-  const showTabs = hasChangesView && changesPanel !== undefined;
+  const showTabs = hasChangesView;
   const isChangesTab = showTabs && activeTab === "changes";
   const unseenChanges = workspace?.unseenChangeCount ?? 0;
   const filterTarget = targetFilter
@@ -159,7 +160,7 @@ function ChatPanel({
       ) : null}
 
       {isChangesTab ? (
-        <div className="min-h-0 flex-1 overflow-y-auto">{changesPanel}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto">{changesPanel ?? <CurriculumChangesPanel />}</div>
       ) : filteredDiscussion && targetFilter ? (
         <>
           <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-xs">

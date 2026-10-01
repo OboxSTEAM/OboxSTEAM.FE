@@ -1,53 +1,12 @@
 import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 
 import type { FrameworkCheck, ProgramFramework } from "@/lib/api";
+import {
+  buildFrameworkRules,
+  frameworkCheckProgress,
+  frameworkCheckTitle,
+} from "@/lib/frameworks/rule-labels";
 import { cn } from "@/lib/utils";
-
-export function buildFrameworkRules(framework: ProgramFramework): string[] {
-  const rules: string[] = [];
-  if (framework.minModules != null) {
-    rules.push(`Tối thiểu ${framework.minModules} học phần`);
-  }
-  if (framework.minOfflineSessions != null) {
-    rules.push(
-      `Tối thiểu ${framework.minOfflineSessions} mẫu hoạt động offline trong curriculum`,
-    );
-  }
-  if (framework.minLiveSessions != null) {
-    rules.push(
-      `Tối thiểu ${framework.minLiveSessions} mẫu hoạt động live trong curriculum`,
-    );
-  }
-  if (framework.requireCapstoneResearchMilestone) {
-    rules.push("Bắt buộc có mốc nghiên cứu / dự án tổng kết");
-  }
-  return rules;
-}
-
-const CHECK_LABELS: Record<string, (expected: string) => string> = {
-  MinModules: (expected) => `Tối thiểu ${expected} học phần`,
-  MinOfflineSessions: (expected) => `Tối thiểu ${expected} hoạt động offline`,
-  MinLiveSessions: (expected) => `Tối thiểu ${expected} hoạt động live`,
-  RequireCapstoneResearchMilestone: () => "Có mốc nghiên cứu / dự án tổng kết",
-};
-
-type CheckItem = FrameworkCheck["checks"][number];
-
-function checkTitle(item: CheckItem): string {
-  const expected = item.expected?.trim() || "";
-  const labeled = item.code ? CHECK_LABELS[item.code] : undefined;
-  if (labeled) return labeled(expected);
-  return item.label?.trim() || "Yêu cầu khung";
-}
-
-function checkProgress(item: CheckItem): string {
-  const actual = item.actual?.trim() || "0";
-  if (item.code === "RequireCapstoneResearchMilestone") {
-    return `${actual}/1`;
-  }
-  const expected = item.expected?.trim();
-  return expected ? `${actual}/${expected}` : actual;
-}
 
 export function FrameworkRequirements({
   framework,
@@ -129,10 +88,10 @@ export function FrameworkRequirements({
                       item.passed ? "text-muted-foreground" : "text-foreground",
                     )}
                   >
-                    {checkTitle(item)}
+                    {frameworkCheckTitle(item)}
                   </span>
                   <span className="shrink-0 font-mono text-[11px] tabular-nums text-muted-foreground">
-                    {checkProgress(item)}
+                    {frameworkCheckProgress(item)}
                   </span>
                 </li>
               ))}

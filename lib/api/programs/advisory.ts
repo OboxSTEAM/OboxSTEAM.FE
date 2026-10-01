@@ -10,7 +10,6 @@ import {
   advisoryPinsQuerySchema,
   advisoryThreadActionRequestSchema,
   advisoryThreadsQuerySchema,
-  assignProgramAdvisorSchema,
   createAdvisoryThreadSchema,
   createAdvisoryReferenceSchema,
   recordAdvisoryReadSchema,
@@ -22,7 +21,6 @@ import {
   type AdvisoryPinsQuery,
   type AdvisoryThreadActionInput,
   type AdvisoryThreadsQuery,
-  type AssignProgramAdvisorInput,
   type CreateAdvisoryThreadInput,
   type CreateAdvisoryReferenceInput,
   type RecordAdvisoryReadInput,
@@ -36,7 +34,6 @@ import {
   getAdvisoryThreadResponseSchema,
   getAdvisoryTimelineResponseSchema,
   advisoryThreadMutationResponseSchema,
-  assignProgramAdvisorResponseSchema,
   getAdvisoryBoardResponseSchema,
   getAdvisoryAnchorFieldsResponseSchema,
   getAdvisoryMessagesResponseSchema,
@@ -54,7 +51,6 @@ import {
   type AdvisoryMessageMutationResult,
   type AdvisoryReferenceResult,
   type AdvisoryThreadMutationResult,
-  type AssignProgramAdvisorResult,
   type GetAdvisoryBoardResult,
   type GetAdvisoryAnchorFieldsResult,
   type GetAdvisoryMessagesResult,
@@ -77,7 +73,6 @@ export type {
   AdvisoryMessageMutationResult,
   AdvisoryReferenceResult,
   AdvisoryThreadMutationResult,
-  AssignProgramAdvisorResult,
   GetAdvisoryBoardResult,
   GetAdvisoryAnchorFieldsResult,
   GetAdvisoryMessagesResult,
@@ -102,7 +97,6 @@ export type {
   AdvisoryMineQuery,
   AdvisoryPinsQuery,
   AdvisoryThreadsQuery,
-  AssignProgramAdvisorInput,
   CreateAdvisoryThreadInput,
   CreateAdvisoryReferenceInput,
   AdvisoryThreadActionInput,
@@ -235,21 +229,6 @@ export async function getAdvisoryBoard(
     `${PROGRAMS_BASE}/${id}/advisory/board${buildQueryString(params, advisoryBoardQuerySchema)}`,
     getAdvisoryBoardResponseSchema,
     { method: "GET" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function assignProgramAdvisor(
-  programId: string,
-  input: AssignProgramAdvisorInput,
-): Promise<AssignProgramAdvisorResult> {
-  const { id } = programIdParamSchema.parse({ id: programId });
-  const body = assignProgramAdvisorSchema.parse(input);
-  const response = await apiFetchParsed(
-    `${PROGRAMS_BASE}/${id}/advisor`,
-    assignProgramAdvisorResponseSchema,
-    { method: "PUT", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

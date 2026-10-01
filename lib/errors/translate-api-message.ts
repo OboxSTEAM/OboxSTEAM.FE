@@ -7,31 +7,17 @@
 
 const EXACT_VI: Record<string, string> = {
   ADVISOR_REQUIRED:
-    "Chương trình cần có chuyên gia phụ trách đã liên kết tài khoản trước khi gửi thẩm định.",
+    "Chương trình cần có chuyên gia phụ trách đã liên kết tài khoản trước khi mời duyệt.",
   ADVISOR_LOGIN_REQUIRED:
     "Chuyên gia phụ trách chưa kích hoạt hoặc liên kết tài khoản đăng nhập.",
   MODULES_REQUIRED:
-    "Chương trình phải có ít nhất một học phần trước khi gửi thẩm định.",
+    "Chương trình phải có ít nhất một học phần trước khi mời chuyên gia duyệt.",
   FRAMEWORK_UNAVAILABLE:
     "Khung năng lực liên kết chưa được xuất bản hoặc không khả dụng.",
   FRAMEWORK_CHECK_FAILED:
-    "Kiểm tra đối sánh khung năng lực chưa đạt. Vui lòng kiểm tra lại cấu trúc chương trình.",
+    "Chương trình chưa đạt các quy tắc của khung. Vui lòng kiểm tra lại cấu trúc chương trình.",
   APPROVAL_BLOCKED:
-    "Còn mục bắt buộc sửa chưa được chấp nhận.",
-  ACCEPT_REQUIRES_FIXED:
-    "Chỉ chấp nhận mục manager đã đánh dấu Đã sửa.",
-  ACCEPT_REQUIRES_RESUBMIT:
-    "Chấp nhận chỉ mở sau khi manager gửi lại thẩm định.",
-  RUBRIC_SCORE_BELOW_HALF:
-    "Điểm dưới một nửa mức tối đa. Hãy gắn bắt buộc sửa và trả về manager.",
-  "The Comment field is required.":
-    "Cần có nội dung nhận xét trước khi trả về manager.",
-  REQUIRED_CHANGES_NOT_FIXED:
-    "Còn mục bắt buộc sửa chưa đánh dấu Đã sửa. Hãy xử lý hết trước khi gửi lại thẩm định.",
-  SUBMISSION_CONCURRENCY_STALE:
-    "Dữ liệu thẩm định đã được cập nhật bởi thao tác khác. Vui lòng tải lại trang.",
-  ADVISORY_ANCHOR_FIELD_INVALID:
-    "Trường neo góp ý không hợp lệ hoặc không thuộc danh mục cho phép.",
+    "Còn mục cần sửa đang mở. Xử lý hoặc gỡ ghim trước khi chấp thuận.",
   "This activity is locked until prerequisites are met.":
     "Hoạt động này chưa mở khóa. Hoàn thành các bài trước để tiếp tục.",
   "This module is locked until prerequisites are met.":
@@ -157,7 +143,7 @@ const EXACT_VI: Record<string, string> = {
 const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
   {
     pattern: /ADVISOR_REQUIRED|responsible advisor.*active linked login/i,
-    vi: "Chương trình cần có chuyên gia phụ trách đã liên kết tài khoản trước khi gửi thẩm định.",
+    vi: "Chương trình cần có chuyên gia phụ trách đã liên kết tài khoản trước khi mời duyệt.",
   },
   {
     pattern: /ADVISOR_LOGIN_REQUIRED|advisor.*login/i,
@@ -165,39 +151,15 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
   },
   {
     pattern: /MODULES_REQUIRED|at least one module/i,
-    vi: "Chương trình phải có ít nhất một học phần trước khi gửi thẩm định.",
+    vi: "Chương trình phải có ít nhất một học phần trước khi mời chuyên gia duyệt.",
   },
   {
     pattern: /FRAMEWORK_CHECK_FAILED|framework check failed/i,
-    vi: "Kiểm tra đối sánh khung năng lực chưa đạt. Vui lòng kiểm tra lại cấu trúc chương trình.",
+    vi: "Chương trình chưa đạt các quy tắc của khung. Vui lòng kiểm tra lại cấu trúc chương trình.",
   },
   {
-    pattern: /APPROVAL_BLOCKED|unresolved RequiredChange/i,
-    vi: "Còn mục bắt buộc sửa chưa được chấp nhận.",
-  },
-  {
-    pattern: /ACCEPT_REQUIRES_FIXED/i,
-    vi: "Chỉ chấp nhận mục manager đã đánh dấu Đã sửa.",
-  },
-  {
-    pattern: /ACCEPT_REQUIRES_RESUBMIT/i,
-    vi: "Chấp nhận chỉ mở sau khi manager gửi lại thẩm định.",
-  },
-  {
-    pattern: /RUBRIC_SCORE_BELOW_HALF|below half/i,
-    vi: "Điểm dưới một nửa mức tối đa. Hãy gắn bắt buộc sửa và trả về manager.",
-  },
-  {
-    pattern: /REQUIRED_CHANGES_NOT_FIXED/i,
-    vi: "Còn mục bắt buộc sửa chưa đánh dấu Đã sửa. Hãy xử lý hết trước khi gửi lại thẩm định.",
-  },
-  {
-    pattern: /SUBMISSION_CONCURRENCY_STALE|concurrency.*stale/i,
-    vi: "Dữ liệu thẩm định đã được cập nhật bởi thao tác khác. Vui lòng tải lại trang.",
-  },
-  {
-    pattern: /ADVISORY_ANCHOR_FIELD_INVALID/i,
-    vi: "Trường neo góp ý không hợp lệ hoặc không thuộc danh mục cho phép.",
+    pattern: /APPROVAL_BLOCKED|open pins?/i,
+    vi: "Còn mục cần sửa đang mở. Xử lý hoặc gỡ ghim trước khi chấp thuận.",
   },
   {
     pattern: /locked until prerequisites? are met/i,

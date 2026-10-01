@@ -127,3 +127,10 @@ export const selectProgramClassSchema = z.object({
 
 export type SelectProgramClassInput = z.infer<typeof selectProgramClassSchema>;
 
+/** Body for `PUT /api/programs/{id}/advisor` — Draft or Approved only; on Approved it revokes approval. */
+export const assignProgramAdvisorSchema = z.object({
+  advisorExpertId: z.string().uuid("ID chuyên gia phụ trách không hợp lệ."),
+});
+
+export type AssignProgramAdvisorInput = z.infer<typeof assignProgramAdvisorSchema>;
+
