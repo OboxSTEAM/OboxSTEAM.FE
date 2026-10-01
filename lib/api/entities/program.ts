@@ -23,7 +23,6 @@ export const programCategorySchema = z.enum([
 /** Catalog lifecycle — OpenAPI `ProgramStatus`. Legacy free strings / Published are rejected. */
 export const programStatusSchema = z.enum([
   "Draft",
-  "PendingReview",
   "Approved",
   "Active",
   "Inactive",

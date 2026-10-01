@@ -21,6 +21,10 @@ export const CURRICULUM_IN_COMPACT =
 export const CURRICULUM_TEXTAREA =
   "w-full text-sm p-3 rounded-lg border outline-none resize-none bg-card focus:ring-1 focus:ring-ring/50";
 
+/** A disabled fieldset makes native fields inert but leaves them looking editable; grey them out. */
+export const CURRICULUM_READONLY_FIELDSET =
+  "disabled:[&_input]:cursor-not-allowed disabled:[&_input]:opacity-70 disabled:[&_textarea]:cursor-not-allowed disabled:[&_textarea]:opacity-70 disabled:[&_label]:cursor-default";
+
 const W = {
   border: "var(--border)",
   textStrong: "var(--foreground)",

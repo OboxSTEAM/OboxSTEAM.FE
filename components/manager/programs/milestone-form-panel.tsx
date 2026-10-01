@@ -33,7 +33,10 @@ import {
   createResearchMilestoneSchema,
   updateResearchMilestoneSchema,
 } from "@/lib/validations/research-milestones";
-import { NameWithAutoCode } from "@/components/manager/programs/curriculum-form-controls";
+import {
+  CURRICULUM_READONLY_FIELDSET,
+  NameWithAutoCode,
+} from "@/components/manager/programs/curriculum-form-controls";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -271,7 +274,10 @@ export function MilestoneFormPanel({
         </div>
       </div>
 
-      <fieldset disabled={disabled} className="min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto border-0 p-5">
+      <fieldset
+        disabled={disabled}
+        className={cn("min-h-0 min-w-0 flex-1 space-y-4 overflow-y-auto border-0 p-5", CURRICULUM_READONLY_FIELDSET)}
+      >
         <section className="rounded-xl border p-4" style={{ borderColor: W.border, background: W.surface }}>
           <STitle>1 · Mốc nghiên cứu</STitle>
           <p className="mb-3 text-xs leading-5" style={{ color: W.muted }}>
@@ -304,7 +310,7 @@ export function MilestoneFormPanel({
                 name="isCapstone"
                 control={control}
                 render={({ field }) => (
-                  <Checkbox id="capstone" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
+                  <Checkbox id="capstone" disabled={disabled} checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                 )}
               />
               <Label htmlFor="capstone" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>
@@ -353,8 +359,8 @@ export function MilestoneFormPanel({
                 name="assignmentType"
                 control={control}
                 render={({ field }) => (
-                  <Select value={field.value} onValueChange={field.onChange} disabled={isEdit}>
-                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg", isEdit && "opacity-60")}>
+                  <Select value={field.value} onValueChange={field.onChange} disabled={isEdit || disabled}>
+                    <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-10 rounded-lg")}>
                       <span className="truncate">
                         {field.value === "Quiz" ? "Trắc nghiệm" : field.value === "Retrospective" ? "Nhật ký phản tư" : "Nộp tệp"}
                       </span>

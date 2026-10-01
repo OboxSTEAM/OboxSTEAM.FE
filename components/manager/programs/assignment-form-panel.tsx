@@ -21,6 +21,7 @@ import {
 } from "@/components/programs/program-select-styles";
 import {
   CompactNumberField,
+  CURRICULUM_READONLY_FIELDSET,
   CURRICULUM_TEXTAREA,
   DEFAULT_QUIZ_DIFFICULTY,
   NameWithAutoCode,
@@ -302,7 +303,10 @@ export function AssignmentFormPanel({
         title={isEdit ? `${disabled ? "Xem" : "Chỉnh sửa"}: ${assignmentToEdit!.title}` : "Tạo Bài tập mới"}
         sub="Bài tập thuộc học phần (module)"
       />
-      <fieldset disabled={disabled} className="min-h-0 min-w-0 flex-1 space-y-6 overflow-y-auto border-0 p-5">
+      <fieldset
+        disabled={disabled}
+        className={cn("min-h-0 min-w-0 flex-1 space-y-6 overflow-y-auto border-0 p-5", CURRICULUM_READONLY_FIELDSET)}
+      >
         <div>
           <STitle>Thông tin cơ bản</STitle>
           <div
@@ -338,7 +342,7 @@ export function AssignmentFormPanel({
                   name="assignmentType"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select value={field.value} onValueChange={field.onChange} disabled={disabled}>
                       <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
                         <span className="truncate">
                           {ASSIGNMENT_TYPE_LABELS[field.value] ?? field.value}
@@ -362,7 +366,7 @@ export function AssignmentFormPanel({
                   name="courseId"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value || NO_COURSE} onValueChange={field.onChange}>
+                    <Select value={field.value || NO_COURSE} onValueChange={field.onChange} disabled={disabled}>
                       <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "h-9 rounded-lg")}>
                         <span className="truncate">
                           {field.value === NO_COURSE || !field.value
@@ -434,6 +438,7 @@ export function AssignmentFormPanel({
                 render={({ field }) => (
                   <Checkbox
                     id="req-pass"
+                    disabled={disabled}
                     checked={field.value}
                     onCheckedChange={(v) => field.onChange(v === true)}
                     className="border-input bg-background data-checked:border-primary"
@@ -471,6 +476,7 @@ export function AssignmentFormPanel({
                       const selectValue = field.value || "none";
                       return (
                       <Select
+                        disabled={disabled}
                         value={selectValue}
                         onValueChange={(v) =>
                           field.onChange(!v || v === "none" ? "" : v)
@@ -566,7 +572,7 @@ export function AssignmentFormPanel({
                     name="allowShuffle"
                     control={control}
                     render={({ field }) => (
-                      <Checkbox id="shuffle-q" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
+                      <Checkbox id="shuffle-q" disabled={disabled} checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                     )}
                   />
                   <Label htmlFor="shuffle-q" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Trộn câu hỏi</Label>
@@ -576,7 +582,7 @@ export function AssignmentFormPanel({
                     name="shuffleOptions"
                     control={control}
                     render={({ field }) => (
-                      <Checkbox id="shuffle-o" checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
+                      <Checkbox id="shuffle-o" disabled={disabled} checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="border-input bg-background data-checked:border-primary" />
                     )}
                   />
                   <Label htmlFor="shuffle-o" className="text-sm font-semibold cursor-pointer" style={{ color: W.textStrong }}>Trộn đáp án</Label>

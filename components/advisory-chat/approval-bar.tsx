@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils";
 
 const STATE_COPY: Record<AdvisoryWorkspace["status"], { label: string; tone: string }> = {
   Draft: { label: "Bản nháp", tone: "bg-muted text-muted-foreground" },
-  PendingReview: { label: "Bản nháp", tone: "bg-muted text-muted-foreground" },
   Approved: { label: "Đã chấp thuận", tone: "bg-emerald-500/10 text-emerald-700" },
   Active: { label: "Đang mở", tone: "bg-primary/10 text-primary" },
   Inactive: { label: "Ngừng hoạt động", tone: "bg-muted text-muted-foreground" },

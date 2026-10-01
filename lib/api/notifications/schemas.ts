@@ -14,10 +14,16 @@ import {
 export const paginatedNotificationsSchema = createPaginatedSchema(
   notificationSchema,
 ).extend({
+  /** Rows with a type this client does not know yet are dropped so the rest of the page still loads. */
   items: z
-    .array(notificationSchema)
+    .array(z.unknown())
     .nullish()
-    .transform((value) => value ?? []),
+    .transform((value) =>
+      (value ?? []).flatMap((item) => {
+        const parsed = notificationSchema.safeParse(item);
+        return parsed.success ? [parsed.data] : [];
+      }),
+    ),
 });
 
 export const notificationsListValueSchema = createApiValueSchema(

@@ -51,7 +51,6 @@ export function ManagerStatusBadge({
   } else if (
     [
       "pending",
-      "pendingreview",
       "draft",
       "waiting",
       "upcoming",

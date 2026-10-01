@@ -29,7 +29,7 @@ export const activityMaterialSchema = z.object({
 
 /**
  * Full material with signed preview URL from `GET /api/materials/activity/{activityId}`.
- * `fileUrl` is short-lived: public only for Active programs; Draft/PendingReview
+ * `fileUrl` is short-lived: public only for Active programs; Draft/Approved
  * requires Expert/Manager/Admin (or enrolled student when Active).
  */
 export const materialSchema = z.object({

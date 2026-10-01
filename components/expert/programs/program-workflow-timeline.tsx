@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 
 const STAGE_BY_STATUS: Record<ProgramStatus, number> = {
   Draft: 0,
-  PendingReview: 0,
   Approved: 1,
   Active: 2,
   Inactive: 2,

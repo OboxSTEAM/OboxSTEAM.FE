@@ -7,6 +7,7 @@ import {
   CreditCard,
   GraduationCap,
   Link2,
+  MessagesSquare,
   Repeat,
   Sparkles,
   Star,
@@ -31,6 +32,7 @@ export type NotificationTypeGroup =
   | "media"
   | "highlight"
   | "review"
+  | "advisory"
   | "other";
 
 type TypeStyle = {
@@ -105,6 +107,11 @@ const STYLE: Record<NotificationTypeGroup, Omit<TypeStyle, "group">> = {
     icon: Star,
     wrapClassName: "bg-[#FFF8E1] text-[#8A7200]",
     iconClassName: "fill-[#FDD835] text-[#FDD835]",
+  },
+  advisory: {
+    icon: MessagesSquare,
+    wrapClassName: "bg-[#EDE7F6] text-[#5E35B1]",
+    iconClassName: "text-[#7E57C2]",
   },
   other: {
     icon: Bell,
@@ -186,10 +193,10 @@ const TYPE_GROUP: Record<NotificationType, NotificationTypeGroup> = {
   MaterialUpdated: "progress",
   AssignmentEditedByMentor: "grading",
   ClassQuizSetEditedByMentor: "grading",
-  CurriculumReviewSubmitted: "grading",
-  CurriculumReviewApproved: "grading",
-  CurriculumReviewChangesRequested: "grading",
-  CurriculumReviewPublished: "grading",
+  CurriculumReviewSubmitted: "advisory",
+  CurriculumReviewApproved: "advisory",
+  CurriculumReviewChangesRequested: "advisory",
+  CurriculumReviewPublished: "advisory",
   ClassSessionExpertInvited: "session",
   ClassSessionExpertAccepted: "session",
   ClassSessionExpertDeclined: "session",
@@ -197,13 +204,13 @@ const TYPE_GROUP: Record<NotificationType, NotificationTypeGroup> = {
   ClassSessionExpertFeedbackRequested: "session",
   ClassSessionExpertFeedbackSubmitted: "session",
   ClassSessionExpertClearedOnReschedule: "session",
-  AdvisoryFeedbackPublished: "grading",
-  AdvisoryReply: "grading",
-  AdvisoryCorrectionAddressed: "grading",
-  CurriculumApprovalRequested: "grading",
-  CurriculumApprovalRevoked: "grading",
-  AdvisoryDiscussionMessage: "grading",
-  AdvisoryMentionPinned: "grading",
+  AdvisoryFeedbackPublished: "advisory",
+  AdvisoryReply: "advisory",
+  AdvisoryCorrectionAddressed: "advisory",
+  CurriculumApprovalRequested: "advisory",
+  CurriculumApprovalRevoked: "advisory",
+  AdvisoryDiscussionMessage: "advisory",
+  AdvisoryMentionPinned: "advisory",
 };
 
 export function getNotificationTypeStyle(type: NotificationType): TypeStyle {

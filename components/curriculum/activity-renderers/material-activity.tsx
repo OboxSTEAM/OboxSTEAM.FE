@@ -711,7 +711,7 @@ export function MaterialActivity({
       >
         <p className="text-sm text-learn-muted">
           {accessDenied
-            ? "Bạn không có quyền xem tài liệu này. Tài liệu chỉ công khai khi chương trình Active; Draft/PendingReview cần Expert/Manager/Admin."
+            ? "Bạn không có quyền xem tài liệu này. Tài liệu chỉ công khai khi chương trình đang mở; trước khi xuất bản, chỉ chuyên gia, manager hoặc admin xem được."
             : "Không tải được tài liệu học tập (liên kết ký số có thể đã hết hạn)."}
         </p>
         <button

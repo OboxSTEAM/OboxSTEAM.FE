@@ -744,7 +744,7 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason:
       "Liên kết xem trước đã hết hạn, hoặc bạn không có quyền xem tài liệu ở trạng thái chương trình hiện tại.",
     action:
-      "Thử lại. Tài liệu công khai chỉ khi chương trình Active; Draft/PendingReview cần Expert/Manager/Admin.",
+      "Thử lại. Tài liệu chỉ công khai khi chương trình đang mở; trước khi xuất bản, chỉ chuyên gia, manager hoặc admin xem được.",
   },
   "curriculum.assignment.save": {
     title: "Không lưu được bài tập",
@@ -1118,7 +1118,7 @@ function reasonForHttpStatus(
   }
   if (status === 403) {
     if (context === "curriculum.material.preview") {
-      return "Tài liệu chỉ công khai khi chương trình Active. Draft/PendingReview cần quyền Expert, Manager hoặc Admin và dùng URL ký số.";
+      return "Tài liệu chỉ công khai khi chương trình đang mở. Trước khi xuất bản, chỉ chuyên gia, manager hoặc admin xem được.";
     }
     return "Bạn không có quyền thực hiện thao tác này.";
   }

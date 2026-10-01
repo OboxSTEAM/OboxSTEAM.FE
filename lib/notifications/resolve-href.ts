@@ -22,7 +22,7 @@ export type ResolveNotificationHrefInput = {
   payload: NotificationPayload;
   /** Used only to pick student vs manager/parent destination paths — not to filter inbox. */
   accountRole?: string | null;
-  /** Advisory thread / invitation id when present on the notification row. */
+  /** Expert session invitation id when present on the notification row. */
   entityId?: string | null;
 };
 
@@ -134,17 +134,8 @@ function resolveDeeplinkPathOverride(
   return deeplinkPath;
 }
 
-function expertProgramHref(
-  programId: string,
-  opts?: { tab?: string; threadId?: string | null },
-): string {
-  const params = new URLSearchParams();
-  if (opts?.tab) params.set("tab", opts.tab);
-  if (opts?.threadId) params.set("thread", opts.threadId);
-  const query = params.toString();
-  return query
-    ? `/expert/programs/${programId}?${query}`
-    : `/expert/programs/${programId}`;
+function expertProgramHref(programId: string): string {
+  return `/expert/programs/${programId}`;
 }
 
 function managerProgramHref(programId: string): string {
@@ -171,7 +162,7 @@ export function resolveNotificationHref(
   const isParent = isParentRole(accountRole);
   const isMentor = isMentorRole(accountRole);
   const isExpert = canAccessExpertArea(accountRole);
-  const threadId = entityId?.trim() || null;
+  const invitationId = entityId?.trim() || null;
 
   const override = resolveDeeplinkPathOverride(payload, accountRole);
   if (override) return override;
@@ -368,36 +359,14 @@ export function resolveNotificationHref(
         : "/portfolio";
     }
 
+    // Legacy review-round types: older inbox rows still carry them.
     case "CurriculumReviewSubmitted":
-      if (!programId) return isExpert ? "/expert/programs" : null;
-      return isExpert
-        ? expertProgramHref(programId)
-        : managerProgramHref(programId);
-
     case "CurriculumReviewApproved":
     case "CurriculumReviewChangesRequested":
     case "CurriculumReviewPublished":
-      if (!programId) return isManager ? "/manager/programs" : null;
-      return isExpert
-        ? expertProgramHref(programId)
-        : managerProgramHref(programId);
-
     case "AdvisoryFeedbackPublished":
     case "AdvisoryReply":
     case "AdvisoryCorrectionAddressed":
-      if (!programId) {
-        if (isExpert) return "/expert/programs";
-        if (isManager) return "/manager/programs";
-        return null;
-      }
-      if (isExpert) {
-        return expertProgramHref(programId, {
-          tab: "content",
-          threadId,
-        });
-      }
-      return managerProgramHref(programId);
-
     case "CurriculumApprovalRequested":
     case "CurriculumApprovalRevoked":
     case "AdvisoryDiscussionMessage":
@@ -413,14 +382,14 @@ export function resolveNotificationHref(
     case "ClassSessionExpertInvitationWithdrawn":
     case "ClassSessionExpertFeedbackRequested":
     case "ClassSessionExpertClearedOnReschedule":
-      return isExpert ? expertScheduleHref(threadId) : classId
+      return isExpert ? expertScheduleHref(invitationId) : classId
         ? `/manager/classes/${classId}`
         : "/manager/classes";
 
     case "ClassSessionExpertAccepted":
     case "ClassSessionExpertDeclined":
     case "ClassSessionExpertFeedbackSubmitted":
-      if (isExpert) return expertScheduleHref(threadId);
+      if (isExpert) return expertScheduleHref(invitationId);
       return classId ? `/manager/classes/${classId}` : "/manager/classes";
 
     default:

@@ -6,8 +6,6 @@ import type {
   AdvisoryThreadType,
   ReviewSubmissionStatus,
 } from "@/lib/api/entities/program-advisory";
-import type { ProgramStatus } from "@/lib/api/entities/program";
-
 /** Vietnamese labels for advisory next-action hints from API. */
 export const ADVISORY_NEXT_ACTION_LABELS: Record<string, string> = {
   ReviewSubmission: "Thẩm định lần nộp đang chờ",
@@ -133,18 +131,3 @@ export const CHANGE_KIND_LABELS: Record<
   modified: "Đã sửa",
   reordered: "Đổi thứ tự",
 };
-
-/** Priority filter groups for expert program home. */
-export const ADVISORY_STATUS_FILTER_OPTIONS: {
-  value: string;
-  label: string;
-  status?: ProgramStatus;
-  unreadOnly?: boolean;
-}[] = [
-  { value: "all", label: "Tất cả" },
-  { value: "PendingReview", label: "Chờ quyết định", status: "PendingReview" },
-  { value: "Draft", label: "Bản nháp", status: "Draft" },
-  { value: "Approved", label: "Đã duyệt", status: "Approved" },
-  { value: "Active", label: "Đang mở", status: "Active" },
-  { value: "unread", label: "Chưa đọc nhận xét", unreadOnly: true },
-];

@@ -531,7 +531,7 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
                   name="requireCapstoneResearchMilestone"
                   render={({ field }) => (
                     <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/60 p-4">
-                      <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} className="mt-0.5" />
+                      <Checkbox checked={field.value} onCheckedChange={(v) => field.onChange(v === true)} disabled={!isEditingDraft} className="mt-0.5" />
                       <span>
                         <span className="block text-sm font-bold text-foreground">Bắt buộc có mốc nghiên cứu / capstone</span>
                         <span className="mt-0.5 block text-xs leading-5 text-muted-foreground">Curriculum cần có ít nhất một mốc tổng hợp để học viên chứng minh khả năng vận dụng.</span>
@@ -758,7 +758,7 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
         isOpen={showPublishConfirm}
         onOpenChange={setShowPublishConfirm}
         title="Xuất bản phiên bản khung?"
-        description="Chương trình đang dùng phiên bản cũ sẽ không tự nâng cấp. Manager phải chọn phiên bản mới khi gửi thẩm định."
+        description="Chương trình đang dùng phiên bản cũ sẽ không tự nâng cấp. Manager cần chủ động chuyển chương trình sang phiên bản mới."
         confirmLabel="Xuất bản"
         onConfirm={handlePublish}
       />
