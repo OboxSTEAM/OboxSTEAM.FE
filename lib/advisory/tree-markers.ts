@@ -11,6 +11,16 @@ export type TreeDiscussionCount = {
   /** Messages mentioning this component or anything under it. */
   messageCount: number;
   openPinCount: number;
+  /** Part of the totals that mentions this exact component (not its children). */
+  ownMessageCount: number;
+  ownOpenPinCount: number;
+};
+
+const EMPTY_COUNT: TreeDiscussionCount = {
+  messageCount: 0,
+  openPinCount: 0,
+  ownMessageCount: 0,
+  ownOpenPinCount: 0,
 };
 
 /** Keyed by `data-curriculum-anchor` value (`module:{id}`, `activity:{id}`, …). */
@@ -33,17 +43,19 @@ export function buildTreeDiscussionCounts(
 ): TreeDiscussionCounts {
   const totals = new Map<string, TreeDiscussionCount>();
 
-  const add = (key: string, item: MentionCount) => {
-    const current = totals.get(key) ?? { messageCount: 0, openPinCount: 0 };
+  const add = (key: string, item: MentionCount, isOwn = false) => {
+    const current = totals.get(key) ?? EMPTY_COUNT;
     totals.set(key, {
       messageCount: current.messageCount + item.messageCount,
       openPinCount: current.openPinCount + item.openPinCount,
+      ownMessageCount: current.ownMessageCount + (isOwn ? item.messageCount : 0),
+      ownOpenPinCount: current.ownOpenPinCount + (isOwn ? item.openPinCount : 0),
     });
   };
 
   for (const item of counts) {
     if (item.messageCount === 0 && item.openPinCount === 0) continue;
-    add(curriculumAnchorFor(item), item);
+    add(curriculumAnchorFor(item), item, true);
 
     const target = getTarget(item.targetType, item.targetId);
     if (!target) continue;
@@ -66,7 +78,9 @@ export function findMentionCount(
   const match = counts.find(
     (item) => item.targetType === targetType && item.targetId.toLowerCase() === id,
   );
-  return { messageCount: match?.messageCount ?? 0, openPinCount: match?.openPinCount ?? 0 };
+  const messageCount = match?.messageCount ?? 0;
+  const openPinCount = match?.openPinCount ?? 0;
+  return { messageCount, openPinCount, ownMessageCount: messageCount, ownOpenPinCount: openPinCount };
 }
 
 /**

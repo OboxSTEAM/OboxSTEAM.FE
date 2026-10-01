@@ -36,6 +36,7 @@ import Link from "next/link";
 import { useOptionalAdvisoryChat } from "@/components/advisory-chat/advisory-chat-provider";
 import {
   NodeDiscussionBar,
+  TreeMarkerLegend,
   TreeMentionButton,
   TreeNodeMarkers,
 } from "@/components/advisory-chat/curriculum-node-markers";
@@ -2775,6 +2776,9 @@ export function CurriculumSplitPanel({
               : "Chỉ xem — đang khóa chỉnh sửa"
           }
         />
+        {hasChat && (discussionCounts.size > 0 || changeMarkers.size > 0) ? (
+          <TreeMarkerLegend className="border-b px-3 py-1.5" />
+        ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div

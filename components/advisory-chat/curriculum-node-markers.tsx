@@ -1,6 +1,6 @@
 "use client";
 
-import { AtSign, MessagesSquare } from "lucide-react";
+import { AtSign, MessageSquare, MessagesSquare, Pin } from "lucide-react";
 
 import { useAdvisoryChat } from "@/components/advisory-chat/advisory-chat-provider";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,10 @@ import type { TreeDiscussionCount } from "@/lib/advisory/tree-markers";
 import type { CurriculumChangeKind } from "@/lib/api/advisory-chat/schemas";
 import { cn } from "@/lib/utils";
 
-/** Tree row trailing markers: unseen change dot, open pins, discussion count. */
+/**
+ * Tree row trailing markers: "Mới" tag for unseen changes, open-pin and message chips.
+ * Chips are dashed when every counted message is about a child component.
+ */
 export function TreeNodeMarkers({
   count,
   changeKind,
@@ -26,36 +29,122 @@ export function TreeNodeMarkers({
   return (
     <span className="inline-flex items-center gap-1">
       {changeKind ? (
-        <span
-          className="size-2 rounded-full bg-sky-500"
-          title={`Thay đổi mới: ${CHANGE_KIND_LABELS[changeKind].toLowerCase()}`}
-        >
-          <span className="sr-only">Thay đổi mới: {CHANGE_KIND_LABELS[changeKind]}</span>
-        </span>
+        <NewChangeTag title={`Thay đổi mới: ${CHANGE_KIND_LABELS[changeKind].toLowerCase()}`} />
       ) : null}
       {openPins > 0 ? (
-        <span
-          className={cn(
-            "inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums",
-            PIN_STATUS_BADGE_CLASSES.Open,
-          )}
-          title={`${openPins} mục cần sửa đang mở (gồm mục con)`}
-        >
-          {openPins}
-          <span className="sr-only"> mục cần sửa</span>
-        </span>
+        <MarkerChip
+          kind="pin"
+          value={openPins}
+          isChildOnly={count?.ownOpenPinCount === 0}
+          title={describeSplit("pin", openPins, count?.ownOpenPinCount ?? 0)}
+        />
       ) : null}
       {messages > 0 ? (
-        <span
-          className="inline-flex min-w-5 items-center justify-center rounded-full bg-muted px-1.5 text-[10px] font-bold text-muted-foreground tabular-nums"
-          title={`${messages} tin nhắn nhắc đến (gồm mục con)`}
-        >
-          {messages}
-          <span className="sr-only"> tin nhắn</span>
-        </span>
+        <MarkerChip
+          kind="message"
+          value={messages}
+          isChildOnly={count?.ownMessageCount === 0}
+          title={describeSplit("message", messages, count?.ownMessageCount ?? 0)}
+        />
       ) : null}
     </span>
   );
+}
+
+/** One-line key for the tree markers, shown above the curriculum tree. */
+export function TreeMarkerLegend({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground",
+        className,
+      )}
+    >
+      <span className="inline-flex items-center gap-1">
+        <MarkerChip kind="message" value={2} isDecorative />
+        tin nhắn
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <MarkerChip kind="pin" value={1} isDecorative />
+        cần sửa
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <NewChangeTag isDecorative />
+        thay đổi chưa xem
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <MarkerChip kind="message" value={2} isChildOnly isDecorative />
+        chỉ ở mục con
+      </span>
+    </div>
+  );
+}
+
+const MARKER_CHIP_CLASSES = {
+  message: {
+    own: "bg-muted text-foreground/80 dark:bg-white/8",
+    child: "border border-dashed border-muted-foreground/40 text-muted-foreground",
+  },
+  pin: {
+    own: PIN_STATUS_BADGE_CLASSES.Open,
+    child: "border border-dashed border-primary/45 text-primary/85",
+  },
+} as const;
+
+function MarkerChip({
+  kind,
+  value,
+  isChildOnly = false,
+  isDecorative = false,
+  title,
+}: {
+  kind: "message" | "pin";
+  value: number;
+  isChildOnly?: boolean;
+  isDecorative?: boolean;
+  title?: string;
+}) {
+  const Icon = kind === "pin" ? Pin : MessageSquare;
+  return (
+    <span
+      title={title}
+      aria-hidden={isDecorative || undefined}
+      className={cn(
+        "inline-flex h-4 items-center gap-0.5 rounded-full px-1.5 text-[10px] leading-none font-bold tabular-nums",
+        MARKER_CHIP_CLASSES[kind][isChildOnly ? "child" : "own"],
+      )}
+    >
+      <Icon className="size-2.5 shrink-0" strokeWidth={2.5} aria-hidden />
+      {value}
+      {title ? <span className="sr-only">{title}</span> : null}
+    </span>
+  );
+}
+
+function NewChangeTag({ title, isDecorative = false }: { title?: string; isDecorative?: boolean }) {
+  return (
+    <span
+      title={title}
+      aria-hidden={isDecorative || undefined}
+      className="inline-flex h-4 items-center rounded-full bg-sky-500/12 px-1.5 text-[10px] leading-none font-semibold text-sky-700 dark:bg-sky-400/15 dark:text-sky-300"
+    >
+      Mới
+      {title ? <span className="sr-only">: {title}</span> : null}
+    </span>
+  );
+}
+
+const SPLIT_COPY = {
+  message: { noun: "tin nhắn", relation: "nhắc đến" },
+  pin: { noun: "mục cần sửa", relation: "đang mở ở" },
+} as const;
+
+function describeSplit(kind: keyof typeof SPLIT_COPY, total: number, own: number): string {
+  const { noun, relation } = SPLIT_COPY[kind];
+  const child = total - own;
+  if (child === 0) return `${total} ${noun} ${relation} mục này`;
+  if (own === 0) return `${total} ${noun} ${relation} các mục con`;
+  return `${total} ${noun}: ${own} ở mục này, ${child} ở các mục con`;
 }
 
 /** Hover action on a tree row: push this component into the chat composer. */
