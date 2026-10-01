@@ -5,7 +5,29 @@ import {
 
 import { ensureSyncHubStarted } from "@/lib/realtime/sync-hub-connection";
 
-const joinedProgramRefCounts = new Map<string, number>();
+type SyncGroup = {
+  joinMethod: string;
+  leaveMethod: string;
+  refCounts: Map<string, number>;
+};
+
+/** Public program group (`seats.changed`, public `curriculum.structureChanged`). */
+const programGroup: SyncGroup = {
+  joinMethod: "JoinProgramSync",
+  leaveMethod: "LeaveProgramSync",
+  refCounts: new Map(),
+};
+
+/**
+ * Advisory chat group — participants only (hub throws otherwise). Membership doubles
+ * as presence: the BE skips chat notifications for members.
+ */
+const advisoryGroup: SyncGroup = {
+  joinMethod: "JoinAdvisorySync",
+  leaveMethod: "LeaveAdvisorySync",
+  refCounts: new Map(),
+};
+
 let hubConnection: HubConnection | null = null;
 
 export function bindProgramSyncHub(connection: HubConnection): void {
@@ -18,51 +40,78 @@ export function unbindProgramSyncHub(connection: HubConnection): void {
   }
 }
 
-/** Subscribe to program-scoped sync events (e.g. `seats.changed`). Ref-counted per program. */
-export async function joinProgramSync(programId: string): Promise<void> {
-  if (!programId) return;
+async function joinGroup(group: SyncGroup, programId: string): Promise<boolean> {
+  if (!programId) return false;
 
-  const nextCount = (joinedProgramRefCounts.get(programId) ?? 0) + 1;
-  joinedProgramRefCounts.set(programId, nextCount);
+  group.refCounts.set(programId, (group.refCounts.get(programId) ?? 0) + 1);
 
   const conn = (await ensureSyncHubStarted()) ?? hubConnection;
-  if (conn?.state !== HubConnectionState.Connected) return;
+  // Released while the hub was starting — joining now would leak membership.
+  if (!group.refCounts.has(programId)) return false;
+  if (conn?.state !== HubConnectionState.Connected) return false;
 
   hubConnection = conn;
 
   try {
-    await conn.invoke("JoinProgramSync", programId);
+    await conn.invoke(group.joinMethod, programId);
+    return true;
   } catch {
     /* Hub join is best-effort; REST refetch still works. */
+    return false;
   }
+}
+
+function leaveGroup(group: SyncGroup, programId: string): void {
+  if (!programId) return;
+
+  const current = group.refCounts.get(programId) ?? 0;
+  if (current > 1) {
+    group.refCounts.set(programId, current - 1);
+    return;
+  }
+
+  group.refCounts.delete(programId);
+  const conn = hubConnection;
+  if (conn?.state === HubConnectionState.Connected) {
+    void conn.invoke(group.leaveMethod, programId).catch(() => {
+      /* best-effort */
+    });
+  }
+}
+
+/** Subscribe to program-scoped sync events (e.g. `seats.changed`). Ref-counted per program. */
+export async function joinProgramSync(programId: string): Promise<void> {
+  await joinGroup(programGroup, programId);
 }
 
 export function leaveProgramSync(programId: string): void {
-  if (!programId) return;
-
-  const current = joinedProgramRefCounts.get(programId) ?? 0;
-  if (current <= 1) {
-    joinedProgramRefCounts.delete(programId);
-    const conn = hubConnection;
-    if (conn?.state === HubConnectionState.Connected) {
-      void conn.invoke("LeaveProgramSync", programId).catch(() => {
-        /* best-effort */
-      });
-    }
-  } else {
-    joinedProgramRefCounts.set(programId, current - 1);
-  }
+  leaveGroup(programGroup, programId);
 }
 
+/**
+ * Join the advisory chat group (`advisory.*` scopes + versioned `curriculum.structureChanged`).
+ * Ref-counted per program; resolves `false` when the hub is offline or the user is not a participant.
+ */
+export function joinAdvisorySync(programId: string): Promise<boolean> {
+  return joinGroup(advisoryGroup, programId);
+}
+
+export function leaveAdvisorySync(programId: string): void {
+  leaveGroup(advisoryGroup, programId);
+}
+
+/** Re-join every held group — SignalR drops groups (and advisory presence) on disconnect. */
 export async function rejoinAllProgramSyncGroups(): Promise<void> {
   const conn = hubConnection;
   if (conn?.state !== HubConnectionState.Connected) return;
 
-  for (const programId of joinedProgramRefCounts.keys()) {
-    try {
-      await conn.invoke("JoinProgramSync", programId);
-    } catch {
-      /* ignore per-program join failures */
+  for (const group of [programGroup, advisoryGroup]) {
+    for (const programId of group.refCounts.keys()) {
+      try {
+        await conn.invoke(group.joinMethod, programId);
+      } catch {
+        /* ignore per-program join failures */
+      }
     }
   }
 }

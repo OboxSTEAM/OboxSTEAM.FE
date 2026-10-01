@@ -6,6 +6,10 @@ import {
 import type { Notification } from "@/lib/api/entities/notification";
 import { AUTH_SESSION_CHANGED } from "@/lib/auth/session";
 import {
+  dispatchAdvisorySyncEvent,
+  flushAllAdvisorySyncHandlers,
+} from "@/lib/realtime/advisory-sync-bus";
+import {
   flushAllCurriculumSyncHandlers,
   dispatchCurriculumSyncEvent,
 } from "@/lib/realtime/curriculum-sync-bus";
@@ -48,6 +52,7 @@ function handleSyncPayload(payload: unknown): void {
   if (!event) return;
   dispatchCurriculumSyncEvent(event);
   dispatchSeatsSyncEvent(event);
+  dispatchAdvisorySyncEvent(event);
 }
 
 function detachConnection(conn: HubConnection): void {
@@ -77,7 +82,7 @@ async function startHubInternal(): Promise<HubConnection | null> {
   });
 
   conn.onreconnected(() => {
-    void rejoinAllProgramSyncGroups();
+    void rejoinAllProgramSyncGroups().then(flushAllAdvisorySyncHandlers);
     flushAllCurriculumSyncHandlers();
     flushAllMediaSyncHandlers();
     flushAllSeatsSyncHandlers();
