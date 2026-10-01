@@ -635,24 +635,18 @@ export function ProgramForm({
                     )}
                     Thay thế
                   </button>
-                  <button
-                    type="button"
-                    disabled={isUploadingThumbnail || isLoading}
-                    onClick={() => {
-                      if (!isEdit) {
-                        clearPendingThumbnail();
-                        return;
-                      }
-                      setValue("thumbnailUrl", "", {
-                        shouldDirty: true,
-                        shouldValidate: true,
-                      });
-                    }}
-                    className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary/90 disabled:opacity-50"
-                  >
-                    <Trash2 className="size-3.5" />
-                    Xóa
-                  </button>
+                  {/* PUT skips blank strings, so a saved thumbnail can only be replaced. */}
+                  {!isEdit ? (
+                    <button
+                      type="button"
+                      disabled={isUploadingThumbnail || isLoading}
+                      onClick={clearPendingThumbnail}
+                      className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white shadow hover:bg-primary/90 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-3.5" />
+                      Xóa
+                    </button>
+                  ) : null}
                 </div>
               </>
             ) : (

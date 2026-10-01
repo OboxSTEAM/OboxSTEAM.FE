@@ -50,14 +50,15 @@ export const programReviewsQuerySchema = z.object({
 
 /** Body for `POST /api/programs` and `PUT /api/programs/{id}`. */
 export const programUpsertSchema = z.object({
-  code: z.string().min(1, "Mã chương trình là bắt buộc."),
-  name: z.string().min(1, "Tên chương trình là bắt buộc."),
-  seriesName: z.string().min(1, "Tên series là bắt buộc."),
-  description: z.string().min(1, "Mô tả là bắt buộc."),
+  // Trimmed: PUT skips blank strings, so whitespace-only would silently keep the old value.
+  code: z.string().trim().min(1, "Mã chương trình là bắt buộc."),
+  name: z.string().trim().min(1, "Tên chương trình là bắt buộc."),
+  seriesName: z.string().trim().min(1, "Tên series là bắt buộc."),
+  description: z.string().trim().min(1, "Mô tả là bắt buộc."),
   category: programCategorySchema,
   level: programLevelSchema,
-  estimatedDuration: z.string().min(1, "Thời lượng dự kiến là bắt buộc."),
-  skillsGained: z.string().min(1, "Kỹ năng đạt được là bắt buộc."),
+  estimatedDuration: z.string().trim().min(1, "Thời lượng dự kiến là bắt buộc."),
+  skillsGained: z.string().trim().min(1, "Kỹ năng đạt được là bắt buộc."),
   skillIds: z.array(z.string().uuid("ID kỹ năng không hợp lệ.")).optional(),
   thumbnailUrl: z.string().url("URL ảnh thumbnail không hợp lệ.").or(z.literal("")).nullable().optional(),
   status: programStatusSchema,

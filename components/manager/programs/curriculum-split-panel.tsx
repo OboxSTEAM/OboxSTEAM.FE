@@ -976,13 +976,23 @@ function ProgramInfoPanel({
     if (disabled) return;
     setBusy(true);
     try {
+      // A null frameworkId means "unchanged"; unlinking needs the explicit flag.
+      const clearFramework = Boolean(program.frameworkId) && !values.frameworkId;
       const res = curriculumFieldsLocked
         ? await updateProgramSettings(program.id, {
             status: values.status,
             price: values.price,
             frameworkId: values.frameworkId,
+            clearFramework,
           })
-        : await updateProgram(program.id, values);
+        : await updateProgram(program.id, {
+            ...values,
+            clearFramework,
+            // `[]` unlinks every skill, so only send the list when it was edited.
+            skillIds: isSameIdSet(values.skillIds, program.skills.map((skill) => skill.id))
+              ? undefined
+              : values.skillIds,
+          });
       if (!res) throw new Error("Không có phản hồi từ hệ thống.");
       if (options?.frameworkExpertId) {
         try {
@@ -1056,6 +1066,14 @@ function ProgramInfoPanel({
       </div>
     </div>
   );
+}
+
+/** Missing `next` counts as unchanged. */
+function isSameIdSet(next: readonly string[] | undefined, current: readonly string[]): boolean {
+  if (next === undefined) return true;
+  if (next.length !== current.length) return false;
+  const currentIds = new Set(current);
+  return next.every((id) => currentIds.has(id));
 }
 
 function ParentPathBreadcrumb({
