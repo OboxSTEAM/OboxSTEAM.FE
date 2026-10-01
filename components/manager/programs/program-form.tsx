@@ -70,8 +70,13 @@ export type ProgramFormProps = {
   ) => Promise<void>;
   onThumbnailUploaded?: (program: ProgramWithModules) => void;
   isLoading?: boolean;
-  /** Cohort lock / read-only — disables fields and thumbnail upload. */
+  /** Read-only — disables every field and thumbnail upload. */
   disabled?: boolean;
+  /**
+   * Disables curriculum fields (everything except status, price and framework)
+   * and thumbnail upload; used during a live class or before re-editing an approval.
+   */
+  curriculumFieldsLocked?: boolean;
   /** Extra buttons rendered in the sticky action bar */
   actionSlot?: React.ReactNode;
   /**
@@ -124,6 +129,7 @@ const LBL = "text-xs font-semibold text-muted-foreground mb-1.5 block uppercase 
 const ERR_CLS = "text-[11px] text-primary mt-1 flex items-center gap-1 font-medium";
 const INPUT_CLS = "h-9 rounded-lg border-input bg-card text-sm text-foreground focus-visible:ring-ring/50 placeholder:text-muted-foreground";
 const TEXTAREA_CLS = "w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-foreground outline-hidden transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:border-ring resize-none placeholder:text-muted-foreground";
+const CURRICULUM_FIELDSET = "m-0 min-w-0 border-0 p-0 disabled:opacity-60";
 
 function FieldError({ message }: { message?: string }) {
   const shakeRef = useRef<HTMLParagraphElement>(null);
@@ -322,6 +328,7 @@ export function ProgramForm({
   onThumbnailUploaded,
   isLoading = false,
   disabled = false,
+  curriculumFieldsLocked = false,
   statusPortalHost = null,
   frameworkVersionNumber = null,
   frameworkRequirements = "inline",
@@ -329,7 +336,7 @@ export function ProgramForm({
   const isEdit = Boolean(programId);
   const statusInPortal = isEdit && statusPortalHost != null;
   /** Create: pick file for create multipart. Edit: upload via thumbnail endpoint. */
-  const canPickThumbnail = !disabled;
+  const canPickThumbnail = !disabled && !curriculumFieldsLocked;
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isImageOpen, setIsImageOpen] = useState(!isEdit);
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(!isEdit);
@@ -596,7 +603,10 @@ export function ProgramForm({
           </CollapsibleTrigger>
 
           <CollapsibleContent className="pt-4">
-            <div className="flex flex-col md:flex-row gap-5 items-start">
+            <fieldset
+              disabled={curriculumFieldsLocked}
+              className={cn("flex flex-col md:flex-row gap-5 items-start", CURRICULUM_FIELDSET)}
+            >
           {/* Thumbnail preview - Wide banner aspect ratio */}
           <div
             className="relative w-full md:w-2/3 overflow-hidden rounded-xl border border-border bg-muted"
@@ -734,7 +744,7 @@ export function ProgramForm({
               </div>
             )}
           </div>
-            </div>
+            </fieldset>
           </CollapsibleContent>
         </div>
       </Collapsible>
@@ -750,7 +760,7 @@ export function ProgramForm({
             Thông tin chung
           </FormSectionTitle>
           {isEdit && !statusInPortal && <FieldError message={errors.status?.message} />}
-          <div className="space-y-4">
+          <fieldset disabled={curriculumFieldsLocked} className={cn("space-y-4", CURRICULUM_FIELDSET)}>
             <NameWithAutoCode
               nameLabel="Tên chương trình học"
               codeLabel="Mã chương trình"
@@ -758,7 +768,7 @@ export function ProgramForm({
               name={nameValue}
               code={codeValue}
               lockCode={isEdit}
-              disabled={disabled || isLoading}
+              disabled={disabled || isLoading || curriculumFieldsLocked}
               namePlaceholder="Ví dụ: STEAM Robotics Cơ bản"
               nameError={errors.name?.message}
               onNameChange={(value) =>
@@ -798,7 +808,7 @@ export function ProgramForm({
               />
               <FieldError message={errors.description?.message} />
             </div>
-          </div>
+          </fieldset>
         </div>
 
         <hr className="border-border" />
@@ -807,6 +817,7 @@ export function ProgramForm({
         <div>
           <FormSectionTitle>Phân loại & Cấu hình</FormSectionTitle>
           <div className="space-y-5">
+            <fieldset disabled={curriculumFieldsLocked} className={cn("space-y-5", CURRICULUM_FIELDSET)}>
             {/* Category Chips row */}
             <div>
               <label className={LBL}>
@@ -894,7 +905,11 @@ export function ProgramForm({
                   name="level"
                   control={control}
                   render={({ field }) => (
-                    <Select value={field.value} onValueChange={field.onChange}>
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={disabled || isLoading || curriculumFieldsLocked}
+                    >
                       <SelectTrigger className={cn(LIGHT_SELECT_TRIGGER, "h-9 rounded-lg border-input text-sm w-full")}>
                         <span className="truncate">
                           {LEVELS.find((l) => l.value === field.value)?.label ?? field.value}
@@ -925,6 +940,7 @@ export function ProgramForm({
                 <FieldError message={errors.estimatedDuration?.message} />
               </div>
             </div>
+            </fieldset>
 
             <div>
               <label className={LBL}>Khung thẩm định chuyên môn</label>
@@ -1013,7 +1029,11 @@ export function ProgramForm({
 
             <hr className="border-border" />
 
-            <div data-advisory-field="skillsGained">
+            <fieldset
+              data-advisory-field="skillsGained"
+              disabled={curriculumFieldsLocked}
+              className={CURRICULUM_FIELDSET}
+            >
               <div>
                 <label className={LBL}>
                   Kỹ năng đạt được <span className="text-primary">*</span>
@@ -1038,6 +1058,7 @@ export function ProgramForm({
                       value={field.value ?? []}
                       onChange={field.onChange}
                       knownSkills={[]}
+                      disabled={disabled || isLoading || curriculumFieldsLocked}
                     />
                   )}
                 />
@@ -1045,7 +1066,7 @@ export function ProgramForm({
                   Gắn kỹ năng danh mục để portfolio học viên hiện đúng nhóm STEAM khi hoàn thành chương trình.
                 </p>
               </div>
-            </div>
+            </fieldset>
           </CollapsibleContent>
         </Collapsible>
 

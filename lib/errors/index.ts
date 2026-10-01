@@ -1,3 +1,4 @@
+export { emitApiErrorCode, subscribeApiErrorCode } from "./api-error-signals";
 export { getApiErrorCode, resolveAppError } from "./resolve-app-error";
 export {
   localizeUserFacingMessage,

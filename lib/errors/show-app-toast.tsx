@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { AppErrorToast } from "@/components/errors/app-error-toast";
 import { AppSuccessToast } from "@/components/errors/app-success-toast";
 
-import { resolveAppError } from "./resolve-app-error";
+import { emitApiErrorCode } from "./api-error-signals";
+import { getApiErrorCode, resolveAppError } from "./resolve-app-error";
 import type { AppErrorContext, AppErrorState, AppSuccessState } from "./types";
 
 const ERROR_TOAST_ID = "app-error";
@@ -27,6 +28,7 @@ export function showAppErrorFromUnknown(
   context: AppErrorContext = "generic",
 ): void {
   showAppError(resolveAppError(error, context));
+  emitApiErrorCode(getApiErrorCode(error));
 }
 
 export function showAppSuccess(

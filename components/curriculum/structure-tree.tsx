@@ -189,7 +189,8 @@ export function StructureTreeRow({
   onMoveDown,
   moveBusy = false,
   trailing,
-  /** DOM hook so a side rail can draw a relation line to this row. */
+  hoverActions,
+  /** DOM hook for relation lines and chat mention navigation (`{kind}:{id}`). */
   anchorId,
   /** Activity used by the milestone selected in the side rail. */
   linked,
@@ -217,6 +218,8 @@ export function StructureTreeRow({
   moveBusy?: boolean;
   /** Optional end-of-row markers (e.g. pin counts) — manager leaves empty. */
   trailing?: ReactNode;
+  /** Extra hover/focus actions shown even when the tree is read-only. */
+  hoverActions?: ReactNode;
   anchorId?: string;
   linked?: boolean;
   body?: ReactNode;
@@ -346,6 +349,7 @@ export function StructureTreeRow({
           ) : null}
 
           <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100 group-focus-within/tr:opacity-100">
+            {hoverActions}
             {showReorder ? (
               <>
                 <button

@@ -102,6 +102,18 @@ export const updateProgramSchema = programUpsertSchema.extend({
   clearFramework: z.boolean().optional().nullable(),
 });
 
+/**
+ * Non-curriculum subset of `PUT /api/programs/{id}` — accepted while a class is
+ * running and never revokes an approval.
+ */
+export const updateProgramSettingsSchema = updateProgramSchema.pick({
+  status: true,
+  price: true,
+  frameworkId: true,
+  frameworkVersionId: true,
+  clearFramework: true,
+});
+
 export const uploadProgramThumbnailSchema = z.object({
   file: z
     .instanceof(File, { message: "Vui lòng chọn ảnh thumbnail." })

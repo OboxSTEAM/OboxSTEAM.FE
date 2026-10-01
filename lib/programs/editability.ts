@@ -49,7 +49,8 @@ function buildReason(
 }
 
 /**
- * Mirrors BE CurriculumEditGuard / program PUT-DELETE 409 rules:
+ * Mirrors BE CurriculumEditGuard 409 rules (curriculum edits, program delete,
+ * thumbnail upload; program PUT only when a curriculum field changes):
  * locked when any class is InProgress, or any Open class has seatsTaken > 0
  * (proxy for Active enrollments).
  */

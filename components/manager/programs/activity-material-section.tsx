@@ -257,6 +257,7 @@ export function ActivityMaterialSection({
 
       {material ? (
         <div
+          data-curriculum-anchor={`material:${material.id}`}
           className="flex items-start gap-3 rounded-xl border bg-card p-3.5"
           style={{ borderColor: W.border }}
         >

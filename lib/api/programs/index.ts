@@ -11,6 +11,7 @@ import {
   reviewIdParamSchema,
   selectProgramClassSchema,
   updateProgramSchema,
+  updateProgramSettingsSchema,
   uploadProgramThumbnailSchema,
   type AssignProgramAdvisorInput,
 } from "@/lib/validations/programs";
@@ -185,6 +186,7 @@ export type ProgramReviewsQuery = z.infer<typeof programReviewsQuerySchema>;
 export type ProgramIdParam = z.infer<typeof programIdParamSchema>;
 export type CreateProgramInput = z.infer<typeof createProgramRequestSchema>;
 export type UpdateProgramInput = z.infer<typeof updateProgramSchema>;
+export type UpdateProgramSettingsInput = z.infer<typeof updateProgramSettingsSchema>;
 export type SelectProgramClassInput = z.infer<typeof selectProgramClassSchema>;
 
 const PROGRAMS_BASE = "/api/programs";
@@ -511,14 +513,32 @@ export async function updateProgram(
 ): Promise<UpdateProgramResult> {
   const { id: programId } = programIdParamSchema.parse({ id });
   const parsed = updateProgramSchema.parse(input);
-  const body = {
-    ...parsed,
-    // PUT only toggles Active ↔ Inactive; other lifecycle moves go through approval/publish.
-    status: parsed.status === "Active" || parsed.status === "Inactive" ? parsed.status : undefined,
-    frameworkId: parsed.frameworkId || null,
-    frameworkVersionId: parsed.frameworkVersionId || null,
-  };
+  return putProgram(programId, { ...parsed, ...toProgramSettingsBody(parsed) });
+}
 
+/**
+ * `PUT /api/programs/{id}` with only status, price and framework. Curriculum
+ * fields are omitted so the request passes the live-class lock and keeps the approval.
+ */
+export async function updateProgramSettings(
+  id: string,
+  input: UpdateProgramSettingsInput,
+): Promise<UpdateProgramResult> {
+  const { id: programId } = programIdParamSchema.parse({ id });
+  const parsed = updateProgramSettingsSchema.parse(input);
+  return putProgram(programId, { ...parsed, ...toProgramSettingsBody(parsed) });
+}
+
+function toProgramSettingsBody(input: UpdateProgramSettingsInput) {
+  return {
+    // PUT only toggles Active ↔ Inactive; other lifecycle moves go through approval/publish.
+    status: input.status === "Active" || input.status === "Inactive" ? input.status : undefined,
+    frameworkId: input.frameworkId || null,
+    frameworkVersionId: input.frameworkVersionId || null,
+  };
+}
+
+async function putProgram(programId: string, body: object): Promise<UpdateProgramResult> {
   const response = await apiFetchParsed(
     `${PROGRAMS_BASE}/${programId}`,
     updateProgramResponseSchema,

@@ -44,8 +44,10 @@ import type { DiscussionPinAction } from "@/lib/validations";
 
 const DESKTOP_QUERY = "(min-width: 1024px)";
 const HIDDEN_UNREAD_REFRESH_MS = 800;
-const ANCHOR_SCROLL_ATTEMPTS = 10;
+/** Material rows mount after the activity detail loads, so allow ~2s. */
+const ANCHOR_SCROLL_ATTEMPTS = 20;
 const ANCHOR_SCROLL_RETRY_MS = 100;
+const ANCHOR_FLASH_MS = 1600;
 const NO_CAPABILITIES = advisoryCapabilitiesSchema.parse({});
 
 export type ChatPanelTab = "chat" | "changes";
@@ -323,6 +325,14 @@ function scrollToCurriculumAnchor(anchor: string, attemptsLeft: number): void {
       block: "nearest",
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
+    element.animate(
+      [
+        { boxShadow: "0 0 0 2px var(--primary)" },
+        { boxShadow: "0 0 0 2px var(--primary)", offset: 0.6 },
+        { boxShadow: "0 0 0 2px transparent" },
+      ],
+      { duration: ANCHOR_FLASH_MS, easing: "ease-out" },
+    );
     return;
   }
   if (attemptsLeft > 0) {

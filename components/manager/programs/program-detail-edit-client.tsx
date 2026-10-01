@@ -1,32 +1,26 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
 
+import {
+  AdvisoryChatProvider,
+  AdvisoryChatSidebar,
+  ApprovalBar,
+  useAdvisoryChat,
+} from "@/components/advisory-chat";
 import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
-import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
-import { ManagerRevisionChecklist } from "@/components/advisory/manager-revision-checklist";
-import { AdvisoryWorkflowTimeline } from "@/components/advisory/advisory-workflow-timeline";
+import { ManagerCurriculumTab } from "@/components/manager/programs/manager-curriculum-tab";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
-import { ProgramReviewActions } from "@/components/manager/programs/program-review-actions";
-import { FrameworkRequirements } from "@/components/manager/programs/framework-requirements";
+import { ProgramLifecycleSteps } from "@/components/manager/programs/program-lifecycle-steps";
 import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
-import {
-  getAdvisoryThreads,
-  getProgramAdvisoryWorkspace,
-  getProgramFrameworkById,
-  getProgramFrameworkCheck,
-  type ProgramWithModules,
-} from "@/lib/api";
-import {
-  fetchProgramCohortLock,
-  type ProgramCohortLock,
-} from "@/lib/programs/editability";
+import { buildMaterialActivityOptions } from "@/lib/advisory/material-activity-options";
+import { getProgramFrameworkById, type ProgramWithModules } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 
@@ -113,19 +107,36 @@ type ProgramDetailEditClientProps = {
 function ProgramDetailEditClientInner({
   program: initialProgram,
 }: ProgramDetailEditClientProps) {
+  const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
+  const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
+
+  if (initialProgram !== prevInitial) {
+    setPrevInitial(initialProgram);
+    setProgram(initialProgram);
+  }
+
+  const materialActivities = useMemo(
+    () => buildMaterialActivityOptions(program.modules),
+    [program.modules],
+  );
+
+  return (
+    <AdvisoryChatProvider
+      programId={program.id}
+      materialActivities={materialActivities}
+      hasChangesView
+    >
+      <ProgramDetailLayout program={program} />
+    </AdvisoryChatProvider>
+  );
+}
+
+function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [program, setProgram] = useState<ProgramWithModules>(initialProgram);
-  const [prevInitial, setPrevInitial] = useState<ProgramWithModules>(initialProgram);
+  const { workspace } = useAdvisoryChat();
   const activeTab = parseProgramTab(searchParams.get("tab"));
-  const [submitRequest, setSubmitRequest] = useState(0);
-  const [curriculumRevision, setCurriculumRevision] = useState(0);
-  const [cohortLock, setCohortLock] = useState<ProgramCohortLock>({
-    locked: false,
-    reason: null,
-    blockingClasses: [],
-  });
 
   function setActiveTab(id: TabId) {
     const params = new URLSearchParams(searchParams.toString());
@@ -137,39 +148,36 @@ function ProgramDetailEditClientInner({
       params.delete("id");
       params.delete("moduleId");
       params.delete("courseId");
+      params.delete("material");
     }
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
 
-  const handleSilentSync = useCallback(() => {
-    setCurriculumRevision((revision) => revision + 1);
+  const refreshProgram = useCallback(() => {
     router.refresh();
   }, [router]);
 
-  useCurriculumSync(program.id, handleSilentSync);
+  useCurriculumSync(program.id, refreshProgram);
 
-  const { data: advisoryWorkspaceData, retry: retryAdvisoryWorkspace } = useClientFetch({
-    fetcher: () => getProgramAdvisoryWorkspace(program.id),
-    deps: [program.id],
-    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
-  });
-  const advisoryWorkspace = advisoryWorkspaceData?.data ?? null;
-  const prepFrameworkId =
-    program.status === "Draft" ? program.frameworkId : null;
+  // Approve/revoke/publish by anyone lands as a workspace status change; reload the
+  // RSC program so status-dependent forms are not stale.
+  const syncedStatusRef = useRef(program.status);
+  useEffect(() => {
+    const status = workspace?.status;
+    if (!status || status === program.status || status === syncedStatusRef.current) return;
+    syncedStatusRef.current = status;
+    router.refresh();
+  }, [program.status, router, workspace?.status]);
+
+  const prepFrameworkId = program.status === "Draft" ? program.frameworkId : null;
   const { data: prepFrameworkData } = useClientFetch({
     enabled: prepFrameworkId != null,
     fetcher: () => getProgramFrameworkById(prepFrameworkId!),
     deps: [prepFrameworkId],
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
   });
-  const prepFramework = prepFrameworkData?.data ?? null;
-  const { data: frameworkCheckData, isLoading: isFrameworkCheckLoading } = useClientFetch({
-    enabled: program.status === "Draft" && program.frameworkId != null,
-    fetcher: () => getProgramFrameworkCheck(program.id),
-    deps: [program.id, program.frameworkId, program.updatedAt, curriculumRevision],
-    onError: (error) => showAppErrorFromUnknown(error, "programs.framework-check"),
-  });
+  const prepFramework = prepFrameworkId ? (prepFrameworkData?.data ?? null) : null;
   const advisorAttachKey = useRef<string | null>(null);
 
   useEffect(() => {
@@ -197,160 +205,67 @@ function ProgramDetailEditClientInner({
     })();
   }, [prepFramework?.expertId, program, router]);
 
-  const { data: advisoryThreadsData, retry: retryAdvisoryThreads } = useClientFetch({
-    enabled: advisoryWorkspace != null,
-    fetcher: () => getAdvisoryThreads(program.id),
-    deps: [program.id, advisoryWorkspace != null],
-    onError: (error) => showAppErrorFromUnknown(error, "expert.advisory.workspace"),
-  });
-  const advisoryThreads = advisoryThreadsData?.data ?? [];
-
-  useEffect(() => {
-    let cancelled = false;
-    fetchProgramCohortLock(program.id).then((lock) => {
-      if (!cancelled) setCohortLock(lock);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [program.id]);
-
-  if (initialProgram !== prevInitial) {
-    setPrevInitial(initialProgram);
-    setProgram(initialProgram);
-  }
-
   const breadcrumbs = [
     { label: "Chương trình", href: "/manager/programs" },
     { label: program.name },
   ];
 
-  /** Curriculum is frozen while the expert board reviews it. */
-  const isReviewLocked =
-    program.status === "PendingReview" || program.status === "Approved";
-  const showPrepRequirements =
-    program.status === "Draft" && program.frameworkId != null;
-  const showAdvisoryPanel =
-    program.status === "Draft" ||
-    program.status === "PendingReview" ||
-    program.status === "Approved";
-
   return (
-    <div className="flex flex-col gap-0">
-      <ManagerPageHeader
-        title={program.name}
-        description={`Mã: ${program.code} · Cập nhật thông tin và khung chương trình học`}
-        breadcrumbs={breadcrumbs}
-      />
-
-      <StepperTabBar active={activeTab} onChange={setActiveTab} />
-
-      <div className="px-6 pb-12 pt-6">
-        <div className="mb-6">
-          <ProgramReviewActions
-            programId={program.id}
-            status={program.status}
-            hasFramework={program.frameworkId != null}
-            hasAdvisor={program.advisorExpertId != null}
-            moduleCount={program.modules.length}
-            openRequiredCount={advisoryWorkspace?.openRequiredChangeCount ?? 0}
-            addressedRequiredCount={advisoryWorkspace?.addressedRequiredChangeCount ?? 0}
-            reviewRound={advisoryWorkspace?.workflow?.round ?? 0}
-            submitRequest={submitRequest}
-            onChanged={() => {
-              retryAdvisoryWorkspace();
-              retryAdvisoryThreads();
-              router.refresh();
-            }}
+    <div className="flex min-h-full items-stretch">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <ManagerPageHeader
+          title={program.name}
+          description={`Mã: ${program.code} · Cập nhật thông tin và khung chương trình học`}
+          breadcrumbs={breadcrumbs}
+        >
+          <ProgramLifecycleSteps
+            status={workspace?.status ?? program.status}
+            hasApproval={workspace ? workspace.approval !== null : null}
           />
-        </div>
+        </ManagerPageHeader>
 
-        {activeTab === "curriculum" && (
-          <div className="space-y-6">
-            {showPrepRequirements && prepFramework ? (
-              <FrameworkRequirements
-                variant="banner"
+        <StepperTabBar active={activeTab} onChange={setActiveTab} />
+
+        <div className="px-6 pb-12 pt-6">
+          {activeTab === "curriculum" && (
+            <Suspense fallback={<CurriculumPanelFallback />}>
+              <ManagerCurriculumTab
+                program={program}
                 framework={prepFramework}
-                frameworkVersionNumber={
-                  program.frameworkVersionNumber ??
-                  prepFramework.currentVersionNumber
-                }
-                isCategoryMismatch={
-                  program.category != null &&
-                  prepFramework.category !== program.category
-                }
-                check={frameworkCheckData?.data ?? null}
-                isCheckLoading={isFrameworkCheckLoading}
+                onRefresh={refreshProgram}
               />
-            ) : null}
-            {showAdvisoryPanel ? (
-              <AdvisoryWorkflowTimeline
-                timeline={advisoryWorkspace?.workflow}
-                participants={advisoryWorkspace?.participants}
-              />
-            ) : null}
-            {showAdvisoryPanel && program.status === "Draft" ? (
-              <ManagerRevisionChecklist
-                threads={advisoryThreads}
-                fixedRequiredCount={advisoryWorkspace?.fixedRequiredCount ?? 0}
-                outstandingRequiredCount={advisoryWorkspace?.outstandingRequiredCount ?? 0}
-                canResubmit={(advisoryWorkspace?.openRequiredChangeCount ?? 0) === 0
-                  && (advisoryWorkspace?.addressedRequiredChangeCount ?? 0) > 0}
-                onResubmit={() => setSubmitRequest((value) => value + 1)}
-              />
-            ) : null}
-            <div className="w-full">
-              <Suspense fallback={<CurriculumPanelFallback />}>
-                <CurriculumSplitPanel
-                  program={program}
-                  onRefresh={() => {
-                    setCurriculumRevision((revision) => revision + 1);
-                    router.refresh();
-                  }}
-                  cohortLocked={isReviewLocked || cohortLock.locked}
-                  lockReason={
-                    isReviewLocked
-                      ? program.status === "Approved"
-                        ? "Chương trình đã được duyệt và đang ở chế độ chỉ xem."
-                        : "Chương trình đang chờ chuyên gia thẩm định. Rút duyệt để tiếp tục chỉnh sửa."
-                      : cohortLock.reason
-                  }
-                  blockingClasses={cohortLock.blockingClasses}
-                  advisoryThreads={advisoryThreads}
-                  advisoryCapabilities={advisoryWorkspace?.capabilities}
-                  onAdvisoryChanged={() => {
-                    retryAdvisoryThreads();
-                    retryAdvisoryWorkspace();
-                  }}
-                />
-              </Suspense>
+            </Suspense>
+          )}
+
+          {activeTab === "experts" && (
+            <div className="py-4">
+              <ProgramExpertsManager program={program} />
             </div>
-          </div>
-        )}
+          )}
 
-        {activeTab === "experts" && (
-          <div className="py-4">
-            <ProgramExpertsManager program={program} />
-          </div>
-        )}
+          {activeTab === "reviews" && (
+            <div className="py-4">
+              <ProgramReviewsManager
+                programId={program.id}
+                programName={program.name}
+                programRating={program.rating}
+                totalReviews={program.totalReviews}
+              />
+            </div>
+          )}
 
-        {activeTab === "reviews" && (
-          <div className="py-4">
-            <ProgramReviewsManager
-              programId={program.id}
-              programName={program.name}
-              programRating={program.rating}
-              totalReviews={program.totalReviews}
-            />
-          </div>
-        )}
-
-        {activeTab === "classes" && (
-          <div className="py-4">
-            <ClassManager fixedProgramId={program.id} embedded />
-          </div>
-        )}
+          {activeTab === "classes" && (
+            <div className="py-4">
+              <ClassManager fixedProgramId={program.id} embedded />
+            </div>
+          )}
+        </div>
       </div>
+
+      <AdvisoryChatSidebar
+        className="sticky top-0 h-[calc(100dvh-4rem)] self-start"
+        footer={<ApprovalBar />}
+      />
     </div>
   );
 }

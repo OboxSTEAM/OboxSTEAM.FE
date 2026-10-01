@@ -1,6 +1,6 @@
 import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 
-import type { FrameworkCheck, ProgramFramework } from "@/lib/api";
+import type { ProgramFramework, ProgramFrameworkCheck } from "@/lib/api";
 import {
   buildFrameworkRules,
   frameworkCheckProgress,
@@ -20,7 +20,7 @@ export function FrameworkRequirements({
   frameworkVersionNumber?: number | null;
   isCategoryMismatch?: boolean;
   variant?: "inline" | "banner";
-  check?: FrameworkCheck | null;
+  check?: ProgramFrameworkCheck | null;
   isCheckLoading?: boolean;
 }) {
   const rules = buildFrameworkRules(framework);

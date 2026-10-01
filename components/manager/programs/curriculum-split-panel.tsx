@@ -33,11 +33,20 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
-import { NodeFeedbackStrip } from "@/components/advisory/node-feedback-strip";
-import { AdvisoryPinBadge } from "@/components/advisory/advisory-pin-badge";
-import { buildAdvisoryPinMap } from "@/lib/advisory/manager-target";
+import { useOptionalAdvisoryChat } from "@/components/advisory-chat/advisory-chat-provider";
+import {
+  NodeDiscussionBar,
+  TreeMentionButton,
+  TreeNodeMarkers,
+} from "@/components/advisory-chat/curriculum-node-markers";
+import { useCurriculumTreeMarkers } from "@/hooks/use-curriculum-tree-markers";
+import {
+  curriculumAnchorFor,
+  selectionToMentionTarget,
+} from "@/lib/advisory/mention-navigation";
+import { findMentionCount } from "@/lib/advisory/tree-markers";
 import { selToQuery, type SelectedNode } from "@/lib/curriculum/selection";
-import type { AdvisoryCapabilities, AdvisoryThread } from "@/lib/api";
+import type { CurriculumTargetType } from "@/lib/api/advisory-chat/schemas";
 
 import {
   CurriculumMutateContext,
@@ -94,6 +103,7 @@ import {
   getResearchMilestoneById,
   getResearchMilestonesByModule,
   updateProgram,
+  updateProgramSettings,
   type ProgramWithModules,
   type Module,
   type Course,
@@ -946,10 +956,13 @@ function ProgramInfoPanel({
   program,
   onSuccess,
   disabled = false,
+  curriculumFieldsLocked = false,
 }: {
   program: ProgramWithModules;
   onSuccess: () => void;
   disabled?: boolean;
+  /** Only status, price and framework are editable and saved. */
+  curriculumFieldsLocked?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -963,7 +976,13 @@ function ProgramInfoPanel({
     if (disabled) return;
     setBusy(true);
     try {
-      const res = await updateProgram(program.id, values);
+      const res = curriculumFieldsLocked
+        ? await updateProgramSettings(program.id, {
+            status: values.status,
+            price: values.price,
+            frameworkId: values.frameworkId,
+          })
+        : await updateProgram(program.id, values);
       if (!res) throw new Error("Không có phản hồi từ hệ thống.");
       if (options?.frameworkExpertId) {
         try {
@@ -993,9 +1012,16 @@ function ProgramInfoPanel({
         action={<div ref={setStatusHost} className="shrink-0" />}
       />
       <div className="p-5">
+        {curriculumFieldsLocked && !disabled ? (
+          <p className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+            Hiện chỉ đổi được trạng thái, học phí và khung thẩm định; các thông tin còn lại đang bị
+            khoá.
+          </p>
+        ) : null}
         <ProgramForm
           programId={program.id}
           disabled={disabled}
+          curriculumFieldsLocked={curriculumFieldsLocked}
           statusPortalHost={statusHost}
           frameworkVersionNumber={program.frameworkVersionNumber}
           frameworkRequirements={program.status === "Draft" ? "prep" : "hidden"}
@@ -1283,7 +1309,7 @@ function CourseActivityRows({
   onReorder,
   moveBusy,
   linkedIds,
-  pinMap,
+  adornments,
 }: {
   course: Course;
   sel: SelectedNode;
@@ -1299,7 +1325,7 @@ function CourseActivityRows({
   onReorder: (courseId: string, orderedIds: string[]) => Promise<void>;
   moveBusy?: boolean;
   linkedIds?: ReadonlySet<string>;
-  pinMap?: Map<string, { openRequired: number; suggestions: number; accepted: boolean }>;
+  adornments: NodeAdornmentsFor;
 }) {
   const acts = useMemo(
     () => [...(course.activities || [])].sort((a, b) => a.activityOrder - b.activityOrder),
@@ -1348,7 +1374,7 @@ function CourseActivityRows({
             label={act.name}
             meta={activityMeta}
             onSelect={() => select({ kind: "activity", id: act.id, courseId: course.id })}
-            trailing={<AdvisoryPinBadge counts={pinMap?.get(`activity:${act.id}`)} />}
+            {...adornments("Activity", act.id, act.name)}
             onDelete={() => setDelTarget({ type: "activity", id: act.id, name: act.name })}
           />
         );
@@ -1439,13 +1465,21 @@ function CohortLockBanner({
 type CurriculumSplitPanelProps = {
   program: ProgramWithModules;
   onRefresh: () => void;
+  /** Read-only tree + detail panels (live-class lock, missing permission, pending confirm). */
   cohortLocked?: boolean;
+  /** Keeps status, price and framework editable while `cohortLocked` (not curriculum fields). */
+  canEditProgramSettings?: boolean;
+  /** Lock banner copy; the banner is hidden when neither this nor `blockingClasses` is set. */
   lockReason?: string | null;
   blockingClasses?: ProgramCohortLockClass[];
-  advisoryThreads?: AdvisoryThread[];
-  advisoryCapabilities?: AdvisoryCapabilities;
-  onAdvisoryChanged?: () => void;
 };
+
+type NodeAdornments = { trailing?: ReactNode; hoverActions?: ReactNode };
+type NodeAdornmentsFor = (
+  targetType: CurriculumTargetType,
+  targetId: string,
+  label: string,
+) => NodeAdornments;
 
 
 function parseSelFromSearch(
@@ -1554,11 +1588,9 @@ export function CurriculumSplitPanel({
   program,
   onRefresh,
   cohortLocked = false,
+  canEditProgramSettings = false,
   lockReason = null,
   blockingClasses = [],
-  advisoryThreads = [],
-  advisoryCapabilities,
-  onAdvisoryChanged,
 }: CurriculumSplitPanelProps) {
   const canMutate = !cohortLocked;
   const router = useRouter();
@@ -1568,9 +1600,23 @@ export function CurriculumSplitPanel({
     () => [...(program.modules || [])].sort((a, b) => a.moduleOrder - b.moduleOrder),
     [program.modules],
   );
-  const advisoryPins = useMemo(
-    () => buildAdvisoryPinMap(advisoryThreads),
-    [advisoryThreads],
+
+  const chat = useOptionalAdvisoryChat();
+  const hasChat = chat !== null;
+  const { mentionCounts, discussionCounts, changeMarkers } = useCurriculumTreeMarkers(chat);
+  const adornments = useCallback<NodeAdornmentsFor>(
+    (targetType, targetId, label) => {
+      if (!hasChat) return {};
+      const anchor = curriculumAnchorFor({ targetType, targetId });
+      const count = discussionCounts.get(anchor);
+      const changeKind = changeMarkers.get(anchor);
+      return {
+        trailing:
+          count || changeKind ? <TreeNodeMarkers count={count} changeKind={changeKind} /> : undefined,
+        hoverActions: <TreeMentionButton token={{ targetType, targetId }} label={label} />,
+      };
+    },
+    [changeMarkers, discussionCounts, hasChat],
   );
 
   const [sel, setSel] = useState<SelectedNode>(() => {
@@ -1950,6 +1996,8 @@ export function CurriculumSplitPanel({
     return { module, course, activity };
   }, [sel, modules]);
 
+  const selectedMentionTarget = selectionToMentionTarget(sel, program.id);
+
   const pathParts = useMemo(() => {
     const parts: { label: string; onClick?: () => void }[] = [
       { label: program.name, onClick: () => select({ kind: "program" }) },
@@ -2038,7 +2086,8 @@ export function CurriculumSplitPanel({
         <ProgramInfoPanel
           program={program}
           onSuccess={onRefresh}
-          disabled={cohortLocked}
+          disabled={cohortLocked && !canEditProgramSettings}
+          curriculumFieldsLocked={cohortLocked}
         />
       );
     }
@@ -2251,6 +2300,7 @@ export function CurriculumSplitPanel({
     milestonesByModule,
     upsertMilestone,
     cohortLocked,
+    canEditProgramSettings,
     lockReason,
   ]);
 
@@ -2299,11 +2349,12 @@ export function CurriculumSplitPanel({
         isLast
         kind="program"
         defaultOpen
+        anchorId="program"
         selected={sel?.kind === "program"}
         label={program.name}
         meta={program.code}
         onSelect={() => select({ kind: "program" })}
-        trailing={<AdvisoryPinBadge counts={advisoryPins.get("program")} />}
+        {...adornments("Program", program.id, program.name)}
       >
         <LayoutGroup id="curriculum-modules">
           {orderedModules.map((mod, mIdx) => {
@@ -2368,6 +2419,7 @@ export function CurriculumSplitPanel({
                 depth={depth}
                 isLast={isLast}
                 kind="assignment"
+                anchorId={`assignment:${asg.id}`}
                 selected={sel?.kind === "assignment" && sel.id === asg.id}
                 label={asg.title ?? "Không tiêu đề"}
                 meta={
@@ -2381,7 +2433,7 @@ export function CurriculumSplitPanel({
                     moduleId: mod.id,
                   })
                 }
-                trailing={<AdvisoryPinBadge counts={advisoryPins.get(`assignment:${asg.id}`)} />}
+                {...adornments("Assignment", asg.id, asg.title ?? "Bài tập")}
                 onDelete={() =>
                   setDelTarget({
                     type: "assignment",
@@ -2416,6 +2468,7 @@ export function CurriculumSplitPanel({
                 depth={1}
                 isLast={isLastMod}
                 kind="module"
+                anchorId={`module:${mod.id}`}
                 forceOpen={moduleForceOpen}
                 canMoveUp={mIdx > 0}
                 canMoveDown={mIdx < orderedModules.length - 1}
@@ -2438,7 +2491,7 @@ export function CurriculumSplitPanel({
                 label={mod.name}
                 meta={`${mod.code ? `${mod.code} · ` : ""}${MODULE_TYPE_LABELS[mod.moduleType] || mod.moduleType}`}
                 onSelect={() => select({ kind: "module", id: mod.id })}
-                trailing={<AdvisoryPinBadge counts={advisoryPins.get(`module:${mod.id}`)} />}
+                {...adornments("Module", mod.id, mod.name)}
                 onDelete={() =>
                   setDelTarget({ type: "module", id: mod.id, name: mod.name })
                 }
@@ -2472,6 +2525,7 @@ export function CurriculumSplitPanel({
                         depth={2}
                         isLast={isLastCourse}
                         kind="course"
+                        anchorId={`course:${course.id}`}
                         forceOpen={courseForceOpen}
                         canMoveUp={cIdx > 0}
                         canMoveDown={cIdx < courses.length - 1}
@@ -2490,7 +2544,7 @@ export function CurriculumSplitPanel({
                             moduleId: mod.id,
                           })
                         }
-                        trailing={<AdvisoryPinBadge counts={advisoryPins.get(`course:${course.id}`)} />}
+                        {...adornments("Course", course.id, course.name)}
                         onDelete={() =>
                           setDelTarget({
                             type: "course",
@@ -2507,7 +2561,7 @@ export function CurriculumSplitPanel({
                           onReorder={handleActivityReorder}
                           moveBusy={reorderBusy}
                           linkedIds={linkedActivityIds}
-                          pinMap={advisoryPins}
+                          adornments={adornments}
                         />
                         {courseAsgs.map((asg) =>
                           assignmentRow(asg, 3, false),
@@ -2603,7 +2657,7 @@ export function CurriculumSplitPanel({
   return (
     <CurriculumMutateContext.Provider value={canMutate}>
     <div className="flex flex-col gap-3">
-      {cohortLocked ? (
+      {cohortLocked && (lockReason != null || blockingClasses.length > 0) ? (
         <CohortLockBanner
           programId={program.id}
           lockReason={lockReason}
@@ -2697,14 +2751,16 @@ export function CurriculumSplitPanel({
         <div className="shrink-0 border-b" style={{ borderColor: W.border, background: W.surface }}>
           <ParentPathBreadcrumb parts={pathParts} />
         </div>
-        <NodeFeedbackStrip
-          programId={program.id}
-          selection={sel}
-          threads={advisoryThreads}
-          capabilities={advisoryCapabilities}
-          readOnly={program.status === "PendingReview"}
-          onChanged={onAdvisoryChanged}
-        />
+        {hasChat && selectedMentionTarget ? (
+          <NodeDiscussionBar
+            token={selectedMentionTarget}
+            count={findMentionCount(
+              mentionCounts,
+              selectedMentionTarget.targetType,
+              selectedMentionTarget.targetId,
+            )}
+          />
+        ) : null}
         <div className="min-w-0">
           <DetailPanelSwitcher selectionKey={selPanelKey(sel)}>
             {detail()}

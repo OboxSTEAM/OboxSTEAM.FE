@@ -86,6 +86,7 @@ export {
   programSortBySchema,
   programUpsertSchema,
   updateProgramSchema,
+  updateProgramSettingsSchema,
   uploadProgramThumbnailSchema,
   type AssignProgramAdvisorInput,
   type UploadProgramThumbnailInput,
