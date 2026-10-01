@@ -407,7 +407,7 @@ export function FrameworkWorkspace({ frameworkId }: FrameworkWorkspaceProps) {
                 <Button
                   type="submit"
                   disabled={isSaving || !isDirty}
-                  className="h-10 rounded-xl bg-foreground px-5 font-semibold text-background hover:bg-foreground/90"
+                  className="h-10 rounded-xl bg-primary px-5 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
                 >
                   {isSaving ? "Đang lưu…" : "Lưu khung & quy tắc"}
                 </Button>
