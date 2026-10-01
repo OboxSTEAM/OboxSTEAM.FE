@@ -9,9 +9,9 @@ import {
   AdvisoryChatProvider,
   AdvisoryChatSidebar,
   ApprovalBar,
+  ProgramWorkflowTimeline,
   useAdvisoryChat,
 } from "@/components/advisory-chat";
-import { ProgramWorkflowTimeline } from "@/components/expert/programs/program-workflow-timeline";
 import { ExpertWorkbenchHero } from "@/components/expert/shared/expert-workbench";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
 import { FrameworkRequirements } from "@/components/manager/programs/framework-requirements";

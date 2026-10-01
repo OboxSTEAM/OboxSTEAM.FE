@@ -8,13 +8,13 @@ import {
   AdvisoryChatProvider,
   AdvisoryChatSidebar,
   ApprovalBar,
+  ProgramWorkflowTimeline,
   useAdvisoryChat,
 } from "@/components/advisory-chat";
 import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { ManagerCurriculumTab } from "@/components/manager/programs/manager-curriculum-tab";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
-import { ProgramLifecycleSteps } from "@/components/manager/programs/program-lifecycle-steps";
 import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
@@ -217,12 +217,13 @@ function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
           title={program.name}
           description={`Mã: ${program.code} · Cập nhật thông tin và khung chương trình học`}
           breadcrumbs={breadcrumbs}
-        >
-          <ProgramLifecycleSteps
-            status={workspace?.status ?? program.status}
-            hasApproval={workspace ? workspace.approval !== null : null}
-          />
-        </ManagerPageHeader>
+          footer={
+            <ProgramWorkflowTimeline
+              status={workspace?.status ?? program.status}
+              workspace={workspace}
+            />
+          }
+        />
 
         <StepperTabBar active={activeTab} onChange={setActiveTab} />
 

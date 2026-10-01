@@ -2,12 +2,17 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type MouseEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
+import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import {
   Activity as ActivityIcon,
@@ -172,6 +177,114 @@ export function StructureAddTray({
   );
 }
 
+type FlyoutPosition = { top: number; left: number };
+
+/**
+ * Hover state for the row actions. The actions render in a portal beside the tree panel,
+ * so they never cover the row; a short close delay lets the pointer cross the gap.
+ */
+function useRowFlyout(rowRef: RefObject<HTMLDivElement | null>) {
+  const closeTimer = useRef<number | null>(null);
+  const [position, setPosition] = useState<FlyoutPosition | null>(null);
+  const isOpen = position !== null;
+
+  const cancelClose = useCallback(() => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+    closeTimer.current = null;
+  }, []);
+
+  const open = useCallback(() => {
+    cancelClose();
+    const row = rowRef.current;
+    if (!row) return;
+    const rowRect = row.getBoundingClientRect();
+    const panelRight =
+      row.closest("[data-structure-panel]")?.getBoundingClientRect().right ?? rowRect.right;
+    setPosition({ top: rowRect.top + rowRect.height / 2, left: panelRight + 6 });
+  }, [cancelClose, rowRef]);
+
+  const scheduleClose = useCallback(() => {
+    cancelClose();
+    closeTimer.current = window.setTimeout(() => setPosition(null), 140);
+  }, [cancelClose]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const close = () => setPosition(null);
+    window.addEventListener("scroll", close, true);
+    return () => window.removeEventListener("scroll", close, true);
+  }, [isOpen]);
+
+  useEffect(() => cancelClose, [cancelClose]);
+
+  return { position, open, cancelClose, scheduleClose };
+}
+
+function RowActionsFlyout({
+  position,
+  onEnter,
+  onLeave,
+  children,
+}: {
+  position: FlyoutPosition;
+  onEnter: () => void;
+  onLeave: () => void;
+  children: ReactNode;
+}) {
+  return createPortal(
+    <div
+      role="toolbar"
+      aria-label="Thao tác với mục"
+      onMouseEnter={onEnter}
+      onMouseLeave={onLeave}
+      onFocus={onEnter}
+      onBlur={onLeave}
+      className="fixed z-50 flex -translate-y-1/2 items-center gap-px rounded-lg border border-border bg-popover p-0.5 shadow-md animate-in fade-in-0 slide-in-from-left-1 duration-100"
+      style={{ top: position.top, left: position.left }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+function RowActionButton({
+  title,
+  label,
+  disabled = false,
+  isDestructive = false,
+  onClick,
+  children,
+}: {
+  title: string;
+  label: string;
+  disabled?: boolean;
+  isDestructive?: boolean;
+  onClick?: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={title}
+      aria-label={label}
+      disabled={disabled}
+      onClick={(event) => {
+        event.stopPropagation();
+        onClick?.();
+      }}
+      className={cn(
+        "flex size-6 items-center justify-center rounded text-muted-foreground transition-colors disabled:pointer-events-none disabled:opacity-30",
+        isDestructive
+          ? "hover:bg-destructive/10 hover:text-destructive"
+          : "hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function StructureTreeRow({
   depth,
   isLast,
@@ -235,6 +348,9 @@ export function StructureTreeRow({
   const effectiveOnDelete = canMutate ? onDelete : undefined;
   const showReorder = canMutate && (onMoveUp != null || onMoveDown != null);
   const hasBranch = childItems.length > 0;
+  const hasActions = showReorder || Boolean(effectiveOnDelete) || Boolean(hoverActions);
+  const rowRef = useRef<HTMLDivElement>(null);
+  const flyout = useRowFlyout(rowRef);
   const [open, setOpen] = useState(defaultOpen || forceOpen);
   if ((forceOpen || selected) && !open) {
     setOpen(true);
@@ -260,8 +376,13 @@ export function StructureTreeRow({
       <StructureTreeGuides depth={depth} isLast={isLast} />
       <div className={cn("relative z-10", depth > 0 && "ml-3")}>
         <div
+          ref={rowRef}
           data-curriculum-anchor={anchorId}
-          className="group/tr flex items-center gap-0.5 rounded-lg"
+          onMouseEnter={hasActions ? flyout.open : undefined}
+          onMouseLeave={hasActions ? flyout.scheduleClose : undefined}
+          onFocus={hasActions ? flyout.open : undefined}
+          onBlur={hasActions ? flyout.scheduleClose : undefined}
+          className="flex items-center gap-0.5 rounded-lg"
           style={{
             background: selected
               ? "rgba(79,195,247,0.13)"
@@ -343,54 +464,8 @@ export function StructureTreeRow({
           </button>
 
           {trailing ? (
-            <div className="flex shrink-0 flex-col items-end gap-0.5 pr-1">
-              {trailing}
-            </div>
+            <div className="flex shrink-0 items-center gap-1.5 pr-2">{trailing}</div>
           ) : null}
-
-          <div className="flex shrink-0 items-center gap-px pr-0.5 opacity-0 transition-opacity group-hover/tr:opacity-100 group-focus-within/tr:opacity-100">
-            {hoverActions}
-            {showReorder ? (
-              <>
-                <button
-                  type="button"
-                  title="Đưa lên"
-                  aria-label={`Đưa lên ${label}`}
-                  disabled={moveBusy || !canMoveUp}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveUp?.();
-                  }}
-                  className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-                >
-                  <ChevronUp className="size-3.5" strokeWidth={2.25} />
-                </button>
-                <button
-                  type="button"
-                  title="Đưa xuống"
-                  aria-label={`Đưa xuống ${label}`}
-                  disabled={moveBusy || !canMoveDown}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onMoveDown?.();
-                  }}
-                  className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-30"
-                >
-                  <ChevronDown className="size-3.5" strokeWidth={2.25} />
-                </button>
-              </>
-            ) : null}
-            {effectiveOnDelete && (
-              <button
-                type="button"
-                title="Xóa"
-                onClick={effectiveOnDelete}
-                className="flex size-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-              >
-                <Trash className="size-3" />
-              </button>
-            )}
-          </div>
         </div>
         {hasBranch && open ? (
           <ul className="relative mt-0.5" role="list">
@@ -398,18 +473,59 @@ export function StructureTreeRow({
           </ul>
         ) : null}
       </div>
+      {flyout.position ? (
+        <RowActionsFlyout
+          position={flyout.position}
+          onEnter={flyout.cancelClose}
+          onLeave={flyout.scheduleClose}
+        >
+          {hoverActions}
+          {showReorder ? (
+            <>
+              <RowActionButton
+                title="Đưa lên"
+                label={`Đưa lên ${label}`}
+                disabled={moveBusy || !canMoveUp}
+                onClick={onMoveUp}
+              >
+                <ChevronUp className="size-3.5" strokeWidth={2.25} />
+              </RowActionButton>
+              <RowActionButton
+                title="Đưa xuống"
+                label={`Đưa xuống ${label}`}
+                disabled={moveBusy || !canMoveDown}
+                onClick={onMoveDown}
+              >
+                <ChevronDown className="size-3.5" strokeWidth={2.25} />
+              </RowActionButton>
+            </>
+          ) : null}
+          {effectiveOnDelete ? (
+            <RowActionButton
+              title="Xóa"
+              label={`Xóa ${label}`}
+              isDestructive
+              onClick={effectiveOnDelete}
+            >
+              <Trash className="size-3" />
+            </RowActionButton>
+          ) : null}
+        </RowActionsFlyout>
+      ) : null}
     </motion.li>
   );
 }
 
 export function StructureTreePanelHeader({
   hint,
+  action,
 }: {
   hint: string;
+  action?: ReactNode;
 }) {
   return (
     <div
-      className="flex shrink-0 items-center justify-between border-b px-3 py-2.5"
+      className="flex shrink-0 items-start justify-between gap-2 border-b px-3 py-2.5"
       style={{ borderColor: STRUCTURE_W.border }}
     >
       <div>
@@ -426,6 +542,7 @@ export function StructureTreePanelHeader({
           {hint}
         </p>
       </div>
+      {action ? <div className="-mt-0.5 -mr-1 shrink-0">{action}</div> : null}
     </div>
   );
 }

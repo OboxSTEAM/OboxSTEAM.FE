@@ -1,9 +1,10 @@
 "use client";
 
-import { AtSign, MessageSquare, MessagesSquare, Pin } from "lucide-react";
+import { AtSign, Info, MessageSquare, MessagesSquare, Pin } from "lucide-react";
 
 import { useAdvisoryChat } from "@/components/advisory-chat/advisory-chat-provider";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from "@/components/ui/popover";
 import { CHANGE_KIND_LABELS } from "@/lib/advisory/change-format";
 import { MENTION_TARGET_TYPE_LABELS, type MentionToken } from "@/lib/advisory/mention-token";
 import { PIN_STATUS_BADGE_CLASSES } from "@/lib/advisory/pin-actions";
@@ -12,8 +13,9 @@ import type { CurriculumChangeKind } from "@/lib/api/advisory-chat/schemas";
 import { cn } from "@/lib/utils";
 
 /**
- * Tree row trailing markers: "Mới" tag for unseen changes, open-pin and message chips.
- * Chips are dashed when every counted message is about a child component.
+ * Tree row trailing markers, kept to one line: a dot for unseen changes plus a single
+ * chip for the most urgent discussion state (open pins win over messages). The tooltip
+ * carries the full breakdown. The chip is dashed when it only concerns child components.
  */
 export function TreeNodeMarkers({
   count,
@@ -26,57 +28,68 @@ export function TreeNodeMarkers({
   const messages = count?.messageCount ?? 0;
   if (!changeKind && openPins === 0 && messages === 0) return null;
 
+  const hasPins = openPins > 0;
+  const breakdown = [
+    hasPins ? describeSplit("pin", openPins, count?.ownOpenPinCount ?? 0) : null,
+    messages > 0 ? describeSplit("message", messages, count?.ownMessageCount ?? 0) : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
-    <span className="inline-flex items-center gap-1">
+    <>
       {changeKind ? (
-        <NewChangeTag title={`Thay đổi mới: ${CHANGE_KIND_LABELS[changeKind].toLowerCase()}`} />
+        <NewChangeDot title={`Thay đổi mới: ${CHANGE_KIND_LABELS[changeKind].toLowerCase()}`} />
       ) : null}
-      {openPins > 0 ? (
+      {hasPins || messages > 0 ? (
         <MarkerChip
-          kind="pin"
-          value={openPins}
-          isChildOnly={count?.ownOpenPinCount === 0}
-          title={describeSplit("pin", openPins, count?.ownOpenPinCount ?? 0)}
+          kind={hasPins ? "pin" : "message"}
+          value={hasPins ? openPins : messages}
+          isChildOnly={(hasPins ? count?.ownOpenPinCount : count?.ownMessageCount) === 0}
+          title={breakdown}
         />
       ) : null}
-      {messages > 0 ? (
-        <MarkerChip
-          kind="message"
-          value={messages}
-          isChildOnly={count?.ownMessageCount === 0}
-          title={describeSplit("message", messages, count?.ownMessageCount ?? 0)}
-        />
-      ) : null}
-    </span>
+    </>
   );
 }
 
-/** One-line key for the tree markers, shown above the curriculum tree. */
-export function TreeMarkerLegend({ className }: { className?: string }) {
+const LEGEND_ROWS = [
+  { marker: <MarkerChip kind="pin" value={1} isDecorative />, text: "Mục cần sửa đang mở (ưu tiên hơn tin nhắn)" },
+  { marker: <MarkerChip kind="message" value={2} isDecorative />, text: "Tin nhắn nhắc đến mục này" },
+  { marker: <NewChangeDot isDecorative />, text: "Có thay đổi chưa xem" },
+  { marker: <MarkerChip kind="message" value={2} isChildOnly isDecorative />, text: "Nét đứt: chỉ ở các mục con" },
+] as const;
+
+/** "Chú thích" button for the tree markers; the key opens on demand so it costs no tree space. */
+export function TreeMarkerLegend() {
   return (
-    <div
-      className={cn(
-        "flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground",
-        className,
-      )}
-    >
-      <span className="inline-flex items-center gap-1">
-        <MarkerChip kind="message" value={2} isDecorative />
-        tin nhắn
-      </span>
-      <span className="inline-flex items-center gap-1">
-        <MarkerChip kind="pin" value={1} isDecorative />
-        cần sửa
-      </span>
-      <span className="inline-flex items-center gap-1">
-        <NewChangeTag isDecorative />
-        thay đổi chưa xem
-      </span>
-      <span className="inline-flex items-center gap-1">
-        <MarkerChip kind="message" value={2} isChildOnly isDecorative />
-        chỉ ở mục con
-      </span>
-    </div>
+    <Popover>
+      <PopoverTrigger
+        openOnHover
+        render={
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-6 gap-1 px-1.5 text-[11px] text-muted-foreground"
+          >
+            <Info className="size-3" aria-hidden />
+            Chú thích
+          </Button>
+        }
+      />
+      <PopoverContent align="end" className="w-64 gap-2">
+        <PopoverTitle className="text-xs">Ký hiệu trên cây</PopoverTitle>
+        <ul className="flex flex-col gap-1.5">
+          {LEGEND_ROWS.map((row) => (
+            <li key={row.text} className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="flex w-9 shrink-0 justify-start">{row.marker}</span>
+              {row.text}
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -121,15 +134,14 @@ function MarkerChip({
   );
 }
 
-function NewChangeTag({ title, isDecorative = false }: { title?: string; isDecorative?: boolean }) {
+function NewChangeDot({ title, isDecorative = false }: { title?: string; isDecorative?: boolean }) {
   return (
     <span
       title={title}
       aria-hidden={isDecorative || undefined}
-      className="inline-flex h-4 items-center rounded-full bg-sky-500/12 px-1.5 text-[10px] leading-none font-semibold text-sky-700 dark:bg-sky-400/15 dark:text-sky-300"
+      className="inline-flex size-2 shrink-0 rounded-full bg-sky-500 ring-2 ring-sky-500/20 dark:bg-sky-400 dark:ring-sky-400/20"
     >
-      Mới
-      {title ? <span className="sr-only">: {title}</span> : null}
+      {title ? <span className="sr-only">{title}</span> : null}
     </span>
   );
 }

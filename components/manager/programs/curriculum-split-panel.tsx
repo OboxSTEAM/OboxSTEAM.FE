@@ -2764,6 +2764,7 @@ export function CurriculumSplitPanel({
       }}
     >
       <div
+        data-structure-panel
         className="absolute inset-y-0 left-0 z-10 flex flex-col overflow-hidden border-r"
         style={{ borderColor: W.border, background: W.surface, width: structureWidth }}
       >
@@ -2775,10 +2776,12 @@ export function CurriculumSplitPanel({
                 : "Chọn mục để thêm · mũi tên để đổi thứ tự"
               : "Chỉ xem — đang khóa chỉnh sửa"
           }
+          action={
+            hasChat && (discussionCounts.size > 0 || changeMarkers.size > 0) ? (
+              <TreeMarkerLegend />
+            ) : undefined
+          }
         />
-        {hasChat && (discussionCounts.size > 0 || changeMarkers.size > 0) ? (
-          <TreeMarkerLegend className="border-b px-3 py-1.5" />
-        ) : null}
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <div

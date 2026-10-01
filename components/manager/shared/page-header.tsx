@@ -10,12 +10,15 @@ type ManagerPageHeaderProps = {
   description?: string;
   breadcrumbs?: BreadcrumbItemType[];
   children?: ReactNode; // For action buttons or toolbar items
+  /** Full-width content under the title row (e.g. a progress timeline). */
+  footer?: ReactNode;
 };
 
 export function ManagerPageHeader({
   title,
   description,
   children,
+  footer,
 }: ManagerPageHeaderProps) {
   return (
     <div className="flex flex-col gap-4 border-b border-border bg-card px-6 py-5">
@@ -35,6 +38,7 @@ export function ManagerPageHeader({
           </div>
         ) : null}
       </div>
+      {footer}
     </div>
   );
 }

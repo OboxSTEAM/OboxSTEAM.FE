@@ -11,6 +11,7 @@ export { ApproveCurriculumDialog } from "./approve-curriculum-dialog";
 export { ChangeCard } from "./changes/change-card";
 export { CurriculumChangesPanel } from "./changes/curriculum-changes-panel";
 export { FrameworkCheckList } from "./framework-check-list";
+export { ProgramWorkflowTimeline } from "./program-workflow-timeline";
 export { RevokeApprovalDialog } from "./revoke-approval-dialog";
 export {
   AdvisoryComposer,

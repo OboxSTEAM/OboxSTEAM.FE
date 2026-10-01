@@ -23,7 +23,10 @@ type ProgramWorkflowTimelineProps = {
   className?: string;
 };
 
-/** Draft → Approved → Published rail; each step explains itself on hover. */
+/**
+ * Draft → Approved → Published rail shared by the expert and manager program pages;
+ * each step explains itself on hover and "Việc của bạn" follows the viewer's capabilities.
+ */
 export function ProgramWorkflowTimeline({ status, workspace, className }: ProgramWorkflowTimelineProps) {
   const stage = STAGE_BY_STATUS[status];
   const approval = workspace?.approval ?? null;
@@ -71,12 +74,7 @@ export function ProgramWorkflowTimeline({ status, workspace, className }: Progra
   const advisorLabel = workspace
     ? (workspace.advisorName ?? "Chưa phân công chuyên gia")
     : "Đang tải…";
-  const nextAction =
-    stage === 0 && workspace?.capabilities.canApprove
-      ? "Rà soát khung chương trình và chấp thuận khi đạt yêu cầu."
-      : isLiveWithoutApproval && workspace?.capabilities.canApprove
-        ? "Rà soát các thay đổi và chấp thuận lại phiên bản hiện tại."
-        : null;
+  const nextAction = workspace ? describeNextAction(workspace, stage, isLiveWithoutApproval) : null;
 
   return (
     <section className={cn("rounded-2xl border border-border bg-card px-4 py-4", className)}>
@@ -106,4 +104,30 @@ export function ProgramWorkflowTimeline({ status, workspace, className }: Progra
       <ExpertWorkflowRail steps={steps} />
     </section>
   );
+}
+
+function describeNextAction(
+  workspace: AdvisoryWorkspace,
+  stage: number,
+  isLiveWithoutApproval: boolean,
+): string | null {
+  const { capabilities } = workspace;
+  if (stage === 0 && capabilities.canApprove) {
+    return "Rà soát khung chương trình và chấp thuận khi đạt yêu cầu.";
+  }
+  if (isLiveWithoutApproval && capabilities.canApprove) {
+    return "Rà soát các thay đổi và chấp thuận lại phiên bản hiện tại.";
+  }
+  if (stage === 0 && capabilities.canRequestApproval) {
+    return workspace.openPinCount > 0
+      ? `Xử lý ${workspace.openPinCount} ghim đang mở rồi mời chuyên gia duyệt.`
+      : "Hoàn thiện khung chương trình rồi mời chuyên gia duyệt.";
+  }
+  if (isLiveWithoutApproval && capabilities.canRequestApproval) {
+    return "Mời chuyên gia chấp thuận lại các thay đổi sau khi xuất bản.";
+  }
+  if (stage === 1 && capabilities.canPublish) {
+    return "Xuất bản chương trình để mở lớp cho học viên đăng ký.";
+  }
+  return null;
 }
