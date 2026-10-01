@@ -7,9 +7,9 @@ import { formatRelativeTime } from "@/lib/classes/session-helpers";
 import { cn } from "@/lib/utils";
 
 const TONE_CLASSES = {
-  neutral: "bg-muted text-muted-foreground",
-  success: "bg-emerald-500/10 text-emerald-800 dark:text-emerald-300",
-  warning: "bg-amber-500/12 text-amber-900 dark:text-amber-300",
+  neutral: "bg-muted text-muted-foreground dark:bg-white/5",
+  success: "bg-emerald-500/10 text-emerald-800 dark:bg-emerald-400/10 dark:text-emerald-300",
+  warning: "bg-amber-500/12 text-amber-900 dark:bg-amber-400/10 dark:text-amber-300",
 } as const;
 
 /** Centered event row (curriculum updates, approval changes, publish, advisor change). */

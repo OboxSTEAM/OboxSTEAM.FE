@@ -3,7 +3,11 @@
 import { useState } from "react";
 import { Loader2, MoreHorizontal, Pin, RotateCw } from "lucide-react";
 
-import { AdvisoryAttachmentList } from "@/components/advisory-chat/advisory-attachment-list";
+import {
+  AdvisoryAttachmentFiles,
+  AdvisoryAttachmentImages,
+  splitAttachments,
+} from "@/components/advisory-chat/advisory-attachment-list";
 import {
   AdvisoryComposer,
   type AdvisoryComposerPayload,
@@ -36,6 +40,11 @@ const ROLE_LABELS: Partial<Record<AdvisoryUserRole, string>> = {
   Manager: "Quản lý",
   Admin: "Quản trị",
 };
+
+const OWN_BUBBLE_CLASSES =
+  "rounded-tr-md border border-primary/15 bg-primary/8 dark:border-primary/25 dark:bg-primary/15";
+const OTHER_BUBBLE_CLASSES =
+  "rounded-tl-md border border-border bg-muted/50 dark:border-white/8 dark:bg-white/6";
 
 type AdvisoryMessageItemProps = {
   message: DiscussionMessage;
@@ -72,6 +81,20 @@ export function AdvisoryMessageItem({
       })
     : [];
   const hasMenu = canModify || canTogglePin || pinActions.length > 0;
+  const { images, files } = splitAttachments(message.attachments);
+  const hasBubble = message.isDeleted || isEditing || Boolean(message.text) || files.length > 0;
+  const pinBadge = message.pin ? (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
+        hasBubble && "mb-1",
+        PIN_STATUS_BADGE_CLASSES[message.pin.status],
+      )}
+    >
+      <Pin className="size-3" aria-hidden />
+      {PIN_STATUS_LABELS[message.pin.status]}
+    </span>
+  ) : null;
 
   async function handleEdit(payload: AdvisoryComposerPayload) {
     try {
@@ -99,51 +122,62 @@ export function AdvisoryMessageItem({
       <div className={cn("flex max-w-full items-start gap-1", isOwn && "flex-row-reverse")}>
         <div
           className={cn(
-            "min-w-0 rounded-2xl px-3 py-2 transition-shadow",
-            isEditing ? "w-[min(100%,22rem)]" : "w-fit max-w-[min(100%,22rem)]",
-            isOwn
-              ? "rounded-tr-md border border-primary/15 bg-primary/8"
-              : "rounded-tl-md border border-border bg-muted/50",
-            message.isDeleted && "border-dashed bg-transparent",
+            "flex min-w-0 flex-col gap-1 rounded-2xl transition-shadow",
+            isOwn ? "items-end" : "items-start",
+            isEditing && "w-[min(100%,22rem)]",
             "group-data-[highlighted]/message:ring-2 group-data-[highlighted]/message:ring-ring",
           )}
         >
-          {message.pin ? (
-            <span
+          {hasBubble ? (
+            <div
               className={cn(
-                "mb-1 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold",
-                PIN_STATUS_BADGE_CLASSES[message.pin.status],
+                "min-w-0 rounded-2xl px-3 py-2",
+                isEditing ? "w-full" : "w-fit max-w-[min(100%,22rem)]",
+                isOwn ? OWN_BUBBLE_CLASSES : OTHER_BUBBLE_CLASSES,
+                message.isDeleted && "border-dashed bg-transparent dark:bg-transparent",
               )}
             >
-              <Pin className="size-3" aria-hidden />
-              {PIN_STATUS_LABELS[message.pin.status]}
-            </span>
-          ) : null}
+              {pinBadge}
 
-          {message.isDeleted ? (
-            <p className="text-sm text-muted-foreground italic">Tin nhắn đã bị xoá</p>
-          ) : isEditing ? (
-            <AdvisoryComposer
-              mode="edit"
-              initialText={message.text}
-              initialReferences={message.references}
-              onSubmit={handleEdit}
-              onCancel={() => setIsEditing(false)}
-            />
+              {message.isDeleted ? (
+                <p className="text-sm text-muted-foreground italic">Tin nhắn đã bị xoá</p>
+              ) : isEditing ? (
+                <AdvisoryComposer
+                  mode="edit"
+                  initialText={message.text}
+                  initialReferences={message.references}
+                  onSubmit={handleEdit}
+                  onCancel={() => setIsEditing(false)}
+                />
+              ) : (
+                <>
+                  {message.text ? (
+                    <MessageText
+                      text={message.text}
+                      references={message.references}
+                      className="text-foreground"
+                    />
+                  ) : null}
+                  <AdvisoryAttachmentFiles
+                    programId={programId}
+                    attachments={files}
+                    onSaveAsMaterial={onSaveAsMaterial}
+                    className={message.text ? "mt-2" : undefined}
+                  />
+                </>
+              )}
+            </div>
           ) : (
-            <>
-              <MessageText
-                text={message.text}
-                references={message.references}
-                className="text-foreground"
-              />
-              <AdvisoryAttachmentList
-                programId={programId}
-                attachments={message.attachments}
-                onSaveAsMaterial={onSaveAsMaterial}
-              />
-            </>
+            pinBadge
           )}
+
+          {!message.isDeleted ? (
+            <AdvisoryAttachmentImages
+              programId={programId}
+              attachments={images}
+              onSaveAsMaterial={onSaveAsMaterial}
+            />
+          ) : null}
         </div>
 
         {hasMenu && !isEditing ? (
@@ -198,6 +232,8 @@ export function AdvisoryMessageItem({
 export function AdvisoryPendingMessageItem({ item }: { item: PendingDiscussionMessage }) {
   const { programId, discussion } = useAdvisoryChat();
   const isFailed = item.status === "failed";
+  const { images, files } = splitAttachments(item.attachments);
+  const hasBubble = Boolean(item.text) || files.length > 0;
 
   function handleRetry() {
     discussion
@@ -210,14 +246,29 @@ export function AdvisoryPendingMessageItem({ item }: { item: PendingDiscussionMe
       aria-label={isFailed ? "Tin nhắn gửi thất bại" : "Tin nhắn đang gửi"}
       className="flex flex-col items-end px-3 pt-3"
     >
-      <div
-        className={cn(
-          "w-fit max-w-[min(100%,22rem)] rounded-2xl rounded-tr-md border px-3 py-2",
-          isFailed ? "border-destructive/40 bg-destructive/5" : "border-primary/15 bg-primary/8 opacity-70",
-        )}
-      >
-        <MessageText text={item.text} className="text-foreground" />
-        <AdvisoryAttachmentList programId={programId} attachments={item.attachments} />
+      <div className={cn("flex flex-col items-end gap-1", !isFailed && "opacity-70")}>
+        {hasBubble ? (
+          <div
+            className={cn(
+              "w-fit max-w-[min(100%,22rem)] rounded-2xl rounded-tr-md border px-3 py-2",
+              isFailed
+                ? "border-destructive/40 bg-destructive/5 dark:bg-destructive/10"
+                : "border-primary/15 bg-primary/8 dark:border-primary/25 dark:bg-primary/15",
+            )}
+          >
+            {item.text ? <MessageText text={item.text} className="text-foreground" /> : null}
+            <AdvisoryAttachmentFiles
+              programId={programId}
+              attachments={files}
+              className={item.text ? "mt-2" : undefined}
+            />
+          </div>
+        ) : null}
+        <AdvisoryAttachmentImages
+          programId={programId}
+          attachments={images}
+          className={isFailed ? "rounded-2xl ring-2 ring-destructive/40" : undefined}
+        />
       </div>
       <div className="mt-1 flex items-center gap-1 text-[11px]">
         {isFailed ? (

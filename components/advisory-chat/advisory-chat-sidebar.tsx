@@ -35,7 +35,12 @@ export function AdvisoryChatSidebar({ footer, changesPanel, className }: Advisor
   if (isDesktop) {
     if (!isChatOpen) {
       return (
-        <div className={cn("flex shrink-0 flex-col items-center border-l border-border bg-card py-3", className)}>
+        <div
+          className={cn(
+            "flex shrink-0 flex-col items-center border-l border-border bg-card py-3 dark:border-white/8 dark:bg-card/40",
+            className,
+          )}
+        >
           <ChatLauncherButton unreadCount={unreadCount} onClick={() => setChatOpen(true)} />
         </div>
       );
@@ -44,7 +49,7 @@ export function AdvisoryChatSidebar({ footer, changesPanel, className }: Advisor
       <aside
         aria-label="Trao đổi về chương trình"
         className={cn(
-          "flex w-[min(24rem,34vw)] shrink-0 flex-col border-l border-border bg-card",
+          "flex w-[min(24rem,34vw)] shrink-0 flex-col border-l border-border bg-card dark:border-white/8 dark:bg-card/40",
           className,
         )}
       >
@@ -114,7 +119,7 @@ function ChatPanel({
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex items-start gap-2 border-b border-border px-4 py-3">
+      <header className="flex items-start gap-2 border-b border-border px-4 py-3 dark:border-white/8">
         <div className="min-w-0 flex-1">
           {isSheet ? (
             <SheetTitle className={titleClassName}>Trao đổi về chương trình</SheetTitle>
@@ -143,9 +148,9 @@ function ChatPanel({
         <Tabs
           value={activeTab}
           onValueChange={(value) => setActiveTab(value === "changes" ? "changes" : "chat")}
-          className="border-b border-border px-3 py-2"
+          className="border-b border-border px-3 py-2 dark:border-white/8"
         >
-          <TabsList className="w-full">
+          <TabsList className="w-full dark:bg-white/6">
             <TabsTrigger value="chat">Trò chuyện</TabsTrigger>
             <TabsTrigger value="changes">
               Thay đổi
@@ -163,7 +168,7 @@ function ChatPanel({
         <div className="min-h-0 flex-1 overflow-y-auto">{changesPanel ?? <CurriculumChangesPanel />}</div>
       ) : filteredDiscussion && targetFilter ? (
         <>
-          <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-xs">
+          <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-2 text-xs dark:border-white/8 dark:bg-white/4">
             <span className="min-w-0 flex-1 truncate text-muted-foreground">
               Thảo luận về {MENTION_TARGET_TYPE_LABELS[targetFilter.targetType].toLowerCase()}{" "}
               <span className="font-semibold text-foreground">
@@ -184,7 +189,7 @@ function ChatPanel({
         <>
           <AdvisoryPinPanel />
           <AdvisoryMessageList thread={discussion} />
-          <div className="border-t border-border p-3">
+          <div className="border-t border-border p-3 dark:border-white/8">
             <AdvisoryComposer
               ref={composerRef}
               disabled={!capabilities.canPost}
@@ -195,7 +200,7 @@ function ChatPanel({
         </>
       )}
 
-      {footer ? <div className="border-t border-border">{footer}</div> : null}
+      {footer ? <div className="border-t border-border dark:border-white/8">{footer}</div> : null}
     </div>
   );
 }

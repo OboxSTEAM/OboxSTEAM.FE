@@ -39,7 +39,7 @@ export function ChangeCard({ item, onNavigate, onMention }: ChangeCardProps) {
   return (
     <article
       className={cn(
-        "space-y-2.5 rounded-xl border border-border bg-card p-3",
+        "space-y-2.5 rounded-xl border border-border bg-card p-3 dark:border-white/8 dark:bg-white/4",
         item.isUnseen && "ring-1 ring-primary/30",
       )}
     >

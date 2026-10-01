@@ -400,7 +400,7 @@ export function AdvisoryComposer({
 
       <div
         className={cn(
-          "rounded-xl border border-input bg-background transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30",
+          "rounded-xl border border-input bg-background transition-colors focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/30 dark:border-white/10 dark:bg-white/4 dark:focus-within:border-ring",
           isDragOver && "border-ring bg-accent/5",
           disabled && "opacity-70",
         )}
@@ -506,8 +506,8 @@ function ComposerAttachmentTray({
         <li
           key={item.localId}
           className={cn(
-            "relative flex max-w-full items-center gap-2 rounded-lg border bg-muted/40 py-1 pr-1 pl-1",
-            item.status === "error" ? "border-destructive/50" : "border-border",
+            "relative flex max-w-full items-center gap-2 rounded-lg border bg-muted/40 py-1 pr-1 pl-1 dark:bg-white/5",
+            item.status === "error" ? "border-destructive/50" : "border-border dark:border-white/8",
           )}
           title={item.errorMessage ?? item.fileName}
         >
@@ -519,7 +519,7 @@ function ComposerAttachmentTray({
               className="size-9 shrink-0 rounded-md object-cover"
             />
           ) : (
-            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-background text-[10px] font-semibold text-muted-foreground uppercase">
+            <span className="flex size-9 shrink-0 items-center justify-center rounded-md bg-background text-[10px] font-semibold text-muted-foreground uppercase dark:bg-white/8">
               {item.fileName.split(".").pop()?.slice(0, 4)}
             </span>
           )}

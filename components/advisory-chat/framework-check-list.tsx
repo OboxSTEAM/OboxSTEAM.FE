@@ -72,9 +72,9 @@ export function FrameworkCheckList({
           >
             <div className="flex items-start gap-2">
               {item.passed ? (
-                <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-label="Đạt" />
+                <CheckCircle2 className="mt-0.5 size-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-label="Đạt" />
               ) : (
-                <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-700" aria-label="Chưa đạt" />
+                <CircleAlert className="mt-0.5 size-3.5 shrink-0 text-amber-700 dark:text-amber-400" aria-label="Chưa đạt" />
               )}
               <span
                 className={cn(

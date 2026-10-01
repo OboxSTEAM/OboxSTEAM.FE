@@ -14,10 +14,13 @@ import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 const STATE_COPY: Record<AdvisoryWorkspace["status"], { label: string; tone: string }> = {
-  Draft: { label: "Bản nháp", tone: "bg-muted text-muted-foreground" },
-  Approved: { label: "Đã chấp thuận", tone: "bg-emerald-500/10 text-emerald-700" },
-  Active: { label: "Đang mở", tone: "bg-primary/10 text-primary" },
-  Inactive: { label: "Ngừng hoạt động", tone: "bg-muted text-muted-foreground" },
+  Draft: { label: "Bản nháp", tone: "bg-muted text-muted-foreground dark:bg-white/8" },
+  Approved: {
+    label: "Đã chấp thuận",
+    tone: "bg-emerald-500/10 text-emerald-700 dark:bg-emerald-400/12 dark:text-emerald-300",
+  },
+  Active: { label: "Đang mở", tone: "bg-primary/10 text-primary dark:bg-primary/18" },
+  Inactive: { label: "Ngừng hoạt động", tone: "bg-muted text-muted-foreground dark:bg-white/8" },
 };
 
 type ApprovalBarProps = {
@@ -100,7 +103,7 @@ export function ApprovalBar({ onProgramChanged, className }: ApprovalBarProps) {
       </div>
 
       {workspace.status === "Draft" && workspace.openPinCount > 0 ? (
-        <p className="text-xs text-amber-800">
+        <p className="text-xs text-amber-800 dark:text-amber-300">
           Còn {workspace.openPinCount} mục cần sửa đang mở.
         </p>
       ) : null}

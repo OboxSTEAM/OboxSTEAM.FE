@@ -135,7 +135,7 @@ function ApproveCurriculumBody({ onClose }: { onClose: () => void }) {
       </DialogHeader>
 
       {isVersionChanged ? (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-500/12 px-3 py-2.5 text-xs text-amber-800">
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-amber-500/12 px-3 py-2.5 text-xs text-amber-800 dark:text-amber-300">
           <span className="min-w-0 flex-1">
             Chương trình vừa được cập nhật lên phiên bản {currentVersion}. Hãy xem lại thay đổi trước
             khi chấp thuận.
@@ -252,7 +252,9 @@ function SummaryRow({
     <div
       className={cn(
         "flex items-center justify-between gap-2 rounded-lg px-3 py-2 text-xs",
-        tone === "warning" ? "bg-amber-500/12 text-amber-800" : "bg-muted/60 text-muted-foreground",
+        tone === "warning"
+          ? "bg-amber-500/12 text-amber-800 dark:text-amber-300"
+          : "bg-muted/60 text-muted-foreground",
       )}
     >
       <span className="min-w-0 flex-1 leading-relaxed">{text}</span>

@@ -79,7 +79,7 @@ export function CurriculumChangesPanel() {
           </Button>
         </div>
       ) : (
-        <div role="group" aria-label="Mốc so sánh" className="flex gap-1 rounded-lg bg-muted p-1">
+        <div role="group" aria-label="Mốc so sánh" className="flex gap-1 rounded-lg bg-muted p-1 dark:bg-white/6">
           {BASE_OPTIONS.map((option) => (
             <button
               key={option.value}
@@ -89,7 +89,7 @@ export function CurriculumChangesPanel() {
               className={cn(
                 "min-h-8 flex-1 rounded-md px-2 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 base === option.value
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-background text-foreground shadow-sm dark:bg-white/12"
                   : "text-muted-foreground hover:text-foreground",
               )}
             >
