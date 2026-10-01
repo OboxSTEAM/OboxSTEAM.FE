@@ -331,7 +331,7 @@ async function loadProgramCategories(): Promise<CategoryLookup> {
 
   for (let guard = 0; guard < 10; guard += 1) {
     const result = await getPrograms({ page, pageSize: 100 });
-    const pageData = result.data;
+    const pageData = result?.data;
     for (const program of pageData?.items ?? []) {
       lookup[program.id] = program.category ?? null;
     }

@@ -121,7 +121,7 @@ async function loadProgramPassRows(): Promise<ProgramPassRow[]> {
 
   for (let guard = 0; guard < 5; guard += 1) {
     const result = await getPrograms({ page, pageSize: 100, sortBy: "name" });
-    const pageData = result.data;
+    const pageData = result?.data;
     programs.push(...(pageData?.items ?? []));
     if (!pageData?.hasNext) break;
     page += 1;
@@ -131,7 +131,7 @@ async function loadProgramPassRows(): Promise<ProgramPassRow[]> {
     try {
       const result = await getDashboardEnrollment({ programId: program.id });
       const pass = programEndPassRate(
-        result.data?.programEnrollmentsByStatus ?? [],
+        result?.data?.programEnrollmentsByStatus ?? [],
       );
       if (pass.finished <= 0) return null;
       return {

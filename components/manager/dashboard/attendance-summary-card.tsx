@@ -167,7 +167,7 @@ async function loadAttendanceSummary(): Promise<AttendanceSummary> {
       const result = await getClassSessionWithStudents(job.classId, job.sessionId);
       return {
         ...job,
-        rate: sessionRate(result.data?.students ?? []),
+        rate: sessionRate(result?.data?.students ?? []),
       };
     } catch {
       return { ...job, rate: null };
@@ -222,7 +222,7 @@ async function loadEligibleClasses() {
       page,
       pageSize: 100,
     });
-    const pageData = result.data;
+    const pageData = result?.data;
     items.push(...(pageData?.items ?? []));
     if (!pageData?.hasNext) break;
     page += 1;
@@ -242,7 +242,7 @@ async function loadCountedSessions(classId: string): Promise<ClassSession[]> {
       page,
       pageSize: 100,
     });
-    const pageData = result.data;
+    const pageData = result?.data;
     sessions.push(...(pageData?.items ?? []).filter(isCountedSession));
     if (!pageData?.hasNext) break;
     page += 1;
