@@ -1,44 +1,44 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ChevronDown, ShieldCheck } from "lucide-react";
+import { ArrowLeft, ShieldCheck } from "lucide-react";
 
 import {
   AdvisoryChatProvider,
   AdvisoryChatSidebar,
   ApprovalBar,
-  FrameworkCheckList,
   useAdvisoryChat,
 } from "@/components/advisory-chat";
+import { ProgramWorkflowTimeline } from "@/components/expert/programs/program-workflow-timeline";
 import { ExpertWorkbenchHero } from "@/components/expert/shared/expert-workbench";
 import { CurriculumSplitPanel } from "@/components/manager/programs/curriculum-split-panel";
-import { ProgramLifecycleSteps } from "@/components/manager/programs/program-lifecycle-steps";
+import { FrameworkRequirements } from "@/components/manager/programs/framework-requirements";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useCurriculumSync } from "@/hooks/use-curriculum-sync";
 import { useFrameworkCheck } from "@/hooks/use-framework-check";
-import type { ProgramWithModules } from "@/lib/api";
-import { cn } from "@/lib/utils";
+import type { ProgramFramework, ProgramWithModules } from "@/lib/api";
 
 type ExpertProgramWorkspaceProps = {
   program: ProgramWithModules;
+  /** `null` when the program has no framework or the viewer cannot read it. */
+  framework: ProgramFramework | null;
 };
 
 /**
  * Expert view of a program: the live curriculum (read-only) next to the shared
  * advisory chat. Approve / revoke come from the workspace capabilities.
  */
-export function ExpertProgramWorkspace({ program }: ExpertProgramWorkspaceProps) {
+export function ExpertProgramWorkspace({ program, framework }: ExpertProgramWorkspaceProps) {
   return (
     <AdvisoryChatProvider programId={program.id} hasChangesView>
-      <ExpertProgramLayout program={program} />
+      <ExpertProgramLayout program={program} framework={framework} />
     </AdvisoryChatProvider>
   );
 }
 
-function ExpertProgramLayout({ program }: ExpertProgramWorkspaceProps) {
+function ExpertProgramLayout({ program, framework }: ExpertProgramWorkspaceProps) {
   const router = useRouter();
   const { workspace, currentUserId } = useAdvisoryChat();
 
@@ -79,14 +79,13 @@ function ExpertProgramLayout({ program }: ExpertProgramWorkspaceProps) {
             </Button>
           }
         >
-          <ProgramLifecycleSteps
-            status={workspace?.status ?? program.status}
-            hasApproval={workspace ? workspace.approval !== null : null}
-          />
+          <ProgramWorkflowTimeline status={workspace?.status ?? program.status} workspace={workspace} />
         </ExpertWorkbenchHero>
 
         <div className="space-y-4 px-4 pb-12 pt-6 sm:px-6">
-          {program.frameworkId ? <FrameworkCheckSection programId={program.id} /> : null}
+          {program.frameworkId ? (
+            <FrameworkCheckBanner program={program} framework={framework} />
+          ) : null}
           <CurriculumSplitPanel program={program} onRefresh={refreshProgram} readOnly />
         </div>
       </div>
@@ -99,50 +98,20 @@ function ExpertProgramLayout({ program }: ExpertProgramWorkspaceProps) {
   );
 }
 
-/** Live framework rules, collapsed by default; failing rules link to the components to fix. */
-function FrameworkCheckSection({ programId }: { programId: string }) {
-  const [isOpen, setOpen] = useState(false);
-  const frameworkCheck = useFrameworkCheck(programId);
-  const { check } = frameworkCheck;
-  const failedCount = check ? check.checks.filter((item) => !item.passed).length : 0;
-
-  let summary = "Đang kiểm tra…";
-  let tone = "bg-muted text-muted-foreground";
-  if (check) {
-    if (failedCount > 0) {
-      summary = `${failedCount}/${check.checks.length} quy tắc chưa đạt`;
-      tone = "bg-amber-500/12 text-amber-800 dark:text-amber-300";
-    } else {
-      summary = "Đạt toàn bộ quy tắc";
-      tone = "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
-    }
-  } else if (frameworkCheck.error) {
-    summary = "Không tải được";
-  }
+function FrameworkCheckBanner({ program, framework }: ExpertProgramWorkspaceProps) {
+  const frameworkCheck = useFrameworkCheck(program.id);
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setOpen} className="rounded-2xl border border-border bg-card">
-      <CollapsibleTrigger className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-2.5 text-left">
-        <span className="text-sm font-semibold text-foreground">Kiểm tra khung</span>
-        <span className="flex items-center gap-2">
-          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", tone)}>{summary}</span>
-          <ChevronDown
-            className={cn(
-              "size-4 text-muted-foreground transition-transform duration-200 motion-reduce:transition-none",
-              isOpen && "rotate-180",
-            )}
-            aria-hidden
-          />
-        </span>
-      </CollapsibleTrigger>
-      <CollapsibleContent className="px-4 pb-4">
-        <FrameworkCheckList
-          check={check}
-          isLoading={frameworkCheck.isLoading}
-          error={frameworkCheck.error}
-          onRetry={() => void frameworkCheck.refresh()}
-        />
-      </CollapsibleContent>
-    </Collapsible>
+    <FrameworkRequirements
+      variant="banner"
+      framework={framework}
+      frameworkVersionNumber={program.frameworkVersionNumber ?? framework?.currentVersionNumber}
+      isCategoryMismatch={
+        framework != null && program.category != null && framework.category !== program.category
+      }
+      check={frameworkCheck.check}
+      isCheckLoading={frameworkCheck.isLoading}
+      onRetryCheck={() => void frameworkCheck.refresh()}
+    />
   );
 }

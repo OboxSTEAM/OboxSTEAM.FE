@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
 import { ExpertProgramWorkspace } from "@/components/expert/programs/expert-program-workspace";
-import { getProgramById } from "@/lib/api";
+import { getProgramById, getProgramFrameworkById } from "@/lib/api";
 import { hydrateProgramCurriculum } from "@/lib/api/programs/hydrate-curriculum";
 import { programIdParamSchema } from "@/lib/validations/programs";
 
@@ -31,11 +31,23 @@ export default async function ExpertProgramWorkspacePage({
     notFound();
   }
 
+  const framework = program.frameworkId ? await loadFramework(program.frameworkId) : null;
+
   return (
     <Suspense fallback={<div className="min-h-[480px] animate-pulse p-6 motion-reduce:animate-none" />}>
-      <ExpertProgramWorkspace program={program} />
+      <ExpertProgramWorkspace program={program} framework={framework} />
     </Suspense>
   );
+}
+
+/** Board members may not be allowed to read the framework; the live check still renders without it. */
+async function loadFramework(frameworkId: string) {
+  try {
+    const result = await getProgramFrameworkById(frameworkId);
+    return result?.data ?? null;
+  } catch {
+    return null;
+  }
 }
 
 async function loadProgram(programId: string) {

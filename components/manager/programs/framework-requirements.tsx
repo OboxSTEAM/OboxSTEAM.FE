@@ -1,5 +1,6 @@
 import { AlertCircle, CheckCircle2, Circle } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import type { ProgramFramework, ProgramFrameworkCheck } from "@/lib/api";
 import {
   buildFrameworkRules,
@@ -8,6 +9,10 @@ import {
 } from "@/lib/frameworks/rule-labels";
 import { cn } from "@/lib/utils";
 
+/**
+ * Framework rules for a program. The banner variant shows the live check; `framework`
+ * may be `null` when the viewer cannot read the framework itself (only the check).
+ */
 export function FrameworkRequirements({
   framework,
   frameworkVersionNumber,
@@ -15,15 +20,18 @@ export function FrameworkRequirements({
   variant = "inline",
   check = null,
   isCheckLoading = false,
+  onRetryCheck,
 }: {
-  framework: ProgramFramework;
+  framework: ProgramFramework | null;
   frameworkVersionNumber?: number | null;
   isCategoryMismatch?: boolean;
   variant?: "inline" | "banner";
   check?: ProgramFrameworkCheck | null;
   isCheckLoading?: boolean;
+  /** Shown as a retry action when there is neither a check nor framework rules to list. */
+  onRetryCheck?: () => void;
 }) {
-  const rules = buildFrameworkRules(framework);
+  const rules = framework ? buildFrameworkRules(framework) : [];
   const items = check?.checks ?? [];
   const doneCount = items.filter((item) => item.passed).length;
   const showChecklist = variant === "banner" && (isCheckLoading || items.length > 0);
@@ -42,10 +50,11 @@ export function FrameworkRequirements({
           Yêu cầu của khung
         </p>
         <p className="text-[11px] text-muted-foreground">
-          {framework.name || "Khung thẩm định"}
-          {frameworkVersionNumber != null ? ` · v${frameworkVersionNumber}` : ""}
-          {" · "}
-          {framework.expertName || "Chưa có chuyên gia"}
+          {framework
+            ? `${framework.name || "Khung thẩm định"}${frameworkVersionNumber != null ? ` · v${frameworkVersionNumber}` : ""} · ${framework.expertName || "Chưa có chuyên gia"}`
+            : frameworkVersionNumber != null
+              ? `Khung v${frameworkVersionNumber}`
+              : "Khung thẩm định"}
         </p>
       </div>
       {showChecklist ? (
@@ -110,6 +119,13 @@ export function FrameworkRequirements({
             </li>
           ))}
         </ul>
+      ) : onRetryCheck && !check ? (
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+          <span>Không tải được kết quả kiểm tra khung.</span>
+          <Button variant="outline" size="xs" onClick={onRetryCheck}>
+            Thử lại
+          </Button>
+        </div>
       ) : (
         <p className="mt-2 text-xs text-muted-foreground">
           Khung này không đặt yêu cầu tối thiểu về cấu trúc.
