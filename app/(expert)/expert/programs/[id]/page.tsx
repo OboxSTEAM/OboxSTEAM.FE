@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
-import { ProgramAdvisoryWorkspace } from "@/components/expert/programs/program-advisory-workspace";
+import { ExpertProgramWorkspace } from "@/components/expert/programs/expert-program-workspace";
 import { getProgramById } from "@/lib/api";
 import { hydrateProgramCurriculum } from "@/lib/api/programs/hydrate-curriculum";
 import { programIdParamSchema } from "@/lib/validations/programs";
@@ -32,8 +32,8 @@ export default async function ExpertProgramWorkspacePage({
   }
 
   return (
-    <Suspense fallback={<div className="min-h-[480px] animate-pulse p-6" />}>
-      <ProgramAdvisoryWorkspace program={program} />
+    <Suspense fallback={<div className="min-h-[480px] animate-pulse p-6 motion-reduce:animate-none" />}>
+      <ExpertProgramWorkspace program={program} />
     </Suspense>
   );
 }

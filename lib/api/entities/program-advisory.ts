@@ -170,11 +170,15 @@ export const advisoryMineItemSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? null),
-  nextAction: nullableStringSchema,
-  unreadFeedbackCount: z.number().int(),
+  /** Chat messages after the viewer's read cursor. */
+  unreadCount: z.number().int(),
+  openPinCount: z.number().int(),
+  /** `Revoked` can pair with any status, including `Active`. */
+  approvalState: z.enum(["None", "Approved", "Revoked"]),
 });
 
 export type AdvisoryMineItem = z.infer<typeof advisoryMineItemSchema>;
+export type AdvisoryApprovalState = AdvisoryMineItem["approvalState"];
 
 export const paginatedAdvisoryMineSchema =
   createPaginatedSchema(advisoryMineItemSchema);

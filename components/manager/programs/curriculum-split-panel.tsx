@@ -132,7 +132,11 @@ import {
   THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
 import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
-import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
+import {
+  MODULE_TYPE_LABELS,
+  PROGRAM_CATEGORY_META,
+  PROGRAM_LEVEL_LABELS,
+} from "@/lib/programs/constants";
 
 /* ─── Palette ─────────────────────────────────────────────────────────────── */
 const W = {
@@ -224,7 +228,7 @@ function EmptyPanel() {
   return (
     <div className="flex flex-col items-center justify-center h-full gap-3 py-20 px-6 text-center">
       <LayoutGrid className="size-10" style={{ color: W.surface3 }} />
-      <p className="text-sm font-semibold" style={{ color: W.textStrong }}>Chọn một mục để chỉnh sửa</p>
+      <p className="text-sm font-semibold" style={{ color: W.textStrong }}>Chọn một mục để xem chi tiết</p>
       <p className="text-xs max-w-[200px]" style={{ color: W.muted }}>Bấm vào tên chương trình, module, khóa học hoặc hoạt động bên trái.</p>
     </div>
   );
@@ -1068,6 +1072,69 @@ function ProgramInfoPanel({
   );
 }
 
+/** Program node for viewers: the curriculum fields an advisor reviews, without the edit form. */
+function ProgramSummaryPanel({ program }: { program: ProgramWithModules }) {
+  const category = program.category ? PROGRAM_CATEGORY_META[program.category] : null;
+  const facts: { label: string; value: string }[] = [
+    { label: "Series", value: program.seriesName || "—" },
+    { label: "Thể loại STEAM", value: category?.label ?? "—" },
+    { label: "Độ khó", value: PROGRAM_LEVEL_LABELS[program.level] ?? program.level },
+    { label: "Thời lượng dự kiến", value: program.estimatedDuration || "—" },
+    {
+      label: "Khung thẩm định",
+      value: program.frameworkVersionNumber != null ? `Phiên bản ${program.frameworkVersionNumber}` : "Chưa gắn khung",
+    },
+  ];
+
+  return (
+    <div className="flex flex-col">
+      <PHdr icon={LayoutGrid} color={W.primary} title={program.name} sub={`Mã: ${program.code} · Thông tin chung`} />
+      <div className="space-y-6 p-5">
+        {program.thumbnailUrl ? (
+          <div className="overflow-hidden rounded-xl border bg-muted" style={{ aspectRatio: "21/9", borderColor: W.border }}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- uploaded thumbnail, unknown host */}
+            <img src={program.thumbnailUrl} alt="" className="h-full w-full object-cover" />
+          </div>
+        ) : null}
+
+        <dl className="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+          {facts.map((fact) => (
+            <div key={fact.label} className="min-w-0">
+              <dt className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: W.faint }}>
+                {fact.label}
+              </dt>
+              <dd className="mt-0.5 text-sm" style={{ color: W.textStrong }}>{fact.value}</dd>
+            </div>
+          ))}
+        </dl>
+
+        <div>
+          <STitle>Mô tả chương trình</STitle>
+          <p className="whitespace-pre-line text-sm leading-relaxed" style={{ color: W.text }}>
+            {program.description || "Chưa có mô tả."}
+          </p>
+        </div>
+
+        <div>
+          <STitle>Kỹ năng đạt được</STitle>
+          <p className="whitespace-pre-line text-sm leading-relaxed" style={{ color: W.text }}>
+            {program.skillsGained || "Chưa khai báo."}
+          </p>
+          {program.skills.length > 0 ? (
+            <ul className="mt-3 flex flex-wrap gap-1.5">
+              {program.skills.map((skill) => (
+                <li key={skill.id} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium" style={{ color: W.textStrong }}>
+                  {skill.name || skill.code}
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /** Missing `next` counts as unchanged. */
 function isSameIdSet(next: readonly string[] | undefined, current: readonly string[]): boolean {
   if (next === undefined) return true;
@@ -1483,6 +1550,8 @@ function CohortLockBanner({
 type CurriculumSplitPanelProps = {
   program: ProgramWithModules;
   onRefresh: () => void;
+  /** Viewer mode (experts): no mutations, and the program node shows a summary instead of the form. */
+  readOnly?: boolean;
   /** Read-only tree + detail panels (live-class lock, missing permission, pending confirm). */
   cohortLocked?: boolean;
   /** Keeps status, price and framework editable while `cohortLocked` (not curriculum fields). */
@@ -1605,11 +1674,13 @@ function parseSelFromSearch(
 export function CurriculumSplitPanel({
   program,
   onRefresh,
-  cohortLocked = false,
+  readOnly = false,
+  cohortLocked: isCohortLocked = false,
   canEditProgramSettings = false,
   lockReason = null,
   blockingClasses = [],
 }: CurriculumSplitPanelProps) {
+  const cohortLocked = isCohortLocked || readOnly;
   const canMutate = !cohortLocked;
   const router = useRouter();
   const pathname = usePathname();
@@ -2100,6 +2171,7 @@ export function CurriculumSplitPanel({
   const detail = useCallback((): React.ReactNode => {
     if (!sel) return <EmptyPanel />;
     if (sel.kind === "program") {
+      if (readOnly) return <ProgramSummaryPanel program={program} />;
       return (
         <ProgramInfoPanel
           program={program}
@@ -2317,6 +2389,7 @@ export function CurriculumSplitPanel({
     upsertSessionAssignment,
     milestonesByModule,
     upsertMilestone,
+    readOnly,
     cohortLocked,
     canEditProgramSettings,
     lockReason,
