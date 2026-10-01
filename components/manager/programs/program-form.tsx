@@ -41,6 +41,7 @@ import {
   type ProgramWithModules,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { buildFrameworkRules } from "@/lib/frameworks/rule-labels";
 import { SkillMultiSelect } from "@/components/skills/skill-multi-select";
 import { programUpsertSchema, uploadProgramThumbnailSchema } from "@/lib/validations/programs";
 import { cn } from "@/lib/utils";
@@ -234,6 +235,7 @@ function FrameworkPicker({
             const isOtherCategory = framework.category !== programCategory;
             const summary =
               framework.description.trim() || "Chưa có mô tả cho khung này.";
+            const ruleCount = buildFrameworkRules(framework).length;
             return (
               <button
                 key={framework.id}
@@ -271,9 +273,7 @@ function FrameworkPicker({
                   </span>
                   <span className="mt-1.5 block truncate text-xs text-foreground/80">
                     Chuyên gia: {framework.expertName || "Chưa có tên"}
-                    {framework.criteria.length > 0
-                      ? ` · ${framework.criteria.length} tiêu chí`
-                      : ""}
+                    {ruleCount > 0 ? ` · ${ruleCount} quy tắc` : ""}
                   </span>
                 </span>
                 <span
@@ -305,7 +305,7 @@ function FrameworkGuidelines({
   if (!framework) {
     return (
       <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-        Gắn khung để chuyên gia thẩm định curriculum theo rubric có sẵn.
+        Gắn khung để curriculum được kiểm tra tự động theo quy tắc của khung trước khi chuyên gia chấp thuận.
       </p>
     );
   }

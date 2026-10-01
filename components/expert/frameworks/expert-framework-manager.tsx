@@ -10,11 +10,7 @@ import {
   Plus,
 } from "lucide-react";
 
-import {
-  FrameworkFormDialog,
-  type CriterionDraft,
-  type FrameworkFormValues,
-} from "@/components/expert/frameworks/framework-form-dialog";
+import { FrameworkFormDialog } from "@/components/expert/frameworks/framework-form-dialog";
 import {
   ExpertWorkbenchHero,
   ExpertWorkflowRail,
@@ -35,22 +31,19 @@ import {
 } from "@/components/ui/tooltip";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
-  addFrameworkCriterion,
   createProgramFramework,
-  deleteFrameworkCriterion,
   deleteProgramFramework,
   getProgramFrameworks,
-  updateFrameworkCriterion,
-  updateProgramFramework,
-  type FrameworkRubricCriterionRequestInput,
   type ProgramCategory,
   type ProgramFramework,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import { buildFrameworkRules } from "@/lib/frameworks/rule-labels";
 import {
   PROGRAM_CATEGORY_META,
   PROGRAM_CATEGORY_ORDER,
 } from "@/lib/programs/constants";
+import type { FrameworkCreateFormValues } from "@/lib/validations/program-frameworks";
 
 const CATEGORY_OPTIONS = [
   { value: "all", label: "Mọi lĩnh vực" },
@@ -62,69 +55,6 @@ const CATEGORY_OPTIONS = [
 
 const PAGE_SIZE = 10;
 
-function toCount(value: string): number | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  return Number.isInteger(parsed) && parsed >= 1 ? parsed : null;
-}
-
-function toCriterionRequest(
-  criterion: CriterionDraft,
-  index: number,
-): FrameworkRubricCriterionRequestInput {
-  return {
-    name: criterion.name.trim(),
-    description: criterion.description.trim() || null,
-    evidenceGuidance: criterion.evidenceGuidance.trim() || null,
-    maxScore: Number(criterion.maxScore),
-    displayOrder: index,
-  };
-}
-
-function hasCriterionChanged(
-  criterion: CriterionDraft,
-  index: number,
-  framework: ProgramFramework,
-): boolean {
-  const original = framework.criteria.find((item) => item.id === criterion.id);
-  if (!original) return true;
-  return (
-    original.name !== criterion.name.trim() ||
-    original.description !== criterion.description.trim() ||
-    (original.evidenceGuidance ?? "") !== criterion.evidenceGuidance.trim() ||
-    original.maxScore !== Number(criterion.maxScore) ||
-    original.displayOrder !== index
-  );
-}
-
-/** Applies added / edited / removed rubric rows against the saved framework. */
-async function syncFrameworkCriteria(
-  framework: ProgramFramework,
-  drafts: CriterionDraft[],
-): Promise<void> {
-  const keptIds = new Set(
-    drafts.map((draft) => draft.id).filter((id): id is string => id != null),
-  );
-
-  for (const original of framework.criteria) {
-    if (!keptIds.has(original.id)) {
-      await deleteFrameworkCriterion(framework.id, original.id);
-    }
-  }
-
-  for (const [index, draft] of drafts.entries()) {
-    const request = toCriterionRequest(draft, index);
-    if (draft.id) {
-      if (hasCriterionChanged(draft, index, framework)) {
-        await updateFrameworkCriterion(framework.id, draft.id, request);
-      }
-      continue;
-    }
-    await addFrameworkCriterion(framework.id, request);
-  }
-}
-
 export function ExpertFrameworkManager() {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -132,8 +62,6 @@ export function ExpertFrameworkManager() {
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
   const [formOpen, setFormOpen] = useState(false);
-  const [editingFramework, setEditingFramework] =
-    useState<ProgramFramework | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ProgramFramework | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -159,73 +87,31 @@ export function ExpertFrameworkManager() {
   const totalCount = data?.data?.totalCount ?? 0;
 
   function openCreate() {
-    setEditingFramework(null);
     setFormOpen(true);
   }
 
-  async function handleSubmit(
-    values: FrameworkFormValues,
-    criteria: CriterionDraft[],
-  ) {
+  async function handleCreate(values: FrameworkCreateFormValues) {
     setIsSubmitting(true);
     try {
-      if (editingFramework) {
-        const minModules = toCount(values.minModules);
-        const minOfflineSessions = toCount(values.minOfflineSessions);
-        const minLiveSessions = toCount(values.minLiveSessions);
-
-        await updateProgramFramework(editingFramework.id, {
-          name: values.name,
-          description: values.description || null,
-          academicGuidance: values.academicGuidance || null,
-          category: values.category,
-          minModules,
-          minOfflineSessions,
-          minLiveSessions,
-          requireCapstoneResearchMilestone:
-            values.requireCapstoneResearchMilestone,
-          clearMinModules: minModules == null,
-          clearMinOfflineSessions: minOfflineSessions == null,
-          clearMinLiveSessions: minLiveSessions == null,
-        });
-        await syncFrameworkCriteria(editingFramework, criteria);
-        showAppSuccess({
-          title: "Đã cập nhật khung chương trình",
-          description: `Khung “${values.name}” đã được lưu.`,
-        });
-      } else {
-        const created = await createProgramFramework({
-          name: values.name,
-          description: values.description || null,
-          academicGuidance: values.academicGuidance || null,
-          category: values.category,
-          minModules: toCount(values.minModules),
-          minOfflineSessions: toCount(values.minOfflineSessions),
-          minLiveSessions: toCount(values.minLiveSessions),
-          requireCapstoneResearchMilestone:
-            values.requireCapstoneResearchMilestone,
-          criteria: criteria.map(toCriterionRequest),
-        });
-        const frameworkId = created?.data?.id;
-        showAppSuccess({
-          title: "Đã tạo khung chương trình",
-          description: `Khung “${values.name}” sẵn sàng để biên tập.`,
-        });
-        setFormOpen(false);
-        setEditingFramework(null);
-        if (frameworkId) {
-          router.push(`/expert/frameworks/${frameworkId}`);
-          return;
-        }
-      }
+      const created = await createProgramFramework({
+        name: values.name,
+        description: values.description || null,
+        academicGuidance: values.academicGuidance || null,
+        category: values.category,
+      });
+      const frameworkId = created?.data?.id;
+      showAppSuccess({
+        title: "Đã tạo khung chương trình",
+        description: `Khung “${values.name}” sẵn sàng để đặt quy tắc.`,
+      });
       setFormOpen(false);
-      setEditingFramework(null);
+      if (frameworkId) {
+        router.push(`/expert/frameworks/${frameworkId}`);
+        return;
+      }
       retry();
     } catch (error) {
-      showAppErrorFromUnknown(
-        error,
-        editingFramework ? "frameworks.update" : "frameworks.create",
-      );
+      showAppErrorFromUnknown(error, "frameworks.create");
     } finally {
       setIsSubmitting(false);
     }
@@ -297,21 +183,10 @@ export function ExpertFrameworkManager() {
       ),
     },
     {
-      header: "Yêu cầu tối thiểu",
+      header: "Quy tắc",
       className: "w-40",
       render: (framework) => {
-        const rules = [
-          framework.minModules != null
-            ? `${framework.minModules} học phần`
-            : null,
-          framework.minOfflineSessions != null
-            ? `${framework.minOfflineSessions} buổi offline`
-            : null,
-          framework.minLiveSessions != null
-            ? `${framework.minLiveSessions} buổi live`
-            : null,
-          framework.requireCapstoneResearchMilestone ? "Có capstone" : null,
-        ].filter(Boolean) as string[];
+        const rules = buildFrameworkRules(framework);
 
         if (rules.length === 0) {
           return (
@@ -330,10 +205,10 @@ export function ExpertFrameworkManager() {
               }
             >
               <span className="truncate tabular-nums">
-                {rules.length} ràng buộc
+                {rules.length} quy tắc
               </span>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-56 text-left leading-5">
+            <TooltipContent side="top" className="max-w-72 text-left leading-5">
               <ul className="space-y-1">
                 {rules.map((rule) => (
                   <li key={rule}>· {rule}</li>
@@ -343,15 +218,6 @@ export function ExpertFrameworkManager() {
           </Tooltip>
         );
       },
-    },
-    {
-      header: "Tiêu chí",
-      className: "w-24 tabular-nums",
-      render: (framework) => (
-        <span className="font-mono text-sm font-semibold text-foreground">
-          {framework.criteria.length}
-        </span>
-      ),
     },
     {
       header: "Thao tác",
@@ -387,7 +253,7 @@ export function ExpertFrameworkManager() {
       <ExpertWorkbenchHero
         eyebrow="Thư viện chuẩn học thuật"
         title="Bộ khung thẩm định"
-        description="Khung = chuẩn cấu trúc & hướng dẫn học thuật. Rubric = tiêu chí chấm khi thẩm định. Hoàn thiện rồi xuất bản để Manager gán vào chương trình."
+        description="Khung gồm hướng dẫn học thuật và các quy tắc kiểm tra curriculum tự động. Hoàn thiện rồi xuất bản để Manager gán vào chương trình."
         icon={BookOpen}
         actions={
           <Button
@@ -409,12 +275,12 @@ export function ExpertFrameworkManager() {
             },
             {
               label: "Đặt chuẩn nền",
-              detail: "Nguyên tắc học thuật và điều kiện cấu trúc tối thiểu.",
+              detail: "Nguyên tắc sư phạm cho người thiết kế curriculum.",
               state: "next",
             },
             {
-              label: "Viết rubric",
-              detail: "Tiêu chí, minh chứng và thang điểm rõ ràng.",
+              label: "Đặt quy tắc",
+              detail: "Điều kiện curriculum phải đạt trước khi chấp thuận.",
               state: "next",
             },
             {
@@ -484,7 +350,7 @@ export function ExpertFrameworkManager() {
                 <ManagerEmptyState
                   icon={BookOpen}
                   title="Chưa có bộ khung thẩm định"
-                  description="Khởi tạo bộ khung đầu tiên, sau đó hoàn thiện bối cảnh, chuẩn học thuật và rubric trong trang biên tập."
+                  description="Khởi tạo bộ khung đầu tiên, sau đó hoàn thiện bối cảnh, chuẩn học thuật và quy tắc trong trang biên tập."
                   actionLabel="Khởi tạo bộ khung"
                   onAction={openCreate}
                 />
@@ -496,13 +362,9 @@ export function ExpertFrameworkManager() {
 
       <FrameworkFormDialog
         open={formOpen}
-        onOpenChange={(open) => {
-          setFormOpen(open);
-          if (!open) setEditingFramework(null);
-        }}
-        framework={editingFramework}
+        onOpenChange={setFormOpen}
         isSubmitting={isSubmitting}
-        onSubmit={handleSubmit}
+        onSubmit={handleCreate}
       />
 
       <ConfirmDialog

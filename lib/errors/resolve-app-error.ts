@@ -355,7 +355,7 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "frameworks.versions": {
     title: "Không thao tác được phiên bản khung",
-    reason: "Phiên bản nháp có thể đã được xuất bản hoặc dữ liệu rubric chưa hợp lệ.",
+    reason: "Phiên bản nháp có thể đã được xuất bản hoặc quy tắc khung chưa hợp lệ.",
     action: "Tải lại trang và thử lại.",
   },
   "frameworks.list": {
@@ -371,7 +371,7 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   "frameworks.create": {
     title: "Không tạo được khung chương trình",
     reason: "Thông tin chưa hợp lệ hoặc tên khung đã tồn tại.",
-    action: "Kiểm tra tên, lĩnh vực và bộ tiêu chí rồi thử lại.",
+    action: "Kiểm tra tên và lĩnh vực rồi thử lại.",
   },
   "frameworks.update": {
     title: "Không cập nhật được khung chương trình",
@@ -382,11 +382,6 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không xóa được khung chương trình",
     reason: "Khung có thể đang được chương trình khác sử dụng.",
     action: "Gỡ khung khỏi các chương trình liên quan rồi thử lại.",
-  },
-  "frameworks.criteria": {
-    title: "Không lưu được tiêu chí rubric",
-    reason: "Tên tiêu chí hoặc điểm tối đa chưa hợp lệ.",
-    action: "Kiểm tra tên tiêu chí và điểm tối đa (1–100) rồi thử lại.",
   },
   "coteach.mine": {
     title: "Không tải được lịch đồng hành",
@@ -1041,7 +1036,6 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "frameworks.create",
   "frameworks.update",
   "frameworks.delete",
-  "frameworks.criteria",
   "coteach.invite",
   "coteach.accept",
   "coteach.decline",

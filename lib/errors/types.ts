@@ -83,7 +83,6 @@ export type AppErrorContext =
   | "frameworks.create"
   | "frameworks.update"
   | "frameworks.delete"
-  | "frameworks.criteria"
   | "frameworks.versions"
   | "programs.advisor"
   | "programs.advisory"

@@ -4,62 +4,45 @@ import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
   createProgramFrameworkSchema,
-  frameworkCriterionIdParamSchema,
-  frameworkRubricCriterionRequestSchema,
   frameworkVersionIdParamSchema,
   programFrameworkIdParamSchema,
   programFrameworkListQuerySchema,
-  saveFrameworkRubricSchema,
   updateProgramFrameworkSchema,
   type CreateProgramFrameworkInput,
-  type FrameworkRubricCriterionRequestInput,
   type ProgramFrameworkListQuery,
-  type SaveFrameworkRubricInput,
   type UpdateProgramFrameworkInput,
 } from "@/lib/validations/program-frameworks";
 
 import {
   archiveProgramFrameworkResponseSchema,
-  createFrameworkCriterionResponseSchema,
   createFrameworkDraftVersionResponseSchema,
   createProgramFrameworkResponseSchema,
-  deleteFrameworkCriterionResponseSchema,
   deleteProgramFrameworkResponseSchema,
   getFrameworkVersionResponseSchema,
   getFrameworkVersionsResponseSchema,
   getProgramFrameworkByIdResponseSchema,
   getProgramFrameworksResponseSchema,
   publishFrameworkVersionResponseSchema,
-  saveFrameworkRubricResponseSchema,
-  updateFrameworkCriterionResponseSchema,
   updateProgramFrameworkResponseSchema,
   type ArchiveProgramFrameworkResult,
-  type CreateFrameworkCriterionResult,
   type CreateFrameworkDraftVersionResult,
   type CreateProgramFrameworkResult,
-  type DeleteFrameworkCriterionResult,
   type DeleteProgramFrameworkResult,
   type GetFrameworkVersionResult,
   type GetFrameworkVersionsResult,
   type GetProgramFrameworkByIdResult,
   type GetProgramFrameworksResult,
   type PublishFrameworkVersionResult,
-  type SaveFrameworkRubricResult,
-  type UpdateFrameworkCriterionResult,
   type UpdateProgramFrameworkResult,
 } from "./schemas";
 
 export type {
   ArchiveProgramFrameworkResponse,
   ArchiveProgramFrameworkResult,
-  CreateFrameworkCriterionResponse,
-  CreateFrameworkCriterionResult,
   CreateFrameworkDraftVersionResponse,
   CreateFrameworkDraftVersionResult,
   CreateProgramFrameworkResponse,
   CreateProgramFrameworkResult,
-  DeleteFrameworkCriterionResponse,
-  DeleteFrameworkCriterionResult,
   DeleteProgramFrameworkResponse,
   DeleteProgramFrameworkResult,
   GetFrameworkVersionResponse,
@@ -72,25 +55,19 @@ export type {
   GetProgramFrameworksResult,
   PublishFrameworkVersionResponse,
   PublishFrameworkVersionResult,
-  SaveFrameworkRubricResponse,
-  SaveFrameworkRubricResult,
-  UpdateFrameworkCriterionResponse,
-  UpdateFrameworkCriterionResult,
   UpdateProgramFrameworkResponse,
   UpdateProgramFrameworkResult,
 } from "./schemas";
 
 export type {
-  FrameworkRubricCriterion,
+  FrameworkRuleFields,
   ProgramFramework,
   ProgramFrameworkVersion,
 } from "@/lib/api/entities/program-framework";
 
 export type {
   CreateProgramFrameworkInput,
-  FrameworkRubricCriterionRequestInput,
   ProgramFrameworkListQuery,
-  SaveFrameworkRubricInput,
   UpdateProgramFrameworkInput,
 } from "@/lib/validations/program-frameworks";
 
@@ -183,57 +160,6 @@ export async function deleteProgramFramework(
   return requireApiValue(response.value);
 }
 
-export async function addFrameworkCriterion(
-  frameworkId: string,
-  input: FrameworkRubricCriterionRequestInput,
-): Promise<CreateFrameworkCriterionResult> {
-  const { id } = programFrameworkIdParamSchema.parse({ id: frameworkId });
-  const body = frameworkRubricCriterionRequestSchema.parse(input);
-  const response = await apiFetchParsed(
-    `${BASE}/${id}/criteria`,
-    createFrameworkCriterionResponseSchema,
-    { method: "POST", body },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function updateFrameworkCriterion(
-  frameworkId: string,
-  criterionId: string,
-  input: FrameworkRubricCriterionRequestInput,
-): Promise<UpdateFrameworkCriterionResult> {
-  const params = frameworkCriterionIdParamSchema.parse({
-    id: frameworkId,
-    criterionId,
-  });
-  const body = frameworkRubricCriterionRequestSchema.parse(input);
-  const response = await apiFetchParsed(
-    `${BASE}/${params.id}/criteria/${params.criterionId}`,
-    updateFrameworkCriterionResponseSchema,
-    { method: "PUT", body },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function deleteFrameworkCriterion(
-  frameworkId: string,
-  criterionId: string,
-): Promise<DeleteFrameworkCriterionResult> {
-  const params = frameworkCriterionIdParamSchema.parse({
-    id: frameworkId,
-    criterionId,
-  });
-  const response = await apiFetchParsed(
-    `${BASE}/${params.id}/criteria/${params.criterionId}`,
-    deleteFrameworkCriterionResponseSchema,
-    { method: "DELETE" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
 export async function archiveProgramFramework(
   id: string,
 ): Promise<ArchiveProgramFrameworkResult> {
@@ -302,25 +228,6 @@ export async function publishFrameworkVersion(
     `${BASE}/${params.id}/versions/${params.versionId}/publish`,
     publishFrameworkVersionResponseSchema,
     { method: "POST" },
-  );
-  assertApiSuccess(response);
-  return requireApiValue(response.value);
-}
-
-export async function saveFrameworkDraftRubric(
-  frameworkId: string,
-  versionId: string,
-  input: SaveFrameworkRubricInput,
-): Promise<SaveFrameworkRubricResult> {
-  const params = frameworkVersionIdParamSchema.parse({
-    id: frameworkId,
-    versionId,
-  });
-  const body = saveFrameworkRubricSchema.parse(input);
-  const response = await apiFetchParsed(
-    `${BASE}/${params.id}/versions/${params.versionId}/rubric`,
-    saveFrameworkRubricResponseSchema,
-    { method: "PUT", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

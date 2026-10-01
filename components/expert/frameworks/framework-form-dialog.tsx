@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { ListChecks, Plus, Ruler, SlidersHorizontal, Trash2 } from "lucide-react";
-import { z } from "zod";
+import { Ruler } from "lucide-react";
 
 import { useAuthErrorShake } from "@/components/auth/use-auth-error-shake";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogClose,
@@ -29,8 +27,6 @@ import {
   SelectTrigger,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { programCategorySchema } from "@/lib/api/entities/program";
-import type { ProgramFramework } from "@/lib/api";
 import {
   PROGRAM_CATEGORY_META,
   PROGRAM_CATEGORY_ORDER,
@@ -41,170 +37,62 @@ import {
   THEME_SELECT_TRIGGER,
 } from "@/lib/ui/select-styles";
 import { cn } from "@/lib/utils";
-
-/** Counts stay as text so form input and parsed output share one type.
- * Blank = unrestricted; zero is not a valid configured minimum.
- */
-const countTextSchema = z
-  .string()
-  .trim()
-  .refine(
-    (value) => value === "" || /^[1-9]\d{0,3}$/.test(value),
-    "Để trống nếu không ràng buộc, hoặc nhập số nguyên từ 1 trở lên.",
-  );
-
-const frameworkFormSchema = z.object({
-  name: z
-    .string()
-    .trim()
-    .min(1, "Vui lòng nhập tên khung.")
-    .max(255, "Tên khung không được quá 255 ký tự."),
-  description: z.string().trim().max(4000, "Mô tả không được quá 4000 ký tự."),
-  academicGuidance: z
-    .string()
-    .trim()
-    .max(8000, "Hướng dẫn học thuật không được quá 8000 ký tự."),
-  category: programCategorySchema,
-  minModules: countTextSchema,
-  minOfflineSessions: countTextSchema,
-  minLiveSessions: countTextSchema,
-  requireCapstoneResearchMilestone: z.boolean(),
-});
-
-export type FrameworkFormValues = z.infer<typeof frameworkFormSchema>;
-
-export type CriterionDraft = {
-  /** Stable React key — criteria can be reordered and re-added before saving. */
-  key: string;
-  /** Set for criteria that already exist on the server. */
-  id: string | null;
-  name: string;
-  description: string;
-  evidenceGuidance: string;
-  maxScore: string;
-};
-
-export type FrameworkFormSubmit = (
-  values: FrameworkFormValues,
-  criteria: CriterionDraft[],
-) => Promise<void>;
+import {
+  frameworkCreateFormSchema,
+  type FrameworkCreateFormValues,
+} from "@/lib/validations/program-frameworks";
 
 type FrameworkFormDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  framework: ProgramFramework | null;
   isSubmitting: boolean;
-  onSubmit: FrameworkFormSubmit;
+  onSubmit: (values: FrameworkCreateFormValues) => Promise<void>;
 };
 
 const INPUT_CLASS =
   "h-11 rounded-xl border-input bg-card text-sm text-foreground focus-visible:ring-ring/50";
 
-function createCriterionKey(): string {
-  return `criterion-${Math.random().toString(36).slice(2, 10)}`;
-}
+const DEFAULT_VALUES: FrameworkCreateFormValues = {
+  name: "",
+  description: "",
+  academicGuidance: "",
+  category: "Science",
+};
 
-function toDefaultValues(framework: ProgramFramework | null): FrameworkFormValues {
-  return {
-    name: framework?.name ?? "",
-    description: framework?.description ?? "",
-    academicGuidance: framework?.academicGuidance ?? "",
-    category: framework?.category ?? "Science",
-    minModules: framework?.minModules?.toString() ?? "",
-    minOfflineSessions: framework?.minOfflineSessions?.toString() ?? "",
-    minLiveSessions: framework?.minLiveSessions?.toString() ?? "",
-    requireCapstoneResearchMilestone:
-      framework?.requireCapstoneResearchMilestone ?? false,
-  };
-}
-
-function toCriterionDrafts(framework: ProgramFramework | null): CriterionDraft[] {
-  if (!framework) return [];
-  return [...framework.criteria]
-    .sort((left, right) => left.displayOrder - right.displayOrder)
-    .map((criterion) => ({
-      key: criterion.id,
-      id: criterion.id,
-      name: criterion.name,
-      description: criterion.description,
-      evidenceGuidance: criterion.evidenceGuidance ?? "",
-      maxScore: criterion.maxScore.toString(),
-    }));
-}
-
+/** Creates a framework shell; rules are configured in the editor it opens next. */
 export function FrameworkFormDialog({
   open,
   onOpenChange,
-  framework,
   isSubmitting,
   onSubmit,
 }: FrameworkFormDialogProps) {
-  const frameworkId = framework?.id ?? null;
-  const [criteria, setCriteria] = useState<CriterionDraft[]>(() =>
-    toCriterionDrafts(framework),
-  );
-  const [criteriaError, setCriteriaError] = useState<string | null>(null);
-
   const {
     control,
     register,
     reset,
     handleSubmit,
     formState: { errors },
-  } = useForm<FrameworkFormValues>({
-    resolver: zodResolver(frameworkFormSchema),
-    defaultValues: toDefaultValues(framework),
+  } = useForm<FrameworkCreateFormValues>({
+    resolver: zodResolver(frameworkCreateFormSchema),
+    defaultValues: DEFAULT_VALUES,
   });
 
   useEffect(() => {
-    if (!open) return;
-    reset(toDefaultValues(framework));
-    // Reset only when the dialog opens or switches to another framework.
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-seed drafts on open
-    setCriteria(toCriterionDrafts(framework));
-    setCriteriaError(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
-  }, [frameworkId, open, reset]);
-
-  function updateCriterion(key: string, patch: Partial<CriterionDraft>) {
-    setCriteria((prev) =>
-      prev.map((item) => (item.key === key ? { ...item, ...patch } : item)),
-    );
-  }
-
-  function validateCriteria(): boolean {
-    for (const criterion of criteria) {
-      if (!criterion.name.trim()) {
-        setCriteriaError("Mỗi tiêu chí cần có tên.");
-        return false;
-      }
-      const maxScore = Number(criterion.maxScore);
-      if (!Number.isInteger(maxScore) || maxScore < 1 || maxScore > 100) {
-        setCriteriaError("Điểm tối đa của mỗi tiêu chí phải là số nguyên 1–100.");
-        return false;
-      }
-    }
-    setCriteriaError(null);
-    return true;
-  }
+    if (open) reset(DEFAULT_VALUES);
+  }, [open, reset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogScrollPopup className="max-w-4xl">
+      <DialogScrollPopup className="max-w-2xl">
         <form
-          onSubmit={handleSubmit((values) => {
-            if (!validateCriteria()) return;
-            return onSubmit(values, criteria);
-          })}
+          onSubmit={handleSubmit((values) => onSubmit(values))}
           className={dialogScrollFormClassName}
         >
           <DialogScrollHeader>
-            <DialogTitle>
-              {framework ? "Cập nhật khung chương trình" : "Tạo khung chương trình"}
-            </DialogTitle>
+            <DialogTitle>Tạo khung chương trình</DialogTitle>
             <DialogDescription>
-              Khung quy định chuẩn cấu trúc và hướng dẫn học thuật. Rubric bên
-              dưới là bộ tiêu chí dùng khi chuyên gia thẩm định chương trình.
+              Nhập thông tin chung của khung. Sau khi tạo, bạn sẽ đặt các quy tắc
+              kiểm tra curriculum tự động trong trang biên tập.
             </DialogDescription>
           </DialogScrollHeader>
           <DialogClose />
@@ -281,200 +169,12 @@ export function FrameworkFormDialog({
                 <Textarea
                   id="framework-academic-guidance"
                   rows={4}
-                  placeholder="Nêu nguyên tắc sư phạm, độ sâu kiến thức và những minh chứng quan trọng người thẩm định cần tìm."
+                  placeholder="Nêu nguyên tắc sư phạm, độ sâu kiến thức và những điều người thiết kế curriculum cần lưu ý."
                   {...register("academicGuidance")}
                   className="rounded-xl border-input bg-card"
                 />
                 <FieldError message={errors.academicGuidance?.message} />
               </div>
-            </section>
-
-            <section className="space-y-4 border-t border-border pt-5">
-              <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-                <SlidersHorizontal className="size-4 text-primary" />
-                Yêu cầu tối thiểu
-              </h3>
-              <p className="-mt-2 text-xs leading-5 text-muted-foreground">
-                Để trống nếu khung không ràng buộc chỉ số đó.
-              </p>
-
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div className="space-y-2">
-                  <Label htmlFor="framework-min-modules">Số học phần tối thiểu</Label>
-                  <Input
-                    id="framework-min-modules"
-                    inputMode="numeric"
-                    placeholder="—"
-                    {...register("minModules")}
-                    className={INPUT_CLASS}
-                  />
-                  <FieldError message={errors.minModules?.message} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="framework-min-offline">Buổi offline tối thiểu</Label>
-                  <Input
-                    id="framework-min-offline"
-                    inputMode="numeric"
-                    placeholder="—"
-                    {...register("minOfflineSessions")}
-                    className={INPUT_CLASS}
-                  />
-                  <FieldError message={errors.minOfflineSessions?.message} />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="framework-min-live">Buổi live tối thiểu</Label>
-                  <Input
-                    id="framework-min-live"
-                    inputMode="numeric"
-                    placeholder="—"
-                    {...register("minLiveSessions")}
-                    className={INPUT_CLASS}
-                  />
-                  <FieldError message={errors.minLiveSessions?.message} />
-                </div>
-              </div>
-
-              <Controller
-                control={control}
-                name="requireCapstoneResearchMilestone"
-                render={({ field }) => (
-                  <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border bg-background/60 p-4">
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(checked === true)}
-                      className="mt-0.5 border-input data-checked:border-primary data-checked:bg-primary"
-                    />
-                    <span className="min-w-0">
-                      <span className="block text-sm font-semibold text-foreground">
-                        Bắt buộc có capstone / mốc nghiên cứu
-                      </span>
-                      <span className="mt-0.5 block text-xs text-muted-foreground">
-                        Chương trình theo khung này phải có ít nhất một mốc nghiên cứu
-                        tổng kết.
-                      </span>
-                    </span>
-                  </label>
-                )}
-              />
-            </section>
-
-            <section className="space-y-4 border-t border-border pt-5">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <h3 className="flex items-center gap-2 font-heading text-sm font-bold text-foreground">
-                    <ListChecks className="size-4 text-primary" />
-                    Rubric — tiêu chí chấm điểm
-                  </h3>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                    Mỗi tiêu chí nên nêu chuẩn cần đạt và minh chứng cần quan sát.
-                  </p>
-                </div>
-                <span className="text-[11px] font-medium text-muted-foreground">
-                  {criteria.length} tiêu chí
-                </span>
-              </div>
-
-              {criteria.length === 0 ? (
-                <p className="rounded-xl border border-dashed border-border p-5 text-center text-sm text-muted-foreground">
-                  Chưa có tiêu chí. Thêm tiêu chí để chuyên gia chấm điểm khi thẩm định.
-                </p>
-              ) : (
-                <ul className="space-y-3">
-                  {criteria.map((criterion, index) => (
-                    <li
-                      key={criterion.key}
-                      className="grid gap-3 rounded-xl border border-border bg-background/60 p-4 sm:grid-cols-[minmax(0,1fr)_7rem_auto]"
-                    >
-                      <div className="space-y-2">
-                        <Input
-                          value={criterion.name}
-                          onChange={(event) =>
-                            updateCriterion(criterion.key, {
-                              name: event.target.value,
-                            })
-                          }
-                          placeholder={`Tiêu chí ${index + 1}`}
-                          className="h-10 rounded-lg border-input bg-card text-sm"
-                        />
-                        <Textarea
-                          value={criterion.description}
-                          onChange={(event) =>
-                            updateCriterion(criterion.key, {
-                              description: event.target.value,
-                            })
-                          }
-                          placeholder="Chuẩn cần đạt (không bắt buộc)"
-                          rows={2}
-                          className="rounded-lg border-input bg-card text-sm"
-                        />
-                        <Textarea
-                          value={criterion.evidenceGuidance}
-                          onChange={(event) =>
-                            updateCriterion(criterion.key, {
-                              evidenceGuidance: event.target.value,
-                            })
-                          }
-                          placeholder="Minh chứng cần quan sát (không bắt buộc)"
-                          rows={2}
-                          className="rounded-lg border-input bg-card text-sm"
-                        />
-                      </div>
-                      <Input
-                        value={criterion.maxScore}
-                        inputMode="numeric"
-                        onChange={(event) =>
-                          updateCriterion(criterion.key, {
-                            maxScore: event.target.value,
-                          })
-                        }
-                        placeholder="Điểm tối đa"
-                        aria-label={`Điểm tối đa của tiêu chí ${index + 1}`}
-                        className="h-10 rounded-lg border-input bg-card text-sm"
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          setCriteria((prev) =>
-                            prev.filter((item) => item.key !== criterion.key),
-                          )
-                        }
-                        aria-label={`Xóa tiêu chí ${criterion.name || index + 1}`}
-                        className="size-10 rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                      >
-                        <Trash2 className="size-4" />
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {criteriaError ? (
-                <p className="text-xs font-medium text-primary">{criteriaError}</p>
-              ) : null}
-
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() =>
-                  setCriteria((prev) => [
-                    ...prev,
-                    {
-                      key: createCriterionKey(),
-                      id: null,
-                      name: "",
-                      description: "",
-                      evidenceGuidance: "",
-                      maxScore: "10",
-                    },
-                  ])
-                }
-                className="h-10 w-full gap-2 rounded-xl border-dashed"
-              >
-                <Plus className="size-4" />
-                Thêm tiêu chí
-              </Button>
             </section>
           </DialogScrollBody>
 
@@ -493,11 +193,7 @@ export function FrameworkFormDialog({
               disabled={isSubmitting}
               className="h-11 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
             >
-              {isSubmitting
-                ? "Đang lưu..."
-                : framework
-                  ? "Lưu thay đổi"
-                  : "Tạo khung"}
+              {isSubmitting ? "Đang tạo..." : "Tạo khung"}
             </Button>
           </DialogScrollFooter>
         </form>

@@ -2,7 +2,6 @@ import { z } from "zod";
 
 import { createPaginatedSchema } from "@/lib/api/entities/pagination";
 import {
-  frameworkRubricCriterionSchema,
   programFrameworkSchema,
   programFrameworkVersionSchema,
 } from "@/lib/api/entities/program-framework";
@@ -20,9 +19,6 @@ export const programFrameworkValueSchema = createApiValueSchema(
 );
 export const programFrameworkVersionValueSchema = createApiValueSchema(
   programFrameworkVersionSchema,
-);
-export const frameworkRubricCriterionValueSchema = createApiValueSchema(
-  frameworkRubricCriterionSchema,
 );
 export const deleteProgramFrameworkValueSchema = createApiValueSchema(z.boolean());
 
@@ -56,18 +52,6 @@ export const createFrameworkDraftVersionResponseSchema = createApiResponseSchema
 export const publishFrameworkVersionResponseSchema = createApiResponseSchema(
   programFrameworkVersionValueSchema,
 );
-export const saveFrameworkRubricResponseSchema = createApiResponseSchema(
-  programFrameworkVersionValueSchema,
-);
-export const createFrameworkCriterionResponseSchema = createApiResponseSchema(
-  frameworkRubricCriterionValueSchema,
-);
-export const updateFrameworkCriterionResponseSchema = createApiResponseSchema(
-  frameworkRubricCriterionValueSchema,
-);
-export const deleteFrameworkCriterionResponseSchema = createApiResponseSchema(
-  deleteProgramFrameworkValueSchema,
-);
 
 export type GetProgramFrameworksResponse = z.infer<
   typeof getProgramFrameworksResponseSchema
@@ -93,21 +77,6 @@ export type DeleteProgramFrameworkResponse = z.infer<
 >;
 export type DeleteProgramFrameworkResult =
   DeleteProgramFrameworkResponse["value"];
-export type CreateFrameworkCriterionResponse = z.infer<
-  typeof createFrameworkCriterionResponseSchema
->;
-export type CreateFrameworkCriterionResult =
-  CreateFrameworkCriterionResponse["value"];
-export type UpdateFrameworkCriterionResponse = z.infer<
-  typeof updateFrameworkCriterionResponseSchema
->;
-export type UpdateFrameworkCriterionResult =
-  UpdateFrameworkCriterionResponse["value"];
-export type DeleteFrameworkCriterionResponse = z.infer<
-  typeof deleteFrameworkCriterionResponseSchema
->;
-export type DeleteFrameworkCriterionResult =
-  DeleteFrameworkCriterionResponse["value"];
 export type ArchiveProgramFrameworkResponse = z.infer<
   typeof archiveProgramFrameworkResponseSchema
 >;
@@ -131,7 +100,3 @@ export type PublishFrameworkVersionResponse = z.infer<
 >;
 export type PublishFrameworkVersionResult =
   PublishFrameworkVersionResponse["value"];
-export type SaveFrameworkRubricResponse = z.infer<
-  typeof saveFrameworkRubricResponseSchema
->;
-export type SaveFrameworkRubricResult = SaveFrameworkRubricResponse["value"];
