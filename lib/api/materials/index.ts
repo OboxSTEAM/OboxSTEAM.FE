@@ -1,10 +1,12 @@
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
+  createMaterialFromAttachmentSchema,
   materialByActivityParamsSchema,
   materialIdParamSchema,
   materialListQuerySchema,
   updateMaterialSchema,
+  type CreateMaterialFromAttachmentInput,
   type MaterialListQuery,
   type UpdateMaterialInput,
 } from "@/lib/validations/materials";
@@ -114,6 +116,24 @@ export async function uploadMaterial(
       method: "POST",
       body: formData,
     },
+  );
+  assertApiSuccess(response);
+  return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/materials/from-discussion-attachment` — copies a chat attachment into a
+ * SelfPaced activity that has no material yet (409 `MATERIAL_ACTIVITY_INVALID` otherwise).
+ */
+export async function createMaterialFromDiscussionAttachment(
+  input: CreateMaterialFromAttachmentInput,
+): Promise<UploadMaterialResult> {
+  const body = createMaterialFromAttachmentSchema.parse(input);
+
+  const response = await apiFetchParsed(
+    `${MATERIALS_BASE}/from-discussion-attachment`,
+    uploadMaterialResponseSchema,
+    { method: "POST", body },
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);

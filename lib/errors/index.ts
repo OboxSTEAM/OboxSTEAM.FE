@@ -1,4 +1,4 @@
-export { resolveAppError } from "./resolve-app-error";
+export { getApiErrorCode, resolveAppError } from "./resolve-app-error";
 export {
   localizeUserFacingMessage,
   looksLikeEnglishMessage,

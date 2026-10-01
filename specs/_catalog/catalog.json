@@ -546,6 +546,16 @@
         "description": "Retrieve a single course by its exact name (case-insensitive)."
       },
       {
+        "path": "/api/programs/{id}/curriculum/changes",
+        "method": "get",
+        "description": "Advisory participants only. base = lastApproval (default; 0 when never approved), lastSeen, start, or version:N. to defaults to the current curriculumVersion. Items are consolidated per component and sorted in current tree order."
+      },
+      {
+        "path": "/api/programs/{id}/curriculum/changes/seen",
+        "method": "post",
+        "description": "Stores max(seenVersion, version) for the caller. version above the current curriculumVersion returns 400."
+      },
+      {
         "path": "/api/dashboard/overview",
         "method": "get",
         "description": "Returns trimmed KPI summaries for revenue, enrollment, assessment, and operations (no trends / top-N). Prefer /landing for the home page to avoid duplicate section fetches. Status filters that do not apply to a section are ignored."
@@ -788,6 +798,11 @@
         "description": "Uploads learning material to S3 for a SelfPaced activity. Supported formats: PDF (≤50 MB), DOC/DOCX (≤50 MB), Video .mp4/.mov/.avi/.mkv (≤3 GB), Image .jpg/.jpeg/.png/.gif/.webp (≤10 MB). ActivityId is required."
       },
       {
+        "path": "/api/materials/from-discussion-attachment",
+        "method": "post",
+        "description": "Copies a sent chat attachment to the material storage and attaches it to a SelfPaced activity of the same program that has no material yet (409 MATERIAL_ACTIVITY_INVALID). Material type and size limits apply (400 ATTACHMENT_TYPE_NOT_ALLOWED); an unsent or deleted attachment returns 400 ATTACHMENT_INVALID. The same curriculum edit lock as upload applies."
+      },
+      {
         "path": "/api/materials/activity/{activityId}",
         "method": "get",
         "description": "Returns the learning material for a SelfPaced activity. Students must pass programEnrollmentId for enrollment-scoped access."
@@ -865,7 +880,7 @@
       {
         "path": "/api/media/{mediaId}/process-tags",
         "method": "post",
-        "description": "Submits a new Rekognition face-search job on the transcoded video output, restarts label detection, then polls once for results. Returns 202 while VideoStatus is PendingTagging; call again until TaggingComplete."
+        "description": "Images: runs Rekognition face search on the stored image and replaces tags immediately (200). Videos: submits a new Rekognition face-search job on the transcoded output, restarts label detection, then polls once for results. Returns 202 while VideoStatus is PendingTagging; call again until TaggingComplete."
       },
       {
         "path": "/api/mentors/me/profile",
@@ -1164,7 +1179,7 @@
       {
         "path": "/api/programs",
         "method": "post",
-        "description": "Creates a new program as Draft. Use submit-review and publish to change status. Requires Admin or Manager role."
+        "description": "Creates a new program as Draft. Use the approval endpoints and publish to change status. Requires Admin or Manager role."
       },
       {
         "path": "/api/programs/with-modules",
@@ -1219,133 +1234,211 @@
       {
         "path": "/api/programs/review-queue",
         "method": "get",
-        "description": "Experts see PendingReview programs on their program board or whose attached framework they own. Manager and Admin see all pending."
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/curriculum-reviews",
         "method": "get",
-        "description": "Framework owner and program-board experts may read history. Manager and Admin may read all."
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/submit-review",
         "method": "post",
-        "description": "Draft only. Always requires a responsible advisor with an active linked login (with or without a framework). Creates an immutable ProgramReviewSubmission, notifies the advisor, and moves to PendingReview. When a published FrameworkVersionId is pinned, framework pre-checks run; failures return machine codes ADVISOR_REQUIRED, ADVISOR_LOGIN_REQUIRED, MODULES_REQUIRED, FRAMEWORK_UNAVAILABLE, or FRAMEWORK_CHECK_FAILED."
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/withdraw-review",
         "method": "post",
-        "description": "Moves PendingReview or Approved back to Draft. No curriculum review row is created."
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/advisor",
         "method": "put",
-        "description": "The expert must have an active linked login and is added to the program board. Pending or approved review must be withdrawn before reassignment."
+        "description": "The expert must have an active linked login and is added to the program board. Allowed in Draft and Approved; changing the advisor of an Approved program revokes the approval (AdvisorChanged) and returns it to Draft. Posts AdvisorChanged. Active/Inactive return 409 INVALID_STATUS."
+      },
+      {
+        "path": "/api/programs/{id}/approval/request",
+        "method": "post",
+        "description": "Draft only (409 INVALID_STATUS). Requires a responsible advisor (400 ADVISOR_REQUIRED) with an active login (400 ADVISOR_LOGIN_REQUIRED). Posts ApprovalRequested and notifies the advisor. Status is unchanged."
+      },
+      {
+        "path": "/api/programs/{id}/approval",
+        "method": "post",
+        "description": "Checks in order: caller is the advisor (403); status Draft (409 INVALID_STATUS); curriculumVersion matches (409 CURRICULUM_VERSION_STALE); no Open pins (409 APPROVAL_BLOCKED); framework check passes (409 FRAMEWORK_CHECK_FAILED with FrameworkCheckDto in value.data). Resolves Addressed pins, sets Approved, posts Approved, and notifies managers."
+      },
+      {
+        "path": "/api/programs/{id}/approval/revoke",
+        "method": "post",
+        "description": "Manager/Admin (ManagerReopened, notifies the advisor) or the advisor (ExpertRevoked, notifies managers). Approved only (409 INVALID_STATUS). Returns the program to Draft and posts ApprovalRevoked."
       },
       {
         "path": "/api/programs/{id}/publish",
         "method": "post",
-        "description": "Moves Approved to Active. Notifies managers. Enrollment and class creation require Active."
+        "description": "Approved only (409 INVALID_STATUS) and the active approval must cover the current curriculumVersion (409 CURRICULUM_VERSION_STALE). Moves to Active, posts Published, and notifies managers. Enrollment and class creation require Active."
       },
       {
         "path": "/api/programs/{id}/approve-review",
         "method": "post",
-        "description": "PendingReview → Approved. Only the assigned responsible advisor may approve. Unresolved RequiredChange threads (Open + Addressed) block approval (error code APPROVAL_BLOCKED). Submission concurrencyVersion is distinct from draft autosave tokens; stale tokens return 409. Scores are required when the attached framework has rubric criteria."
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/request-changes",
         "method": "post",
-        "description": "PendingReview → Draft (program unlocked for edit; timeline moves to Revision). Honors requiredChangeThreadIds and idempotent clientOperationId. Submission concurrencyVersion is distinct from draft autosave tokens; stale tokens return 409 SUBMISSION_CONCURRENCY_STALE. Carried RequiredChanges remain visible across the next submission."
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/advisory-mine",
-        "method": "get"
+        "method": "get",
+        "description": "Experts see programs where they are the advisor or a board member; managers and admins see all. Each item has status, approvalState, unreadCount (chat read cursor), openPinCount, and latestActivityAt. unreadOnly keeps items with unreadCount > 0."
       },
       {
         "path": "/api/programs/{id}/advisory",
         "method": "get",
-        "description": "Includes collaborationContractVersion 3, capabilities, a 5-stage workflow timeline with round and nextAction, outstandingRequiredCount, fixedRequiredCount, and unreadNoteCount (notes plus the general thread)."
+        "description": "Status, curriculumVersion, participants, capabilities, the active approval, pin counts, discussion unreadCount, live frameworkCheckPassed, changesSinceApprovalCount, unseenChangeCount, and latestSequence."
       },
       {
         "path": "/api/programs/{id}/advisory/timeline",
         "method": "get",
-        "description": "Returns the server-derived six-stage advisory workflow. Viewing a stage does not change lifecycle state."
+        "description": "The advisory board and timeline were replaced by the advisory workspace; use GET advisory and curriculum/changes."
       },
       {
         "path": "/api/programs/{id}/advisory/board",
         "method": "get",
-        "description": "Returns the frozen curriculum tree, submission pins, revision summary, and framework highlights."
+        "description": "The advisory board and timeline were replaced by the advisory workspace; use GET advisory and curriculum/changes."
       },
       {
         "path": "/api/programs/{id}/framework-check",
-        "method": "get"
+        "method": "get",
+        "description": "Advisory participants only (Manager/Admin, the advisor, board experts)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads",
-        "method": "get"
+        "method": "get",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads",
-        "method": "post"
+        "method": "post",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}",
         "method": "get",
-        "description": "Returns the full AdvisoryThreadDto with ordered events and ordered messages so clients do not double-render MessageAdded events against a separate message list. Status PATCH also returns this full thread shape."
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/pins",
-        "method": "get"
+        "method": "get",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/messages",
-        "method": "get"
+        "method": "get",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/messages",
-        "method": "post"
+        "method": "post",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/actions",
         "method": "post",
-        "description": "MarkFixed (manager, open required change, Draft), Acknowledge (manager or author, open suggestion), or Accept (responsible advisor, Addressed required change while the program is PendingReview). Returns the full thread. clientOperationId is idempotent. Waive is not an action."
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/status",
         "method": "patch",
-        "description": "Obsolete. Use POST .../actions. Waive is rejected. Returns the full AdvisoryThreadDto."
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-read",
-        "method": "post"
+        "method": "post",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-references",
-        "method": "post"
+        "method": "post",
+        "description": "Advisory references and anchor fields were replaced by discussion mentions; use mention-targets and advisory-discussion/messages."
       },
       {
         "path": "/api/programs/{id}/advisory-references/{referenceId}",
-        "method": "get"
+        "method": "get",
+        "description": "Advisory references and anchor fields were replaced by discussion mentions; use mention-targets and advisory-discussion/messages."
       },
       {
         "path": "/api/programs/advisory-anchor-fields",
         "method": "get",
-        "description": "Publishes the BE allowlist of targetType + fieldKey (+ label) values accepted for note anchors and advisory references. Unknown keys are rejected with 400 ADVISORY_ANCHOR_FIELD_INVALID."
+        "description": "Advisory references and anchor fields were replaced by discussion mentions; use mention-targets and advisory-discussion/messages."
+      },
+      {
+        "path": "/api/programs/{id}/mention-targets",
+        "method": "get",
+        "description": "Participants only. Every component of the program (program, modules, courses, research milestones, activities, materials, assignments) as a flat list in curriculum tree order, with ancestor path."
       },
       {
         "path": "/api/programs/{id}/advisory-discussion/messages",
-        "method": "get"
+        "method": "get",
+        "description": "Cursor paging with before/after. targetType + targetId (together) return only messages that mention that exact component. Deleted messages are tombstones."
       },
       {
         "path": "/api/programs/{id}/advisory-discussion/messages",
-        "method": "post"
+        "method": "post",
+        "description": "Text may contain mention tokens @[Type:uuid] (≤ 20, each must belong to the program: 400 MENTION_TARGET_INVALID). Text ≤ 4000 (MESSAGE_TOO_LONG); text or attachments required (MESSAGE_EMPTY); ≤ 10 unsent own attachments (TOO_MANY_ATTACHMENTS, ATTACHMENT_INVALID). Idempotent on author + clientMessageId."
       },
       {
         "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}",
         "method": "get"
       },
       {
+        "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}",
+        "method": "patch",
+        "description": "Author only. Mentions are re-parsed; same text rules as posting."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}",
+        "method": "delete",
+        "description": "Author only. The message stays as a tombstone; mentions, attachments, and pin are removed."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}/pin",
+        "method": "post",
+        "description": "Advisor or board expert. Pin starts Open; already pinned messages are returned unchanged."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}/pin",
+        "method": "delete",
+        "description": "Advisor or board expert."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/messages/{messageId}/pin/actions",
+        "method": "post",
+        "description": "MarkAddressed (Manager/Admin, Open → Addressed), Reopen (advisor or board expert, Addressed/Resolved → Open), Resolve (advisor or board expert, Open/Addressed → Resolved). Invalid transitions return 409 INVALID_STATUS."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/pins",
+        "method": "get",
+        "description": "Ordered by pinnedAt; optional status filter."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/mention-counts",
+        "method": "get",
+        "description": "Exact target only (no roll-up to ancestors). Deleted messages are excluded."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/attachments",
+        "method": "post",
+        "description": "Multipart field 'file'. ≤ 20 MB (400 ATTACHMENT_TOO_LARGE). Allowed: png, jpg, jpeg, gif, webp, pdf, doc, docx, ppt, pptx, xls, xlsx, zip (400 ATTACHMENT_TYPE_NOT_ALLOWED). The attachment stays unsent until a message references it; unsent uploads are purged after 24 hours."
+      },
+      {
+        "path": "/api/programs/{id}/advisory-discussion/attachments/{attachmentId}/url",
+        "method": "get",
+        "description": "Presigned URL valid for 15 minutes. Unsent attachments are visible to their uploader only."
+      },
+      {
         "path": "/api/programs/{id}/advisory-threads/{threadId}/read",
-        "method": "post"
+        "method": "post",
+        "description": "Advisory threads were removed; use the program advisory discussion (advisory-discussion/messages, pins, read)."
       },
       {
         "path": "/api/programs/{id}/advisory-discussion/read",
@@ -1353,23 +1446,28 @@
       },
       {
         "path": "/api/programs/{id}/review-submissions",
-        "method": "get"
+        "method": "get",
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/review-submissions/{submissionId}",
-        "method": "get"
+        "method": "get",
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/review-submissions/{submissionId}/changes",
-        "method": "get"
+        "method": "get",
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/review-submissions/{submissionId}/draft",
-        "method": "get"
+        "method": "get",
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/review-submissions/{submissionId}/draft",
-        "method": "put"
+        "method": "put",
+        "description": "The submission-based review flow was replaced by versioned approval; use approval/request, approval, approval/revoke, and publish."
       },
       {
         "path": "/api/programs/{id}/thumbnail",
@@ -1434,7 +1532,7 @@
       {
         "path": "/api/program-frameworks",
         "method": "post",
-        "description": "Expert-owned blueprint. Opt-in rules (null = not enforced). Zero rubric criteria is allowed."
+        "description": "Expert-owned blueprint. Opt-in rules (null or false = not enforced). Invalid rule values return 400 FRAMEWORK_RULES_INVALID."
       },
       {
         "path": "/api/program-frameworks/{id}",
@@ -1473,22 +1571,23 @@
       },
       {
         "path": "/api/program-frameworks/{id}/versions/{versionId}/rubric",
-        "method": "put"
+        "method": "put",
+        "description": "Rubric criteria were replaced by framework rule fields."
       },
       {
         "path": "/api/program-frameworks/{id}/criteria",
         "method": "post",
-        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+        "description": "Rubric criteria were replaced by framework rule fields."
       },
       {
         "path": "/api/program-frameworks/{id}/criteria/{criterionId}",
         "method": "put",
-        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+        "description": "Rubric criteria were replaced by framework rule fields."
       },
       {
         "path": "/api/program-frameworks/{id}/criteria/{criterionId}",
         "method": "delete",
-        "description": "Owning expert only. Allowed when the framework is unattached or the attached program is Draft. Blocked with 409 otherwise."
+        "description": "Rubric criteria were replaced by framework rule fields."
       },
       {
         "path": "/api/programs/{programId}/reviews",
@@ -1668,7 +1767,7 @@
       {
         "path": "/api/seed/clear",
         "method": "delete",
-        "description": "Removes all application data from the database (PostgreSQL TRUNCATE CASCADE). EF migration history is preserved."
+        "description": "Blocks face indexing, purges Rekognition collection oboxsteam-faces, removes S3 objects except the Seed/ prefix, truncates application tables (PostgreSQL TRUNCATE CASCADE), then purges the collection again. EF migration history is preserved. The database is left unchanged if the first face purge fails."
       },
       {
         "path": "/api/classes/{classId}/sessions/{sessionId}/attendance",
@@ -1721,12 +1820,6 @@
         "name": "ActivityResumeStateDto"
       },
       {
-        "name": "ActivitySnapshot"
-      },
-      {
-        "name": "AddAdvisoryMessageRequest"
-      },
-      {
         "name": "AddHighlightSegmentRequest"
       },
       {
@@ -1736,34 +1829,37 @@
         "name": "AddProgramToExpertDto"
       },
       {
-        "name": "AdvisoryAnchorFieldDto"
+        "name": "AdvisoryAttachmentUrlDto"
       },
       {
-        "name": "AdvisoryAnchorFieldDtoIReadOnlyListApiResult"
+        "name": "AdvisoryAttachmentUrlDtoApiResult"
       },
       {
-        "name": "AdvisoryAnchorFieldDtoIReadOnlyListResponseDataContent"
-      },
-      {
-        "name": "AdvisoryBoardDto"
-      },
-      {
-        "name": "AdvisoryBoardDtoApiResult"
-      },
-      {
-        "name": "AdvisoryBoardDtoResponseDataContent"
-      },
-      {
-        "name": "AdvisoryBoardProgramDto"
+        "name": "AdvisoryAttachmentUrlDtoResponseDataContent"
       },
       {
         "name": "AdvisoryCapabilitiesDto"
+      },
+      {
+        "name": "AdvisoryDiscussionAttachmentDto"
+      },
+      {
+        "name": "AdvisoryDiscussionAttachmentDtoApiResult"
+      },
+      {
+        "name": "AdvisoryDiscussionAttachmentDtoResponseDataContent"
       },
       {
         "name": "AdvisoryDiscussionMessageDto"
       },
       {
         "name": "AdvisoryDiscussionMessageDtoApiResult"
+      },
+      {
+        "name": "AdvisoryDiscussionMessageDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "AdvisoryDiscussionMessageDtoIReadOnlyListResponseDataContent"
       },
       {
         "name": "AdvisoryDiscussionMessageDtoResponseDataContent"
@@ -1778,22 +1874,22 @@
         "name": "AdvisoryDiscussionPageDtoResponseDataContent"
       },
       {
-        "name": "AdvisoryFeedbackCountsDto"
+        "name": "AdvisoryDiscussionPinActionRequest"
       },
       {
-        "name": "AdvisoryMessageDto"
+        "name": "AdvisoryDiscussionPinDto"
       },
       {
-        "name": "AdvisoryMessageDtoApiResult"
+        "name": "AdvisoryDiscussionSystemEventDto"
       },
       {
-        "name": "AdvisoryMessageDtoIReadOnlyListApiResult"
+        "name": "AdvisoryMentionCountDto"
       },
       {
-        "name": "AdvisoryMessageDtoIReadOnlyListResponseDataContent"
+        "name": "AdvisoryMentionCountDtoIReadOnlyListApiResult"
       },
       {
-        "name": "AdvisoryMessageDtoResponseDataContent"
+        "name": "AdvisoryMentionCountDtoIReadOnlyListResponseDataContent"
       },
       {
         "name": "AdvisoryMineItemDto"
@@ -1808,67 +1904,10 @@
         "name": "AdvisoryMineItemDtoPaginationResponseDataContent"
       },
       {
-        "name": "AdvisoryNextActionDto"
-      },
-      {
         "name": "AdvisoryParticipantDto"
       },
       {
         "name": "AdvisoryReferenceDto"
-      },
-      {
-        "name": "AdvisoryReferenceDtoApiResult"
-      },
-      {
-        "name": "AdvisoryReferenceDtoResponseDataContent"
-      },
-      {
-        "name": "AdvisoryTargetPathDto"
-      },
-      {
-        "name": "AdvisoryThreadActionRequest"
-      },
-      {
-        "name": "AdvisoryThreadDto"
-      },
-      {
-        "name": "AdvisoryThreadDtoApiResult"
-      },
-      {
-        "name": "AdvisoryThreadDtoIReadOnlyListApiResult"
-      },
-      {
-        "name": "AdvisoryThreadDtoIReadOnlyListResponseDataContent"
-      },
-      {
-        "name": "AdvisoryThreadDtoResponseDataContent"
-      },
-      {
-        "name": "AdvisoryThreadEventDto"
-      },
-      {
-        "name": "AdvisoryThreadPinDto"
-      },
-      {
-        "name": "AdvisoryThreadPinSummaryDto"
-      },
-      {
-        "name": "AdvisoryThreadPinSummaryDtoIReadOnlyListApiResult"
-      },
-      {
-        "name": "AdvisoryThreadPinSummaryDtoIReadOnlyListResponseDataContent"
-      },
-      {
-        "name": "AdvisoryWorkflowStageDto"
-      },
-      {
-        "name": "AdvisoryWorkflowTimelineDto"
-      },
-      {
-        "name": "AdvisoryWorkflowTimelineDtoApiResult"
-      },
-      {
-        "name": "AdvisoryWorkflowTimelineDtoResponseDataContent"
       },
       {
         "name": "AffectedCurriculumLinkDto"
@@ -1877,10 +1916,10 @@
         "name": "ApiResult"
       },
       {
-        "name": "ApproveCurriculumReviewRequest"
+        "name": "ApproveLinkDto"
       },
       {
-        "name": "ApproveLinkDto"
+        "name": "ApproveProgramRequest"
       },
       {
         "name": "AssessmentKpiSummaryDto"
@@ -1932,9 +1971,6 @@
       },
       {
         "name": "AssignmentResponseDtoResponseDataContent"
-      },
-      {
-        "name": "AssignmentSnapshot"
       },
       {
         "name": "AssignmentSubmissionListItemDto"
@@ -2303,19 +2339,10 @@
         "name": "CourseResponseDtoResponseDataContent"
       },
       {
-        "name": "CourseSnapshot"
-      },
-      {
         "name": "CreateActivitiesRequestDto"
       },
       {
         "name": "CreateActivityProgressRequestDto"
-      },
-      {
-        "name": "CreateAdvisoryReferenceRequest"
-      },
-      {
-        "name": "CreateAdvisoryThreadRequest"
       },
       {
         "name": "CreateAssessmentRecoveryRequestDto"
@@ -2348,6 +2375,9 @@
         "name": "CreateHighlightStackRequest"
       },
       {
+        "name": "CreateMaterialFromDiscussionAttachmentRequest"
+      },
+      {
         "name": "CreateMentorRequestDto"
       },
       {
@@ -2375,22 +2405,34 @@
         "name": "CreateResearchMilestoneRequestDto"
       },
       {
-        "name": "CurriculumReviewResponseDto"
+        "name": "CurriculumChangeActorDto"
       },
       {
-        "name": "CurriculumReviewResponseDtoApiResult"
+        "name": "CurriculumChangeFieldDto"
       },
       {
-        "name": "CurriculumReviewResponseDtoIReadOnlyListApiResult"
+        "name": "CurriculumChangeItemDto"
       },
       {
-        "name": "CurriculumReviewResponseDtoIReadOnlyListResponseDataContent"
+        "name": "CurriculumChangeMoveDto"
       },
       {
-        "name": "CurriculumReviewResponseDtoResponseDataContent"
+        "name": "CurriculumChangeSummaryDto"
       },
       {
-        "name": "CurriculumSnapshotDocument"
+        "name": "CurriculumChangesDto"
+      },
+      {
+        "name": "CurriculumChangesDtoApiResult"
+      },
+      {
+        "name": "CurriculumChangesDtoResponseDataContent"
+      },
+      {
+        "name": "CurriculumPathSegmentDto"
+      },
+      {
+        "name": "CurriculumReorderedChildDto"
       },
       {
         "name": "DashboardLandingDto"
@@ -2418,6 +2460,9 @@
       },
       {
         "name": "DecideClassRedeliveryRequestDto"
+      },
+      {
+        "name": "EditAdvisoryDiscussionMessageRequest"
       },
       {
         "name": "EnrollmentCurriculumActivityDto"
@@ -2603,21 +2648,6 @@
         "name": "FrameworkCheckItemDto"
       },
       {
-        "name": "FrameworkHighlightDto"
-      },
-      {
-        "name": "FrameworkRubricCriterionRequest"
-      },
-      {
-        "name": "FrameworkRubricCriterionResponseDto"
-      },
-      {
-        "name": "FrameworkRubricCriterionResponseDtoApiResult"
-      },
-      {
-        "name": "FrameworkRubricCriterionResponseDtoResponseDataContent"
-      },
-      {
         "name": "GenerateClassSessionsRequestDto"
       },
       {
@@ -2750,6 +2780,9 @@
         "name": "ManagerTransferClassRequestDto"
       },
       {
+        "name": "MarkCurriculumChangesSeenRequest"
+      },
+      {
         "name": "MaterialListItemDto"
       },
       {
@@ -2769,9 +2802,6 @@
       },
       {
         "name": "MaterialResponseDtoResponseDataContent"
-      },
-      {
-        "name": "MaterialSnapshot"
       },
       {
         "name": "MediaAssetDto"
@@ -2820,6 +2850,15 @@
       },
       {
         "name": "MediaTagDtoResponseDataContent"
+      },
+      {
+        "name": "MentionTargetDto"
+      },
+      {
+        "name": "MentionTargetDtoIReadOnlyListApiResult"
+      },
+      {
+        "name": "MentionTargetDtoIReadOnlyListResponseDataContent"
       },
       {
         "name": "MentorCompleteBulkRequestDto"
@@ -2885,9 +2924,6 @@
         "name": "MentorUtilizationDtoPagination"
       },
       {
-        "name": "MilestoneSnapshot"
-      },
-      {
         "name": "ModuleEnrollmentResponseDto"
       },
       {
@@ -2904,9 +2940,6 @@
       },
       {
         "name": "ModuleRetakeCheckoutRequestDto"
-      },
-      {
-        "name": "ModuleSnapshot"
       },
       {
         "name": "ModulesResponseDto"
@@ -3144,6 +3177,9 @@
         "name": "ProgramAdvisoryWorkspaceDtoResponseDataContent"
       },
       {
+        "name": "ProgramApprovalSummaryDto"
+      },
+      {
         "name": "ProgramCurriculumActivityDto"
       },
       {
@@ -3231,27 +3267,6 @@
         "name": "ProgramListItemDtoPaginationResponseDataContent"
       },
       {
-        "name": "ProgramReviewDraftDto"
-      },
-      {
-        "name": "ProgramReviewDraftDtoApiResult"
-      },
-      {
-        "name": "ProgramReviewDraftDtoResponseDataContent"
-      },
-      {
-        "name": "ProgramReviewQueueItemDto"
-      },
-      {
-        "name": "ProgramReviewQueueItemDtoPagination"
-      },
-      {
-        "name": "ProgramReviewQueueItemDtoPaginationApiResult"
-      },
-      {
-        "name": "ProgramReviewQueueItemDtoPaginationResponseDataContent"
-      },
-      {
         "name": "ProgramReviewResponseDto"
       },
       {
@@ -3268,27 +3283,6 @@
       },
       {
         "name": "ProgramReviewResponseDtoResponseDataContent"
-      },
-      {
-        "name": "ProgramReviewSubmissionDetailDto"
-      },
-      {
-        "name": "ProgramReviewSubmissionDetailDtoApiResult"
-      },
-      {
-        "name": "ProgramReviewSubmissionDetailDtoResponseDataContent"
-      },
-      {
-        "name": "ProgramReviewSubmissionSummaryDto"
-      },
-      {
-        "name": "ProgramReviewSubmissionSummaryDtoIReadOnlyListApiResult"
-      },
-      {
-        "name": "ProgramReviewSubmissionSummaryDtoIReadOnlyListResponseDataContent"
-      },
-      {
-        "name": "ProgramSnapshot"
       },
       {
         "name": "ProgramsResponseDto"
@@ -3384,12 +3378,6 @@
         "name": "RecordAdvisoryDiscussionReadRequest"
       },
       {
-        "name": "RecordAdvisoryReadRequest"
-      },
-      {
-        "name": "RecordAdvisoryThreadReadRequest"
-      },
-      {
         "name": "ReorderPortfolioItemEntryDto"
       },
       {
@@ -3400,9 +3388,6 @@
       },
       {
         "name": "ReorderPortfolioSectionsRequestDto"
-      },
-      {
-        "name": "RequestCurriculumChangesRequest"
       },
       {
         "name": "RequestLinkDto"
@@ -3474,10 +3459,7 @@
         "name": "RevenueOverviewDtoResponseDataContent"
       },
       {
-        "name": "ReviewCriterionScoreRequest"
-      },
-      {
-        "name": "ReviewCriterionScoreResponseDto"
+        "name": "RevokeProgramApprovalRequest"
       },
       {
         "name": "SaveActivityCheckpointRequestDto"
@@ -3502,12 +3484,6 @@
       },
       {
         "name": "SaveDraftAnswersResponseDtoResponseDataContent"
-      },
-      {
-        "name": "SaveFrameworkRubricRequest"
-      },
-      {
-        "name": "SaveProgramReviewDraftRequest"
       },
       {
         "name": "SaveRetrospectiveDraftRequestDto"
@@ -3621,18 +3597,6 @@
         "name": "SubdomainAvailabilityResponseDtoResponseDataContent"
       },
       {
-        "name": "SubmissionChangeItemDto"
-      },
-      {
-        "name": "SubmissionChangesDto"
-      },
-      {
-        "name": "SubmissionChangesDtoApiResult"
-      },
-      {
-        "name": "SubmissionChangesDtoResponseDataContent"
-      },
-      {
         "name": "SubmitAssignmentRequestDto"
       },
       {
@@ -3682,9 +3646,6 @@
       },
       {
         "name": "UpdateActivityProgressRequestDto"
-      },
-      {
-        "name": "UpdateAdvisoryThreadStatusRequest"
       },
       {
         "name": "UpdateAssignmentRequestDto"

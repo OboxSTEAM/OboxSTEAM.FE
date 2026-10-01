@@ -263,6 +263,81 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Lần nộp đã thay đổi hoặc điểm rubric chưa hợp lệ.",
     action: "Tải lại trang, kiểm tra điểm và thử lại.",
   },
+  "advisory.mine": {
+    title: "Không tải được danh sách chương trình tư vấn",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra mạng và thử tải lại sau vài giây.",
+  },
+  "advisory.workspace": {
+    title: "Không tải được không gian tư vấn",
+    reason: "Chương trình có thể đã đổi người tư vấn hoặc không còn tồn tại.",
+    action: "Quay lại danh sách và mở lại chương trình.",
+  },
+  "advisory.messages": {
+    title: "Không tải được tin nhắn",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Thử tải lại cuộc trò chuyện sau vài giây.",
+  },
+  "advisory.message.send": {
+    title: "Không gửi được tin nhắn",
+    reason: "Tin nhắn chưa hợp lệ hoặc kết nối bị gián đoạn.",
+    action: "Kiểm tra nội dung, tệp đính kèm rồi gửi lại.",
+  },
+  "advisory.message.edit": {
+    title: "Không sửa được tin nhắn",
+    reason: "Tin nhắn có thể đã bị xoá hoặc bạn không phải người gửi.",
+    action: "Tải lại cuộc trò chuyện và thử lại.",
+  },
+  "advisory.message.delete": {
+    title: "Không xoá được tin nhắn",
+    reason: "Tin nhắn có thể đã bị xoá hoặc bạn không phải người gửi.",
+    action: "Tải lại cuộc trò chuyện và thử lại.",
+  },
+  "advisory.pin": {
+    title: "Không cập nhật được ghim",
+    reason: "Trạng thái ghim đã thay đổi ở nơi khác hoặc bạn không có quyền.",
+    action: "Tải lại danh sách ghim và thử lại.",
+  },
+  "advisory.attachment.upload": {
+    title: "Không tải lên được tệp",
+    reason: "Tệp quá lớn, sai định dạng hoặc kết nối bị gián đoạn.",
+    action: "Dùng ảnh, PDF, Word, PowerPoint, Excel hoặc ZIP dưới 20 MB rồi thử lại.",
+  },
+  "advisory.attachment.open": {
+    title: "Không mở được tệp đính kèm",
+    reason: "Tệp có thể đã bị xoá hoặc liên kết tạm thời đã hết hạn.",
+    action: "Thử mở lại tệp sau vài giây.",
+  },
+  "advisory.mentionTargets": {
+    title: "Không tải được danh sách thành phần",
+    reason: "Máy chủ tạm thời không phản hồi hoặc kết nối bị gián đoạn.",
+    action: "Thử gõ @ lại sau vài giây.",
+  },
+  "advisory.approval.request": {
+    title: "Không gửi được yêu cầu chấp thuận",
+    reason: "Chương trình chưa ở trạng thái nháp hoặc chưa có người tư vấn.",
+    action: "Tải lại trang, kiểm tra trạng thái và người tư vấn rồi thử lại.",
+  },
+  "advisory.approval.approve": {
+    title: "Không chấp thuận được chương trình",
+    reason: "Chương trình đã thay đổi hoặc chưa đạt yêu cầu khung.",
+    action: "Tải lại trang, xem lại thay đổi rồi chấp thuận lại.",
+  },
+  "advisory.approval.revoke": {
+    title: "Không huỷ được chấp thuận",
+    reason: "Trạng thái chấp thuận đã thay đổi ở nơi khác.",
+    action: "Tải lại trang và kiểm tra trạng thái hiện tại.",
+  },
+  "advisory.changes": {
+    title: "Không tải được danh sách thay đổi",
+    reason: "Máy chủ tạm thời không phản hồi hoặc phiên bản chương trình đã thay đổi.",
+    action: "Tải lại trang và mở lại danh sách thay đổi.",
+  },
+  "advisory.saveMaterial": {
+    title: "Không lưu được tài liệu",
+    reason: "Hoạt động đã chọn không nhận tài liệu hoặc tệp không còn tồn tại.",
+    action: "Chọn hoạt động tự học chưa có tài liệu rồi thử lại.",
+  },
   "programs.advisor": {
     title: "Không gán được chuyên gia phụ trách",
     reason: "Chuyên gia không thuộc hội đồng hoặc trạng thái chương trình không cho phép.",
@@ -1426,6 +1501,117 @@ const PROGRAM_REVIEW_CODE_ERRORS: Record<string, AppErrorState> = {
   },
 };
 
+/** BE machine codes for advisory chat, approval, curriculum edits and frameworks. */
+const ADVISORY_CODE_ERRORS: Record<string, AppErrorState> = {
+  CURRICULUM_VERSION_STALE: {
+    title: "Chương trình vừa được cập nhật",
+    reason: "Nội dung chương trình đã thay đổi kể từ lúc bạn mở trang.",
+    action: "Xem lại danh sách thay đổi mới nhất rồi thử lại.",
+  },
+  APPROVAL_BLOCKED: {
+    title: "Chưa thể chấp thuận",
+    reason: "Vẫn còn ghim góp ý chưa được xử lý.",
+    action: "Xử lý hoặc đóng các ghim đang mở rồi chấp thuận lại.",
+  },
+  FRAMEWORK_CHECK_FAILED: {
+    title: "Chương trình chưa đạt yêu cầu khung",
+    reason: "Một số quy tắc của khung chương trình chưa được đáp ứng.",
+    action: "Xem các mục chưa đạt trong kiểm tra khung và nhờ quản lý điều chỉnh.",
+  },
+  FRAMEWORK_UNAVAILABLE: {
+    title: "Không kiểm tra được khung chương trình",
+    reason: "Khung được gán cho chương trình không còn khả dụng.",
+    action: "Liên hệ quản lý để gán lại khung chương trình.",
+  },
+  INVALID_STATUS: {
+    title: "Trạng thái chương trình không phù hợp",
+    reason: "Thao tác này chỉ thực hiện được khi chương trình ở trạng thái phù hợp.",
+    action: "Tải lại trang để xem trạng thái hiện tại.",
+  },
+  ADVISOR_REQUIRED: {
+    title: "Chương trình chưa có người tư vấn",
+    reason: "Cần gán chuyên gia tư vấn trước khi gửi yêu cầu chấp thuận.",
+    action: "Gán chuyên gia tư vấn cho chương trình rồi thử lại.",
+  },
+  ADVISOR_LOGIN_REQUIRED: {
+    title: "Người tư vấn chưa có tài khoản",
+    reason: "Chuyên gia tư vấn cần có tài khoản đăng nhập để xem và chấp thuận.",
+    action: "Cấp tài khoản cho chuyên gia hoặc chọn người tư vấn khác.",
+  },
+  MESSAGE_TOO_LONG: {
+    title: "Tin nhắn quá dài",
+    reason: "Mỗi tin nhắn tối đa 4000 ký tự.",
+    action: "Rút gọn hoặc tách thành nhiều tin nhắn rồi gửi lại.",
+  },
+  TOO_MANY_MENTIONS: {
+    title: "Quá nhiều thẻ @",
+    reason: "Mỗi tin nhắn chỉ gắn tối đa 20 thành phần.",
+    action: "Bớt thẻ @ hoặc tách thành nhiều tin nhắn.",
+  },
+  TOO_MANY_ATTACHMENTS: {
+    title: "Quá nhiều tệp đính kèm",
+    reason: "Mỗi tin nhắn đính kèm tối đa 10 tệp.",
+    action: "Bớt tệp đính kèm hoặc gửi thành nhiều tin nhắn.",
+  },
+  MESSAGE_EMPTY: {
+    title: "Tin nhắn đang trống",
+    reason: "Tin nhắn cần có nội dung hoặc tệp đính kèm.",
+    action: "Nhập nội dung hoặc đính kèm tệp rồi gửi lại.",
+  },
+  MENTION_TARGET_INVALID: {
+    title: "Thành phần được gắn không còn tồn tại",
+    reason: "Một thành phần được gắn @ đã bị xoá hoặc không thuộc chương trình này.",
+    action: "Xoá thẻ @ đó, chọn lại thành phần rồi gửi lại.",
+  },
+  ATTACHMENT_INVALID: {
+    title: "Tệp đính kèm không hợp lệ",
+    reason: "Tệp đã hết hạn, đã được dùng hoặc không thuộc cuộc trò chuyện này.",
+    action: "Tải tệp lên lại rồi gửi.",
+  },
+  ATTACHMENT_TOO_LARGE: {
+    title: "Tệp quá lớn",
+    reason: "Mỗi tệp đính kèm tối đa 20 MB.",
+    action: "Nén hoặc chọn tệp nhỏ hơn rồi thử lại.",
+  },
+  ATTACHMENT_TYPE_NOT_ALLOWED: {
+    title: "Định dạng tệp không được hỗ trợ",
+    reason: "Chỉ hỗ trợ ảnh (PNG, JPG, GIF, WebP), PDF, Word, PowerPoint, Excel và ZIP.",
+    action: "Chuyển tệp sang định dạng được hỗ trợ rồi thử lại.",
+  },
+  MATERIAL_ACTIVITY_INVALID: {
+    title: "Hoạt động không nhận tài liệu",
+    reason: "Chỉ hoạt động tự học chưa có tài liệu mới lưu được tệp từ trò chuyện.",
+    action: "Chọn hoạt động tự học khác hoặc xoá tài liệu hiện có trước.",
+  },
+  CURRICULUM_LOCKED_COHORT: {
+    title: "Không thể chỉnh sửa chương trình",
+    reason: "Chương trình đang có lớp diễn ra hoặc đã có học viên.",
+    action: "Chờ các lớp của chương trình kết thúc rồi chỉnh sửa lại.",
+  },
+  ENDPOINT_REMOVED: {
+    title: "Tính năng đã thay đổi",
+    reason: "Thao tác này thuộc luồng thẩm định cũ và không còn được hỗ trợ.",
+    action: "Tải lại trang để dùng giao diện mới.",
+  },
+  FRAMEWORK_RULES_INVALID: {
+    title: "Quy tắc khung chưa hợp lệ",
+    reason: "Một số giá trị quy tắc mâu thuẫn hoặc nằm ngoài giới hạn cho phép.",
+    action: "Kiểm tra các giá trị tối thiểu, tối đa và tỉ lệ rồi lưu lại.",
+  },
+};
+
+const ADVISORY_CODE_CONTEXT_PREFIXES = [
+  "advisory.",
+  "curriculum.",
+  "programs.",
+  "frameworks.",
+] as const;
+
+/** Machine `error.code` from a BE envelope (HTTP error body or `isSuccess: false`), if any. */
+export function getApiErrorCode(error: unknown): string | null {
+  return extractApiErrorCode(error);
+}
+
 function extractApiErrorCode(error: unknown): string | null {
   if (error instanceof ApiResponseError) {
     return error.code?.trim() || null;
@@ -1453,6 +1639,17 @@ function resolveProgramReviewCodeError(
   if (!context.startsWith("programs.reviews.")) return null;
   const code = extractApiErrorCode(error);
   return code ? (PROGRAM_REVIEW_CODE_ERRORS[code] ?? null) : null;
+}
+
+function resolveAdvisoryCodeError(
+  error: unknown,
+  context: AppErrorContext,
+): AppErrorState | null {
+  if (!ADVISORY_CODE_CONTEXT_PREFIXES.some((prefix) => context.startsWith(prefix))) {
+    return null;
+  }
+  const code = extractApiErrorCode(error);
+  return code ? (ADVISORY_CODE_ERRORS[code] ?? null) : null;
 }
 
 function fromZodError(error: ZodError): AppErrorState {
@@ -1491,6 +1688,9 @@ export function resolveAppError(
 ): AppErrorState {
   const reviewCodeError = resolveProgramReviewCodeError(error, context);
   if (reviewCodeError) return reviewCodeError;
+
+  const advisoryCodeError = resolveAdvisoryCodeError(error, context);
+  if (advisoryCodeError) return advisoryCodeError;
 
   if (error instanceof ApiResponseError) {
     const mapped = mapHttpStatusToError(

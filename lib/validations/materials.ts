@@ -25,6 +25,17 @@ export const updateMaterialSchema = z.object({
   title: z.string().min(1, "Tiêu đề tài liệu là bắt buộc."),
 });
 
+/** Body for `POST /api/materials/from-discussion-attachment`. */
+export const createMaterialFromAttachmentSchema = z.object({
+  attachmentId: z.string().uuid("Tệp đính kèm không hợp lệ."),
+  activityId: z.string().uuid("Hoạt động không hợp lệ."),
+  title: z
+    .string()
+    .trim()
+    .min(1, "Tiêu đề tài liệu là bắt buộc.")
+    .max(255, "Tiêu đề tài liệu không được quá 255 ký tự."),
+});
+
 export const materialTypeFilterSchema = z.enum([
   "PDF",
   "DOC",
@@ -51,5 +62,8 @@ export type MaterialByActivityParams = z.infer<typeof materialByActivityParamsSc
 export type MaterialByActivityQuery = z.infer<typeof materialByActivityQuerySchema>;
 export type MaterialIdParam = z.infer<typeof materialIdParamSchema>;
 export type UpdateMaterialInput = z.infer<typeof updateMaterialSchema>;
+export type CreateMaterialFromAttachmentInput = z.infer<
+  typeof createMaterialFromAttachmentSchema
+>;
 export type MaterialTypeFilter = z.infer<typeof materialTypeFilterSchema>;
 export type MaterialListQuery = z.infer<typeof materialListQuerySchema>;
