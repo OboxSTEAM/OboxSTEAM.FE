@@ -64,6 +64,12 @@ const EXACT_VI: Record<string, string> = {
   "Check-in is not available for this session.":
     "Buổi học này không hỗ trợ check-in.",
   "You have already checked in.": "Bạn đã check-in rồi.",
+  "This session is not open for check-in.":
+    "Buổi học này không còn mở check-in.",
+  "Mentors can only update attendance while the class session is ongoing.":
+    "Mentor chỉ sửa điểm danh khi buổi học đang diễn ra.",
+  "Cannot change the time of a session that is in progress.":
+    "Không thể đổi giờ của buổi đang diễn ra.",
   Unauthorized: "Bạn chưa đăng nhập hoặc phiên đã hết hạn.",
   Forbidden: "Bạn không có quyền thực hiện thao tác này.",
   "Access denied.": "Bạn không có quyền thực hiện thao tác này.",

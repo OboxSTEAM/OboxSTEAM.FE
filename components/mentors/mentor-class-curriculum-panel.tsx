@@ -51,6 +51,7 @@ import {
 import {
   canGenerateSessionCheckinQr,
   effectiveSessionStatus,
+  isSessionAttendanceClosed,
   formatClassSessionSchedule,
   getNextSessionForActivity,
   getSessionsForActivity,
@@ -375,7 +376,14 @@ export function MentorClassCurriculumPanel({
 
   const handleAttendanceChange = useCallback(
     async (student: ClassSessionStudent, status: SessionAttendanceStatus) => {
-      if (!effectiveSessionId || student.attendanceStatus === status) return;
+      if (
+        !effectiveSessionId ||
+        !selectedSession ||
+        isSessionAttendanceClosed(selectedSession) ||
+        student.attendanceStatus === status
+      ) {
+        return;
+      }
       setUpdatingAttendanceId(student.studentId);
       try {
         await updateSessionAttendance(
@@ -395,7 +403,7 @@ export function MentorClassCurriculumPanel({
         setUpdatingAttendanceId(null);
       }
     },
-    [classId, effectiveSessionId, retryAttendance],
+    [classId, effectiveSessionId, retryAttendance, selectedSession],
   );
 
   const handleMentorCompleteActivity = useCallback(async () => {

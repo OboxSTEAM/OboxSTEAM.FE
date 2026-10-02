@@ -7,21 +7,40 @@ const ACTIVE_SESSION_STATUSES = new Set<ClassSessionStatus>([
 ]);
 
 /**
- * Session rows stay `InProgress` after the clock passes `endTime` until the
- * backend closes them. Once the slot is over, show the same "Hoàn thành"
- * the mentor already recorded on the activity.
+ * Display status while the 5-minute close job lags. Does not write the server.
+ * Assignment windows stay on the API status — the job does not move them.
  */
 export function effectiveSessionStatus(
-  session: Pick<ClassSession, "status" | "endTime">,
+  session: Pick<ClassSession, "status" | "sessionKind" | "startTime" | "endTime">,
   now = new Date(),
 ): ClassSessionStatus {
   if (session.status === "Completed" || session.status === "Cancelled") {
     return session.status;
   }
-  if (session.status !== "InProgress") return session.status;
+  if (session.sessionKind === "AssignmentWindow") return session.status;
+
+  const nowMs = now.getTime();
   const endMs = parseApiDateTime(session.endTime)?.getTime();
-  if (endMs != null && endMs <= now.getTime()) return "Completed";
+  if (endMs != null && nowMs >= endMs) return "Completed";
+
+  const startMs = parseApiDateTime(session.startTime)?.getTime();
+  if (
+    session.status === "Scheduled" &&
+    startMs != null &&
+    nowMs >= startMs
+  ) {
+    return "InProgress";
+  }
   return session.status;
+}
+
+/** Mentor roster edits and student check-in stop once the slot is over. */
+export function isSessionAttendanceClosed(
+  session: Pick<ClassSession, "status" | "sessionKind" | "startTime" | "endTime">,
+  now = new Date(),
+): boolean {
+  const status = effectiveSessionStatus(session, now);
+  return status === "Completed" || status === "Cancelled";
 }
 
 /**

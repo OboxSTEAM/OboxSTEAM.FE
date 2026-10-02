@@ -34,12 +34,16 @@ import {
   submitClassSessionExpertFeedback,
   type ClassSessionExpert,
   type ClassSessionExpertStatus,
+  type ClassSessionStatus,
 } from "@/lib/api";
 import {
   CLASS_SESSION_KIND_LABELS,
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
-import { formatClassSessionSchedule } from "@/lib/classes/session-helpers";
+import {
+  effectiveSessionStatus,
+  formatClassSessionSchedule,
+} from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -69,30 +73,41 @@ const STATUS_BADGE: Record<ClassSessionExpertStatus, { label: string; className:
 const PAGE_SIZE = 50;
 type ScheduleView = "action" | "upcoming" | "history" | "all";
 
+function displaySessionStatus(invite: ClassSessionExpert): ClassSessionStatus {
+  return effectiveSessionStatus({
+    status: invite.sessionStatus,
+    sessionKind: invite.sessionKind,
+    startTime: invite.sessionStartTime,
+    endTime: invite.sessionEndTime,
+  });
+}
+
 function canRespondToInvite(invite: ClassSessionExpert): boolean {
-  return invite.status === "Invited" && invite.sessionStatus === "Scheduled";
+  return invite.status === "Invited" && displaySessionStatus(invite) === "Scheduled";
 }
 
 function needsFeedback(invite: ClassSessionExpert): boolean {
   return (
     invite.status === "Accepted" &&
-    invite.sessionStatus === "Completed" &&
+    displaySessionStatus(invite) === "Completed" &&
     invite.mentorFeedback == null
   );
 }
 
 function isUpcomingAccepted(invite: ClassSessionExpert): boolean {
+  const sessionStatus = displaySessionStatus(invite);
   return (
     invite.status === "Accepted" &&
-    (invite.sessionStatus === "Scheduled" || invite.sessionStatus === "InProgress")
+    (sessionStatus === "Scheduled" || sessionStatus === "InProgress")
   );
 }
 
 function isHistory(invite: ClassSessionExpert): boolean {
+  const sessionStatus = displaySessionStatus(invite);
   return (
     invite.status === "Declined" ||
-    invite.sessionStatus === "Cancelled" ||
-    (invite.sessionStatus === "Completed" && !needsFeedback(invite))
+    sessionStatus === "Cancelled" ||
+    (sessionStatus === "Completed" && !needsFeedback(invite))
   );
 }
 
@@ -349,7 +364,7 @@ function InviteCard({
   const canGiveFeedback =
     needsFeedback(invite) ||
     (invite.status === "Accepted" &&
-      invite.sessionStatus === "Completed" &&
+      displaySessionStatus(invite) === "Completed" &&
       invite.mentorFeedback != null);
   const canRespond = canRespondToInvite(invite);
   const awaitingFeedback = needsFeedback(invite);
@@ -366,7 +381,7 @@ function InviteCard({
           Icon: Clock,
           className: "bg-[#FDD835]/25 text-[#725D00] dark:text-[#fde047]",
         }
-      : invite.sessionStatus === "InProgress"
+      : displaySessionStatus(invite) === "InProgress"
         ? {
             label: "Đang diễn ra",
             Icon: Clock,
@@ -441,7 +456,7 @@ function InviteCard({
                 <span className="text-border"> · </span>
                 {CLASS_SESSION_KIND_LABELS[invite.sessionKind]}
                 <span className="text-border"> · </span>
-                {CLASS_SESSION_STATUS_LABELS[invite.sessionStatus]}
+                {CLASS_SESSION_STATUS_LABELS[displaySessionStatus(invite)]}
               </p>
             </div>
 

@@ -23,6 +23,7 @@ import {
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import type { ClassSession } from "@/lib/api/entities/class-session";
 import { listSessionEvidence } from "@/lib/api/class-sessions";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 import { CLASS_SESSION_KIND_LABELS } from "@/lib/classes/constants";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import { cn } from "@/lib/utils";
@@ -79,8 +80,9 @@ export function SessionEvidenceGalleryDrawer({
 
   const sessionId = session?.id ?? "";
   const canInviteExpert =
-    session?.sessionKind === "Offline" &&
-    session.status === "Scheduled" &&
+    session != null &&
+    session.sessionKind === "Offline" &&
+    effectiveSessionStatus(session) === "Scheduled" &&
     !!onInviteExpert;
 
   const {
@@ -185,7 +187,7 @@ export function SessionEvidenceGalleryDrawer({
             {session ? (
               <div className="space-y-3 rounded-xl border border-border bg-muted/10 p-3">
                 <div className="flex flex-wrap items-center gap-2">
-                  <ClassSessionStatusBadge status={session.status} />
+                  <ClassSessionStatusBadge status={effectiveSessionStatus(session)} />
                   <ClassDateRange
                     startDate={session.startTime}
                     endDate={session.endTime}

@@ -11,6 +11,7 @@ import {
   type StudentScheduleInterval,
 } from "@/lib/api";
 import { findBusyConflictLabel } from "@/lib/classes/schedule-conflict";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 
 export type BoardClassSessions =
   | { status: "ready"; sessions: ClassSession[] }
@@ -121,7 +122,7 @@ async function loadMentorBusyIntervals(): Promise<StudentScheduleInterval[]> {
         startTime: session.startTime,
         endTime: session.endTime,
         sessionKind: session.sessionKind,
-        status: session.status,
+        status: effectiveSessionStatus(session),
       }),
     );
   });

@@ -25,6 +25,7 @@ import {
 import {
   canGenerateSessionCheckinQr,
   formatClassSessionSchedule,
+  isSessionAttendanceClosed,
   type ClassSessionSchedule,
   type LiveJoinState,
 } from "@/lib/classes/session-helpers";
@@ -387,14 +388,20 @@ function OfflineSessionLayout({
   const location = nextSession?.location ?? null;
   const hasCoordinates =
     nextSession?.latitude != null && nextSession?.longitude != null;
-  const canCheckin =
+  const checkedIn = isAttendanceCheckedIn(myAttendanceStatus);
+  const canOfferCheckin =
     nextSession != null && canGenerateSessionCheckinQr(nextSession);
+  const attendanceClosed =
+    nextSession != null && isSessionAttendanceClosed(nextSession);
   const joinState = useLiveJoinState(nextSession);
   const showCheckinPanel =
-    canCheckin &&
-    (isAttendanceCheckedIn(myAttendanceStatus) ||
-      joinState?.phase === "countdown" ||
-      joinState?.phase === "live");
+    (canOfferCheckin &&
+      (checkedIn ||
+        joinState?.phase === "countdown" ||
+        joinState?.phase === "live")) ||
+    (checkedIn &&
+      nextSession?.sessionKind === "Offline" &&
+      Boolean(nextSession.requiresAttendance));
 
   return (
     <div className="space-y-5">
@@ -407,7 +414,7 @@ function OfflineSessionLayout({
         <SessionScheduleShell mode="offline">
           <OfflineSessionWindow
             join={joinState}
-            requireQrCheckin={Boolean(activity.requireQrCheckin) || canCheckin}
+            requireQrCheckin={Boolean(activity.requireQrCheckin) || canOfferCheckin}
           />
 
           <div className="overflow-hidden rounded-2xl border border-[#E8A87C]/35 bg-[#E8A87C]/8">
@@ -463,6 +470,15 @@ function OfflineSessionLayout({
           initialStatus={myAttendanceStatus}
           onCheckedIn={onAttendanceChange}
         />
+      ) : null}
+
+      {attendanceClosed &&
+      !checkedIn &&
+      nextSession?.sessionKind === "Offline" &&
+      nextSession.requiresAttendance ? (
+        <p className="text-sm text-learn-muted">
+          Buổi đã kết thúc. Không còn check-in.
+        </p>
       ) : null}
 
       <CompletionOrMentorNote

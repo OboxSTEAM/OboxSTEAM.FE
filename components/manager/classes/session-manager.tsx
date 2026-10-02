@@ -61,6 +61,7 @@ import {
   CLASS_SESSION_STATUS_LABELS,
 } from "@/lib/classes/constants";
 import { subscribeClassSessionsInvalidate } from "@/lib/classes/session-invalidate-bus";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 import {
   canGenerateClassSessions,
   countActiveClassSessions,
@@ -382,7 +383,7 @@ function SessionManagerInner() {
       header: "Trạng thái",
       className: "w-32",
       render: (session) => (
-        <ClassSessionStatusBadge status={session.status} />
+        <ClassSessionStatusBadge status={effectiveSessionStatus(session)} />
       ),
     },
     {
@@ -402,7 +403,8 @@ function SessionManagerInner() {
               <Images className="size-4" />
             </Button>
           ) : null}
-          {session.sessionKind === "Offline" && session.status === "Scheduled" ? (
+          {session.sessionKind === "Offline" &&
+          effectiveSessionStatus(session) === "Scheduled" ? (
             <Button
               type="button"
               variant="ghost"

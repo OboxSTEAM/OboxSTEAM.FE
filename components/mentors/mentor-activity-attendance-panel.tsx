@@ -98,6 +98,9 @@ export function MentorActivityAttendancePanel({
     });
   }, [students, search, statusFilter]);
 
+  const attendanceLocked =
+    sessionStatus === "Completed" || sessionStatus === "Cancelled";
+
   const columns: ColumnDef<ClassSessionStudent>[] = useMemo(
     () => [
       {
@@ -153,7 +156,9 @@ export function MentorActivityAttendancePanel({
               onStatusChange(student, value as SessionAttendanceStatus);
             }}
             disabled={
-              updatingStudentId === student.studentId || isCompletingActivity
+              attendanceLocked ||
+              updatingStudentId === student.studentId ||
+              isCompletingActivity
             }
           >
             <SelectTrigger className={cn(THEME_SELECT_TRIGGER, "w-full")}>
@@ -180,7 +185,13 @@ export function MentorActivityAttendancePanel({
         ),
       },
     ],
-    [isCompletingActivity, onStatusChange, sessionStatus, updatingStudentId],
+    [
+      attendanceLocked,
+      isCompletingActivity,
+      onStatusChange,
+      sessionStatus,
+      updatingStudentId,
+    ],
   );
 
   return (
@@ -210,6 +221,12 @@ export function MentorActivityAttendancePanel({
           setStatusFilter("all");
         }}
       />
+
+      {attendanceLocked ? (
+        <p className="border-b border-border px-4 py-3 text-xs text-muted-foreground sm:px-6">
+          Buổi đã kết thúc hoặc đã huỷ. Không sửa điểm danh nữa.
+        </p>
+      ) : null}
 
       {onCompleteActivity ? (
         <div className="space-y-2 border-b border-border bg-muted/10 px-4 py-3 sm:px-6">

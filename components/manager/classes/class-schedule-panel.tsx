@@ -53,6 +53,7 @@ import {
   CLASS_SESSIONS_QUERY,
 } from "@/lib/classes/constants";
 import { subscribeClassSessionsInvalidate } from "@/lib/classes/session-invalidate-bus";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 import {
   canGenerateClassSessions,
   countActiveClassSessions,
@@ -349,14 +350,17 @@ export function ClassSchedulePanel({
     {
       header: "Trạng thái",
       className: "w-28",
-      render: (session) => <ClassSessionStatusBadge status={session.status} />,
+      render: (session) => (
+        <ClassSessionStatusBadge status={effectiveSessionStatus(session)} />
+      ),
     },
     {
       header: "Thao tác",
       className: "w-28 text-right",
       render: (session) => {
         const canInviteExpert =
-          session.sessionKind === "Offline" && session.status === "Scheduled";
+          session.sessionKind === "Offline" &&
+          effectiveSessionStatus(session) === "Scheduled";
 
         return (
           <div className="flex justify-end gap-1">

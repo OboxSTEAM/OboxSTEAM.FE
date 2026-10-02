@@ -37,6 +37,7 @@ import {
 } from "@/lib/api";
 import { parseApiDateTime } from "@/lib/api/datetime";
 import { CLASS_SESSIONS_QUERY } from "@/lib/classes/constants";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 import {
   addDaysToDateOnly,
@@ -97,7 +98,7 @@ function toScheduleItem(
     endTime: session.endTime,
     location: session.location,
     meetingUrl: session.meetingUrl,
-    status: session.status,
+    status: effectiveSessionStatus(session),
     activityId: session.activityId,
     dateOnly,
   };

@@ -52,6 +52,7 @@ import {
 } from "@/lib/api";
 import type { SkillSummary } from "@/lib/api/entities/skill";
 import { isMentorBoardClass } from "@/lib/classes/constants";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
@@ -1040,7 +1041,7 @@ function toWeekScheduleClass(
       startTime: session.startTime,
       endTime: session.endTime,
       sessionKind: session.sessionKind,
-      status: session.status,
+      status: effectiveSessionStatus(session),
     })),
   };
 }

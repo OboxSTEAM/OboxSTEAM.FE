@@ -21,14 +21,14 @@ export const CLASS_SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
 };
 
 export const CLASS_SESSION_STATUS_LABELS: Record<ClassSessionStatus, string> = {
-  Scheduled: "Đã lên lịch",
+  Scheduled: "Sắp diễn ra",
   InProgress: "Đang diễn ra",
   Completed: "Hoàn thành",
-  Cancelled: "Đã hủy",
+  Cancelled: "Đã huỷ",
 };
 
 export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> = {
-  Expected: "Chờ điểm danh",
+  Expected: "Chưa điểm danh",
   Present: "Có mặt",
   Absent: "Vắng",
   Excused: "Có phép",
@@ -36,8 +36,8 @@ export const ATTENDANCE_STATUS_LABELS: Record<SessionAttendanceStatus, string> =
 };
 
 /**
- * After the session is closed, `Expected` is an unmarked roll — not a session
- * still waiting to start. Keep the stored value; only the label changes.
+ * `Expected` means the database has no attendance row. After the session is
+ * closed that is missing data, not a roll still waiting to be taken.
  */
 export function formatAttendanceStatusLabel(
   status: SessionAttendanceStatus,
@@ -47,7 +47,7 @@ export function formatAttendanceStatusLabel(
     status === "Expected" &&
     (sessionStatus === "Completed" || sessionStatus === "Cancelled")
   ) {
-    return "Chưa điểm danh";
+    return "Không có dữ liệu điểm danh";
   }
   return ATTENDANCE_STATUS_LABELS[status];
 }

@@ -57,6 +57,7 @@ import {
   ASSIGNMENT_TYPE_LABELS,
 } from "@/lib/curriculum/constants";
 import { DEFAULT_LIVE_ACTIVITY_DURATION_MINUTES } from "@/lib/classes/lifecycle";
+import { effectiveSessionStatus } from "@/lib/classes/session-helpers";
 import {
   fromApiDateTimeToLocalInput,
   toApiDateTimeFromLocalInput,
@@ -266,6 +267,10 @@ export function SessionFormDialog({
   const prefersPlace = sessionKind === "Offline";
   /** Create flow does not collect a Google Meet link for live online sessions. */
   const omitOnlineMeetingUrl = !session && sessionKind === "LiveOnline";
+  const displayedStatus = session ? effectiveSessionStatus(session) : null;
+  const isSessionClosed =
+    displayedStatus === "Completed" || displayedStatus === "Cancelled";
+  const isTimeLocked = displayedStatus === "InProgress" || isSessionClosed;
   const [extraVenueOpen, setExtraVenueOpen] = useState(false);
   const [activityOptions, setActivityOptions] = useState<ActivityOption[]>([]);
   const [assignmentOptions, setAssignmentOptions] = useState<AssignmentOption[]>(
@@ -452,7 +457,15 @@ export function SessionFormDialog({
               Thông tin buổi học
             </h3>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            {isSessionClosed ? (
+              <p className="text-sm text-muted-foreground">
+                Buổi đã kết thúc hoặc đã huỷ. Không sửa được thông tin buổi.
+              </p>
+            ) : null}
+            <fieldset
+              disabled={isSessionClosed}
+              className="grid gap-3 border-0 p-0 disabled:opacity-70 sm:grid-cols-2"
+            >
               <FormField
                 id="title"
                 label="Tiêu đề"
@@ -825,6 +838,7 @@ export function SessionFormDialog({
                           placeholder="Bắt đầu"
                           value={field.value ?? ""}
                           invalid={!!errors.startTime}
+                          disabled={isTimeLocked}
                           onChange={(next) => {
                             field.onChange(next);
                             if (isActivitySession) {
@@ -854,7 +868,11 @@ export function SessionFormDialog({
                           referenceDate={startTimeValue || undefined}
                           referenceLabel="Bắt đầu"
                           invalid={!!errors.endTime}
-                          disabled={isActivitySession || !isAssignmentSession}
+                          disabled={
+                            isTimeLocked ||
+                            isActivitySession ||
+                            !isAssignmentSession
+                          }
                           onChange={
                             isAssignmentSession ? field.onChange : () => undefined
                           }
@@ -863,6 +881,11 @@ export function SessionFormDialog({
                     )}
                   />
                 </div>
+                {isTimeLocked && !isSessionClosed ? (
+                  <p className="text-xs text-muted-foreground">
+                    Buổi đang diễn ra. Không đổi được giờ bắt đầu và giờ kết thúc.
+                  </p>
+                ) : null}
                 {isActivitySession ? (
                   <p className="text-xs text-muted-foreground">
                     Buổi hoạt động: chỉ chọn giờ bắt đầu. Kết thúc = Start +
@@ -1031,7 +1054,7 @@ export function SessionFormDialog({
                   className="w-full resize-none rounded-xl border border-input bg-card px-3.5 py-3 text-sm text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-ring focus:ring-2 focus:ring-ring/30"
                 />
               </FormField>
-            </div>
+            </fieldset>
           </DialogScrollBody>
 
           <DialogScrollFooter>
@@ -1046,7 +1069,7 @@ export function SessionFormDialog({
             </Button>
             <Button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || isSessionClosed}
               className="h-11 rounded-xl bg-primary px-6 font-semibold text-white hover:bg-primary/90 active:scale-[0.98]"
             >
               {isSubmitting
