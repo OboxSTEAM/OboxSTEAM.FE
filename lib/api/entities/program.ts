@@ -81,6 +81,10 @@ export const programSchema = z.object({
   frameworkVersionNumber: z.number().int().nullable().optional().transform(
     (value) => value ?? null,
   ),
+  latestFrameworkVersionNumber: z.number().int().nullish().transform(
+    (value) => value ?? null,
+  ),
+  hasNewerFrameworkVersion: z.boolean().nullish().transform((value) => value ?? false),
   advisorExpertId: z
     .string()
     .uuid()

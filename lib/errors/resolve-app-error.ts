@@ -300,8 +300,8 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
   },
   "programs.advisor": {
     title: "Không gán được chuyên gia phụ trách",
-    reason: "Chỉ đổi được chuyên gia phụ trách khi chương trình là Bản nháp hoặc Đã chấp thuận.",
-    action: "Gán chuyên gia vào hội đồng trước. Với chương trình đã xuất bản, hãy liên hệ quản trị viên.",
+    reason: "Chuyên gia phụ trách là tác giả khung, chỉ được gán khi chương trình là Bản nháp hoặc Đã chấp thuận và tác giả có tài khoản đăng nhập đang hoạt động.",
+    action: "Kiểm tra tài khoản của tác giả khung rồi tải lại trang. Nếu vẫn lỗi, hãy liên hệ quản trị viên.",
   },
   "programs.advisory": {
     title: "Không thực hiện được thao tác advisory",
@@ -312,6 +312,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     title: "Không tải được kiểm tra khung",
     reason: "Chương trình chưa gán khung hoặc máy chủ tạm thời không phản hồi.",
     action: "Kiểm tra khung gán cho chương trình và thử lại.",
+  },
+  "programs.framework-upgrade": {
+    title: "Không cập nhật được phiên bản khung",
+    reason: "Phiên bản khung không còn hợp lệ hoặc chương trình đang bị khoá chỉnh sửa.",
+    action: "Tải lại trang để xem phiên bản mới nhất rồi thử lại.",
   },
   "frameworks.versions": {
     title: "Không thao tác được phiên bản khung",
@@ -1537,8 +1542,23 @@ const ADVISORY_CODE_ERRORS: Record<string, AppErrorState> = {
   },
   CURRICULUM_LOCKED_COHORT: {
     title: "Không thể chỉnh sửa chương trình",
-    reason: "Chương trình đang có lớp diễn ra hoặc đã có học viên.",
-    action: "Chờ các lớp của chương trình kết thúc rồi chỉnh sửa lại.",
+    reason: "Chương trình đang có lớp diễn ra, lớp đã có học viên hoặc có học viên đang thanh toán.",
+    action: "Chờ các lớp kết thúc hoặc giao dịch thanh toán hoàn tất rồi thử lại.",
+  },
+  FRAMEWORK_LOCKED: {
+    title: "Không thể đổi khung chương trình",
+    reason: "Khung chỉ được chọn khi tạo chương trình.",
+    action: "Tạo chương trình mới nếu cần dùng khung khác.",
+  },
+  FRAMEWORK_REQUIRED: {
+    title: "Chương trình không gắn khung",
+    reason: "Chương trình không gắn khung không có bước chấp thuận.",
+    action: "Tải lại trang rồi xuất bản trực tiếp.",
+  },
+  FRAMEWORK_VERSION_INVALID: {
+    title: "Phiên bản khung không hợp lệ",
+    reason: "Phiên bản phải đã xuất bản, cùng khung và mới hơn phiên bản đang dùng.",
+    action: "Tải lại trang để xem phiên bản mới nhất rồi thử lại.",
   },
   ENDPOINT_REMOVED: {
     title: "Tính năng đã thay đổi",
@@ -1549,6 +1569,15 @@ const ADVISORY_CODE_ERRORS: Record<string, AppErrorState> = {
     title: "Quy tắc khung chưa hợp lệ",
     reason: "Một số giá trị quy tắc mâu thuẫn hoặc nằm ngoài giới hạn cho phép.",
     action: "Kiểm tra các giá trị tối thiểu, tối đa và tỉ lệ rồi lưu lại.",
+  },
+};
+
+/** BE machine codes with the same meaning in every context (checkout, enroll, parent pay…). */
+const GLOBAL_CODE_ERRORS: Record<string, AppErrorState> = {
+  PROGRAM_NOT_AVAILABLE: {
+    title: "Chương trình tạm ngừng nhận đăng ký",
+    reason: "Chương trình đang được cập nhật nên chưa thể giữ chỗ hay thanh toán. Chỗ giữ và giao dịch đang chờ đã được huỷ.",
+    action: "Quay lại sau khi chương trình mở lại đăng ký.",
   },
 };
 
@@ -1591,6 +1620,11 @@ function resolveProgramReviewCodeError(
   if (!context.startsWith("programs.reviews.")) return null;
   const code = extractApiErrorCode(error);
   return code ? (PROGRAM_REVIEW_CODE_ERRORS[code] ?? null) : null;
+}
+
+function resolveGlobalCodeError(error: unknown): AppErrorState | null {
+  const code = extractApiErrorCode(error);
+  return code ? (GLOBAL_CODE_ERRORS[code] ?? null) : null;
 }
 
 function resolveAdvisoryCodeError(
@@ -1638,6 +1672,9 @@ export function resolveAppError(
   error: unknown,
   context: AppErrorContext = "generic",
 ): AppErrorState {
+  const globalCodeError = resolveGlobalCodeError(error);
+  if (globalCodeError) return globalCodeError;
+
   const reviewCodeError = resolveProgramReviewCodeError(error, context);
   if (reviewCodeError) return reviewCodeError;
 

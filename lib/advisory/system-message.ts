@@ -20,6 +20,8 @@ const REVOKE_REASON_TEXT: Record<ApprovalRevokeReason, (actor: string | null) =>
     "Chương trình vừa được chỉnh sửa nên chấp thuận trước đó không còn hiệu lực.",
   ExpertRevoked: (actor) => `${actor ?? "Chuyên gia"} đã rút lại chấp thuận.`,
   AdvisorChanged: () => "Chuyên gia tư vấn đã thay đổi nên chấp thuận trước đó không còn hiệu lực.",
+  FrameworkUpgraded: () =>
+    "Chương trình đã chuyển sang phiên bản khung mới nên chấp thuận trước đó không còn hiệu lực.",
 };
 
 /** Vietnamese copy for a system message; falls back to the server text. */
@@ -93,6 +95,22 @@ export function describeSystemMessage(message: DiscussionMessage): SystemMessage
             ? `${newAdvisorName} được chỉ định làm chuyên gia tư vấn.`
             : "Chuyên gia tư vấn đã thay đổi.";
       return { text, detail: null, tone: "neutral", versionRange: null };
+    }
+    case "FrameworkUpgraded": {
+      const { actorName, fromVersion, toVersion } = event.payload;
+      const actor = actorName ?? "Quản lý";
+      const range =
+        fromVersion !== null && toVersion !== null
+          ? ` từ v${fromVersion} lên v${toVersion}`
+          : toVersion !== null
+            ? ` lên v${toVersion}`
+            : "";
+      return {
+        text: `${actor} đã cập nhật khung chương trình${range}.`,
+        detail: "Chương trình về Bản nháp và cần chuyên gia phụ trách chấp thuận lại theo quy tắc mới.",
+        tone: "warning",
+        versionRange: null,
+      };
     }
   }
 }

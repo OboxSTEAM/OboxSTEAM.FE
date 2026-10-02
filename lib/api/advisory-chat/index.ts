@@ -21,6 +21,7 @@ import {
   postDiscussionMessageSchema,
   recordDiscussionReadSchema,
   revokeProgramApprovalSchema,
+  upgradeProgramFrameworkVersionSchema,
   type AdvisoryProgramsQuery,
   type ApproveProgramInput,
   type CurriculumChangesQuery,
@@ -32,6 +33,7 @@ import {
   type PostDiscussionMessageInput,
   type RecordDiscussionReadInput,
   type RevokeProgramApprovalInput,
+  type UpgradeProgramFrameworkVersionInput,
 } from "@/lib/validations/advisory-chat";
 import { programIdParamSchema } from "@/lib/validations/programs";
 
@@ -160,6 +162,22 @@ export async function revokeProgramApproval(
   const body = revokeProgramApprovalSchema.parse(input);
   return getData(
     `${programPath(programId)}/approval/revoke`,
+    getAdvisoryWorkspaceResponseSchema,
+    { method: "POST", body },
+  );
+}
+
+/**
+ * `POST /api/programs/{id}/framework-version` — pins a newer published version of the
+ * program's framework. Revokes the approval and returns Approved/Active/Inactive to Draft.
+ */
+export async function upgradeProgramFrameworkVersion(
+  programId: string,
+  input: UpgradeProgramFrameworkVersionInput,
+): Promise<AdvisoryWorkspace> {
+  const body = upgradeProgramFrameworkVersionSchema.parse(input);
+  return getData(
+    `${programPath(programId)}/framework-version`,
     getAdvisoryWorkspaceResponseSchema,
     { method: "POST", body },
   );

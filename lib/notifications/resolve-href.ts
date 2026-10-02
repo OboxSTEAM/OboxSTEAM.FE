@@ -371,6 +371,8 @@ export function resolveNotificationHref(
     case "CurriculumApprovalRevoked":
     case "AdvisoryDiscussionMessage":
     case "AdvisoryMentionPinned":
+    case "ProgramFrameworkUpgraded":
+    case "FrameworkVersionPublished":
       if (!programId) {
         if (isExpert) return "/expert/programs";
         if (isManager) return "/manager/programs";

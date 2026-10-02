@@ -32,7 +32,11 @@ type ExpertProgramWorkspaceProps = {
  */
 export function ExpertProgramWorkspace({ program, framework }: ExpertProgramWorkspaceProps) {
   return (
-    <AdvisoryChatProvider programId={program.id} hasChangesView>
+    <AdvisoryChatProvider
+      programId={program.id}
+      hasFramework={program.frameworkId != null}
+      hasChangesView
+    >
       <ExpertProgramLayout program={program} framework={framework} />
     </AdvisoryChatProvider>
   );
@@ -54,11 +58,11 @@ function ExpertProgramLayout({ program, framework }: ExpertProgramWorkspaceProps
       ? "Chuyên gia phụ trách"
       : "Hội đồng chuyên môn"
     : "Hồ sơ cố vấn chương trình";
-  const frameworkLabel =
-    program.frameworkVersionNumber != null
+  const frameworkLabel = program.frameworkId
+    ? program.frameworkVersionNumber != null
       ? `Khung v${program.frameworkVersionNumber}`
-      : "Chưa gắn khung";
-
+      : "Khung chương trình"
+    : "Không theo khung";
   return (
     <div className="flex min-h-full items-stretch">
       <div className="flex min-w-0 flex-1 flex-col">

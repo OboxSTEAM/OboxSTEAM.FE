@@ -479,7 +479,7 @@ export async function updateProgram(
 }
 
 /**
- * `PUT /api/programs/{id}` with only status, price and framework. Curriculum
+ * `PUT /api/programs/{id}` with only status and price. Curriculum
  * fields are omitted so the request passes the live-class lock and keeps the approval.
  */
 export async function updateProgramSettings(
@@ -495,8 +495,6 @@ function toProgramSettingsBody(input: UpdateProgramSettingsInput) {
   return {
     // PUT only toggles Active ↔ Inactive; other lifecycle moves go through approval/publish.
     status: input.status === "Active" || input.status === "Inactive" ? input.status : undefined,
-    frameworkId: input.frameworkId || null,
-    frameworkVersionId: input.frameworkVersionId || null,
   };
 }
 

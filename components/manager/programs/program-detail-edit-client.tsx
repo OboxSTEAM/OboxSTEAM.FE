@@ -123,6 +123,7 @@ function ProgramDetailEditClientInner({
   return (
     <AdvisoryChatProvider
       programId={program.id}
+      hasFramework={program.frameworkId != null}
       materialActivities={materialActivities}
       hasChangesView
     >
@@ -170,18 +171,18 @@ function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
     router.refresh();
   }, [program.status, router, workspace?.status]);
 
-  const prepFrameworkId = program.status === "Draft" ? program.frameworkId : null;
-  const { data: prepFrameworkData } = useClientFetch({
-    enabled: prepFrameworkId != null,
-    fetcher: () => getProgramFrameworkById(prepFrameworkId!),
-    deps: [prepFrameworkId],
+  const frameworkId = program.frameworkId ?? null;
+  const { data: frameworkData } = useClientFetch({
+    enabled: frameworkId != null,
+    fetcher: () => getProgramFrameworkById(frameworkId!),
+    deps: [frameworkId],
     onError: (error) => showAppErrorFromUnknown(error, "frameworks.list"),
   });
-  const prepFramework = prepFrameworkId ? (prepFrameworkData?.data ?? null) : null;
+  const framework = frameworkId ? (frameworkData?.data ?? null) : null;
   const advisorAttachKey = useRef<string | null>(null);
 
   useEffect(() => {
-    const expertId = prepFramework?.expertId;
+    const expertId = framework?.expertId;
     if (program.status !== "Draft" || !expertId) return;
     const onBoard = program.experts.some((expert) => expert.expertId === expertId);
     if (program.advisorExpertId === expertId && onBoard) return;
@@ -203,7 +204,7 @@ function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
         showAppErrorFromUnknown(error, "programs.advisor");
       }
     })();
-  }, [prepFramework?.expertId, program, router]);
+  }, [framework?.expertId, program, router]);
 
   const breadcrumbs = [
     { label: "Chương trình", href: "/manager/programs" },
@@ -232,7 +233,7 @@ function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
             <Suspense fallback={<CurriculumPanelFallback />}>
               <ManagerCurriculumTab
                 program={program}
-                framework={prepFramework}
+                framework={framework}
                 onRefresh={refreshProgram}
               />
             </Suspense>

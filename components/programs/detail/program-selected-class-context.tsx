@@ -10,11 +10,12 @@ import {
   useRef,
   useState,
 } from "react";
+import { useRouter } from "next/navigation";
 
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { selectProgramClass } from "@/lib/api/programs";
 import { isStudentRole } from "@/lib/auth/roles";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { showAppErrorFromUnknown, subscribeApiErrorCode } from "@/lib/errors";
 import {
   clearClassHold,
   getClassHold,
@@ -80,6 +81,7 @@ export function ProgramSelectedClassProvider({
   programId: string;
   children: React.ReactNode;
 }) {
+  const router = useRouter();
   const { isAuthenticated, isHydrated, profile } = useCurrentUser();
   const { enrollment, refresh: refreshEnrollment } = useProgramEnrollmentLookup();
   const isStudent =
@@ -160,6 +162,20 @@ export function ProgramSelectedClassProvider({
       });
     };
   }, [isStudent, programId]);
+
+  useEffect(
+    () =>
+      subscribeApiErrorCode("PROGRAM_NOT_AVAILABLE", () => {
+        selectGenerationRef.current += 1;
+        clearClassHold(programId);
+        setHold(null);
+        setSelectingClassId(null);
+        setHoldReleaseCount((count) => count + 1);
+        refreshEnrollment();
+        router.refresh();
+      }),
+    [programId, refreshEnrollment, router],
+  );
 
   useEffect(() => {
     if (!hold?.holdExpiresAt) return;

@@ -28,6 +28,12 @@ const countSchema = z
 
 const versionSchema = z.number().int().min(0);
 
+const nullableVersionNumberSchema = z
+  .number()
+  .int()
+  .nullish()
+  .transform((value) => value ?? null);
+
 function listOf<T extends z.ZodType>(itemSchema: T) {
   return z
     .array(itemSchema)
@@ -72,6 +78,7 @@ export const advisoryCapabilitiesSchema = z.object({
   canRevokeApproval: z.boolean().optional().default(false),
   canRequestApproval: z.boolean().optional().default(false),
   canPublish: z.boolean().optional().default(false),
+  canUpgradeFrameworkVersion: z.boolean().optional().default(false),
 });
 
 const EMPTY_CAPABILITIES = advisoryCapabilitiesSchema.parse({});
@@ -91,6 +98,9 @@ export const advisoryWorkspaceSchema = z.object({
   curriculumLocked: z.boolean().optional().default(false),
   advisorExpertId: nullableUuidSchema,
   advisorName: nullableTextSchema,
+  frameworkVersionNumber: nullableVersionNumberSchema,
+  latestFrameworkVersionNumber: nullableVersionNumberSchema,
+  hasNewerFrameworkVersion: z.boolean().optional().default(false),
   participants: listOf(advisoryParticipantSchema),
   capabilities: advisoryCapabilitiesSchema
     .nullish()
@@ -165,6 +175,7 @@ export const discussionSystemEventCodeSchema = z.enum([
   "ApprovalRevoked",
   "Published",
   "AdvisorChanged",
+  "FrameworkUpgraded",
 ]);
 
 export const discussionSystemEventSchema = z.object({
@@ -352,6 +363,7 @@ export const approvalRevokeReasonSchema = z.enum([
   "CurriculumEdited",
   "ExpertRevoked",
   "AdvisorChanged",
+  "FrameworkUpgraded",
 ]);
 
 const approvalRevokedPayloadSchema = z.object({
@@ -370,13 +382,20 @@ const advisorChangedPayloadSchema = z.object({
   newAdvisorName: nullableTextSchema,
 });
 
+const frameworkUpgradedPayloadSchema = z.object({
+  actorName: nullableTextSchema,
+  fromVersion: nullableVersionNumberSchema,
+  toVersion: nullableVersionNumberSchema,
+});
+
 export type DiscussionSystemEventPayload =
   | { code: "CurriculumUpdated"; payload: z.infer<typeof curriculumUpdatedPayloadSchema> }
   | { code: "ApprovalRequested"; payload: z.infer<typeof approvalRequestedPayloadSchema> }
   | { code: "Approved"; payload: z.infer<typeof approvedPayloadSchema> }
   | { code: "ApprovalRevoked"; payload: z.infer<typeof approvalRevokedPayloadSchema> }
   | { code: "Published"; payload: z.infer<typeof publishedPayloadSchema> }
-  | { code: "AdvisorChanged"; payload: z.infer<typeof advisorChangedPayloadSchema> };
+  | { code: "AdvisorChanged"; payload: z.infer<typeof advisorChangedPayloadSchema> }
+  | { code: "FrameworkUpgraded"; payload: z.infer<typeof frameworkUpgradedPayloadSchema> };
 
 const SYSTEM_EVENT_PAYLOAD_SCHEMAS = {
   CurriculumUpdated: curriculumUpdatedPayloadSchema,
@@ -385,6 +404,7 @@ const SYSTEM_EVENT_PAYLOAD_SCHEMAS = {
   ApprovalRevoked: approvalRevokedPayloadSchema,
   Published: publishedPayloadSchema,
   AdvisorChanged: advisorChangedPayloadSchema,
+  FrameworkUpgraded: frameworkUpgradedPayloadSchema,
 } as const;
 
 /** Typed payload for a system message; `null` when the payload does not match its code. */

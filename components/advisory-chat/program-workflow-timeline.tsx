@@ -1,5 +1,6 @@
 "use client";
 
+import { useAdvisoryChat } from "@/components/advisory-chat/advisory-chat-provider";
 import {
   ExpertWorkflowRail,
   type ExpertWorkflowStep,
@@ -16,6 +17,13 @@ const STAGE_BY_STATUS: Record<ProgramStatus, number> = {
   Inactive: 2,
 };
 
+const UNFRAMED_STAGE_BY_STATUS: Record<ProgramStatus, number> = {
+  Draft: 0,
+  Approved: 0,
+  Active: 1,
+  Inactive: 1,
+};
+
 type ProgramWorkflowTimelineProps = {
   status: ProgramStatus;
   /** `null` while the advisory workspace is loading. */
@@ -24,10 +32,16 @@ type ProgramWorkflowTimelineProps = {
 };
 
 /**
- * Draft → Approved → Published rail shared by the expert and manager program pages;
- * each step explains itself on hover and "Việc của bạn" follows the viewer's capabilities.
+ * Draft → Approved → Published rail shared by the expert and manager program pages
+ * (Draft → Published when the program has no framework); each step explains itself
+ * on hover and "Việc của bạn" follows the viewer's capabilities.
  */
 export function ProgramWorkflowTimeline({ status, workspace, className }: ProgramWorkflowTimelineProps) {
+  const { hasFramework } = useAdvisoryChat();
+  if (!hasFramework) {
+    return <UnframedWorkflowTimeline status={status} workspace={workspace} className={className} />;
+  }
+
   const stage = STAGE_BY_STATUS[status];
   const approval = workspace?.approval ?? null;
   const isLiveWithoutApproval = stage === 2 && workspace != null && approval === null;
@@ -53,22 +67,9 @@ export function ProgramWorkflowTimeline({ status, workspace, className }: Progra
         </span>
       ) : undefined,
     },
-    status === "Inactive"
-      ? {
-          label: "Ngừng hoạt động",
-          detail: "Chương trình đã ngừng nhận học viên mới; manager có thể mở lại bất cứ lúc nào.",
-        }
-      : {
-          label: "Xuất bản",
-          detail: "Manager xuất bản chương trình để mở lớp cho học viên đăng ký.",
-        },
+    publishStep(status),
   ];
-  const steps = baseSteps.map(
-    (step, index): ExpertWorkflowStep => ({
-      ...step,
-      state: index < stage ? "done" : index === stage ? "current" : "next",
-    }),
-  );
+  const steps = toSteps(baseSteps, stage);
 
   const currentLabel = steps[stage]?.label ?? "Chưa xác định";
   const advisorLabel = workspace
@@ -95,15 +96,75 @@ export function ProgramWorkflowTimeline({ status, workspace, className }: Progra
           </Badge>
         ) : null}
       </div>
-      {nextAction ? (
-        <p className="mb-3 text-sm text-foreground">
-          <span className="font-semibold">Việc của bạn: </span>
-          {nextAction}
-        </p>
-      ) : null}
+      <NextAction text={nextAction} />
       <ExpertWorkflowRail steps={steps} />
     </section>
   );
+}
+
+function UnframedWorkflowTimeline({ status, workspace, className }: ProgramWorkflowTimelineProps) {
+  const stage = UNFRAMED_STAGE_BY_STATUS[status];
+  const steps = toSteps(
+    [
+      {
+        label: "Soạn thảo & trao đổi",
+        detail:
+          "Manager xây dựng chương trình và trao đổi với hội đồng chuyên gia; chương trình không theo khung nên không cần chấp thuận.",
+      },
+      publishStep(status),
+    ],
+    stage,
+  );
+  const nextAction =
+    workspace && stage === 0 && workspace.capabilities.canPublish
+      ? "Hoàn thiện chương trình rồi xuất bản để mở lớp cho học viên đăng ký."
+      : null;
+
+  return (
+    <section className={cn("rounded-2xl border border-border bg-card px-4 py-4", className)}>
+      <div className="mb-4">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+          Tiến trình chương trình
+        </p>
+        <p className="mt-1 text-sm font-semibold text-foreground">
+          {steps[stage]?.label ?? "Chưa xác định"}
+          <span className="mx-2 text-muted-foreground">·</span>
+          <span className="font-normal text-muted-foreground">Không theo khung</span>
+        </p>
+      </div>
+      <NextAction text={nextAction} />
+      <ExpertWorkflowRail steps={steps} />
+    </section>
+  );
+}
+
+function NextAction({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <p className="mb-3 text-sm text-foreground">
+      <span className="font-semibold">Việc của bạn: </span>
+      {text}
+    </p>
+  );
+}
+
+function publishStep(status: ProgramStatus): Omit<ExpertWorkflowStep, "state"> {
+  return status === "Inactive"
+    ? {
+        label: "Ngừng hoạt động",
+        detail: "Chương trình đã ngừng nhận học viên mới; manager có thể mở lại bất cứ lúc nào.",
+      }
+    : {
+        label: "Xuất bản",
+        detail: "Manager xuất bản chương trình để mở lớp cho học viên đăng ký.",
+      };
+}
+
+function toSteps(steps: Omit<ExpertWorkflowStep, "state">[], stage: number): ExpertWorkflowStep[] {
+  return steps.map((step, index) => ({
+    ...step,
+    state: index < stage ? "done" : index === stage ? "current" : "next",
+  }));
 }
 
 function describeNextAction(

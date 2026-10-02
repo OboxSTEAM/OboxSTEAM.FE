@@ -52,7 +52,9 @@ function buildReason(
  * Mirrors BE CurriculumEditGuard 409 rules (curriculum edits, program delete,
  * thumbnail upload; program PUT only when a curriculum field changes):
  * locked when any class is InProgress, or any Open class has seatsTaken > 0
- * (proxy for Active enrollments).
+ * (proxy for Active enrollments). BE also locks while an Open class has a live
+ * hold with a Pending payment; that case is not visible here, so the 409 is the
+ * only signal.
  */
 export async function fetchProgramCohortLock(
   programId: string,

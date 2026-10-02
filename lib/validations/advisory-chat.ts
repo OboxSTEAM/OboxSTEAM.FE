@@ -122,6 +122,11 @@ export const revokeProgramApprovalSchema = z.object({
     .nullable(),
 });
 
+/** Body for `POST /api/programs/{id}/framework-version` — a newer published version of the same framework. */
+export const upgradeProgramFrameworkVersionSchema = z.object({
+  frameworkVersionId: z.string().uuid("ID phiên bản khung không hợp lệ."),
+});
+
 export const curriculumChangesQuerySchema = z.object({
   base: z
     .string()
@@ -180,6 +185,9 @@ export type DiscussionPinsQuery = z.infer<typeof discussionPinsQuerySchema>;
 export type RecordDiscussionReadInput = z.infer<typeof recordDiscussionReadSchema>;
 export type ApproveProgramInput = z.infer<typeof approveProgramSchema>;
 export type RevokeProgramApprovalInput = z.infer<typeof revokeProgramApprovalSchema>;
+export type UpgradeProgramFrameworkVersionInput = z.infer<
+  typeof upgradeProgramFrameworkVersionSchema
+>;
 export type CurriculumChangesQuery = z.infer<typeof curriculumChangesQuerySchema>;
 export type MarkCurriculumChangesSeenInput = z.infer<
   typeof markCurriculumChangesSeenSchema

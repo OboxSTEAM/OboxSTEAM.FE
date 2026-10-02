@@ -32,8 +32,17 @@ type ApprovalBarProps = {
 /** Approval state + role actions (approve, request, reopen/revoke, publish) for the advisory chat. */
 export function ApprovalBar({ onProgramChanged, className }: ApprovalBarProps) {
   const router = useRouter();
-  const { programId, currentUserId, isStaff, workspace, workspaceState, capabilities, hasChangesView, openChanges } =
-    useAdvisoryChat();
+  const {
+    programId,
+    isStaff,
+    isAdvisor,
+    hasFramework,
+    workspace,
+    workspaceState,
+    capabilities,
+    hasChangesView,
+    openChanges,
+  } = useAdvisoryChat();
   const [isApproveOpen, setApproveOpen] = useState(false);
   const [isRevokeOpen, setRevokeOpen] = useState(false);
   const [isPublishOpen, setPublishOpen] = useState(false);
@@ -48,9 +57,6 @@ export function ApprovalBar({ onProgramChanged, className }: ApprovalBarProps) {
     );
   }
 
-  const isAdvisor =
-    workspace.participants.find((participant) => participant.userId === currentUserId)?.isAdvisor ??
-    !isStaff;
   const state = STATE_COPY[workspace.status];
   const { approval } = workspace;
   const isApproved = workspace.status === "Approved";
@@ -98,17 +104,19 @@ export function ApprovalBar({ onProgramChanged, className }: ApprovalBarProps) {
           {state.label}
         </span>
         <p className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-          {describeApprovalState(workspace, isLive)}
+          {hasFramework
+            ? describeApprovalState(workspace, isLive)
+            : describeUnframedState(workspace, isLive)}
         </p>
       </div>
 
-      {workspace.status === "Draft" && workspace.openPinCount > 0 ? (
+      {hasFramework && workspace.status === "Draft" && workspace.openPinCount > 0 ? (
         <p className="text-xs text-amber-800 dark:text-amber-300">
           Còn {workspace.openPinCount} mục cần sửa đang mở.
         </p>
       ) : null}
 
-      {isLive && workspace.changesSinceApprovalCount > 0 ? (
+      {hasFramework && isLive && workspace.changesSinceApprovalCount > 0 ? (
         <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
           <span>{workspace.changesSinceApprovalCount} thay đổi sau lần chấp thuận gần nhất.</span>
           {hasChangesView ? (
@@ -119,9 +127,9 @@ export function ApprovalBar({ onProgramChanged, className }: ApprovalBarProps) {
         </div>
       ) : null}
 
-      {workspace.status === "Draft" && isStaff && !workspace.advisorName ? (
+      {hasFramework && workspace.status === "Draft" && isStaff && !workspace.advisorName ? (
         <p className="text-xs text-muted-foreground">
-          Gán chuyên gia tư vấn để có thể mời duyệt chương trình.
+          Chưa có chuyên gia phụ trách khung nên chưa thể mời duyệt chương trình.
         </p>
       ) : null}
 
@@ -170,7 +178,11 @@ export function ApprovalBar({ onProgramChanged, className }: ApprovalBarProps) {
         onOpenChange={setPublishOpen}
         onConfirm={handlePublish}
         title="Xuất bản chương trình?"
-        description={`Phiên bản ${approval?.curriculumVersion ?? workspace.curriculumVersion} đã được chấp thuận sẽ được xuất bản. Sau đó bạn có thể tạo lớp và buổi học; tuyển sinh mở riêng từng lớp.`}
+        description={
+          hasFramework
+            ? `Phiên bản ${approval?.curriculumVersion ?? workspace.curriculumVersion} đã được chấp thuận sẽ được xuất bản. Sau đó bạn có thể tạo lớp và buổi học; tuyển sinh mở riêng từng lớp.`
+            : `Phiên bản ${workspace.curriculumVersion} sẽ được xuất bản ngay, không cần chuyên gia chấp thuận. Sau đó bạn có thể tạo lớp và buổi học; tuyển sinh mở riêng từng lớp.`
+        }
         confirmLabel="Xuất bản"
       />
     </div>
@@ -188,4 +200,9 @@ function describeApprovalState(workspace: AdvisoryWorkspace, isLive: boolean): s
   return workspace.advisorName
     ? `Chuyên gia tư vấn: ${workspace.advisorName}`
     : "Chưa có chuyên gia tư vấn";
+}
+
+function describeUnframedState(workspace: AdvisoryWorkspace, isLive: boolean): string {
+  if (isLive) return `Phiên bản ${workspace.curriculumVersion}`;
+  return "Không theo khung · quản lý xuất bản trực tiếp";
 }

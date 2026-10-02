@@ -211,6 +211,8 @@ const TYPE_GROUP: Record<NotificationType, NotificationTypeGroup> = {
   CurriculumApprovalRevoked: "advisory",
   AdvisoryDiscussionMessage: "advisory",
   AdvisoryMentionPinned: "advisory",
+  ProgramFrameworkUpgraded: "advisory",
+  FrameworkVersionPublished: "advisory",
 };
 
 export function getNotificationTypeStyle(type: NotificationType): TypeStyle {

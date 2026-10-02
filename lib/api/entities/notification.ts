@@ -97,6 +97,9 @@ export const notificationTypeSchema = z.enum([
   "CurriculumApprovalRevoked",
   "AdvisoryDiscussionMessage",
   "AdvisoryMentionPinned",
+  // Framework versions (payload carries fromVersion / toVersion)
+  "ProgramFrameworkUpgraded",
+  "FrameworkVersionPublished",
 ]);
 export const notificationSchema = z.object({
   id: z.string().uuid(),

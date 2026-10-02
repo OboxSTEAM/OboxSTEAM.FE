@@ -25427,7 +25427,7 @@
           "Program"
         ],
         "summary": "Update program information",
-        "description": "Updates program details. Status may only toggle Active ↔ Inactive. Requires Admin or Manager role.",
+        "description": "Updates program details. Status may only toggle Active ↔ Inactive. The framework is set only on create: frameworkId, frameworkVersionId, or clearFramework that would change it return 409 FRAMEWORK_LOCKED (omitted or matching values are ignored). Requires Admin or Manager role.",
         "parameters": [
           {
             "name": "id",
@@ -25961,7 +25961,7 @@
           "Program"
         ],
         "summary": "Select a class and hold a seat",
-        "description": "Starts a 5-minute soft seat hold when the student selects a class. Checkout and parent-pay require this step first. Publishes seats.changed over SignalR.",
+        "description": "Starts a 5-minute soft seat hold when the student selects a class. Checkout and parent-pay require this step first. Publishes seats.changed over SignalR. When the program is not Active (for example it returned to Draft for re-approval), this, checkout, and parent-pay release the student's hold and pending checkout and return 400 PROGRAM_NOT_AVAILABLE.",
         "parameters": [
           {
             "name": "id",
@@ -26588,7 +26588,7 @@
           "Program"
         ],
         "summary": "Ask the advisor to approve the current curriculum",
-        "description": "Draft only (409 INVALID_STATUS). Requires a responsible advisor (400 ADVISOR_REQUIRED) with an active login (400 ADVISOR_LOGIN_REQUIRED). Posts ApprovalRequested and notifies the advisor. Status is unchanged.",
+        "description": "Programs without a framework have no approval step (409 FRAMEWORK_REQUIRED). Draft only (409 INVALID_STATUS). Requires a responsible advisor (400 ADVISOR_REQUIRED) with an active login (400 ADVISOR_LOGIN_REQUIRED). Posts ApprovalRequested and notifies the advisor. Status is unchanged.",
         "parameters": [
           {
             "name": "id",
@@ -26710,7 +26710,7 @@
           "Program"
         ],
         "summary": "Approve the current curriculum version (advisor)",
-        "description": "Checks in order: caller is the advisor (403); status Draft (409 INVALID_STATUS); curriculumVersion matches (409 CURRICULUM_VERSION_STALE); no Open pins (409 APPROVAL_BLOCKED); framework check passes (409 FRAMEWORK_CHECK_FAILED with FrameworkCheckDto in value.data). Resolves Addressed pins, sets Approved, posts Approved, and notifies managers.",
+        "description": "Checks in order: caller is the advisor (403); the program has a framework (409 FRAMEWORK_REQUIRED); status Draft (409 INVALID_STATUS); curriculumVersion matches (409 CURRICULUM_VERSION_STALE); no Open pins (409 APPROVAL_BLOCKED); framework check passes (409 FRAMEWORK_CHECK_FAILED with FrameworkCheckDto in value.data). Resolves Addressed pins, sets Approved, posts Approved, and notifies managers.",
         "parameters": [
           {
             "name": "id",
@@ -26991,8 +26991,8 @@
         "tags": [
           "Program"
         ],
-        "summary": "Publish an approved program",
-        "description": "Approved only (409 INVALID_STATUS) and the active approval must cover the current curriculumVersion (409 CURRICULUM_VERSION_STALE). Moves to Active, posts Published, and notifies managers. Enrollment and class creation require Active.",
+        "summary": "Publish a program",
+        "description": "With a framework: Approved only (409 INVALID_STATUS) and the active approval must cover the current curriculumVersion (409 CURRICULUM_VERSION_STALE). Without a framework: no approval step; Draft (or legacy Approved) publishes directly, other statuses return 409 INVALID_STATUS. Moves to Active, posts Published, and notifies managers. Enrollment and class creation require Active.",
         "parameters": [
           {
             "name": "id",
@@ -27027,6 +27027,147 @@
           },
           "401": {
             "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/programs/{id}/framework-version": {
+      "post": {
+        "tags": [
+          "Program"
+        ],
+        "summary": "Upgrade to a newer version of the program's framework",
+        "description": "Programs without a framework return 409 FRAMEWORK_REQUIRED. The version must be published, belong to the same framework, and be newer than the pinned one (400 FRAMEWORK_VERSION_INVALID). Uses the curriculum cohort lock (409 CURRICULUM_LOCKED_COHORT). Pins the version, revokes the active approval (FrameworkUpgraded), returns Approved/Active/Inactive programs to Draft, posts FrameworkUpgraded { fromVersion, toVersion }, and notifies the advisor. Returns the workspace; frameworkCheckPassed reflects the new rules.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeProgramFrameworkVersionRequest"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeProgramFrameworkVersionRequest"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpgradeProgramFrameworkVersionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProgramAdvisoryWorkspaceDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
             "content": {
               "text/plain": {
                 "schema": {
@@ -27272,7 +27413,7 @@
           "Program"
         ],
         "summary": "Advisory workspace summary for a program",
-        "description": "Status, curriculumVersion, participants, capabilities, the active approval, pin counts, discussion unreadCount, live frameworkCheckPassed, changesSinceApprovalCount, unseenChangeCount, and latestSequence.",
+        "description": "Status, curriculumVersion, frameworkVersionNumber, latestFrameworkVersionNumber, hasNewerFrameworkVersion, participants, capabilities, the active approval, pin counts, discussion unreadCount, live frameworkCheckPassed, changesSinceApprovalCount, unseenChangeCount, and latestSequence. Only the advisor gets canPin/canResolvePin. Programs without a framework never get canRequestApproval/canApprove and get canPublish in Draft.",
         "parameters": [
           {
             "name": "id",
@@ -28354,7 +28495,7 @@
           "Program"
         ],
         "summary": "Pin a chat message",
-        "description": "Advisor or board expert. Pin starts Open; already pinned messages are returned unchanged.",
+        "description": "Program advisor only (board experts and managers get 403). Pin starts Open; already pinned messages are returned unchanged.",
         "parameters": [
           {
             "name": "id",
@@ -28403,7 +28544,7 @@
           "Program"
         ],
         "summary": "Unpin a chat message",
-        "description": "Advisor or board expert.",
+        "description": "Program advisor only (board experts and managers get 403).",
         "parameters": [
           {
             "name": "id",
@@ -28454,7 +28595,7 @@
           "Program"
         ],
         "summary": "Change a pin status",
-        "description": "MarkAddressed (Manager/Admin, Open → Addressed), Reopen (advisor or board expert, Addressed/Resolved → Open), Resolve (advisor or board expert, Open/Addressed → Resolved). Invalid transitions return 409 INVALID_STATUS.",
+        "description": "MarkAddressed (Manager/Admin, Open → Addressed), Reopen (program advisor, Addressed/Resolved → Open), Resolve (program advisor, Open/Addressed → Resolved). Board experts get 403. Invalid transitions return 409 INVALID_STATUS.",
         "parameters": [
           {
             "name": "id",
@@ -36893,6 +37034,9 @@
           },
           "canPublish": {
             "type": "boolean"
+          },
+          "canUpgradeFrameworkVersion": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -37263,7 +37407,8 @@
               "Approved",
               "ApprovalRevoked",
               "Published",
-              "AdvisorChanged"
+              "AdvisorChanged",
+              "FrameworkUpgraded"
             ],
             "type": "string"
           },
@@ -47615,7 +47760,9 @@
               "CurriculumApprovalRevoked",
               "CurriculumApprovalRequested",
               "AdvisoryDiscussionMessage",
-              "AdvisoryMentionPinned"
+              "AdvisoryMentionPinned",
+              "ProgramFrameworkUpgraded",
+              "FrameworkVersionPublished"
             ],
             "type": "string"
           },
@@ -47880,6 +48027,18 @@
           "programName": {
             "type": "string",
             "description": "Program display name for client context.",
+            "nullable": true
+          },
+          "fromVersion": {
+            "type": "integer",
+            "description": "Framework version the program was pinned to before an upgrade or a newer publish.",
+            "format": "int32",
+            "nullable": true
+          },
+          "toVersion": {
+            "type": "integer",
+            "description": "Framework version the program upgraded to, or the newly published version.",
+            "format": "int32",
             "nullable": true
           },
           "extra": {
@@ -49859,6 +50018,19 @@
             "type": "string",
             "nullable": true
           },
+          "frameworkVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "latestFrameworkVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "hasNewerFrameworkVersion": {
+            "type": "boolean"
+          },
           "participants": {
             "type": "array",
             "items": {
@@ -51374,6 +51546,14 @@
             "type": "integer",
             "format": "int32",
             "nullable": true
+          },
+          "latestFrameworkVersionNumber": {
+            "type": "integer",
+            "format": "int32",
+            "nullable": true
+          },
+          "hasNewerFrameworkVersion": {
+            "type": "boolean"
           },
           "advisorExpertId": {
             "type": "string",
@@ -55775,6 +55955,16 @@
           "phone": {
             "type": "string",
             "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "UpgradeProgramFrameworkVersionRequest": {
+        "type": "object",
+        "properties": {
+          "frameworkVersionId": {
+            "type": "string",
+            "format": "uuid"
           }
         },
         "additionalProperties": false

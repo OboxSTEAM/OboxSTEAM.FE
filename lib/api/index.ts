@@ -520,6 +520,7 @@ export {
   requestProgramApproval,
   revokeProgramApproval,
   unpinDiscussionMessage,
+  upgradeProgramFrameworkVersion,
   uploadDiscussionAttachment,
   type AdvisoryApprovalState,
   type AdvisoryChatCapabilities,

@@ -16,6 +16,12 @@ const optionalExtraSchema = z
   .nullish()
   .transform((value) => value ?? undefined);
 
+const optionalVersionSchema = z
+  .number()
+  .int()
+  .nullish()
+  .transform((value) => value ?? undefined);
+
 /**
  * Typed deeplink bag — mirrors OpenAPI `NotificationPayload`.
  * Prefer `Notification.payload` over parsing `payloadJson`.
@@ -51,6 +57,8 @@ export const notificationPayloadSchema = z
     actorName: optionalExtraSchema,
     className: optionalExtraSchema,
     programName: optionalExtraSchema,
+    fromVersion: optionalVersionSchema,
+    toVersion: optionalVersionSchema,
   })
   .passthrough();
 

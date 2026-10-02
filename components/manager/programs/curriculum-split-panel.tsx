@@ -69,7 +69,6 @@ import {
 } from "@/components/ui/select";
 import {
   ProgramForm,
-  type ProgramFormSubmitOptions,
   type ProgramFormValues,
 } from "@/components/manager/programs/program-form";
 import { ActivityMaterialSection } from "@/components/manager/programs/activity-material-section";
@@ -132,7 +131,6 @@ import {
   THEME_SELECT_CONTENT,
   THEME_SELECT_ITEM,
 } from "@/components/programs/program-select-styles";
-import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import {
   MODULE_TYPE_LABELS,
   PROGRAM_CATEGORY_META,
@@ -972,42 +970,23 @@ function ProgramInfoPanel({
   const [statusHost, setStatusHost] = useState<HTMLDivElement | null>(null);
   const { ok, flash } = useSuccessFlash();
 
-  const handleUpdate = async (
-    values: ProgramFormValues,
-    options?: ProgramFormSubmitOptions,
-  ) => {
+  const handleUpdate = async (values: ProgramFormValues) => {
     if (disabled) return;
     setBusy(true);
     try {
-      // A null frameworkId means "unchanged"; unlinking needs the explicit flag.
-      const clearFramework = Boolean(program.frameworkId) && !values.frameworkId;
       const res = curriculumFieldsLocked
         ? await updateProgramSettings(program.id, {
             status: values.status,
             price: values.price,
-            frameworkId: values.frameworkId,
-            clearFramework,
           })
         : await updateProgram(program.id, {
             ...values,
-            clearFramework,
             // `[]` unlinks every skill, so only send the list when it was edited.
             skillIds: isSameIdSet(values.skillIds, program.skills.map((skill) => skill.id))
               ? undefined
               : values.skillIds,
           });
       if (!res) throw new Error("Không có phản hồi từ hệ thống.");
-      if (options?.frameworkExpertId) {
-        try {
-          await attachFrameworkAuthorToProgram(program.id, options.frameworkExpertId, {
-            status: program.status,
-            assignedExpertIds: program.experts.map((expert) => expert.expertId),
-            advisorExpertId: program.advisorExpertId,
-          });
-        } catch (attachError) {
-          showAppErrorFromUnknown(attachError, "experts.update");
-        }
-      }
       flash();
       showAppSuccess({ title: "Cập nhật thành công", description: "Chương trình đã được cập nhật." });
       router.refresh(); onSuccess();
@@ -1027,8 +1006,7 @@ function ProgramInfoPanel({
       <div className="p-5">
         {curriculumFieldsLocked && !disabled ? (
           <p className="mb-4 rounded-lg border border-border bg-muted/50 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
-            Hiện chỉ đổi được trạng thái, học phí và khung thẩm định; các thông tin còn lại đang bị
-            khoá.
+            Hiện chỉ đổi được trạng thái và học phí; các thông tin còn lại đang bị khoá.
           </p>
         ) : null}
         <ProgramForm
@@ -1037,7 +1015,6 @@ function ProgramInfoPanel({
           curriculumFieldsLocked={curriculumFieldsLocked}
           statusPortalHost={statusHost}
           frameworkVersionNumber={program.frameworkVersionNumber}
-          frameworkRequirements={program.status === "Draft" ? "prep" : "hidden"}
           initialValues={{
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",

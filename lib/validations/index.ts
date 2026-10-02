@@ -123,6 +123,7 @@ export {
   postDiscussionMessageSchema,
   recordDiscussionReadSchema,
   revokeProgramApprovalSchema,
+  upgradeProgramFrameworkVersionSchema,
   validateDiscussionAttachmentFile,
   type AdvisoryProgramsQuery,
   type ApproveProgramInput,
@@ -137,6 +138,7 @@ export {
   type PostDiscussionMessageInput,
   type RecordDiscussionReadInput,
   type RevokeProgramApprovalInput,
+  type UpgradeProgramFrameworkVersionInput,
 } from "./advisory-chat";
 export {
   createProgramFrameworkSchema,

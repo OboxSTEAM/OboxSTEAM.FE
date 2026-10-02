@@ -6,6 +6,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -58,6 +59,10 @@ type AdvisoryChatContextValue = {
   currentUserId: string | null;
   /** Manager/Admin — may mark pins as addressed. */
   isStaff: boolean;
+  /** Viewer is the program's main advisor (framework author). */
+  isAdvisor: boolean;
+  /** Without a framework there is no advisor or approval step; the manager publishes directly. */
+  hasFramework: boolean;
   workspace: AdvisoryWorkspace | null;
   workspaceState: ReturnType<typeof useAdvisoryWorkspace>;
   capabilities: AdvisoryChatCapabilities;
@@ -91,6 +96,7 @@ const AdvisoryChatContext = createContext<AdvisoryChatContextValue | null>(null)
 
 type AdvisoryChatProviderProps = {
   programId: string;
+  hasFramework: boolean;
   initialWorkspace?: AdvisoryWorkspace | null;
   /** Targets for "Lưu thành tài liệu" (see `buildMaterialActivityOptions`). */
   materialActivities?: MaterialActivityOption[];
@@ -102,6 +108,7 @@ type AdvisoryChatProviderProps = {
 /** Program advisory chat state shared by the sidebar, curriculum tree and approval UI. */
 export function AdvisoryChatProvider({
   programId,
+  hasFramework,
   initialWorkspace = null,
   materialActivities = [],
   hasChangesView = false,
@@ -141,11 +148,14 @@ export function AdvisoryChatProvider({
   const { getTarget } = mentions;
 
   const isChatOpen = isDesktop ? isDesktopOpen : isMobileOpen;
-  const capabilities = workspace?.capabilities ?? NO_CAPABILITIES;
-  const viewerRole =
-    workspace?.participants.find((participant) => participant.userId === currentUserId)?.role ??
-    profile?.role ??
-    null;
+  const viewer = workspace?.participants.find((participant) => participant.userId === currentUserId);
+  const viewerRole = viewer?.role ?? profile?.role ?? null;
+  const isStaff = isAdvisoryStaffRole(viewerRole);
+  const isAdvisor = viewer?.isAdvisor ?? false;
+  const capabilities = useMemo(
+    () => restrictBoardExpertCapabilities(workspace?.capabilities ?? NO_CAPABILITIES, isStaff, isAdvisor),
+    [isAdvisor, isStaff, workspace?.capabilities],
+  );
 
   useEffect(() => {
     isChatOpenRef.current = isChatOpen;
@@ -273,7 +283,9 @@ export function AdvisoryChatProvider({
   const value: AdvisoryChatContextValue = {
     programId,
     currentUserId,
-    isStaff: isAdvisoryStaffRole(viewerRole),
+    isStaff,
+    isAdvisor,
+    hasFramework,
     workspace,
     workspaceState,
     capabilities,
@@ -313,6 +325,16 @@ export function useAdvisoryChat(): AdvisoryChatContextValue {
 /** Same as `useAdvisoryChat`, but `null` outside a provider (shared curriculum UI). */
 export function useOptionalAdvisoryChat(): AdvisoryChatContextValue | null {
   return useContext(AdvisoryChatContext);
+}
+
+/** Board experts only read the chat; the server still grants them pin rights. */
+function restrictBoardExpertCapabilities(
+  capabilities: AdvisoryChatCapabilities,
+  isStaff: boolean,
+  isAdvisor: boolean,
+): AdvisoryChatCapabilities {
+  if (isStaff || isAdvisor) return capabilities;
+  return { ...capabilities, canPin: false, canResolvePin: false };
 }
 
 function scrollToCurriculumAnchor(anchor: string, attemptsLeft: number): void {

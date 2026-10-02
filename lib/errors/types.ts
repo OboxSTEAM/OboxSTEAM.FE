@@ -79,6 +79,7 @@ export type AppErrorContext =
   | "programs.advisor"
   | "programs.advisory"
   | "programs.framework-check"
+  | "programs.framework-upgrade"
   | "coteach.mine"
   | "coteach.list"
   | "coteach.invite"

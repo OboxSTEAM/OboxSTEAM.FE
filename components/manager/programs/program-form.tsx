@@ -57,7 +57,7 @@ export type ProgramFormValues = z.infer<typeof programUpsertSchema>;
 export type ProgramFormSubmitOptions = {
   /** Local file for `POST /api/programs` create-time thumbnail (ignored on edit). */
   thumbnailFile?: File | null;
-  /** Owner of the selected framework. Empty when no framework is chosen. */
+  /** Owner of the selected framework (create only). Empty when no framework is chosen. */
   frameworkExpertId?: string | null;
 };
 
@@ -74,7 +74,7 @@ export type ProgramFormProps = {
   /** Read-only — disables every field and thumbnail upload. */
   disabled?: boolean;
   /**
-   * Disables curriculum fields (everything except status, price and framework)
+   * Disables curriculum fields (everything except status and price)
    * and thumbnail upload; used during a live class or before re-editing an approval.
    */
   curriculumFieldsLocked?: boolean;
@@ -87,13 +87,6 @@ export type ProgramFormProps = {
   statusPortalHost?: HTMLElement | null;
   /** Pinned framework version on the program (display only). */
   frameworkVersionNumber?: number | null;
-  /**
-   * `inline` — show rules under the picker (create flow).
-   * `prep` — hide them once the saved framework is still selected; the draft
-   * page shows those rules above the curriculum editor.
-   * `hidden` — advisory has started; the pass/fail check replaces this list.
-   */
-  frameworkRequirements?: "inline" | "prep" | "hidden";
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -319,6 +312,49 @@ function FrameworkGuidelines({
   );
 }
 
+/** Edit mode: the framework is fixed at creation, so it is shown read-only. */
+function LockedFrameworkSummary({
+  hasFramework,
+  framework,
+  frameworkVersionNumber,
+  isLoading,
+}: {
+  hasFramework: boolean;
+  framework: ProgramFramework | null;
+  frameworkVersionNumber: number | null;
+  isLoading: boolean;
+}) {
+  let content: React.ReactNode;
+  if (!hasFramework) {
+    content = <span className="text-sm text-muted-foreground">Không gắn khung</span>;
+  } else if (isLoading) {
+    content = <span className="block h-5 w-40 animate-pulse rounded bg-muted" aria-hidden />;
+  } else {
+    content = (
+      <span className="block min-w-0">
+        <span className="block truncate text-sm font-semibold text-foreground">
+          {framework?.name || "Khung đã gắn"}
+          {frameworkVersionNumber != null ? ` · v${frameworkVersionNumber}` : ""}
+        </span>
+        {framework?.expertName ? (
+          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+            Chuyên gia phụ trách: {framework.expertName}
+          </span>
+        ) : null}
+      </span>
+    );
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="rounded-xl border border-border bg-muted/40 px-3 py-2.5">{content}</div>
+      <p className="text-[11px] leading-relaxed text-muted-foreground">
+        Khung chỉ chọn khi tạo chương trình. Cần khung khác thì tạo chương trình mới.
+      </p>
+    </div>
+  );
+}
+
 // ── Main Form ─────────────────────────────────────────────────────────────
 export function ProgramForm({
   programId,
@@ -330,7 +366,6 @@ export function ProgramForm({
   curriculumFieldsLocked = false,
   statusPortalHost = null,
   frameworkVersionNumber = null,
-  frameworkRequirements = "inline",
 }: ProgramFormProps) {
   const isEdit = Boolean(programId);
   const statusInPortal = isEdit && statusPortalHost != null;
@@ -427,10 +462,8 @@ export function ProgramForm({
 
   const onFormSubmit = handleSubmit(
     async (data) => {
-      const isFrameworkChanged =
-        !isEdit || (data.frameworkId ?? "") !== (initialValues?.frameworkId ?? "");
       const frameworkExpertId =
-        data.frameworkId && isFrameworkChanged
+        !isEdit && data.frameworkId
           ? (frameworks.find((item) => item.id === data.frameworkId)?.expertId ??
             null)
           : null;
@@ -937,37 +970,44 @@ export function ProgramForm({
 
             <div>
               <label className={LBL}>Khung thẩm định chuyên môn</label>
-              <Controller
-                name="frameworkId"
-                control={control}
-                render={({ field }) => (
-                  <FrameworkPicker
-                    frameworks={frameworkOptions}
-                    isLoading={isFrameworksLoading}
-                    search={frameworkSearch}
-                    onSearchChange={setFrameworkSearch}
-                    value={field.value ?? ""}
-                    onChange={field.onChange}
-                    programCategory={category}
-                  />
-                )}
-              />
-              <FieldError message={errors.frameworkId?.message} />
-              {frameworkRequirements !== "hidden" &&
-              !(
-                frameworkRequirements === "prep" &&
-                Boolean(initialValues?.frameworkId) &&
-                (frameworkId ?? "") === initialValues?.frameworkId
-              ) ? (
-                <FrameworkGuidelines
+              {isEdit ? (
+                <LockedFrameworkSummary
+                  hasFramework={Boolean(initialValues?.frameworkId)}
                   framework={selectedFramework}
                   frameworkVersionNumber={frameworkVersionNumber}
-                  isCategoryMismatch={
-                    selectedFramework != null &&
-                    selectedFramework.category !== category
-                  }
+                  isLoading={isFrameworksLoading}
                 />
-              ) : null}
+              ) : (
+                <>
+                  <Controller
+                    name="frameworkId"
+                    control={control}
+                    render={({ field }) => (
+                      <FrameworkPicker
+                        frameworks={frameworkOptions}
+                        isLoading={isFrameworksLoading}
+                        search={frameworkSearch}
+                        onSearchChange={setFrameworkSearch}
+                        value={field.value ?? ""}
+                        onChange={field.onChange}
+                        programCategory={category}
+                      />
+                    )}
+                  />
+                  <FieldError message={errors.frameworkId?.message} />
+                  <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                    Khung không đổi được sau khi tạo chương trình.
+                  </p>
+                  <FrameworkGuidelines
+                    framework={selectedFramework}
+                    frameworkVersionNumber={frameworkVersionNumber}
+                    isCategoryMismatch={
+                      selectedFramework != null &&
+                      selectedFramework.category !== category
+                    }
+                  />
+                </>
+              )}
             </div>
           </div>
         </div>

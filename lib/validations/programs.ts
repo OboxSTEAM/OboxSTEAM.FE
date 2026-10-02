@@ -99,8 +99,10 @@ export const createProgramRequestSchema = createProgramSchema.extend({
     .nullable(),
 });
 
-export const updateProgramSchema = programUpsertSchema.extend({
-  clearFramework: z.boolean().optional().nullable(),
+/** Framework is fixed at creation; to use another one, create a new program. */
+export const updateProgramSchema = programUpsertSchema.omit({
+  frameworkId: true,
+  frameworkVersionId: true,
 });
 
 /**
@@ -110,9 +112,6 @@ export const updateProgramSchema = programUpsertSchema.extend({
 export const updateProgramSettingsSchema = updateProgramSchema.pick({
   status: true,
   price: true,
-  frameworkId: true,
-  frameworkVersionId: true,
-  clearFramework: true,
 });
 
 export const uploadProgramThumbnailSchema = z.object({

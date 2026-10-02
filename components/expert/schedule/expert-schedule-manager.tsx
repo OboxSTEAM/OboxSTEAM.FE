@@ -16,10 +16,7 @@ import {
   X,
 } from "lucide-react";
 
-import {
-  ExpertWorkbenchHero,
-  ExpertWorkflowRail,
-} from "@/components/expert/shared/expert-workbench";
+import { ExpertWorkbenchHero } from "@/components/expert/shared/expert-workbench";
 import { ManagerEmptyState } from "@/components/manager/shared/empty-state";
 import { ManagerFilterBar } from "@/components/manager/shared/filter-bar";
 import { Badge } from "@/components/ui/badge";
@@ -46,13 +43,6 @@ import {
 } from "@/lib/classes/session-helpers";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
-
-const STATUS_OPTIONS = [
-  { value: "all", label: "Mọi trạng thái" },
-  { value: "Invited", label: "Chờ phản hồi" },
-  { value: "Accepted", label: "Đã nhận lời" },
-  { value: "Declined", label: "Đã từ chối" },
-];
 
 const STATUS_BADGE: Record<ClassSessionExpertStatus, { label: string; className: string }> =
   {
@@ -86,12 +76,13 @@ function canRespondToInvite(invite: ClassSessionExpert): boolean {
   return invite.status === "Invited" && displaySessionStatus(invite) === "Scheduled";
 }
 
+/** BE accepts feedback only once the server marks the session Completed, not when its slot merely ends. */
+function canSubmitFeedback(invite: ClassSessionExpert): boolean {
+  return invite.status === "Accepted" && invite.sessionStatus === "Completed";
+}
+
 function needsFeedback(invite: ClassSessionExpert): boolean {
-  return (
-    invite.status === "Accepted" &&
-    displaySessionStatus(invite) === "Completed" &&
-    invite.mentorFeedback == null
-  );
+  return canSubmitFeedback(invite) && invite.mentorFeedback == null;
 }
 
 function isUpcomingAccepted(invite: ClassSessionExpert): boolean {
@@ -115,19 +106,12 @@ export function ExpertScheduleManager() {
   const searchParams = useSearchParams();
   const highlightedInviteId = searchParams.get("invite");
   const [search, setSearch] = useState("");
-  const [status, setStatus] = useState("all");
   const [view, setView] = useState<ScheduleView>("action");
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const { data, isLoading, markLoading, retry } = useClientFetch({
-    fetcher: () =>
-      getMyClassSessionExperts({
-        status:
-          status === "all" ? undefined : (status as ClassSessionExpertStatus),
-        page: 1,
-        pageSize: PAGE_SIZE,
-      }),
-    deps: [status],
+  const { data, isLoading, retry } = useClientFetch({
+    fetcher: () => getMyClassSessionExperts({ page: 1, pageSize: PAGE_SIZE }),
+    deps: [],
     onError: (error) => showAppErrorFromUnknown(error, "coteach.mine"),
   });
 
@@ -163,11 +147,7 @@ export function ExpertScheduleManager() {
     });
   }, [data?.data?.items, highlightedInviteId, search, view]);
 
-  const allItems = data?.data?.items ?? [];
-  const awaitingResponseCount = allItems.filter(canRespondToInvite).length;
-  const upcomingCount = allItems.filter(isUpcomingAccepted).length;
-  const feedbackCount = allItems.filter(needsFeedback).length;
-  const totalCount = data?.data?.totalCount ?? allItems.length;
+  const totalCount = data?.data?.totalCount ?? data?.data?.items.length ?? 0;
 
   async function respond(invite: ClassSessionExpert, accept: boolean) {
     setBusyId(invite.id);
@@ -223,42 +203,7 @@ export function ExpertScheduleManager() {
         title="Lịch đồng hành chuyên môn"
         description="Xác nhận lời mời, chuẩn bị phiên chuyên môn, rồi gửi phản hồi cho mentor sau buổi."
         icon={CalendarDays}
-        actions={
-          <Button nativeButton={false} render={<Link href="/expert/programs" />} variant="outline" className="h-10 gap-2 rounded-xl">
-            Bàn cố vấn chương trình <ArrowRight className="size-4" />
-          </Button>
-        }
-      >
-        <ExpertWorkflowRail
-          steps={[
-            {
-              label: "Trước buổi",
-              detail: "Xác nhận lịch và kiểm tra xung đột.",
-              state: awaitingResponseCount > 0 ? "current" : "done",
-            },
-            {
-              label: "Chuẩn bị",
-              detail: "Nắm tên phiên, lớp và hình thức tổ chức.",
-              state:
-                awaitingResponseCount > 0
-                  ? "next"
-                  : upcomingCount > 0
-                    ? "current"
-                    : "done",
-            },
-            {
-              label: "Trong buổi",
-              detail: "Quan sát cách triển khai và phối hợp chuyên môn.",
-              state: "next",
-            },
-            {
-              label: "Sau buổi",
-              detail: "Gửi phản hồi để mentor có hành động tiếp theo.",
-              state: feedbackCount > 0 ? "current" : "next",
-            },
-          ]}
-        />
-      </ExpertWorkbenchHero>
+      />
 
       <div className="mx-auto w-full max-w-[1500px] px-4 pb-12 sm:px-6">
         <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
@@ -285,24 +230,8 @@ export function ExpertScheduleManager() {
             searchValue={search}
             onSearchChange={setSearch}
             searchPlaceholder="Tìm theo tên buổi học hoặc lớp..."
-            filters={[
-              {
-                key: "status",
-                placeholder: "Trạng thái",
-                value: status,
-                onChange: (value) => {
-                  markLoading();
-                  setStatus(value || "all");
-                },
-                options: STATUS_OPTIONS,
-              },
-            ]}
-            showClear={search !== "" || status !== "all"}
-            onClearFilters={() => {
-              markLoading();
-              setSearch("");
-              setStatus("all");
-            }}
+            showClear={search !== ""}
+            onClearFilters={() => setSearch("")}
           />
 
           <div className="p-4 sm:p-5">
@@ -361,11 +290,7 @@ function InviteCard({
     invite.sessionStartTime,
     invite.sessionEndTime,
   );
-  const canGiveFeedback =
-    needsFeedback(invite) ||
-    (invite.status === "Accepted" &&
-      displaySessionStatus(invite) === "Completed" &&
-      invite.mentorFeedback != null);
+  const canGiveFeedback = canSubmitFeedback(invite);
   const canRespond = canRespondToInvite(invite);
   const awaitingFeedback = needsFeedback(invite);
 
@@ -458,6 +383,14 @@ function InviteCard({
                 <span className="text-border"> · </span>
                 {CLASS_SESSION_STATUS_LABELS[displaySessionStatus(invite)]}
               </p>
+
+              <Link
+                href={`/expert/programs/${invite.programId}`}
+                className="mt-2 inline-flex min-h-9 items-center gap-1 rounded-md text-sm font-semibold text-primary underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                Xem chương trình &amp; trao đổi với quản lý
+                <ArrowRight className="size-3.5" aria-hidden />
+              </Link>
             </div>
 
             {canRespond ? (

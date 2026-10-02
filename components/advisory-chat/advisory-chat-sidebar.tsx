@@ -98,6 +98,7 @@ function ChatPanel({
     activeTab,
     setActiveTab,
     hasChangesView,
+    hasFramework,
   } = useAdvisoryChat();
 
   const showTabs = hasChangesView;
@@ -127,9 +128,11 @@ function ChatPanel({
             <h2 className={titleClassName}>Trao đổi về chương trình</h2>
           )}
           <p className="truncate text-xs text-muted-foreground">
-            {workspace?.advisorName
-              ? `Chuyên gia tư vấn: ${workspace.advisorName}`
-              : "Chưa có chuyên gia tư vấn"}
+            {!hasFramework
+              ? "Quản lý và hội đồng chuyên gia"
+              : workspace?.advisorName
+                ? `Chuyên gia tư vấn: ${workspace.advisorName}`
+                : "Chưa có chuyên gia tư vấn"}
           </p>
         </div>
         <Button
