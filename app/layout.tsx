@@ -1,5 +1,7 @@
-import type { Metadata, Viewport } from "next";
+﻿import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono, Lora, Nunito } from "next/font/google";
+import { preconnect } from "react-dom";
+import { getApiBaseUrl } from "@/lib/api/config";
 import { AppProviders } from "@/components/providers/app-providers";
 import { SITE } from "@/lib/landing/content";
 import "./globals.css";
@@ -18,6 +20,7 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono",
   subsets: ["latin"],
+  preload: false,
 });
 
 const lora = Lora({
@@ -67,6 +70,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  preconnect(new URL(getApiBaseUrl()).origin, { crossOrigin: "anonymous" });
+
   return (
     <html
       lang="en"
@@ -79,3 +84,4 @@ export default function RootLayout({
     </html>
   );
 }
+

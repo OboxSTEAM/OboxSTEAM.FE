@@ -13,3 +13,6 @@ export const LANDING_IMAGE_BLUR_DATA_URL =
 export function landingImage(path: string): string {
   return `${LANDING_IMAGE_BASE}/${path.replace(/^\/+/, "")}`;
 }
+
+/** Pre-rendered paper grain tile (replaces a live SVG feTurbulence filter). */
+export const LANDING_NOISE_TEXTURE = 'url("/images/landing/paper-noise.webp")' as const;

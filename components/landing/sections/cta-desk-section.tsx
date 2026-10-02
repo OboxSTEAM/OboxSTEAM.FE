@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { HeroPhotoPrint } from "@/components/landing/hero-photo-print";
 import { LandingDeskTexture } from "@/components/landing/landing-desk-texture";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { LANDING_NOISE_TEXTURE } from "@/lib/landing/assets";
 import { CTA_DESK_SECTION } from "@/lib/landing/content";
 import { CTA_PRINTS } from "@/lib/landing/cta-print-layout";
 import { cn } from "@/lib/utils";
@@ -46,7 +47,6 @@ export function CtaDeskSection() {
 
       const ctx = gsap.context(() => {
         gsap.set(contentRef.current, {
-          filter: "blur(10px)",
           opacity: 0.2,
           y: 48,
         });
@@ -63,7 +63,7 @@ export function CtaDeskSection() {
 
         /**
          * Soft scrub reveal (no hard pin jump from Programs).
-         * Scroll down → settle in; scroll up → blur + slide out.
+         * Scroll down → settle in; scroll up → fade + slide out.
          */
         const tl = gsap.timeline({
           scrollTrigger: {
@@ -78,7 +78,6 @@ export function CtaDeskSection() {
         tl.to(
           contentRef.current,
           {
-            filter: "blur(0px)",
             opacity: 1,
             y: 0,
             ease: "none",
@@ -124,8 +123,7 @@ export function CtaDeskSection() {
           aria-hidden="true"
           className="absolute inset-0 z-[2] pointer-events-none opacity-[0.12] mix-blend-soft-light"
           style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E\")",
+            backgroundImage: LANDING_NOISE_TEXTURE,
             backgroundSize: "180px 180px",
           }}
         />
@@ -150,7 +148,7 @@ export function CtaDeskSection() {
         <div className="relative z-40 flex min-h-dvh items-center justify-center px-4 sm:px-6 lg:px-8">
           <div
             ref={contentRef}
-            className="flex w-full max-w-[46rem] flex-col items-center will-change-[transform,filter,opacity] sm:max-w-[52rem]"
+            className="flex w-full max-w-[46rem] flex-col items-center will-change-[transform,opacity] sm:max-w-[52rem]"
           >
             <h2
               id="cta-desk-headline"
@@ -199,3 +197,5 @@ export function CtaDeskSection() {
     </section>
   );
 }
+
+

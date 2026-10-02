@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -10,6 +10,7 @@ import { HeroPhotoPrint } from "@/components/landing/hero-photo-print";
 import { LandingDeskTexture } from "@/components/landing/landing-desk-texture";
 import { buttonVariants } from "@/components/ui/button";
 import { useCurrentUser } from "@/hooks/use-current-user";
+import { LANDING_NOISE_TEXTURE } from "@/lib/landing/assets";
 import { HERO } from "@/lib/landing/content";
 import { HERO_PRINTS } from "@/lib/landing/hero-print-layout";
 import { cn } from "@/lib/utils";
@@ -59,9 +60,9 @@ export function HeroSection() {
         tl.to(
           contentRef.current,
           {
-            filter: "blur(8px)",
             opacity: 0.32,
             y: -20,
+            scale: 0.97,
             ease: "none",
           },
           0,
@@ -106,8 +107,7 @@ export function HeroSection() {
           aria-hidden="true"
           className="absolute inset-0 z-[2] pointer-events-none opacity-[0.14] mix-blend-soft-light"
           style={{
-            backgroundImage:
-              "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E\")",
+            backgroundImage: LANDING_NOISE_TEXTURE,
             backgroundSize: "180px 180px",
           }}
         />
@@ -132,13 +132,15 @@ export function HeroSection() {
             zIndex={print.zIndex}
             className={print.className}
             frameClassName={print.frameClassName}
+            settleOnLoad
+            settleIndex={index}
           />
         ))}
 
         <div className="relative z-40 flex flex-1 items-center justify-center px-4 sm:px-6 lg:px-8 pt-24 pb-20 sm:pt-28">
           <div
             ref={contentRef}
-            className="max-w-3xl text-center will-change-[transform,filter,opacity]"
+            className="max-w-3xl text-center will-change-[transform,opacity]"
           >
             <h1
               id="hero-headline"
@@ -205,3 +207,5 @@ export function HeroSection() {
     </section>
   );
 }
+
+

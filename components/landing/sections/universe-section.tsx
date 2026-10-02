@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
@@ -14,6 +14,11 @@ import {
 import AnimatedContent from "@/components/AnimatedContent";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
 import { buttonVariants } from "@/components/ui/button";
+import {
+  LANDING_IMAGE_BLUR_DATA_URL,
+  LANDING_IMAGE_QUALITY,
+  LANDING_NOISE_TEXTURE,
+} from "@/lib/landing/assets";
 import { UNIVERSE_SECTION } from "@/lib/landing/content";
 import { cn } from "@/lib/utils";
 
@@ -81,47 +86,36 @@ function useReducedMotion() {
   return reduce;
 }
 
-function useAutoTabs(count: number, reduceMotion: boolean) {
+function useAutoTabs(count: number) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [progress, setProgress] = useState(0);
-  const startRef = useRef(Date.now());
 
-  const selectTab = useCallback((index: number) => {
-    setActiveIndex(index);
-    setProgress(0);
-    startRef.current = Date.now();
-  }, []);
+  const selectTab = useCallback((index: number) => setActiveIndex(index), []);
+  const advance = useCallback(
+    () => setActiveIndex((current) => (current + 1) % count),
+    [count],
+  );
 
-  useEffect(() => {
-    if (reduceMotion) {
-      setProgress(1);
-      return;
-    }
-
-    startRef.current = Date.now();
-    setProgress(0);
-
-    let raf = 0;
-    const tick = () => {
-      const elapsed = Date.now() - startRef.current;
-      const nextProgress = Math.min(elapsed / TAB_DURATION_MS, 1);
-      setProgress(nextProgress);
-
-      if (nextProgress >= 1) {
-        setActiveIndex((current) => (current + 1) % count);
-        return;
-      }
-
-      raf = requestAnimationFrame(tick);
-    };
-
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [activeIndex, count, reduceMotion]);
-
-  return { activeIndex, progress, selectTab };
+  return { activeIndex, selectTab, advance };
 }
 
+/** True while the element intersects the viewport (pauses off-screen work). */
+function useInView<T extends Element>() {
+  const ref = useRef<T>(null);
+  const [isInView, setIsInView] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsInView(entry.isIntersecting),
+      { threshold: 0.1 },
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, isInView };
+}
 function GridBackground() {
   return (
     <div
@@ -155,8 +149,7 @@ function PaperGrain({
       )}
       style={{
         opacity,
-        backgroundImage:
-          "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.9'/%3E%3C/svg%3E\")",
+        backgroundImage: LANDING_NOISE_TEXTURE,
         backgroundSize: "160px 160px",
       }}
     />
@@ -167,14 +160,18 @@ function UniverseFeatureTab({
   feature,
   index,
   isActive,
-  progress,
+  isRunning,
+  reduceMotion,
   onSelect,
+  onProgressEnd,
 }: {
   feature: UniverseFeature;
   index: number;
   isActive: boolean;
-  progress: number;
+  isRunning: boolean;
+  reduceMotion: boolean;
   onSelect: () => void;
+  onProgressEnd: () => void;
 }) {
   const Icon = FEATURE_ICONS[feature.iconName];
   const sheet = FEATURE_SHEETS[feature.iconName] ?? FEATURE_SHEETS.ScanFace;
@@ -210,10 +207,16 @@ function UniverseFeatureTab({
       {isActive ? (
         <span
           aria-hidden="true"
-          className="absolute inset-y-0 left-0"
+          className="absolute inset-0 origin-left"
+          onAnimationEnd={reduceMotion ? undefined : onProgressEnd}
           style={{
-            width: `${progress * 100}%`,
             backgroundColor: sheet.fill,
+            ...(reduceMotion
+              ? null
+              : {
+                  animation: `universeTabProgress ${TAB_DURATION_MS}ms linear forwards`,
+                  animationPlayState: isRunning ? "running" : "paused",
+                }),
           }}
         />
       ) : null}
@@ -291,8 +294,10 @@ function UniverseFeatureSheet({
                   alt={feature.label}
                   fill
                   sizes="(max-width: 1024px) 90vw, 480px"
+                  quality={LANDING_IMAGE_QUALITY}
+                  placeholder="blur"
+                  blurDataURL={LANDING_IMAGE_BLUR_DATA_URL}
                   className="object-cover object-top"
-                  priority={feature.id === "face-detection"}
                 />
               </div>
             </div>
@@ -327,14 +332,16 @@ function UniverseFeatureSheet({
 
 function UniverseFolderStack({
   activeIndex,
-  progress,
+  isRunning,
   reduceMotion,
   onSelect,
+  onProgressEnd,
 }: {
   activeIndex: number;
-  progress: number;
+  isRunning: boolean;
   reduceMotion: boolean;
   onSelect: (index: number) => void;
+  onProgressEnd: () => void;
 }) {
   return (
     <div role="tablist" aria-label="Tính năng AI Portfolio">
@@ -346,8 +353,10 @@ function UniverseFolderStack({
               feature={feature}
               index={index}
               isActive={index === activeIndex}
-              progress={index === activeIndex ? progress : 0}
+              isRunning={isRunning}
+              reduceMotion={reduceMotion}
               onSelect={() => onSelect(index)}
+              onProgressEnd={onProgressEnd}
             />
           ))}
         </div>
@@ -374,13 +383,12 @@ function UniverseFolderStack({
 
 export function UniverseSection() {
   const reduceMotion = useReducedMotion();
-  const { activeIndex, progress, selectTab } = useAutoTabs(
-    FEATURE_COUNT,
-    reduceMotion,
-  );
+  const { activeIndex, selectTab, advance } = useAutoTabs(FEATURE_COUNT);
+  const { ref: sectionRef, isInView } = useInView<HTMLElement>();
 
   return (
     <section
+      ref={sectionRef}
       id="portfolio"
       className="relative overflow-hidden bg-[#FAFAF5]"
       aria-labelledby="universe-heading"
@@ -424,12 +432,16 @@ export function UniverseSection() {
         <AnimatedContent distance={24} duration={0.65} delay={0.08}>
           <UniverseFolderStack
             activeIndex={activeIndex}
-            progress={progress}
+            isRunning={isInView}
             reduceMotion={reduceMotion}
             onSelect={selectTab}
+            onProgressEnd={advance}
           />
         </AnimatedContent>
       </div>
     </section>
   );
 }
+
+
+

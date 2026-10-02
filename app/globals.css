@@ -447,3 +447,34 @@
   height: 0 !important;
 }
 
+
+/* Landing: Universe tab progress fill (scaleX, no per-frame React state). */
+@keyframes universeTabProgress {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+/* Landing: hero print settles onto the desk once its image has loaded. */
+.print-settle {
+  opacity: 0;
+  translate: 0 -14px;
+  scale: 1.04;
+  transition:
+    opacity 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    translate 420ms cubic-bezier(0.22, 1, 0.36, 1),
+    scale 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--settle-delay, 0ms);
+}
+.print-settle[data-settled="true"] {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .print-settle {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1;
+    transition: none;
+  }
+}
