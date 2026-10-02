@@ -184,7 +184,6 @@ export function MilestoneFormPanel({
         },
   });
 
-  const isQuiz = watch("assignmentType") === "Quiz";
   const titleValue = watch("title") ?? "";
   const codeValue = watch("code") ?? "";
   const assignmentTitleValue = watch("assignmentTitle") ?? "";
@@ -214,7 +213,7 @@ export function MilestoneFormPanel({
           assignmentDescription: data.assignmentDescription || null,
           maxPoints: Number(data.maxPoints),
           passScore: Number(data.passScore),
-          timeLimitMinutes: isQuiz ? data.timeLimitMinutes : null,
+          timeLimitMinutes: data.timeLimitMinutes ?? null,
         });
         result = res?.data ?? null;
         showAppSuccess({ title: "Cập nhật thành công", description: `Milestone "${data.title}" đã lưu.` });
@@ -232,7 +231,7 @@ export function MilestoneFormPanel({
           maxPoints: Number(data.maxPoints),
           passScore: Number(data.passScore),
           maxAttempts: Number(data.maxAttempts),
-          timeLimitMinutes: isQuiz ? data.timeLimitMinutes : null,
+          timeLimitMinutes: data.timeLimitMinutes ?? null,
         });
         result = res?.data ?? null;
         showAppSuccess({ title: "Tạo thành công", description: `Đã tạo milestone "${data.title}".` });
@@ -395,25 +394,23 @@ export function MilestoneFormPanel({
                 <input type="number" {...register("maxAttempts", { valueAsNumber: true })} className={cn(IN, "font-mono")} style={{ borderColor: W.border }} />
               </div>
             )}
-            {isQuiz && (
-              <div className="space-y-1.5">
-                <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
-                  Thời lượng làm bài (phút)
-                </Label>
-                <input
-                  type="number"
-                  min={1}
-                  placeholder="Không giới hạn"
-                  {...register("timeLimitMinutes", { setValueAs: emptyMinutes })}
-                  className={cn(IN, "font-mono")}
-                  style={{ borderColor: errors.timeLimitMinutes ? W.primary : W.border }}
-                />
-                <p className="text-xs" style={{ color: W.muted }}>
-                  Để trống nếu bài trắc nghiệm không tính giờ. Không áp dụng cho nộp tệp và nhật ký.
-                </p>
-                <FErr msg={errors.timeLimitMinutes?.message as string | undefined} />
-              </div>
-            )}
+            <div className="space-y-1.5">
+              <Label className="text-sm font-semibold" style={{ color: W.textStrong }}>
+                Thời lượng làm bài (phút)
+              </Label>
+              <input
+                type="number"
+                min={1}
+                placeholder="Không giới hạn"
+                {...register("timeLimitMinutes", { setValueAs: emptyMinutes })}
+                className={cn(IN, "font-mono")}
+                style={{ borderColor: errors.timeLimitMinutes ? W.primary : W.border }}
+              />
+              <p className="text-xs" style={{ color: W.muted }}>
+                Để trống nếu không giới hạn thời gian.
+              </p>
+              <FErr msg={errors.timeLimitMinutes?.message as string | undefined} />
+            </div>
           </div>
         </section>
 

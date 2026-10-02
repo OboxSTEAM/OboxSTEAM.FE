@@ -99,8 +99,8 @@ export const FRAMEWORK_RULE_GROUPS: FrameworkRuleGroup[] = [
       {
         kind: "boolean",
         key: "requireActivityDuration",
-        label: "Mọi hoạt động phải có thời lượng",
-        hint: "Hoạt động chưa nhập thời lượng sẽ bị đánh dấu chưa đạt.",
+        label: "Hoạt động online/offline phải có thời lượng",
+        hint: "Hoạt động online/offline chưa nhập thời lượng sẽ bị đánh dấu chưa đạt. Hoạt động tự học được miễn.",
       },
     ],
   },

@@ -83,7 +83,7 @@ const CHECK_TITLES: Record<FrameworkCheckCode, (expected: string) => string> = {
   CoursesPerModule: (e) => withExpected("Số khóa học mỗi học phần", e),
   TotalHours: (e) => withExpected("Tổng thời lượng (giờ)", e),
   MaxActivityDuration: (e) => `Mỗi hoạt động tối đa ${e} phút`,
-  ActivityDurationSet: () => "Mọi hoạt động đều có thời lượng",
+  ActivityDurationSet: () => "Hoạt động online/offline đều có thời lượng",
   MinOfflineSessions: (e) => `Tối thiểu ${e} hoạt động offline`,
   MinLiveSessions: (e) => `Tối thiểu ${e} hoạt động live`,
   OfflineRatio: (e) => `Tỷ lệ hoạt động offline tối thiểu ${stripPercent(e)}%`,
@@ -139,7 +139,9 @@ export function buildFrameworkRules(rules: FrameworkRuleValues): string[] {
   if (rules.maxActivityMinutes != null) {
     lines.push(`Mỗi hoạt động tối đa ${rules.maxActivityMinutes} phút`);
   }
-  if (rules.requireActivityDuration) lines.push("Mọi hoạt động phải có thời lượng");
+  if (rules.requireActivityDuration) {
+    lines.push("Hoạt động online/offline phải có thời lượng");
+  }
   if (rules.minOfflineSessions != null) {
     lines.push(`Tối thiểu ${rules.minOfflineSessions} hoạt động offline trong curriculum`);
   }

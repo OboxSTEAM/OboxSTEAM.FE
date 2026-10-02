@@ -29,7 +29,7 @@ export const createResearchMilestoneSchema = z.object({
   maxPoints: z.number().int().min(0, "Điểm tối đa không được âm."),
   passScore: z.number().min(0, "Điểm đạt không được âm."),
   maxAttempts: z.number().int().min(1, "Số lần nộp tối thiểu là 1."),
-  /** Quiz clock. Null for FileUpload and Retrospective. Minimum 1 when set. */
+  /** Time limit for any assignment type. Null means unlimited; minimum 1 when set. */
   timeLimitMinutes: z
     .number()
     .int()

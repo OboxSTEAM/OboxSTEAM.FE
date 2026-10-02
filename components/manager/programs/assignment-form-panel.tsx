@@ -266,7 +266,7 @@ export function AssignmentFormPanel({
         shuffleOptions: isQuiz ? data.shuffleOptions : false,
         questionBankId: isQuiz ? data.questionBankId || null : null,
         questionCount: isQuiz && data.questionCount ? Number(data.questionCount) : null,
-        timeLimitMinutes: isQuiz && data.timeLimitMinutes ? Number(data.timeLimitMinutes) : null,
+        timeLimitMinutes: data.timeLimitMinutes ? Number(data.timeLimitMinutes) : null,
         easyPercent: isQuiz ? Number(data.easyPercent) : 0,
         mediumPercent: isQuiz ? Number(data.mediumPercent) : 0,
         hardPercent: isQuiz ? Number(data.hardPercent) : 0,
@@ -407,7 +407,7 @@ export function AssignmentFormPanel({
             className="rounded-xl border p-4"
             style={{ borderColor: W.border, background: W.surface }}
           >
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <CompactNumberField
                 fill
                 label="Điểm tối đa"
@@ -429,6 +429,13 @@ export function AssignmentFormPanel({
                 required
                 error={errors.maxAttempts?.message as string | undefined}
                 {...register("maxAttempts", { valueAsNumber: true })}
+              />
+              <CompactNumberField
+                fill
+                label="Thời lượng (phút)"
+                placeholder="Không giới hạn"
+                error={errors.timeLimitMinutes?.message}
+                {...register("timeLimitMinutes", { setValueAs: emptyNumberField })}
               />
             </div>
             <div className="mt-4 flex items-center gap-2 border-t pt-3" style={{ borderColor: W.border }}>
@@ -537,12 +544,6 @@ export function AssignmentFormPanel({
                   label="Số câu hỏi"
                   error={errors.questionCount?.message}
                   {...register("questionCount", { setValueAs: emptyNumberField })}
-                />
-                <CompactNumberField
-                  fill
-                  label="Thời lượng (phút)"
-                  error={errors.timeLimitMinutes?.message}
-                  {...register("timeLimitMinutes", { setValueAs: emptyNumberField })}
                 />
               </div>
 
