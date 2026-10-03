@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import { ExpertAvatarGroup } from "@/components/experts/expert-avatar-group";
 import { useCurrentUser } from "@/components/providers/current-user-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import {
 import type { CompleteActivitySource } from "@/lib/validations/program-enrollments";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
 import { getNextSessionForActivity } from "@/lib/classes/session-helpers";
+import type { CoTeachExpertFace } from "@/lib/curriculum/coteach-experts";
 import {
   findFlatActivity,
   getActivityBreadcrumb,
@@ -37,6 +39,8 @@ type ActivityPanelProps = {
   onCurriculumRefresh: () => Promise<void>;
   classSessions?: ClassSession[];
   classId?: string | null;
+  coTeachExperts?: CoTeachExpertFace[];
+  onOpenExpert?: (expert: CoTeachExpertFace) => void;
 };
 
 function resolveCompleteSource(
@@ -75,6 +79,8 @@ export function ActivityPanel({
   onCurriculumRefresh,
   classSessions = [],
   classId = null,
+  coTeachExperts = [],
+  onOpenExpert,
 }: ActivityPanelProps) {
   const [canComplete, setCanComplete] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
@@ -289,6 +295,23 @@ export function ActivityPanel({
             {ACTIVITY_TYPE_LABELS[activity.activityType]}
           </Badge>
         </div>
+        {coTeachExperts.length > 0 ? (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <ExpertAvatarGroup
+              people={coTeachExperts.map((expert) => ({
+                id: expert.expertId,
+                name: expert.fullName,
+                avatarUrl: expert.avatarUrl,
+              }))}
+              ringClassName="ring-learn-surface"
+              onPersonClick={(expertId) => {
+                const expert = coTeachExperts.find((item) => item.expertId === expertId);
+                if (expert) onOpenExpert?.(expert);
+              }}
+            />
+            <span className="text-sm text-learn-muted">Chuyên gia đồng hành</span>
+          </div>
+        ) : null}
       </div>
 
       <div

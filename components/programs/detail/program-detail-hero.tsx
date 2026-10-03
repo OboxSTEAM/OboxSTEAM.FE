@@ -5,7 +5,7 @@ import Image from "next/image";
 
 import Aurora from "@/components/Aurora";
 import { EyebrowChip } from "@/components/common/eyebrow-chip";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ExpertAvatarGroup } from "@/components/experts/expert-avatar-group";
 import type { ProgramExpert } from "@/lib/api/entities/expert";
 import type { ProgramCategory } from "@/lib/api/entities/program";
 import type { ProgramWithModules } from "@/lib/api/programs";
@@ -17,7 +17,6 @@ import {
 import {
   formatProgramExpertSummary,
   getExpertAvatarUrl,
-  getExpertInitials,
   getProgramThumbnailUrl,
   truncateProgramDescription,
 } from "@/lib/programs/format";
@@ -145,38 +144,37 @@ function ExpertAvatarStack({
   program: ProgramWithModules;
   onExpertClick?: (expert: ProgramExpert) => void;
 }) {
-  const experts = program.experts.slice(0, 3);
-  if (experts.length === 0) return null;
+  if (program.experts.length === 0) return null;
 
   const summary = formatProgramExpertSummary(program.experts);
+  const soleExpert = program.experts.length === 1 ? program.experts[0] : null;
 
   return (
     <div className="flex flex-wrap items-center gap-2.5">
-      <div className="flex -space-x-2">
-        {experts.map((expert) => {
-          const avatarUrl = getExpertAvatarUrl(expert.avatarUrl);
-          return (
-            <button
-              key={expert.expertId}
-              type="button"
-              onClick={() => onExpertClick?.(expert)}
-              className="relative rounded-full ring-2 ring-[#FAFAF5] transition-transform hover:z-10 hover:scale-105 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-[#4FC3F7]"
-              aria-label={`Xem thông tin ${expert.fullName}`}
-            >
-              <Avatar size="sm" className="size-7 bg-white">
-                {avatarUrl ? (
-                  <AvatarImage src={avatarUrl} alt="" />
-                ) : null}
-                <AvatarFallback className="bg-[#F5F5F0] text-[10px] font-medium text-[#6B6B6B]">
-                  {getExpertInitials(expert.fullName)}
-                </AvatarFallback>
-              </Avatar>
-            </button>
-          );
-        })}
-      </div>
+      <ExpertAvatarGroup
+        people={program.experts.map((expert) => ({
+          id: expert.expertId,
+          name: expert.fullName,
+          avatarUrl: getExpertAvatarUrl(expert.avatarUrl),
+        }))}
+        ringClassName="ring-[#FAFAF5]"
+        onPersonClick={(expertId) => {
+          const expert = program.experts.find((item) => item.expertId === expertId);
+          if (expert) onExpertClick?.(expert);
+        }}
+      />
       {summary ? (
-        <span className="text-sm text-[#6B6B6B]">{summary}</span>
+        soleExpert ? (
+          <button
+            type="button"
+            onClick={() => onExpertClick?.(soleExpert)}
+            className="text-sm text-[#6B6B6B] underline-offset-2 hover:text-[#2D2D2D] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
+          >
+            {summary}
+          </button>
+        ) : (
+          <span className="text-sm text-[#6B6B6B]">{summary}</span>
+        )
       ) : null}
     </div>
   );

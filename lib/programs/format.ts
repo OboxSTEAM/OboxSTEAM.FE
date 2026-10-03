@@ -101,8 +101,8 @@ export function formatProgramExpertSummary(experts: ProgramExpert[]): string | n
   const first = experts[0].fullName;
   const rest = experts.length - 1;
 
-  if (rest === 0) return `Giảng viên: ${first}`;
-  return `Giảng viên: ${first} +${rest}`;
+  if (rest === 0) return `Chuyên gia: ${first}`;
+  return "Chuyên gia";
 }
 
 export function truncateProgramDescription(

@@ -20,16 +20,34 @@ export const classSessionExpertSchema = z.object({
   expertUserId: z.string().uuid().nullable(),
   expertCode: nullableStringSchema,
   expertName: nullableStringSchema,
+  expertAvatarUrl: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? ""),
   status: classSessionExpertStatusSchema,
   sessionTitle: nullableStringSchema,
   sessionKind: z.enum(["LiveOnline", "Offline", "AssignmentWindow"]),
   sessionStatus: z.enum(["Scheduled", "InProgress", "Completed", "Cancelled"]),
   sessionStartTime: z.string(),
   sessionEndTime: z.string(),
-  scheduleConflictWarning: z.string().nullable(),
-  mentorFeedback: z.string().nullable(),
-  mentorFeedbackRating: z.number().int().nullable(),
-  mentorFeedbackAt: z.string().nullable(),
+  /** Omitted on Student responses. Manager/Admin still send them. */
+  scheduleConflictWarning: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  mentorFeedback: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
+  mentorFeedbackRating: z
+    .number()
+    .int()
+    .nullish()
+    .transform((value) => value ?? null),
+  mentorFeedbackAt: z
+    .string()
+    .nullish()
+    .transform((value) => value ?? null),
   createdAt: z.string(),
   updatedAt: z.string().nullable(),
 });

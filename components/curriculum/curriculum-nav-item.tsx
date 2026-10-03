@@ -3,11 +3,13 @@
 import { useEffect, useRef } from "react";
 import { CheckCircle2, Circle, Lock } from "lucide-react";
 
+import { ExpertAvatarGroup } from "@/components/experts/expert-avatar-group";
 import type { ActivityNavStatus } from "@/lib/api";
 import {
   ACTIVITY_TITLE_PREFIX,
   ACTIVITY_TYPE_LABELS,
 } from "@/lib/curriculum/constants";
+import type { CoTeachExpertFace } from "@/lib/curriculum/coteach-experts";
 import { cn } from "@/lib/utils";
 
 type CurriculumNavItemProps = {
@@ -19,6 +21,8 @@ type CurriculumNavItemProps = {
   onSelect: (activityId: string) => void;
   /** When nested under a course/milestone tree branch */
   inTree?: boolean;
+  coTeachExperts?: CoTeachExpertFace[];
+  onOpenExpert?: (expert: CoTeachExpertFace) => void;
 };
 
 function StatusIcon({ status }: { status: ActivityNavStatus }) {
@@ -54,6 +58,8 @@ export function CurriculumNavItem({
   isSelected,
   onSelect,
   inTree = false,
+  coTeachExperts = [],
+  onOpenExpert,
 }: CurriculumNavItemProps) {
   const rowRef = useRef<HTMLButtonElement>(null);
   const isLocked = status === "locked";
@@ -67,25 +73,47 @@ export function CurriculumNavItem({
   }, [isSelected]);
 
   return (
-    <button
-      ref={rowRef}
-      type="button"
-      disabled={isLocked}
-      onClick={() => onSelect(activityId)}
+    <div
       className={cn(
-        "flex min-h-11 w-full items-center gap-2.5 rounded-lg text-left text-sm transition-colors",
-        inTree ? "px-2 py-2" : "px-3 py-2.5",
-        isLocked && "cursor-not-allowed opacity-50",
-        isSelected && "bg-learn-surface font-medium text-learn-text-strong",
-        isCompleted && !isSelected && "text-learn-muted",
+        "flex items-center gap-1 rounded-lg",
+        isSelected && "bg-learn-surface",
       )}
-      aria-current={isSelected ? "page" : undefined}
     >
-      <StatusIcon status={status} />
-      <span className="min-w-0 leading-snug">
-        <span className="text-learn-faint">{prefix}: </span>
-        {activityName}
-      </span>
-    </button>
+      <button
+        ref={rowRef}
+        type="button"
+        disabled={isLocked}
+        onClick={() => onSelect(activityId)}
+        className={cn(
+          "flex min-h-11 min-w-0 flex-1 items-center gap-2.5 rounded-lg text-left text-sm transition-colors",
+          inTree ? "px-2 py-2" : "px-3 py-2.5",
+          isLocked && "cursor-not-allowed opacity-50",
+          isSelected && "font-medium text-learn-text-strong",
+          isCompleted && !isSelected && "text-learn-muted",
+        )}
+        aria-current={isSelected ? "page" : undefined}
+      >
+        <StatusIcon status={status} />
+        <span className="min-w-0 leading-snug">
+          <span className="text-learn-faint">{prefix}: </span>
+          {activityName}
+        </span>
+      </button>
+      {coTeachExperts.length > 0 ? (
+        <ExpertAvatarGroup
+          people={coTeachExperts.map((expert) => ({
+            id: expert.expertId,
+            name: expert.fullName,
+            avatarUrl: expert.avatarUrl,
+          }))}
+          ringClassName="ring-learn-surface"
+          className="mr-1 shrink-0"
+          onPersonClick={(expertId) => {
+            const expert = coTeachExperts.find((item) => item.expertId === expertId);
+            if (expert) onOpenExpert?.(expert);
+          }}
+        />
+      ) : null}
+    </div>
   );
 }

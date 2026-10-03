@@ -216,18 +216,24 @@ export function ScheduleSessionDetailSheet({
     });
 
   const { data: coTeachExperts, isLoading: isCoTeachLoading } = useClientFetch({
-    enabled: open && Boolean(sessionId) && session?.sessionKind === "Offline",
+    enabled:
+      open &&
+      !isMentorView &&
+      Boolean(classId) &&
+      Boolean(sessionId) &&
+      session?.sessionKind === "Offline",
     fetcher: async () => {
-      if (!sessionId) return [];
+      if (!classId || !sessionId) return [];
       const result = await getClassSessionExperts({
+        classId,
         sessionId,
         status: "Accepted",
         page: 1,
-        pageSize: 20,
+        pageSize: 100,
       });
       return result?.data?.items ?? [];
     },
-    deps: [sessionId, open, session?.sessionKind],
+    deps: [classId, sessionId, open, session?.sessionKind, isMentorView],
     onError: () => undefined,
   });
 
@@ -474,7 +480,7 @@ export function ScheduleSessionDetailSheet({
                     }
                   />
                 ) : null}
-                {session.sessionKind === "Offline" ? (
+                {session.sessionKind === "Offline" && !isMentorView ? (
                   <div className="space-y-2 px-4 py-3.5">
                     <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6B6B6B]">
                       Chuyên gia đồng hành
@@ -499,19 +505,6 @@ export function ScheduleSessionDetailSheet({
                               <p className="font-mono text-[11px] text-muted-foreground">
                                 {expert.expertCode}
                               </p>
-                            ) : null}
-                            {isMentorView && expert.mentorFeedback ? (
-                              <div className="mt-2 rounded-lg bg-muted/50 px-2.5 py-2 text-xs text-muted-foreground">
-                                <p className="font-semibold text-foreground">
-                                  Phản hồi riêng tư
-                                  {expert.mentorFeedbackRating
-                                    ? ` · ${expert.mentorFeedbackRating}/5`
-                                    : ""}
-                                </p>
-                                <p className="mt-1 whitespace-pre-wrap leading-relaxed">
-                                  {expert.mentorFeedback}
-                                </p>
-                              </div>
                             ) : null}
                           </li>
                         ))}

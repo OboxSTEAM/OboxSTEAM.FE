@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/accordion";
 import type { EnrollmentCurriculum, EnrollmentCurriculumAssignment } from "@/lib/api";
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
+import type { CoTeachExpertFace } from "@/lib/curriculum/coteach-experts";
 import { MODULE_TYPE_LABELS } from "@/lib/programs/constants";
 import { localizeUserFacingMessage } from "@/lib/errors";
 import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
@@ -50,6 +51,8 @@ type CurriculumNavProps = {
   onOpenMindMap?: () => void;
   mainView?: "content" | "mind-map";
   classContext?: CurriculumClassContext | null;
+  expertsByActivityId?: Record<string, CoTeachExpertFace[]>;
+  onOpenExpert?: (expert: CoTeachExpertFace) => void;
   className?: string;
 };
 
@@ -153,6 +156,8 @@ export function CurriculumNav({
   onOpenMindMap,
   mainView = "content",
   classContext = null,
+  expertsByActivityId = {},
+  onOpenExpert,
   className,
 }: CurriculumNavProps) {
   const reduceMotion = useReducedMotion();
@@ -352,6 +357,10 @@ export function CurriculumNav({
                                         selectedActivityId === activity.activityId
                                       }
                                       onSelect={onSelectActivity}
+                                      coTeachExperts={
+                                        expertsByActivityId[activity.activityId]
+                                      }
+                                      onOpenExpert={onOpenExpert}
                                       inTree
                                     />
                                   </NavActivityNode>

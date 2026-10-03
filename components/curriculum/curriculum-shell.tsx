@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ListTree, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 
+import { ExpertProfileDialog } from "@/components/experts/expert-profile-dialog";
 import { SiteHeader } from "@/components/landing/site-header";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -15,8 +16,11 @@ import {
   SheetPopup,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useClassCoTeachExperts } from "@/hooks/use-class-coteach-experts";
 import type { EnrollmentCurriculum } from "@/lib/api";
+import type { ProgramExpert } from "@/lib/api/entities/expert";
 import type { CurriculumClassContext } from "@/lib/curriculum/class-context";
+import type { CoTeachExpertFace } from "@/lib/curriculum/coteach-experts";
 import { findFlatAssignment } from "@/lib/curriculum/assignment-helpers";
 import { cn } from "@/lib/utils";
 
@@ -27,6 +31,19 @@ import { CurriculumNav } from "./curriculum-nav";
 import { CurriculumMindMapPanel } from "./mind-map/curriculum-mind-map-panel";
 
 const DESKTOP_NAV_WIDTH = 320;
+
+function toProgramExpertPreview(expert: CoTeachExpertFace): ProgramExpert {
+  return {
+    expertId: expert.expertId,
+    code: expert.code,
+    fullName: expert.fullName,
+    title: "",
+    organization: "",
+    avatarUrl: expert.avatarUrl ?? "",
+    linkedInUrl: "",
+    roleInBoard: "",
+  };
+}
 
 export type CurriculumMainView = "content" | "mind-map";
 
@@ -55,6 +72,14 @@ export function CurriculumShell({
 }: CurriculumShellProps) {
   const reduceMotion = useReducedMotion();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [profileExpert, setProfileExpert] = useState<CoTeachExpertFace | null>(null);
+  const { expertsByActivityId } = useClassCoTeachExperts(
+    classContext?.classId,
+    classContext?.sessions ?? [],
+  );
+  const selectedCoTeachExperts = selectedActivityId
+    ? (expertsByActivityId[selectedActivityId] ?? [])
+    : [];
   const [desktopNavOpen, setDesktopNavOpen] = useState(true);
   const [mainView, setMainView] = useState<CurriculumMainView>(initialView);
   const [mindMapReady, setMindMapReady] = useState(initialView === "mind-map");
@@ -131,6 +156,8 @@ export function CurriculumShell({
               onOpenMindMap={handleOpenMindMap}
               mainView={mainView}
               classContext={classContext}
+              expertsByActivityId={expertsByActivityId}
+              onOpenExpert={setProfileExpert}
             />
           </ScrollArea>
         </motion.aside>
@@ -190,6 +217,8 @@ export function CurriculumShell({
                   onCurriculumRefresh={onCurriculumRefresh}
                   classSessions={classContext?.sessions ?? []}
                   classId={classContext?.classId ?? null}
+                  coTeachExperts={selectedCoTeachExperts}
+                  onOpenExpert={setProfileExpert}
                 />
               )}
             </section>
@@ -245,6 +274,8 @@ export function CurriculumShell({
                 onOpenMindMap={handleOpenMindMap}
                 mainView={mainView}
                 classContext={classContext}
+                expertsByActivityId={expertsByActivityId}
+                onOpenExpert={setProfileExpert}
               />
             </ScrollArea>
           </SheetBody>
@@ -254,6 +285,16 @@ export function CurriculumShell({
       {classContext ? (
         <CurriculumClassGallery classId={classContext.classId} />
       ) : null}
+
+      <ExpertProfileDialog
+        expertId={profileExpert?.expertId ?? null}
+        open={profileExpert != null}
+        onOpenChange={(open) => {
+          if (!open) setProfileExpert(null);
+        }}
+        currentProgramId={curriculum.programId}
+        preview={profileExpert ? toProgramExpertPreview(profileExpert) : null}
+      />
     </div>
   );
 }
