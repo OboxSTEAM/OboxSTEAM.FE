@@ -3445,6 +3445,9 @@
         "name": "ResearchMilestoneResponseDtoResponseDataContent"
       },
       {
+        "name": "ResearchSubmissionEvidenceDto"
+      },
+      {
         "name": "ResearchSubmissionResponseDto"
       },
       {

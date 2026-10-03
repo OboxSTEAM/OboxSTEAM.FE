@@ -36,6 +36,7 @@ export type {
 
 export type {
   ResearchSubmission,
+  ResearchSubmissionEvidence,
   ResearchSubmissionStatus,
   ResearchSubmissionUploadPayload,
 } from "@/lib/api/entities/research-submission";

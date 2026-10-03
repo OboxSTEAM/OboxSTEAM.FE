@@ -53125,6 +53125,34 @@
         },
         "additionalProperties": false
       },
+      "ResearchSubmissionEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "mediaAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileType": {
+            "type": "string",
+            "nullable": true
+          },
+          "videoStatus": {
+            "enum": [
+              "None",
+              "Transcoding",
+              "PendingTagging",
+              "TaggingComplete",
+              "Failed"
+            ],
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ResearchSubmissionResponseDto": {
         "type": "object",
         "properties": {
@@ -53186,6 +53214,13 @@
             "items": {
               "type": "string",
               "format": "uuid"
+            },
+            "nullable": true
+          },
+          "evidences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResearchSubmissionEvidenceDto"
             },
             "nullable": true
           },

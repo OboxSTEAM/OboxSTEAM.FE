@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { mediaVideoStatusSchema } from "@/lib/api/entities/media";
+
 /** Mirrors backend submission status on research milestone deliverables. */
 export const researchSubmissionStatusSchema = z.enum([
   "Pending",
@@ -7,6 +9,17 @@ export const researchSubmissionStatusSchema = z.enum([
   "Graded",
   "ReturnedForRevision",
 ]);
+
+/**
+ * One evidence media asset on a submission. `fileUrl` is null while the
+ * media pipeline is still transcoding a video.
+ */
+export const researchSubmissionEvidenceSchema = z.object({
+  mediaAssetId: z.string().uuid(),
+  fileUrl: z.string().nullable(),
+  fileType: z.string().nullable(),
+  videoStatus: mediaVideoStatusSchema,
+});
 
 export const researchSubmissionSchema = z.object({
   id: z.string(),
@@ -19,10 +32,12 @@ export const researchSubmissionSchema = z.object({
   status: researchSubmissionStatusSchema,
   contentText: z.string().nullable(),
   fileUrl: z.string().nullable(),
-  /** Preview URLs for display — not sent on submit. */
+  /** Legacy preview URLs — not index-aligned with `evidenceMediaAssetIds`; prefer `evidences`. */
   evidenceUrls: z.array(z.string()).nullable().optional(),
   /** Media asset IDs for evidence — use these on submit. */
   evidenceMediaAssetIds: z.array(z.string().uuid()).nullable().optional(),
+  /** Evidence with ID, URL and pipeline status kept together. */
+  evidences: z.array(researchSubmissionEvidenceSchema).nullable().optional(),
   assignedGrade: z.number().nullable(),
   passScore: z.number(),
   maxPoints: z.number(),
@@ -48,6 +63,7 @@ export const researchSubmissionUploadPayloadSchema = z.object({
 
 export type ResearchSubmissionStatus = z.infer<typeof researchSubmissionStatusSchema>;
 export type ResearchSubmission = z.infer<typeof researchSubmissionSchema>;
+export type ResearchSubmissionEvidence = z.infer<typeof researchSubmissionEvidenceSchema>;
 export type ResearchSubmissionUploadPayload = z.infer<
   typeof researchSubmissionUploadPayloadSchema
 >;

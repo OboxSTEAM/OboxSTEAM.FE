@@ -303572,6 +303572,38 @@
                               },
                               "nullable": true
                             },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
                             "assignedGrade": {
                               "type": "number",
                               "format": "double",
@@ -303723,6 +303755,38 @@
                               },
                               "nullable": true
                             },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
                             "assignedGrade": {
                               "type": "number",
                               "format": "double",
@@ -303871,6 +303935,38 @@
                               "items": {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              "nullable": true
+                            },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
                               },
                               "nullable": true
                             },
@@ -305456,6 +305552,38 @@
                               },
                               "nullable": true
                             },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
                             "assignedGrade": {
                               "type": "number",
                               "format": "double",
@@ -305607,6 +305735,38 @@
                               },
                               "nullable": true
                             },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
                             "assignedGrade": {
                               "type": "number",
                               "format": "double",
@@ -305755,6 +305915,38 @@
                               "items": {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              "nullable": true
+                            },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
                               },
                               "nullable": true
                             },
@@ -306661,6 +306853,38 @@
                               },
                               "nullable": true
                             },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
                             "assignedGrade": {
                               "type": "number",
                               "format": "double",
@@ -306812,6 +307036,38 @@
                               },
                               "nullable": true
                             },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
+                              },
+                              "nullable": true
+                            },
                             "assignedGrade": {
                               "type": "number",
                               "format": "double",
@@ -306960,6 +307216,38 @@
                               "items": {
                                 "type": "string",
                                 "format": "uuid"
+                              },
+                              "nullable": true
+                            },
+                            "evidences": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "mediaAssetId": {
+                                    "type": "string",
+                                    "format": "uuid"
+                                  },
+                                  "fileUrl": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "fileType": {
+                                    "type": "string",
+                                    "nullable": true
+                                  },
+                                  "videoStatus": {
+                                    "enum": [
+                                      "None",
+                                      "Transcoding",
+                                      "PendingTagging",
+                                      "TaggingComplete",
+                                      "Failed"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "additionalProperties": false
                               },
                               "nullable": true
                             },
@@ -392994,6 +393282,34 @@
         },
         "additionalProperties": false
       },
+      "ResearchSubmissionEvidenceDto": {
+        "type": "object",
+        "properties": {
+          "mediaAssetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "fileType": {
+            "type": "string",
+            "nullable": true
+          },
+          "videoStatus": {
+            "enum": [
+              "None",
+              "Transcoding",
+              "PendingTagging",
+              "TaggingComplete",
+              "Failed"
+            ],
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
       "ResearchSubmissionResponseDto": {
         "type": "object",
         "properties": {
@@ -393055,6 +393371,38 @@
             "items": {
               "type": "string",
               "format": "uuid"
+            },
+            "nullable": true
+          },
+          "evidences": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "mediaAssetId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "fileUrl": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "fileType": {
+                  "type": "string",
+                  "nullable": true
+                },
+                "videoStatus": {
+                  "enum": [
+                    "None",
+                    "Transcoding",
+                    "PendingTagging",
+                    "TaggingComplete",
+                    "Failed"
+                  ],
+                  "type": "string"
+                }
+              },
+              "additionalProperties": false
             },
             "nullable": true
           },
@@ -393184,6 +393532,38 @@
                     "items": {
                       "type": "string",
                       "format": "uuid"
+                    },
+                    "nullable": true
+                  },
+                  "evidences": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "mediaAssetId": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "fileUrl": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "fileType": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "videoStatus": {
+                          "enum": [
+                            "None",
+                            "Transcoding",
+                            "PendingTagging",
+                            "TaggingComplete",
+                            "Failed"
+                          ],
+                          "type": "string"
+                        }
+                      },
+                      "additionalProperties": false
                     },
                     "nullable": true
                   },
@@ -393327,6 +393707,38 @@
                 "items": {
                   "type": "string",
                   "format": "uuid"
+                },
+                "nullable": true
+              },
+              "evidences": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "mediaAssetId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "fileUrl": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "fileType": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "videoStatus": {
+                      "enum": [
+                        "None",
+                        "Transcoding",
+                        "PendingTagging",
+                        "TaggingComplete",
+                        "Failed"
+                      ],
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": false
                 },
                 "nullable": true
               },

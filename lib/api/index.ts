@@ -1175,6 +1175,7 @@ export {
   type GradeResearchSubmissionResponse,
   type GradeResearchSubmissionResult,
   type ResearchSubmission,
+  type ResearchSubmissionEvidence,
   type ResearchSubmissionIdParam,
   type ResearchSubmissionStatus,
   type ResearchSubmissionUploadPayload,

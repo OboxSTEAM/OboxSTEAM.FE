@@ -1,9 +1,15 @@
+import {
+  mediaVideoStatusSchema,
+  type MediaVideoStatus,
+} from "@/lib/api/entities/media";
+
 export type ResearchStagingEvidence = {
   /** Class-media asset id — required for submit as EvidenceMediaAssetIds. */
   mediaAssetId: string;
-  /** Preview URL from upload / GET (display only). */
+  /** Preview URL from upload / GET (display only). Empty while a video is transcoding. */
   url: string;
   name: string;
+  videoStatus?: MediaVideoStatus | null;
 };
 
 export type ResearchStagingState = {
@@ -43,10 +49,21 @@ function normalizeEvidence(raw: unknown): ResearchStagingEvidence[] {
           ? fileNameFromUrl(url)
           : "minh chứng";
     // Drop legacy URL-only staging rows — they cannot be submitted under the new contract.
-    if (!mediaAssetId || !url) continue;
-    items.push({ mediaAssetId, url, name });
+    if (!mediaAssetId) continue;
+    const status = mediaVideoStatusSchema.safeParse(record.videoStatus);
+    items.push({
+      mediaAssetId,
+      url,
+      name,
+      videoStatus: status.success ? status.data : null,
+    });
   }
   return items;
+}
+
+/** Shows a processing placeholder instead of a preview. */
+export function isEvidenceProcessing(item: ResearchStagingEvidence): boolean {
+  return !item.url && item.videoStatus === "Transcoding";
 }
 
 export function getStoredResearchStaging(

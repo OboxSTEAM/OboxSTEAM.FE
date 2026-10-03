@@ -61,6 +61,7 @@ import {
   clearStoredResearchStaging,
   fileNameFromUrl,
   getStoredResearchStaging,
+  isEvidenceProcessing,
   migrateResearchStagingKey,
   researchDraftStorageKey,
   setStoredResearchStaging,
@@ -131,27 +132,51 @@ function emptyStaging(): ResearchStagingState {
 }
 
 function stagingFromSubmission(submission: ResearchSubmission): ResearchStagingState {
-  const evidenceUrls = submission.evidenceUrls ?? [];
-  const evidenceMediaAssetIds = submission.evidenceMediaAssetIds ?? [];
-  const evidence: ResearchStagingEvidence[] = [];
-
-  for (let index = 0; index < evidenceMediaAssetIds.length; index += 1) {
-    const mediaAssetId = evidenceMediaAssetIds[index]?.trim();
-    if (!mediaAssetId) continue;
-    const url = evidenceUrls[index]?.trim() ?? "";
-    evidence.push({
-      mediaAssetId,
-      url,
-      name: url ? fileNameFromUrl(url) : `minh-chung-${index + 1}`,
-    });
-  }
-
   return {
     contentText: submission.contentText ?? "",
     fileUrl: submission.fileUrl,
     fileName: submission.fileUrl ? fileNameFromUrl(submission.fileUrl) : null,
-    evidence,
+    evidence: evidenceFromSubmission(submission),
   };
+}
+
+function evidenceFromSubmission(submission: ResearchSubmission): ResearchStagingEvidence[] {
+  // `evidenceUrls` skips media without a URL, so it cannot be paired with IDs by index.
+  if (!submission.evidences) {
+    return (submission.evidenceMediaAssetIds ?? [])
+      .filter((id) => Boolean(id?.trim()))
+      .map((mediaAssetId, index) => ({
+        mediaAssetId,
+        url: "",
+        name: `minh-chung-${index + 1}`,
+      }));
+  }
+
+  return submission.evidences.map((item, index) => {
+    const url = item.fileUrl?.trim() ?? "";
+    return {
+      mediaAssetId: item.mediaAssetId,
+      url,
+      name: url ? fileNameFromUrl(url) : `minh-chung-${index + 1}`,
+      videoStatus: item.videoStatus,
+    };
+  });
+}
+
+/** Fills URL / status for staged items whose upload returned no preview yet. */
+function refreshStagedEvidence(
+  staged: ResearchStagingEvidence[],
+  submission: ResearchSubmission,
+): ResearchStagingEvidence[] {
+  if (!submission.evidences?.length || staged.every((item) => item.url)) return staged;
+  const serverById = new Map(
+    evidenceFromSubmission(submission).map((item) => [item.mediaAssetId, item]),
+  );
+  return staged.map((item) => {
+    const server = serverById.get(item.mediaAssetId);
+    if (item.url || !server) return item;
+    return { ...item, url: server.url, videoStatus: server.videoStatus };
+  });
 }
 
 function isAllowedEvidenceFile(file: File): boolean {
@@ -165,6 +190,11 @@ function isAllowedEvidenceFile(file: File): boolean {
   );
 }
 
+function isVideoFile(file: File): boolean {
+  const name = file.name.toLowerCase();
+  return file.type.startsWith("video/") || name.endsWith(".mp4") || name.endsWith(".mov");
+}
+
 function resolveInitialStaging(
   submission: ResearchSubmission,
   draftKey?: string,
@@ -173,7 +203,7 @@ function resolveInitialStaging(
     getStoredResearchStaging(submission.id) ??
     (draftKey ? getStoredResearchStaging(draftKey) : null);
   if (stored && (stored.fileUrl || stored.evidence.length > 0 || stored.contentText.trim())) {
-    return stored;
+    return { ...stored, evidence: refreshStagedEvidence(stored.evidence, submission) };
   }
   if (isEditableStatus(submission.status)) {
     return stagingFromSubmission(submission);
@@ -384,11 +414,13 @@ function StagedPrimaryCard({
 function EvidenceTile({
   url,
   name,
+  isProcessing = false,
   onRemove,
   disabled,
 }: {
   url: string;
   name: string;
+  isProcessing?: boolean;
   onRemove?: () => void;
   disabled?: boolean;
 }) {
@@ -397,6 +429,19 @@ function EvidenceTile({
       <div className="aspect-square w-full overflow-hidden bg-learn-surface-2">
         {url ? (
           <FilePreviewMedia url={url} name={name} size="tile" />
+        ) : isProcessing ? (
+          <div
+            role="status"
+            className="flex size-full flex-col items-center justify-center gap-1 px-1 text-center"
+          >
+            <Loader2
+              className="size-4 text-learn-muted motion-safe:animate-spin"
+              aria-hidden
+            />
+            <span className="text-[10px] font-medium leading-tight text-learn-muted">
+              Đang xử lý
+            </span>
+          </div>
         ) : (
           <div className="flex size-full items-center justify-center">
             <FileText className="size-5 text-learn-faint" aria-hidden />
@@ -786,6 +831,7 @@ export function ResearchSubmissionPanel({
             mediaAssetId,
             url,
             name: file.name,
+            videoStatus: !url && isVideoFile(file) ? "Transcoding" : null,
           });
         }
 
@@ -1055,6 +1101,7 @@ export function ResearchSubmissionPanel({
   const description = assignment.description?.trim() || null;
 
   const submittedLabel = formatAssignmentTimestamp(submission?.submittedAt);
+  const submittedEvidence = submission ? evidenceFromSubmission(submission) : [];
   const passScore = submission?.passScore ?? assignment.passScore;
   const maxPoints = submission?.maxPoints ?? assignment.maxPoints;
   const hasStagedContent =
@@ -1294,6 +1341,7 @@ export function ResearchSubmissionPanel({
                       <EvidenceTile
                         url={item.url}
                         name={item.name}
+                        isProcessing={isEvidenceProcessing(item)}
                         disabled={Boolean(uploadingTarget)}
                         onRemove={() => removeEvidence(item.mediaAssetId)}
                       />
@@ -1341,15 +1389,19 @@ export function ResearchSubmissionPanel({
                 />
               </section>
             ) : null}
-            {(submission.evidenceUrls?.length ?? 0) > 0 ? (
+            {submittedEvidence.length > 0 ? (
               <section className="space-y-1.5 border-t border-learn-border/70 pt-3">
                 <p className="text-[11px] font-semibold uppercase tracking-wide text-learn-faint">
                   Minh chứng
                 </p>
                 <ul className="flex flex-wrap gap-2">
-                  {submission.evidenceUrls?.map((url) => (
-                    <li key={url}>
-                      <EvidenceTile url={url} name={fileNameFromUrl(url)} />
+                  {submittedEvidence.map((item) => (
+                    <li key={item.mediaAssetId}>
+                      <EvidenceTile
+                        url={item.url}
+                        name={item.name}
+                        isProcessing={isEvidenceProcessing(item)}
+                      />
                     </li>
                   ))}
                 </ul>
