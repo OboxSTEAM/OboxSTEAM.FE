@@ -8,7 +8,7 @@ import type { SessionAttendanceStatus } from "@/lib/api/entities/session-attenda
 import { cn } from "@/lib/utils";
 
 const SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
-  LiveOnline: "Buổi học",
+  LiveOnline: "Trực tuyến",
   Offline: "Ngoại khóa",
   AssignmentWindow: "Kiểm tra",
 };

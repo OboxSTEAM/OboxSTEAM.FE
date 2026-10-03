@@ -12,7 +12,6 @@ export type ScheduleDisplaySession = {
   startTime: string;
   endTime: string;
   location?: string | null;
-  meetingUrl?: string | null;
   status: ClassSessionStatus;
   isCompleted?: boolean;
   attendanceStatus?: SessionAttendanceStatus | null;

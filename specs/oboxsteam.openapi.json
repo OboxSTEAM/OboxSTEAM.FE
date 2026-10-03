@@ -24758,7 +24758,7 @@
           {
             "name": "skillsGained",
             "in": "query",
-            "description": "Filter by skills gained keyword (optional)",
+            "description": "Filter by catalog skill name or code (optional)",
             "schema": {
               "type": "string"
             }
@@ -24900,9 +24900,6 @@
                     "type": "string"
                   },
                   "EstimatedDuration": {
-                    "type": "string"
-                  },
-                  "SkillsGained": {
                     "type": "string"
                   },
                   "SkillIds": {
@@ -25160,7 +25157,7 @@
           {
             "name": "skillsGained",
             "in": "query",
-            "description": "Filter by skills gained keyword (optional)",
+            "description": "Filter by catalog skill name or code (optional)",
             "schema": {
               "type": "string"
             }
@@ -50547,10 +50544,6 @@
             "type": "string",
             "nullable": true
           },
-          "skillsGained": {
-            "type": "string",
-            "nullable": true
-          },
           "rating": {
             "type": "number",
             "format": "double",
@@ -51159,10 +51152,6 @@
             "type": "string",
             "nullable": true
           },
-          "skillsGained": {
-            "type": "string",
-            "nullable": true
-          },
           "skills": {
             "type": "array",
             "items": {
@@ -51491,10 +51480,6 @@
             "type": "string"
           },
           "estimatedDuration": {
-            "type": "string",
-            "nullable": true
-          },
-          "skillsGained": {
             "type": "string",
             "nullable": true
           },
@@ -55805,10 +55790,6 @@
             "nullable": true
           },
           "estimatedDuration": {
-            "type": "string",
-            "nullable": true
-          },
-          "skillsGained": {
             "type": "string",
             "nullable": true
           },

@@ -49,7 +49,7 @@ import { formatVietnamTimeRange } from "@/lib/schedules/week";
 import { cn } from "@/lib/utils";
 
 const SESSION_KIND_LABELS: Record<ClassSessionKind, string> = {
-  LiveOnline: "Buổi học",
+  LiveOnline: "Trực tuyến",
   Offline: "Ngoại khóa",
   AssignmentWindow: "Kiểm tra",
 };
@@ -66,7 +66,6 @@ export type ScheduleSessionDetailSource = {
   startTime: string;
   endTime: string;
   location?: string | null;
-  meetingUrl?: string | null;
   status: ClassSessionStatus;
   isCompleted?: boolean;
   attendanceStatus?: SessionAttendanceStatus | null;
@@ -287,8 +286,7 @@ export function ScheduleSessionDetailSheet({
       status: classSession?.status ?? session.status,
       startTime: classSession?.startTime ?? session.startTime,
       endTime: classSession?.endTime ?? session.endTime,
-      meetingUrl:
-        session.meetingUrl?.trim() || classSession?.meetingUrl?.trim() || null,
+      meetingUrl: null,
       location:
         session.location?.trim() || classSession?.location?.trim() || null,
     };
@@ -386,16 +384,21 @@ export function ScheduleSessionDetailSheet({
         activityType == null &&
         session.sessionKind === "Offline"));
 
-  const canRevealMeet =
-    liveJoin != null && canRevealSessionJoinUrl(liveJoin.phase);
-  const revealedMeetUrl = canRevealMeet ? liveJoin.joinUrl : null;
-  const isMeetLocked = liveJoin?.phase === "locked";
-  const isMeetCancelled = liveJoin?.phase === "cancelled";
-  const isMeetEnded = liveJoin?.phase === "ended";
-  const canJoinMeet =
-    !isMentorView &&
-    revealedMeetUrl != null &&
-    (liveJoin?.phase === "countdown" || liveJoin?.phase === "live");
+  const isJoinLocked = liveJoin?.phase === "locked";
+  const canEnterClass =
+    isOnlineSession &&
+    liveJoin != null &&
+    canRevealSessionJoinUrl(liveJoin.phase);
+  const onlineHint =
+    liveJoin?.phase === "cancelled"
+      ? "Buổi học đã bị hủy."
+      : liveJoin?.phase === "ended"
+        ? "Buổi học đã kết thúc."
+        : isJoinLocked
+          ? "Phòng học mở 15 phút trước giờ bắt đầu, ngay trong trang chương trình."
+          : canEnterClass
+            ? "Phòng học đã mở — vào lớp ngay trong trang chương trình."
+            : null;
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -552,28 +555,9 @@ export function ScheduleSessionDetailSheet({
                 {!isVenueLoading && isOnlineSession ? (
                   <DetailInfoRow
                     icon={Video}
-                    label="Link tham gia (Google Meet)"
-                    value={
-                      isMeetCancelled
-                        ? "Buổi học đã bị hủy"
-                        : isMeetEnded
-                          ? "Buổi học đã kết thúc"
-                          : isMeetLocked
-                            ? "Chưa mở"
-                            : revealedMeetUrl
-                              ? revealedMeetUrl.replace(/^https?:\/\//, "")
-                              : "Online — chờ link"
-                    }
-                    href={revealedMeetUrl}
-                    hint={
-                      isMeetCancelled || isMeetEnded
-                        ? null
-                        : isMeetLocked && liveJoin
-                          ? `Link Meet mở 15 phút trước giờ bắt đầu · còn ${formatJoinCountdown(liveJoin.msUntilOpen)}`
-                          : revealedMeetUrl
-                            ? null
-                            : "Buổi online đã lên lịch; link Meet sẽ cập nhật sau."
-                    }
+                    label="Hình thức"
+                    value="Lớp học trực tuyến"
+                    hint={onlineHint}
                     hintMono={false}
                   />
                 ) : null}
@@ -604,24 +588,9 @@ export function ScheduleSessionDetailSheet({
           ) : null}
 
           <div className="mt-auto flex shrink-0 flex-col gap-2.5 pt-2">
-            {canJoinMeet ? (
-              <a
-                href={revealedMeetUrl!}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cn(
-                  buttonVariants({ variant: "default" }),
-                  "h-11 w-full gap-2 rounded-xl text-sm font-semibold",
-                )}
-              >
-                <Video className="size-4" />
-                Tham gia Google Meet
-                <ExternalLink className="size-3.5 opacity-80" />
-              </a>
-            ) : null}
-            {!isMentorView && isOnlineSession && isMeetLocked && liveJoin ? (
+            {!isMentorView && isOnlineSession && isJoinLocked && liveJoin ? (
               <p className="rounded-xl border border-border bg-muted/40 px-3.5 py-3 text-center text-xs text-muted-foreground">
-                Nút tham gia mở 15 phút trước giờ bắt đầu
+                Nút Vào lớp học mở 15 phút trước giờ bắt đầu
                 <span className="mt-1 block font-mono font-semibold tabular-nums text-foreground">
                   {formatJoinCountdown(liveJoin.msUntilOpen)}
                 </span>
@@ -632,28 +601,40 @@ export function ScheduleSessionDetailSheet({
                 href={curriculumHref}
                 className={cn(
                   buttonVariants({ variant: "default" }),
-                  "h-11 w-full rounded-xl text-sm font-semibold",
+                  "h-11 w-full gap-2 rounded-xl text-sm font-semibold",
                 )}
                 onClick={() => onOpenChange(false)}
               >
-                Mở trong chương trình
+                {canEnterClass ? (
+                  <>
+                    <Video className="size-4" aria-hidden />
+                    Vào lớp học
+                  </>
+                ) : (
+                  "Mở trong chương trình"
+                )}
               </Link>
             ) : isLearnHrefReady ? (
               <Link
                 href={learnHref}
                 className={cn(
-                  buttonVariants({
-                    variant: canJoinMeet ? "outline" : "default",
-                  }),
-                  "h-11 w-full rounded-xl text-sm font-semibold",
+                  buttonVariants({ variant: "default" }),
+                  "h-11 w-full gap-2 rounded-xl text-sm font-semibold",
                 )}
+                onClick={() => onOpenChange(false)}
               >
-                Mở chương trình học
+                {canEnterClass ? (
+                  <>
+                    <Video className="size-4" aria-hidden />
+                    Vào lớp học
+                  </>
+                ) : (
+                  "Mở chương trình học"
+                )}
               </Link>
             ) : (
               <Button
                 type="button"
-                variant={canJoinMeet ? "outline" : "default"}
                 className="h-11 w-full rounded-xl text-sm font-semibold"
                 disabled
               >
