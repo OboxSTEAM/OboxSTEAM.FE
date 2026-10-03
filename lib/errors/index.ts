@@ -1,4 +1,9 @@
 export { emitApiErrorCode, subscribeApiErrorCode } from "./api-error-signals";
+export {
+  ASSIGNMENT_ERROR_CODES,
+  getAssignmentWindowConflict,
+  getExpiredGradedQuizResult,
+} from "./api-error-payload";
 export { getApiErrorCode, resolveAppError } from "./resolve-app-error";
 export {
   localizeUserFacingMessage,

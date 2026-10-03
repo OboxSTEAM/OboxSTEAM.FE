@@ -53,6 +53,7 @@ export const classSessionsQuerySchema = z.object({
   moduleId: z.string().uuid().optional(),
   sessionKind: classSessionKindSchema.optional(),
   status: classSessionStatusSchema.optional(),
+  assignmentId: z.string().uuid().optional(),
   from: z.string().optional(),
   to: z.string().optional(),
 });
@@ -415,6 +416,54 @@ export const updateClassSessionSchema = classSessionBodySchema
     }
   });
 
+/** BE rejects AssignmentWindow edits shorter than this. */
+export const ASSIGNMENT_WINDOW_MIN_HOURS = 48;
+
+/**
+ * Mentor/Manager form for an `AssignmentWindow` session (`datetime-local` values).
+ * Mirrors BE rules applied whenever start or end changes: end not in the past,
+ * window ≥ 48h. Only submit when the times are dirty.
+ */
+export const assignmentWindowFormSchema = z
+  .object({
+    startTime: z.string().min(1, "Chọn thời điểm mở bài."),
+    endTime: z.string().min(1, "Chọn thời điểm đóng bài."),
+  })
+  .superRefine((value, ctx) => {
+    const start = new Date(value.startTime).getTime();
+    const end = new Date(value.endTime).getTime();
+    if (Number.isNaN(start) || Number.isNaN(end)) return;
+    if (end <= Date.now()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: "Thời điểm đóng không được ở quá khứ.",
+      });
+      return;
+    }
+    if (end - start < ASSIGNMENT_WINDOW_MIN_HOURS * 3_600_000) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["endTime"],
+        message: `Khung mở bài phải kéo dài ít nhất ${ASSIGNMENT_WINDOW_MIN_HOURS} giờ.`,
+      });
+    }
+  });
+
+/** Create (`POST /api/classes/{classId}/sessions`) additionally rejects a start in the past. */
+export const assignmentWindowCreateFormSchema = assignmentWindowFormSchema.superRefine(
+  (value, ctx) => {
+    const start = new Date(value.startTime).getTime();
+    if (!Number.isNaN(start) && start < Date.now()) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["startTime"],
+        message: "Thời điểm mở không được ở quá khứ.",
+      });
+    }
+  },
+);
+
 /** Body for `POST /api/class-enrollments`. */
 export const createClassEnrollmentSchema = z.object({
   programEnrollmentId: z.string().uuid("ID ghi danh chương trình không hợp lệ."),
@@ -482,6 +531,7 @@ export type UpdateClassInput = z.infer<typeof updateClassSchema>;
 export type ClassFormValues = z.infer<typeof classFormSchema>;
 export type CreateClassSessionInput = z.infer<typeof createClassSessionSchema>;
 export type UpdateClassSessionInput = z.infer<typeof updateClassSessionSchema>;
+export type AssignmentWindowFormValues = z.infer<typeof assignmentWindowFormSchema>;
 export type ClassSessionFormValues = z.infer<typeof classSessionFormSchema>;
 export type CreateClassEnrollmentInput = z.infer<typeof createClassEnrollmentSchema>;
 export type TransferClassEnrollmentInput = z.infer<typeof transferClassEnrollmentSchema>;

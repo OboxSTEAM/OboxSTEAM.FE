@@ -116,6 +116,7 @@ function toTreeProgress(
 type MentorClassCurriculumPanelProps = {
   classId: string;
   programId: string;
+  classEndDate?: string | null;
   roster: ClassStudentRoster[];
   sessions: ClassSession[];
   initialActivityId?: string | null;
@@ -126,6 +127,7 @@ type MentorClassCurriculumPanelProps = {
 export function MentorClassCurriculumPanel({
   classId,
   programId,
+  classEndDate,
   roster: _roster,
   sessions,
   initialActivityId = null,
@@ -568,6 +570,7 @@ export function MentorClassCurriculumPanel({
                   key={selectedAssignment.id}
                   classId={classId}
                   programId={programId}
+                  classEndDate={classEndDate}
                   initialAssignmentId={selectedAssignment.id}
                   embedded
                 />

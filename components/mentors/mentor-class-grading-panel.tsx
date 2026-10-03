@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Beaker,
   BookOpenText,
@@ -14,7 +14,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-import { ClassDateRange } from "@/components/classes/class-date-range";
 import { AssignmentResultCard } from "@/components/curriculum/assignment-outcome";
 import { MentorAssignmentScheduleCard } from "@/components/mentors/mentor-assignment-schedule-card";
 import {
@@ -421,29 +420,6 @@ function AssignmentPromptDialog({
                   {assignment.passScore}
                 </p>
               </div>
-              {assignment.availableFrom || assignment.availableUntil ? (
-                <div className="sm:col-span-2">
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Khung mở bài
-                  </p>
-                  <ClassDateRange
-                    startDate={assignment.availableFrom}
-                    endDate={assignment.availableUntil}
-                    layout="inline"
-                  />
-                </div>
-              ) : null}
-              {assignment.dueDate ? (
-                <div className="sm:col-span-2">
-                  <p className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                    Hạn nộp
-                  </p>
-                  <ClassDateRange
-                    startDate={assignment.dueDate}
-                    layout="inline"
-                  />
-                </div>
-              ) : null}
               {assignment.assignmentType === "Quiz" ? (
                 <>
                   {assignment.questionCount != null ? (
@@ -500,6 +476,7 @@ function AssignmentPromptDialog({
 type MentorClassGradingPanelProps = {
   classId: string;
   programId: string;
+  classEndDate?: string | null;
   initialAssignmentId?: string | null;
   /**
    * When true, hide mode tabs + assignment picker — used inside Chương trình
@@ -511,6 +488,7 @@ type MentorClassGradingPanelProps = {
 export function MentorClassGradingPanel({
   classId,
   programId,
+  classEndDate = null,
   initialAssignmentId = null,
   embedded = false,
 }: MentorClassGradingPanelProps) {
@@ -634,7 +612,6 @@ export function MentorClassGradingPanel({
     isLoading: isAssignmentDetailLoading,
     hasError: hasAssignmentDetailError,
     retry: retryAssignmentDetail,
-    mutate: mutateAssignmentDetail,
   } = useClientFetch({
     enabled: !!assignmentId,
     fetcher: async () => {
@@ -662,27 +639,40 @@ export function MentorClassGradingPanel({
       showAppErrorFromUnknown(error, "assignments.submissions.list"),
   });
 
+  const appliedInitialRef = useRef<{ id: string; mode: GradingMode } | null>(
+    null,
+  );
+
   useEffect(() => {
     if (!initialAssignmentId || assignments.length === 0) return;
     const item = assignments.find((a) => a.id === initialAssignmentId);
     if (!item) return;
 
+    let nextMode: GradingMode;
     if (isQuizAssignmentType(item.assignmentType)) {
-      markLoading();
-      setMode("quiz");
-      setAssignmentId(initialAssignmentId);
-      setGradeTarget(null);
-      setQuizPreview(null);
+      nextMode = "quiz";
+    } else if (isRegularManualType(item.assignmentType)) {
+      // FileUpload may be a research milestone — wait for the map before choosing mode.
+      if (item.assignmentType === "FileUpload" && !researchIdSet) return;
+      nextMode = researchIdSet?.has(item.id) ? "research" : "manual";
+    } else {
       return;
     }
 
-    if (!isRegularManualType(item.assignmentType)) return;
+    // Re-runs (e.g. research map arriving late) must not markLoading() again:
+    // assignmentId is unchanged, so no refetch would ever clear the skeleton.
+    const applied = appliedInitialRef.current;
+    if (applied?.id === initialAssignmentId) {
+      if (applied.mode !== nextMode) {
+        appliedInitialRef.current = { id: initialAssignmentId, mode: nextMode };
+        setMode(nextMode);
+      }
+      return;
+    }
 
-    // FileUpload may be a research milestone — wait for the map before choosing mode.
-    if (item.assignmentType === "FileUpload" && !researchIdSet) return;
-
+    appliedInitialRef.current = { id: initialAssignmentId, mode: nextMode };
     markLoading();
-    setMode(researchIdSet?.has(item.id) ? "research" : "manual");
+    setMode(nextMode);
     setAssignmentId(initialAssignmentId);
     setGradeTarget(null);
     setQuizPreview(null);
@@ -1210,7 +1200,7 @@ export function MentorClassGradingPanel({
                     ) : (
                       <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
                         {assignmentDetail?.description?.trim() ||
-                          "Chưa có mô tả đề — bấm Xem đề để xem điểm đạt / hạn nộp."}
+                          "Chưa có mô tả đề — bấm Xem đề để xem điểm tối đa / điểm đạt."}
                       </p>
                     )}
                   </div>
@@ -1232,10 +1222,9 @@ export function MentorClassGradingPanel({
               assignmentDetail.id === assignmentId ? (
                 <div className="shrink-0 border-b border-border px-4 py-3 sm:px-5">
                   <MentorAssignmentScheduleCard
+                    classId={classId}
                     assignment={assignmentDetail}
-                    onUpdated={(next) => {
-                      mutateAssignmentDetail(next);
-                    }}
+                    classEndDate={classEndDate}
                   />
                 </div>
               ) : assignmentId && isAssignmentDetailPending ? (

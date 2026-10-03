@@ -409,6 +409,7 @@ function MentorClassDetailInner({ classId }: MentorClassDetailProps) {
               <MentorClassCurriculumPanel
                 classId={classId}
                 programId={classItem.programId}
+                classEndDate={classItem.endDate}
                 roster={roster}
                 sessions={sessions}
                 initialActivityId={deepActivityId}

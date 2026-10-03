@@ -1521,6 +1521,7 @@
           "AssessmentRecoveryRequest"
         ],
         "summary": "Request extra attempts (same class window)",
+        "description": "Only while the class AssignmentWindow has not ended. 409 error codes: ASSIGNMENT_WINDOW_MISSING when the student's class has no window; ASSIGNMENT_WINDOW_CLOSED after EndTime (data = AssignmentWindowConflictDto).",
         "requestBody": {
           "content": {
             "application/json": {
@@ -1557,6 +1558,26 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -1671,6 +1692,7 @@
           "AssessmentRecoveryRequest"
         ],
         "summary": "Approve recovery request (same class grant)",
+        "description": "Only while the class AssignmentWindow has not ended. 409 ASSIGNMENT_WINDOW_CLOSED when the window is missing or has ended (data = AssignmentWindowConflictDto when a window exists).",
         "parameters": [
           {
             "name": "id",
@@ -1718,6 +1740,26 @@
               "text/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AssessmentRecoveryRequestResponseDtoApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
                 }
               }
             }
@@ -2589,7 +2631,7 @@
           "AssignmentSubmission"
         ],
         "summary": "Submit work for a non-research assignment",
-        "description": "Student turns in a FileUpload assignment. Quizzes and retrospectives use their dedicated endpoints. Provide ContentText and/or FileUrl.",
+        "description": "Student turns in a FileUpload assignment. Quizzes and retrospectives use their dedicated endpoints. Provide ContentText and/or FileUrl. A first submission, or a resubmission after a failed grade, needs the class AssignmentWindow to be open; Pending or ReturnedForRevision work can still be turned in after the window closes. 409 error codes: ASSIGNMENT_WINDOW_MISSING; ASSIGNMENT_WINDOW_NOT_OPEN and ASSIGNMENT_WINDOW_CLOSED (data = AssignmentWindowConflictDto); ASSIGNMENT_MAX_ATTEMPTS; plain 409 when the work already passed or is pending mentor review.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -8208,6 +8250,15 @@
               "type": "string",
               "example": "15/06/2026 14:30:00"
             }
+          },
+          {
+            "name": "assignmentId",
+            "in": "query",
+            "description": "Filter by assignment ID, e.g. the AssignmentWindow of one assignment (optional)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "responses": {
@@ -8278,7 +8329,7 @@
           "ClassSession"
         ],
         "summary": "Create a class session",
-        "description": "Schedules a new session for a class cohort. Requires Admin or Manager role.",
+        "description": "Schedules a new session for a class cohort. Requires Admin or Manager role. AssignmentWindow (AssignmentId set, no ActivityId): the client supplies StartTime and EndTime; StartTime must not be in the past, EndTime must be in the future and at least 48 hours after StartTime, and EndTime may run to 23:59:59 Asia/Ho_Chi_Minh on the class end date. Violations return 400.",
         "parameters": [
           {
             "name": "classId",
@@ -8599,7 +8650,7 @@
           "ClassSession"
         ],
         "summary": "Update a class session",
-        "description": "Updates a scheduled class session. Admin/Manager may update any session. Mentors may update StartTime, EndTime, and Description of AssignmentWindow sessions on their class.",
+        "description": "Updates a scheduled class session. Admin/Manager may update any session. Mentors may update StartTime, EndTime, and Description of AssignmentWindow sessions on their class. When an AssignmentWindow's times change (any role), EndTime must be in the future and at least 48 hours after StartTime, and may run to 23:59:59 Asia/Ho_Chi_Minh on the class end date; violations return 400. Moving a window does not extend attempts already in progress.",
         "parameters": [
           {
             "name": "classId",
@@ -9767,7 +9818,8 @@
         "tags": [
           "ClassSessionExpert"
         ],
-        "summary": "List co-teach invitations (manager)",
+        "summary": "List co-teach invitations",
+        "description": "Manager/Admin list any status. A Student must pass classId and must be actively enrolled; the result is only Accepted invitations and omits mentor feedback and schedule warnings. Student pageSize cannot exceed 100.",
         "parameters": [
           {
             "name": "classId",
@@ -9830,17 +9882,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassSessionExpertResponseDtoPaginationApiResult"
+                  "$ref": "#/components/schemas/ClassSessionExpertStudentResponseDtoPaginationApiResult"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassSessionExpertResponseDtoPaginationApiResult"
+                  "$ref": "#/components/schemas/ClassSessionExpertStudentResponseDtoPaginationApiResult"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ClassSessionExpertResponseDtoPaginationApiResult"
+                  "$ref": "#/components/schemas/ClassSessionExpertStudentResponseDtoPaginationApiResult"
                 }
               }
             }
@@ -32866,7 +32918,7 @@
           "Quiz"
         ],
         "summary": "Start a quiz attempt",
-        "description": "Starts a new Mode A quiz attempt or resumes an existing Pending submission. Requires Student role and an active enrollment in the assignment's module.",
+        "description": "Starts a new Mode A quiz attempt or resumes an existing Pending submission. Requires Student role and an active enrollment in the assignment's module. A new attempt needs the class AssignmentWindow to be open (StartTime <= now <= EndTime); a Pending attempt still inside its time limit resumes even after the window closes. 409 error codes: ASSIGNMENT_WINDOW_MISSING (no window for the student's class); ASSIGNMENT_WINDOW_NOT_OPEN and ASSIGNMENT_WINDOW_CLOSED (data = AssignmentWindowConflictDto with startTime/endTime in UTC); ASSIGNMENT_MAX_ATTEMPTS; QUIZ_ATTEMPT_EXPIRED_GRADED (the Pending attempt passed ExpiresAt + 60 s, was graded from its saved answers, and data = QuizResultResponseDto; call start again to open the next attempt when one is allowed).",
         "parameters": [
           {
             "name": "assignmentId",
@@ -33130,7 +33182,7 @@
           "Quiz"
         ],
         "summary": "Save draft quiz answers",
-        "description": "Upserts draft answers for a Pending submission. Partial answers are allowed. Requires Student role.",
+        "description": "Upserts draft answers for a Pending submission. Partial answers are allowed. Requires Student role. The class AssignmentWindow closing does not block an attempt already in progress. 409 error codes: ASSIGNMENT_ATTEMPT_TIME_EXPIRED once ExpiresAt + 60 s grace has passed; 409 when the submission is no longer Pending.",
         "parameters": [
           {
             "name": "submissionId",
@@ -33291,7 +33343,7 @@
           "Quiz"
         ],
         "summary": "Submit quiz",
-        "description": "Final submit: merges request answers with saved drafts, validates all questions are answered, auto-grades, and sets submission to Graded. An empty answers array is allowed when all drafts are saved. Requires Student role.",
+        "description": "Final submit: merges request answers with saved drafts, validates all questions are answered, auto-grades, and sets submission to Graded. An empty answers array is allowed when all drafts are saved. Requires Student role. The class AssignmentWindow closing does not block an attempt already in progress. 409 error codes: ASSIGNMENT_ATTEMPT_TIME_EXPIRED once ExpiresAt + 60 s grace has passed (the attempt is later graded from saved answers by start or by the 5-minute background sweep); 409 when the submission is no longer Pending.",
         "parameters": [
           {
             "name": "submissionId",
@@ -33452,7 +33504,7 @@
           "Quiz"
         ],
         "summary": "Get quiz result",
-        "description": "Returns the graded result for a submission. Students may only access their own result and must have a module enrollment (any status). Mentors may access students in their class. Manager and Admin may access any submission.",
+        "description": "Returns the graded result for a submission. Students may only access their own result and must have a module enrollment (any status). Mentors may access students in their class. Manager and Admin may access any submission. 409 while the submission is not Graded. A Pending attempt past ExpiresAt + 60 s is graded from its saved answers by the next start call or by the background sweep (runs every 5 minutes).",
         "parameters": [
           {
             "name": "submissionId",
@@ -34944,7 +34996,7 @@
           "ResearchSubmission"
         ],
         "summary": "Submit research work",
-        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. New attempts must fall inside the class AssignmentWindow. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL.",
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. New attempts must fall inside the class AssignmentWindow (409 ASSIGNMENT_WINDOW_MISSING, ASSIGNMENT_WINDOW_NOT_OPEN or ASSIGNMENT_WINDOW_CLOSED; the last two carry AssignmentWindowConflictDto in data). 409 ASSIGNMENT_MAX_ATTEMPTS when the attempt budget is used. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL.",
         "requestBody": {
           "content": {
             "application/json": {
@@ -35255,7 +35307,7 @@
           "Retrospective"
         ],
         "summary": "Start a retrospective draft",
-        "description": "Creates a new Pending submission or resumes an existing draft or revision. Requires Student role and an active enrollment in the assignment's module.",
+        "description": "Creates a new Pending submission or resumes an existing draft or revision. Requires Student role and an active enrollment in the assignment's module. A new draft needs the class AssignmentWindow to be open; an existing submission resumes regardless. 409 error codes: ASSIGNMENT_WINDOW_MISSING; ASSIGNMENT_WINDOW_NOT_OPEN and ASSIGNMENT_WINDOW_CLOSED (data = AssignmentWindowConflictDto with startTime/endTime in UTC).",
         "parameters": [
           {
             "name": "assignmentId",
@@ -35499,7 +35551,7 @@
           "Retrospective"
         ],
         "summary": "Save retrospective draft",
-        "description": "Autosaves plain-text draft content for a Pending or ReturnedForRevision submission.",
+        "description": "Autosaves plain-text draft content for a Pending or ReturnedForRevision submission. Not blocked by the class AssignmentWindow or a time limit: work already in progress continues after the window closes. 409 when the submission is not in an editable state.",
         "parameters": [
           {
             "name": "submissionId",
@@ -35660,7 +35712,7 @@
           "Retrospective"
         ],
         "summary": "Submit retrospective",
-        "description": "Final submit: merges optional request text with the saved draft, requires non-empty plain text, and sets submission to TurnedIn for mentor grading.",
+        "description": "Final submit: merges optional request text with the saved draft, requires non-empty plain text, and sets submission to TurnedIn for mentor grading. Not blocked by the class AssignmentWindow: work already in progress can be turned in after it closes. 409 error codes: ASSIGNMENT_MAX_ATTEMPTS when a resubmission after ReturnedForRevision or Graded exceeds the attempt budget; 409 when the submission is not in a submittable state.",
         "parameters": [
           {
             "name": "submissionId",
@@ -36551,6 +36603,134 @@
           },
           "403": {
             "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Skill"
+        ],
+        "summary": "Create a catalog skill",
+        "description": "Adds a skill to the shared catalog. Code is unique, including soft-deleted skills. Manager only.",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSkillRequestDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSkillRequestDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSkillRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDetailDtoApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDetailDtoApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SkillDetailDtoApiResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectApiResult"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "text/plain": {
                 "schema": {
@@ -40779,6 +40959,10 @@
             "type": "string",
             "nullable": true
           },
+          "expertAvatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
           "status": {
             "enum": [
               "Invited",
@@ -40943,6 +41127,168 @@
           },
           "data": {
             "$ref": "#/components/schemas/ClassSessionExpertResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionExpertStudentResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classSessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "classId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "className": {
+            "type": "string",
+            "nullable": true
+          },
+          "programId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expertId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "expertUserId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "expertCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "expertName": {
+            "type": "string",
+            "nullable": true
+          },
+          "expertAvatarUrl": {
+            "type": "string",
+            "nullable": true
+          },
+          "status": {
+            "enum": [
+              "Invited",
+              "Accepted",
+              "Declined"
+            ],
+            "type": "string"
+          },
+          "sessionTitle": {
+            "type": "string",
+            "nullable": true
+          },
+          "sessionKind": {
+            "enum": [
+              "LiveOnline",
+              "Offline",
+              "AssignmentWindow"
+            ],
+            "type": "string"
+          },
+          "sessionStatus": {
+            "enum": [
+              "Scheduled",
+              "InProgress",
+              "Completed",
+              "Cancelled"
+            ],
+            "type": "string"
+          },
+          "sessionStartTime": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "sessionEndTime": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "15/06/2026 14:30:00"
+          },
+          "updatedAt": {
+            "type": "string",
+            "nullable": true,
+            "example": "15/06/2026 14:30:00"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionExpertStudentResponseDtoPagination": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClassSessionExpertStudentResponseDto"
+            },
+            "nullable": true
+          },
+          "currentPage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasPrevious": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "hasNext": {
+            "type": "boolean",
+            "readOnly": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionExpertStudentResponseDtoPaginationApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/ClassSessionExpertStudentResponseDtoPaginationResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ClassSessionExpertStudentResponseDtoPaginationResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/ClassSessionExpertStudentResponseDtoPagination"
           }
         },
         "additionalProperties": false
@@ -42928,6 +43274,40 @@
             "minimum": 1,
             "type": "integer",
             "format": "int32",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "CreateSkillRequestDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "enum": [
+              "Science",
+              "Technology",
+              "Engineering",
+              "Arts",
+              "Math",
+              "SoftSkill"
+            ],
+            "type": "string",
+            "nullable": true
+          },
+          "subcategory": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -53721,6 +54101,75 @@
           },
           "data": {
             "$ref": "#/components/schemas/SessionAttendanceResponseDto"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SkillDetailDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "category": {
+            "enum": [
+              "Science",
+              "Technology",
+              "Engineering",
+              "Arts",
+              "Math",
+              "SoftSkill"
+            ],
+            "type": "string"
+          },
+          "subcategory": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SkillDetailDtoApiResult": {
+        "type": "object",
+        "properties": {
+          "isSuccess": {
+            "type": "boolean"
+          },
+          "value": {
+            "$ref": "#/components/schemas/SkillDetailDtoResponseDataContent"
+          },
+          "error": {
+            "$ref": "#/components/schemas/ErrorContent"
+          }
+        },
+        "additionalProperties": false
+      },
+      "SkillDetailDtoResponseDataContent": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "message": {
+            "type": "string",
+            "nullable": true
+          },
+          "data": {
+            "$ref": "#/components/schemas/SkillDetailDto"
           }
         },
         "additionalProperties": false

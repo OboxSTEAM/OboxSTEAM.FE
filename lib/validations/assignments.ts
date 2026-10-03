@@ -15,7 +15,10 @@ export const assignmentTypeInputSchema = z.enum([
 
 export type AssignmentTypeInput = z.infer<typeof assignmentTypeInputSchema>;
 
-/** Shared field shape for `Create`/`UpdateAssignmentRequestDto`. Dates use `dd/MM/yyyy HH:mm:ss`. */
+/**
+ * Shared field shape for `Create`/`UpdateAssignmentRequestDto`.
+ * Open / close windows live on the class `AssignmentWindow` session, not here.
+ */
 const assignmentFieldsSchema = z.object({
   code: z.string().nullable().optional(),
   moduleId: z.string().uuid("ID module không hợp lệ."),
@@ -26,9 +29,6 @@ const assignmentFieldsSchema = z.object({
   maxPoints: z.number().int().min(0, "Điểm tối đa không được âm."),
   passScore: z.number().min(0, "Điểm đạt không được âm."),
   isRequiredForModulePass: z.boolean().default(false),
-  dueDate: z.string().nullable().optional(),
-  availableFrom: z.string().nullable().optional(),
-  availableUntil: z.string().nullable().optional(),
   allowShuffle: z.boolean().default(false),
   questionBankId: z.string().uuid("ID ngân hàng câu hỏi không hợp lệ.").nullable().optional(),
   questionCount: z.number().int().min(0).nullable().optional(),
@@ -76,9 +76,6 @@ export const assignmentFormSchema = assignmentFieldsSchema
     code: z.string(),
     courseId: z.string(),
     description: z.string(),
-    dueDate: z.string(),
-    availableFrom: z.string(),
-    availableUntil: z.string(),
     questionBankId: z.string(),
     questionCount: z.number().int().min(0).nullable().optional(),
     timeLimitMinutes: z.number().int().min(1).nullable().optional(),

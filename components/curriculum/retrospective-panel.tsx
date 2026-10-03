@@ -343,7 +343,7 @@ export function RetrospectivePanel({
       setContentText(next.contentText ?? "");
       setLastSavedAt(next.lastSavedAt);
     } catch (error) {
-      showAppErrorFromUnknown(error, "generic");
+      showAppErrorFromUnknown(error, "assignments.attempt.start");
     } finally {
       setIsStarting(false);
     }
@@ -418,7 +418,7 @@ export function RetrospectivePanel({
       }
       await onCurriculumRefresh();
     } catch (error) {
-      showAppErrorFromUnknown(error, "generic");
+      showAppErrorFromUnknown(error, "assignments.attempt.start");
     } finally {
       setIsRetrying(false);
     }

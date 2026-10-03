@@ -63,6 +63,8 @@ import {
   toApiDateTimeFromLocalInput,
 } from "@/lib/curriculum/datetime";
 import {
+  assignmentWindowCreateFormSchema,
+  assignmentWindowFormSchema,
   classSessionFormSchema,
   type ClassSessionFormValues,
 } from "@/lib/validations/classes";
@@ -238,6 +240,7 @@ export function SessionFormDialog({
     setValue,
     getValues,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<ClassSessionFormValues>({
     resolver: zodResolver(classSessionFormSchema),
@@ -428,6 +431,30 @@ export function SessionFormDialog({
       const endTime = toApiDateTimeFromLocalInput(values.endTime ?? "");
       if (!endTime) return;
       payload.endTime = endTime;
+    }
+
+    if (isAssignmentSession) {
+      const isTimeChanged =
+        !session ||
+        values.startTime !== fromApiDateTimeToLocalInput(session.startTime) ||
+        (values.endTime ?? "") !== fromApiDateTimeToLocalInput(session.endTime);
+      if (isTimeChanged) {
+        const windowSchema = session
+          ? assignmentWindowFormSchema
+          : assignmentWindowCreateFormSchema;
+        const windowCheck = windowSchema.safeParse({
+          startTime: values.startTime,
+          endTime: values.endTime ?? "",
+        });
+        if (!windowCheck.success) {
+          const issue = windowCheck.error.issues[0];
+          setError(issue?.path[0] === "startTime" ? "startTime" : "endTime", {
+            type: "validate",
+            message: issue?.message,
+          });
+          return;
+        }
+      }
     }
 
     await onSubmit(payload);

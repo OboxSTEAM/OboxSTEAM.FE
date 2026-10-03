@@ -42,7 +42,13 @@ import {
 import { AssignmentRecoveryActions } from "@/components/curriculum/recovery";
 import { hasAttemptsRemaining, getEffectiveMaxAttempts } from "@/lib/curriculum/recovery-decision";
 import { useMyRecoveryRequests } from "@/hooks/use-my-recovery-requests";
-import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  ASSIGNMENT_ERROR_CODES,
+  getApiErrorCode,
+  getExpiredGradedQuizResult,
+  showAppErrorFromUnknown,
+  showAppSuccess,
+} from "@/lib/errors";
 import { cn } from "@/lib/utils";
 
 import { QuizAttemptView } from "./quiz/quiz-attempt-view";
@@ -80,6 +86,41 @@ function isMissingQuizResultError(error: unknown): boolean {
   return error instanceof ApiRequestError && (error.status === 404 || error.status === 405);
 }
 
+/** `GET .../quiz/result` returns 409 while the submission is still Pending. */
+function isUngradedQuizResultError(error: unknown): boolean {
+  return (
+    isMissingQuizResultError(error) ||
+    (error instanceof ApiRequestError && error.status === 409)
+  );
+}
+
+/** BE still accepts save/submit up to this long after `expiresAt`, then returns 409. */
+const QUIZ_EXPIRY_GRACE_MS = 60_000;
+
+function isAttemptPastGrace(attempt: QuizAttempt): boolean {
+  if (!attempt.expiresAt) return false;
+  const expiresAt = new Date(attempt.expiresAt).getTime();
+  if (Number.isNaN(expiresAt)) return false;
+  return Date.now() > expiresAt + QUIZ_EXPIRY_GRACE_MS;
+}
+
+/** `ASSIGNMENT_ATTEMPT_TIME_EXPIRED`, or the attempt is no longer Pending (graded by the sweep job). */
+function isAttemptExpiredError(error: unknown): boolean {
+  return error instanceof ApiRequestError && error.status === 409;
+}
+
+/** Graded result for a submission, or null while it is still Pending / unavailable. */
+async function fetchGradedQuizResult(submissionId: string): Promise<QuizResult | null> {
+  try {
+    const response = await getQuizResult(submissionId);
+    return response?.data ?? null;
+  } catch {
+    return null;
+  }
+}
+
+type SaveOutcome = "ok" | "expired" | "error";
+
 /**
  * Hydrate graded/in-progress quiz via submission-scoped APIs only.
  * Prefer curriculum `latestSubmissionId`, then localStorage from this browser.
@@ -103,7 +144,7 @@ async function loadHydratedQuizState(
       return { phase: "result", result: graded };
     }
   } catch (error) {
-    if (!isMissingQuizResultError(error)) {
+    if (!isUngradedQuizResultError(error)) {
       throw error;
     }
   }
@@ -154,6 +195,7 @@ export function QuizPanel({
   const [isSaving, setIsSaving] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+  const [expiredSubmissionId, setExpiredSubmissionId] = useState<string | null>(null);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingSaveRef = useRef<{ questionId: string; selectedOptionIds: string[] } | null>(
     null,
@@ -187,8 +229,18 @@ export function QuizPanel({
     }
   }, []);
 
+  /** Expired attempt can't be saved/submitted — BE grades it on the next start or in the sweep job. */
+  const enterExpiredState = useCallback(
+    (submissionId: string) => {
+      resetAttemptState();
+      setExpiredSubmissionId(submissionId);
+    },
+    [resetAttemptState],
+  );
+
   useEffect(() => {
     resetAttemptState();
+    setExpiredSubmissionId(null);
   }, [assignmentId, resetAttemptState]);
 
   useEffect(() => {
@@ -246,28 +298,42 @@ export function QuizPanel({
       return;
     }
 
+    if (isAttemptPastGrace(hydratedState.attempt)) {
+      enterExpiredState(hydratedState.attempt.submissionId);
+      return;
+    }
+
     setAttempt(hydratedState.attempt);
     setResult(null);
     setAnswers(answersFromAttempt(hydratedState.attempt));
     setMarkedIds(getQuizMarks(hydratedState.attempt.submissionId));
     setCurrentIndex(0);
     setPhase("attempt");
-  }, [hydratedState]);
+  }, [hydratedState, enterExpiredState]);
 
   const flushSave = useCallback(
-    async (submissionId: string, payload: { questionId: string; selectedOptionIds: string[] }) => {
+    async (
+      submissionId: string,
+      payload: { questionId: string; selectedOptionIds: string[] },
+    ): Promise<SaveOutcome> => {
       setIsSaving(true);
       try {
         await saveQuizDraftAnswers(submissionId, {
           answers: [payload],
         });
+        return "ok";
       } catch (error) {
-        showAppErrorFromUnknown(error, "generic");
+        showAppErrorFromUnknown(error, "assignments.quiz.save");
+        if (isAttemptExpiredError(error)) {
+          enterExpiredState(submissionId);
+          return "expired";
+        }
+        return "error";
       } finally {
         setIsSaving(false);
       }
     },
-    [],
+    [enterExpiredState],
   );
 
   const scheduleSave = useCallback(
@@ -285,9 +351,36 @@ export function QuizPanel({
     [flushSave],
   );
 
+  const revealExpiredResult = useCallback(
+    (graded: QuizResult) => {
+      resetAttemptState();
+      setExpiredSubmissionId(null);
+      setResult(graded);
+      setStoredQuizSubmissionId(assignmentId, graded.submissionId);
+      setPhase("result");
+      showAppSuccess({
+        title: graded.passed
+          ? "Lượt làm đã hết giờ — Đạt yêu cầu"
+          : "Lượt làm đã hết giờ và đã được chấm",
+        description: `Điểm: ${graded.assignedGrade}/${graded.maxPoints}`,
+      });
+      void onCurriculumRefresh();
+    },
+    [assignmentId, onCurriculumRefresh, resetAttemptState],
+  );
+
   const handleStart = useCallback(async () => {
     setIsStarting(true);
     try {
+      // The 5-minute sweep may have graded it already; start would then open the next attempt.
+      if (expiredSubmissionId) {
+        const graded = await fetchGradedQuizResult(expiredSubmissionId);
+        if (graded) {
+          revealExpiredResult(graded);
+          return;
+        }
+      }
+
       const startResult = await startQuizAttempt(assignmentId);
       const nextAttempt = startResult?.data;
       if (!nextAttempt) {
@@ -300,12 +393,23 @@ export function QuizPanel({
       setStoredQuizSubmissionId(assignmentId, nextAttempt.submissionId);
       setCurrentIndex(0);
       setPhase("attempt");
+      setExpiredSubmissionId(null);
     } catch (error) {
-      showAppErrorFromUnknown(error, "generic");
+      const expiredResult = getExpiredGradedQuizResult(error);
+      if (expiredResult) {
+        revealExpiredResult(expiredResult);
+        return;
+      }
+      showAppErrorFromUnknown(error, "assignments.attempt.start");
+      if (getApiErrorCode(error) === ASSIGNMENT_ERROR_CODES.quizAttemptExpiredGraded) {
+        // Result payload unreadable — refetch so hydration loads the graded attempt.
+        setExpiredSubmissionId(null);
+        void onCurriculumRefresh();
+      }
     } finally {
       setIsStarting(false);
     }
-  }, [assignmentId]);
+  }, [assignmentId, expiredSubmissionId, onCurriculumRefresh, revealExpiredResult]);
 
   const handleSelectOption = useCallback(
     (questionId: string, optionId: string) => {
@@ -362,8 +466,12 @@ export function QuizPanel({
     setIsSubmitting(true);
     try {
       if (pendingSaveRef.current) {
-        await flushSave(attempt.submissionId, pendingSaveRef.current);
+        const saveOutcome = await flushSave(
+          attempt.submissionId,
+          pendingSaveRef.current,
+        );
         pendingSaveRef.current = null;
+        if (saveOutcome === "expired") return;
       }
 
       const submitAnswers = attempt.questions
@@ -391,11 +499,14 @@ export function QuizPanel({
       });
       await onCurriculumRefresh();
     } catch (error) {
-      showAppErrorFromUnknown(error, "generic");
+      showAppErrorFromUnknown(error, "assignments.quiz.submit");
+      if (isAttemptExpiredError(error)) {
+        enterExpiredState(attempt.submissionId);
+      }
     } finally {
       setIsSubmitting(false);
     }
-  }, [answers, assignmentId, attempt, flushSave, onCurriculumRefresh]);
+  }, [answers, assignmentId, attempt, enterExpiredState, flushSave, onCurriculumRefresh]);
 
   const handleSubmit = useCallback(() => {
     if (!attempt || isSubmitting) return;
@@ -403,10 +514,14 @@ export function QuizPanel({
   }, [attempt, isSubmitting]);
 
   const handleExpire = useCallback(() => {
-    if (!isSubmitting && phase === "attempt") {
-      void performSubmit();
+    if (isSubmitting || phase !== "attempt" || !attempt) return;
+    // Within grace: auto-submit. Past grace (e.g. tab reopened later): BE would 409.
+    if (isAttemptPastGrace(attempt)) {
+      enterExpiredState(attempt.submissionId);
+      return;
     }
-  }, [performSubmit, isSubmitting, phase]);
+    void performSubmit();
+  }, [attempt, enterExpiredState, performSubmit, isSubmitting, phase]);
 
   if (!isAssignmentSelectable(flatAssignment.status)) {
     return (
@@ -516,7 +631,12 @@ export function QuizPanel({
   );
 
   const isRetake = hasCompletedAttempt;
-  const startLabel = isRetake ? "Làm lại bài kiểm tra" : "Bắt đầu làm bài";
+  const hasExpiredAttempt = expiredSubmissionId != null;
+  const startLabel = hasExpiredAttempt
+    ? "Xem kết quả"
+    : isRetake
+      ? "Làm lại bài kiểm tra"
+      : "Bắt đầu làm bài";
   const showIntroStart = phase === "intro";
   const showResultRecovery =
     phase === "result" && result != null && result.passed === false;
@@ -556,6 +676,20 @@ export function QuizPanel({
           phase !== "attempt" && "overflow-y-auto px-4 pb-3 sm:px-5",
         )}
       >
+        {phase === "intro" && hasExpiredAttempt ? (
+          <div
+            role="status"
+            className="mb-4 rounded-xl border border-learn-primary/30 bg-learn-primary/5 px-4 py-3 text-sm text-learn-text-strong"
+          >
+            <p className="font-semibold">Lượt làm trước đã hết giờ.</p>
+            <p className="mt-1 text-learn-muted">
+              Lượt này được chấm theo các đáp án đã lưu (câu chưa trả lời tính
+              sai). Bấm “Xem kết quả” để xem điểm, sau đó bắt đầu lượt mới nếu
+              bạn còn lượt.
+            </p>
+          </div>
+        ) : null}
+
         {phase === "intro" ? <QuizIntro assignment={assignment} /> : null}
 
         {phase === "attempt" && attempt ? (

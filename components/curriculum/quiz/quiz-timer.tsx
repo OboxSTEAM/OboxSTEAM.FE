@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
 
@@ -21,19 +21,28 @@ export function QuizTimer({ expiresAt, onExpire }: QuizTimerProps) {
     return new Date(expiresAt).getTime() - Date.now();
   });
 
+  const onExpireRef = useRef(onExpire);
   useEffect(() => {
+    onExpireRef.current = onExpire;
+  }, [onExpire]);
+
+  useEffect(() => {
+    // One expiry callback per `expiresAt`; repeated calls would spam submit.
+    let hasFired = false;
     const tick = () => {
       const next = new Date(expiresAt).getTime() - Date.now();
       setRemainingMs(next);
-      if (next <= 0) {
-        onExpire?.();
+      if (next <= 0 && !hasFired) {
+        hasFired = true;
+        window.clearInterval(interval);
+        onExpireRef.current?.();
       }
     };
 
-    tick();
     const interval = window.setInterval(tick, 1000);
+    tick();
     return () => window.clearInterval(interval);
-  }, [expiresAt, onExpire]);
+  }, [expiresAt]);
 
   const isUrgent = remainingMs <= 5 * 60 * 1000;
   const isExpired = remainingMs <= 0;

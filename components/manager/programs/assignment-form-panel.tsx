@@ -40,9 +40,6 @@ import {
 } from "@/lib/validations/assignments";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { cn } from "@/lib/utils";
-import {
-  fromApiDateTimeToLocalInput,
-} from "@/lib/curriculum/datetime";
 
 /* ─── Palette (mirrors curriculum-split-panel) ─────────────────────────────── */
 const W = {
@@ -157,9 +154,6 @@ export function AssignmentFormPanel({
           passScore: assignmentToEdit.passScore,
           maxAttempts: assignmentToEdit.maxAttempts,
           isRequiredForModulePass: assignmentToEdit.isRequiredForModulePass,
-          dueDate: fromApiDateTimeToLocalInput(assignmentToEdit.dueDate),
-          availableFrom: fromApiDateTimeToLocalInput(assignmentToEdit.availableFrom),
-          availableUntil: fromApiDateTimeToLocalInput(assignmentToEdit.availableUntil),
           questionBankId: assignmentToEdit.questionBankId || "",
           questionCount: assignmentToEdit.questionCount,
           timeLimitMinutes: assignmentToEdit.timeLimitMinutes,
@@ -179,9 +173,6 @@ export function AssignmentFormPanel({
           passScore: 50,
           maxAttempts: 1,
           isRequiredForModulePass: false,
-          dueDate: "",
-          availableFrom: "",
-          availableUntil: "",
           questionBankId: "",
           questionCount: null,
           timeLimitMinutes: null,
@@ -254,14 +245,6 @@ export function AssignmentFormPanel({
         passScore: Number(data.passScore),
         maxAttempts: Number(data.maxAttempts),
         isRequiredForModulePass: data.isRequiredForModulePass,
-        // Lịch mở bài do mentor set theo lớp/chương trình — manager không ghi đè khi sửa.
-        ...(isEdit
-          ? {}
-          : {
-              dueDate: null,
-              availableFrom: null,
-              availableUntil: null,
-            }),
         allowShuffle: isQuiz ? data.allowShuffle : false,
         shuffleOptions: isQuiz ? data.shuffleOptions : false,
         questionBankId: isQuiz ? data.questionBankId || null : null,
@@ -313,7 +296,7 @@ export function AssignmentFormPanel({
             className="mb-3 rounded-lg border border-dashed px-3 py-2.5 text-xs"
             style={{ borderColor: W.border, color: W.muted }}
           >
-            Lịch mở / hạn nộp do mentor thiết lập khi mở bài cho học viên — không cần nhập khi tạo khung bài tập.
+            Lịch mở / đóng bài nằm trên buổi &quot;Nộp bài tập&quot; của từng lớp — mentor chỉnh khi mở bài cho học viên, không cần nhập ở đây.
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">

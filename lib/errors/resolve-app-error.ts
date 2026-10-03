@@ -1,7 +1,13 @@
 import { ZodError } from "zod";
 
+import { parseUtcApiDateTime } from "@/lib/api/datetime";
 import { ApiRequestError, ApiResponseError } from "@/lib/api/errors";
 
+import {
+  ASSIGNMENT_ERROR_CODES,
+  extractApiErrorCode,
+  getAssignmentWindowConflict,
+} from "./api-error-payload";
 import type { AppErrorContext, AppErrorState } from "./types";
 import { translateApiMessage } from "./translate-api-message";
 
@@ -522,10 +528,25 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Không lấy được điểm tự chấm của học viên.",
     action: "Thử lại hoặc xem điểm trên bảng danh sách.",
   },
+  "assignments.attempt.start": {
+    title: "Chưa thể bắt đầu làm bài",
+    reason: "Bài tập chưa mở, đã đóng theo lịch của lớp, hoặc bạn đã hết lượt làm.",
+    action: "Xem lịch mở bài của lớp hoặc liên hệ mentor để được gia hạn.",
+  },
+  "assignments.quiz.save": {
+    title: "Không lưu được câu trả lời",
+    reason: "Kết nối gián đoạn hoặc lượt làm đã hết thời gian.",
+    action: "Kiểm tra mạng rồi chọn lại đáp án.",
+  },
+  "assignments.quiz.submit": {
+    title: "Không nộp được bài kiểm tra",
+    reason: "Kết nối gián đoạn hoặc lượt làm đã hết thời gian.",
+    action: "Thử nộp lại. Nếu đã hết giờ, bắt đầu lượt mới.",
+  },
   "assignments.schedule": {
     title: "Không cập nhật được lịch mở bài",
-    reason: "Khung thời gian chưa hợp lệ hoặc bạn không có quyền sửa bài tập này.",
-    action: "Kiểm tra mở từ / đóng lúc / hạn nộp rồi thử lại.",
+    reason: "Khung thời gian chưa hợp lệ hoặc bạn không có quyền sửa buổi nộp bài của lớp này.",
+    action: "Kiểm tra thời điểm mở / đóng bài rồi thử lại.",
   },
   "classSessions.list": {
     title: "Không tải được lịch học",
@@ -1275,6 +1296,28 @@ function mapHttpStatusToError(
     };
   }
 
+  if (status === 409 && context === "assignments.attempt.start") {
+    return {
+      title: "Bài tập không trong thời gian mở",
+      reason:
+        apiMessage ?? "Bài tập chưa mở hoặc đã đóng theo lịch của lớp.",
+      action: "Xem lịch mở bài của lớp hoặc liên hệ mentor để được gia hạn.",
+    };
+  }
+
+  if (
+    status === 409 &&
+    (context === "assignments.quiz.save" || context === "assignments.quiz.submit")
+  ) {
+    return {
+      title: "Lượt làm đã hết giờ",
+      reason:
+        apiMessage ?? "Đã quá thời gian làm bài nên không thể lưu hoặc nộp thêm.",
+      action:
+        "Bấm “Xem kết quả” — lượt này được chấm theo các đáp án đã lưu.",
+    };
+  }
+
   if (status === 409 && context === "curriculum.material.save") {
     return {
       title: "Hoạt động đã có tài liệu",
@@ -1599,24 +1642,80 @@ export function getApiErrorCode(error: unknown): string | null {
   return extractApiErrorCode(error);
 }
 
-function extractApiErrorCode(error: unknown): string | null {
-  if (error instanceof ApiResponseError) {
-    return error.code?.trim() || null;
+const ASSIGNMENT_CODE_ERRORS: Record<string, AppErrorState> = {
+  [ASSIGNMENT_ERROR_CODES.windowMissing]: {
+    title: "Lớp chưa có lịch mở bài",
+    reason: "Lớp của bạn chưa được xếp khung thời gian cho bài tập này.",
+    action: "Liên hệ mentor hoặc quản lý lớp để được xếp lịch.",
+  },
+  [ASSIGNMENT_ERROR_CODES.windowNotOpen]: {
+    title: "Bài tập chưa mở",
+    reason: "Bài tập chưa đến thời gian mở theo lịch của lớp.",
+    action: "Quay lại khi bài mở.",
+  },
+  [ASSIGNMENT_ERROR_CODES.windowClosed]: {
+    title: "Bài tập đã đóng",
+    reason: "Đã hết thời gian làm bài theo lịch của lớp.",
+    action: "Liên hệ mentor nếu bạn cần được gia hạn.",
+  },
+  [ASSIGNMENT_ERROR_CODES.maxAttempts]: {
+    title: "Đã hết lượt làm bài",
+    reason: "Bạn đã dùng hết số lượt làm cho bài tập này.",
+    action: "Gửi yêu cầu xin thêm lượt để mentor xem xét.",
+  },
+  [ASSIGNMENT_ERROR_CODES.attemptTimeExpired]: {
+    title: "Lượt làm đã hết giờ",
+    reason: "Đã quá thời gian làm bài nên không thể lưu hoặc nộp thêm.",
+    action: "Bấm “Xem kết quả” — lượt này được chấm theo các đáp án đã lưu.",
+  },
+  [ASSIGNMENT_ERROR_CODES.quizAttemptExpiredGraded]: {
+    title: "Lượt làm trước đã hết giờ",
+    reason: "Lượt làm đã được chấm theo các đáp án đã lưu (câu chưa trả lời tính sai).",
+    action: "Xem kết quả rồi bắt đầu lượt mới nếu bạn còn lượt.",
+  },
+};
+
+/** Approvers (mentor/manager) fix window problems by editing the class schedule. */
+const RECOVERY_DECIDE_WINDOW_ACTIONS: Record<string, string> = {
+  [ASSIGNMENT_ERROR_CODES.windowMissing]: "Xếp lịch mở bài cho lớp rồi duyệt lại.",
+  [ASSIGNMENT_ERROR_CODES.windowClosed]: "Gia hạn lịch mở bài của lớp rồi duyệt lại.",
+};
+
+const windowTimeFormatter = new Intl.DateTimeFormat("vi-VN", {
+  hour: "2-digit",
+  minute: "2-digit",
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+});
+
+function formatWindowTime(value: string | null): string | null {
+  const date = parseUtcApiDateTime(value);
+  return date ? windowTimeFormatter.format(date) : null;
+}
+
+function resolveAssignmentCodeError(
+  error: unknown,
+  context: AppErrorContext,
+): AppErrorState | null {
+  const code = extractApiErrorCode(error);
+  const base = code ? ASSIGNMENT_CODE_ERRORS[code] : undefined;
+  if (!code || !base) return null;
+
+  let state: AppErrorState = base;
+  const conflict = getAssignmentWindowConflict(error);
+  if (code === ASSIGNMENT_ERROR_CODES.windowNotOpen) {
+    const opensAt = formatWindowTime(conflict?.startTime ?? null);
+    if (opensAt) state = { ...state, reason: `Bài tập mở lúc ${opensAt} theo lịch của lớp.` };
+  } else if (code === ASSIGNMENT_ERROR_CODES.windowClosed) {
+    const closedAt = formatWindowTime(conflict?.endTime ?? null);
+    if (closedAt) state = { ...state, reason: `Bài tập đã đóng lúc ${closedAt} theo lịch của lớp.` };
   }
-  if (error instanceof ApiRequestError) {
-    const body = error.body as {
-      error?: { code?: string | null };
-      value?: { code?: string | null };
-      code?: string | null;
-    } | null;
-    return (
-      body?.error?.code?.trim() ||
-      body?.value?.code?.trim() ||
-      body?.code?.trim() ||
-      null
-    );
+
+  if (context === "assessment-recovery.decide" && RECOVERY_DECIDE_WINDOW_ACTIONS[code]) {
+    state = { ...state, action: RECOVERY_DECIDE_WINDOW_ACTIONS[code] };
   }
-  return null;
+  return state;
 }
 
 function resolveProgramReviewCodeError(
@@ -1678,6 +1777,9 @@ export function resolveAppError(
   error: unknown,
   context: AppErrorContext = "generic",
 ): AppErrorState {
+  const assignmentCodeError = resolveAssignmentCodeError(error, context);
+  if (assignmentCodeError) return assignmentCodeError;
+
   const globalCodeError = resolveGlobalCodeError(error);
   if (globalCodeError) return globalCodeError;
 

@@ -238,6 +238,9 @@ export {
   type ProgramEnrollmentIdParam,
 } from "./certificates";
 export {
+  ASSIGNMENT_WINDOW_MIN_HOURS,
+  assignmentWindowCreateFormSchema,
+  assignmentWindowFormSchema,
   classEnrollmentIdParamSchema,
   classEnrollmentSortBySchema,
   classEnrollmentsByProgramQuerySchema,
@@ -260,6 +263,7 @@ export {
   updateClassSchema,
   updateClassSessionSchema,
   updateSessionAttendanceSchema,
+  type AssignmentWindowFormValues,
   type ClassEnrollmentIdParam,
   type ClassEnrollmentsByProgramQuery,
   type ClassFormValues,

@@ -74,7 +74,8 @@
       },
       {
         "path": "/api/assessment-recovery-requests",
-        "method": "post"
+        "method": "post",
+        "description": "Only while the class AssignmentWindow has not ended. 409 error codes: ASSIGNMENT_WINDOW_MISSING when the student's class has no window; ASSIGNMENT_WINDOW_CLOSED after EndTime (data = AssignmentWindowConflictDto)."
       },
       {
         "path": "/api/assessment-recovery-requests/me",
@@ -90,7 +91,8 @@
       },
       {
         "path": "/api/assessment-recovery-requests/{id}/approve",
-        "method": "post"
+        "method": "post",
+        "description": "Only while the class AssignmentWindow has not ended. 409 ASSIGNMENT_WINDOW_CLOSED when the window is missing or has ended (data = AssignmentWindowConflictDto when a window exists)."
       },
       {
         "path": "/api/assessment-recovery-requests/{id}/reject",
@@ -129,7 +131,7 @@
       {
         "path": "/api/assignment-submissions/submit",
         "method": "post",
-        "description": "Student turns in a FileUpload assignment. Quizzes and retrospectives use their dedicated endpoints. Provide ContentText and/or FileUrl."
+        "description": "Student turns in a FileUpload assignment. Quizzes and retrospectives use their dedicated endpoints. Provide ContentText and/or FileUrl. A first submission, or a resubmission after a failed grade, needs the class AssignmentWindow to be open; Pending or ReturnedForRevision work can still be turned in after the window closes. 409 error codes: ASSIGNMENT_WINDOW_MISSING; ASSIGNMENT_WINDOW_NOT_OPEN and ASSIGNMENT_WINDOW_CLOSED (data = AssignmentWindowConflictDto); ASSIGNMENT_MAX_ATTEMPTS; plain 409 when the work already passed or is pending mentor review."
       },
       {
         "path": "/api/assignment-submissions/{submissionId}",
@@ -413,7 +415,7 @@
       {
         "path": "/api/classes/{classId}/sessions",
         "method": "post",
-        "description": "Schedules a new session for a class cohort. Requires Admin or Manager role."
+        "description": "Schedules a new session for a class cohort. Requires Admin or Manager role. AssignmentWindow (AssignmentId set, no ActivityId): the client supplies StartTime and EndTime; StartTime must not be in the past, EndTime must be in the future and at least 48 hours after StartTime, and EndTime may run to 23:59:59 Asia/Ho_Chi_Minh on the class end date. Violations return 400."
       },
       {
         "path": "/api/classes/{classId}/sessions/with-students/{sessionId}",
@@ -428,7 +430,7 @@
       {
         "path": "/api/classes/{classId}/sessions/{id}",
         "method": "put",
-        "description": "Updates a scheduled class session. Admin/Manager may update any session. Mentors may update StartTime, EndTime, and Description of AssignmentWindow sessions on their class."
+        "description": "Updates a scheduled class session. Admin/Manager may update any session. Mentors may update StartTime, EndTime, and Description of AssignmentWindow sessions on their class. When an AssignmentWindow's times change (any role), EndTime must be in the future and at least 48 hours after StartTime, and may run to 23:59:59 Asia/Ho_Chi_Minh on the class end date; violations return 400. Moving a window does not extend attempts already in progress."
       },
       {
         "path": "/api/classes/{classId}/sessions/{id}",
@@ -477,7 +479,8 @@
       },
       {
         "path": "/api/class-session-experts",
-        "method": "get"
+        "method": "get",
+        "description": "Manager/Admin list any status. A Student must pass classId and must be actively enrolled; the result is only Accepted invitations and omits mentor feedback and schedule warnings. Student pageSize cannot exceed 100."
       },
       {
         "path": "/api/class-session-experts/mine",
@@ -1652,7 +1655,7 @@
       {
         "path": "/api/assignments/{assignmentId}/quiz/start",
         "method": "post",
-        "description": "Starts a new Mode A quiz attempt or resumes an existing Pending submission. Requires Student role and an active enrollment in the assignment's module."
+        "description": "Starts a new Mode A quiz attempt or resumes an existing Pending submission. Requires Student role and an active enrollment in the assignment's module. A new attempt needs the class AssignmentWindow to be open (StartTime <= now <= EndTime); a Pending attempt still inside its time limit resumes even after the window closes. 409 error codes: ASSIGNMENT_WINDOW_MISSING (no window for the student's class); ASSIGNMENT_WINDOW_NOT_OPEN and ASSIGNMENT_WINDOW_CLOSED (data = AssignmentWindowConflictDto with startTime/endTime in UTC); ASSIGNMENT_MAX_ATTEMPTS; QUIZ_ATTEMPT_EXPIRED_GRADED (the Pending attempt passed ExpiresAt + 60 s, was graded from its saved answers, and data = QuizResultResponseDto; call start again to open the next attempt when one is allowed)."
       },
       {
         "path": "/api/submissions/{submissionId}/quiz",
@@ -1662,17 +1665,17 @@
       {
         "path": "/api/submissions/{submissionId}/quiz/answers",
         "method": "put",
-        "description": "Upserts draft answers for a Pending submission. Partial answers are allowed. Requires Student role."
+        "description": "Upserts draft answers for a Pending submission. Partial answers are allowed. Requires Student role. The class AssignmentWindow closing does not block an attempt already in progress. 409 error codes: ASSIGNMENT_ATTEMPT_TIME_EXPIRED once ExpiresAt + 60 s grace has passed; 409 when the submission is no longer Pending."
       },
       {
         "path": "/api/submissions/{submissionId}/quiz/submit",
         "method": "post",
-        "description": "Final submit: merges request answers with saved drafts, validates all questions are answered, auto-grades, and sets submission to Graded. An empty answers array is allowed when all drafts are saved. Requires Student role."
+        "description": "Final submit: merges request answers with saved drafts, validates all questions are answered, auto-grades, and sets submission to Graded. An empty answers array is allowed when all drafts are saved. Requires Student role. The class AssignmentWindow closing does not block an attempt already in progress. 409 error codes: ASSIGNMENT_ATTEMPT_TIME_EXPIRED once ExpiresAt + 60 s grace has passed (the attempt is later graded from saved answers by start or by the 5-minute background sweep); 409 when the submission is no longer Pending."
       },
       {
         "path": "/api/submissions/{submissionId}/quiz/result",
         "method": "get",
-        "description": "Returns the graded result for a submission. Students may only access their own result and must have a module enrollment (any status). Mentors may access students in their class. Manager and Admin may access any submission."
+        "description": "Returns the graded result for a submission. Students may only access their own result and must have a module enrollment (any status). Mentors may access students in their class. Manager and Admin may access any submission. 409 while the submission is not Graded. A Pending attempt past ExpiresAt + 60 s is graded from its saved answers by the next start call or by the background sweep (runs every 5 minutes)."
       },
       {
         "path": "/api/modules/{moduleId}/research-milestones",
@@ -1732,7 +1735,7 @@
       {
         "path": "/api/research-submissions/submit",
         "method": "post",
-        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. New attempts must fall inside the class AssignmentWindow. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL."
+        "description": "Student submits research deliverable content for a milestone. Creates the submission when none exists (milestone unlock + required activities + availability). Resubmission after ReturnedForRevision does not require mentor to reopen. New attempts must fall inside the class AssignmentWindow (409 ASSIGNMENT_WINDOW_MISSING, ASSIGNMENT_WINDOW_NOT_OPEN or ASSIGNMENT_WINDOW_CLOSED; the last two carry AssignmentWindowConflictDto in data). 409 ASSIGNMENT_MAX_ATTEMPTS when the attempt budget is used. Pass EvidenceMediaAssetIds from evidence upload (isEvidence=true); primary FileUrl stays a document URL."
       },
       {
         "path": "/api/research-submissions/{submissionId}/grade",
@@ -1742,7 +1745,7 @@
       {
         "path": "/api/assignments/{assignmentId}/retrospective/start",
         "method": "post",
-        "description": "Creates a new Pending submission or resumes an existing draft or revision. Requires Student role and an active enrollment in the assignment's module."
+        "description": "Creates a new Pending submission or resumes an existing draft or revision. Requires Student role and an active enrollment in the assignment's module. A new draft needs the class AssignmentWindow to be open; an existing submission resumes regardless. 409 error codes: ASSIGNMENT_WINDOW_MISSING; ASSIGNMENT_WINDOW_NOT_OPEN and ASSIGNMENT_WINDOW_CLOSED (data = AssignmentWindowConflictDto with startTime/endTime in UTC)."
       },
       {
         "path": "/api/submissions/{submissionId}/retrospective",
@@ -1752,12 +1755,12 @@
       {
         "path": "/api/submissions/{submissionId}/retrospective/draft",
         "method": "put",
-        "description": "Autosaves plain-text draft content for a Pending or ReturnedForRevision submission."
+        "description": "Autosaves plain-text draft content for a Pending or ReturnedForRevision submission. Not blocked by the class AssignmentWindow or a time limit: work already in progress continues after the window closes. 409 when the submission is not in an editable state."
       },
       {
         "path": "/api/submissions/{submissionId}/retrospective/submit",
         "method": "post",
-        "description": "Final submit: merges optional request text with the saved draft, requires non-empty plain text, and sets submission to TurnedIn for mentor grading."
+        "description": "Final submit: merges optional request text with the saved draft, requires non-empty plain text, and sets submission to TurnedIn for mentor grading. Not blocked by the class AssignmentWindow: work already in progress can be turned in after it closes. 409 error codes: ASSIGNMENT_MAX_ATTEMPTS when a resubmission after ReturnedForRevision or Graded exceeds the attempt budget; 409 when the submission is not in a submittable state."
       },
       {
         "path": "/api/schedules/weekly",
@@ -1788,6 +1791,11 @@
         "path": "/api/skills",
         "method": "get",
         "description": "Paged STEAM skill catalog for class requiredSkillIds and mentor skill pickers. Soft-deleted skills are excluded."
+      },
+      {
+        "path": "/api/skills",
+        "method": "post",
+        "description": "Adds a skill to the shared catalog. Code is unique, including soft-deleted skills. Manager only."
       }
     ],
     "schemas": [
@@ -2245,6 +2253,18 @@
         "name": "ClassSessionExpertResponseDtoResponseDataContent"
       },
       {
+        "name": "ClassSessionExpertStudentResponseDto"
+      },
+      {
+        "name": "ClassSessionExpertStudentResponseDtoPagination"
+      },
+      {
+        "name": "ClassSessionExpertStudentResponseDtoPaginationApiResult"
+      },
+      {
+        "name": "ClassSessionExpertStudentResponseDtoPaginationResponseDataContent"
+      },
+      {
         "name": "ClassSessionJoinResponseDto"
       },
       {
@@ -2408,6 +2428,9 @@
       },
       {
         "name": "CreateResearchMilestoneRequestDto"
+      },
+      {
+        "name": "CreateSkillRequestDto"
       },
       {
         "name": "CurriculumChangeActorDto"
@@ -3540,6 +3563,15 @@
       },
       {
         "name": "SessionAttendanceResponseDtoResponseDataContent"
+      },
+      {
+        "name": "SkillDetailDto"
+      },
+      {
+        "name": "SkillDetailDtoApiResult"
+      },
+      {
+        "name": "SkillDetailDtoResponseDataContent"
       },
       {
         "name": "SkillEvidenceDto"
