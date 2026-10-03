@@ -502,6 +502,11 @@ const CONTEXT_FALLBACKS: Record<AppErrorContext, AppErrorState> = {
     reason: "Máy chủ tạm thời không phản hồi.",
     action: "Thử tải lại sau vài giây.",
   },
+  "skills.create": {
+    title: "Không tạo được kỹ năng",
+    reason: "Mã, tên hoặc nhóm kỹ năng chưa hợp lệ.",
+    action: "Kiểm tra các trường rồi thử lại.",
+  },
   "assignments.submissions.list": {
     title: "Không tải được bài nộp",
     reason: "Máy chủ tạm thời không phản hồi hoặc lớp/bài tập không hợp lệ.",
@@ -1017,6 +1022,7 @@ const MANAGER_MUTATE: ReadonlySet<AppErrorContext> = new Set([
   "mentors.skills.update",
   "mentors.skills.visibility",
   "mentors.skills.delete",
+  "skills.create",
   "assignments.submissions.grade",
   "assignments.schedule",
   "classSessions.create",

@@ -61,6 +61,15 @@ const EXACT_VI: Record<string, string> = {
   "Duplicate skill ids are not allowed.": "Không được chọn trùng kỹ năng.",
   "One or more skill ids are missing or deleted.":
     "Một hoặc nhiều kỹ năng không còn trong danh mục.",
+  "Skill code is required.": "Mã kỹ năng là bắt buộc.",
+  "Skill code cannot exceed 50 characters.":
+    "Mã kỹ năng không được quá 50 ký tự.",
+  "Skill name is required.": "Tên kỹ năng là bắt buộc.",
+  "Skill name cannot exceed 255 characters.":
+    "Tên kỹ năng không được quá 255 ký tự.",
+  "Skill category is required.": "Nhóm kỹ năng là bắt buộc.",
+  "Skill subcategory cannot exceed 100 characters.":
+    "Nhánh con không được quá 100 ký tự.",
   "Payment not found.": "Không tìm thấy giao dịch thanh toán.",
   "Invalid check-in token.": "Token check-in không hợp lệ.",
   "Invalid check-in code.": "Mã check-in không hợp lệ.",
@@ -198,6 +207,10 @@ const PATTERN_VI: Array<{ pattern: RegExp; vi: string }> = [
   {
     pattern: /check[- ]?in.*(invalid|expired|not available)/i,
     vi: "Mã check-in không hợp lệ, đã hết hạn, hoặc buổi học không hỗ trợ check-in.",
+  },
+  {
+    pattern: /Skill with code '.+' already exists/i,
+    vi: "Mã kỹ năng đã tồn tại, kể cả khi kỹ năng đó đã bị xóa.",
   },
   {
     pattern: /already (checked in|exists|enrolled)/i,

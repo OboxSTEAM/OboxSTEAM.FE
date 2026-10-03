@@ -110,6 +110,7 @@ export type AppErrorContext =
   | "mentors.skills.visibility"
   | "mentors.skills.delete"
   | "skills.list"
+  | "skills.create"
   | "assignments.submissions.list"
   | "assignments.submissions.grade"
   | "assignments.quiz.result"

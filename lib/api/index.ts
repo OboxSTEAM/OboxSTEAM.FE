@@ -70,7 +70,9 @@ export {
 } from "./experts";
 
 export {
+  createSkill,
   getSkills,
+  type CreatedSkill,
   type GetSkillsResponse,
   type GetSkillsResult,
   type SkillListQuery,

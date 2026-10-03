@@ -398,6 +398,7 @@ export function ProgramForm({
     register,
     handleSubmit,
     control,
+    getValues,
     setValue,
     formState: { errors },
   } = useForm<ProgramFormValues>({
@@ -1081,6 +1082,25 @@ export function ProgramForm({
                       onChange={field.onChange}
                       knownSkills={knownSkills}
                       disabled={disabled || isLoading || curriculumFieldsLocked}
+                      onSkillCreated={
+                        programId
+                          ? async (skill) => {
+                              const current = getValues("skillIds") ?? [];
+                              const next = current.includes(skill.id)
+                                ? current
+                                : [...current, skill.id];
+                              setValue("skillIds", next, {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              });
+                              if (disabled || curriculumFieldsLocked) return;
+                              await onSubmit({
+                                ...getValues(),
+                                skillIds: next,
+                              });
+                            }
+                          : undefined
+                      }
                     />
                   )}
                 />

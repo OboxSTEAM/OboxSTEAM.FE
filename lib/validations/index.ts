@@ -63,8 +63,10 @@ export {
   type UpdateMentorSkillVisibilityInput,
 } from "./mentors";
 export {
+  createSkillFormSchema,
   skillListQuerySchema,
   skillSortBySchema,
+  type CreateSkillFormInput,
   type SkillListQuery,
 } from "./skills";
 export {

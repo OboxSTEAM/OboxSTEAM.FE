@@ -3,15 +3,19 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { Check, ChevronDown, Plus, Search, X } from "lucide-react";
 
+import { CreateSkillDialog } from "@/components/skills/create-skill-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useCurrentUser } from "@/hooks/use-current-user";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getSkills,
+  type CreatedSkill,
   type SkillCategory,
   type SkillSummary,
 } from "@/lib/api";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { isManagerRole } from "@/lib/auth/roles";
+import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { SKILL_CATEGORY_LABELS } from "@/lib/mentors/skill-labels";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +48,11 @@ type SkillMultiSelectProps = {
   enabled?: boolean;
   /** Seed labels for already-selected skills before catalog loads. */
   knownSkills?: SkillSummary[];
+  /**
+   * After `POST /api/skills`. The new id is already in `onChange`.
+   * Program edit uses this to PUT `skillIds`. Class required-skills does not.
+   */
+  onSkillCreated?: (skill: SkillSummary) => void | Promise<void>;
   className?: string;
 };
 
@@ -51,22 +60,26 @@ function skillLabel(skill: SkillSummary): string {
   return skill.name?.trim() || skill.code?.trim() || "Kỹ năng";
 }
 
-/** Inline multi-select against `GET /api/skills` for class requiredSkillIds. */
+/** Inline multi-select against `GET /api/skills`. */
 export function SkillMultiSelect({
   value,
   onChange,
   disabled = false,
   enabled = true,
   knownSkills = [],
+  onSkillCreated,
   className,
 }: SkillMultiSelectProps) {
+  const { profile } = useCurrentUser();
+  const canCreateSkill = isManagerRole(profile?.role);
   const [isExpanded, setIsExpanded] = useState(false);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<SkillCategory | "all">(
     "all",
   );
 
-  const { data, isLoading } = useClientFetch({
+  const { data, isLoading, mutate } = useClientFetch({
     enabled: enabled && isExpanded,
     fetcher: async () => {
       const result = await getSkills({
@@ -117,6 +130,32 @@ export function SkillMultiSelect({
       return haystack.includes(query);
     });
   }, [catalog, categoryFilter, search]);
+
+  async function handleSkillCreated(created: CreatedSkill) {
+    const summary: SkillSummary = {
+      id: created.id,
+      code: created.code,
+      name: created.name,
+      category: created.category,
+      subcategory: created.subcategory ?? null,
+    };
+    mutate((prev) => {
+      const items = prev ?? [];
+      if (items.some((item) => item.id === summary.id)) return items;
+      return [summary, ...items];
+    });
+    if (!selectedSet.has(summary.id)) {
+      onChange([...value, summary.id]);
+    }
+    if (onSkillCreated) {
+      await onSkillCreated(summary);
+      return;
+    }
+    showAppSuccess({
+      title: "Đã tạo kỹ năng",
+      description: "Kỹ năng mới đã được chọn. Lưu để gắn vào mục đang sửa.",
+    });
+  }
 
   function toggle(skillId: string) {
     if (selectedSet.has(skillId)) {
@@ -222,37 +261,56 @@ export function SkillMultiSelect({
               />
             </div>
 
-            {categories.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                <CategoryFilterChip
-                  active={categoryFilter === "all"}
-                  disabled={disabled}
-                  onClick={() => setCategoryFilter("all")}
-                >
-                  Tất cả
-                </CategoryFilterChip>
-                {categories.map((category) => (
-                  <CategoryFilterChip
-                    key={category}
-                    active={categoryFilter === category}
+            {categories.length > 0 || canCreateSkill ? (
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {categories.length > 0 ? (
+                    <>
+                      <CategoryFilterChip
+                        active={categoryFilter === "all"}
+                        disabled={disabled}
+                        onClick={() => setCategoryFilter("all")}
+                      >
+                        Tất cả
+                      </CategoryFilterChip>
+                      {categories.map((category) => (
+                        <CategoryFilterChip
+                          key={category}
+                          active={categoryFilter === category}
+                          disabled={disabled}
+                          onClick={() => setCategoryFilter(category)}
+                          className={
+                            categoryFilter === category
+                              ? CATEGORY_CHIP[category]
+                              : undefined
+                          }
+                        >
+                          <span
+                            className={cn(
+                              "size-1.5 rounded-full",
+                              CATEGORY_DOT[category],
+                            )}
+                            aria-hidden
+                          />
+                          {SKILL_CATEGORY_LABELS[category]}
+                        </CategoryFilterChip>
+                      ))}
+                    </>
+                  ) : null}
+                </div>
+                {canCreateSkill ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
                     disabled={disabled}
-                    onClick={() => setCategoryFilter(category)}
-                    className={
-                      categoryFilter === category
-                        ? CATEGORY_CHIP[category]
-                        : undefined
-                    }
+                    onClick={() => setIsCreateOpen(true)}
+                    className="h-7 shrink-0 rounded-full px-2.5 text-[11px]"
                   >
-                    <span
-                      className={cn(
-                        "size-1.5 rounded-full",
-                        CATEGORY_DOT[category],
-                      )}
-                      aria-hidden
-                    />
-                    {SKILL_CATEGORY_LABELS[category]}
-                  </CategoryFilterChip>
-                ))}
+                    <Plus className="size-3" />
+                    Tạo skill
+                  </Button>
+                ) : null}
               </div>
             ) : null}
           </div>
@@ -341,6 +399,15 @@ export function SkillMultiSelect({
             </button>
           </div>
         </div>
+      ) : null}
+
+      {canCreateSkill ? (
+        <CreateSkillDialog
+          open={isCreateOpen}
+          onOpenChange={setIsCreateOpen}
+          defaultCategory={categoryFilter === "all" ? "Science" : categoryFilter}
+          onCreated={handleSkillCreated}
+        />
       ) : null}
     </div>
   );

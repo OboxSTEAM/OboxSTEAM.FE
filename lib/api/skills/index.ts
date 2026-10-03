@@ -1,21 +1,26 @@
 import { apiFetchParsed, assertApiSuccess } from "@/lib/api/client";
 import { ApiResponseError } from "@/lib/api/errors";
 import {
+  createSkillFormSchema,
   skillListQuerySchema,
+  type CreateSkillFormInput,
   type SkillListQuery,
 } from "@/lib/validations/skills";
 
 import {
+  createSkillResponseSchema,
   getSkillsResponseSchema,
+  type CreatedSkill,
   type GetSkillsResult,
 } from "./schemas";
 
 export type {
+  CreatedSkill,
   GetSkillsResponse,
   GetSkillsResult,
 } from "./schemas";
 
-export type { SkillListQuery } from "@/lib/validations/skills";
+export type { CreateSkillFormInput, SkillListQuery } from "@/lib/validations/skills";
 export type { SkillCategory, SkillSummary } from "@/lib/api/entities/skill";
 
 const SKILLS_BASE = "/api/skills";
@@ -53,4 +58,26 @@ export async function getSkills(
   );
   assertApiSuccess(response);
   return requireApiValue(response.value);
+}
+
+/**
+ * `POST /api/skills` — Manager only. Adds a catalog row.
+ * Does not attach the skill to a program; callers send `skillIds` on program update.
+ */
+export async function createSkill(
+  input: CreateSkillFormInput,
+): Promise<CreatedSkill> {
+  const parsed = createSkillFormSchema.parse(input);
+  const response = await apiFetchParsed(SKILLS_BASE, createSkillResponseSchema, {
+    method: "POST",
+    body: {
+      code: parsed.code,
+      name: parsed.name,
+      category: parsed.category,
+      subcategory: parsed.subcategory || null,
+      description: parsed.description || null,
+    },
+  });
+  assertApiSuccess(response);
+  return requireApiValue(response.value).data;
 }

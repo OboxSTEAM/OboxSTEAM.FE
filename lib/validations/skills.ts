@@ -20,3 +20,25 @@ export const skillListQuerySchema = z.object({
 });
 
 export type SkillListQuery = z.infer<typeof skillListQuerySchema>;
+
+/** Form body for `POST /api/skills`. Empty optional strings become null at the API boundary. */
+export const createSkillFormSchema = z.object({
+  code: z
+    .string()
+    .trim()
+    .min(1, "Mã kỹ năng là bắt buộc.")
+    .max(50, "Mã kỹ năng không được quá 50 ký tự."),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Tên kỹ năng là bắt buộc.")
+    .max(255, "Tên kỹ năng không được quá 255 ký tự."),
+  category: skillCategorySchema,
+  subcategory: z
+    .string()
+    .trim()
+    .max(100, "Nhánh con không được quá 100 ký tự."),
+  description: z.string().trim(),
+});
+
+export type CreateSkillFormInput = z.infer<typeof createSkillFormSchema>;
