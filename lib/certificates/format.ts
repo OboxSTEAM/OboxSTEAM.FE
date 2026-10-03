@@ -70,22 +70,9 @@ export function formatCertificateDate(value: string | null | undefined): string 
   }
 }
 
-/**
- * Prefer `skillsGained[]`; fall back to splitting `skillsAcquired` string
- * (comma / semicolon / newline).
- */
+/** Catalog skill names on a certificate. `skillsAcquired` is a JSON string snapshot — do not split it. */
 export function resolveCertificateSkills(
-  skillsGained: string[] | null | undefined,
-  skillsAcquired: string | null | undefined,
+  skillsGained: readonly string[] | null | undefined,
 ): string[] {
-  if (skillsGained && skillsGained.length > 0) {
-    return skillsGained.map((skill) => skill.trim()).filter(Boolean);
-  }
-
-  if (!skillsAcquired?.trim()) return [];
-
-  return skillsAcquired
-    .split(/[,;\n]+/)
-    .map((skill) => skill.trim())
-    .filter(Boolean);
+  return (skillsGained ?? []).map((skill) => skill.trim()).filter(Boolean);
 }

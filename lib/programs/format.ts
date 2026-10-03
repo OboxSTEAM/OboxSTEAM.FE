@@ -29,15 +29,14 @@ export function isReviewEdited(review: {
   return updated.getTime() - created.getTime() > 1000;
 }
 
-export function parseProgramSkills(skillsGained: string): string[] {
-  return skillsGained
-    .split(/[,;•\n]/)
-    .map((skill) => skill.trim())
-    .filter(Boolean);
-}
-
-export function formatProgramSkillsPreview(skillsGained: string): string {
-  return parseProgramSkills(skillsGained).join(", ");
+/** Display names for catalog skills linked to a program, skipping blanks. */
+export function formatCatalogSkillNames(
+  skills: ReadonlyArray<{ name?: string | null; code?: string | null }>,
+): string {
+  return skills
+    .map((skill) => skill.name?.trim() || skill.code?.trim() || "")
+    .filter(Boolean)
+    .join(", ");
 }
 
 export type ProgramCardExpert = {

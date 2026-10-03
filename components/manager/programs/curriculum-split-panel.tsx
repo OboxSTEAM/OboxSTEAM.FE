@@ -1019,12 +1019,12 @@ function ProgramInfoPanel({
             code: program.code, name: program.name, seriesName: program.seriesName,
             description: program.description, category: program.category || "Science",
             level: program.level, estimatedDuration: program.estimatedDuration,
-            skillsGained: program.skillsGained,
             skillIds: program.skills.map((skill) => skill.id),
             thumbnailUrl: program.thumbnailUrl || "",
             status: program.status, price: program.price,
             frameworkId: program.frameworkId ?? "",
           }}
+          knownSkills={program.skills}
           onSubmit={handleUpdate}
           onThumbnailUploaded={() => {
             router.refresh();
@@ -1093,18 +1093,19 @@ function ProgramSummaryPanel({ program }: { program: ProgramWithModules }) {
 
         <div>
           <STitle>Kỹ năng đạt được</STitle>
-          <p className="whitespace-pre-line text-sm leading-relaxed" style={{ color: W.text }}>
-            {program.skillsGained || "Chưa khai báo."}
-          </p>
           {program.skills.length > 0 ? (
-            <ul className="mt-3 flex flex-wrap gap-1.5">
+            <ul className="flex flex-wrap gap-1.5">
               {program.skills.map((skill) => (
                 <li key={skill.id} className="rounded-md bg-muted px-2 py-0.5 text-xs font-medium" style={{ color: W.textStrong }}>
                   {skill.name || skill.code}
                 </li>
               ))}
             </ul>
-          ) : null}
+          ) : (
+            <p className="text-sm leading-relaxed" style={{ color: W.text }}>
+              Chưa khai báo.
+            </p>
+          )}
         </div>
       </div>
     </div>

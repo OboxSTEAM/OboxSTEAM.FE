@@ -108,12 +108,6 @@ export function SkillsPanel({ skills, onChange }: SkillsPanelProps) {
                           {skill.skill.name?.trim() || "Kỹ năng"}
                         </span>
                       </p>
-                      <p className="text-[11px] text-muted-foreground">
-                        {skill.evidenceCount} minh chứng
-                        {skill.skill.subcategory
-                          ? ` · ${skill.skill.subcategory}`
-                          : ""}
-                      </p>
                     </div>
                     <div className="flex shrink-0 gap-0.5">
                       <button

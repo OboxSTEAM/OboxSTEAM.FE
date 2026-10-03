@@ -55,7 +55,6 @@ export const programEnrollmentSchema = z.object({
   description: z.string().nullable(),
   level: programLevelSchema,
   estimatedDuration: z.string().nullable(),
-  skillsGained: z.string().nullable(),
   rating: z.number().nullable(),
   totalReviews: z.number(),
   thumbnailUrl: z.string().nullable(),

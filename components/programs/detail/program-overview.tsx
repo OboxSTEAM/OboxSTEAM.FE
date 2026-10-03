@@ -1,5 +1,4 @@
 import type { ProgramWithModules } from "@/lib/api/programs";
-import { parseProgramSkills } from "@/lib/programs/format";
 import { cn } from "@/lib/utils";
 
 type ProgramOverviewProps = {
@@ -8,7 +7,9 @@ type ProgramOverviewProps = {
 };
 
 export function ProgramOverview({ program, className }: ProgramOverviewProps) {
-  const skills = parseProgramSkills(program.skillsGained);
+  const skills = program.skills.filter(
+    (skill) => skill.name?.trim() || skill.code?.trim(),
+  );
 
   return (
     <div
@@ -31,22 +32,24 @@ export function ProgramOverview({ program, className }: ProgramOverviewProps) {
           </p>
         </div>
 
-        {skills.length > 0 ? (
-          <div>
-            <h3 className="mb-3 font-heading text-base font-semibold text-[#2D2D2D]">
-              Kỹ năng đạt được
-            </h3>
+        <div>
+          <h3 className="mb-3 font-heading text-base font-semibold text-[#2D2D2D]">
+            Kỹ năng đạt được
+          </h3>
+          {skills.length > 0 ? (
             <ul className="flex flex-wrap gap-2">
               {skills.map((skill) => (
-                <li key={skill}>
+                <li key={skill.id}>
                   <span className="inline-flex rounded-md bg-[#E8EEF5] px-3 py-1.5 text-sm font-medium text-[#2D2D2D]">
-                    {skill}
+                    {skill.name?.trim() || skill.code}
                   </span>
                 </li>
               ))}
             </ul>
-          </div>
-        ) : null}
+          ) : (
+            <p className="text-sm text-[#6B6B6B]">Chưa có kỹ năng.</p>
+          )}
+        </div>
       </div>
     </div>
   );

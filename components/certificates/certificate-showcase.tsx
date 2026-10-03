@@ -38,10 +38,7 @@ export function CertificateShowcase({
     (a, b) => a.moduleOrder - b.moduleOrder,
   );
   const outcomes = (certificate.learningOutcomes ?? []).filter(Boolean);
-  const skills = resolveCertificateSkills(
-    certificate.skillsGained,
-    certificate.skillsAcquired,
-  );
+  const skills = resolveCertificateSkills(certificate.skillsGained);
   const avatarUrl = certificate.student.avatarUrl?.trim() || null;
   const thumbnailUrl = certificate.program.thumbnailUrl?.trim() || null;
 
@@ -163,11 +160,11 @@ export function CertificateShowcase({
                 </div>
               ) : null}
 
-              {skills.length > 0 ? (
-                <div>
-                  <h2 className="font-heading text-lg font-semibold text-[#2D2D2D]">
-                    Kỹ năng đạt được
-                  </h2>
+              <div>
+                <h2 className="font-heading text-lg font-semibold text-[#2D2D2D]">
+                  Kỹ năng đạt được
+                </h2>
+                {skills.length > 0 ? (
                   <div className="mt-3 flex flex-wrap gap-2">
                     {skills.map((skill) => (
                       <span
@@ -178,8 +175,10 @@ export function CertificateShowcase({
                       </span>
                     ))}
                   </div>
-                </div>
-              ) : null}
+                ) : (
+                  <p className="mt-3 text-sm text-[#6B6B6B]">Chưa có kỹ năng.</p>
+                )}
+              </div>
             </section>
           )}
         </div>

@@ -57,6 +57,10 @@ const EXACT_VI: Record<string, string> = {
   "Assignment not found.": "Không tìm thấy bài tập.",
   "Session not found.": "Không tìm thấy buổi học.",
   "Program not found.": "Không tìm thấy chương trình.",
+  "Skill id is required.": "Cần chọn kỹ năng hợp lệ.",
+  "Duplicate skill ids are not allowed.": "Không được chọn trùng kỹ năng.",
+  "One or more skill ids are missing or deleted.":
+    "Một hoặc nhiều kỹ năng không còn trong danh mục.",
   "Payment not found.": "Không tìm thấy giao dịch thanh toán.",
   "Invalid check-in token.": "Token check-in không hợp lệ.",
   "Invalid check-in code.": "Mã check-in không hợp lệ.",

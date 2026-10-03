@@ -9,7 +9,7 @@ import type { Program } from "@/lib/api/programs";
 import { getProgramPriceParts } from "@/lib/programs/constants";
 import {
   formatProgramCardFooterMeta,
-  formatProgramSkillsPreview,
+  formatCatalogSkillNames,
   getProgramCardExpert,
   getProgramThumbnailUrl,
 } from "@/lib/programs/format";
@@ -57,7 +57,7 @@ function ProgramCardFooterMeta({ program }: { program: Program }) {
 
 export function ProgramCard({ program, className }: ProgramCardProps) {
   const priceParts = getProgramPriceParts(program.price);
-  const skillsPreview = formatProgramSkillsPreview(program.skillsGained);
+  const skillsPreview = formatCatalogSkillNames(program.skills);
   const thumbnailUrl = getProgramThumbnailUrl(program.thumbnailUrl);
 
   return (

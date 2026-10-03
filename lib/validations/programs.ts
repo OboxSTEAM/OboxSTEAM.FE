@@ -26,6 +26,10 @@ export const programListQuerySchema = z.object({
   category: programCategorySchema.optional(),
   level: programLevelSchema.optional(),
   rating: z.number().optional(),
+  /**
+   * Query name is unchanged. Matches a catalog skill whose name or code
+   * contains the keyword, not free-text in the program description.
+   */
   skillsGained: z.string().optional(),
   status: programStatusSchema.optional(),
 });
@@ -58,8 +62,34 @@ export const programUpsertSchema = z.object({
   category: programCategorySchema,
   level: programLevelSchema,
   estimatedDuration: z.string().trim().min(1, "Thời lượng dự kiến là bắt buộc."),
-  skillsGained: z.string().trim().min(1, "Kỹ năng đạt được là bắt buộc."),
-  skillIds: z.array(z.string().uuid("ID kỹ năng không hợp lệ.")).optional(),
+  /**
+   * Omitted or null on update keeps the current links. `[]` clears them.
+   * Create with no ids leaves the program without skills.
+   */
+  skillIds: z
+    .array(
+      z
+        .string()
+        .uuid("ID kỹ năng không hợp lệ.")
+        .refine(
+          (id) => id !== "00000000-0000-0000-0000-000000000000",
+          "Cần chọn kỹ năng hợp lệ.",
+        ),
+    )
+    .superRefine((ids, ctx) => {
+      const seen = new Set<string>();
+      for (const id of ids) {
+        if (seen.has(id)) {
+          ctx.addIssue({
+            code: "custom",
+            message: "Không được chọn trùng kỹ năng.",
+          });
+          return;
+        }
+        seen.add(id);
+      }
+    })
+    .optional(),
   thumbnailUrl: z.string().url("URL ảnh thumbnail không hợp lệ.").or(z.literal("")).nullable().optional(),
   status: programStatusSchema,
   price: z.number().min(0, "Giá không được âm."),

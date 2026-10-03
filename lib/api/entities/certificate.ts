@@ -44,7 +44,13 @@ export const certificateDetailSchema = z.object({
   program: certificateProgramSchema,
   modules: z.array(certificateModuleSchema).nullable(),
   learningOutcomes: z.array(z.string()).nullable(),
-  skillsGained: z.array(z.string()).nullable(),
+  /** Catalog skill names, name then code. Empty when the program has no skills. */
+  skillsGained: z
+    .array(z.string())
+    .nullish()
+    .transform((value) =>
+      (value ?? []).map((skill) => skill.trim()).filter(Boolean),
+    ),
 });
 
 export type CertificateListItem = z.infer<typeof certificateListItemSchema>;

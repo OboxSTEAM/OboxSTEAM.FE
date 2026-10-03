@@ -3,14 +3,8 @@
 import Link from "next/link";
 import { Pin } from "lucide-react";
 
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import type { PortfolioSkill, SkillEvidence } from "@/lib/api/entities/portfolio";
+import type { PortfolioSkill } from "@/lib/api/entities/portfolio";
 import type { SkillCategory } from "@/lib/api/entities/skill";
-import { getCertificateVerifyHref } from "@/lib/certificates/format";
 import { SKILL_CATEGORY_LABELS } from "@/lib/mentors/skill-labels";
 import { cn } from "@/lib/utils";
 
@@ -42,13 +36,6 @@ type SkillsSectionProps = {
   showHidden?: boolean;
 };
 
-function evidenceHref(evidence: SkillEvidence): string | null {
-  if (evidence.portfolioItemId) return `#portfolio-item-${evidence.portfolioItemId}`;
-  if (evidence.verificationUrl) return evidence.verificationUrl;
-  if (evidence.certificateCode) return getCertificateVerifyHref(evidence.certificateCode);
-  return null;
-}
-
 function SkillChip({
   skill,
   isDark,
@@ -64,57 +51,22 @@ function SkillChip({
   const name = skill.skill.name?.trim() || "Kỹ năng";
   const category = skill.skill.category;
   return (
-    <Popover>
-      <PopoverTrigger
-        className={cn(
-          "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-left text-xs font-medium outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
-          emphasized ? "px-3 py-1.5 text-sm" : "",
-          !skill.isVisible && "opacity-45",
-          isDark
-            ? "border-[#FAFAF5]/20 text-[#FAFAF5]"
-            : "border-[#E5E5E0] bg-white text-[#2D2D2D]",
-        )}
-      >
-        <span className={cn("size-2 shrink-0 rounded-full", SKILL_CATEGORY_DOT[category])} />
-        <span className="truncate">{name}</span>
-        {showPin && skill.isPinned ? (
-          <Pin className="size-3 shrink-0 opacity-70" />
-        ) : null}
-        <span className="shrink-0 opacity-50">{skill.evidenceCount}</span>
-      </PopoverTrigger>
-      <PopoverContent className="w-72">
-        <p className="text-sm font-semibold">{name}</p>
-        <p className="text-xs text-muted-foreground">
-          {SKILL_CATEGORY_LABELS[category]}
-          {skill.skill.subcategory ? ` · ${skill.skill.subcategory}` : ""}
-        </p>
-        <ul className="mt-2 space-y-1.5">
-          {skill.evidences.map((evidence, index) => {
-            const href = evidenceHref(evidence);
-            const label = evidence.programName?.trim() || evidence.type;
-            const body = (
-              <>
-                <span className="block text-xs font-medium">{label}</span>
-                <span className="block text-[11px] text-muted-foreground">
-                  {evidence.type} · {evidence.achievedAt}
-                </span>
-              </>
-            );
-            return (
-              <li key={`${skill.skillId}-${index}`}>
-                {href ? (
-                  <a href={href} className="block rounded-md px-1 py-0.5 hover:bg-muted">
-                    {body}
-                  </a>
-                ) : (
-                  body
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      </PopoverContent>
-    </Popover>
+    <span
+      className={cn(
+        "inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-left text-xs font-medium",
+        emphasized ? "px-3 py-1.5 text-sm" : "",
+        !skill.isVisible && "opacity-45",
+        isDark
+          ? "border-[#FAFAF5]/20 text-[#FAFAF5]"
+          : "border-[#E5E5E0] bg-white text-[#2D2D2D]",
+      )}
+    >
+      <span className={cn("size-2 shrink-0 rounded-full", SKILL_CATEGORY_DOT[category])} />
+      <span className="truncate">{name}</span>
+      {showPin && skill.isPinned ? (
+        <Pin className="size-3 shrink-0 opacity-70" />
+      ) : null}
+    </span>
   );
 }
 

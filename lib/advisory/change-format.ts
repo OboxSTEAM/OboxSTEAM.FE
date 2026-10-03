@@ -151,6 +151,10 @@ export function isLongTextField(field: CurriculumChangeField): boolean {
 export function formatChangeValue(field: CurriculumChangeField, value: unknown): string | null {
   if (value === null || value === undefined || value === "") return null;
 
+  if (field.fieldKey.startsWith("skill:")) {
+    return toBoolean(value) ? "Có" : "Không";
+  }
+
   switch (field.valueType) {
     case "Boolean":
       return toBoolean(value) ? "Có" : "Không";

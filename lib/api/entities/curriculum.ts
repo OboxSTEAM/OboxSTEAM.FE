@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { curriculumCourseSchema } from "@/lib/api/entities/course";
 import { moduleTypeSchema } from "@/lib/api/entities/module";
+import { skillSummarySchema } from "@/lib/api/entities/skill";
 
 export const curriculumModuleSchema = z.object({
   moduleId: z.string(),
@@ -16,6 +17,10 @@ export const curriculumModuleSchema = z.object({
 export const programCurriculumSchema = z.object({
   programId: z.string(),
   programName: z.string(),
+  skills: z
+    .array(skillSummarySchema)
+    .nullish()
+    .transform((value) => value ?? []),
   modules: z.array(curriculumModuleSchema),
 });
 

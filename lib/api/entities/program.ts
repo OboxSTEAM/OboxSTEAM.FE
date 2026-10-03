@@ -52,10 +52,6 @@ export const programSchema = z.object({
     .string()
     .nullish()
     .transform((value) => value ?? ""),
-  skillsGained: z
-    .string()
-    .nullish()
-    .transform((value) => value ?? ""),
   skills: z
     .array(skillSummarySchema)
     .nullish()

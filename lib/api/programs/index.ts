@@ -431,7 +431,6 @@ export async function createProgram(
     ["Category", fields.category],
     ["Level", fields.level],
     ["EstimatedDuration", fields.estimatedDuration],
-    ["SkillsGained", fields.skillsGained],
     ["Price", fields.price],
   ];
 

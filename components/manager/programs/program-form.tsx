@@ -39,6 +39,7 @@ import {
   uploadProgramThumbnail,
   type ProgramFramework,
   type ProgramWithModules,
+  type SkillSummary,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { buildFrameworkRules } from "@/lib/frameworks/rule-labels";
@@ -87,6 +88,8 @@ export type ProgramFormProps = {
   statusPortalHost?: HTMLElement | null;
   /** Pinned framework version on the program (display only). */
   frameworkVersionNumber?: number | null;
+  /** Labels for skills already linked, before the catalog picker loads. */
+  knownSkills?: SkillSummary[];
 };
 
 // ── Constants ─────────────────────────────────────────────────────────────
@@ -366,6 +369,7 @@ export function ProgramForm({
   curriculumFieldsLocked = false,
   statusPortalHost = null,
   frameworkVersionNumber = null,
+  knownSkills = [],
 }: ProgramFormProps) {
   const isEdit = Boolean(programId);
   const statusInPortal = isEdit && statusPortalHost != null;
@@ -407,7 +411,6 @@ export function ProgramForm({
       category:          initialValues?.category          ?? "Science",
       level:             initialValues?.level             ?? "Beginner",
       estimatedDuration: initialValues?.estimatedDuration ?? "",
-      skillsGained:      initialValues?.skillsGained      ?? "",
       skillIds:          initialValues?.skillIds ?? [],
       thumbnailUrl:      initialValues?.thumbnailUrl      ?? "",
       status:            initialValues?.status            ?? "Draft",
@@ -474,7 +477,7 @@ export function ProgramForm({
     },
     (validationErrors) => {
       if (validationErrors.thumbnailUrl) setIsImageOpen(true);
-      if (validationErrors.price || validationErrors.skillsGained) {
+      if (validationErrors.price || validationErrors.skillIds) {
         setIsAdvancedOpen(true);
       }
     },
@@ -1063,26 +1066,12 @@ export function ProgramForm({
             <hr className="border-border" />
 
             <fieldset
-              data-advisory-field="skillsGained"
+              data-advisory-field="skill"
               disabled={curriculumFieldsLocked}
               className={CURRICULUM_FIELDSET}
             >
               <div>
-                <label className={LBL}>
-                  Kỹ năng đạt được <span className="text-primary">*</span>
-                </label>
-                <textarea
-                  id="skillsGained"
-                  rows={3}
-                  placeholder="Liệt kê các kỹ năng học viên đạt được sau khoá học (mỗi kỹ năng một dòng hoặc phân cách bằng dấu phẩy)..."
-                  {...register("skillsGained")}
-                  aria-invalid={!!errors.skillsGained}
-                  className={cn(TEXTAREA_CLS, errors.skillsGained && "border-primary")}
-                />
-                <FieldError message={errors.skillsGained?.message} />
-              </div>
-              <div className="mt-4">
-                <label className={LBL}>Kỹ năng trong danh mục STEAM</label>
+                <label className={LBL}>Kỹ năng đạt được</label>
                 <Controller
                   name="skillIds"
                   control={control}
@@ -1090,13 +1079,14 @@ export function ProgramForm({
                     <SkillMultiSelect
                       value={field.value ?? []}
                       onChange={field.onChange}
-                      knownSkills={[]}
+                      knownSkills={knownSkills}
                       disabled={disabled || isLoading || curriculumFieldsLocked}
                     />
                   )}
                 />
+                <FieldError message={errors.skillIds?.message} />
                 <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
-                  Gắn kỹ năng danh mục để portfolio học viên hiện đúng nhóm STEAM khi hoàn thành chương trình.
+                  Chọn từ danh mục. Học viên nhận các kỹ năng này khi hoàn thành chương trình. Bỏ trống nếu chương trình chưa gắn kỹ năng.
                 </p>
               </div>
             </fieldset>
