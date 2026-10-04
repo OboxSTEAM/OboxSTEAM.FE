@@ -34,12 +34,6 @@ const FILTER_OPTIONS: {
   { value: "Inactive", label: "Ngừng hoạt động", status: "Inactive" },
 ];
 
-const APPROVAL_COPY: Record<AdvisoryProgramItem["approvalState"], { label: string; tone: string }> = {
-  None: { label: "Chưa chấp thuận", tone: "text-muted-foreground" },
-  Approved: { label: "Đã chấp thuận", tone: "text-emerald-700 dark:text-emerald-300" },
-  Revoked: { label: "Chấp thuận đã bị huỷ", tone: "text-amber-800 dark:text-amber-300" },
-};
-
 const COLUMNS: ColumnDef<AdvisoryProgramItem>[] = [
   {
     header: "Chương trình",
@@ -70,19 +64,10 @@ const COLUMNS: ColumnDef<AdvisoryProgramItem>[] = [
   },
   {
     header: "Trạng thái",
-    className: "w-44",
-    render: (item) => {
-      const approval = APPROVAL_COPY[item.approvalState];
-      const isApprovalImplied = item.status === "Approved" && item.approvalState === "Approved";
-      return (
-        <div className="flex flex-col gap-0.5">
-          <span className="text-sm text-foreground">{PROGRAM_STATUS_LABELS[item.status]}</span>
-          {isApprovalImplied ? null : (
-            <span className={cn("text-[11px] font-medium", approval.tone)}>{approval.label}</span>
-          )}
-        </div>
-      );
-    },
+    className: "w-40",
+    render: (item) => (
+      <span className="text-sm text-foreground">{PROGRAM_STATUS_LABELS[item.status]}</span>
+    ),
   },
   {
     header: "Trao đổi",
