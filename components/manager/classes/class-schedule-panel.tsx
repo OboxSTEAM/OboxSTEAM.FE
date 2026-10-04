@@ -196,7 +196,10 @@ export function ClassSchedulePanel({
   });
 
   const sessions = sessionsData?.data?.items ?? [];
-  const totalCount = sessionsData?.data?.totalCount ?? sessions.length;
+  const visibleSessions = useMemo(
+    () => sessions.filter((session) => session.sessionKind !== "AssignmentWindow"),
+    [sessions],
+  );
   const modules = useMemo(() => {
     const all = modulesData?.data?.items ?? [];
     if (!programId) return all;
@@ -204,13 +207,13 @@ export function ClassSchedulePanel({
   }, [modulesData?.data?.items, programId]);
 
   const dayFiltered = useMemo(() => {
-    if (!selectedDay) return sessions;
+    if (!selectedDay) return visibleSessions;
     const key = dayKey(selectedDay);
-    return sessions.filter((session) => {
+    return visibleSessions.filter((session) => {
       const start = parseApiDateTime(session.startTime);
       return start ? dayKey(start) === key : false;
     });
-  }, [sessions, selectedDay]);
+  }, [visibleSessions, selectedDay]);
 
   const weekGroups = useMemo(() => groupByWeek(dayFiltered), [dayFiltered]);
   const activeSessionCount = countActiveClassSessions(sessions);
@@ -421,7 +424,7 @@ export function ClassSchedulePanel({
           <p className="text-sm font-semibold text-foreground">Lịch học lớp</p>
           <p className="text-xs text-muted-foreground">
             <span className="font-mono font-bold text-foreground">
-              {totalCount}
+              {visibleSessions.length}
             </span>{" "}
             buổi · chọn ngày trên lịch để lọc danh sách
           </p>
@@ -455,8 +458,9 @@ export function ClassSchedulePanel({
               <SelectItem value="all" className={THEME_SELECT_ITEM}>
                 All types
               </SelectItem>
-              {Object.entries(CLASS_SESSION_KIND_LABELS).map(
-                ([value, label]) => (
+              {Object.entries(CLASS_SESSION_KIND_LABELS)
+                .filter(([value]) => value !== "AssignmentWindow")
+                .map(([value, label]) => (
                   <SelectItem
                     key={value}
                     value={value}
@@ -464,8 +468,7 @@ export function ClassSchedulePanel({
                   >
                     {label}
                   </SelectItem>
-                ),
-              )}
+                ))}
             </SelectContent>
           </Select>
           <Select
@@ -540,7 +543,7 @@ export function ClassSchedulePanel({
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)] lg:items-start">
           <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <SessionCalendar
-              sessions={sessions}
+              sessions={visibleSessions}
               mode="edit"
               focusSession={pendingFocus}
               onSelectDay={(day) => setSelectedDay(day)}

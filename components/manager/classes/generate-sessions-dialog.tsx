@@ -22,6 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { TimePicker, formatTimeLabel, parseTimeToMinutes } from "@/components/ui/time-picker";
 import { generateClassSessions } from "@/lib/api";
+import { wallClockToUtcTimeString } from "@/lib/api/datetime";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import {
   dotnetDayOfWeekSchema,
@@ -45,9 +46,9 @@ const generateSessionsFormSchema = z
     sessionEndTime: z.string().min(1, "Nhập giờ kết thúc."),
   })
   .superRefine((value, ctx) => {
-    const start = toUtcTimeString(value.sessionStartTime);
-    const end = toUtcTimeString(value.sessionEndTime);
-    if (!start || !end) return;
+    const start = parseTimeToMinutes(value.sessionStartTime);
+    const end = parseTimeToMinutes(value.sessionEndTime);
+    if (start == null || end == null) return;
     if (end <= start) {
       ctx.addIssue({
         code: "custom",
@@ -67,14 +68,6 @@ type GenerateSessionsDialogProps = {
   onGenerated: () => void;
 };
 
-function toUtcTimeString(value: string): string | null {
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-  if (/^\d{2}:\d{2}:\d{2}$/.test(trimmed)) return trimmed;
-  if (/^\d{2}:\d{2}$/.test(trimmed)) return `${trimmed}:00`;
-  return null;
-}
-
 export function GenerateSessionsDialog({
   open,
   onOpenChange,
@@ -89,6 +82,7 @@ export function GenerateSessionsDialog({
     reset,
     watch,
     setValue,
+    setError,
     formState: { errors },
   } = useForm<GenerateSessionsFormValues>({
     resolver: zodResolver(generateSessionsFormSchema),
@@ -129,9 +123,16 @@ export function GenerateSessionsDialog({
   }
 
   async function onSubmit(values: GenerateSessionsFormValues) {
-    const sessionStartTime = toUtcTimeString(values.sessionStartTime);
-    const sessionEndTime = toUtcTimeString(values.sessionEndTime);
+    const sessionStartTime = wallClockToUtcTimeString(values.sessionStartTime);
+    const sessionEndTime = wallClockToUtcTimeString(values.sessionEndTime);
     if (!sessionStartTime || !sessionEndTime) return;
+    if (sessionEndTime <= sessionStartTime) {
+      setError("sessionEndTime", {
+        message:
+          "Khung giờ này qua nửa đêm theo UTC. Chọn giờ bắt đầu từ 07:00.",
+      });
+      return;
+    }
 
     setIsSubmitting(true);
     try {
@@ -143,7 +144,7 @@ export function GenerateSessionsDialog({
       const count = result?.data?.length ?? 0;
       showAppSuccess({
         title: "Đã tạo lịch buổi học",
-        description: `${count} buổi được xếp theo khung chương trình (UTC).`,
+        description: `${count} buổi được xếp theo khung chương trình.`,
       });
       onOpenChange(false);
       onGenerated();
@@ -181,7 +182,8 @@ export function GenerateSessionsDialog({
               <p>• Activity: End = Start + DurationMinutes (không dùng SessionEndTime).</p>
               <p>• Assignment window: độ dài = SessionEndTime − SessionStartTime (End khung giờ chỉ áp dụng cho bài tập).</p>
               <p>• Không cần mentor. Chặn nếu lớp đã có học viên, hoặc còn buổi active (xóa/hủy trước).</p>
-              <p>• Thời gian nhập theo UTC. Không đủ chỗ → nới EndDate hoặc thêm ngày.</p>
+              <p>• Nhập giờ Việt Nam (UTC+7). Hệ thống tự đổi sang UTC khi tạo lịch.</p>
+              <p>• Không đủ chỗ → nới EndDate hoặc thêm ngày.</p>
             </div>
 
             <fieldset className="space-y-2">
@@ -217,7 +219,7 @@ export function GenerateSessionsDialog({
             <div className="space-y-1.5">
               <Label className="flex items-center gap-2">
                 <CalendarClock className="size-4 text-primary" aria-hidden />
-                Khung giờ UTC (End chỉ cho assignment)
+                Khung giờ Việt Nam (End chỉ cho assignment)
               </Label>
               <div className="flex items-center gap-2">
                 <Controller
@@ -226,7 +228,7 @@ export function GenerateSessionsDialog({
                   render={({ field }) => (
                     <TimePicker
                       id="sessionStartTime"
-                      ariaLabel="Giờ bắt đầu UTC"
+                      ariaLabel="Giờ bắt đầu"
                       placeholder="Bắt đầu"
                       value={field.value ?? ""}
                       invalid={!!errors.sessionStartTime}
@@ -263,7 +265,7 @@ export function GenerateSessionsDialog({
                   render={({ field }) => (
                     <TimePicker
                       id="sessionEndTime"
-                      ariaLabel="Giờ kết thúc UTC"
+                      ariaLabel="Giờ kết thúc"
                       placeholder="Kết thúc"
                       value={field.value ?? ""}
                       min={sessionStartTimeValue || undefined}
@@ -279,8 +281,9 @@ export function GenerateSessionsDialog({
                 />
               </div>
               <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Start áp dụng mọi buổi. End chỉ quyết định độ dài cửa sổ bài tập;
-                buổi activity lấy DurationMinutes từ khung chương trình.
+                09:00 ở đây là 09:00 giờ Việt Nam trên lịch. Start áp dụng mọi buổi.
+                End chỉ quyết định độ dài cửa sổ bài tập; buổi activity lấy
+                DurationMinutes từ khung chương trình.
               </p>
               {(errors.sessionStartTime?.message ||
                 errors.sessionEndTime?.message) && (

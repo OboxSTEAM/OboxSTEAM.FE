@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Users, Star, GraduationCap, LayoutGrid } from "lucide-react";
+import { Users, Star, GraduationCap, LayoutGrid, BookOpen } from "lucide-react";
 
 import {
   AdvisoryChatProvider,
@@ -14,6 +14,7 @@ import {
 import { ClassManager } from "@/components/manager/classes/class-manager";
 import { ManagerPageHeader } from "@/components/manager/shared/page-header";
 import { ManagerCurriculumTab } from "@/components/manager/programs/manager-curriculum-tab";
+import { ProgramAcademicGuidanceTab } from "@/components/manager/programs/program-academic-guidance-tab";
 import { ProgramExpertsManager } from "@/components/manager/programs/program-experts-manager";
 import { attachFrameworkAuthorToProgram } from "@/lib/programs/attach-framework-author";
 import { ProgramReviewsManager } from "@/components/manager/programs/program-reviews-manager";
@@ -25,10 +26,11 @@ import { cn } from "@/lib/utils";
 import { showAppErrorFromUnknown } from "@/lib/errors";
 
 // ─── Stepper tab config ────────────────────────────────────────────────────────
-type TabId = "curriculum" | "experts" | "reviews" | "classes";
+type TabId = "curriculum" | "guidance" | "experts" | "reviews" | "classes";
 
 const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: "curriculum",  label: "Khung chương trình", icon: LayoutGrid },
+  { id: "guidance",    label: "Chuẩn nền",            icon: BookOpen },
   { id: "experts",     label: "Chuyên gia",           icon: Users },
   { id: "reviews",     label: "Đánh giá",             icon: Star },
   { id: "classes",     label: "Lớp",                  icon: GraduationCap },
@@ -172,7 +174,7 @@ function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
   }, [program.status, router, workspace?.status]);
 
   const frameworkId = program.frameworkId ?? null;
-  const { data: frameworkData } = useClientFetch({
+  const { data: frameworkData, isLoading: isFrameworkLoading } = useClientFetch({
     enabled: frameworkId != null,
     fetcher: () => getProgramFrameworkById(frameworkId!),
     deps: [frameworkId],
@@ -237,6 +239,14 @@ function ProgramDetailLayout({ program }: { program: ProgramWithModules }) {
                 onRefresh={refreshProgram}
               />
             </Suspense>
+          )}
+
+          {activeTab === "guidance" && (
+            <ProgramAcademicGuidanceTab
+              framework={framework}
+              frameworkVersionNumber={program.frameworkVersionNumber}
+              isFrameworkLoading={frameworkId != null && isFrameworkLoading && !framework}
+            />
           )}
 
           {activeTab === "experts" && (

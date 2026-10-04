@@ -109,7 +109,7 @@ export default function CreateProgramPage() {
         </div>
       </div>
 
-      <div className="flex-1 px-6 py-6 max-w-5xl">
+      <div className="mx-auto w-full max-w-[1500px] flex-1 px-6 py-6">
         <ProgramForm onSubmit={handleSubmit} isLoading={isSubmitting} />
       </div>
     </div>

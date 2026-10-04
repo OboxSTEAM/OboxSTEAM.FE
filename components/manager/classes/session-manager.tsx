@@ -167,7 +167,9 @@ function SessionManagerInner() {
   const totalCount = sessionsData?.data?.totalCount ?? 0;
 
   const filteredSessions = useMemo(() => {
-    const items = sessionsData?.data?.items ?? [];
+    const items = (sessionsData?.data?.items ?? []).filter(
+      (session) => session.sessionKind !== "AssignmentWindow",
+    );
     const q = search.trim().toLowerCase();
     if (!q) return items;
     return items.filter(
@@ -581,9 +583,9 @@ function SessionManagerInner() {
                     },
                     options: [
                       { value: "all", label: "All types" },
-                      ...Object.entries(CLASS_SESSION_KIND_LABELS).map(
-                        ([value, label]) => ({ value, label }),
-                      ),
+                      ...Object.entries(CLASS_SESSION_KIND_LABELS)
+                        .filter(([value]) => value !== "AssignmentWindow")
+                        .map(([value, label]) => ({ value, label })),
                     ],
                   },
                   {

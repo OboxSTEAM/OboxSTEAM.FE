@@ -39,27 +39,33 @@ export function ExpertHeader({ title }: { title?: string }) {
 
   React.useEffect(() => {
     const pathSegments = pathname.split("/").filter(Boolean);
-    const programIds = pathSegments.filter((segment, index) => {
+    const targets = pathSegments.flatMap((segment, index) => {
       const prevSegment = index > 0 ? pathSegments[index - 1] : "";
-      return (
-        prevSegment === "programs" &&
-        UUID_RE.test(segment) &&
-        !attemptedIds.current.has(segment)
-      );
+      if (
+        (prevSegment !== "programs" && prevSegment !== "frameworks") ||
+        !UUID_RE.test(segment) ||
+        attemptedIds.current.has(segment)
+      ) {
+        return [];
+      }
+      return [{ id: segment, kind: prevSegment as "programs" | "frameworks" }];
     });
-    if (programIds.length === 0) return;
+    if (targets.length === 0) return;
 
-    programIds.forEach(async (id) => {
+    targets.forEach(async ({ id, kind }) => {
       attemptedIds.current.add(id);
       try {
-        const { getProgramById } = await import("@/lib/api");
-        const res = await getProgramById(id);
-        const name = res?.data?.name?.trim();
-        if (name) {
-          setResolvedLabels((prev) => ({ ...prev, [id]: name }));
+        const { getProgramById, getProgramFrameworkById } = await import("@/lib/api");
+        const res =
+          kind === "programs"
+            ? await getProgramById(id)
+            : await getProgramFrameworkById(id);
+        const resolved = res?.data?.name?.trim();
+        if (resolved) {
+          setResolvedLabels((prev) => ({ ...prev, [id]: resolved }));
         }
       } catch {
-        // Keep the id in the breadcrumb when the program name cannot be loaded.
+        // Keep the id in the breadcrumb when the name cannot be loaded.
       }
     });
   }, [pathname]);

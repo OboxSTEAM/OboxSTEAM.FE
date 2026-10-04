@@ -42,6 +42,10 @@ import {
   type SkillSummary,
 } from "@/lib/api";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
+import {
+  academicGuidanceForDesigner,
+  loadFrameworkVersions,
+} from "@/lib/frameworks/academic-guidance";
 import { buildFrameworkRules } from "@/lib/frameworks/rule-labels";
 import { SkillMultiSelect } from "@/components/skills/skill-multi-select";
 import { programUpsertSchema, uploadProgramThumbnailSchema } from "@/lib/validations/programs";
@@ -166,6 +170,7 @@ function FrameworkPicker({
   onSearchChange,
   value,
   onChange,
+  onPreviewChange,
   programCategory,
 }: {
   frameworks: ProgramFramework[];
@@ -174,10 +179,20 @@ function FrameworkPicker({
   onSearchChange: (value: string) => void;
   value: string;
   onChange: (value: string) => void;
+  /** Framework id under the pointer, or "" for “Không gắn khung”. `null` when the pointer leaves the list. */
+  onPreviewChange: (frameworkId: string | null) => void;
   programCategory: string;
 }) {
   return (
-    <div className="space-y-2">
+    <div
+      className="space-y-2"
+      onMouseLeave={() => onPreviewChange(null)}
+      onBlur={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+          onPreviewChange(null);
+        }
+      }}
+    >
       <div className="relative">
         <Search className="pointer-events-none absolute left-3 top-2.5 size-4 text-muted-foreground" />
         <Input
@@ -196,6 +211,8 @@ function FrameworkPicker({
         <button
           type="button"
           onClick={() => onChange("")}
+          onMouseEnter={() => onPreviewChange("")}
+          onFocus={() => onPreviewChange("")}
           className={cn(
             "flex w-full items-center justify-between gap-3 rounded-xl border px-3 py-2.5 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
             value
@@ -237,6 +254,8 @@ function FrameworkPicker({
                 key={framework.id}
                 type="button"
                 onClick={() => onChange(framework.id)}
+                onMouseEnter={() => onPreviewChange(framework.id)}
+                onFocus={() => onPreviewChange(framework.id)}
                 className={cn(
                   "flex w-full items-start gap-3 rounded-xl border p-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40",
                   selected
@@ -312,6 +331,93 @@ function FrameworkGuidelines({
       frameworkVersionNumber={frameworkVersionNumber}
       isCategoryMismatch={isCategoryMismatch}
     />
+  );
+}
+
+function AcademicGuidanceNotice({
+  framework,
+  source,
+}: {
+  framework: ProgramFramework | null;
+  /** `preview` while the pointer is on a framework; `selected` after a choice; `idle` before either. */
+  source: "idle" | "preview" | "selected" | "none";
+}) {
+  const frameworkId = framework?.id ?? null;
+  const {
+    data: loadedVersions,
+    isLoading: isGuidanceLoading,
+    hasError: hasGuidanceError,
+  } = useClientFetch({
+    enabled: frameworkId != null,
+    fetcher: () => loadFrameworkVersions(frameworkId!),
+    deps: [frameworkId],
+    minSkeletonMs: 0,
+  });
+
+  const versions = loadedVersions ?? [];
+  const versionsMatch =
+    !framework ||
+    versions.length === 0 ||
+    versions.every((version) => version.frameworkId === framework.id);
+  const guidance =
+    framework && versionsMatch
+      ? academicGuidanceForDesigner(framework, versions)
+      : "";
+  const isWaiting = Boolean(framework) && (!versionsMatch || (isGuidanceLoading && !guidance));
+
+  let body: React.ReactNode;
+  if (source === "idle") {
+    body = (
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        Rê chuột vào một khung trong danh sách để đọc chuẩn học thuật trước khi chọn.
+      </p>
+    );
+  } else if (source === "none" || !framework) {
+    body = (
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        Không gắn khung thì chương trình không nhận hướng dẫn học thuật từ chuyên gia.
+      </p>
+    );
+  } else if (isWaiting) {
+    body = <div className="mt-3 h-24 animate-pulse rounded-lg bg-muted" />;
+  } else if (guidance) {
+    body = (
+      <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground">{guidance}</p>
+    );
+  } else {
+    body = (
+      <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        {hasGuidanceError
+          ? "Không tải được hướng dẫn học thuật của khung này."
+          : "Khung này chưa ghi hướng dẫn học thuật."}
+      </p>
+    );
+  }
+
+  return (
+    <aside className="xl:sticky xl:top-20 xl:max-h-[calc(100vh-6.5rem)] xl:self-start xl:overflow-y-auto">
+      <section className="rounded-2xl border border-border bg-card p-5 shadow-[0_4px_18px_rgba(45,45,45,0.04)]">
+        <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">
+          Chuẩn nền
+        </p>
+        <h2 className="mt-1 font-heading text-base font-bold text-foreground">
+          Chuẩn học thuật
+        </h2>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          {source === "preview"
+            ? "Đang xem khung này."
+            : source === "selected"
+              ? "Khung đã chọn cho chương trình."
+              : "Đọc hướng dẫn này trước khi gắn khung."}
+        </p>
+        {framework && source !== "none" ? (
+          <p className="mt-3 truncate text-sm font-semibold text-foreground">
+            {framework.name || "Khung chưa đặt tên"}
+          </p>
+        ) : null}
+        {body}
+      </section>
+    </aside>
   );
 }
 
@@ -435,9 +541,25 @@ export function ProgramForm({
   });
 
   const frameworks = frameworksData?.data?.items ?? [];
+  const [frameworkSearch, setFrameworkSearch] = useState("");
+  const [previewFrameworkId, setPreviewFrameworkId] = useState<string | null>(null);
   const selectedFramework =
     frameworks.find((item) => item.id === frameworkId) ?? null;
-  const [frameworkSearch, setFrameworkSearch] = useState("");
+  const previewFramework =
+    previewFrameworkId && previewFrameworkId.length > 0
+      ? frameworks.find((item) => item.id === previewFrameworkId) ?? null
+      : null;
+  const noticedFramework = previewFramework ?? (previewFrameworkId === "" ? null : selectedFramework);
+  const guidanceSource =
+    previewFrameworkId === ""
+      ? "none"
+      : previewFramework
+        ? "preview"
+        : previewFrameworkId
+          ? "preview"
+          : selectedFramework
+            ? "selected"
+            : "idle";
   const frameworkOptions = useMemo(() => {
     const keyword = frameworkSearch.trim().toLocaleLowerCase("vi");
     return frameworks
@@ -610,7 +732,13 @@ export function ProgramForm({
   );
 
   return (
-    <form onSubmit={onFormSubmit} className="flex flex-col gap-6">
+    <form
+      onSubmit={onFormSubmit}
+      className={cn(
+        "flex flex-col gap-6",
+        !isEdit && "xl:grid xl:grid-cols-[minmax(0,1fr)_22rem] xl:items-start xl:gap-6",
+      )}
+    >
       {statusInPortal && statusPortalHost
         ? createPortal(statusControl, statusPortalHost)
         : null}
@@ -971,22 +1099,31 @@ export function ProgramForm({
               </div>
             </div>
             </fieldset>
+          </div>
+        </div>
 
-            <div>
-              <label className={LBL}>Khung thẩm định chuyên môn</label>
-              {isEdit ? (
-                <LockedFrameworkSummary
-                  hasFramework={Boolean(initialValues?.frameworkId)}
-                  framework={selectedFramework}
-                  frameworkVersionNumber={frameworkVersionNumber}
-                  isLoading={isFrameworksLoading}
-                />
-              ) : (
-                <>
-                  <Controller
-                    name="frameworkId"
-                    control={control}
-                    render={({ field }) => (
+        <hr className="border-border" />
+
+        <div>
+          <FormSectionTitle>Khung thẩm định chuyên môn</FormSectionTitle>
+          {isEdit ? null : (
+            <p className="-mt-2 mb-4 text-xs leading-relaxed text-muted-foreground">
+              Rê chuột vào một khung để xem chuẩn học thuật ở cột bên phải, rồi mới chọn. Khung không đổi được sau khi tạo chương trình.
+            </p>
+          )}
+          {isEdit ? (
+            <LockedFrameworkSummary
+              hasFramework={Boolean(initialValues?.frameworkId)}
+              framework={selectedFramework}
+              frameworkVersionNumber={frameworkVersionNumber}
+              isLoading={isFrameworksLoading}
+            />
+          ) : (
+            <>
+              <Controller
+                name="frameworkId"
+                control={control}
+                render={({ field }) => (
                       <FrameworkPicker
                         frameworks={frameworkOptions}
                         isLoading={isFrameworksLoading}
@@ -994,26 +1131,22 @@ export function ProgramForm({
                         onSearchChange={setFrameworkSearch}
                         value={field.value ?? ""}
                         onChange={field.onChange}
+                        onPreviewChange={setPreviewFrameworkId}
                         programCategory={category}
                       />
-                    )}
-                  />
-                  <FieldError message={errors.frameworkId?.message} />
-                  <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                    Khung không đổi được sau khi tạo chương trình.
-                  </p>
-                  <FrameworkGuidelines
-                    framework={selectedFramework}
-                    frameworkVersionNumber={frameworkVersionNumber}
-                    isCategoryMismatch={
-                      selectedFramework != null &&
-                      selectedFramework.category !== category
-                    }
-                  />
-                </>
-              )}
-            </div>
-          </div>
+                )}
+              />
+              <FieldError message={errors.frameworkId?.message} />
+              <FrameworkGuidelines
+                framework={selectedFramework}
+                frameworkVersionNumber={frameworkVersionNumber}
+                isCategoryMismatch={
+                  selectedFramework != null &&
+                  selectedFramework.category !== category
+                }
+              />
+            </>
+          )}
         </div>
 
         <hr className="border-border" />
@@ -1115,6 +1248,10 @@ export function ProgramForm({
 
       </div>
       </fieldset>
+
+      {!isEdit ? (
+        <AcademicGuidanceNotice framework={noticedFramework} source={guidanceSource} />
+      ) : null}
 
       {/* Hidden submit – triggered by outer action bar */}
       <button type="submit" id="__program-form-submit" className="hidden" aria-hidden disabled={isLoading || disabled} />

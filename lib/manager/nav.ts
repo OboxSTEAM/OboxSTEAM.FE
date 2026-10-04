@@ -1,7 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
-  CalendarDays,
   ClipboardList,
   FileQuestion,
   GraduationCap,
@@ -52,11 +51,6 @@ export const MANAGER_NAV_GROUPS: ManagerNavGroup[] = [
         label: "Lớp học",
         href: "/manager/classes",
         icon: Users,
-      },
-      {
-        label: "Lịch học",
-        href: "/manager/sessions",
-        icon: CalendarDays,
       },
       {
         label: "Chuyên gia",
