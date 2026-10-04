@@ -24,6 +24,10 @@ import {
   unbindProgramSyncHub,
 } from "@/lib/realtime/program-sync-membership";
 import {
+  dispatchClassLiveSyncEvent,
+  flushAllClassLiveSyncHandlers,
+} from "@/lib/realtime/class-live-sync-bus";
+import {
   dispatchSeatsSyncEvent,
   flushAllSeatsSyncHandlers,
 } from "@/lib/realtime/seats-sync-bus";
@@ -53,6 +57,7 @@ function handleSyncPayload(payload: unknown): void {
   dispatchCurriculumSyncEvent(event);
   dispatchSeatsSyncEvent(event);
   dispatchAdvisorySyncEvent(event);
+  dispatchClassLiveSyncEvent(event);
 }
 
 function detachConnection(conn: HubConnection): void {
@@ -86,6 +91,7 @@ async function startHubInternal(): Promise<HubConnection | null> {
     flushAllCurriculumSyncHandlers();
     flushAllMediaSyncHandlers();
     flushAllSeatsSyncHandlers();
+    flushAllClassLiveSyncHandlers();
   });
 
   try {

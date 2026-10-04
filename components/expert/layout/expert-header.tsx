@@ -26,14 +26,47 @@ const PATH_LABELS: Record<string, string> = {
   profile: "Hồ sơ chuyên môn",
 };
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function ExpertHeader({ title }: { title?: string }) {
   const pathname = usePathname();
-
   const segments = pathname.split("/").filter(Boolean);
+  const [resolvedLabels, setResolvedLabels] = React.useState<
+    Record<string, string>
+  >({});
+  const attemptedIds = React.useRef(new Set<string>());
+
+  React.useEffect(() => {
+    const pathSegments = pathname.split("/").filter(Boolean);
+    const programIds = pathSegments.filter((segment, index) => {
+      const prevSegment = index > 0 ? pathSegments[index - 1] : "";
+      return (
+        prevSegment === "programs" &&
+        UUID_RE.test(segment) &&
+        !attemptedIds.current.has(segment)
+      );
+    });
+    if (programIds.length === 0) return;
+
+    programIds.forEach(async (id) => {
+      attemptedIds.current.add(id);
+      try {
+        const { getProgramById } = await import("@/lib/api");
+        const res = await getProgramById(id);
+        const name = res?.data?.name?.trim();
+        if (name) {
+          setResolvedLabels((prev) => ({ ...prev, [id]: name }));
+        }
+      } catch {
+        // Keep the id in the breadcrumb when the program name cannot be loaded.
+      }
+    });
+  }, [pathname]);
 
   const breadcrumbItems = segments.map((segment, index) => {
     const url = "/" + segments.slice(0, index + 1).join("/");
-    const label = PATH_LABELS[segment] || segment;
+    const label = PATH_LABELS[segment] || resolvedLabels[segment] || segment;
     const isLast = index === segments.length - 1;
     return { label, url, isLast };
   });
@@ -57,7 +90,10 @@ export function ExpertHeader({ title }: { title?: string }) {
                   )}
                   <BreadcrumbItem>
                     {item.isLast ? (
-                      <BreadcrumbPage className="font-heading font-semibold text-foreground">
+                      <BreadcrumbPage
+                        title={item.label}
+                        className="max-w-[min(28rem,42vw)] truncate font-heading font-semibold text-foreground"
+                      >
                         {item.label}
                       </BreadcrumbPage>
                     ) : (

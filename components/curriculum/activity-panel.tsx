@@ -7,11 +7,12 @@ import { useCurrentUser } from "@/components/providers/current-user-provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAttendanceSync } from "@/hooks/use-class-live-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   completeActivity,
   getActivityById,
-  getClassSessionWithStudents,
+  getSessionAttendance,
   type ClassSession,
   type EnrollmentCurriculum,
   type SessionAttendanceStatus,
@@ -42,6 +43,22 @@ type ActivityPanelProps = {
   coTeachExperts?: CoTeachExpertFace[];
   onOpenExpert?: (expert: CoTeachExpertFace) => void;
 };
+
+async function loadMyAttendanceStatus(
+  classId: string | null,
+  sessionId: string | null,
+  studentId: string | null,
+): Promise<SessionAttendanceStatus | null> {
+  if (!classId || !sessionId || !studentId) return null;
+  const result = await getSessionAttendance(classId, sessionId, {
+    studentId,
+    page: 1,
+    pageSize: 20,
+  });
+  const row =
+    result?.data?.items?.find((item) => item.studentId === studentId) ?? null;
+  return row?.status ?? null;
+}
 
 function resolveCompleteSource(
   activityType: string,
@@ -141,32 +158,43 @@ export function ActivityPanel({
     return getNextSessionForActivity(classSessions, selectedActivityId);
   }, [activity, classSessions, selectedActivityId]);
 
-  const {
-    data: myAttendanceRow,
-  } = useClientFetch({
-    enabled: Boolean(
-      classId &&
-        nextSession?.id &&
-        activity &&
-        activity.activityType !== "SelfPaced",
-    ),
-    fetcher: async () => {
-      if (!classId || !nextSession?.id || !currentStudentId) return null;
-      const result = await getClassSessionWithStudents(classId, nextSession.id);
-      return (
-        result?.data?.students?.find(
-          (row) => row.studentId === currentStudentId,
-        ) ?? null
+  const attendanceSessionId =
+    activity && activity.activityType !== "SelfPaced" ? nextSession?.id ?? null : null;
+
+  const { data: serverAttendanceStatus, mutate: mutateAttendance } =
+    useClientFetch({
+      enabled: Boolean(classId && attendanceSessionId && currentStudentId),
+      fetcher: () =>
+        loadMyAttendanceStatus(
+          classId,
+          attendanceSessionId,
+          currentStudentId,
+        ),
+      deps: [classId, attendanceSessionId, currentStudentId],
+      onError: () => {
+        /* Attendance is supplementary for student UX; ignore fetch failures. */
+      },
+    });
+
+  const refreshMyAttendance = useCallback(async () => {
+    if (!classId || !attendanceSessionId || !currentStudentId) return;
+    setAttendanceStatusOverride(null);
+    try {
+      const status = await loadMyAttendanceStatus(
+        classId,
+        attendanceSessionId,
+        currentStudentId,
       );
-    },
-    deps: [classId, nextSession?.id, currentStudentId],
-    onError: () => {
-      /* Attendance is supplementary for student UX; ignore fetch failures. */
-    },
-  });
+      mutateAttendance(status);
+    } catch {
+      /* Sync hints are best-effort. */
+    }
+  }, [attendanceSessionId, classId, currentStudentId, mutateAttendance]);
+
+  useAttendanceSync(classId, attendanceSessionId, refreshMyAttendance);
 
   const myAttendanceStatus: SessionAttendanceStatus | null =
-    attendanceStatusOverride ?? myAttendanceRow?.attendanceStatus ?? null;
+    attendanceStatusOverride ?? serverAttendanceStatus ?? null;
 
   const handleAttendanceChange = useCallback(
     (status: SessionAttendanceStatus) => {

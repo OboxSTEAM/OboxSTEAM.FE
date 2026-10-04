@@ -41,6 +41,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { useSubmissionTurnedInSync } from "@/hooks/use-class-live-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getAssignmentById,
@@ -999,6 +1000,7 @@ export function MentorClassGradingPanel({
     isLoading: isSubmissionsLoading,
     markLoading,
     retry,
+    mutate: mutateSubmissions,
   } = useClientFetch({
     enabled: !!assignmentId,
     fetcher: async () => {
@@ -1068,6 +1070,7 @@ export function MentorClassGradingPanel({
     isLoading: isArtifactLoading,
     hasError: hasArtifactError,
     retry: retryArtifact,
+    mutate: mutateArtifact,
   } = useClientFetch({
     enabled: gradeTarget != null && canGradeInMode,
     fetcher: async (): Promise<SubmissionArtifact | null> => {
@@ -1090,6 +1093,35 @@ export function MentorClassGradingPanel({
     ],
     onError: (error) =>
       showAppErrorFromUnknown(error, "assignments.submissions.list"),
+  });
+
+  useSubmissionTurnedInSync(classId, async (event) => {
+    if (!assignmentId) return;
+    if (event && event.assignmentId !== assignmentId) return;
+
+    try {
+      const list = await getAssignmentSubmissions(assignmentId, classId);
+      mutateSubmissions(list?.data ?? []);
+    } catch {
+      /* Sync hints are best-effort. */
+    }
+
+    const openSubmissionId = gradeTarget?.submissionId;
+    if (!openSubmissionId) return;
+    if (event && event.submissionId !== openSubmissionId) return;
+    if (!canGradeInMode || !selectedAssignment) return;
+
+    try {
+      const artifact =
+        mode === "research"
+          ? await loadResearchArtifact(openSubmissionId)
+          : selectedAssignment.assignmentType === "Retrospective"
+            ? await loadRetrospectiveArtifact(openSubmissionId)
+            : await loadFileUploadArtifact(openSubmissionId);
+      mutateArtifact(artifact);
+    } catch {
+      /* Sync hints are best-effort. */
+    }
   });
 
   // useClientFetch keeps the previous target's data while refetching.

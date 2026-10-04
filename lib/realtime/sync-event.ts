@@ -8,6 +8,8 @@ export const CURRICULUM_STRUCTURE_CHANGED_SCOPE = "curriculum.structureChanged";
 export const ADVISORY_DISCUSSION_CHANGED_SCOPE = "advisory.discussionChanged";
 export const ADVISORY_PIN_CHANGED_SCOPE = "advisory.pinChanged";
 export const ADVISORY_APPROVAL_CHANGED_SCOPE = "advisory.approvalChanged";
+export const ATTENDANCE_CHANGED_SCOPE = "attendance.changed";
+export const SUBMISSION_TURNED_IN_SCOPE = "submission.turnedIn";
 
 /** Hub may serialize `payload` as an object or a JSON string. */
 const syncPayloadSchema = z.preprocess((value) => {
@@ -87,6 +89,72 @@ export function isCurriculumStructureChanged(event: SyncEvent): boolean {
 
 export function isSeatsChanged(event: SyncEvent): boolean {
   return event.scope === "seats.changed";
+}
+
+const attendanceStatusSchema = z.enum(["Present", "Late", "Absent", "Excused"]);
+
+const attendanceChangedPayloadSchema = z.object({
+  studentId: z.string().min(1),
+  status: attendanceStatusSchema,
+});
+
+const submissionTurnedInPayloadSchema = z.object({
+  assignmentId: z.string().min(1),
+  studentId: z.string().min(1),
+  classId: z.string().min(1),
+  status: z.literal("TurnedIn"),
+});
+
+export type AttendanceChangedSync = {
+  sessionId: string;
+  studentId: string;
+  status: z.infer<typeof attendanceStatusSchema>;
+};
+
+export type SubmissionTurnedInSync = {
+  submissionId: string;
+  assignmentId: string;
+  studentId: string;
+  classId: string;
+};
+
+/** Student attendance hint. `entityId` is the class session. Payload has no classId. */
+export function parseAttendanceChanged(
+  event: SyncEvent,
+): AttendanceChangedSync | null {
+  if (
+    event.scope !== ATTENDANCE_CHANGED_SCOPE ||
+    event.entityType !== "ClassSession"
+  ) {
+    return null;
+  }
+  const parsed = attendanceChangedPayloadSchema.safeParse(event.payload);
+  if (!parsed.success) return null;
+  return {
+    sessionId: event.entityId,
+    studentId: parsed.data.studentId,
+    status: parsed.data.status,
+  };
+}
+
+/** Mentor hint that a FileUpload or research submission was turned in. */
+export function parseSubmissionTurnedIn(
+  event: SyncEvent,
+): SubmissionTurnedInSync | null {
+  if (
+    event.scope !== SUBMISSION_TURNED_IN_SCOPE ||
+    event.entityType !== "Submission"
+  ) {
+    return null;
+  }
+  const parsed = submissionTurnedInPayloadSchema.safeParse(event.payload);
+  if (!parsed.success) return null;
+  return {
+    submissionId: event.entityId,
+    assignmentId: parsed.data.assignmentId,
+    studentId: parsed.data.studentId,
+    classId: parsed.data.classId,
+  };
 }
 
 /** Narrow a hub event to an advisory scope with a valid payload, or `null`. */

@@ -32,7 +32,7 @@ const MEDIA_SYNC_TYPES = new Set<NotificationType>([
 
 /**
  * Fan out hub `notificationReceived` into silent screen refresh buses.
- * Complements `syncEvent` (only `curriculum.structureChanged` on BE today).
+ * Complements hub `syncEvent` scopes (`curriculum.structureChanged`, advisory, seats, attendance, submission).
  */
 export function dispatchNotificationSideEffects(notification: {
   type: NotificationType;

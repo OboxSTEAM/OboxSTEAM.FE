@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSubmissionTurnedInSync } from "@/hooks/use-class-live-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   forceCompleteActivity,
@@ -276,6 +277,7 @@ export function MentorStudentProgressPane({
     data: assignmentData,
     isLoading: isAssignmentLoading,
     retry: retryAssignment,
+    mutate: mutateAssignmentProgress,
   } = useClientFetch({
     enabled: kind === "assignment" && Boolean(targetId),
     fetcher: async () => {
@@ -285,6 +287,19 @@ export function MentorStudentProgressPane({
     deps: [classId, targetId, kind],
     onError: (error) =>
       showAppErrorFromUnknown(error, "classes.curriculumProgress"),
+  });
+
+  useSubmissionTurnedInSync(kind === "assignment" ? classId : null, async (event) => {
+    if (kind !== "assignment" || !targetId) return;
+    if (event && event.assignmentId !== targetId) return;
+    try {
+      const result = await getClassAssignmentStudentProgress(classId, targetId);
+      if (result?.data?.assignmentId === targetId) {
+        mutateAssignmentProgress(result.data);
+      }
+    } catch {
+      /* Sync hints are best-effort. */
+    }
   });
 
   // Hide previous target while deps change / fetch effect marks loading.

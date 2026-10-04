@@ -88,6 +88,17 @@ function sortActivities(activities: Activity[]): Activity[] {
   return [...activities].sort((a, b) => a.activityOrder - b.activityOrder);
 }
 
+/** Activities linked to a research milestone render under that milestone, matching the student tree. */
+function milestoneLinkedActivityIds(milestones: ResearchMilestone[]): Set<string> {
+  const ids = new Set<string>();
+  for (const milestone of milestones) {
+    for (const linked of milestone.activities ?? []) {
+      ids.add(linked.activityId);
+    }
+  }
+  return ids;
+}
+
 function formatModuleIndex(index: number): string {
   return String(index + 1).padStart(2, "0");
 }
@@ -484,11 +495,14 @@ export function MentorCurriculumTree({
         className="space-y-2"
       >
         {orderedModules.map((module, moduleIndex) => {
-          const courses = [...(module.courses ?? [])];
+          const courses = [...(module.courses ?? [])].sort(
+            (a, b) => a.courseOrder - b.courseOrder,
+          );
           const assignments = assignmentsByModule[module.id] ?? [];
           const milestones = [...(milestonesByModule[module.id] ?? [])].sort(
             (a, b) => a.milestoneOrder - b.milestoneOrder,
           );
+          const linkedActivityIds = milestoneLinkedActivityIds(milestones);
           const hasContent =
             courses.length > 0 ||
             assignments.length > 0 ||
@@ -524,7 +538,15 @@ export function MentorCurriculumTree({
                 ) : (
                   <TreeBranch className="space-y-1.5 py-1">
                     {courses.map((course) => {
-                      const activities = sortActivities(course.activities ?? []);
+                      const activities = sortActivities(
+                        course.activities ?? [],
+                      ).filter((activity) => !linkedActivityIds.has(activity.id));
+                      if (
+                        activities.length === 0 &&
+                        (course.activities?.length ?? 0) > 0
+                      ) {
+                        return null;
+                      }
                       const open = isGroupOpen(course.id);
 
                       return (
