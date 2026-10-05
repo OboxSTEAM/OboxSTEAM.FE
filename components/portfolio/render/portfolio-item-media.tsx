@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ImagePlus, X } from "lucide-react";
+import { ExternalLink, FileText, ImagePlus, X } from "lucide-react";
 
 import {
   Dialog,
@@ -65,21 +65,25 @@ export function PortfolioItemMedia({
   return (
     <div className="space-y-1.5">
       <div className="relative">
-        <button
-          type="button"
-          className="block w-full overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
-          onClick={() => setLightboxIndex(0)}
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element -- remote portfolio media */}
-          <img
-            src={cover.url!}
-            alt={cover.caption ?? ""}
-            className={cn(
-              "aspect-video w-full",
-              isCertificate ? "bg-[#F5F5F0] object-contain" : "object-cover",
-            )}
-          />
-        </button>
+        {isPdfUrl(cover.url) ? (
+          <PdfDocumentTile url={cover.url!} isDark={isDark} />
+        ) : (
+          <button
+            type="button"
+            className="block w-full overflow-hidden rounded-md outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]"
+            onClick={() => setLightboxIndex(0)}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element -- remote portfolio media */}
+            <img
+              src={cover.url!}
+              alt={cover.caption ?? ""}
+              className={cn(
+                "aspect-video w-full",
+                isCertificate ? "bg-[#F5F5F0] object-contain" : "object-cover",
+              )}
+            />
+          </button>
+        )}
         {extra > 0 ? (
           <button
             type="button"
@@ -129,15 +133,108 @@ export function PortfolioItemMedia({
         <DialogPopup className="max-w-3xl bg-black p-3">
           <DialogTitle className="sr-only">Ảnh minh chứng</DialogTitle>
           {lightboxIndex != null && sorted[lightboxIndex]?.url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={sorted[lightboxIndex].url!}
-              alt={sorted[lightboxIndex].caption ?? ""}
-              className="max-h-[70vh] w-full object-contain"
-            />
+            isPdfUrl(sorted[lightboxIndex].url) ? (
+              <PdfDocumentTile url={sorted[lightboxIndex].url!} isDark />
+            ) : (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={sorted[lightboxIndex].url!}
+                alt={sorted[lightboxIndex].caption ?? ""}
+                className="max-h-[70vh] w-full object-contain"
+              />
+            )
           ) : null}
         </DialogPopup>
       </Dialog>
     </div>
   );
+}
+
+const STEAM_RAINBOW =
+  "linear-gradient(90deg, #E94B3C 0%, #7CB342 25%, #4FC3F7 50%, #FDD835 75%, #7E57C2 100%)";
+
+/** Certificate-style preview for PDF media — browsers can't render a PDF in `<img>`. */
+function PdfDocumentTile({ url, isDark }: { url: string; isDark: boolean }) {
+  const fileName = getPdfFileName(url);
+
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={`Mở chứng chỉ PDF${fileName ? ` ${fileName}` : ""} trong tab mới`}
+      className={cn(
+        "group/pdf relative flex aspect-video w-full flex-col items-center justify-center gap-2.5 overflow-hidden rounded-md px-4 outline-none focus-visible:ring-2 focus-visible:ring-[#4FC3F7]",
+        isDark
+          ? "bg-white/[0.06] ring-1 ring-[#FAFAF5]/10"
+          : "bg-[#F5F5F0] ring-1 ring-[#E5E5E0]",
+      )}
+    >
+      <span
+        aria-hidden
+        className="relative flex aspect-[1.414/1] w-[46%] max-w-[11rem] flex-col overflow-hidden rounded-[3px] bg-white shadow-[0_6px_18px_rgba(45,45,45,0.14)] ring-1 ring-black/5 transition-transform duration-200 ease-out group-hover/pdf:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover/pdf:translate-y-0"
+      >
+        <span className="h-[5%] w-full shrink-0" style={{ background: STEAM_RAINBOW }} />
+        <span className="flex flex-1 flex-col items-center justify-center gap-[6%] px-[12%]">
+          <span className="h-[5%] w-1/3 rounded-full bg-[#E5E5E0]" />
+          <span className="h-[9%] w-3/4 rounded-full bg-[#2D2D2D]/80" />
+          <span className="h-[5%] w-1/2 rounded-full bg-[#E5E5E0]" />
+        </span>
+        <span className="flex items-end justify-between px-[8%] pb-[7%]">
+          <span className="h-[3px] w-1/4 rounded-full bg-[#E5E5E0]" />
+          <span
+            className="size-[18%] min-h-3 min-w-3 rounded-full opacity-80"
+            style={{ background: STEAM_RAINBOW }}
+          />
+        </span>
+      </span>
+
+      <span className="absolute right-2 top-2 rounded-full bg-[#E94B3C] px-2 py-0.5 font-mono text-[10px] font-semibold tracking-[0.12em] text-white">
+        PDF
+      </span>
+
+      <span
+        className={cn(
+          "flex min-w-0 max-w-full items-center gap-1.5 text-xs font-semibold",
+          isDark ? "text-[#FAFAF5]/85" : "text-[#2D2D2D]",
+        )}
+      >
+        <FileText className="size-3.5 shrink-0 text-[#E94B3C]" aria-hidden />
+        <span className="truncate font-mono text-[11px]">
+          {fileName ?? "Chứng chỉ"}
+        </span>
+        <ExternalLink
+          className={cn(
+            "size-3 shrink-0 transition-opacity",
+            isDark ? "text-[#FAFAF5]/50" : "text-[#6B6B6B]",
+            "opacity-60 group-hover/pdf:opacity-100",
+          )}
+          aria-hidden
+        />
+      </span>
+    </a>
+  );
+}
+
+function isPdfUrl(url: string | null | undefined): boolean {
+  if (!url) return false;
+  try {
+    return new URL(url, "https://placeholder.local").pathname
+      .toLowerCase()
+      .endsWith(".pdf");
+  } catch {
+    return false;
+  }
+}
+
+function getPdfFileName(url: string): string | null {
+  try {
+    const segment = new URL(url, "https://placeholder.local").pathname
+      .split("/")
+      .pop();
+    if (!segment) return null;
+    return decodeURIComponent(segment).replace(/\.pdf$/i, "") || null;
+  } catch {
+    return null;
+  }
 }

@@ -1039,7 +1039,8 @@ function ItemCardEditable({
                     Chạy demo · {demo.label}
                   </button>
                 ) : null}
-                {item.pdfUrl ? (
+                {item.pdfUrl &&
+                !media.some((asset) => asset.url === item.pdfUrl) ? (
                   <a
                     href={item.pdfUrl}
                     target="_blank"

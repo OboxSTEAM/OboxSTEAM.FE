@@ -220,6 +220,7 @@ function ItemCard({
 }) {
   const cardSurface = resolved.cardSurfaceClass;
   const dateRange = formatPortfolioItemDateRange(item.startDate, item.endDate);
+  const mediaAssets = itemMediaSources(item);
 
   const card = (
     <div className={cn("h-full", itemSpanClass(item.span, layoutStyle))}>
@@ -233,7 +234,7 @@ function ItemCard({
       >
       <div className="mb-3" id={`portfolio-item-${item.id}`}>
         <PortfolioItemMedia
-          assets={itemMediaSources(item)}
+          assets={mediaAssets}
           itemType={item.itemType}
           isDark={resolved.isDark}
         />
@@ -364,7 +365,8 @@ function ItemCard({
           Xem liên kết
         </a>
       ) : null}
-      {item.pdfUrl ? (
+      {item.pdfUrl &&
+      !mediaAssets.some((asset) => asset.url === item.pdfUrl) ? (
         <a
           href={item.pdfUrl}
           target="_blank"
