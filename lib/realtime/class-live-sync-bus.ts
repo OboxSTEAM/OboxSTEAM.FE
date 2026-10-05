@@ -1,6 +1,8 @@
 import {
   parseAttendanceChanged,
+  parseSubmissionGraded,
   parseSubmissionTurnedIn,
+  type SubmissionGradedSync,
   type SubmissionTurnedInSync,
   type SyncEvent,
 } from "@/lib/realtime/sync-event";
@@ -10,9 +12,17 @@ type AttendanceSyncHandler = () => void | Promise<void>;
 type SubmissionSyncHandler = (
   event: SubmissionTurnedInSync | null,
 ) => void | Promise<void>;
+/** `null` is a reconnect resync — the open assignment refetches its submission. */
+type SubmissionGradedHandler = (
+  event: SubmissionGradedSync | null,
+) => void | Promise<void>;
 
 const attendanceHandlersBySessionId = new Map<string, Set<AttendanceSyncHandler>>();
 const submissionHandlersByClassId = new Map<string, Set<SubmissionSyncHandler>>();
+const gradedHandlersByAssignmentId = new Map<
+  string,
+  Set<SubmissionGradedHandler>
+>();
 
 function run<T>(handlers: Set<T> | undefined, invoke: (handler: T) => void): void {
   if (!handlers?.size) return;
@@ -66,7 +76,28 @@ export function registerSubmissionTurnedInHandler(
   };
 }
 
-/** Dispatch `attendance.changed` and `submission.turnedIn`. No toast. */
+/** Student assignment page that is showing this assignment. */
+export function registerSubmissionGradedHandler(
+  assignmentId: string,
+  handler: SubmissionGradedHandler,
+): () => void {
+  const bucket =
+    gradedHandlersByAssignmentId.get(assignmentId) ??
+    new Set<SubmissionGradedHandler>();
+  bucket.add(handler);
+  gradedHandlersByAssignmentId.set(assignmentId, bucket);
+
+  return () => {
+    const current = gradedHandlersByAssignmentId.get(assignmentId);
+    if (!current) return;
+    current.delete(handler);
+    if (current.size === 0) {
+      gradedHandlersByAssignmentId.delete(assignmentId);
+    }
+  };
+}
+
+/** Dispatch `attendance.changed`, `submission.turnedIn` and `submission.graded`. No toast. */
 export function dispatchClassLiveSyncEvent(event: SyncEvent): void {
   const attendance = parseAttendanceChanged(event);
   if (attendance) {
@@ -80,11 +111,22 @@ export function dispatchClassLiveSyncEvent(event: SyncEvent): void {
   }
 
   const turnedIn = parseSubmissionTurnedIn(event);
-  if (!turnedIn) return;
+  if (turnedIn) {
+    const handlers = submissionHandlersByClassId.get(turnedIn.classId);
+    run(handlers, (handler) => {
+      void Promise.resolve(handler(turnedIn)).catch(() => {
+        /* best-effort */
+      });
+    });
+    return;
+  }
 
-  const handlers = submissionHandlersByClassId.get(turnedIn.classId);
+  const graded = parseSubmissionGraded(event);
+  if (!graded) return;
+
+  const handlers = gradedHandlersByAssignmentId.get(graded.assignmentId);
   run(handlers, (handler) => {
-    void Promise.resolve(handler(turnedIn)).catch(() => {
+    void Promise.resolve(handler(graded)).catch(() => {
       /* best-effort */
     });
   });
@@ -101,6 +143,14 @@ export function flushAllClassLiveSyncHandlers(): void {
   }
 
   for (const handlers of submissionHandlersByClassId.values()) {
+    run(handlers, (handler) => {
+      void Promise.resolve(handler(null)).catch(() => {
+        /* best-effort */
+      });
+    });
+  }
+
+  for (const handlers of gradedHandlersByAssignmentId.values()) {
     run(handlers, (handler) => {
       void Promise.resolve(handler(null)).catch(() => {
         /* best-effort */

@@ -11,6 +11,11 @@ export type AppErrorState = {
 export type AppSuccessState = {
   title: string;
   description?: string;
+  /** Inline call to action; clicking it also dismisses the toast. */
+  action?: {
+    label: string;
+    onClick: () => void;
+  };
 };
 
 export type AppErrorContext =

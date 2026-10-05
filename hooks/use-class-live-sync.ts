@@ -4,9 +4,13 @@ import { useEffect, useRef } from "react";
 
 import {
   registerAttendanceSyncHandler,
+  registerSubmissionGradedHandler,
   registerSubmissionTurnedInHandler,
 } from "@/lib/realtime/class-live-sync-bus";
-import type { SubmissionTurnedInSync } from "@/lib/realtime/sync-event";
+import type {
+  SubmissionGradedSync,
+  SubmissionTurnedInSync,
+} from "@/lib/realtime/sync-event";
 
 /**
  * Refetch attendance when `attendance.changed` targets the session this screen holds.
@@ -18,7 +22,10 @@ export function useAttendanceSync(
   refetch: () => void | Promise<void>,
 ): void {
   const refetchRef = useRef(refetch);
-  refetchRef.current = refetch;
+
+  useEffect(() => {
+    refetchRef.current = refetch;
+  });
 
   useEffect(() => {
     if (!classId || !sessionId) return;
@@ -35,7 +42,10 @@ export function useSubmissionTurnedInSync(
   onSync: (event: SubmissionTurnedInSync | null) => void | Promise<void>,
 ): void {
   const onSyncRef = useRef(onSync);
-  onSyncRef.current = onSync;
+
+  useEffect(() => {
+    onSyncRef.current = onSync;
+  });
 
   useEffect(() => {
     if (!classId) return;
@@ -43,4 +53,26 @@ export function useSubmissionTurnedInSync(
       onSyncRef.current(event),
     );
   }, [classId]);
+}
+
+/**
+ * Refetch the student's open assignment when `submission.graded` targets it.
+ * `null` means the hub reconnected and the screen should reload its submission.
+ */
+export function useSubmissionGradedSync(
+  assignmentId: string | null | undefined,
+  onSync: (event: SubmissionGradedSync | null) => void | Promise<void>,
+): void {
+  const onSyncRef = useRef(onSync);
+
+  useEffect(() => {
+    onSyncRef.current = onSync;
+  });
+
+  useEffect(() => {
+    if (!assignmentId) return;
+    return registerSubmissionGradedHandler(assignmentId, (event) =>
+      onSyncRef.current(event),
+    );
+  }, [assignmentId]);
 }

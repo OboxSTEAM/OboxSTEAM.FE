@@ -35,12 +35,32 @@ export function showAppSuccess(
   state: AppSuccessState,
   options?: { id?: string; duration?: number },
 ): void {
-  toast.custom(() => <AppSuccessToast {...state} />, {
-    id: options?.id ?? SUCCESS_TOAST_ID,
-    duration: options?.duration ?? 5000,
-    unstyled: true,
-    classNames: {
-      toast: "p-0 bg-transparent border-0 shadow-none",
+  const { action } = state;
+
+  toast.custom(
+    (toastId) => (
+      <AppSuccessToast
+        {...state}
+        action={
+          action
+            ? {
+                label: action.label,
+                onClick: () => {
+                  toast.dismiss(toastId);
+                  action.onClick();
+                },
+              }
+            : undefined
+        }
+      />
+    ),
+    {
+      id: options?.id ?? SUCCESS_TOAST_ID,
+      duration: options?.duration ?? 5000,
+      unstyled: true,
+      classNames: {
+        toast: "p-0 bg-transparent border-0 shadow-none",
+      },
     },
-  });
+  );
 }

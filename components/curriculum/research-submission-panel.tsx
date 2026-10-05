@@ -22,6 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSubmissionGradedSync } from "@/hooks/use-class-live-sync";
 import { useClientFetch } from "@/hooks/use-client-fetch";
 import {
   getAssignmentById,
@@ -655,6 +656,13 @@ export function ResearchSubmissionPanel({
     onError: (error) => {
       showAppErrorFromUnknown(error, "generic");
     },
+  });
+
+  useSubmissionGradedSync(assignmentId, (event) => {
+    // A retake draft is local-only until submitted; an older attempt's grade must not replace it.
+    if (isRetaking && event?.submissionId !== localSubmissionId) return;
+    retryProgress();
+    retrySubmission();
   });
 
   useEffect(() => {

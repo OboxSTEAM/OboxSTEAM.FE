@@ -12,7 +12,10 @@ import {
 import { useRouter } from "next/navigation";
 
 import { useCurrentUser } from "@/components/providers/current-user-provider";
-import type { Notification } from "@/lib/api/entities/notification";
+import type {
+  Notification,
+  NotificationType,
+} from "@/lib/api/entities/notification";
 import {
   getNotifications,
   getUnreadNotificationCount,
@@ -22,6 +25,7 @@ import {
 import { normalizeAccountRole } from "@/lib/auth/roles";
 import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { resolveNotificationHrefFromNotification } from "@/lib/notifications/resolve-href";
+import { hasCurriculumSyncHandlers } from "@/lib/realtime/curriculum-sync-bus";
 import { dispatchNotificationSideEffects } from "@/lib/realtime/notification-side-effects";
 import {
   acquireSyncHub,
@@ -35,6 +39,26 @@ import { resolveNotificationPayload, payloadString } from "@/lib/notifications/p
 
 const INBOX_PAGE_SIZE = 10;
 const STALE_MS = 30_000;
+
+/**
+ * An open screen for the same program (learn page, parent progression) shows these
+ * in place — tree status, assignment result — so the toast is skipped.
+ */
+const IN_PLACE_PROGRESS_TYPES = new Set<NotificationType>([
+  "ActivityCompleted",
+  "ResearchGradedPassed",
+  "ResearchGradedFailed",
+  "ResearchReturnedForRevision",
+]);
+
+function isShownInPlace(notification: Notification): boolean {
+  if (!IN_PLACE_PROGRESS_TYPES.has(notification.type)) return false;
+  const programId = payloadString(
+    resolveNotificationPayload(notification),
+    "programId",
+  );
+  return hasCurriculumSyncHandlers(programId);
+}
 
 export type NotificationContextValue = {
   items: Notification[];
@@ -289,6 +313,8 @@ export function NotificationProvider({
       }
 
       dispatchNotificationSideEffects(notification);
+
+      if (isShownInPlace(notification)) return;
 
       showAppSuccess(
         {

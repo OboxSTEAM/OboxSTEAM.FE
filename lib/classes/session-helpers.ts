@@ -83,6 +83,24 @@ export function getNextSessionForActivity(
   );
 }
 
+/**
+ * Upcoming/active session, or the most recent completed one once the mentor
+ * closes the last slot — so the session block and attendance stay visible.
+ */
+export function getDisplaySessionForActivity(
+  sessions: ClassSession[],
+  activityId: string,
+  now = new Date(),
+): ClassSession | null {
+  return (
+    getNextSessionForActivity(sessions, activityId, now) ??
+    getSessionsForActivity(sessions, activityId).findLast(
+      (session) => session.status === "Completed",
+    ) ??
+    null
+  );
+}
+
 export function formatClassSessionDateTime(value: string): string {
   const parsed = parseApiDateTime(value) ?? new Date(value);
   return new Intl.DateTimeFormat("vi-VN", {

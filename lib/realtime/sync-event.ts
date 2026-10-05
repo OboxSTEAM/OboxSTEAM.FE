@@ -10,6 +10,8 @@ export const ADVISORY_PIN_CHANGED_SCOPE = "advisory.pinChanged";
 export const ADVISORY_APPROVAL_CHANGED_SCOPE = "advisory.approvalChanged";
 export const ATTENDANCE_CHANGED_SCOPE = "attendance.changed";
 export const SUBMISSION_TURNED_IN_SCOPE = "submission.turnedIn";
+export const ACTIVITY_PROGRESS_CHANGED_SCOPE = "activityProgress.changed";
+export const SUBMISSION_GRADED_SCOPE = "submission.graded";
 
 /** Hub may serialize `payload` as an object or a JSON string. */
 const syncPayloadSchema = z.preprocess((value) => {
@@ -105,6 +107,62 @@ const submissionTurnedInPayloadSchema = z.object({
   status: z.literal("TurnedIn"),
 });
 
+const nullableIdSchema = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? null);
+
+const activityProgressChangedPayloadSchema = z.object({
+  studentId: z.string().min(1),
+  programId: z.string().min(1),
+  programEnrollmentId: nullableIdSchema,
+  activityId: z.string().min(1),
+  nextActivityId: nullableIdSchema,
+  status: z.string(),
+});
+
+const submissionGradedStatusSchema = z.enum(["Graded", "ReturnedForRevision"]);
+
+const submissionGradedPayloadSchema = z.object({
+  studentId: z.string().min(1),
+  assignmentId: z.string().min(1),
+  programId: z.string().min(1),
+  programEnrollmentId: nullableIdSchema,
+  researchMilestoneId: nullableIdSchema,
+  status: submissionGradedStatusSchema,
+  assignedGrade: z
+    .number()
+    .nullish()
+    .transform((value) => value ?? null),
+  maxPoints: z.number(),
+  passed: z
+    .boolean()
+    .nullish()
+    .transform((value) => value ?? null),
+});
+
+export type ActivityProgressChangedSync = {
+  activityId: string;
+  studentId: string;
+  programId: string;
+  programEnrollmentId: string | null;
+  nextActivityId: string | null;
+  status: string;
+};
+
+export type SubmissionGradedSync = {
+  submissionId: string;
+  assignmentId: string;
+  studentId: string;
+  programId: string;
+  programEnrollmentId: string | null;
+  researchMilestoneId: string | null;
+  status: z.infer<typeof submissionGradedStatusSchema>;
+  assignedGrade: number | null;
+  maxPoints: number;
+  passed: boolean | null;
+};
+
 export type AttendanceChangedSync = {
   sessionId: string;
   studentId: string;
@@ -155,6 +213,35 @@ export function parseSubmissionTurnedIn(
     studentId: parsed.data.studentId,
     classId: parsed.data.classId,
   };
+}
+
+/** Student/parent hint that an activity was completed. `entityId` is the activity. */
+export function parseActivityProgressChanged(
+  event: SyncEvent,
+): ActivityProgressChangedSync | null {
+  if (
+    event.scope !== ACTIVITY_PROGRESS_CHANGED_SCOPE ||
+    event.entityType !== "Activity"
+  ) {
+    return null;
+  }
+  const parsed = activityProgressChangedPayloadSchema.safeParse(event.payload);
+  return parsed.success ? parsed.data : null;
+}
+
+/** Student/parent hint that a mentor graded or returned a submission. `entityId` is the submission. */
+export function parseSubmissionGraded(
+  event: SyncEvent,
+): SubmissionGradedSync | null {
+  if (
+    event.scope !== SUBMISSION_GRADED_SCOPE ||
+    event.entityType !== "Submission"
+  ) {
+    return null;
+  }
+  const parsed = submissionGradedPayloadSchema.safeParse(event.payload);
+  if (!parsed.success) return null;
+  return { submissionId: event.entityId, ...parsed.data };
 }
 
 /** Narrow a hub event to an advisory scope with a valid payload, or `null`. */

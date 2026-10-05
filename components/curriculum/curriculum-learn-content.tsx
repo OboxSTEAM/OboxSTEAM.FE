@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -22,7 +22,11 @@ import {
 import { useCurrentUser } from "@/hooks/use-current-user";
 import { CLASS_SESSIONS_QUERY } from "@/lib/classes/constants";
 import { resolveActiveProgramEnrollment } from "@/lib/curriculum/active-enrollment";
-import { findFlatAssignment } from "@/lib/curriculum/assignment-helpers";
+import {
+  findFlatAssignment,
+  flattenCurriculumAssignments,
+  type FlatCurriculumAssignment,
+} from "@/lib/curriculum/assignment-helpers";
 import {
   mentorFromClassSummary,
   type CurriculumClassContext,
@@ -31,7 +35,7 @@ import {
   findFlatActivity,
   resolveInitialActivityId,
 } from "@/lib/curriculum/helpers";
-import { showAppErrorFromUnknown } from "@/lib/errors";
+import { showAppErrorFromUnknown, showAppSuccess } from "@/lib/errors";
 import { canRebuyCompletedEnrollment } from "@/lib/programs/enrollments";
 import { cn } from "@/lib/utils";
 
@@ -41,6 +45,8 @@ import { ProgramCompletionReviewPrompt } from "./program-completion-review-promp
 type CurriculumLearnContentProps = {
   programId: string;
 };
+
+const ASSIGNMENT_UNLOCKED_TOAST_ID = "assignment-unlocked";
 
 function LearnSkeleton() {
   return (
@@ -136,6 +142,24 @@ async function loadMentorProfile(mentorId: string): Promise<Mentor | null> {
   }
 }
 
+/** Assignments that were locked in `previous` and are open to work on in `next`. */
+function findNewlyUnlockedAssignments(
+  previous: EnrollmentCurriculum,
+  next: EnrollmentCurriculum,
+): FlatCurriculumAssignment[] {
+  const previousStatusById = new Map(
+    flattenCurriculumAssignments(previous).map((item) => [
+      item.assignmentId,
+      item.status,
+    ]),
+  );
+  return flattenCurriculumAssignments(next).filter(
+    (item) =>
+      item.status === "available" &&
+      previousStatusById.get(item.assignmentId) === "locked",
+  );
+}
+
 function applyCurriculumSelection(
   nextCurriculum: EnrollmentCurriculum,
   seed: {
@@ -176,6 +200,8 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
   const [isBootstrapping, setIsBootstrapping] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isClassPickerOpen, setIsClassPickerOpen] = useState(false);
+  /** Latest loaded tree; sync refreshes can overlap, so diffs read this instead of a render closure. */
+  const curriculumRef = useRef<EnrollmentCurriculum | null>(null);
 
   const loadCurriculum = useCallback(
     async (
@@ -187,6 +213,7 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
         throw new Error("Enrollment curriculum response missing data.");
       }
       const nextCurriculum = result.data;
+      curriculumRef.current = nextCurriculum;
       setCurriculum(nextCurriculum);
 
       const selection = applyCurriculumSelection(nextCurriculum, {
@@ -345,12 +372,53 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
     setSelectedAssignmentId(assignmentId);
   }, []);
 
+  const reloadClassSessions = useCallback(async (classId: string) => {
+    try {
+      const result = await getClassSessions(classId, CLASS_SESSIONS_QUERY);
+      const sessions = result?.data?.items;
+      if (!sessions) return;
+      setClassContext((prev) =>
+        prev && prev.classId === classId ? { ...prev, sessions } : prev,
+      );
+    } catch {
+      // Sessions are supplementary here; keep the last list on failure.
+    }
+  }, []);
+
+  const classId = classContext?.classId ?? null;
+
   const handleCurriculumRefresh = useCallback(async () => {
-    if (!curriculum) return;
-    await loadCurriculum(curriculum.enrollmentId, {
-      activityId: selectedActivityId,
-      assignmentId: selectedAssignmentId,
-    });
+    const previous = curriculumRef.current;
+    if (!previous) return;
+
+    const [nextCurriculum] = await Promise.all([
+      loadCurriculum(previous.enrollmentId, {
+        activityId: selectedActivityId,
+        assignmentId: selectedAssignmentId,
+      }),
+      classId ? reloadClassSessions(classId) : Promise.resolve(),
+    ]);
+
+    const unlocked = findNewlyUnlockedAssignments(previous, nextCurriculum).filter(
+      (item) => item.assignmentId !== selectedAssignmentId,
+    );
+    const firstUnlocked = unlocked[0];
+    if (firstUnlocked) {
+      showAppSuccess(
+        {
+          title: "Bài tập đã mở khóa",
+          description:
+            unlocked.length > 1
+              ? `${firstUnlocked.title} và ${unlocked.length - 1} bài khác đã sẵn sàng.`
+              : `${firstUnlocked.title} đã sẵn sàng để làm.`,
+          action: {
+            label: "Làm bài ngay",
+            onClick: () => handleSelectAssignment(firstUnlocked.assignmentId),
+          },
+        },
+        { id: ASSIGNMENT_UNLOCKED_TOAST_ID, duration: 8000 },
+      );
+    }
 
     // Catch the Active → Completed flip mid-session so the review prompt can open.
     if (enrollment?.status === "Active") {
@@ -364,10 +432,12 @@ export function CurriculumLearnContent({ programId }: CurriculumLearnContentProp
       }
     }
   }, [
-    curriculum,
+    classId,
     enrollment,
+    handleSelectAssignment,
     loadCurriculum,
     programId,
+    reloadClassSessions,
     selectedActivityId,
     selectedAssignmentId,
   ]);

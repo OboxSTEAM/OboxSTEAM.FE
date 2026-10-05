@@ -19,7 +19,7 @@ import {
 } from "@/lib/api";
 import type { CompleteActivitySource } from "@/lib/validations/program-enrollments";
 import { ACTIVITY_TYPE_LABELS } from "@/lib/curriculum/constants";
-import { getNextSessionForActivity } from "@/lib/classes/session-helpers";
+import { getDisplaySessionForActivity } from "@/lib/classes/session-helpers";
 import type { CoTeachExpertFace } from "@/lib/curriculum/coteach-experts";
 import {
   findFlatActivity,
@@ -155,7 +155,7 @@ export function ActivityPanel({
   const nextSession = useMemo(() => {
     if (!activity || !selectedActivityId) return null;
     if (activity.activityType === "SelfPaced") return null;
-    return getNextSessionForActivity(classSessions, selectedActivityId);
+    return getDisplaySessionForActivity(classSessions, selectedActivityId);
   }, [activity, classSessions, selectedActivityId]);
 
   const attendanceSessionId =
