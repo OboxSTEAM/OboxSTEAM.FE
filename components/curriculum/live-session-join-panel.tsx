@@ -131,11 +131,22 @@ function renderWindowState(
     );
   }
 
-  if (panelPhase === "left") {
+  if (
+    panelPhase === "left" &&
+    (join.phase === "countdown" || join.phase === "live")
+  ) {
     return (
-      <p className={joinPanelMessageClass(variant)}>
-        Bạn đã rời buổi học. Có thể tham gia lại nếu buổi vẫn đang diễn ra.
-      </p>
+      <div className="space-y-3">
+        <p className={joinPanelMessageClass(variant)}>
+          Bạn đã rời buổi học. Buổi học vẫn đang diễn ra, bạn có thể vào lại.
+        </p>
+        <IdleJoinButton
+          label="Vào lại lớp học"
+          busy={handlers.joinBusy}
+          variant={variant}
+          onJoin={handlers.onJoin}
+        />
+      </div>
     );
   }
 
